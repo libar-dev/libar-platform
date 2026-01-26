@@ -21,11 +21,11 @@ This example app exists to **serve platform development** ([ADR-008](../../docs-
 | --------------------- | ----- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | CMS Dual-Write        | 02    | [`commands.ts`](convex/contexts/orders/handlers/commands.ts)                               | [ADR-001](../../../docs/architecture/decisions/ADR-001-dual-write-pattern.md)   |
 | Pure Deciders         | 14    | [`createOrder.ts`](convex/contexts/orders/domain/deciders/createOrder.ts)                  | [CLAUDE.md](../../../CLAUDE.md#pure-deciders-replace-aggregates)                |
-| Projection Categories | 15    | [`definitions.ts`](convex/projections/definitions.ts)                                      | [PROJECTION-CATEGORIES.md](../../../docs/architecture/PROJECTION-CATEGORIES.md) |
-| DCB                   | 16    | [`reserveMultipleDCB.ts`](convex/contexts/inventory/domain/deciders/reserveMultipleDCB.ts) | [DCB-ARCHITECTURE.md](../../../docs/architecture/DCB-ARCHITECTURE.md)           |
-| Reactive Projections  | 17    | [`orderSummary.evolve.ts`](convex/projections/evolve/orderSummary.evolve.ts)               | [REACTIVE-PROJECTIONS.md](../../../docs/architecture/REACTIVE-PROJECTIONS.md)   |
-| Fat Events            | 20    | [`events.ts`](convex/contexts/orders/domain/events.ts)                                     | [FAT-EVENTS.md](../../../docs/architecture/FAT-EVENTS.md)                       |
-| Reservation Pattern   | 20    | [`reserveStock.ts`](convex/contexts/inventory/domain/deciders/reserveStock.ts)             | [RESERVATION-PATTERN.md](../../../docs/architecture/RESERVATION-PATTERN.md)     |
+| Projection Categories | 15    | [`definitions.ts`](convex/projections/definitions.ts)                                      | [projection-categories.md](../../packages/platform-core/docs/projection-categories.md) |
+| DCB                   | 16    | [`reserveMultipleDCB.ts`](convex/contexts/inventory/domain/deciders/reserveMultipleDCB.ts) | [dcb-architecture.md](../../packages/platform-core/docs/dcb-architecture.md)           |
+| Reactive Projections  | 17    | [`orderSummary.evolve.ts`](convex/projections/evolve/orderSummary.evolve.ts)               | [reactive-projections.md](../../packages/platform-core/docs/reactive-projections.md)   |
+| Fat Events            | 20    | [`events.ts`](convex/contexts/orders/domain/events.ts)                                     | [fat-events.md](../../packages/platform-core/docs/fat-events.md)                       |
+| Reservation Pattern   | 20    | [`reserveStock.ts`](convex/contexts/inventory/domain/deciders/reserveStock.ts)             | [reservation-pattern.md](../../packages/platform-core/docs/reservation-pattern.md)     |
 
 ## Architecture
 
