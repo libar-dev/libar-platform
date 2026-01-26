@@ -1,0 +1,55 @@
+{
+  "name": "libar-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Convex-native DDD/ES/CQRS platform",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libar-dev/libar-platform.git"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm --filter order-management test:unit",
+    "test:packages": "pnpm --filter '@libar-dev/platform-*' test",
+    "test:integration": "pnpm --filter order-management test:integration && pnpm --filter @libar-dev/platform-core test:integration",
+    "typecheck": "pnpm -r exec tsc --noEmit",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev": "pnpm --filter order-management dev",
+    "ladle": "pnpm --filter frontend ladle",
+    "docs:all": "pnpm docs:prd:all && pnpm docs:pdrs && pnpm docs:changelog && pnpm docs:business-rules",
+    "docs:patterns": "generate-docs --input 'packages/*/src/**/*.ts' --input 'delivery-process/src/**/*.ts' --generators patterns --output docs-living --features 'examples/order-management/tests/**/*.feature' --features 'delivery-process/specs/**/*.feature' --overwrite && prettier --write 'docs-living/**/*.md'",
+    "docs:roadmap": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --features 'examples/order-management/tests/features/timeline/*.feature' --generators roadmap --output docs-living --overwrite && prettier --write 'docs-living/ROADMAP.md' 'docs-living/phases/*.md'",
+    "docs:prd": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators requirements --output docs-living --overwrite && prettier --write 'docs-living/PRODUCT-REQUIREMENTS.md' 'docs-living/requirements/*.md'",
+    "docs:prd:roadmap": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators roadmap --output docs-living --overwrite && prettier --write 'docs-living/ROADMAP.md' 'docs-living/phases/*.md'",
+    "docs:prd:remaining": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators remaining --output docs-living --overwrite && prettier --write 'docs-living/REMAINING-WORK.md' 'docs-living/remaining/*.md'",
+    "docs:prd:current": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators current --output docs-living --overwrite && prettier --write 'docs-living/CURRENT-WORK.md' && (ls docs-living/current/*.md >/dev/null 2>&1 && prettier --write 'docs-living/current/*.md' || true)",
+    "docs:prd:milestones": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators milestones --output docs-living/timeline --overwrite && prettier --write 'docs-living/timeline/COMPLETED-MILESTONES.md' 'docs-living/timeline/milestones/*.md'",
+    "docs:prd:all": "pnpm docs:prd && pnpm docs:prd:roadmap && pnpm docs:prd:remaining && pnpm docs:prd:current && pnpm docs:prd:milestones",
+    "docs:pdrs": "generate-docs --input 'delivery-process/src/**/*.ts' --features 'delivery-process/decisions/*.feature' --generators adrs --output docs-living --overwrite && prettier --write 'docs-living/DECISIONS.md' 'docs-living/decisions/**/*.md'",
+    "docs:business-rules": "generate-docs --input 'delivery-process/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'delivery-process/specs/**/*.feature' --features 'delivery-process/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators business-rules --output docs-living --overwrite && prettier --write 'docs-living/BUSINESS-RULES.md'",
+    "docs:changelog": "generate-docs --input 'packages/*/src/**/*.ts' --input 'delivery-process/src/**/*.ts' --features 'delivery-process/decisions/*.feature' --features 'delivery-process/releases/*.feature' --features 'delivery-process/specs/**/*.feature' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators changelog --output docs-living --overwrite && prettier --write 'docs-living/CHANGELOG-GENERATED.md'",
+    "lint:patterns": "lint-patterns -i 'packages/*/src/**/*.ts'",
+    "lint-process": "lint-process"
+  },
+  "devDependencies": {
+    "@convex-dev/eslint-plugin": "^1.1.1",
+    "@libar-dev/delivery-process": "git+https://github.com/libar-dev/delivery-process.git#c89ffd11dc5292ec402d5066db556e32ccdef39f",
+    "@edge-runtime/vm": "^5.0.0",
+    "concurrently": "^9.2.1",
+    "convex-helpers": "^0.1.108",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "packageManager": "pnpm@10.26.1"
+}

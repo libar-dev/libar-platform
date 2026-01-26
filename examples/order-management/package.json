@@ -1,0 +1,37 @@
+{
+  "name": "order-management",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx convex dev --live-component-sources --typecheck-components",
+    "dev:local": "CONVEX_DEPLOYMENT= CONVEX_SELF_HOSTED_URL=http://127.0.0.1:3220 CONVEX_SELF_HOSTED_ADMIN_KEY='convex-self-hosted|015d3d6337e962a4aaa4bf02acc968e845da8b7878de54a9a268f6b7ee767db66ad0999b2e' npx convex dev --live-component-sources --typecheck-components",
+    "test": "vitest run",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:unit:watch": "vitest --config vitest.config.ts",
+    "test:integration": "cd ../../ && just test-integration",
+    "test:integration:ci": "vitest run --config vitest.integration.config.ts",
+    "test:watch": "vitest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@convex-dev/action-retrier": "^0.2.1",
+    "@convex-dev/rate-limiter": "^0.2.1",
+    "@convex-dev/workflow": "^0.3.3",
+    "@convex-dev/workpool": "^0.2.18",
+    "@libar-dev/platform-bc": "workspace:*",
+    "@libar-dev/platform-core": "workspace:*",
+    "@libar-dev/platform-bus": "workspace:*",
+    "@libar-dev/platform-store": "workspace:*",
+    "convex": "^1.31.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@amiceli/vitest-cucumber": "^5.2.1",
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-helpers": "^0.1.108",
+    "convex-test": "^0.0.41",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

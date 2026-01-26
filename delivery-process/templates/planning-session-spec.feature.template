@@ -1,0 +1,176 @@
+# Planning Session Spec Template
+#
+# Purpose: Template for creating roadmap specs from pattern briefs
+# Usage: Planning sessions use this to convert pattern-briefs/*.md to .feature specs
+# Output: delivery-process/specs/{product-area}/{pattern-name}.feature
+#
+# IMPORTANT: Roadmap specs use Rule: keywords for organization. When Tier 2
+# executable specs are created from these, step definitions must use the
+# Rule() + RuleScenario() pattern in vitest-cucumber (NOT Scenario() directly).
+#
+# See: delivery-process/docs/PLANNING-SESSION-GUIDE.md for complete workflow
+
+# =============================================================================
+# REQUIRED TAGS (copy and fill in values)
+# =============================================================================
+@libar-docs
+@libar-docs-release:{release}
+@libar-docs-pattern:{PatternName}
+@libar-docs-status:roadmap
+@libar-docs-phase:{N}
+@libar-docs-effort:{estimate}
+@libar-docs-product-area:{Platform|DeliveryProcess}
+@libar-docs-depends-on:{DependencyPattern}
+@libar-docs-executable-specs:{package}/tests/features/behavior/{feature-name}
+Feature: {Pattern Name} - {Brief Tagline}
+
+  # ---------------------------------------------------------------------------
+  # FEATURE DESCRIPTION - Choose structure that fits your pattern
+  # ---------------------------------------------------------------------------
+
+  # Option A: Problem/Solution Structure
+  **Problem:** {One paragraph describing the pain point}
+
+  **Solution:** {One paragraph describing what this pattern provides}
+
+  # Option B: Value-First Structure (TDD-style)
+  # **Business Value:** {Primary benefit in one sentence}
+  #
+  # **How It Works:**
+  # - Key mechanism 1
+  # - Key mechanism 2
+
+  # Option C: Context/Approach Structure
+  # **Context:** {Why this pattern is needed}
+  #
+  # **Approach:** {How the pattern addresses the need}
+
+  # ---------------------------------------------------------------------------
+  # BENEFITS TABLE (include in all cases)
+  # ---------------------------------------------------------------------------
+
+  **Why It Matters:**
+  | Benefit | How |
+  | {benefit1 from pattern brief} | {explanation1} |
+  | {benefit2 from pattern brief} | {explanation2} |
+  | {benefit3 from pattern brief} | {explanation3} |
+
+  # ---------------------------------------------------------------------------
+  # DELIVERABLES
+  # ---------------------------------------------------------------------------
+
+  Background: Deliverables
+    Given the following deliverables:
+      | Deliverable | Status | Location | Tests | Test Type |
+      | {Core type definitions} | planned | @libar-dev/{package}/src/{file}.ts | Yes | unit |
+      | {Implementation} | planned | @libar-dev/{package}/src/{file}.ts | Yes | integration |
+      | {Documentation} | planned | docs/architecture/{PATTERN}.md | No | - |
+      | {Example} | planned | examples/order-management/{path}/ | Yes | unit |
+
+  # =============================================================================
+  # RULES: Each business constraint becomes a Rule with structured description
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # RULE 1: {Business constraint being enforced}
+  # ---------------------------------------------------------------------------
+
+  Rule: {Declarative statement - e.g., "Reservations prevent race conditions"}
+
+    **Invariant:** {The constraint in one sentence - what must always be true}
+
+    **Rationale:** {Business justification - why this constraint exists and what
+    problems it prevents}
+
+    # If pattern brief has a table, include it here:
+    | {Column1} | {Column2} | {Column3} |
+    | {value} | {value} | {value} |
+
+    # If pattern brief has code examples:
+    **Current State:**
+    """typescript
+    // Current approach (before)
+    {code showing current behavior}
+    """
+
+    **Target State:**
+    """typescript
+    // Target approach (after)
+    {code showing target API}
+    """
+
+    **Verified by:** {Scenario name 1}, {Scenario name 2}
+
+    @acceptance-criteria @happy-path
+    Scenario: {Happy path demonstrating this constraint}
+      Given {precondition with specific example}
+      When {action is performed}
+      Then {expected outcome}
+
+    @acceptance-criteria @validation
+    Scenario: {Validation case showing constraint enforcement}
+      Given {precondition that would violate constraint}
+      When {action is attempted}
+      Then {expected rejection with error code}
+
+  # ---------------------------------------------------------------------------
+  # RULE 2: {Second business constraint}
+  # ---------------------------------------------------------------------------
+
+  Rule: {Second declarative statement}
+
+    **Invariant:** {What must always be true for this constraint}
+
+    **Rationale:** {Why this constraint exists}
+
+    **Verified by:** {Scenario name}
+
+    @acceptance-criteria @happy-path
+    Scenario: {Demonstrates constraint}
+      Given {setup}
+      When {action}
+      Then {outcome}
+
+  # ---------------------------------------------------------------------------
+  # RULE 3: {Category/comparison concept - if pattern has categories}
+  # ---------------------------------------------------------------------------
+
+  Rule: {Category-based constraint - e.g., "Categories determine behavior"}
+
+    **Invariant:** {Category-based constraint statement}
+
+    **Rationale:** {Why different categories need different behavior}
+
+    # Category comparison table:
+    | Category | {Property1} | {Property2} |
+    | {cat1} | {value} | {value} |
+    | {cat2} | {value} | {value} |
+
+    **Verified by:** {Category determines behavior}
+
+    @acceptance-criteria @happy-path
+    Scenario Outline: Category determines behavior
+      Given a <category> entity
+      When <action> is performed
+      Then <outcome> should occur
+
+      Examples:
+        | category | action | outcome |
+        | {cat1} | {action1} | {outcome1} |
+        | {cat2} | {action2} | {outcome2} |
+
+  # =============================================================================
+  # CHECKLIST: Before committing, verify:
+  # =============================================================================
+  # [ ] All required @libar-docs-* tags are present
+  # [ ] @libar-docs-executable-specs points to correct package location
+  # [ ] Deliverables table has Location, Tests, and Test Type columns
+  # [ ] Every business constraint has a Rule: block
+  # [ ] Every Rule has **Invariant:** and **Rationale:**
+  # [ ] Every Rule has **Verified by:** listing scenario names
+  # [ ] Each Rule has at least 2 scenarios (happy-path + validation)
+  # [ ] All scenarios tagged @acceptance-criteria
+  # [ ] Happy-path scenarios also tagged @happy-path
+  # [ ] Validation scenarios also tagged @validation
+  # [ ] Code examples use DocStrings (""" syntax)
+  # [ ] Tables from pattern brief are preserved as DataTables

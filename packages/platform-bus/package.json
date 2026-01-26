@@ -1,0 +1,62 @@
+{
+  "name": "@libar-dev/platform-bus",
+  "description": "Command bus component for Convex - idempotent command execution with correlation tracking",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@convex-dev/component-source": "./src/client/index.ts",
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./convex.config": {
+      "@convex-dev/component-source": "./src/component/convex.config.ts",
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    },
+    "./_generated/component": {
+      "types": "./dist/component/_generated/component.d.ts",
+      "default": "./dist/component/_generated/component.js"
+    },
+    "./test": "./src/test.ts"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libar-dev/libar-dev-packages.git",
+    "directory": "packages/platform/bus"
+  },
+  "homepage": "https://github.com/libar-dev/convex-event-sourcing#readme",
+  "bugs": {
+    "url": "https://github.com/libar-dev/convex-event-sourcing/issues"
+  },
+  "main": "./dist/client/index.js",
+  "types": "./dist/client/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "convex": ">=1.17.0 <1.35.0",
+    "zod": "^4.0.0"
+  },
+  "dependencies": {
+    "@libar-dev/platform-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@amiceli/vitest-cucumber": "^6.2.0",
+    "convex": "^1.31.0",
+    "convex-helpers": "^0.1.77",
+    "vitest": "^2.1.8",
+    "zod": "^4.0.0"
+  }
+}

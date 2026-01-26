@@ -1,0 +1,154 @@
+{
+  "name": "@libar-dev/platform-core",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./events": {
+      "types": "./dist/events/index.d.ts",
+      "default": "./dist/events/index.js"
+    },
+    "./commands": {
+      "types": "./dist/commands/index.d.ts",
+      "default": "./dist/commands/index.js"
+    },
+    "./ids": {
+      "types": "./dist/ids/index.d.ts",
+      "default": "./dist/ids/index.js"
+    },
+    "./cms": {
+      "types": "./dist/cms/index.d.ts",
+      "default": "./dist/cms/index.js"
+    },
+    "./projections": {
+      "types": "./dist/projections/index.d.ts",
+      "default": "./dist/projections/index.js"
+    },
+    "./orchestration": {
+      "types": "./dist/orchestration/index.d.ts",
+      "default": "./dist/orchestration/index.js"
+    },
+    "./handlers": {
+      "types": "./dist/handlers/index.d.ts",
+      "default": "./dist/handlers/index.js"
+    },
+    "./invariants": {
+      "types": "./dist/invariants/index.d.ts",
+      "default": "./dist/invariants/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./repository": {
+      "types": "./dist/repository/index.d.ts",
+      "default": "./dist/repository/index.js"
+    },
+    "./correlation": {
+      "types": "./dist/correlation/index.d.ts",
+      "default": "./dist/correlation/index.js"
+    },
+    "./eventbus": {
+      "types": "./dist/eventbus/index.d.ts",
+      "default": "./dist/eventbus/index.js"
+    },
+    "./integration": {
+      "types": "./dist/integration/index.d.ts",
+      "default": "./dist/integration/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "default": "./dist/registry/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "default": "./dist/middleware/index.js"
+    },
+    "./batch": {
+      "types": "./dist/batch/index.d.ts",
+      "default": "./dist/batch/index.js"
+    },
+    "./queries": {
+      "types": "./dist/queries/index.d.ts",
+      "default": "./dist/queries/index.js"
+    },
+    "./processManager": {
+      "types": "./dist/processManager/index.d.ts",
+      "default": "./dist/processManager/index.js"
+    },
+    "./fsm": {
+      "types": "./dist/fsm/index.d.ts",
+      "default": "./dist/fsm/index.js"
+    },
+    "./decider": {
+      "types": "./dist/decider/index.d.ts",
+      "default": "./dist/decider/index.js"
+    },
+    "./dcb": {
+      "types": "./dist/dcb/index.d.ts",
+      "default": "./dist/dcb/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libar-dev/libar-dev-packages.git",
+    "directory": "packages/platform/core"
+  },
+  "homepage": "https://github.com/libar-dev/convex-event-sourcing#readme",
+  "bugs": {
+    "url": "https://github.com/libar-dev/convex-event-sourcing/issues"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:watch": "vitest",
+    "test:integration": "cd ../../../ && just test-infrastructure-isolated",
+    "test:integration:ci": "vitest run --config vitest.integration.config.ts",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@libar-dev/platform-bc": "workspace:*",
+    "@libar-dev/platform-fsm": "workspace:*",
+    "@libar-dev/platform-decider": "workspace:*",
+    "uuid": "^13.0.0"
+  },
+  "peerDependencies": {
+    "convex": ">=1.17.0 <1.35.0",
+    "zod": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    },
+    "convex-helpers": {
+      "optional": true
+    },
+    "convex-test": {
+      "optional": true
+    }
+  },
+  "optionalPeerDependencies": {
+    "vitest": ">=2.0.0",
+    "convex-helpers": ">=0.1.78",
+    "convex-test": ">=0.0.34"
+  },
+  "devDependencies": {
+    "@amiceli/vitest-cucumber": "^6.2.0",
+    "@types/uuid": "^10.0.0",
+    "convex": "^1.17.0",
+    "convex-helpers": "^0.1.78",
+    "vitest": "^2.1.8",
+    "zod": "^4.0.0"
+  }
+}

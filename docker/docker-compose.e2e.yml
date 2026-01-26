@@ -1,0 +1,52 @@
+# docker-compose.e2e.yml - E2E Testing environment with dashboard
+#
+# This is SEPARATE from:
+#   - Local development (docker-compose.dev.yml, port 3220)
+#   - Integration tests (Justfile direct docker run, port 3210)
+#
+# Ports:
+#   - 3230: Backend API
+#   - 3231: HTTP Actions
+#   - 6792: Dashboard UI
+#
+# Storage: tmpfs (ephemeral) - Data cleared on every restart
+#
+# Commands:
+#   just e2e-start    - Start E2E environment
+#   just e2e-stop     - Stop E2E environment
+#   just e2e-restart  - Restart with fresh state
+#   just e2e-deploy   - Deploy app to E2E backend
+#   just e2e-dashboard - Open dashboard in browser
+
+services:
+  backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    container_name: convex-es-e2e-backend
+    ports:
+      - "3230:3210"
+      - "3231:3211"
+    environment:
+      - INSTANCE_SECRET=${CONVEX_INSTANCE_SECRET:-0135d8598650f8f5cb0f30c34ec2e2bb62793bc28717c8eb6fb577996d50be5f}
+      - IS_TEST=true
+    shm_size: 256m
+    # Ephemeral storage - data cleared on restart (same as integration tests)
+    tmpfs:
+      - /convex_data:rw,size=512m,mode=1777
+      - /tmp:rw,size=512m,mode=1777
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3210/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    container_name: convex-es-e2e-dashboard
+    ports:
+      - "6792:6791"
+    environment:
+      - CONVEX_BACKEND_URL=http://backend:3210
+    depends_on:
+      backend:
+        condition: service_healthy

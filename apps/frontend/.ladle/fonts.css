@@ -1,0 +1,21 @@
+/**
+ * Ladle Font Loading
+ *
+ * Loads fonts via Google Fonts CDN for the Vite/Ladle environment.
+ * Next.js uses next/font/google instead (see layout.tsx) which provides
+ * font optimization and self-hosting.
+ *
+ * This file ensures visual consistency between Next.js and Ladle.
+ */
+
+/* Inter - Primary sans-serif font (matches Next.js Inter) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+
+/* Set CSS variables that globals.css references */
+:root {
+  --font-inter:
+    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-geist-mono:
+    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}

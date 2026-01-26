@@ -1,0 +1,59 @@
+{
+  "name": "@libar-dev/platform-fsm",
+  "version": "0.1.0",
+  "description": "Type-safe Finite State Machine for explicit state transitions - pure TypeScript, no dependencies",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    }
+  },
+  "peerDependencies": {
+    "vitest": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@amiceli/vitest-cucumber": "^6.2.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "fsm",
+    "state-machine",
+    "finite-state-machine",
+    "typescript",
+    "ddd",
+    "domain-driven-design"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libar-dev/libar-dev-packages.git",
+    "directory": "packages/platform/fsm"
+  },
+  "homepage": "https://github.com/libar-dev/convex-event-sourcing#readme",
+  "bugs": {
+    "url": "https://github.com/libar-dev/convex-event-sourcing/issues"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@libar-dev/platform-bc",
+  "version": "0.1.0",
+  "description": "TypeScript contracts for Convex DDD/ES bounded contexts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts/index.d.ts",
+      "default": "./dist/contracts/index.js"
+    },
+    "./definitions": {
+      "types": "./dist/definitions/index.d.ts",
+      "default": "./dist/definitions/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libar-dev/libar-dev-packages.git",
+    "directory": "packages/platform/bc"
+  },
+  "homepage": "https://github.com/libar-dev/convex-event-sourcing#readme",
+  "bugs": {
+    "url": "https://github.com/libar-dev/convex-event-sourcing/issues"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@amiceli/vitest-cucumber": "^6.2.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "zod": "^4.0.0"
+  }
+}

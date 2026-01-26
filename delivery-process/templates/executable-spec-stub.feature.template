@@ -1,0 +1,109 @@
+# Executable Spec Stub Template
+#
+# Purpose: Template for creating package-level executable specs (Tier 2)
+# Usage: Implementation sessions create these from roadmap specs
+# Output: deps/libar-dev-packages/packages/{package}/tests/features/behavior/{feature-name}.feature
+#
+# CRITICAL: Feature files with Rule: blocks require step definitions to use
+#           Rule() + RuleScenario() pattern in vitest-cucumber.
+#           See step-definitions-stub.ts.template for correct syntax.
+#
+# See: delivery-process/docs/IMPLEMENTATION-SESSION-GUIDE.md for complete workflow
+
+# =============================================================================
+# REQUIRED TAGS (copy and fill in values)
+# =============================================================================
+@libar-docs
+@libar-docs-implements:{{PatternName}}
+@acceptance-criteria
+@libar-docs-status:roadmap
+@libar-docs-phase:{{N}}
+@libar-docs-product-area:{{ProductArea}}
+Feature: {{Feature Name}} - {{Brief Description}}
+
+  {{Brief explanation of what this executable spec validates.
+  This is the implementation proof for the roadmap spec at:
+  delivery-process/specs/{{product-area}}/{{pattern-name}}.feature}}
+
+  # ---------------------------------------------------------------------------
+  # TEST CONTEXT (optional - for integration tests)
+  # ---------------------------------------------------------------------------
+
+  Background:
+    Given the test environment is initialized
+    # Add common setup steps here
+
+  # ===========================================================================
+  # RULE 1: {{First concept from roadmap spec}}
+  #
+  # vitest-cucumber SYNTAX: In step definitions, this becomes:
+  #   Rule("{{First concept from roadmap spec}}", ({ RuleScenario }) => {...})
+  # ===========================================================================
+
+  Rule: {{First concept from roadmap spec}}
+
+    {{Explanation of this rule from the roadmap spec}}
+
+    @happy-path
+    Scenario: {{Validates first concept - happy path}}
+      Given {{precondition with specific example}}
+      When {{action is performed}}
+      Then {{expected outcome}}
+
+    @validation
+    Scenario: {{Validates first concept - error case}}
+      Given {{invalid precondition}}
+      When {{action is attempted}}
+      Then {{expected rejection with error code}}
+
+  # ===========================================================================
+  # RULE 2: {{Second concept from roadmap spec}}
+  #
+  # vitest-cucumber SYNTAX: In step definitions, this becomes:
+  #   Rule("{{Second concept from roadmap spec}}", ({ RuleScenario }) => {...})
+  # ===========================================================================
+
+  Rule: {{Second concept from roadmap spec}}
+
+    {{Explanation of this rule}}
+
+    @happy-path
+    Scenario: {{Validates second concept}}
+      Given {{setup}}
+      When {{action}}
+      Then {{outcome}}
+
+  # ===========================================================================
+  # EDGE CASES (use Scenario Outline within a Rule)
+  #
+  # vitest-cucumber SYNTAX: Use RuleScenarioOutline inside Rule():
+  #   Rule("Edge cases", ({ RuleScenarioOutline }) => {
+  #     RuleScenarioOutline("Pattern with variations", ({ Given, When, Then }, variables) => {...})
+  #   })
+  # ===========================================================================
+
+  Rule: {{Edge case rule}}
+
+    @edge-case
+    Scenario Outline: {{Pattern with variations}}
+      Given a "<variant>" configuration
+      When {{action}} is performed
+      Then the result should be "<expected>"
+
+      Examples:
+        | variant | expected |
+        | {{variant1}} | {{result1}} |
+        | {{variant2}} | {{result2}} |
+        | {{variant3}} | {{result3}} |
+
+# =============================================================================
+# CHECKLIST: Before committing, verify:
+# =============================================================================
+# [ ] @libar-docs-implements links to correct roadmap pattern
+# [ ] At least one @happy-path scenario per major concept
+# [ ] At least one @validation scenario for error cases
+# [ ] Scenario Outline used for edge case variations
+# [ ] All scenarios are nested under Rule: blocks (required for vitest-cucumber)
+# [ ] Step definitions use Rule() + RuleScenario() pattern (NOT Scenario() directly)
+# [ ] Step definitions are in tests/planning-stubs/ initially
+# [ ] Tests pass: pnpm test --filter @libar-dev/{package}
