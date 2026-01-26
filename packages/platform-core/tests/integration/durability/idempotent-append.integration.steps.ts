@@ -110,7 +110,7 @@ function generateIdempotencyKey(suffix?: string): string {
 // =============================================================================
 
 const feature = await loadFeature(
-  "../../../../../examples/order-management/tests/integration-features/durability/idempotent-append.feature"
+  "../../../../examples/order-management/tests/integration-features/durability/idempotent-append.feature"
 );
 
 // =============================================================================
