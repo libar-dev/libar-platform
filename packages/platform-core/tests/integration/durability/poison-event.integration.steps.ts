@@ -128,7 +128,7 @@ function generateProjectionName(): string {
 // =============================================================================
 
 const feature = await loadFeature(
-  "../../../../examples/order-management/tests/integration-features/durability/poison-event.feature"
+  "../../examples/order-management/tests/integration-features/durability/poison-event.feature"
 );
 
 // =============================================================================

@@ -16,7 +16,7 @@ import { withPrefix } from "../../../src/testing/index.js";
 // =============================================================================
 
 const feature = await loadFeature(
-  "../../../../examples/order-management/tests/integration-features/durability/durable-publication.feature"
+  "../../examples/order-management/tests/integration-features/durability/durable-publication.feature"
 );
 
 // =============================================================================
