@@ -26,13 +26,19 @@ const logger = createScopedLogger("Projection:DeadLetter", PLATFORM_LOG_LEVEL);
 export const onProjectionComplete = internalMutation({
   args: vOnCompleteValidator(
     /**
-     * Context passed from CommandOrchestrator's projection enqueue.
-     * The partition key is wrapped in a structured field to comply with
-     * Convex validators (which reject dynamic/extra properties).
+     * Context passed from CommandOrchestrator (projections) or EventBus (subscriptions).
+     * Supports both projection and subscription contexts for shared dead letter handling.
+     *
+     * Projection context: { projectionName, partition, eventId, ... }
+     * Subscription context: { subscriptionName, eventType, partition, eventId, ... }
      */
     v.object({
       eventId: v.string(),
-      projectionName: v.string(),
+      // Projection context fields
+      projectionName: v.optional(v.string()),
+      // Subscription context fields (EventBus handlers like PM, agents)
+      subscriptionName: v.optional(v.string()),
+      eventType: v.optional(v.string()),
       // Partition key for workpool ordering (e.g., { name: "orderId", value: "ord_123" })
       partition: v.optional(
         v.object({
@@ -40,13 +46,16 @@ export const onProjectionComplete = internalMutation({
           value: v.string(),
         })
       ),
-      // Correlation chain for tracing (passed by orchestrator)
+      // Correlation chain for tracing
       correlationId: v.optional(v.string()),
       causationId: v.optional(v.string()),
     })
   ),
   handler: async (ctx, { context, result }) => {
     if (result.kind === "failed") {
+      // Use projectionName for projections, subscriptionName for EventBus handlers
+      const handlerName = context.projectionName ?? context.subscriptionName ?? "unknown";
+
       // Check if this event already has a dead letter entry
       const existing = await ctx.db
         .query("projectionDeadLetters")
@@ -61,8 +70,8 @@ export const onProjectionComplete = internalMutation({
             error: result.error,
             failedAt: Date.now(),
           });
-          logger.error("Projection failed (retry)", {
-            projectionName: context.projectionName,
+          logger.error("Handler failed (retry)", {
+            projectionName: handlerName,
             eventId: context.eventId,
             attemptCount: existing.attemptCount + 1,
             error: result.error,
@@ -79,7 +88,7 @@ export const onProjectionComplete = internalMutation({
             failedAt: Date.now(),
           });
           logger.error("Retry failed, reset to pending", {
-            projectionName: context.projectionName,
+            projectionName: handlerName,
             eventId: context.eventId,
             attemptCount: existing.attemptCount + 1,
             error: result.error,
@@ -91,14 +100,14 @@ export const onProjectionComplete = internalMutation({
         // Create new dead letter entry
         await ctx.db.insert("projectionDeadLetters", {
           eventId: context.eventId,
-          projectionName: context.projectionName,
+          projectionName: handlerName,
           error: result.error,
           attemptCount: 1,
           status: "pending",
           failedAt: Date.now(),
         });
-        logger.error("Projection failed (new dead letter)", {
-          projectionName: context.projectionName,
+        logger.error("Handler failed (new dead letter)", {
+          projectionName: handlerName,
           eventId: context.eventId,
           error: result.error,
           ...(context.correlationId && { correlationId: context.correlationId }),

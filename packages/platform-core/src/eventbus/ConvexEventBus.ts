@@ -189,7 +189,8 @@ export class ConvexEventBus implements EventBus {
             subscriptionName: subscription.name,
             eventId: event.eventId,
             eventType: event.eventType,
-            [partitionKey.name]: partitionKey.value,
+            // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+            partition: partitionKey,
             correlationId: chain.correlationId,
             causationId: chain.causationId,
           },
