@@ -34,8 +34,7 @@ export const PATTERN_ERROR_CODES = {
   INVALID_LOAD_BATCH_SIZE: "INVALID_LOAD_BATCH_SIZE",
 } as const;
 
-export type PatternErrorCode =
-  (typeof PATTERN_ERROR_CODES)[keyof typeof PATTERN_ERROR_CODES];
+export type PatternErrorCode = (typeof PATTERN_ERROR_CODES)[keyof typeof PATTERN_ERROR_CODES];
 
 // ============================================================================
 // Pattern Types
@@ -356,10 +355,7 @@ export function definePattern(definition: PatternDefinition): PatternDefinition 
  * @param now - Current timestamp (defaults to Date.now())
  * @returns Earliest timestamp to include in the window
  */
-export function calculateWindowBoundary(
-  window: PatternWindow,
-  now: number = Date.now()
-): number {
+export function calculateWindowBoundary(window: PatternWindow, now: number = Date.now()): number {
   const durationMs = parseDuration(window.duration);
   if (durationMs === null) {
     throw new Error(`Invalid duration format: ${window.duration}`);
@@ -390,9 +386,7 @@ export function filterEventsInWindow(
   // Apply event limit if specified
   if (window.eventLimit !== undefined && filtered.length > window.eventLimit) {
     // Take the most recent events up to the limit
-    filtered = filtered
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, window.eventLimit);
+    filtered = filtered.sort((a, b) => b.timestamp - a.timestamp).slice(0, window.eventLimit);
   }
 
   return filtered;

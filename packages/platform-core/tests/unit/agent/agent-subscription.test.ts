@@ -288,10 +288,7 @@ describe("Agent Subscription Integration", () => {
         ) as FunctionReference<"mutation", FunctionVisibility, AgentEventHandlerArgs, unknown>,
       };
 
-      const subscriptions = createAgentSubscriptions(
-        [churnRiskAgent, fraudAgent],
-        handlerMap
-      );
+      const subscriptions = createAgentSubscriptions([churnRiskAgent, fraudAgent], handlerMap);
 
       expect(subscriptions).toHaveLength(2);
       expect(subscriptions[0].name).toBe("agent:orders:churn-risk-agent");

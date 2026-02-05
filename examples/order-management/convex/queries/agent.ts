@@ -114,9 +114,7 @@ export const getDeadLetters = query({
     /** Agent BC identifier */
     agentId: v.string(),
     /** Optional: filter by status */
-    status: v.optional(
-      v.union(v.literal("pending"), v.literal("replayed"), v.literal("ignored"))
-    ),
+    status: v.optional(v.union(v.literal("pending"), v.literal("replayed"), v.literal("ignored"))),
     /** Maximum entries to return (default: 100) */
     limit: v.optional(v.number()),
   },
@@ -124,9 +122,7 @@ export const getDeadLetters = query({
     if (status) {
       return await ctx.db
         .query("agentDeadLetters")
-        .withIndex("by_agentId_status", (q) =>
-          q.eq("agentId", agentId).eq("status", status)
-        )
+        .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId).eq("status", status))
         .order("desc")
         .take(limit);
     }

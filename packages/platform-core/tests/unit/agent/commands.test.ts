@@ -178,9 +178,9 @@ describe("EmittedAgentCommandSchema", () => {
     expect(EmittedAgentCommandSchema.safeParse(createTestCommand({ payload: 123 })).success).toBe(
       true
     );
-    expect(EmittedAgentCommandSchema.safeParse(createTestCommand({ payload: [1, 2, 3] })).success).toBe(
-      true
-    );
+    expect(
+      EmittedAgentCommandSchema.safeParse(createTestCommand({ payload: [1, 2, 3] })).success
+    ).toBe(true);
   });
 
   it("rejects command with invalid metadata", () => {
@@ -427,102 +427,57 @@ describe("createEmittedAgentCommand", () => {
   });
 
   it("generates unique decisionId", () => {
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      ["evt-1"]
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", ["evt-1"]);
     expect(command.metadata.decisionId).toBeDefined();
     expect(command.metadata.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
   });
 
   it("includes patternId when provided in options", () => {
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      ["evt-1"],
-      { patternId: "churn-risk" }
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", ["evt-1"], {
+      patternId: "churn-risk",
+    });
     expect(command.metadata.patternId).toBe("churn-risk");
   });
 
   it("does not include patternId when not provided", () => {
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      ["evt-1"]
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", ["evt-1"]);
     expect(command.metadata.patternId).toBeUndefined();
   });
 
   it("includes analysis when provided in options", () => {
     const analysis = { rawResponse: "LLM output", tokens: 150 };
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      ["evt-1"],
-      { analysis }
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", ["evt-1"], {
+      analysis,
+    });
     expect(command.metadata.analysis).toEqual(analysis);
   });
 
   it("does not include analysis when not provided", () => {
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      ["evt-1"]
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", ["evt-1"]);
     expect(command.metadata.analysis).toBeUndefined();
   });
 
   it("includes both patternId and analysis when provided", () => {
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      ["evt-1"],
-      { patternId: "pattern-1", analysis: { data: "value" } }
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", ["evt-1"], {
+      patternId: "pattern-1",
+      analysis: { data: "value" },
+    });
     expect(command.metadata.patternId).toBe("pattern-1");
     expect(command.metadata.analysis).toEqual({ data: "value" });
   });
 
   it("copies eventIds array (no reference sharing)", () => {
     const eventIds = ["evt-1", "evt-2"];
-    const command = createEmittedAgentCommand(
-      "agent",
-      "Command",
-      {},
-      0.5,
-      "reason",
-      eventIds
-    );
+    const command = createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", eventIds);
     eventIds.push("evt-3"); // Modify original
     expect(command.metadata.eventIds).toEqual(["evt-1", "evt-2"]); // Should be unchanged
   });
 
   describe("validation errors", () => {
     it("throws error for empty type", () => {
-      expect(() =>
-        createEmittedAgentCommand("agent", "", {}, 0.5, "reason", ["evt-1"])
-      ).toThrow("Command type must be a non-empty string");
+      expect(() => createEmittedAgentCommand("agent", "", {}, 0.5, "reason", ["evt-1"])).toThrow(
+        "Command type must be a non-empty string"
+      );
     });
 
     it("throws error for invalid confidence", () => {
@@ -532,21 +487,21 @@ describe("createEmittedAgentCommand", () => {
     });
 
     it("throws error for empty reason", () => {
-      expect(() =>
-        createEmittedAgentCommand("agent", "Command", {}, 0.5, "", ["evt-1"])
-      ).toThrow("Reason is required");
+      expect(() => createEmittedAgentCommand("agent", "Command", {}, 0.5, "", ["evt-1"])).toThrow(
+        "Reason is required"
+      );
     });
 
     it("throws error for empty eventIds", () => {
-      expect(() =>
-        createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", [])
-      ).toThrow("At least one triggering event");
+      expect(() => createEmittedAgentCommand("agent", "Command", {}, 0.5, "reason", [])).toThrow(
+        "At least one triggering event"
+      );
     });
 
     it("includes error code in thrown message", () => {
-      expect(() =>
-        createEmittedAgentCommand("agent", "", {}, 0.5, "reason", ["evt-1"])
-      ).toThrow(COMMAND_EMISSION_ERROR_CODES.INVALID_COMMAND_TYPE);
+      expect(() => createEmittedAgentCommand("agent", "", {}, 0.5, "reason", ["evt-1"])).toThrow(
+        COMMAND_EMISSION_ERROR_CODES.INVALID_COMMAND_TYPE
+      );
     });
   });
 });
@@ -644,9 +599,9 @@ describe("isEmittedAgentCommand", () => {
   });
 
   it("returns false for object with empty type", () => {
-    expect(
-      isEmittedAgentCommand({ type: "", payload: {}, metadata: createTestMetadata() })
-    ).toBe(false);
+    expect(isEmittedAgentCommand({ type: "", payload: {}, metadata: createTestMetadata() })).toBe(
+      false
+    );
   });
 
   it("returns false for object with invalid metadata", () => {

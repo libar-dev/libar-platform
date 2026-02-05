@@ -425,9 +425,7 @@ export type AgentConfigValidationResult =
  * @param config - Configuration to validate
  * @returns Validation result with error details if invalid
  */
-export function validateAgentBCConfig(
-  config: Partial<AgentBCConfig>
-): AgentConfigValidationResult {
+export function validateAgentBCConfig(config: Partial<AgentBCConfig>): AgentConfigValidationResult {
   // Check required ID
   if (!config.id || config.id.trim() === "") {
     return {

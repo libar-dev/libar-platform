@@ -11,11 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../../convex/_generated/api";
-import {
-  generateOrderId,
-  generateCustomerId,
-  createOrderItems,
-} from "../../fixtures/orders";
+import { generateOrderId, generateCustomerId, createOrderItems } from "../../fixtures/orders";
 import { waitUntil, DEFAULT_TIMEOUT_MS } from "../../support/localBackendHelpers";
 
 // Extended timeout for integration tests (15 seconds)

@@ -73,16 +73,11 @@ export function calculateChurnConfidence(
   }
 
   // Base confidence from count
-  let confidence = Math.min(
-    maxBaseConfidence,
-    baseConfidence + count * incrementPerCancellation
-  );
+  let confidence = Math.min(maxBaseConfidence, baseConfidence + count * incrementPerCancellation);
 
   // Boost for recency
   const recentThreshold = Date.now() - recencyDays * DAYS_MS;
-  const recentCount = cancellations.filter(
-    (e) => e.timestamp >= recentThreshold
-  ).length;
+  const recentCount = cancellations.filter((e) => e.timestamp >= recentThreshold).length;
 
   if (recentCount >= minRecentEvents) {
     confidence = Math.min(1, confidence + recencyBoost);
@@ -119,18 +114,13 @@ export function countRecentEvents(
  * // "Customer has 4 cancellations in 30 days (3 recent). Confidence: 0.85"
  * ```
  */
-export function buildChurnReason(
-  events: readonly PublishedEvent[],
-  confidence: number
-): string {
+export function buildChurnReason(events: readonly PublishedEvent[], confidence: number): string {
   const cancellations = events.filter((e) => e.eventType === "OrderCancelled");
   const count = cancellations.length;
 
   const recentCount = countRecentEvents(cancellations);
 
-  const parts = [
-    `Customer has ${count} cancellation${count !== 1 ? "s" : ""} in 30 days`,
-  ];
+  const parts = [`Customer has ${count} cancellation${count !== 1 ? "s" : ""} in 30 days`];
 
   if (recentCount > 0) {
     parts[0] += ` (${recentCount} recent)`;

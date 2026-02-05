@@ -17,11 +17,7 @@ import { PatternTriggers } from "@libar-dev/platform-core/agent";
 import type { PublishedEvent } from "@libar-dev/platform-core";
 
 // Import shared utilities
-import {
-  extractCustomerId,
-  calculateChurnConfidence,
-  buildChurnReason,
-} from "./_utils/index.js";
+import { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./_utils/index.js";
 
 // ============================================================================
 // Agent Configuration
@@ -104,9 +100,7 @@ export const churnRiskAgentConfig: AgentBCConfig = {
     }
 
     // Filter events for this customer
-    const customerEvents = ctx.history.filter(
-      (e) => extractCustomerId(e) === customerId
-    );
+    const customerEvents = ctx.history.filter((e) => extractCustomerId(e) === customerId);
 
     // Check if pattern trigger fires (3+ cancellations)
     const trigger = PatternTriggers.eventTypePresent(["OrderCancelled"], 3);
@@ -128,9 +122,7 @@ export const churnRiskAgentConfig: AgentBCConfig = {
       payload: {
         customerId,
         riskLevel: confidence >= 0.9 ? "high" : "medium",
-        cancellationCount: customerEvents.filter(
-          (e) => e.eventType === "OrderCancelled"
-        ).length,
+        cancellationCount: customerEvents.filter((e) => e.eventType === "OrderCancelled").length,
         windowDays: 30,
       },
       confidence,

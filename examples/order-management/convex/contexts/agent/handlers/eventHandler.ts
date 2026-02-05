@@ -148,10 +148,7 @@ export const handleChurnRiskEvent = internalMutation({
       checkpointId = existingCheckpoint._id;
     } else {
       // Create new checkpoint
-      checkpoint = createInitialAgentCheckpoint(
-        args.agentId,
-        `sub_${args.agentId}_${Date.now()}`
-      );
+      checkpoint = createInitialAgentCheckpoint(args.agentId, `sub_${args.agentId}_${Date.now()}`);
       checkpointId = await ctx.db.insert("agentCheckpoints", checkpoint);
     }
 
@@ -190,11 +187,7 @@ export const handleChurnRiskEvent = internalMutation({
       loadCheckpoint: async () => checkpoint,
 
       // Update checkpoint after processing
-      updateCheckpoint: async (
-        _agentId: string,
-        eventId: string,
-        globalPosition: number
-      ) => {
+      updateCheckpoint: async (_agentId: string, eventId: string, globalPosition: number) => {
         await ctx.db.patch(checkpointId, {
           lastProcessedPosition: globalPosition,
           lastEventId: eventId,
@@ -330,20 +323,14 @@ async function loadEventHistory(
 
   for (const order of customerOrders) {
     try {
-      const orderEvents = await ctx.runQuery(
-        components.eventStore.lib.readStream,
-        {
-          streamType: "Order",
-          streamId: order.orderId,
-        }
-      );
+      const orderEvents = await ctx.runQuery(components.eventStore.lib.readStream, {
+        streamType: "Order",
+        streamId: order.orderId,
+      });
 
       // Filter to only cancellation events within window
       const cancellations = (orderEvents as StoredEventRecord[])
-        .filter(
-          (e) =>
-            e.eventType === "OrderCancelled" && e.timestamp >= cutoffTime
-        )
+        .filter((e) => e.eventType === "OrderCancelled" && e.timestamp >= cutoffTime)
         .map(
           (e): PublishedEvent => ({
             eventId: e.eventId,

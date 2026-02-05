@@ -206,9 +206,7 @@ export const getPendingCommands = internalQuery({
 
     const commands = await ctx.db
       .query("agentCommands")
-      .withIndex("by_agentId_status", (q) =>
-        q.eq("agentId", agentId).eq("status", "pending")
-      )
+      .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId).eq("status", "pending"))
       .take(limit);
 
     return commands;

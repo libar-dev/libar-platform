@@ -396,9 +396,7 @@ export function approveAction(
   reviewNote?: string
 ): PendingApproval {
   if (approval.status !== "pending") {
-    throw new Error(
-      `Cannot approve: current status is "${approval.status}", expected "pending"`
-    );
+    throw new Error(`Cannot approve: current status is "${approval.status}", expected "pending"`);
   }
 
   const now = Date.now();
@@ -439,9 +437,7 @@ export function rejectAction(
   rejectionReason: string
 ): PendingApproval {
   if (approval.status !== "pending") {
-    throw new Error(
-      `Cannot reject: current status is "${approval.status}", expected "pending"`
-    );
+    throw new Error(`Cannot reject: current status is "${approval.status}", expected "pending"`);
   }
 
   return {
@@ -470,9 +466,7 @@ export function rejectAction(
  */
 export function expireAction(approval: PendingApproval): PendingApproval {
   if (approval.status !== "pending") {
-    throw new Error(
-      `Cannot expire: current status is "${approval.status}", expected "pending"`
-    );
+    throw new Error(`Cannot expire: current status is "${approval.status}", expected "pending"`);
   }
 
   return {

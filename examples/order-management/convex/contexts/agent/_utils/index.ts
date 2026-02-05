@@ -7,8 +7,4 @@
  */
 
 export { extractCustomerId, groupEventsByCustomer } from "./customer.js";
-export {
-  calculateChurnConfidence,
-  countRecentEvents,
-  buildChurnReason,
-} from "./confidence.js";
+export { calculateChurnConfidence, countRecentEvents, buildChurnReason } from "./confidence.js";

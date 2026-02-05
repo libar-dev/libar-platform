@@ -15,13 +15,13 @@ The Agent as Bounded Context pattern treats AI agents as reactive event consumer
 
 Traditional approaches to AI integration face several challenges:
 
-| Challenge | Traditional Approach | Agent BC Approach |
-|-----------|---------------------|-------------------|
-| Event access | Ad-hoc polling/webhooks | Native EventBus subscription |
-| State management | External databases | Built-in checkpoint pattern |
-| Explainability | Black box decisions | Audit trail with reasoning |
-| Reliability | Fire-and-forget | Workpool-based durability |
-| Approval workflow | Manual intervention | Configurable human-in-loop |
+| Challenge         | Traditional Approach    | Agent BC Approach            |
+| ----------------- | ----------------------- | ---------------------------- |
+| Event access      | Ad-hoc polling/webhooks | Native EventBus subscription |
+| State management  | External databases      | Built-in checkpoint pattern  |
+| Explainability    | Black box decisions     | Audit trail with reasoning   |
+| Reliability       | Fire-and-forget         | Workpool-based durability    |
+| Approval workflow | Manual intervention     | Configurable human-in-loop   |
 
 ## Architecture
 
@@ -66,13 +66,13 @@ Traditional approaches to AI integration face several challenges:
 
 ### Agent BC vs Regular BC
 
-| Aspect | Regular BC | Agent BC |
-|--------|-----------|----------|
-| State source | CMS tables | Checkpoint + event history |
-| Decision logic | Pure deciders | Rules + optional LLM |
-| Command emission | Explicit via handler | Autonomous with explainability |
-| State mutations | Dual-write (CMS + event) | Checkpoint update only |
-| Subscription priority | Varies | 250 (after projections/PMs) |
+| Aspect                | Regular BC               | Agent BC                       |
+| --------------------- | ------------------------ | ------------------------------ |
+| State source          | CMS tables               | Checkpoint + event history     |
+| Decision logic        | Pure deciders            | Rules + optional LLM           |
+| Command emission      | Explicit via handler     | Autonomous with explainability |
+| State mutations       | Dual-write (CMS + event) | Checkpoint update only         |
+| Subscription priority | Varies                   | 250 (after projections/PMs)    |
 
 ### Event Subscription
 
@@ -103,9 +103,9 @@ const churnRiskPattern = definePattern({
   description: "Detect customer churn based on cancellations",
 
   window: {
-    duration: "30d",    // Look back 30 days
-    minEvents: 3,       // Require at least 3 events
-    eventLimit: 100,    // Max events to load
+    duration: "30d", // Look back 30 days
+    minEvents: 3, // Require at least 3 events
+    eventLimit: 100, // Max events to load
   },
 
   // Fast rule-based trigger
@@ -121,7 +121,7 @@ const churnRiskPattern = definePattern({
       detected: result.confidence > 0.7,
       confidence: result.confidence,
       reasoning: result.reasoning,
-      matchingEventIds: events.map(e => e.eventId),
+      matchingEventIds: events.map((e) => e.eventId),
     };
   },
 });
@@ -133,12 +133,12 @@ Agents emit commands with full explainability metadata:
 
 ```typescript
 const command = createEmittedAgentCommand(
-  "churn-risk-agent",           // agentId
-  "SuggestCustomerOutreach",    // command type
-  { customerId, riskLevel },    // payload
-  0.85,                         // confidence
+  "churn-risk-agent", // agentId
+  "SuggestCustomerOutreach", // command type
+  { customerId, riskLevel }, // payload
+  0.85, // confidence
   "3 cancellations in 30 days", // reason
-  ["evt-1", "evt-2", "evt-3"],  // triggering events
+  ["evt-1", "evt-2", "evt-3"] // triggering events
 );
 
 // Command includes metadata for audit trail:
@@ -230,8 +230,8 @@ Checkpoints track the agent's position in the event stream:
 interface AgentCheckpoint {
   agentId: string;
   subscriptionId: string;
-  lastProcessedPosition: number;  // Global position for idempotency
-  lastEventId: string;            // For causation tracking
+  lastProcessedPosition: number; // Global position for idempotency
+  lastEventId: string; // For causation tracking
   status: "active" | "paused" | "stopped";
   eventsProcessed: number;
   updatedAt: number;
@@ -255,10 +255,10 @@ Configure when human approval is required:
 ```typescript
 const config: AgentBCConfig = {
   // ...
-  confidenceThreshold: 0.8,  // Auto-execute above 0.8
+  confidenceThreshold: 0.8, // Auto-execute above 0.8
 
   humanInLoop: {
-    confidenceThreshold: 0.9,  // Flag below 0.9 for review
+    confidenceThreshold: 0.9, // Flag below 0.9 for review
 
     // These always require approval
     requiresApproval: ["DeleteCustomer", "RefundOrder"],
@@ -266,7 +266,7 @@ const config: AgentBCConfig = {
     // These never require approval
     autoApprove: ["LogEvent", "UpdateMetrics"],
 
-    approvalTimeout: "24h",  // Expire after 24 hours
+    approvalTimeout: "24h", // Expire after 24 hours
   },
 };
 
@@ -287,10 +287,10 @@ const config: AgentBCConfig = {
   rateLimits: {
     maxRequestsPerMinute: 60,
     maxConcurrent: 5,
-    queueDepth: 100,  // Max pending events before backpressure
+    queueDepth: 100, // Max pending events before backpressure
 
     costBudget: {
-      daily: 10.0,        // $10/day limit
+      daily: 10.0, // $10/day limit
       alertThreshold: 0.8, // Alert at 80% usage
     },
   },
@@ -394,35 +394,35 @@ const subscription = createAgentSubscription(myAgentConfig, {
 
 ### Core Types
 
-| Type | Description |
-|------|-------------|
-| `AgentBCConfig` | Full agent configuration |
-| `AgentDecision` | Decision output from onEvent |
-| `PatternDefinition` | Pattern detection rules |
-| `AgentCheckpoint` | Position tracking state |
-| `EmittedAgentCommand` | Command with explainability |
-| `PendingApproval` | Human-in-loop approval request |
+| Type                  | Description                    |
+| --------------------- | ------------------------------ |
+| `AgentBCConfig`       | Full agent configuration       |
+| `AgentDecision`       | Decision output from onEvent   |
+| `PatternDefinition`   | Pattern detection rules        |
+| `AgentCheckpoint`     | Position tracking state        |
+| `EmittedAgentCommand` | Command with explainability    |
+| `PendingApproval`     | Human-in-loop approval request |
 
 ### Factory Functions
 
-| Function | Description |
-|----------|-------------|
-| `createAgentSubscription()` | Create EventBus subscription |
-| `createAgentEventHandler()` | Create event processing handler |
-| `definePattern()` | Define validated pattern |
-| `createEmittedAgentCommand()` | Create command with metadata |
-| `createPendingApproval()` | Create approval request |
-| `initializeAgentBC()` | Initialize agent lifecycle |
+| Function                      | Description                     |
+| ----------------------------- | ------------------------------- |
+| `createAgentSubscription()`   | Create EventBus subscription    |
+| `createAgentEventHandler()`   | Create event processing handler |
+| `definePattern()`             | Define validated pattern        |
+| `createEmittedAgentCommand()` | Create command with metadata    |
+| `createPendingApproval()`     | Create approval request         |
+| `initializeAgentBC()`         | Initialize agent lifecycle      |
 
 ### Pattern Triggers
 
-| Trigger | Description |
-|---------|-------------|
-| `PatternTriggers.countThreshold(n)` | Fire when n events present |
+| Trigger                                      | Description                         |
+| -------------------------------------------- | ----------------------------------- |
+| `PatternTriggers.countThreshold(n)`          | Fire when n events present          |
 | `PatternTriggers.eventTypePresent(types, n)` | Fire when n events of types present |
-| `PatternTriggers.multiStreamPresent(n)` | Fire when events from n streams |
-| `PatternTriggers.all(...triggers)` | AND combination |
-| `PatternTriggers.any(...triggers)` | OR combination |
+| `PatternTriggers.multiStreamPresent(n)`      | Fire when events from n streams     |
+| `PatternTriggers.all(...triggers)`           | AND combination                     |
+| `PatternTriggers.any(...triggers)`           | OR combination                      |
 
 ## Best Practices
 

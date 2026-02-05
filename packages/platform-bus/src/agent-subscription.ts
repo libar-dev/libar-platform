@@ -133,11 +133,7 @@ export interface CreateAgentSubscriptionOptions<THandlerArgs extends UnknownReco
    * Custom transformer for handler args.
    * If not provided, uses default AgentEventHandlerArgs transformer.
    */
-  toHandlerArgs?: (
-    event: PublishedEvent,
-    chain: CorrelationChain,
-    agentId: string
-  ) => THandlerArgs;
+  toHandlerArgs?: (event: PublishedEvent, chain: CorrelationChain, agentId: string) => THandlerArgs;
 
   /**
    * Custom partition key extractor.
@@ -181,9 +177,7 @@ export function defaultAgentTransform(
   agentId: string
 ): AgentEventHandlerArgs {
   // Validate payload is a proper record object
-  const payload = isRecordPayload(event.payload)
-    ? event.payload
-    : { _raw: event.payload };
+  const payload = isRecordPayload(event.payload) ? event.payload : { _raw: event.payload };
 
   return {
     eventId: event.eventId,
@@ -305,7 +299,9 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
  * );
  * ```
  */
-export function createAgentSubscriptions<THandlerArgs extends UnknownRecord = AgentEventHandlerArgs>(
+export function createAgentSubscriptions<
+  THandlerArgs extends UnknownRecord = AgentEventHandlerArgs,
+>(
   definitions: readonly AgentDefinitionForSubscription[],
   handlerMap: Record<
     string,

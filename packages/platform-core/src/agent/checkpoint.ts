@@ -172,8 +172,7 @@ export function applyCheckpointUpdate(
     lastProcessedPosition: update.lastProcessedPosition ?? checkpoint.lastProcessedPosition,
     lastEventId: update.lastEventId ?? checkpoint.lastEventId,
     status: update.status ?? checkpoint.status,
-    eventsProcessed:
-      checkpoint.eventsProcessed + (update.incrementEventsProcessed ?? 0),
+    eventsProcessed: checkpoint.eventsProcessed + (update.incrementEventsProcessed ?? 0),
     updatedAt: Date.now(),
   };
 }

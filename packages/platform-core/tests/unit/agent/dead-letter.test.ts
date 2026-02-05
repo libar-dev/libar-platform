@@ -56,7 +56,9 @@ function createTestDeadLetter(overrides: Partial<AgentDeadLetter> = {}): AgentDe
   };
 }
 
-function createTestContext(overrides: Partial<AgentDeadLetterContext> = {}): AgentDeadLetterContext {
+function createTestContext(
+  overrides: Partial<AgentDeadLetterContext> = {}
+): AgentDeadLetterContext {
   return {
     correlationId: "corr-123",
     errorCode: "LLM_TIMEOUT",
@@ -420,59 +422,28 @@ describe("createAgentDeadLetter", () => {
   });
 
   it("creates dead letter with pending status", () => {
-    const deadLetter = createAgentDeadLetter(
-      "agent",
-      "sub",
-      "evt",
-      0,
-      "error"
-    );
+    const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, "error");
     expect(deadLetter.status).toBe("pending");
   });
 
   it("sets attemptCount to 1", () => {
-    const deadLetter = createAgentDeadLetter(
-      "agent",
-      "sub",
-      "evt",
-      0,
-      "error"
-    );
+    const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, "error");
     expect(deadLetter.attemptCount).toBe(1);
   });
 
   it("sets failedAt to current time", () => {
-    const deadLetter = createAgentDeadLetter(
-      "agent",
-      "sub",
-      "evt",
-      0,
-      "error"
-    );
+    const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, "error");
     expect(deadLetter.failedAt).toBe(Date.now());
   });
 
   it("includes context when provided", () => {
     const context = createTestContext();
-    const deadLetter = createAgentDeadLetter(
-      "agent",
-      "sub",
-      "evt",
-      0,
-      "error",
-      context
-    );
+    const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, "error", context);
     expect(deadLetter.context).toEqual(context);
   });
 
   it("does not include context when not provided", () => {
-    const deadLetter = createAgentDeadLetter(
-      "agent",
-      "sub",
-      "evt",
-      0,
-      "error"
-    );
+    const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, "error");
     expect(deadLetter.context).toBeUndefined();
   });
 
@@ -480,13 +451,7 @@ describe("createAgentDeadLetter", () => {
     it("sanitizes Error objects removing stack-like patterns", () => {
       // The " at " pattern is caught by stack trace removal
       const error = new Error("Error at /app/src/handler.ts:42");
-      const deadLetter = createAgentDeadLetter(
-        "agent",
-        "sub",
-        "evt",
-        0,
-        error
-      );
+      const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, error);
       expect(deadLetter.error).toBe("Error");
       expect(deadLetter.error).not.toContain("/app/src/handler.ts");
     });
@@ -528,13 +493,7 @@ describe("createAgentDeadLetter", () => {
     });
 
     it("sanitizes unknown error types", () => {
-      const deadLetter = createAgentDeadLetter(
-        "agent",
-        "sub",
-        "evt",
-        0,
-        { code: 500 }
-      );
+      const deadLetter = createAgentDeadLetter("agent", "sub", "evt", 0, { code: 500 });
       expect(deadLetter.error).toBe("Unknown error");
     });
   });

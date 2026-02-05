@@ -14,7 +14,12 @@ import type { FunctionReference, FunctionVisibility } from "convex/server";
 import { v7 as uuidv7 } from "uuid";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
-import type { EventBus, EventSubscription, PublishedEvent, PartitionKey } from "../eventbus/types.js";
+import type {
+  EventBus,
+  EventSubscription,
+  PublishedEvent,
+  PartitionKey,
+} from "../eventbus/types.js";
 import type { CorrelationChain } from "../correlation/types.js";
 import type { UnknownRecord } from "../types.js";
 import type {
@@ -320,9 +325,7 @@ export function toAgentHandlerArgs(
   agentId: string
 ): AgentEventHandlerArgs {
   // Validate payload is a proper record object
-  const payload = isRecordPayload(event.payload)
-    ? event.payload
-    : { _raw: event.payload };
+  const payload = isRecordPayload(event.payload) ? event.payload : { _raw: event.payload };
 
   return {
     eventId: event.eventId,
@@ -421,7 +424,10 @@ export function createAgentEventHandler(
 
   const agentInterface = createAgentInterface(runtime);
 
-  return async (event: PublishedEvent, checkpoint: AgentCheckpoint): Promise<AgentEventHandlerResult> => {
+  return async (
+    event: PublishedEvent,
+    checkpoint: AgentCheckpoint
+  ): Promise<AgentEventHandlerResult> => {
     try {
       // Check if agent is active
       if (!isAgentActive(checkpoint)) {
@@ -739,7 +745,8 @@ export function initializeAgentBC(
 
   // Create or use existing checkpoint
   const subscriptionId = generateSubscriptionId(config.id);
-  const checkpoint = options.existingCheckpoint ?? createInitialAgentCheckpoint(config.id, subscriptionId);
+  const checkpoint =
+    options.existingCheckpoint ?? createInitialAgentCheckpoint(config.id, subscriptionId);
 
   // Create subscription handle
   // Note: pause/resume/unsubscribe are stubs that should be implemented

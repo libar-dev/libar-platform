@@ -511,7 +511,7 @@ describe("generateApprovalId", () => {
     for (let i = 0; i < 3; i++) {
       ids.add(generateApprovalId());
       // Delay to ensure different timestamps for UUIDv7
-      await new Promise(resolve => setTimeout(resolve, 2));
+      await new Promise((resolve) => setTimeout(resolve, 2));
     }
     // All IDs should be unique
     expect(ids.size).toBe(3);
@@ -553,10 +553,17 @@ describe("createPendingApproval", () => {
     const config = createTestConfig();
     const approvalIds = new Set<string>();
     for (let i = 0; i < 3; i++) {
-      const approval = createPendingApproval("agent", `dec${i}`, { type: "A", payload: {} }, 0.5, "r", config);
+      const approval = createPendingApproval(
+        "agent",
+        `dec${i}`,
+        { type: "A", payload: {} },
+        0.5,
+        "r",
+        config
+      );
       approvalIds.add(approval.approvalId);
       // Small delay to ensure different timestamps for UUIDv7
-      await new Promise(resolve => setTimeout(resolve, 1));
+      await new Promise((resolve) => setTimeout(resolve, 1));
     }
     expect(approvalIds.size).toBe(3);
     // Restore fake timers for subsequent tests
@@ -566,14 +573,28 @@ describe("createPendingApproval", () => {
 
   it("sets requestedAt to current time", () => {
     const config = createTestConfig();
-    const approval = createPendingApproval("agent", "dec", { type: "A", payload: {} }, 0.5, "r", config);
+    const approval = createPendingApproval(
+      "agent",
+      "dec",
+      { type: "A", payload: {} },
+      0.5,
+      "r",
+      config
+    );
 
     expect(approval.requestedAt).toBe(Date.now());
   });
 
   it("calculates expiresAt based on config timeout", () => {
     const config = createTestConfig({ approvalTimeout: "1h" });
-    const approval = createPendingApproval("agent", "dec", { type: "A", payload: {} }, 0.5, "r", config);
+    const approval = createPendingApproval(
+      "agent",
+      "dec",
+      { type: "A", payload: {} },
+      0.5,
+      "r",
+      config
+    );
 
     const expected = Date.now() + 60 * 60 * 1000;
     expect(approval.expiresAt).toBe(expected);
@@ -581,7 +602,14 @@ describe("createPendingApproval", () => {
 
   it("does not include optional fields initially", () => {
     const config = createTestConfig();
-    const approval = createPendingApproval("agent", "dec", { type: "A", payload: {} }, 0.5, "r", config);
+    const approval = createPendingApproval(
+      "agent",
+      "dec",
+      { type: "A", payload: {} },
+      0.5,
+      "r",
+      config
+    );
 
     expect(approval.reviewerId).toBeUndefined();
     expect(approval.reviewedAt).toBeUndefined();
@@ -979,7 +1007,7 @@ describe("formatRemainingApprovalTime", () => {
     const now = 1000000;
     const approval = createTestApproval({
       status: "pending",
-      expiresAt: now + (2 * 60 * 60 * 1000) + (30 * 60 * 1000), // 2h 30m
+      expiresAt: now + 2 * 60 * 60 * 1000 + 30 * 60 * 1000, // 2h 30m
     });
     expect(formatRemainingApprovalTime(approval, now)).toBe("2h 30m");
   });
@@ -988,7 +1016,7 @@ describe("formatRemainingApprovalTime", () => {
     const now = 1000000;
     const approval = createTestApproval({
       status: "pending",
-      expiresAt: now + (45 * 60 * 1000), // 45m
+      expiresAt: now + 45 * 60 * 1000, // 45m
     });
     expect(formatRemainingApprovalTime(approval, now)).toBe("45m");
   });
@@ -1020,4 +1048,3 @@ describe("validatePendingApproval", () => {
     expect(validatePendingApproval(invalid)).toBe(false);
   });
 });
-

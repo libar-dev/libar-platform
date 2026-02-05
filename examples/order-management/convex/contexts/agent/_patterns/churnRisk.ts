@@ -52,9 +52,7 @@ export const CHURN_RISK_WINDOW_DURATION = "30d" as const;
  * @param minCancellations - Minimum cancellations to trigger
  * @returns Pattern trigger function
  */
-export function createCustomerCancellationTrigger(
-  minCancellations: number
-): PatternTrigger {
+export function createCustomerCancellationTrigger(minCancellations: number): PatternTrigger {
   return (events: readonly PublishedEvent[]): boolean => {
     // Filter to cancellations and group by customer using shared utility
     const cancellations = events.filter((e) => e.eventType === "OrderCancelled");
@@ -97,8 +95,7 @@ export function createCustomerCancellationTrigger(
 export const churnRiskPattern: PatternDefinition = definePattern({
   name: CHURN_RISK_PATTERN_NAME,
 
-  description:
-    "Detect customers at risk of churning based on repeated order cancellations",
+  description: "Detect customers at risk of churning based on repeated order cancellations",
 
   window: {
     duration: CHURN_RISK_WINDOW_DURATION,
@@ -204,18 +201,14 @@ Provide a confidence score (0-1) and brief reasoning.`;
  * @param cancellations - Cancellation events
  * @returns Pattern analysis result
  */
-function createRuleBasedAnalysis(
-  cancellations: readonly PublishedEvent[]
-): PatternAnalysisResult {
+function createRuleBasedAnalysis(cancellations: readonly PublishedEvent[]): PatternAnalysisResult {
   const count = cancellations.length;
   const confidence = Math.min(0.85, 0.5 + count * 0.1);
 
   // Use shared utility for recent count
   const recentCount = countRecentEvents(cancellations);
 
-  const adjustedConfidence = recentCount >= 2
-    ? Math.min(1, confidence + 0.1)
-    : confidence;
+  const adjustedConfidence = recentCount >= 2 ? Math.min(1, confidence + 0.1) : confidence;
 
   return {
     detected: true,
@@ -243,8 +236,7 @@ function createRuleBasedAnalysis(
 export const highValueChurnPattern: PatternDefinition = definePattern({
   name: "high-value-churn-risk",
 
-  description:
-    "Detect high-value customers at risk based on cancellation patterns",
+  description: "Detect high-value customers at risk based on cancellation patterns",
 
   window: {
     duration: "14d", // Shorter window for faster detection

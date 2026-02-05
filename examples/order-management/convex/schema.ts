@@ -607,11 +607,7 @@ export default defineSchema({
     lastEventId: v.string(),
 
     /** Checkpoint status: active, paused, stopped */
-    status: v.union(
-      v.literal("active"),
-      v.literal("paused"),
-      v.literal("stopped")
-    ),
+    status: v.union(v.literal("active"), v.literal("paused"), v.literal("stopped")),
 
     /** Total events processed by this agent */
     eventsProcessed: v.number(),
@@ -653,11 +649,7 @@ export default defineSchema({
     attemptCount: v.number(),
 
     /** Dead letter status */
-    status: v.union(
-      v.literal("pending"),
-      v.literal("replayed"),
-      v.literal("ignored")
-    ),
+    status: v.union(v.literal("pending"), v.literal("replayed"), v.literal("ignored")),
 
     /** When the failure occurred */
     failedAt: v.number(),

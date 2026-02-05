@@ -50,7 +50,7 @@ export const handleChurnRiskOnComplete = internalMutation({
     // Extract event info from job args
     const eventId = jobArgs?.eventId as string | undefined;
     const globalPosition = jobArgs?.globalPosition as number | undefined;
-    const agentId = jobArgs?.agentId as string | undefined ?? CHURN_RISK_AGENT_ID;
+    const agentId = (jobArgs?.agentId as string | undefined) ?? CHURN_RISK_AGENT_ID;
 
     if (status === "success") {
       // Job completed successfully
