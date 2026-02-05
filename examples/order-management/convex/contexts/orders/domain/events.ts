@@ -168,6 +168,7 @@ export type OrderConfirmedEvent = z.infer<typeof OrderConfirmedSchema>;
  */
 export const OrderCancelledPayloadSchema = z.object({
   orderId: z.string(),
+  customerId: z.string(),
   reason: z.string(),
 });
 

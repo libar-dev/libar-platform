@@ -68,6 +68,7 @@ export interface OrderConfirmedPayload {
 
 export interface OrderCancelledPayload {
   orderId: string;
+  customerId: string;
   reason: string;
 }
 

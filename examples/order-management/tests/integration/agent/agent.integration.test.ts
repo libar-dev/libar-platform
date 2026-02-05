@@ -11,7 +11,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../../convex/_generated/api";
-import { generateOrderId, generateCustomerId, createOrderItems } from "../../fixtures/orders";
+import { generateOrderId, generateCustomerId } from "../../fixtures/orders";
+import { generateProductId, generateSku } from "../../fixtures/inventory";
 import { waitUntil, DEFAULT_TIMEOUT_MS } from "../../support/localBackendHelpers";
 
 // Extended timeout for integration tests (15 seconds)
@@ -35,6 +36,16 @@ describe("Agent BC Integration Tests", () => {
 
   describe("Checkpoint Persistence", () => {
     it("should create checkpoint on first event processing", async () => {
+      // Create product with stock first (required for order fulfillment saga)
+      const productId = generateProductId();
+      const sku = generateSku();
+      await testMutation(t, api.testing.createTestProduct, {
+        productId,
+        productName: "Test Widget",
+        sku,
+        availableQuantity: 100,
+      });
+
       // Create an order to trigger the agent
       const customerId = generateCustomerId();
       const orderId = generateOrderId();
@@ -47,9 +58,12 @@ describe("Agent BC Integration Tests", () => {
       expect(createResult.status).toBe("success");
 
       // Add items and submit
-      await testMutation(t, api.orders.addItem, {
+      await testMutation(t, api.orders.addOrderItem, {
         orderId,
-        item: createOrderItems(1)[0],
+        productId,
+        productName: "Test Widget",
+        quantity: 1,
+        unitPrice: 10,
       });
       await testMutation(t, api.orders.submitOrder, { orderId });
 
@@ -93,6 +107,16 @@ describe("Agent BC Integration Tests", () => {
 
   describe("Pattern Detection", () => {
     it("should detect churn risk after 3+ cancellations", async () => {
+      // Create product with stock first (required for order fulfillment saga)
+      const productId = generateProductId();
+      const sku = generateSku();
+      await testMutation(t, api.testing.createTestProduct, {
+        productId,
+        productName: "Test Widget",
+        sku,
+        availableQuantity: 100, // Enough for all orders
+      });
+
       // Create multiple orders for the same customer and cancel them
       const customerId = generateCustomerId();
       const orderIds: string[] = [];
@@ -109,9 +133,12 @@ describe("Agent BC Integration Tests", () => {
         });
 
         // Add items
-        await testMutation(t, api.orders.addItem, {
+        await testMutation(t, api.orders.addOrderItem, {
           orderId,
-          item: createOrderItems(1)[0],
+          productId,
+          productName: "Test Widget",
+          quantity: 1,
+          unitPrice: 10,
         });
 
         // Submit
@@ -159,6 +186,16 @@ describe("Agent BC Integration Tests", () => {
     });
 
     it("should not trigger pattern with fewer than 3 cancellations", async () => {
+      // Create product with stock first (required for order fulfillment saga)
+      const productId = generateProductId();
+      const sku = generateSku();
+      await testMutation(t, api.testing.createTestProduct, {
+        productId,
+        productName: "Test Widget",
+        sku,
+        availableQuantity: 100,
+      });
+
       // Create only 2 orders and cancel them
       const customerId = generateCustomerId();
 
@@ -170,9 +207,12 @@ describe("Agent BC Integration Tests", () => {
           customerId,
         });
 
-        await testMutation(t, api.orders.addItem, {
+        await testMutation(t, api.orders.addOrderItem, {
           orderId,
-          item: createOrderItems(1)[0],
+          productId,
+          productName: "Test Widget",
+          quantity: 1,
+          unitPrice: 10,
         });
 
         await testMutation(t, api.orders.submitOrder, { orderId });
@@ -206,70 +246,117 @@ describe("Agent BC Integration Tests", () => {
   });
 
   describe("Audit Trail", () => {
-    it("should record audit events for agent decisions", async () => {
-      // Trigger pattern detection
-      const customerId = generateCustomerId();
+    /**
+     * Tests that the churn risk agent creates audit events when detecting
+     * churn patterns. The agent groups OrderCancelled events by customerId
+     * and triggers when 3+ cancellations occur within the pattern window.
+     */
+    it("should create audit events when churn pattern is detected", async () => {
+      // Create product with NO stock - saga will fail and cancel orders via compensation
+      const productId = generateProductId();
+      const sku = generateSku();
+      await testMutation(t, api.testing.createTestProduct, {
+        productId,
+        productName: "Test Widget",
+        sku,
+        availableQuantity: 0, // No stock - saga compensation will cancel
+      });
 
-      // Create and cancel 3 orders
+      const customerId = generateCustomerId();
+      const orderIds: string[] = [];
+
+      // Create 3 orders that will be auto-cancelled by saga compensation (no stock)
       for (let i = 0; i < 3; i++) {
         const orderId = generateOrderId();
+        orderIds.push(orderId);
 
         await testMutation(t, api.orders.createOrder, {
           orderId,
           customerId,
         });
 
-        await testMutation(t, api.orders.addItem, {
+        await testMutation(t, api.orders.addOrderItem, {
           orderId,
-          item: createOrderItems(1)[0],
+          productId,
+          productName: "Test Widget",
+          quantity: 1,
+          unitPrice: 10,
         });
 
         await testMutation(t, api.orders.submitOrder, { orderId });
 
+        // Wait for saga compensation to cancel the order (no stock available)
         await waitUntil(
           async () => {
             const order = await testQuery(t, api.orders.getOrderSummary, { orderId });
-            return order?.status === "confirmed";
+            return order?.status === "cancelled";
           },
-          { message: `Order ${i + 1} confirmed`, timeout: AGENT_TEST_TIMEOUT }
+          { message: `Order ${i + 1} cancelled by saga`, timeout: AGENT_TEST_TIMEOUT }
         );
-
-        await testMutation(t, api.orders.cancelOrder, {
-          orderId,
-          reason: `Audit test cancellation ${i + 1}`,
-        });
       }
 
-      // Wait for audit events to be recorded
+      // Verify checkpoint was updated with processed events
+      await waitUntil(
+        async () => {
+          const checkpoint = await testQuery(t, api.queries.agent.getCheckpoint, {
+            agentId: CHURN_RISK_AGENT_ID,
+          });
+          return checkpoint !== null && checkpoint.eventsProcessed > 0;
+        },
+        { message: "Agent checkpoint updated", timeout: AGENT_TEST_TIMEOUT }
+      );
+
+      const checkpoint = await testQuery(t, api.queries.agent.getCheckpoint, {
+        agentId: CHURN_RISK_AGENT_ID,
+      });
+
+      expect(checkpoint).toBeDefined();
+      expect(checkpoint?.agentId).toBe(CHURN_RISK_AGENT_ID);
+      expect(checkpoint?.status).toBe("active");
+      expect(checkpoint?.eventsProcessed).toBeGreaterThan(0);
+
+      // Wait for audit events to be created (pattern detection triggers audit)
       await waitUntil(
         async () => {
           const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
             agentId: CHURN_RISK_AGENT_ID,
-            limit: 5,
+            eventType: "AgentDecisionMade",
+            limit: 10,
           });
           return auditEvents.length > 0;
         },
-        { message: "Audit events recorded", timeout: AGENT_TEST_TIMEOUT }
+        { message: "Audit events created", timeout: AGENT_TEST_TIMEOUT }
       );
 
       // Verify audit event structure
       const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
         agentId: CHURN_RISK_AGENT_ID,
-        limit: 5,
+        eventType: "AgentDecisionMade",
+        limit: 10,
       });
 
       expect(auditEvents.length).toBeGreaterThan(0);
-
-      const event = auditEvents[0];
-      expect(event.agentId).toBe(CHURN_RISK_AGENT_ID);
-      expect(event.eventType).toBeDefined();
-      expect(event.decisionId).toBeDefined();
-      expect(event.timestamp).toBeGreaterThan(0);
+      expect(auditEvents[0]).toMatchObject({
+        agentId: CHURN_RISK_AGENT_ID,
+        eventType: "AgentDecisionMade",
+      });
+      expect(auditEvents[0].decisionId).toBeDefined();
+      expect(auditEvents[0].timestamp).toBeDefined();
     });
   });
 
   describe("Active Agents Query", () => {
     it("should list active agents", async () => {
+      // Create product with stock first (required for order fulfillment saga)
+      const productId = generateProductId();
+      const sku = generateSku();
+      await testMutation(t, api.testing.createTestProduct, {
+        productId,
+        productName: "Test Widget",
+        sku,
+        availableQuantity: 100,
+      });
+
       // Trigger agent to ensure checkpoint exists
       const orderId = generateOrderId();
       const customerId = generateCustomerId();
@@ -279,9 +366,12 @@ describe("Agent BC Integration Tests", () => {
         customerId,
       });
 
-      await testMutation(t, api.orders.addItem, {
+      await testMutation(t, api.orders.addOrderItem, {
         orderId,
-        item: createOrderItems(1)[0],
+        productId,
+        productName: "Test Widget",
+        quantity: 1,
+        unitPrice: 10,
       });
 
       await testMutation(t, api.orders.submitOrder, { orderId });

@@ -63,6 +63,7 @@ export function decideCancelOrder(
       eventType: "OrderCancelled" as const,
       payload: {
         orderId: state.orderId,
+        customerId: state.customerId,
         reason: command.reason,
       },
     },
