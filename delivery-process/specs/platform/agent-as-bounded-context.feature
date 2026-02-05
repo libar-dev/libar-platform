@@ -36,6 +36,58 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
   | LLM integration | @convex-dev/agent + createTool | Tools for command emission and analysis |
   | LLM fault isolation | Phase 18 circuit breaker | Graceful degradation, prevents cascade failures |
 
+  **@convex-dev/agent Integration:**
+
+  Agent BC uses `@convex-dev/agent` for LLM reasoning while maintaining its own state model.
+
+  | Concern | Agent BC Owns | @convex-dev/agent Owns |
+  | Event subscription | Yes - EventBus | No |
+  | Pattern detection | Yes - rules + trigger | No |
+  | LLM reasoning | Delegates | Yes - threads, context |
+  | Decision audit | Yes - audit events | No |
+  | Thread management | Delegates | Yes - conversation state |
+  | Tool execution | Coordinates | Yes - tool runtime |
+
+  **Integration Pattern:**
+  """typescript
+  import { Agent, createTool } from "@convex-dev/agent";
+
+  // Create agent with command emission tool
+  const orderAgent = new Agent(components.agent, {
+    name: "order-analyzer",
+    languageModel: openai("gpt-4"),
+    instructions: "Analyze order patterns and suggest actions.",
+    tools: {
+      emitCommand: createTool({
+        description: "Emit a command based on analysis",
+        args: z.object({
+          type: z.string(),
+          payload: z.any(),
+          confidence: z.number(),
+          reason: z.string(),
+        }),
+        handler: async (ctx, args) => {
+          await agentBC.emitCommand(ctx, args);
+          return { emitted: true };
+        },
+      }),
+    },
+  });
+
+  // Use in event handler
+  async function handleEvent(ctx: ActionCtx, event: FatEvent) {
+    const { threadId } = await orderAgent.createThread(ctx, {
+      userId: event.streamId, // Customer as user
+    });
+
+    const result = await orderAgent.generateText(ctx, { threadId }, {
+      prompt: `Analyze this event and decide if action needed: ${JSON.stringify(event)}`,
+    });
+
+    // Decision already emitted via tool if needed
+  }
+  """
+
   **Alternative Designs (Use-Case Dependent):**
 
   The agent execution model can be implemented with two approaches, chosen based on durability needs:
@@ -166,6 +218,48 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
      │                        │ (AgentDecisionMade)       │
   """
 
+  **Core Type Definitions:**
+
+  | Type | Location | Description |
+  | AgentBCConfig | platform-core/src/agent/types.ts | Full agent configuration |
+  | PatternDefinition | platform-core/src/agent/patterns.ts | Pattern with trigger and analysis |
+  | PatternWindow | platform-core/src/agent/patterns.ts | Time/event window constraints |
+  | AgentSubscription | platform-core/src/agent/subscription.ts | Active subscription handle |
+  | AgentDecision | platform-core/src/agent/types.ts | Analysis result with action |
+  | HumanInLoopConfig | platform-core/src/agent/approval.ts | Approval workflow settings |
+  | AgentCheckpoint | platform-core/src/agent/checkpoint.ts | Position tracking state |
+  | AgentAuditEvent | platform-core/src/agent/audit.ts | Decision audit record |
+  | RateLimitConfig | platform-core/src/agent/rate-limit.ts | LLM call throttling |
+
+  **AgentBCConfig Fields:**
+
+  | Field | Type | Required | Default | Description |
+  | id | string | Yes | - | Unique agent identifier |
+  | subscriptions | string[] | Yes | - | Event types to subscribe |
+  | patternWindow | PatternWindow | Yes | - | Window constraints |
+  | confidenceThreshold | number | Yes | - | Auto-execute threshold (0-1) |
+  | humanInLoop | HumanInLoopConfig | No | {} | Approval requirements |
+  | rateLimits | RateLimitConfig | No | null | LLM rate limiting |
+  | onEvent | EventHandler | Yes | - | Event processing handler |
+
+  **PatternWindow Fields:**
+
+  | Field | Type | Required | Default | Description |
+  | duration | string | Yes | - | Time window (e.g., 7d, 30d) |
+  | eventLimit | number | No | 100 | Max events to load |
+  | minEvents | number | No | 1 | Min events to trigger |
+  | loadBatchSize | number | No | 50 | Lazy loading batch size |
+
+  **AgentDecision Fields:**
+
+  | Field | Type | Description |
+  | command | string or null | Command to emit, null if no action |
+  | payload | unknown | Command payload |
+  | confidence | number | Analysis confidence (0-1) |
+  | reason | string | Human-readable explanation |
+  | requiresApproval | boolean | Needs human review |
+  | triggeringEvents | string[] | Event IDs that triggered |
+
   **Key Concepts:**
   | Concept | Description | Example |
   | Event Subscription | Agent subscribes to relevant event types | OrderSubmitted, PaymentFailed |
@@ -205,6 +299,84 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
   });
   """
 
+  **Agent BC Initialization:**
+  """typescript
+  // Bootstrap agent BC with EventBus registration
+  export async function initializeAgentBC(
+    ctx: MutationCtx,
+    components: { eventBus: EventBusComponent; agent: AgentComponent },
+    config: AgentBCConfig
+  ): Promise<AgentSubscription> {
+    // 1. Validate configuration
+    const validation = validateAgentBCConfig(config);
+    if (!validation.ok) throw new AgentConfigError(validation.error);
+
+    // 2. Create or resume checkpoint
+    const checkpoint = await getOrCreateCheckpoint(ctx, config.id);
+
+    // 3. Register EventBus subscription
+    const subscription = await components.eventBus.subscribe({
+      name: `agent:${config.id}`,
+      eventTypes: config.subscriptions,
+      handler: internal.agent.handleEvent,
+      startPosition: checkpoint.lastProcessedPosition + 1,
+      partitionKey: (event) => event.streamId,
+    });
+
+    // 4. Return subscription handle
+    return {
+      subscriptionId: subscription.id,
+      agentId: config.id,
+      pause: () => pauseAgent(ctx, config.id),
+      resume: () => resumeAgent(ctx, config.id),
+      unsubscribe: () => unsubscribeAgent(ctx, config.id),
+    };
+  }
+  """
+
+  **AgentSubscription Return Type:**
+
+  | Field | Type | Description |
+  | subscriptionId | string | EventBus subscription ID |
+  | agentId | string | Agent BC identifier |
+  | pause | function | Pause event processing |
+  | resume | function | Resume from checkpoint |
+  | unsubscribe | function | Stop and cleanup |
+
+  **Configuration Validators:**
+  """typescript
+  import { v } from "convex/values";
+
+  export const vPatternWindow = v.object({
+    duration: v.string(),
+    eventLimit: v.optional(v.number()),
+    minEvents: v.optional(v.number()),
+    loadBatchSize: v.optional(v.number()),
+  });
+
+  export const vHumanInLoopConfig = v.object({
+    confidenceThreshold: v.optional(v.number()),
+    requiresApproval: v.optional(v.array(v.string())),
+    autoApprove: v.optional(v.array(v.string())),
+    approvalTimeout: v.optional(v.string()),
+  });
+
+  export const vRateLimitConfig = v.object({
+    maxRequestsPerMinute: v.number(),
+    maxConcurrent: v.optional(v.number()),
+    queueDepth: v.optional(v.number()),
+  });
+
+  export const vAgentBCConfig = v.object({
+    id: v.string(),
+    subscriptions: v.array(v.string()),
+    patternWindow: vPatternWindow,
+    confidenceThreshold: v.number(),
+    humanInLoop: v.optional(vHumanInLoopConfig),
+    rateLimits: v.optional(vRateLimitConfig),
+  });
+  """
+
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
@@ -215,6 +387,10 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       | Agent audit trail | planned | @libar-dev/platform-core/src/agent/audit.ts | Yes | unit |
       | Human-in-loop configuration | planned | @libar-dev/platform-core/src/agent/approval.ts | Yes | unit |
       | Agent checkpoint types | planned | @libar-dev/platform-core/src/agent/checkpoint.ts | Yes | unit |
+      | Agent types and validators | planned | @libar-dev/platform-core/src/agent/types.ts | Yes | unit |
+      | Agent initialization | planned | @libar-dev/platform-core/src/agent/init.ts | Yes | unit |
+      | Rate limiting config | planned | @libar-dev/platform-core/src/agent/rate-limit.ts | Yes | unit |
+      | Dead letter handler | planned | @libar-dev/platform-core/src/agent/dead-letter.ts | Yes | unit |
       | Agent as BC documentation | planned | docs/architecture/AGENT-AS-BC.md | No | - |
 
   Rule: Agent subscribes to relevant event streams
@@ -261,6 +437,21 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       Then processing should continue from position 101
       And no events should be reprocessed
       And no events should be lost
+
+    @acceptance-criteria @validation
+    Scenario Outline: Agent configuration validation
+      Given an agent configuration with <violation>
+      When the agent is initialized
+      Then it should fail with code "<error_code>"
+      And error message should indicate "<message>"
+
+      Examples:
+        | violation                    | error_code                   | message                                              |
+        | empty subscription list      | NO_SUBSCRIPTIONS             | Agent must subscribe to at least one event           |
+        | invalid pattern window       | INVALID_PATTERN_WINDOW       | Pattern window duration must be positive             |
+        | confidence threshold > 1     | INVALID_CONFIDENCE_THRESHOLD | Confidence threshold must be between 0 and 1         |
+        | conflicting approval rules   | CONFLICTING_APPROVAL_RULES   | Action cannot be in both autoApprove and requiresApproval |
+        | missing agent id             | AGENT_ID_REQUIRED            | Agent must have a unique identifier                  |
 
   Rule: Agent detects patterns across events
 
@@ -320,6 +511,19 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       Then events should be loaded in batches
       And memory usage should remain bounded
       And all relevant events should still be considered for pattern detection
+
+    @acceptance-criteria @validation
+    Scenario Outline: Pattern definition validation
+      Given a pattern definition with <violation>
+      When the pattern is registered
+      Then it should fail with code "<error_code>"
+
+      Examples:
+        | violation              | error_code              |
+        | no trigger function    | TRIGGER_REQUIRED        |
+        | empty name             | PATTERN_NAME_REQUIRED   |
+        | negative minEvents     | INVALID_MIN_EVENTS      |
+        | duration not parseable | INVALID_DURATION_FORMAT |
 
   Rule: Agent emits commands with explainability
 
@@ -387,6 +591,35 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       And event processing queue should not be blocked
       And retry attempts should be logged for observability
 
+    @acceptance-criteria @validation
+    Scenario Outline: Command validation
+      Given an agent command with <violation>
+      When emitCommand is called
+      Then it should fail with code "<error_code>"
+
+      Examples:
+        | violation               | error_code           |
+        | missing reason          | REASON_REQUIRED      |
+        | missing confidence      | CONFIDENCE_REQUIRED  |
+        | empty triggering events | EVENTS_REQUIRED      |
+        | invalid command type    | INVALID_COMMAND_TYPE |
+
+    @acceptance-criteria @validation
+    Scenario Outline: LLM error handling
+      Given an agent attempting LLM analysis
+      And LLM API returns <error_type>
+      When the error is handled
+      Then recovery action should be "<recovery>"
+      And error should be logged with code "<error_code>"
+
+      Examples:
+        | error_type        | error_code           | recovery              |
+        | 429 rate limit    | LLM_RATE_LIMITED     | exponential backoff   |
+        | 500 server error  | LLM_UNAVAILABLE      | circuit breaker trip  |
+        | timeout           | LLM_TIMEOUT          | retry with backoff    |
+        | invalid response  | LLM_INVALID_RESPONSE | log and skip event    |
+        | auth error        | LLM_AUTH_FAILED      | alert and pause agent |
+
   Rule: Human-in-loop controls automatic execution
 
     High-confidence actions can auto-execute; low-confidence require approval.
@@ -450,6 +683,47 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       When 24 hours pass without approval
       Then action status becomes "expired"
       And AgentActionExpired event is recorded
+
+  Rule: LLM calls are rate-limited to prevent abuse and manage costs
+
+    Rate limiting protects against runaway costs and API throttling.
+
+    **Rate Limit Configuration:**
+    """typescript
+    const rateLimitConfig = {
+      maxRequestsPerMinute: 60,    // LLM API calls per minute
+      maxConcurrent: 5,            // Concurrent LLM calls
+      queueDepth: 100,             // Max queued events before backpressure
+      costBudget: {
+        daily: 100.00,             // USD per day
+        alertThreshold: 0.8,       // Alert at 80% of budget
+      },
+    };
+    """
+
+    @acceptance-criteria @happy-path
+    Scenario: Rate limiter throttles excessive LLM calls
+      Given rate limit is 60 requests per minute
+      And agent has made 60 LLM calls this minute
+      When another event triggers LLM analysis
+      Then the call should be queued
+      And processed when rate limit window resets
+
+    @acceptance-criteria @edge-case
+    Scenario: Queue overflow triggers backpressure
+      Given queue depth limit is 100
+      And 100 events are queued for LLM analysis
+      When another event arrives
+      Then event should be sent to dead letter queue
+      And AgentQueueOverflow alert should be emitted
+
+    @acceptance-criteria @validation
+    Scenario: Cost budget exceeded pauses agent
+      Given daily cost budget is 100.00 USD
+      And agent has spent 100.00 USD today
+      When another LLM call is attempted
+      Then agent should be paused
+      And AgentBudgetExceeded alert should be emitted
 
   Rule: All agent decisions are audited
 

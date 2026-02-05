@@ -125,7 +125,10 @@
   },
   "peerDependencies": {
     "convex": ">=1.17.0 <1.35.0",
-    "zod": "^4.0.0"
+    "zod": "^4.0.0",
+    "@convex-dev/agent": ">=0.3.0",
+    "@convex-dev/workpool": ">=0.3.0",
+    "@convex-dev/workflow": ">=0.3.0"
   },
   "peerDependenciesMeta": {
     "vitest": {
@@ -135,6 +138,15 @@
       "optional": true
     },
     "convex-test": {
+      "optional": true
+    },
+    "@convex-dev/agent": {
+      "optional": true
+    },
+    "@convex-dev/workpool": {
+      "optional": true
+    },
+    "@convex-dev/workflow": {
       "optional": true
     }
   },
