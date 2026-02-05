@@ -53,6 +53,7 @@ import type * as projections_inventory_productCatalog from "../projections/inven
 import type * as projections_monitoring from "../projections/monitoring.js";
 import type * as projections_orders_orderItems from "../projections/orders/orderItems.js";
 import type * as projections_orders_orderSummary from "../projections/orders/orderSummary.js";
+import type * as queries_agent from "../queries/agent.js";
 import type * as queries_correlations from "../queries/correlations.js";
 import type * as queries_events from "../queries/events.js";
 import type * as rateLimits from "../rateLimits.js";
@@ -129,6 +130,7 @@ declare const fullApi: ApiFromModules<{
   "projections/monitoring": typeof projections_monitoring;
   "projections/orders/orderItems": typeof projections_orders_orderItems;
   "projections/orders/orderSummary": typeof projections_orders_orderSummary;
+  "queries/agent": typeof queries_agent;
   "queries/correlations": typeof queries_correlations;
   "queries/events": typeof queries_events;
   rateLimits: typeof rateLimits;
