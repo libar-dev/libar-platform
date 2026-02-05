@@ -562,8 +562,8 @@ describe("createPendingApproval", () => {
         config
       );
       approvalIds.add(approval.approvalId);
-      // Small delay to ensure different timestamps for UUIDv7
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      // Delay to ensure different timestamps for UUIDv7 (1ms is unreliable under CPU pressure)
+      await new Promise((resolve) => setTimeout(resolve, 5));
     }
     expect(approvalIds.size).toBe(3);
     // Restore fake timers for subsequent tests
