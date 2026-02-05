@@ -27,14 +27,17 @@ import {
   type PMEventHandlerArgs,
 } from "@libar-dev/platform-core/processManager";
 import type { SafeMutationRef } from "@libar-dev/platform-core";
-import { releaseReservationConfig } from "../commands/inventory/configs";
-
 // =============================================================================
 // Mutation References (TS2589 Prevention)
 // =============================================================================
 
 const processReleaseCommandRef = makeFunctionReference<"mutation">(
   "processManagers/reservationRelease:processReleaseCommand"
+) as SafeMutationRef;
+
+// Reference to internal mutation (avoids circular dependency and TS2589)
+const releaseReservationRef = makeFunctionReference<"mutation">(
+  "inventoryInternal:releaseReservation"
 ) as SafeMutationRef;
 
 // Export for eventSubscriptions.ts
@@ -488,13 +491,12 @@ export const processReleaseCommand = internalMutation({
     const payload = parseResult.data;
 
     try {
-      // Import dynamically to avoid circular dependencies
-      const { commandOrchestrator } = await import("../infrastructure");
-
-      // Execute via CommandOrchestrator for proper dual-write + projection
-      await commandOrchestrator.execute(ctx, releaseReservationConfig, {
+      // Execute via internal mutation which wraps CommandOrchestrator
+      // (avoids circular dependency: PM -> infrastructure -> eventSubscriptions -> PM)
+      await ctx.runMutation(releaseReservationRef, {
         reservationId: payload.reservationId,
         reason: payload.reason,
+        correlationId: args.correlationId,
       });
 
       console.log(
