@@ -93,7 +93,10 @@ export {
   CHURN_RISK_AGENT_ID,
   CHURN_RISK_SUBSCRIPTIONS,
   churnRiskAgentConfig,
-  __testing as configTesting,
+  // Re-exported utilities (formerly __testing)
+  extractCustomerId,
+  calculateChurnConfidence,
+  buildChurnReason,
 } from "./config.js";
 
 // ============================================================================

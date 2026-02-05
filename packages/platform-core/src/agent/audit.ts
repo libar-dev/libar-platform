@@ -12,6 +12,7 @@
  */
 
 import { z } from "zod";
+import { v7 as uuidv7 } from "uuid";
 import type { LLMContext } from "./types.js";
 
 // ============================================================================
@@ -357,7 +358,7 @@ export type AgentAuditEvent =
  */
 export function generateDecisionId(): string {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
+  const random = uuidv7().slice(0, 8);
   return `dec_${timestamp}_${random}`;
 }
 

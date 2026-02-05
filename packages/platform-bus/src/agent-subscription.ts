@@ -165,11 +165,26 @@ export interface CreateAgentSubscriptionOptions<THandlerArgs extends UnknownReco
  * @param agentId - Agent BC identifier
  * @returns Agent event handler arguments
  */
+/**
+ * Type guard to check if a value is a valid record payload.
+ *
+ * @param value - Value to check
+ * @returns True if value is a non-null object (not array)
+ */
+function isRecordPayload(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 export function defaultAgentTransform(
   event: PublishedEvent,
   chain: CorrelationChain,
   agentId: string
 ): AgentEventHandlerArgs {
+  // Validate payload is a proper record object
+  const payload = isRecordPayload(event.payload)
+    ? event.payload
+    : { _raw: event.payload };
+
   return {
     eventId: event.eventId,
     eventType: event.eventType,
@@ -177,7 +192,7 @@ export function defaultAgentTransform(
     correlationId: chain.correlationId,
     streamType: event.streamType,
     streamId: event.streamId,
-    payload: event.payload as Record<string, unknown>,
+    payload,
     timestamp: event.timestamp,
     category: event.category,
     boundedContext: event.boundedContext,

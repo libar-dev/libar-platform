@@ -11,7 +11,9 @@
  */
 
 import { z } from "zod";
+import { v7 as uuidv7 } from "uuid";
 import type { HumanInLoopConfig } from "./types.js";
+import { parseDuration } from "./patterns.js";
 
 // ============================================================================
 // Error Codes
@@ -31,6 +33,8 @@ export const APPROVAL_ERROR_CODES = {
   APPROVAL_EXPIRED: "APPROVAL_EXPIRED",
   /** Invalid timeout format */
   INVALID_TIMEOUT_FORMAT: "INVALID_TIMEOUT_FORMAT",
+  /** Reviewer is not authorized to approve/reject this approval */
+  UNAUTHORIZED_REVIEWER: "UNAUTHORIZED_REVIEWER",
 } as const;
 
 export type ApprovalErrorCode = (typeof APPROVAL_ERROR_CODES)[keyof typeof APPROVAL_ERROR_CODES];
@@ -195,21 +199,14 @@ export interface PendingApproval {
 // ============================================================================
 
 /**
- * Duration unit multipliers in milliseconds for approval timeout.
- */
-const TIMEOUT_UNITS: Record<string, number> = {
-  m: 60 * 1000, // minutes
-  h: 60 * 60 * 1000, // hours
-  d: 24 * 60 * 60 * 1000, // days
-};
-
-/**
  * Default approval timeout in milliseconds (24 hours).
  */
 export const DEFAULT_APPROVAL_TIMEOUT_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Parse an approval timeout string to milliseconds.
+ *
+ * Delegates to the shared `parseDuration` function from patterns.js.
  *
  * Supports formats:
  * - `Nd` - N days (e.g., "7d", "30d")
@@ -228,26 +225,8 @@ export const DEFAULT_APPROVAL_TIMEOUT_MS = 24 * 60 * 60 * 1000;
  * ```
  */
 export function parseApprovalTimeout(timeout: string): number | null {
-  const match = timeout.trim().match(/^(\d+)([dhm])$/i);
-  if (!match) {
-    return null;
-  }
-
-  const valueStr = match[1];
-  const unitStr = match[2];
-  if (valueStr === undefined || unitStr === undefined) {
-    return null;
-  }
-
-  const value = parseInt(valueStr, 10);
-  const unit = unitStr.toLowerCase();
-  const multiplier = TIMEOUT_UNITS[unit];
-
-  if (value <= 0 || !multiplier) {
-    return null;
-  }
-
-  return value * multiplier;
+  // Delegate to shared duration parser
+  return parseDuration(timeout);
 }
 
 /**
@@ -318,9 +297,9 @@ export function shouldRequireApproval(
     return false;
   }
 
-  // Use confidence threshold
+  // Use confidence threshold (inclusive - requires approval if AT or below threshold)
   const threshold = config.confidenceThreshold ?? 0.9;
-  return confidence < threshold;
+  return confidence <= threshold;
 }
 
 // ============================================================================
@@ -330,14 +309,14 @@ export function shouldRequireApproval(
 /**
  * Generate a unique approval ID.
  *
- * Uses timestamp + random suffix for uniqueness.
+ * Uses timestamp + cryptographically secure random suffix for uniqueness.
  * Format: `apr_{timestamp}_{random}`
  *
  * @returns Unique approval ID
  */
 export function generateApprovalId(): string {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
+  const random = uuidv7().slice(0, 8);
   return `apr_${timestamp}_${random}`;
 }
 
@@ -662,3 +641,226 @@ export type PendingApprovalSchemaType = z.infer<typeof PendingApprovalSchema>;
  * Type inferred from ApprovalActionSchema.
  */
 export type ApprovalActionSchemaType = z.infer<typeof ApprovalActionSchema>;
+
+// ============================================================================
+// Authorization Types
+// ============================================================================
+
+/**
+ * Authorization context for approval operations.
+ *
+ * Provides identity and role information for the reviewer.
+ * Used by handler-level code to validate authorization before
+ * calling approveAction/rejectAction.
+ *
+ * @example
+ * ```typescript
+ * // In your mutation handler:
+ * const authContext: ApprovalAuthContext = {
+ *   userId: ctx.auth.userId,
+ *   roles: ["reviewer", "admin"],
+ *   agentIds: ["churn-risk-agent"], // Optional: restrict to specific agents
+ * };
+ *
+ * if (!isAuthorizedReviewer(approval, authContext)) {
+ *   throw new Error("Unauthorized to review this approval");
+ * }
+ *
+ * const result = approveAction(approval, authContext.userId, "Approved");
+ * ```
+ */
+export interface ApprovalAuthContext {
+  /** User ID of the reviewer */
+  readonly userId: string;
+
+  /** Roles assigned to the user (e.g., "reviewer", "admin") */
+  readonly roles?: readonly string[];
+
+  /** Optional: specific agent IDs this user can review */
+  readonly agentIds?: readonly string[];
+}
+
+/**
+ * Zod schema for ApprovalAuthContext.
+ */
+export const ApprovalAuthContextSchema = z.object({
+  userId: z.string().min(1),
+  roles: z.array(z.string()).optional(),
+  agentIds: z.array(z.string()).optional(),
+});
+
+// ============================================================================
+// Authorization Helpers
+// ============================================================================
+
+/**
+ * Check if a user is authorized to review an approval.
+ *
+ * Authorization logic:
+ * 1. If authContext.agentIds is specified, the approval's agentId must be in the list
+ * 2. If authContext.roles is specified, user must have at least one role
+ * 3. If neither is specified, authorization passes (caller must implement their own checks)
+ *
+ * Note: This is a helper function for use at the handler level.
+ * The approveAction/rejectAction functions are pure state transformers
+ * and do not perform authorization checks themselves.
+ *
+ * @param approval - The approval to check authorization for
+ * @param authContext - The authorization context of the reviewer
+ * @returns true if authorized, false otherwise
+ *
+ * @example
+ * ```typescript
+ * // Before calling approveAction:
+ * if (!isAuthorizedReviewer(approval, authContext)) {
+ *   return { success: false, code: APPROVAL_ERROR_CODES.UNAUTHORIZED_REVIEWER };
+ * }
+ * ```
+ */
+export function isAuthorizedReviewer(
+  approval: PendingApproval,
+  authContext: ApprovalAuthContext
+): boolean {
+  // If agentIds are restricted, check the approval's agent
+  if (authContext.agentIds && authContext.agentIds.length > 0) {
+    if (!authContext.agentIds.includes(approval.agentId)) {
+      return false;
+    }
+  }
+
+  // If roles are specified, user must have at least one
+  if (authContext.roles && authContext.roles.length > 0) {
+    // At least one role means they're a valid reviewer
+    return true;
+  }
+
+  // If no restrictions specified, defer to caller
+  // (they should implement their own checks or this is an open approval)
+  return true;
+}
+
+/**
+ * Result of an approval operation.
+ *
+ * Use this type with the safe variants of approve/reject
+ * to handle errors without exceptions.
+ */
+export type ApprovalOperationResult =
+  | { readonly success: true; readonly approval: PendingApproval }
+  | { readonly success: false; readonly code: ApprovalErrorCode; readonly message: string };
+
+/**
+ * Safely approve an action with authorization check.
+ *
+ * Unlike approveAction, this returns a result object instead of throwing.
+ * Includes authorization validation.
+ *
+ * @param approval - Approval to update
+ * @param authContext - Authorization context of the reviewer
+ * @param reviewNote - Optional note from reviewer
+ * @returns Result with updated approval or error
+ *
+ * @example
+ * ```typescript
+ * const result = safeApproveAction(approval, authContext, "Looks good");
+ * if (result.success) {
+ *   await db.patch(approval._id, result.approval);
+ * } else {
+ *   console.error(result.message);
+ * }
+ * ```
+ */
+export function safeApproveAction(
+  approval: PendingApproval,
+  authContext: ApprovalAuthContext,
+  reviewNote?: string
+): ApprovalOperationResult {
+  // Check authorization
+  if (!isAuthorizedReviewer(approval, authContext)) {
+    return {
+      success: false,
+      code: APPROVAL_ERROR_CODES.UNAUTHORIZED_REVIEWER,
+      message: `User ${authContext.userId} is not authorized to review approvals for agent ${approval.agentId}`,
+    };
+  }
+
+  // Check status
+  if (approval.status !== "pending") {
+    return {
+      success: false,
+      code: APPROVAL_ERROR_CODES.INVALID_STATUS_TRANSITION,
+      message: `Cannot approve: current status is "${approval.status}", expected "pending"`,
+    };
+  }
+
+  // Check expiration
+  if (Date.now() >= approval.expiresAt) {
+    return {
+      success: false,
+      code: APPROVAL_ERROR_CODES.APPROVAL_EXPIRED,
+      message: "Cannot approve: approval has expired",
+    };
+  }
+
+  // Perform approval
+  const updated = approveAction(approval, authContext.userId, reviewNote);
+  return { success: true, approval: updated };
+}
+
+/**
+ * Safely reject an action with authorization check.
+ *
+ * Unlike rejectAction, this returns a result object instead of throwing.
+ * Includes authorization validation.
+ *
+ * @param approval - Approval to update
+ * @param authContext - Authorization context of the reviewer
+ * @param rejectionReason - Reason for rejection
+ * @returns Result with updated approval or error
+ *
+ * @example
+ * ```typescript
+ * const result = safeRejectAction(approval, authContext, "Customer already contacted");
+ * if (result.success) {
+ *   await db.patch(approval._id, result.approval);
+ * } else {
+ *   console.error(result.message);
+ * }
+ * ```
+ */
+export function safeRejectAction(
+  approval: PendingApproval,
+  authContext: ApprovalAuthContext,
+  rejectionReason: string
+): ApprovalOperationResult {
+  // Check authorization
+  if (!isAuthorizedReviewer(approval, authContext)) {
+    return {
+      success: false,
+      code: APPROVAL_ERROR_CODES.UNAUTHORIZED_REVIEWER,
+      message: `User ${authContext.userId} is not authorized to review approvals for agent ${approval.agentId}`,
+    };
+  }
+
+  // Check status
+  if (approval.status !== "pending") {
+    return {
+      success: false,
+      code: APPROVAL_ERROR_CODES.INVALID_STATUS_TRANSITION,
+      message: `Cannot reject: current status is "${approval.status}", expected "pending"`,
+    };
+  }
+
+  // Check expiration
+  if (Date.now() >= approval.expiresAt) {
+    return {
+      success: false,
+      code: APPROVAL_ERROR_CODES.APPROVAL_EXPIRED,
+      message: "Cannot reject: approval has expired",
+    };
+  }
+
+  // Perform rejection
+  const updated = rejectAction(approval, authContext.userId, rejectionReason);
+  return { success: true, approval: updated };
+}

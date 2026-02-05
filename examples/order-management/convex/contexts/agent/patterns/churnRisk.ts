@@ -16,6 +16,10 @@ import {
 } from "@libar-dev/platform-core/agent";
 import type { AgentInterface, PublishedEvent } from "@libar-dev/platform-core";
 
+// Import shared utilities
+import { groupEventsByCustomer } from "../utils/customer.js";
+import { countRecentEvents } from "../utils/confidence.js";
+
 // ============================================================================
 // Pattern Constants
 // ============================================================================
@@ -52,24 +56,13 @@ export function createCustomerCancellationTrigger(
   minCancellations: number
 ): PatternTrigger {
   return (events: readonly PublishedEvent[]): boolean => {
-    // Group cancellations by customer
-    const cancellationsByCustomer = new Map<string, number>();
-
-    for (const event of events) {
-      if (event.eventType !== "OrderCancelled") {
-        continue;
-      }
-
-      const customerId = extractCustomerIdFromEvent(event);
-      if (customerId) {
-        const current = cancellationsByCustomer.get(customerId) ?? 0;
-        cancellationsByCustomer.set(customerId, current + 1);
-      }
-    }
+    // Filter to cancellations and group by customer using shared utility
+    const cancellations = events.filter((e) => e.eventType === "OrderCancelled");
+    const grouped = groupEventsByCustomer(cancellations);
 
     // Check if any customer exceeds threshold
-    for (const count of cancellationsByCustomer.values()) {
-      if (count >= minCancellations) {
+    for (const customerEvents of grouped.values()) {
+      if (customerEvents.length >= minCancellations) {
         return true;
       }
     }
@@ -174,30 +167,7 @@ export const churnRiskPattern: PatternDefinition = definePattern({
 // Helper Functions
 // ============================================================================
 
-/**
- * Extract customer ID from an event.
- *
- * @param event - Published event
- * @returns Customer ID or null
- */
-function extractCustomerIdFromEvent(event: PublishedEvent): string | null {
-  const payload = event.payload as Record<string, unknown>;
-
-  if (typeof payload["customerId"] === "string") {
-    return payload["customerId"];
-  }
-
-  // Extract from orderId pattern
-  const orderId = payload["orderId"];
-  if (typeof orderId === "string" && orderId.includes("_")) {
-    const parts = orderId.split("_");
-    if (parts[0] === "cust" && parts[1]) {
-      return `cust_${parts[1]}`;
-    }
-  }
-
-  return null;
-}
+// extractCustomerId is now imported from ../utils/customer.js
 
 /**
  * Build the LLM analysis prompt for churn risk detection.
@@ -229,6 +199,8 @@ Provide a confidence score (0-1) and brief reasoning.`;
 /**
  * Create a rule-based analysis result when LLM is unavailable.
  *
+ * Uses shared confidence calculation from ../utils/confidence.js
+ *
  * @param cancellations - Cancellation events
  * @returns Pattern analysis result
  */
@@ -238,11 +210,8 @@ function createRuleBasedAnalysis(
   const count = cancellations.length;
   const confidence = Math.min(0.85, 0.5 + count * 0.1);
 
-  // Check for recency boost
-  const recentThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentCount = cancellations.filter(
-    (e) => e.timestamp >= recentThreshold
-  ).length;
+  // Use shared utility for recent count
+  const recentCount = countRecentEvents(cancellations);
 
   const adjustedConfidence = recentCount >= 2
     ? Math.min(1, confidence + 0.1)
@@ -295,9 +264,10 @@ export const highValueChurnPattern: PatternDefinition = definePattern({
 // Exports
 // ============================================================================
 
+// Re-export shared utilities for backwards compatibility in tests
+export { extractCustomerId } from "../utils/customer.js";
+
 export const __testing = {
-  extractCustomerIdFromEvent,
   buildAnalysisPrompt,
   createRuleBasedAnalysis,
-  createCustomerCancellationTrigger,
 };

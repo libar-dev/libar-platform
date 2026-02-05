@@ -16,6 +16,13 @@ import type {
 import { PatternTriggers } from "@libar-dev/platform-core/agent";
 import type { PublishedEvent } from "@libar-dev/platform-core";
 
+// Import shared utilities
+import {
+  extractCustomerId,
+  calculateChurnConfidence,
+  buildChurnReason,
+} from "./utils/index.js";
+
 // ============================================================================
 // Agent Configuration
 // ============================================================================
@@ -135,110 +142,9 @@ export const churnRiskAgentConfig: AgentBCConfig = {
 };
 
 // ============================================================================
-// Helper Functions
+// Re-export utilities for testing
 // ============================================================================
 
-/**
- * Extract customer ID from an event payload.
- *
- * @param event - Published event
- * @returns Customer ID or null if not found
- */
-function extractCustomerId(event: PublishedEvent): string | null {
-  const payload = event.payload as Record<string, unknown>;
-
-  // OrderCancelled has orderId in payload, customerId might be in metadata
-  // For this demo, we use the streamId which typically includes the customer
-  if (typeof payload["customerId"] === "string") {
-    return payload["customerId"];
-  }
-
-  // Fall back to extracting from orderId pattern (e.g., "cust_123_ord_456")
-  const orderId = payload["orderId"];
-  if (typeof orderId === "string" && orderId.includes("_")) {
-    const parts = orderId.split("_");
-    if (parts[0] === "cust" && parts[1]) {
-      return `cust_${parts[1]}`;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Calculate churn confidence based on event patterns.
- *
- * Factors:
- * - Number of cancellations (more = higher risk)
- * - Recency of cancellations (recent = higher risk)
- * - Frequency (clustered = higher risk)
- *
- * @param events - Customer events within the window
- * @returns Confidence score between 0 and 1
- */
-function calculateChurnConfidence(events: readonly PublishedEvent[]): number {
-  const cancellations = events.filter((e) => e.eventType === "OrderCancelled");
-  const count = cancellations.length;
-
-  if (count < 3) {
-    return 0;
-  }
-
-  // Base confidence from count (3=0.6, 4=0.7, 5=0.8, 6+=0.85)
-  let confidence = Math.min(0.85, 0.5 + count * 0.1);
-
-  // Boost for recency (events in last 7 days)
-  const recentThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentCount = cancellations.filter(
-    (e) => e.timestamp >= recentThreshold
-  ).length;
-  if (recentCount >= 2) {
-    confidence = Math.min(1, confidence + 0.1);
-  }
-
-  return Math.round(confidence * 100) / 100;
-}
-
-/**
- * Build a human-readable reason for the churn risk decision.
- *
- * @param events - Customer events within the window
- * @param confidence - Calculated confidence score
- * @returns Human-readable explanation
- */
-function buildChurnReason(
-  events: readonly PublishedEvent[],
-  confidence: number
-): string {
-  const cancellations = events.filter((e) => e.eventType === "OrderCancelled");
-  const count = cancellations.length;
-
-  const recentThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentCount = cancellations.filter(
-    (e) => e.timestamp >= recentThreshold
-  ).length;
-
-  const parts = [
-    `Customer has ${count} order cancellations in the last 30 days`,
-  ];
-
-  if (recentCount > 0) {
-    parts.push(`with ${recentCount} in the last 7 days`);
-  }
-
-  parts.push(
-    `indicating ${confidence >= 0.9 ? "high" : "medium"} churn risk (confidence: ${(confidence * 100).toFixed(0)}%)`
-  );
-
-  return parts.join(", ") + ".";
-}
-
-// ============================================================================
-// Exports for Testing
-// ============================================================================
-
-export const __testing = {
-  extractCustomerId,
-  calculateChurnConfidence,
-  buildChurnReason,
-};
+// Helper functions are now in ./utils/
+// Re-export for backwards compatibility in tests
+export { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./utils/index.js";

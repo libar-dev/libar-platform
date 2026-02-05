@@ -35,6 +35,75 @@ export type DeadLetterErrorCode =
   (typeof DEAD_LETTER_ERROR_CODES)[keyof typeof DEAD_LETTER_ERROR_CODES];
 
 // ============================================================================
+// Error Message Sanitization
+// ============================================================================
+
+/**
+ * Maximum length for sanitized error messages.
+ */
+const MAX_ERROR_MESSAGE_LENGTH = 500;
+
+/**
+ * Regex pattern to detect and remove stack traces.
+ * Matches common stack trace patterns like "at function (file:line:col)"
+ */
+const STACK_TRACE_PATTERN = /\s+at\s+.*(\(.*\))?(\n|$)/g;
+
+/**
+ * Regex pattern to detect and remove file paths.
+ * Matches common file path patterns like /path/to/file.ts
+ */
+const FILE_PATH_PATTERN = /\/[^\s:]+\.(ts|js|mjs|cjs)(:\d+:\d+)?/g;
+
+/**
+ * Sanitize an error message for safe storage in dead letters.
+ *
+ * Removes potentially sensitive information:
+ * - Stack traces (which reveal internal implementation details)
+ * - File paths (which reveal server structure)
+ * - Truncates to maximum length
+ *
+ * @param error - Error object or string to sanitize
+ * @returns Sanitized error message safe for storage
+ *
+ * @example
+ * ```typescript
+ * const sanitized = sanitizeErrorMessage(new Error("Failed at /app/src/agent.ts:42"));
+ * // "Failed at [path]"
+ * ```
+ */
+export function sanitizeErrorMessage(error: unknown): string {
+  let message: string;
+
+  if (error instanceof Error) {
+    // Use message only, strip stack
+    message = error.message;
+  } else if (typeof error === "string") {
+    message = error;
+  } else if (error && typeof error === "object" && "message" in error) {
+    message = String((error as { message: unknown }).message);
+  } else {
+    message = "Unknown error";
+  }
+
+  // Remove stack traces
+  message = message.replace(STACK_TRACE_PATTERN, " ");
+
+  // Remove file paths
+  message = message.replace(FILE_PATH_PATTERN, "[path]");
+
+  // Normalize whitespace
+  message = message.replace(/\s+/g, " ").trim();
+
+  // Truncate to max length
+  if (message.length > MAX_ERROR_MESSAGE_LENGTH) {
+    message = message.slice(0, MAX_ERROR_MESSAGE_LENGTH - 3) + "...";
+  }
+
+  return message || "Unknown error";
+}
+
+// ============================================================================
 // Status Types
 // ============================================================================
 
@@ -202,7 +271,7 @@ export function createAgentDeadLetter(
   subscriptionId: string,
   eventId: string,
   globalPosition: number,
-  error: string,
+  error: string | Error | unknown,
   context?: AgentDeadLetterContext
 ): AgentDeadLetter {
   const base: AgentDeadLetter = {
@@ -210,7 +279,7 @@ export function createAgentDeadLetter(
     subscriptionId,
     eventId,
     globalPosition,
-    error,
+    error: sanitizeErrorMessage(error),
     attemptCount: 1,
     status: "pending",
     failedAt: Date.now(),
@@ -235,11 +304,11 @@ export function createAgentDeadLetter(
  */
 export function incrementDeadLetterAttempt(
   deadLetter: AgentDeadLetter,
-  newError: string
+  newError: string | Error | unknown
 ): AgentDeadLetter {
   return {
     ...deadLetter,
-    error: newError,
+    error: sanitizeErrorMessage(newError),
     attemptCount: deadLetter.attemptCount + 1,
     failedAt: Date.now(),
   };

@@ -244,6 +244,9 @@ export {
   AgentDeadLetterContextSchema,
   AgentDeadLetterSchema,
 
+  // Error Sanitization
+  sanitizeErrorMessage,
+
   // Factory Functions
   createAgentDeadLetter,
   incrementDeadLetterAttempt,
@@ -392,6 +395,12 @@ export {
   // Helper Functions
   getRemainingApprovalTime,
   formatRemainingApprovalTime,
+
+  // Authorization
+  ApprovalAuthContextSchema,
+  isAuthorizedReviewer,
+  safeApproveAction,
+  safeRejectAction,
 } from "./approval.js";
 
 export type {
@@ -402,6 +411,8 @@ export type {
   ApprovalStatus,
   ApprovalAction,
   PendingApproval,
+  ApprovalAuthContext,
+  ApprovalOperationResult,
 
   // Schema Types
   ApprovalStatusSchemaType,
@@ -459,9 +470,6 @@ export {
   // Error Codes
   AGENT_INIT_ERROR_CODES,
 
-  // Constants
-  DEFAULT_AGENT_SUBSCRIPTION_PRIORITY,
-
   // Mock Runtime
   createMockAgentRuntime,
   createAgentInterface,
@@ -472,14 +480,15 @@ export {
   // Event Handler Factory
   createAgentEventHandler,
 
-  // Subscription Factory
-  createAgentSubscription,
-
   // Lifecycle Functions
   generateSubscriptionId,
   initializeAgentBC,
   shutdownAgentBC,
 } from "./init.js";
+
+// NOTE: createAgentSubscription is intentionally NOT exported from platform-core.
+// Use @libar-dev/platform-bus/agent-subscription instead - it's the public API
+// with better caching and context-aware subscription naming.
 
 export type {
   // Error Types
@@ -500,5 +509,6 @@ export type {
   AgentEventHandlerArgs,
   CreateAgentEventHandlerContext,
   AgentEventHandlerResult,
-  CreateAgentSubscriptionOptions,
 } from "./init.js";
+
+// NOTE: CreateAgentSubscriptionOptions is available from @libar-dev/platform-bus/agent-subscription
