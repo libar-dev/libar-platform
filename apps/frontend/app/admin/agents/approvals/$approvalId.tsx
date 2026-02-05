@@ -18,6 +18,10 @@ const getApprovalByIdQuery = makeFunctionReference<"query">(
 
 export const Route = createFileRoute("/admin/agents/approvals/$approvalId")({
   loader: async ({ context, params }) => {
+    // Guard against undefined params during SSR edge cases
+    if (!params.approvalId) {
+      return;
+    }
     await context.queryClient.ensureQueryData(
       convexQuery(getApprovalByIdQuery, { approvalId: params.approvalId })
     );
@@ -96,12 +100,32 @@ function useReviewerId(): string {
 function ApprovalDetailPage() {
   const { approvalId } = Route.useParams();
   const navigate = useNavigate();
-  const { approval } = useApprovalDetail(approvalId);
+  const { approval, isLoading } = useApprovalDetail(approvalId);
   const userId = useReviewerId();
 
   const handleActionComplete = () => {
     navigate({ to: "/admin/agents" });
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout activeNav="agents">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Link to="/admin/agents">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Agents
+              </Button>
+            </Link>
+          </div>
+          <div className="flex items-center justify-center p-12">
+            <div className="text-muted-foreground">Loading approval...</div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!approval) {
     return (

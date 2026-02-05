@@ -1,5 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import type { PendingApproval } from "./use-pending-approvals";
@@ -12,16 +11,17 @@ const getApprovalByIdQuery = makeFunctionReference<"query">(
 /**
  * Hook to fetch a specific approval by ID.
  *
- * Uses TanStack Query + Convex for SSR support with real-time updates.
+ * Uses Convex's native useQuery with "skip" pattern for conditional fetching.
  *
- * @param approvalId - The approval ID to look up
- * @returns Object containing approval data (may be null if not found)
+ * @param approvalId - The approval ID to look up (undefined to skip the query)
+ * @returns Object containing approval data (may be null if not found) and loading state
  *
  * @example
  * ```tsx
  * function ApprovalDetail({ approvalId }: { approvalId: string }) {
- *   const { approval } = useApprovalDetail(approvalId);
+ *   const { approval, isLoading } = useApprovalDetail(approvalId);
  *
+ *   if (isLoading) return <Skeleton />;
  *   if (!approval) {
  *     return <div>Approval not found</div>;
  *   }
@@ -36,14 +36,15 @@ const getApprovalByIdQuery = makeFunctionReference<"query">(
  * }
  * ```
  */
-export function useApprovalDetail(approvalId: string): {
+export function useApprovalDetail(approvalId: string | undefined): {
   approval: PendingApproval | null;
-  isLoading: false; // With Suspense, data is always loaded
+  isLoading: boolean;
 } {
-  const { data } = useSuspenseQuery(convexQuery(getApprovalByIdQuery, { approvalId }));
+  // Use Convex "skip" pattern when approvalId is undefined to avoid calling query with empty args
+  const data = useQuery(getApprovalByIdQuery, approvalId ? { approvalId } : "skip");
 
   return {
-    approval: data as PendingApproval | null,
-    isLoading: false, // Suspense handles loading state
+    approval: (data ?? null) as PendingApproval | null,
+    isLoading: data === undefined,
   };
 }
