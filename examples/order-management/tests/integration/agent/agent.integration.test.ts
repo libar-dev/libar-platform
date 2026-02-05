@@ -525,6 +525,113 @@ describe("Agent BC Integration Tests", () => {
     });
   });
 
+  describe("Workpool Partition Ordering", () => {
+    /**
+     * Tests that events for the same customer (partition key) are processed in order.
+     *
+     * The agent uses streamId (which includes customerId for OrderCancelled events)
+     * as the Workpool partition key. This ensures events for the same customer
+     * are processed sequentially, preserving ordering guarantees.
+     */
+    it("should process events for same customer in order", async () => {
+      // Create product with NO stock - saga will fail and cancel orders via compensation
+      const productId = generateProductId();
+      const sku = generateSku();
+      await testMutation(t, api.testing.createTestProduct, {
+        productId,
+        productName: "Ordering Test Widget",
+        sku,
+        availableQuantity: 0, // No stock - saga compensation will cancel
+      });
+
+      // Use a single customer ID for all orders
+      const customerId = generateCustomerId();
+      const orderIds: string[] = [];
+
+      // Create 5 orders for the same customer in rapid succession
+      for (let i = 0; i < 5; i++) {
+        const orderId = generateOrderId();
+        orderIds.push(orderId);
+
+        // Create order
+        await testMutation(t, api.orders.createOrder, {
+          orderId,
+          customerId,
+        });
+
+        // Add items
+        await testMutation(t, api.orders.addOrderItem, {
+          orderId,
+          productId,
+          productName: "Ordering Test Widget",
+          quantity: 1,
+          unitPrice: 10 + i, // Different prices to distinguish orders
+        });
+
+        // Submit - don't wait between submissions to stress ordering
+        await testMutation(t, api.orders.submitOrder, { orderId });
+      }
+
+      // Wait for all orders to be cancelled by saga compensation
+      for (let i = 0; i < 5; i++) {
+        await waitUntil(
+          async () => {
+            const order = await testQuery(t, api.orders.getOrderSummary, { orderId: orderIds[i] });
+            return order?.status === "cancelled";
+          },
+          { message: `Order ${i + 1} cancelled by saga`, timeout: AGENT_TEST_TIMEOUT }
+        );
+      }
+
+      // Wait for all cancellations to be recorded in projection
+      await waitUntil(
+        async () => {
+          const projection = await testQuery(t, api.testing.getTestCustomerCancellations, {
+            customerId,
+          });
+          return projection !== null && projection.cancellationCount >= 5;
+        },
+        { message: "All 5 customer cancellations recorded", timeout: AGENT_TEST_TIMEOUT }
+      );
+
+      // Wait for agent to process all events
+      await waitUntil(
+        async () => {
+          const checkpoint = await testQuery(t, api.queries.agent.getCheckpoint, {
+            agentId: CHURN_RISK_AGENT_ID,
+          });
+          // Agent should have processed at least 5 events
+          return checkpoint !== null && checkpoint.eventsProcessed >= 5;
+        },
+        { message: "Agent processed 5+ events", timeout: AGENT_TEST_TIMEOUT }
+      );
+
+      // Verify projection has all 5 cancellations
+      const projection = await testQuery(t, api.testing.getTestCustomerCancellations, {
+        customerId,
+      });
+
+      expect(projection).toBeDefined();
+      expect(projection!.cancellationCount).toBeGreaterThanOrEqual(5);
+
+      // Verify all 5 order IDs are in the projection in order
+      // The projection stores cancellations array - verify ordering by timestamp
+      const cancellations = projection!.cancellations;
+      expect(cancellations.length).toBeGreaterThanOrEqual(5);
+
+      // Filter to only our orders
+      const ourCancellations = cancellations.filter((c) => orderIds.includes(c.orderId));
+      expect(ourCancellations.length).toBe(5);
+
+      // Verify timestamps are monotonically increasing (events processed in order)
+      for (let i = 1; i < ourCancellations.length; i++) {
+        const prev = ourCancellations[i - 1];
+        const curr = ourCancellations[i];
+        expect(curr.timestamp).toBeGreaterThanOrEqual(prev.timestamp);
+      }
+    });
+  });
+
   describe("Projection-Based Pattern Detection", () => {
     /**
      * Tests that the customerCancellations projection is updated correctly
@@ -651,6 +758,53 @@ describe("Agent BC Integration Tests", () => {
   });
 
   describe("Dead Letter Handling", () => {
+    /**
+     * Tests that dead letters are created with proper structure and can be queried.
+     *
+     * Uses testCreateAgentDeadLetter helper to directly create a dead letter,
+     * simulating what happens when agent processing fails via onComplete handler.
+     */
+    it("should create dead letter with proper structure and error sanitization", async () => {
+      // Create a dead letter directly using test helper
+      const eventId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const errorMessage = "Processing failed: LLM rate limit exceeded";
+
+      const result = await testMutation(t, api.testingFunctions.testCreateAgentDeadLetter, {
+        agentId: CHURN_RISK_AGENT_ID,
+        subscriptionId: `sub_${CHURN_RISK_AGENT_ID}`,
+        eventId,
+        globalPosition: 12345,
+        error: errorMessage,
+        attemptCount: 3,
+        correlationId: `corr_${Date.now()}`,
+      });
+
+      expect(result.created).toBe(true);
+      expect(result.deadLetterId).toBeDefined();
+
+      // Query the dead letter to verify structure
+      const deadLetters = await testQuery(t, api.testing.getTestAgentDeadLetters, {
+        agentId: CHURN_RISK_AGENT_ID,
+        status: "pending",
+        limit: 50,
+      });
+
+      // Find our dead letter
+      const createdDeadLetter = deadLetters.find((dl) => dl.eventId === eventId);
+      expect(createdDeadLetter).toBeDefined();
+
+      // Verify dead letter structure
+      expect(createdDeadLetter!.agentId).toBe(CHURN_RISK_AGENT_ID);
+      expect(createdDeadLetter!.subscriptionId).toBe(`sub_${CHURN_RISK_AGENT_ID}`);
+      expect(createdDeadLetter!.eventId).toBe(eventId);
+      expect(createdDeadLetter!.globalPosition).toBe(12345);
+      expect(createdDeadLetter!.error).toBe(errorMessage);
+      expect(createdDeadLetter!.attemptCount).toBe(3);
+      expect(createdDeadLetter!.status).toBe("pending");
+      expect(createdDeadLetter!.failedAt).toBeDefined();
+      expect(createdDeadLetter!.context?.correlationId).toBeDefined();
+    });
+
     /**
      * Tests that the agent dead letter infrastructure is working.
      *

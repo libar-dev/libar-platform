@@ -436,6 +436,127 @@ describe("Agent Approval Workflow Integration Tests", () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe("APPROVAL_EXPIRED");
     });
+
+    it("should not expire approvals still within timeout", async () => {
+      const approvalId = generateApprovalId();
+      const decisionId = generateDecisionId();
+      // Set expiration to 1 hour in the future (not expired yet)
+      const expiresAt = Date.now() + 60 * 60 * 1000;
+
+      // Create approval that has NOT expired yet
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId,
+        action: {
+          type: "SuggestCustomerOutreach",
+          payload: { customerId: "cust_not_expired" },
+        },
+        confidence: 0.75,
+        reason: "Customer showing early churn signals",
+        triggeringEventIds: ["evt_not_expired"],
+        expiresAt,
+      });
+
+      // Verify it's pending before expiration run
+      const beforeExpire = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId,
+      });
+      expect(beforeExpire?.status).toBe("pending");
+
+      // Run the expiration cron
+      await testMutation(t, api.testingFunctions.testExpirePendingApprovals, {});
+
+      // Verify it's STILL pending (not expired because expiresAt is in future)
+      const afterExpire = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId,
+      });
+      expect(afterExpire?.status).toBe("pending");
+    });
+
+    it("should correctly identify multiple expired approvals", async () => {
+      const expiredApprovalId1 = generateApprovalId();
+      const expiredApprovalId2 = generateApprovalId();
+      const notExpiredApprovalId = generateApprovalId();
+
+      // Create 2 already-expired approvals
+      const expiredAt = Date.now() - 1000; // 1 second ago
+      const notExpiredAt = Date.now() + 60 * 60 * 1000; // 1 hour in future
+
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId: expiredApprovalId1,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId: generateDecisionId(),
+        action: { type: "ExpiredAction1", payload: {} },
+        confidence: 0.6,
+        reason: "First expired",
+        triggeringEventIds: ["evt_exp1"],
+        expiresAt: expiredAt,
+      });
+
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId: expiredApprovalId2,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId: generateDecisionId(),
+        action: { type: "ExpiredAction2", payload: {} },
+        confidence: 0.55,
+        reason: "Second expired",
+        triggeringEventIds: ["evt_exp2"],
+        expiresAt: expiredAt,
+      });
+
+      // Create 1 not-yet-expired approval
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId: notExpiredApprovalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId: generateDecisionId(),
+        action: { type: "NotExpiredAction", payload: {} },
+        confidence: 0.9,
+        reason: "Not expired yet",
+        triggeringEventIds: ["evt_not_exp"],
+        expiresAt: notExpiredAt,
+      });
+
+      // Verify all are pending before expiration run
+      const beforeExpire1 = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId: expiredApprovalId1,
+      });
+      const beforeExpire2 = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId: expiredApprovalId2,
+      });
+      const beforeExpireNot = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId: notExpiredApprovalId,
+      });
+
+      expect(beforeExpire1?.status).toBe("pending");
+      expect(beforeExpire2?.status).toBe("pending");
+      expect(beforeExpireNot?.status).toBe("pending");
+
+      // Run the expiration cron
+      const expireResult = await testMutation(
+        t,
+        api.testingFunctions.testExpirePendingApprovals,
+        {}
+      );
+
+      // Should have expired at least 2 (could be more from other tests)
+      expect(expireResult.expiredCount).toBeGreaterThanOrEqual(2);
+
+      // Verify expired approvals changed status
+      const afterExpire1 = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId: expiredApprovalId1,
+      });
+      const afterExpire2 = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId: expiredApprovalId2,
+      });
+      const afterExpireNot = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId: notExpiredApprovalId,
+      });
+
+      expect(afterExpire1?.status).toBe("expired");
+      expect(afterExpire2?.status).toBe("expired");
+      expect(afterExpireNot?.status).toBe("pending"); // Should still be pending
+    });
   });
 
   describe("Query Functionality", () => {
@@ -527,6 +648,137 @@ describe("Agent Approval Workflow Integration Tests", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("APPROVAL_NOT_FOUND");
+    });
+  });
+
+  describe("Authorization", () => {
+    /**
+     * Tests that an unauthorized reviewer cannot approve an action.
+     *
+     * Uses testApproveAgentActionWithAuth which includes authorization check
+     * based on authorizedAgentIds parameter.
+     */
+    it("should reject approval from unauthorized reviewer", async () => {
+      const approvalId = generateApprovalId();
+      const decisionId = generateDecisionId();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
+      // Create pending approval for CHURN_RISK_AGENT_ID
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId,
+        action: {
+          type: "SuggestCustomerOutreach",
+          payload: { customerId: "cust_auth_test" },
+        },
+        confidence: 0.75,
+        reason: "Customer at moderate risk",
+        triggeringEventIds: ["evt_auth_test"],
+        expiresAt,
+      });
+
+      // Try to approve with a reviewer who is ONLY authorized for a different agent
+      const result = await testMutation(
+        t,
+        api.testingFunctions.testApproveAgentActionWithAuth,
+        {
+          approvalId,
+          reviewerId: "reviewer_unauthorized",
+          authorizedAgentIds: ["different-agent-id", "another-agent-id"],
+        }
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("UNAUTHORIZED_REVIEWER");
+
+      // Verify the approval is still pending (was not approved)
+      const approval = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId,
+      });
+      expect(approval?.status).toBe("pending");
+    });
+
+    it("should allow approval from authorized reviewer", async () => {
+      const approvalId = generateApprovalId();
+      const decisionId = generateDecisionId();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
+      // Create pending approval for CHURN_RISK_AGENT_ID
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId,
+        action: {
+          type: "SuggestCustomerOutreach",
+          payload: { customerId: "cust_auth_allowed" },
+        },
+        confidence: 0.85,
+        reason: "Customer at high risk",
+        triggeringEventIds: ["evt_auth_allowed_test"],
+        expiresAt,
+      });
+
+      // Approve with a reviewer who IS authorized for CHURN_RISK_AGENT_ID
+      const result = await testMutation(
+        t,
+        api.testingFunctions.testApproveAgentActionWithAuth,
+        {
+          approvalId,
+          reviewerId: "reviewer_authorized",
+          authorizedAgentIds: [CHURN_RISK_AGENT_ID, "another-agent-id"],
+        }
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.approvalId).toBe(approvalId);
+
+      // Verify the approval was approved
+      const approval = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId,
+      });
+      expect(approval?.status).toBe("approved");
+      expect(approval?.reviewerId).toBe("reviewer_authorized");
+    });
+
+    it("should allow approval when no authorization restrictions specified", async () => {
+      const approvalId = generateApprovalId();
+      const decisionId = generateDecisionId();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
+      // Create pending approval
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId,
+        action: {
+          type: "SuggestCustomerOutreach",
+          payload: { customerId: "cust_no_auth_restriction" },
+        },
+        confidence: 0.9,
+        reason: "Customer at very high risk",
+        triggeringEventIds: ["evt_no_auth_test"],
+        expiresAt,
+      });
+
+      // Approve without specifying authorizedAgentIds (no restrictions)
+      const result = await testMutation(
+        t,
+        api.testingFunctions.testApproveAgentActionWithAuth,
+        {
+          approvalId,
+          reviewerId: "reviewer_unrestricted",
+          // No authorizedAgentIds - should be allowed
+        }
+      );
+
+      expect(result.success).toBe(true);
+
+      // Verify the approval was approved
+      const approval = await testQuery(t, api.queries.agent.getApprovalById, {
+        approvalId,
+      });
+      expect(approval?.status).toBe("approved");
     });
   });
 });

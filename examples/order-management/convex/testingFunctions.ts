@@ -512,3 +512,120 @@ export const testExpirePendingApprovals = mutation({
     return await ctx.runMutation(expirePendingApprovalsRef, {});
   },
 });
+
+// ============================================================================
+// AGENT AUTHORIZATION TESTING
+// ============================================================================
+
+/**
+ * Approve an agent action with authorization check.
+ *
+ * Unlike testApproveAgentAction, this mutation includes authorization
+ * validation - the reviewer must be authorized for the agent's agentId.
+ *
+ * @param authorizedAgentIds - Optional list of agent IDs this reviewer can approve.
+ *                             If empty/undefined, reviewer can approve any agent.
+ *                             If specified, approval.agentId must be in this list.
+ */
+export const testApproveAgentActionWithAuth = mutation({
+  args: {
+    approvalId: v.string(),
+    reviewerId: v.string(),
+    reviewNote: v.optional(v.string()),
+    authorizedAgentIds: v.optional(v.array(v.string())),
+  },
+  returns: v.union(
+    v.object({
+      success: v.literal(true),
+      approvalId: v.string(),
+    }),
+    v.object({
+      success: v.literal(false),
+      error: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    // Load the approval first to check authorization
+    const approval = await ctx.db
+      .query("pendingApprovals")
+      .withIndex("by_approvalId", (q) => q.eq("approvalId", args.approvalId))
+      .first();
+
+    if (!approval) {
+      return { success: false, error: "APPROVAL_NOT_FOUND" };
+    }
+
+    // Check authorization if authorizedAgentIds is specified
+    if (args.authorizedAgentIds && args.authorizedAgentIds.length > 0) {
+      if (!args.authorizedAgentIds.includes(approval.agentId)) {
+        return { success: false, error: "UNAUTHORIZED_REVIEWER" };
+      }
+    }
+
+    // Proceed with the normal approval flow
+    return await ctx.runMutation(approveAgentActionRef, {
+      approvalId: args.approvalId,
+      reviewerId: args.reviewerId,
+      reviewNote: args.reviewNote,
+    });
+  },
+});
+
+// ============================================================================
+// AGENT DEAD LETTER TESTING
+// ============================================================================
+
+/**
+ * Create a dead letter entry for testing.
+ *
+ * This directly creates a dead letter to test dead letter infrastructure
+ * without needing to trigger an actual processing failure.
+ * Simulates what happens when agent processing fails via onComplete handler.
+ */
+export const testCreateAgentDeadLetter = mutation({
+  args: {
+    agentId: v.string(),
+    subscriptionId: v.string(),
+    eventId: v.string(),
+    globalPosition: v.number(),
+    error: v.string(),
+    attemptCount: v.optional(v.number()),
+    workId: v.optional(v.string()),
+    correlationId: v.optional(v.string()),
+  },
+  returns: v.object({
+    deadLetterId: v.id("agentDeadLetters"),
+    created: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    // Build context object
+    const contextObj: {
+      correlationId?: string;
+      errorCode?: string;
+      ignoreReason?: string;
+    } = {};
+    if (args.correlationId) {
+      contextObj.correlationId = args.correlationId;
+    }
+
+    // Create dead letter entry
+    const deadLetterId = await ctx.db.insert("agentDeadLetters", {
+      agentId: args.agentId,
+      subscriptionId: args.subscriptionId,
+      eventId: args.eventId,
+      globalPosition: args.globalPosition,
+      error: args.error,
+      attemptCount: args.attemptCount ?? 1,
+      status: "pending" as const,
+      failedAt: Date.now(),
+      workId: args.workId ?? `test_work_${Date.now()}`,
+      context: contextObj,
+    });
+
+    return { deadLetterId, created: true };
+  },
+});
