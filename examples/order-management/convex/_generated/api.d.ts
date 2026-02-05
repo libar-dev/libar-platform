@@ -23,6 +23,9 @@ import type * as contexts_agent_handlers_onComplete from "../contexts/agent/hand
 import type * as contexts_agent_index from "../contexts/agent/index.js";
 import type * as contexts_agent_patterns_churnRisk from "../contexts/agent/patterns/churnRisk.js";
 import type * as contexts_agent_tools_emitCommand from "../contexts/agent/tools/emitCommand.js";
+import type * as contexts_agent_utils_confidence from "../contexts/agent/utils/confidence.js";
+import type * as contexts_agent_utils_customer from "../contexts/agent/utils/customer.js";
+import type * as contexts_agent_utils_index from "../contexts/agent/utils/index.js";
 import type * as crons from "../crons.js";
 import type * as crossContextQueries from "../crossContextQueries.js";
 import type * as dcb_retryExecution from "../dcb/retryExecution.js";
@@ -96,6 +99,9 @@ declare const fullApi: ApiFromModules<{
   "contexts/agent/index": typeof contexts_agent_index;
   "contexts/agent/patterns/churnRisk": typeof contexts_agent_patterns_churnRisk;
   "contexts/agent/tools/emitCommand": typeof contexts_agent_tools_emitCommand;
+  "contexts/agent/utils/confidence": typeof contexts_agent_utils_confidence;
+  "contexts/agent/utils/customer": typeof contexts_agent_utils_customer;
+  "contexts/agent/utils/index": typeof contexts_agent_utils_index;
   crons: typeof crons;
   crossContextQueries: typeof crossContextQueries;
   "dcb/retryExecution": typeof dcb_retryExecution;
@@ -1386,6 +1392,69 @@ export declare const components: {
             state?: any;
             workflowHandle: string;
           };
+        }
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          order: "asc" | "desc";
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            args: any;
+            context?: any;
+            name?: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            workflowId: string;
+          }>;
+          pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+          splitCursor?: string | null;
+        }
+      >;
+      listByName: FunctionReference<
+        "query",
+        "internal",
+        {
+          name: string;
+          order: "asc" | "desc";
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            args: any;
+            context?: any;
+            name?: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            workflowId: string;
+          }>;
+          pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+          splitCursor?: string | null;
         }
       >;
       listSteps: FunctionReference<
