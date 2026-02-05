@@ -8,6 +8,13 @@ import path from "path";
 export default defineConfig({
   server: {
     port: 3000,
+    headers: {
+      // Prevent browser caching SSR hydration data in development
+      // Fixes: "Cannot read properties of undefined (reading 'isDehydrated')"
+      // when TanStack Start's window.$_TSR becomes stale
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      Pragma: "no-cache",
+    },
     fs: {
       // Allow serving files from monorepo root node_modules
       // Required because pnpm hoists packages to root, and symlinks
