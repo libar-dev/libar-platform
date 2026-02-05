@@ -1,17 +1,16 @@
 # ✅ Event Store Durability
 
-**Purpose:** Detailed requirements for the Event Store Durability feature
+**Purpose:** Detailed documentation for the Event Store Durability pattern
 
 ---
 
 ## Overview
 
-| Property       | Value                                    |
-| -------------- | ---------------------------------------- |
-| Status         | completed                                |
-| Product Area   | Platform                                 |
-| Business Value | guaranteed event capture and audit trail |
-| Phase          | 18                                       |
+| Property | Value     |
+| -------- | --------- |
+| Status   | completed |
+| Category | DDD       |
+| Phase    | 18        |
 
 ## Description
 
@@ -51,6 +50,30 @@ same mutation, but several scenarios can result in lost events:
 - **DurableFunctionAdapters** - Provides Workpool/Retrier; this spec uses them for event durability
 - **EventReplayInfrastructure** - Replays events; this spec ensures events exist to replay
 - **WorkpoolPartitioningStrategy** - Partition key patterns; this spec uses for publication ordering
+
+## Dependencies
+
+- Depends on: EventStoreFoundation
+- Depends on: DurableFunctionAdapters
+- Depends on: WorkpoolPartitioningStrategy
+
+- Enables: SagaEngine
+- Enables: ProjectionRebuilder
+- Enables: CrossContextIntegration
+- Enables: AuditCompliance
+
+## Implementations
+
+Files that implement this pattern:
+
+- [`durableAppend.ts`](../../packages/platform-core/src/durability/durableAppend.ts) - ## Durable Append via Workpool Actions
+- [`idempotentAppend.ts`](../../packages/platform-core/src/durability/idempotentAppend.ts) - ## Idempotent Event Append
+- [`index.ts`](../../packages/platform-core/src/durability/index.ts) - ## Event Store Durability
+- [`intentCompletion.ts`](../../packages/platform-core/src/durability/intentCompletion.ts) - ## Intent/Completion Event Pattern
+- [`outbox.ts`](../../packages/platform-core/src/durability/outbox.ts) - ## Outbox Pattern for Action Results
+- [`poisonEvent.ts`](../../packages/platform-core/src/durability/poisonEvent.ts) - ## Poison Event Handling
+- [`publication.ts`](../../packages/platform-core/src/durability/publication.ts) - ## Durable Cross-Context Event Publication
+- [`types.ts`](../../packages/platform-core/src/durability/types.ts) - ## Event Store Durability Types
 
 ## Acceptance Criteria
 
@@ -426,38 +449,6 @@ record is created. Operations teams can investigate and retry manually or automa
 
 _Verified by: Dead letter created after max retries, Admin can retry dead letter, Dead letter stats show context-specific issues_
 
-## Deliverables
-
-- Outbox types and interfaces (complete)
-- createOutboxHandler factory (complete)
-- Idempotent append helper (complete)
-- Durable append action wrapper (complete)
-- Durable event publisher (complete)
-- Intent/completion pattern helpers (complete)
-- Poison event handler (complete)
-- idempotencyKey field + index on events (complete)
-- getByIdempotencyKey query (complete)
-- eventPublications tracking table (complete)
-- poisonEvents tracking table (complete)
-- eventAppendPool Workpool (complete)
-- publicationPool Workpool (complete)
-- Append failure dead letters (complete)
-- Publication dead letters (complete)
-- eventAppendDeadLetters table (complete)
-
-## Implementations
-
-Files that implement this pattern:
-
-- [`durableAppend.ts`](../../packages/platform-core/src/durability/durableAppend.ts) - ## Durable Append via Workpool Actions
-- [`idempotentAppend.ts`](../../packages/platform-core/src/durability/idempotentAppend.ts) - ## Idempotent Event Append
-- [`index.ts`](../../packages/platform-core/src/durability/index.ts) - ## Event Store Durability
-- [`intentCompletion.ts`](../../packages/platform-core/src/durability/intentCompletion.ts) - ## Intent/Completion Event Pattern
-- [`outbox.ts`](../../packages/platform-core/src/durability/outbox.ts) - ## Outbox Pattern for Action Results
-- [`poisonEvent.ts`](../../packages/platform-core/src/durability/poisonEvent.ts) - ## Poison Event Handling
-- [`publication.ts`](../../packages/platform-core/src/durability/publication.ts) - ## Durable Cross-Context Event Publication
-- [`types.ts`](../../packages/platform-core/src/durability/types.ts) - ## Event Store Durability Types
-
 ---
 
-[← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)
+[← Back to Pattern Registry](../PATTERNS.md)

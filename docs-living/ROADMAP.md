@@ -7,16 +7,16 @@
 
 ## Overall Progress
 
-**Patterns:** [█████████████████░░░] 58/70 (83%)
+**Patterns:** [█████████████████░░░] 50/59 (85%)
 
-**Phases:** 19/24 complete
+**Phases:** 16/20 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 70    |
-| Completed      | 58    |
-| Active         | 2     |
-| Planned        | 10    |
+| Total Patterns | 59    |
+| Completed      | 50    |
+| Active         | 1     |
+| Planned        | 8     |
 
 ---
 
@@ -29,7 +29,7 @@
 | ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                 | 1/1      | 100%     |
 | ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)            | 1/1      | 100%     |
 | ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                        | 1/1      | 100%     |
-| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                              | 3/3      | 100%     |
+| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                   | 3/3      | 100%     |
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                      | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                          | 1/1      | 100%     |
@@ -37,17 +37,13 @@
 | ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                          | 2/2      | 100%     |
 | ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)                  | 1/1      | 100%     |
 | ✅ [DynamicConsistencyBoundaries](phases/phase-16-dynamic-consistency-boundaries.md) | 1/1      | 100%     |
-| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)                    | 5/5      | 100%     |
+| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)                    | 1/1      | 100%     |
 | 📋 [ProductionHardening](phases/phase-18-production-hardening.md)                    | 3/7      | 43%      |
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
 | 📋 [AgentAsBoundedContext](phases/phase-22-agent-as-bounded-context.md)              | 0/1      | 0%       |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
-| ✅ [PollingUtilities](phases/phase-56-polling-utilities.md)                          | 1/1      | 100%     |
-| ✅ [BDDWorld](phases/phase-57-bdd-world.md)                                          | 1/1      | 100%     |
-| ✅ [TestEnvironmentGuards](phases/phase-58-test-environment-guards.md)               | 1/1      | 100%     |
-| 🚧 [ThemedDecisionArchitecture](phases/phase-100-themed-decision-architecture.md)    | 1/4      | 25%      |
 
 ---
 
@@ -57,10 +53,10 @@
 
 [███████████████] 2/2 100% complete
 
-| Pattern                      | Status    | Description                                                                      |
-| ---------------------------- | --------- | -------------------------------------------------------------------------------- |
-| ✅ CMS Dual Write            | completed | Core types for Command Model State - the continuously updated aggregate snapshot |
-| ✅ Foundation Infrastructure | completed | Consolidates old roadmap phases 0-13 into a single completed milestone.          |
+| Pattern                      | Status    | Description                                                                                                         |
+| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| ✅ CMS Dual Write            | completed | Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside... |
+| ✅ Foundation Infrastructure | completed | Consolidates old roadmap phases 0-13 into a single completed milestone.                                             |
 
 ---
 
@@ -68,9 +64,9 @@
 
 [███████████████] 1/1 100% complete
 
-| Pattern                   | Status    | Description                                                                 |
-| ------------------------- | --------- | --------------------------------------------------------------------------- |
-| ✅ Event Store Foundation | completed | Problem: Event Sourcing requires centralized storage for domain events with |
+| Pattern                   | Status    | Description                                                                                                              |
+| ------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ✅ Event Store Foundation | completed | Problem: Event Sourcing requires centralized storage for domain events with ordering guarantees, concurrency control,... |
 
 ---
 
@@ -78,9 +74,9 @@
 
 [███████████████] 1/1 100% complete
 
-| Pattern                   | Status    | Description                                                                   |
-| ------------------------- | --------- | ----------------------------------------------------------------------------- |
-| ✅ Command Bus Foundation | completed | Problem: Command execution requires idempotency (same command = same result), |
+| Pattern                   | Status    | Description                                                                                                          |
+| ------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| ✅ Command Bus Foundation | completed | Problem: Command execution requires idempotency (same command = same result), status tracking, and a standardized... |
 
 ---
 
@@ -98,13 +94,13 @@
 
 [███████████████] 1/1 100% complete
 
-| Pattern               | Status    | Description                                                                |
-| --------------------- | --------- | -------------------------------------------------------------------------- |
-| ✅ Saga Orchestration | completed | Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot |
+| Pattern               | Status    | Description                                                                                                           |
+| --------------------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
+| ✅ Saga Orchestration | completed | Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded... |
 
 ---
 
-### ✅ EventUpcasting
+### ✅ EventBusAbstraction
 
 [███████████████] 3/3 100% complete
 
@@ -130,11 +126,11 @@
 
 [███████████████] 3/3 100% complete
 
-| Pattern                       | Status    | Description                                                                           |
-| ----------------------------- | --------- | ------------------------------------------------------------------------------------- |
-| ✅ Bounded Context Foundation | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement,        |
-| ✅ CMS Repository             | completed | Factory for typed data access with automatic schema upcasting in dual-write handlers. |
-| ✅ Invariant Framework        | completed | Factory for declarative business rule validation with typed error codes.              |
+| Pattern                       | Status    | Description                                                                                                              |
+| ----------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ✅ Bounded Context Foundation | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
+| ✅ CMS Repository             | completed | Factory for typed data access with automatic schema upcasting in dual-write handlers.                                    |
+| ✅ Invariant Framework        | completed | Factory for declarative business rule validation with typed error codes.                                                 |
 
 ---
 
@@ -152,11 +148,11 @@
 
 [███████████████] 3/3 100% complete
 
-| Pattern                      | Status    | Description                                                                               |
-| ---------------------------- | --------- | ----------------------------------------------------------------------------------------- |
-| ✅ Logging Infrastructure    | completed | Factory for domain-specific loggers with scope prefixes and level filtering.              |
-| ✅ Package Architecture      | completed | The original @convex-es/core package grew to 25+ modules, creating issues:                |
-| ✅ Process Manager Lifecycle | completed | FSM for managing PM state transitions (idle/processing/completed/failed) with validation. |
+| Pattern                      | Status    | Description                                                                                                              |
+| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ✅ Logging Infrastructure    | completed | Factory for domain-specific loggers with scope prefixes and level filtering.                                             |
+| ✅ Package Architecture      | completed | The original @convex-es/core package grew to 25+ modules, creating issues: - Large bundle size for consumers who only... |
+| ✅ Process Manager Lifecycle | completed | FSM for managing PM state transitions (idle/processing/completed/failed) with validation.                                |
 
 ---
 
@@ -164,10 +160,10 @@
 
 [███████████████] 2/2 100% complete
 
-| Pattern              | Status    | Description                                                                      |
-| -------------------- | --------- | -------------------------------------------------------------------------------- |
-| ✅ Decider Pattern   | completed | Problem: Domain logic embedded in handlers makes testing require infrastructure. |
-| ✅ Handler Factories | completed | The Decider pattern separates pure business logic from infrastructure concerns,  |
+| Pattern              | Status    | Description                                                                                                      |
+| -------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| ✅ Decider Pattern   | completed | Problem: Domain logic embedded in handlers makes testing require infrastructure.                                 |
+| ✅ Handler Factories | completed | The Decider pattern separates pure business logic from infrastructure concerns, enabling unit testing without... |
 
 ---
 
@@ -185,23 +181,19 @@
 
 [███████████████] 1/1 100% complete
 
-| Pattern                           | Status    | Description                                                                 |
-| --------------------------------- | --------- | --------------------------------------------------------------------------- |
-| ✅ Dynamic Consistency Boundaries | completed | Problem: Cross-entity invariants within a bounded context currently require |
+| Pattern                           | Status    | Description                                                                                                          |
+| --------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| ✅ Dynamic Consistency Boundaries | completed | Problem: Cross-entity invariants within a bounded context currently require sequential commands (no atomicity) or... |
 
 ---
 
 ### ✅ ReactiveProjections
 
-[███████████████] 5/5 100% complete
+[███████████████] 1/1 100% complete
 
-| Pattern                                   | Status    | Description                                                 |
-| ----------------------------------------- | --------- | ----------------------------------------------------------- |
-| ✅ Reactive Projection Conflict Detection | completed | As a platform developer                                     |
-| ✅ Reactive Projection Eligibility        | completed | As a platform developer                                     |
-| ✅ Reactive Projection Hybrid Model       | completed | As a frontend developer                                     |
-| ✅ Reactive Projections                   | completed | Problem: Workpool-based projections have 100-500ms latency. |
-| ✅ Reactive Projection Shared Evolve      | completed | As a platform developer                                     |
+| Pattern                 | Status    | Description                                                 |
+| ----------------------- | --------- | ----------------------------------------------------------- |
+| ✅ Reactive Projections | completed | Problem: Workpool-based projections have 100-500ms latency. |
 
 ---
 
@@ -209,15 +201,15 @@
 
 [██████░░░░░░░░░] 3/7 43% complete
 
-| Pattern                        | Status    | Description                                                                                      |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------ |
-| 📋 Admin Tooling Consolidation | planned   | Problem: Admin functionality is scattered across the codebase:                                   |
-| 📋 Circuit Breaker Pattern     | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.          |
-| ✅ Durable Function Adapters   | completed | Problem: Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses |
-| ✅ Event Replay Infrastructure | completed | Problem: When projections become corrupted, require schema migration, or drift from              |
-| ✅ Event Store Durability      | completed | Problem: The dual-write pattern (CMS + Event) works when both operations are in the              |
-| 📋 Health Observability        | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for                   |
-| 📋 Production Hardening        | planned   | Problem: Structured logging (Phase 13) exists but no metrics collection, distributed tracing,    |
+| Pattern                        | Status    | Description                                                                                                            |
+| ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 📋 Admin Tooling Consolidation | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                               |
+| 📋 Circuit Breaker Pattern     | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                |
+| ✅ Durable Function Adapters   | completed | Problem: Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses in-memory...          |
+| ✅ Event Replay Infrastructure | completed | Problem: When projections become corrupted, require schema migration, or drift from the Event Store due to bugs,...    |
+| ✅ Event Store Durability      | completed | Problem: The dual-write pattern (CMS + Event) works when both operations are in the same mutation, but several...      |
+| 📋 Health Observability        | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or... |
+| 📋 Production Hardening        | planned   | Problem: Structured logging (Phase 13) exists but no metrics collection, distributed tracing, or admin tooling for...  |
 
 ---
 
@@ -235,11 +227,11 @@
 
 [██████████░░░░░] 2/3 67% complete
 
-| Pattern                     | Status    | Description                                                                            |
-| --------------------------- | --------- | -------------------------------------------------------------------------------------- |
-| 📋 Deterministic Id Hashing | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), |
-| ✅ Ecst Fat Events          | completed | Problem: Thin events require consumers to query back to the source BC,                 |
-| ✅ Reservation Pattern      | completed | Problem: Uniqueness constraints before entity creation require check-then-create       |
+| Pattern                     | Status    | Description                                                                                                            |
+| --------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 📋 Deterministic Id Hashing | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...  |
+| ✅ Ecst Fat Events          | completed | Problem: Thin events require consumers to query back to the source BC, creating coupling and requiring synchronous...  |
+| ✅ Reservation Pattern      | completed | Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,... |
 
 ---
 
@@ -258,9 +250,9 @@
 
 [░░░░░░░░░░░░░░░] 0/1 0% complete
 
-| Pattern                     | Status  | Description                                                          |
-| --------------------------- | ------- | -------------------------------------------------------------------- |
-| 📋 Agent As Bounded Context | planned | Problem: AI agents are invoked manually without integration into the |
+| Pattern                     | Status  | Description                                                                                     |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| 📋 Agent As Bounded Context | planned | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
 
 ---
 
@@ -268,52 +260,9 @@
 
 [███████████████] 1/1 100% complete
 
-| Pattern                      | Status    | Description                                                                       |
-| ---------------------------- | --------- | --------------------------------------------------------------------------------- |
-| ✅ Example App Modernization | completed | Problem: The `order-management` example app has grown organically during platform |
-
----
-
-### ✅ PollingUtilities
-
-[███████████████] 1/1 100% complete
-
-| Pattern              | Status    | Description                              |
-| -------------------- | --------- | ---------------------------------------- |
-| ✅ Polling Utilities | completed | As a developer writing integration tests |
-
----
-
-### ✅ BDDWorld
-
-[███████████████] 1/1 100% complete
-
-| Pattern      | Status    | Description          |
-| ------------ | --------- | -------------------- |
-| ✅ BDD World | completed | As a BDD test author |
-
----
-
-### ✅ TestEnvironmentGuards
-
-[███████████████] 1/1 100% complete
-
-| Pattern                    | Status    | Description             |
-| -------------------------- | --------- | ----------------------- |
-| ✅ Test Environment Guards | completed | As a platform developer |
-
----
-
-### 🚧 ThemedDecisionArchitecture
-
-[████░░░░░░░░░░░] 1/4 25% complete
-
-| Pattern                         | Status    | Description                                                                                                     |
-| ------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
-| 🚧 Process Enhancements         | active    | Vision: Transform the delivery process from a documentation tool into a delivery operating system.              |
-| ✅ Process Metadata Expansion   | completed | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
-| 📋 Test Content Blocks          | planned   | This feature demonstrates what content blocks are captured and rendered                                         |
-| 📋 Themed Decision Architecture | planned   | Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.                                  |
+| Pattern                      | Status    | Description                                                                                    |
+| ---------------------------- | --------- | ---------------------------------------------------------------------------------------------- |
+| ✅ Example App Modernization | completed | Problem: The `order-management` example app has grown organically during platform development. |
 
 ---
 
@@ -321,6 +270,6 @@
 
 | Quarter           | Total | Completed |
 | ----------------- | ----- | --------- |
-| Q1-2026 ← Current | 6     | 5         |
+| Q1-2026 ← Current | 1     | 1         |
 
 ---

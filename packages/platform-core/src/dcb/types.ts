@@ -1,4 +1,11 @@
 /**
+ * @libar-docs
+ * @libar-docs-pattern DCBTypes
+ * @libar-docs-status completed
+ * @libar-docs-phase 16
+ * @libar-docs-ddd
+ * @libar-docs-extract-shapes DCBScopeKey, ParsedScopeKey, ScopeKeyValidationError, DCBScope, DCBEntityState, DCBAggregatedState, DCBStateUpdates, DCBExecutionResult, DCBSuccessResult, DCBRejectedResult, DCBFailedResult, DCBConflictResult
+ *
  * ## Dynamic Consistency Boundaries (DCB) - Type Definitions
  *
  * Types for scope-based multi-entity coordination within bounded contexts.

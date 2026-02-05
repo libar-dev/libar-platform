@@ -1,17 +1,16 @@
 # ✅ Event Replay Infrastructure
 
-**Purpose:** Detailed requirements for the Event Replay Infrastructure feature
+**Purpose:** Detailed documentation for the Event Replay Infrastructure pattern
 
 ---
 
 ## Overview
 
-| Property       | Value                                    |
-| -------------- | ---------------------------------------- |
-| Status         | completed                                |
-| Product Area   | Platform                                 |
-| Business Value | projection recovery and schema migration |
-| Phase          | 18                                       |
+| Property | Value     |
+| -------- | --------- |
+| Status   | completed |
+| Category | DDD       |
+| Phase    | 18        |
 
 ## Description
 
@@ -42,6 +41,22 @@ rebuilds cannot resume from where they left off, wasting compute and time.
 - Uses Workpool from DurableFunctionAdapters for durable execution
 - Integrates with projection registry from ProjectionCategories for rebuild ordering
 - Admin endpoints follow patterns from existing saga admin tooling
+
+## Dependencies
+
+- Depends on: EventStoreFoundation
+- Depends on: DurableFunctionAdapters
+- Depends on: EventStoreDurability
+
+- Enables: SchemaMigration
+- Enables: ProjectionRecovery
+
+## Implementations
+
+Files that implement this pattern:
+
+- [`progress.ts`](../../packages/platform-core/src/projections/replay/progress.ts) - Progress calculation utilities for replay operations.
+- [`types.ts`](../../packages/platform-core/src/projections/replay/types.ts) - Types for event replay and projection rebuilding.
 
 ## Acceptance Criteria
 
@@ -576,26 +591,6 @@ export const cancelRebuild = internalMutation({
 
 _Verified by: Trigger rebuild creates checkpoint and schedules first chunk, Cancel rebuild stops processing, Cannot trigger duplicate rebuild_
 
-## Deliverables
-
-- replayCheckpoints table schema (complete)
-- Replay types and interfaces (complete)
-- Replay progress calculator (complete)
-- eventReplayPool Workpool config (complete)
-- triggerRebuild mutation (complete)
-- cancelRebuild mutation (complete)
-- getRebuildStatus query (complete)
-- listActiveRebuilds query (complete)
-- processReplayChunk internal mutation (complete)
-- Replay chunk size configuration (complete)
-
-## Implementations
-
-Files that implement this pattern:
-
-- [`progress.ts`](../../packages/platform-core/src/projections/replay/progress.ts) - Progress calculation utilities for replay operations.
-- [`types.ts`](../../packages/platform-core/src/projections/replay/types.ts) - Types for event replay and projection rebuilding.
-
 ---
 
-[← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)
+[← Back to Pattern Registry](../PATTERNS.md)

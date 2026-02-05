@@ -5,25 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 121 rules from 26 features across 3 product areas.**
-
----
-
-## Delivery Process / Phase 100
-
-### TestContentBlocks
-
-_This feature demonstrates what content blocks are captured and rendered_
-
-#### Business rules appear as a separate section
-
-Rule descriptions provide context for why this business rule exists.
-
-#### Multiple rules create multiple Business Rule entries
-
-Each Rule keyword creates a separate entry in the Business Rules section.
-
-_[test-content-blocks.feature](libar-platform/delivery-process/specs/test-content-blocks.feature)_
+**Domain constraints and invariants extracted from feature specifications. 114 rules from 24 features across 2 product areas.**
 
 ---
 
@@ -145,15 +127,6 @@ Commands progress through well-defined states: - **pending**: Command received, 
 
 Every command in the system flows through the same 7-step orchestration:
 
-    | Step | Action | Component | Purpose |
-    | 1 | Record command | Command Bus | Idempotency check |
-    | 2 | Middleware | - | Auth, logging, validation |
-    | 3 | Call handler | Bounded Context | CMS update via Decider |
-    | 4 | Handle rejection | - | Early exit if business rule violated |
-    | 5 | Append event | Event Store | Audit trail |
-    | 6 | Trigger projection | Workpool | Update read models |
-    | 7 | Update status | Command Bus | Final status + result |
-
     This standardized flow ensures:
     - Consistent dual-write semantics (CMS + Event in same transaction)
     - Automatic projection triggering
@@ -217,11 +190,6 @@ Sagas use Convex Workflow for durable execution: - Workflow state is persisted a
 
 If step N fails after steps 1..N-1 succeeded, compensation logic
 must undo the effects of the completed steps:
-
-    | Step | Success Action | Compensation |
-    | Reserve inventory | Stock reserved | Release reservation |
-    | Charge payment | Payment captured | Refund payment |
-    | Update order | Order confirmed | Cancel order |
 
     Compensation runs in reverse order of the original steps.
 
@@ -347,11 +315,25 @@ _Projections exist but categories are implicit._
 
 - **Rationale:** Without explicit categories, developers must guess which projection to use for which purpose, leading to misuse (e.g., using Logic projections for UI) and performance issues (e.g., subscribing to Reporting projections reactively). | Category | Purpose | Query Pattern | Example | | Logic | Minimal data for command validation | Internal only | orderExists(id) | | View | Denormalized for UI queries | Client queries | orderSummaries | | Reporting | Analytics and aggregations | Async/batch | dailySalesReport | | Integration | Cross-context synchronization | EventBus | orderStatusForShipping |
 
+| Category    | Purpose                             | Query Pattern  | Example                |
+| ----------- | ----------------------------------- | -------------- | ---------------------- |
+| Logic       | Minimal data for command validation | Internal only  | orderExists(id)        |
+| View        | Denormalized for UI queries         | Client queries | orderSummaries         |
+| Reporting   | Analytics and aggregations          | Async/batch    | dailySalesReport       |
+| Integration | Cross-context synchronization       | EventBus       | orderStatusForShipping |
+
 #### Categories determine projection characteristics
 
 - **Invariant:** Each category prescribes specific characteristics for cardinality, freshness requirements, and client exposure. These are not suggestions but enforced at registration time.
 
 - **Rationale:** Consistent characteristics per category enable infrastructure optimizations (e.g., reactive subscriptions only for View) and security enforcement (e.g., Logic projections never exposed to clients). | Category | Cardinality | Freshness | Client Exposed | | Logic | Minimal fields | Always current | No | | View | Denormalized | Near real-time | Yes | | Reporting | Aggregated | Eventual | Admin only | | Integration | Contract-defined | Event-driven | No (EventBus) |
+
+| Category    | Cardinality      | Freshness      | Client Exposed |
+| ----------- | ---------------- | -------------- | -------------- |
+| Logic       | Minimal fields   | Always current | No             |
+| View        | Denormalized     | Near real-time | Yes            |
+| Reporting   | Aggregated       | Eventual       | Admin only     |
+| Integration | Contract-defined | Event-driven   | No (EventBus)  |
 
 #### Projections must declare explicit category
 
@@ -495,19 +477,8 @@ All cross-cutting admin operations live in `convex/admin/`.
 Dead letter queue management enables operations teams to: - View failed projection updates - Retry individual or bulk items - Ignore items that cannot be processed
 
     **Existing Operations (to be moved):**
-    | Operation | Current Location | New Location |
-    | getPendingDeadLetters | projections/deadLetters.ts | admin/deadLetters.ts |
-    | replayDeadLetter | projections/deadLetters.ts | admin/deadLetters.ts |
-    | ignoreDeadLetter | projections/deadLetters.ts | admin/deadLetters.ts |
-    | prepareDeadLetterRetrigger | projections/deadLetters.ts | admin/deadLetters.ts |
 
     **New Operations:**
-    | Operation | Purpose |
-    | getDeadLetterById | Get single dead letter with full details |
-    | getDeadLetterStats | Count by projection and status |
-    | bulkRetry | Retry all pending for a projection |
-    | bulkIgnore | Ignore all pending for a projection |
-    | purgeResolved | Delete resolved items older than N days |
 
     **Enhanced DLQ Operations:**
 
@@ -562,10 +533,6 @@ The circuit breaker is a state machine with well-defined transitions:
 
 
     **State Behaviors:**
-    | State | Request Handling | Transitions |
-    | CLOSED | Execute normally, track failures | → OPEN after threshold failures |
-    | OPEN | Reject immediately (fail fast) | → HALF_OPEN after timeout |
-    | HALF_OPEN | Allow single probe request | → CLOSED on success, → OPEN on failure |
 
     **Pure State Machine:**
 
@@ -822,9 +789,6 @@ _No Kubernetes integration (readiness/liveness probes), no metrics for_
 Kubernetes requires HTTP endpoints for orchestration: - **Readiness probe** (`/health/ready`) - Is the service ready to receive traffic? - **Liveness probe** (`/health/live`) - Is the process alive and responsive?
 
     **Endpoint Specifications:**
-    | Endpoint | HTTP Method | Success | Failure | Checks |
-    | /health/ready | GET | 200 OK | 503 Service Unavailable | Event Store, projections, Workpool depth |
-    | /health/live | GET | 200 OK | (always 200) | Process responsive |
 
     **Implementation via httpAction:**
 
@@ -1184,59 +1148,5 @@ Audit trail captures pattern detection, reasoning, and outcomes.
     **Audit Event Structure:**
 
 _[agent-as-bounded-context.feature](libar-platform/delivery-process/specs/platform/agent-as-bounded-context.feature)_
-
----
-
-## Platform / Phase 100
-
-### ThemedDecisionArchitecture
-
-_Current state: Decisions are listed chronologically or alphabetically in flat files._
-
-#### Decisions are grouped by theme
-
-The 7 themes identified during codebase synthesis:
-
-    | Theme        | Core ADRs               | Key Decision                          |
-    | Persistence  | 001, 002, 010, 011      | Dual-write, no snapshots, lazy upcast |
-    | Isolation    | 005, 023, 028, 032      | BC as components, projections at app  |
-    | Commands     | 003, 017, 021, 030      | Orchestrator, idempotency, categories |
-    | Projections  | 004, 006, 015, 016, 018 | Workpool, checkpoints, partitioning   |
-    | Coordination | 009, 020, 025, 033      | Saga vs PM distinction                |
-    | Taxonomy     | 029, 030                | Event types, command categories       |
-    | Testing      | 013, 022, 031           | BDD, inverted pyramid, namespace      |
-
-| Theme        | Core ADRs               | Key Decision                          |
-| ------------ | ----------------------- | ------------------------------------- |
-| Persistence  | 001, 002, 010, 011      | Dual-write, no snapshots, lazy upcast |
-| Isolation    | 005, 023, 028, 032      | BC as components, projections at app  |
-| Commands     | 003, 017, 021, 030      | Orchestrator, idempotency, categories |
-| Projections  | 004, 006, 015, 016, 018 | Workpool, checkpoints, partitioning   |
-| Coordination | 009, 020, 025, 033      | Saga vs PM distinction                |
-| Taxonomy     | 029, 030                | Event types, command categories       |
-| Testing      | 013, 022, 031           | BDD, inverted pyramid, namespace      |
-
-#### Decisions declare dependencies
-
-#### Decisions are layered by evolution phase
-
-The 33 ADRs fall into 3 evolutionary layers:
-
-    | Layer          | ADR Range | Count | Description                    |
-    | Foundation     | 001-010   | 10    | Core patterns, first decisions |
-    | Infrastructure | 011-020   | 10    | Supporting infrastructure      |
-    | Refinement     | 021-033   | 13    | Optimizations, clarifications  |
-
-| Layer          | ADR Range | Count | Description                    |
-| -------------- | --------- | ----- | ------------------------------ |
-| Foundation     | 001-010   | 10    | Core patterns, first decisions |
-| Infrastructure | 011-020   | 10    | Supporting infrastructure      |
-| Refinement     | 021-033   | 13    | Optimizations, clarifications  |
-
-#### Existing ADRs are migrated with review
-
-#### Multiple output formats are generated
-
-_[themed-decision-architecture.feature](libar-platform/delivery-process/specs/themed-decision-architecture.feature)_
 
 ---

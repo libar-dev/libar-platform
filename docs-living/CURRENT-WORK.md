@@ -7,36 +7,22 @@
 
 ## Summary
 
-**Overall Progress:** [█████████████████░░░] 58/70 (83%)
+**Overall Progress:** [█████████████████░░░] 50/59 (85%)
 
-| Metric              | Value |
-| ------------------- | ----- |
-| Active Patterns     | 2     |
-| Active Phases       | 1     |
-| Completed           | 58    |
-| Remaining (Planned) | 10    |
-
----
-
-## Active Phases
-
-### 🚧 ThemedDecisionArchitecture
-
-[████░░░░░░░░░░░] 1/4 25% complete (1 active, 1 done)
-
-| Pattern                 | Description                                                                                        |
-| ----------------------- | -------------------------------------------------------------------------------------------------- |
-| 🚧 Process Enhancements | Vision: Transform the delivery process from a documentation tool into a delivery operating system. |
-
-[View ThemedDecisionArchitecture details →](current/phase-100-themed-decision-architecture.md)
+| Metric         | Value |
+| -------------- | ----- |
+| Total Patterns | 59    |
+| Completed      | 50    |
+| Active         | 1     |
+| Planned        | 8     |
+| Active Phases  | 0     |
 
 ---
 
 ## All Active Patterns
 
-| Pattern                                    | Phase     | Effort | Description                                                                                        |
-| ------------------------------------------ | --------- | ------ | -------------------------------------------------------------------------------------------------- |
-| 🚧 Process Enhancements                    | Phase 100 | 4w     | Vision: Transform the delivery process from a documentation tool into a delivery operating system. |
-| 🚧 Command Config Partition Key Validation | -         | -      | Validates that all projection configurations in a command config                                   |
+| Pattern                                    | Phase | Effort | Description                                                                                            |
+| ------------------------------------------ | ----- | ------ | ------------------------------------------------------------------------------------------------------ |
+| 🚧 Command Config Partition Key Validation | -     | -      | Validates that all projection configurations in a command config have explicit partition keys defined. |
 
 ---

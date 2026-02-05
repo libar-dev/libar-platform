@@ -1,30 +1,18 @@
-# ReactiveProjections
+# ✅ Reactive Projections
 
-**Purpose:** Detailed patterns for ReactiveProjections
-
----
-
-## Summary
-
-**Progress:** [████████████████████] 1/1 (100%)
-
-| Status       | Count |
-| ------------ | ----- |
-| ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+**Purpose:** Detailed documentation for the Reactive Projections pattern
 
 ---
 
-## ✅ Completed Patterns
-
-### ✅ Reactive Projections
+## Overview
 
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Effort   | 2w        |
+| Category | DDD       |
+| Phase    | 17        |
+
+## Description
 
 **Problem:** Workpool-based projections have 100-500ms latency. Users expect
 instant feedback (10-50ms) for their actions without polling.
@@ -50,11 +38,11 @@ The client sees both durable state AND optimistic updates from recent events.
 | Conflict Detection | Compare optimistic vs durable on refresh |
 | Rollback | Discard optimistic if conflict detected |
 
-#### Dependencies
+## Dependencies
 
 - Depends on: ProjectionCategories
 
-#### Acceptance Criteria
+## Acceptance Criteria
 
 **Client receives instant update then durable confirmation**
 
@@ -182,7 +170,7 @@ The client sees both durable state AND optimistic updates from recent events.
 - And pendingEvents becomes 0
 - And state equals durable projection state
 
-#### Business Rules
+## Business Rules
 
 **Hybrid model combines durability with speed**
 
@@ -248,4 +236,4 @@ _Verified by: Hook returns merged state, Hook handles missing durable state, Hoo
 
 ---
 
-[← Back to Roadmap](../ROADMAP.md)
+[← Back to Pattern Registry](../PATTERNS.md)

@@ -9,8 +9,8 @@
 
 | Metric     | Value |
 | ---------- | ----- |
-| Total ADRs | 8     |
-| Accepted   | 8     |
+| Total ADRs | 2     |
+| Accepted   | 2     |
 | Proposed   | 0     |
 | Deprecated | 0     |
 | Superseded | 0     |
@@ -32,31 +32,19 @@
 
 ### process
 
-7 decisions
+1 decisions
 
-| ADR                                                                        | Title                                   | Status   |
-| -------------------------------------------------------------------------- | --------------------------------------- | -------- |
-| [✅ ADR-001](decisions/adr-001-pdr-001-process-decisions-folder.md)        | PDR 001 Process Decisions Folder        | accepted |
-| [✅ ADR-002](decisions/adr-002-release-management-architecture.md)         | Release Management Architecture         | accepted |
-| [✅ ADR-003](decisions/adr-003-pdr-003-behavior-feature-file-structure.md) | PDR 003 Behavior Feature File Structure | accepted |
-| [✅ ADR-004](decisions/adr-004-unified-tag-prefix-architecture.md)         | Unified Tag Prefix Architecture         | accepted |
-| [✅ ADR-005](decisions/adr-005-pdr-005-mvp-workflow.md)                    | PDR 005 Mvp Workflow                    | accepted |
-| [✅ ADR-006](decisions/adr-006-pdr-006-typescript-taxonomy.md)             | PDR 006 TypeScript Taxonomy             | accepted |
-| [✅ ADR-007](decisions/adr-007-pdr-007-two-tier-spec-architecture.md)      | PDR 007 Two Tier Spec Architecture      | accepted |
+| ADR                                                                   | Title                              | Status   |
+| --------------------------------------------------------------------- | ---------------------------------- | -------- |
+| [✅ ADR-007](decisions/adr-007-pdr-007-two-tier-spec-architecture.md) | PDR 007 Two Tier Spec Architecture | accepted |
 
 ---
 
 ## ADR Index
 
-| ADR                                                                        | Title                                   | Status   | Category     |
-| -------------------------------------------------------------------------- | --------------------------------------- | -------- | ------------ |
-| [✅ ADR-001](decisions/adr-001-pdr-001-process-decisions-folder.md)        | PDR 001 Process Decisions Folder        | accepted | process      |
-| [✅ ADR-002](decisions/adr-002-release-management-architecture.md)         | Release Management Architecture         | accepted | process      |
-| [✅ ADR-003](decisions/adr-003-pdr-003-behavior-feature-file-structure.md) | PDR 003 Behavior Feature File Structure | accepted | process      |
-| [✅ ADR-004](decisions/adr-004-unified-tag-prefix-architecture.md)         | Unified Tag Prefix Architecture         | accepted | process      |
-| [✅ ADR-005](decisions/adr-005-pdr-005-mvp-workflow.md)                    | PDR 005 Mvp Workflow                    | accepted | process      |
-| [✅ ADR-006](decisions/adr-006-pdr-006-typescript-taxonomy.md)             | PDR 006 TypeScript Taxonomy             | accepted | process      |
-| [✅ ADR-007](decisions/adr-007-pdr-007-two-tier-spec-architecture.md)      | PDR 007 Two Tier Spec Architecture      | accepted | process      |
-| [✅ ADR-008](decisions/adr-008-pdr-008-example-app-purpose.md)             | PDR 008 Example App Purpose             | accepted | architecture |
+| ADR                                                                   | Title                              | Status   | Category     |
+| --------------------------------------------------------------------- | ---------------------------------- | -------- | ------------ |
+| [✅ ADR-007](decisions/adr-007-pdr-007-two-tier-spec-architecture.md) | PDR 007 Two Tier Spec Architecture | accepted | process      |
+| [✅ ADR-008](decisions/adr-008-pdr-008-example-app-purpose.md)        | PDR 008 Example App Purpose        | accepted | architecture |
 
 ---

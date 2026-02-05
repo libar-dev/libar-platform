@@ -7,26 +7,25 @@
 
 ## Summary
 
-**Overall Progress:** [█████████████████░░░] 58/70 (83%)
+**Overall Progress:** [█████████████████░░░] 50/59 (85%)
 
 | Status              | Count |
 | ------------------- | ----- |
-| 🚧 Active           | 2     |
-| 📋 Planned          | 10    |
-| **Total Remaining** | 12    |
+| 🚧 Active           | 1     |
+| 📋 Planned          | 8     |
+| **Total Remaining** | 9     |
 
 ---
 
 ## By Phase
 
-| Phase                                                                                | Remaining | Active | Complete |
-| ------------------------------------------------------------------------------------ | --------- | ------ | -------- |
-| 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)                 | 4         | 0      | 43%      |
-| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                   | 1         | 0      | 67%      |
-| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)          | 2         | 0      | 0%       |
-| 📋 [AgentAsBoundedContext](remaining/phase-22-agent-as-bounded-context.md)           | 1         | 0      | 0%       |
-| 🚧 [ThemedDecisionArchitecture](remaining/phase-100-themed-decision-architecture.md) | 3         | 1      | 25%      |
-| 🚧 Backlog (No Phase)                                                                | 1         | 1      | 0%       |
+| Phase                                                                       | Remaining | Active | Complete |
+| --------------------------------------------------------------------------- | --------- | ------ | -------- |
+| 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)        | 4         | 0      | 43%      |
+| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)          | 1         | 0      | 67%      |
+| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md) | 2         | 0      | 0%       |
+| 📋 [AgentAsBoundedContext](remaining/phase-22-agent-as-bounded-context.md)  | 1         | 0      | 0%       |
+| 🚧 Backlog (No Phase)                                                       | 1         | 1      | 0%       |
 
 ---
 
@@ -34,8 +33,8 @@
 
 | Priority          | Count |
 | ----------------- | ----- |
-| 🚧 In Progress    | 2     |
-| ✅ Ready to Start | 8     |
+| 🚧 In Progress    | 1     |
+| ✅ Ready to Start | 6     |
 | ⚠️ Blocked        | 2     |
 
 ### Top Ready to Start
@@ -46,8 +45,6 @@
 - Deterministic Id Hashing (Phase 20)
 - Integration Patterns21a (Phase 21)
 - Agent As Bounded Context (Phase 22)
-- Test Content Blocks (Phase 100)
-- Themed Decision Architecture (Phase 100)
 
 ---
 
@@ -61,6 +58,6 @@ Items ready to start (no blocking dependencies):
 - 📋 Deterministic Id Hashing (Phase 20) - 2d
 - 📋 Integration Patterns21a (Phase 21) - 1w
 
-Showing 5 of 8 actionable items.
+Showing 5 of 6 actionable items.
 
 ---
