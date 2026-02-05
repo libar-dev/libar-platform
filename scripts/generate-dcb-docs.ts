@@ -76,7 +76,6 @@ try {
   console.log("Generated files:");
   listFiles(OUTPUT_DIR);
   console.log();
-
 } catch (error) {
   console.error("Generation failed:", error);
   process.exit(1);

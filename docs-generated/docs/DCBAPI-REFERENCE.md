@@ -6,11 +6,11 @@
 ---
 
 This feature file demonstrates code-first documentation generation.
-  The API reference is extracted directly from annotated TypeScript source files,
-  proving that documentation can be a projection of code.
+The API reference is extracted directly from annotated TypeScript source files,
+proving that documentation can be a projection of code.
 
-  **Key Insight:** DCB enables cross-entity invariant validation within a single
-  bounded context with scope-based OCC.
+**Key Insight:** DCB enables cross-entity invariant validation within a single
+bounded context with scope-based OCC.
 
 ---
 
@@ -19,10 +19,7 @@ This feature file demonstrates code-first documentation generation.
 ### Why DCB Exists
 
 **Problem:** Traditional approaches to multi-entity coordination have significant
-    drawbacks:
-    - **Saga coordination** provides only eventual consistency
-    - **Sequential commands** create race condition windows
-    - **Aggregate enlargement** violates single responsibility
+drawbacks: - **Saga coordination** provides only eventual consistency - **Sequential commands** create race condition windows - **Aggregate enlargement** violates single responsibility
 
     **Solution:** DCB provides atomic validation across multiple entities with
     scope-based optimistic concurrency control (OCC), all within a single
@@ -77,7 +74,7 @@ The following diagram shows the step-by-step flow of the `executeWithDCB` functi
 
 ### Core Types
 
-```typescript
+````typescript
 /**
  * Branded type for DCB scope keys.
  *
@@ -93,7 +90,7 @@ The following diagram shows the step-by-step flow of the `executeWithDCB` functi
  * ```
  */
 type DCBScopeKey = string & { readonly __brand: "DCBScopeKey" };
-```
+````
 
 ```typescript
 /**
@@ -161,7 +158,7 @@ type ScopeCommitResult =
   | { status: "conflict"; currentVersion: number };
 ```
 
-```typescript
+````typescript
 /**
  * Scope operations interface for DCB execution.
  *
@@ -228,7 +225,7 @@ interface ScopeOperations {
    */
   commitScope: (streamIds: string[]) => Promise<ScopeCommitResult>;
 }
-```
+````
 
 ```typescript
 /**
@@ -528,10 +525,10 @@ type DCBRetryResult<TData extends object> =
 /**
  * Scope key prefix for tenant isolation.
  */
-SCOPE_KEY_PREFIX = "tenant:" as const
+SCOPE_KEY_PREFIX = "tenant:" as const;
 ```
 
-```typescript
+````typescript
 /**
  * Create a scope key from components.
  *
@@ -548,7 +545,7 @@ SCOPE_KEY_PREFIX = "tenant:" as const
  * ```
  */
 function createScopeKey(tenantId: string, scopeType: string, scopeId: string): DCBScopeKey;
-```
+````
 
 ```typescript
 /**
@@ -568,7 +565,7 @@ function tryCreateScopeKey(
 ): DCBScopeKey | null;
 ```
 
-```typescript
+````typescript
 /**
  * Parse a scope key into its components.
  *
@@ -585,9 +582,9 @@ function tryCreateScopeKey(
  * ```
  */
 function parseScopeKey(scopeKey: string): ParsedScopeKey | null;
-```
+````
 
-```typescript
+````typescript
 /**
  * Validate a scope key format.
  *
@@ -604,7 +601,7 @@ function parseScopeKey(scopeKey: string): ParsedScopeKey | null;
  * ```
  */
 function validateScopeKey(scopeKey: string): ScopeKeyValidationError | null;
-```
+````
 
 ```typescript
 /**
@@ -675,39 +672,39 @@ function extractScopeId(scopeKey: DCBScopeKey): string;
 ```typescript
 import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core/dcb";
 
-    const result = await executeWithDCB(ctx, {
-      scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
-      expectedVersion: 0,
-      boundedContext: "inventory",
-      streamType: "Reservation",
-      schemaVersion: 1,
-      entities: {
-        streamIds: ["product-1", "product-2"],
-        loadEntity: async (ctx, streamId) => {
-          const product = await inventoryRepo.tryLoad(ctx, streamId);
-          return product ? { cms: product, _id: product._id } : null;
-        },
-      },
-      decider: reserveMultipleDecider,
-      command: { orderId: "order_456", items },
-      applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
-        await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
-      },
-      commandId: "cmd_789",
-      correlationId: "corr_abc",
-    });
+const result = await executeWithDCB(ctx, {
+  scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
+  expectedVersion: 0,
+  boundedContext: "inventory",
+  streamType: "Reservation",
+  schemaVersion: 1,
+  entities: {
+    streamIds: ["product-1", "product-2"],
+    loadEntity: async (ctx, streamId) => {
+      const product = await inventoryRepo.tryLoad(ctx, streamId);
+      return product ? { cms: product, _id: product._id } : null;
+    },
+  },
+  decider: reserveMultipleDecider,
+  command: { orderId: "order_456", items },
+  applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
+    await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
+  },
+  commandId: "cmd_789",
+  correlationId: "corr_abc",
+});
 
-    switch (result.status) {
-      case "success":
-        // Append result.events to Event Store
-        break;
-      case "rejected":
-        // Business rule violation - result.code, result.reason
-        break;
-      case "conflict":
-        // OCC conflict - retry with fresh state
-        break;
-    }
+switch (result.status) {
+  case "success":
+    // Append result.events to Event Store
+    break;
+  case "rejected":
+    // Business rule violation - result.code, result.reason
+    break;
+  case "conflict":
+    // OCC conflict - retry with fresh state
+    break;
+}
 ```
 
 ```mermaid
@@ -734,33 +731,33 @@ flowchart TD
 ### Constraints
 
 This feature file demonstrates code-first documentation generation.
-  The API reference is extracted directly from annotated TypeScript source files,
-  proving that documentation can be a projection of code.
+The API reference is extracted directly from annotated TypeScript source files,
+proving that documentation can be a projection of code.
 
-  **Key Insight:** DCB enables cross-entity invariant validation within a single
-  bounded context with scope-based OCC.
+**Key Insight:** DCB enables cross-entity invariant validation within a single
+bounded context with scope-based OCC.
 
 ## Consequences
 
 ### When to Use DCB vs Alternatives
 
-| Criterion | DCB | Saga | Regular Decider |
-| --- | --- | --- | --- |
-| Scope | Single BC | Cross-BC | Single entity |
-| Consistency | Atomic | Eventual | Atomic |
-| Use Case | Multi-product reservation | Order fulfillment | Simple updates |
+| Criterion   | DCB                       | Saga              | Regular Decider |
+| ----------- | ------------------------- | ----------------- | --------------- |
+| Scope       | Single BC                 | Cross-BC          | Single entity   |
+| Consistency | Atomic                    | Eventual          | Atomic          |
+| Use Case    | Multi-product reservation | Order fulfillment | Simple updates  |
 
 ### Constraints and Error Codes
 
 **Mandatory Constraints:**
 
-| Constraint | Enforcement | Error Code |
-| --- | --- | --- |
-| Single bounded context only | Runtime validation | CROSS_BC_NOT_ALLOWED |
-| Tenant-aware scope key | Scope key format | TENANT_ID_REQUIRED |
-| Non-empty scope components | Scope key validation | SCOPE_KEY_EMPTY |
-| Valid scope key format | Regex validation | INVALID_SCOPE_KEY_FORMAT |
-| Decider must be pure | Design pattern | N/A (enforced by types) |
+| Constraint                  | Enforcement          | Error Code               |
+| --------------------------- | -------------------- | ------------------------ |
+| Single bounded context only | Runtime validation   | CROSS_BC_NOT_ALLOWED     |
+| Tenant-aware scope key      | Scope key format     | TENANT_ID_REQUIRED       |
+| Non-empty scope components  | Scope key validation | SCOPE_KEY_EMPTY          |
+| Valid scope key format      | Regex validation     | INVALID_SCOPE_KEY_FORMAT |
+| Decider must be pure        | Design pattern       | N/A (enforced by types)  |
 
     **Scope Key Validation:**
     - The `tenant:` prefix is mandatory in all scope keys
@@ -771,14 +768,14 @@ This feature file demonstrates code-first documentation generation.
 
 **System Guarantees:**
 
-| Guarantee | How Enforced |
-| --- | --- |
-| Tenant isolation | Scope key must include tenant prefix; validated at creation |
-| Atomicity | All state updates + scope commit in same Convex mutation |
-| OCC protection | Scope version checked before commit; conflict returns currentVersion |
-| No partial updates | Rejected/failed status means no CMS changes persisted |
-| Decider purity | Type system enforces no ctx/I/O in decider function signature |
-| Event immutability | Events returned for caller to append; not modified by DCB |
+| Guarantee          | How Enforced                                                         |
+| ------------------ | -------------------------------------------------------------------- |
+| Tenant isolation   | Scope key must include tenant prefix; validated at creation          |
+| Atomicity          | All state updates + scope commit in same Convex mutation             |
+| OCC protection     | Scope version checked before commit; conflict returns currentVersion |
+| No partial updates | Rejected/failed status means no CMS changes persisted                |
+| Decider purity     | Type system enforces no ctx/I/O in decider function signature        |
+| Event immutability | Events returned for caller to append; not modified by DCB            |
 
     **Conflict Resolution:**
     When an OCC conflict occurs (`status: "conflict"`), the caller should:
@@ -792,14 +789,14 @@ This feature file demonstrates code-first documentation generation.
 
 The following table defines which content is extracted from which source files:
 
-| Section | Source File | Extraction Method |
-| --- | --- | --- |
-| Core Types | packages/platform-core/src/dcb/types.ts | @extract-shapes tag |
-| Scope Key Utilities | packages/platform-core/src/dcb/scopeKey.ts | @extract-shapes tag |
-| executeWithDCB Flow | THIS DECISION | Fenced code block (Mermaid) |
-| Usage Example | THIS DECISION | Fenced code block |
-| Constraints | THIS DECISION | Rule block table |
-| Guarantees | THIS DECISION | Rule block table |
+| Section             | Source File                                | Extraction Method           |
+| ------------------- | ------------------------------------------ | --------------------------- |
+| Core Types          | packages/platform-core/src/dcb/types.ts    | @extract-shapes tag         |
+| Scope Key Utilities | packages/platform-core/src/dcb/scopeKey.ts | @extract-shapes tag         |
+| executeWithDCB Flow | THIS DECISION                              | Fenced code block (Mermaid) |
+| Usage Example       | THIS DECISION                              | Fenced code block           |
+| Constraints         | THIS DECISION                              | Rule block table            |
+| Guarantees          | THIS DECISION                              | Rule block table            |
 
     **Usage Example:**
 
