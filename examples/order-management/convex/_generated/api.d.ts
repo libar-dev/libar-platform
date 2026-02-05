@@ -48,6 +48,7 @@ import type * as inventoryInternal from "../inventoryInternal.js";
 import type * as orders from "../orders.js";
 import type * as processManagers_index from "../processManagers/index.js";
 import type * as processManagers_orderNotification from "../processManagers/orderNotification.js";
+import type * as processManagers_reservationRelease from "../processManagers/reservationRelease.js";
 import type * as projections__helpers from "../projections/_helpers.js";
 import type * as projections_crossContext_orderWithInventory from "../projections/crossContext/orderWithInventory.js";
 import type * as projections_customers_customerCancellations from "../projections/customers/customerCancellations.js";
@@ -131,6 +132,7 @@ declare const fullApi: ApiFromModules<{
   orders: typeof orders;
   "processManagers/index": typeof processManagers_index;
   "processManagers/orderNotification": typeof processManagers_orderNotification;
+  "processManagers/reservationRelease": typeof processManagers_reservationRelease;
   "projections/_helpers": typeof projections__helpers;
   "projections/crossContext/orderWithInventory": typeof projections_crossContext_orderWithInventory;
   "projections/customers/customerCancellations": typeof projections_customers_customerCancellations;

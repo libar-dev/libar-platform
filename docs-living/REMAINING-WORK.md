@@ -7,24 +7,25 @@
 
 ## Summary
 
-**Overall Progress:** [█████████████████░░░] 53/61 (87%)
+**Overall Progress:** [█████████████████░░░] 53/62 (85%)
 
 | Status              | Count |
 | ------------------- | ----- |
-| 🚧 Active           | 1     |
+| 🚧 Active           | 2     |
 | 📋 Planned          | 7     |
-| **Total Remaining** | 8     |
+| **Total Remaining** | 9     |
 
 ---
 
 ## By Phase
 
-| Phase                                                                       | Remaining | Active | Complete |
-| --------------------------------------------------------------------------- | --------- | ------ | -------- |
-| 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)        | 4         | 0      | 43%      |
-| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)          | 1         | 0      | 67%      |
-| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md) | 2         | 0      | 0%       |
-| 🚧 Backlog (No Phase)                                                       | 1         | 1      | 0%       |
+| Phase                                                                               | Remaining | Active | Complete |
+| ----------------------------------------------------------------------------------- | --------- | ------ | -------- |
+| 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)                | 4         | 0      | 43%      |
+| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                  | 1         | 0      | 67%      |
+| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)         | 2         | 0      | 0%       |
+| 🚧 [ConfirmedOrderCancellation](remaining/phase-22-confirmed-order-cancellation.md) | 1         | 1      | 50%      |
+| 🚧 Backlog (No Phase)                                                               | 1         | 1      | 0%       |
 
 ---
 
@@ -32,7 +33,7 @@
 
 | Priority          | Count |
 | ----------------- | ----- |
-| 🚧 In Progress    | 1     |
+| 🚧 In Progress    | 2     |
 | ✅ Ready to Start | 5     |
 | ⚠️ Blocked        | 2     |
 

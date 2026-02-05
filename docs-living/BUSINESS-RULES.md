@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 115 rules from 24 features across 2 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 118 rules from 25 features across 2 product areas.**
 
 ---
 
@@ -1154,5 +1154,31 @@ Audit trail captures pattern detection, reasoning, and outcomes.
     **Audit Event Structure:**
 
 _[agent-as-bounded-context.feature](libar-platform/delivery-process/specs/platform/agent-as-bounded-context.feature)_
+
+### ConfirmedOrderCancellation
+
+_The Order FSM treats `confirmed` as terminal._
+
+#### Confirmed orders can be cancelled
+
+The Order FSM must allow transitioning from `confirmed` to `cancelled`.
+
+#### Reservation is released when confirmed order is cancelled
+
+The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
+
+| Property            | Value                           |
+| ------------------- | ------------------------------- |
+| processManagerName  | reservationReleaseOnOrderCancel |
+| eventSubscriptions  | OrderCancelled                  |
+| emitsCommands       | ReleaseReservation              |
+| context             | orders                          |
+| correlationStrategy | orderId                         |
+
+#### Agent BC demo flow is enabled
+
+The primary use case is enabling the Agent BC churn risk detection demo.
+
+_[confirmed-order-cancellation.feature](libar-platform/delivery-process/specs/platform/confirmed-order-cancellation.feature)_
 
 ---

@@ -10,7 +10,7 @@
 | Metric             | Value |
 | ------------------ | ----- |
 | Completed Patterns | 53    |
-| Completed Phases   | 17    |
+| Completed Phases   | 16    |
 | Total Phases       | 20    |
 
 ---
@@ -167,15 +167,6 @@
 | Pattern                    | Description                                                            |
 | -------------------------- | ---------------------------------------------------------------------- |
 | Bdd Testing Infrastructure | Problem: Domain logic tests require infrastructure (Docker, database). |
-
-</details>
-
-<details>
-<summary>✅ AgentAsBoundedContext (1 patterns)</summary>
-
-| Pattern                  | Description                                                                                     |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| Agent As Bounded Context | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
 
 </details>
 

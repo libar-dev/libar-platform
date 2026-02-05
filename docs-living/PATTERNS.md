@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [█████████████████░░░] 53/61 (87% complete)
+**Overall:** [█████████████████░░░] 53/62 (85% complete)
 
 | Status       | Count |
 | ------------ | ----- |
 | ✅ Completed | 53    |
-| 🚧 Active    | 1     |
+| 🚧 Active    | 2     |
 | 📋 Planned   | 7     |
-| **Total**    | 61    |
+| **Total**    | 62    |
 
 ---
 
@@ -22,7 +22,7 @@
 
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (9)
-- [DDD](#ddd) (19)
+- [DDD](#ddd) (20)
 - [Event Sourcing](#event-sourcing) (1)
 - [Implements](#implements) (14)
 - [Infra](#infra) (1)
@@ -88,6 +88,7 @@
 | ✅ Workpool Partition Key Types                          | Implements                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
 | ✅ Workpool Partitioning Strategy                        | Implements                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
 | 🚧 Command Config Partition Key Validation               | Implements                        | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
+| 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
@@ -127,7 +128,7 @@
 
 ### DDD
 
-12/19 complete (63%)
+12/20 complete (60%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
@@ -141,6 +142,7 @@
 - [✅ Projection Categories](patterns/projection-categories.md)
 - [✅ Reactive Projections](patterns/reactive-projections.md)
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
+- [🚧 Confirmed Order Cancellation](patterns/confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
@@ -216,17 +218,16 @@ Pattern relationships and dependencies:
 graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
-    ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    InvariantFramework --> BoundedContextFoundation
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
     MiddlewarePipeline --> CommandBusFoundation
+    InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
     Event_Store_Durability_Types --> Workpool
@@ -256,8 +257,8 @@ graph TD
     Durable_Append_via_Workpool_Actions --> Workpool
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
-    CorrelationChainSystem --> EventStoreFoundation
     DualWriteContract --> BoundedContextIdentity
+    CorrelationChainSystem --> EventStoreFoundation
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -265,6 +266,7 @@ graph TD
     Partition_Key_Helper_Functions ..-> WorkpoolPartitioningStrategy
     Per_Projection_Partition_Configuration ..-> WorkpoolPartitioningStrategy
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
+    ProjectionCheckpointing --> EventStoreFoundation
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     ExampleAppModernization -.-> DynamicConsistencyBoundaries
@@ -293,6 +295,8 @@ graph TD
     DurableFunctionAdapters -.-> DCB
     DeterministicIdHashing -.-> EventStoreFoundation
     DeciderPattern -.-> platform_fsm
+    ConfirmedOrderCancellation -.-> SagaOrchestration
+    ConfirmedOrderCancellation -.-> AgentAsBoundedContext
     CommandBusFoundation -.-> EventStoreFoundation
     CircuitBreakerPattern -.-> DurableFunctionAdapters
     BoundedContextFoundation -.-> EventStoreFoundation

@@ -323,7 +323,7 @@ describe("Orders Integration Tests", () => {
       expect(result.code).toBe("ORDER_ALREADY_CANCELLED");
     });
 
-    it("should reject cancelling confirmed order", async () => {
+    it("should successfully cancel confirmed order", async () => {
       const orderId = generateOrderId();
       const customerId = generateCustomerId();
 
@@ -335,14 +335,14 @@ describe("Orders Integration Tests", () => {
         items: [{ productId: "prod_001", productName: "Widget", quantity: 1, unitPrice: 10 }],
       });
 
-      // Try to cancel
+      // Cancel the confirmed order - this is now allowed
       const result = await testMutation(t, api.orders.cancelOrder, {
         orderId,
-        reason: "Too late",
+        reason: "Customer changed mind after confirmation",
       });
 
-      expect(result.status).toBe("rejected");
-      expect(result.code).toBe("ORDER_ALREADY_CONFIRMED");
+      // Confirmed orders can now be cancelled (ConfirmedOrderCancellation feature)
+      expect(result.status).toBe("success");
     });
   });
 

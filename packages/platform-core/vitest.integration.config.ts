@@ -18,6 +18,8 @@ export default defineConfig({
   test: {
     name: "@libar-dev/platform-core-integration",
     environment: "node",
+    // Fail fast (< 10s) if Docker backend isn't running, instead of 60s timeouts per test
+    globalSetup: "./tests/integration/support/checkBackendHealth.ts",
     env: {
       // Default to app integration test port (3210) for tests that use order-management
       // Infrastructure-only tests can override to 3215 via CONVEX_URL env var

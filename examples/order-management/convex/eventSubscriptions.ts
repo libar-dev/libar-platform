@@ -39,7 +39,7 @@ import {
   createAgentSubscription,
   type AgentEventHandlerArgs,
 } from "@libar-dev/platform-bus/agent-subscription";
-import { orderNotificationPM } from "./processManagers";
+import { orderNotificationPM, reservationReleasePM, handleOrderCancelledRef } from "./processManagers";
 import { churnRiskAgentConfig } from "./contexts/agent/_config.js";
 
 // Using makeFunctionReference to bypass FilterApi recursive type resolution (TS2589 prevention)
@@ -68,6 +68,14 @@ export const eventSubscriptions = defineSubscriptions((registry) => {
   registry.add(
     createPMSubscription(orderNotificationPM, {
       handler: handleOrderConfirmedRef,
+    })
+  );
+
+  // Reservation Release PM: OrderCancelled → ReleaseReservation
+  // Releases reservation when a confirmed order is cancelled
+  registry.add(
+    createPMSubscription(reservationReleasePM, {
+      handler: handleOrderCancelledRef,
     })
   );
 

@@ -13,7 +13,7 @@ import { expect } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../convex/_generated/api";
 import { generateCustomerId } from "../fixtures/orders";
-import { waitUntil } from "../support/localBackendHelpers";
+import { waitUntil, waitForSagaCompletion } from "../support/localBackendHelpers";
 import { testMutation, testQuery } from "../support/integrationHelpers";
 
 // Type for vitest-cucumber DataTable rows (orderId/customerId columns)
@@ -67,10 +67,14 @@ interface IntegrationScenarioState {
   lastError: Error | null;
   secondResult: unknown; // For idempotency testing
   queryResult: unknown; // For query assertions
+  sagaResult: unknown; // For saga completion results
   scenario: {
     orderId?: string;
     customerId?: string;
     commandId?: string;
+    productId?: string;
+    sagaType?: string;
+    sagaId?: string;
     items?: Array<{ productId: string; productName: string; quantity: number; unitPrice: number }>;
   };
 }
@@ -88,6 +92,7 @@ function initState(): IntegrationScenarioState {
     lastError: null,
     secondResult: null,
     queryResult: null,
+    sagaResult: null,
     scenario: {},
   };
 }
@@ -917,9 +922,9 @@ describeFeature(cancelOrderFeature, ({ Scenario, Background, AfterEachScenario }
   });
 
   // --------------------------------------------------------------------------
-  // Scenario: Reject cancelling confirmed order
+  // Scenario: Cancel confirmed order and verify projection
   // --------------------------------------------------------------------------
-  Scenario("Reject cancelling confirmed order", ({ Given, When, Then }) => {
+  Scenario("Cancel confirmed order and verify projection", ({ Given, When, Then, And }) => {
     Given(
       "a confirmed order {string} exists with items:",
       async (_ctx: unknown, orderId: string, table: ItemTableRow[]) => {
@@ -958,20 +963,662 @@ describeFeature(cancelOrderFeature, ({ Scenario, Background, AfterEachScenario }
       }
     );
 
-    Then(
-      "the command should be rejected with code {string}",
-      (_ctx: unknown, expectedCode: string) => {
-        if (scenarioState!.lastResult) {
-          const result = scenarioState!.lastResult as { status: string; code?: string };
-          expect(result.status).toBe("rejected");
-          expect(result.code).toBe(expectedCode);
-        } else {
-          expect(scenarioState!.lastError).toBeDefined();
-          expect(scenarioState!.lastError?.message).toContain(expectedCode);
-        }
+    Then("the command should succeed", () => {
+      if (scenarioState!.lastError) {
+        throw new Error(`Command failed with error: ${scenarioState!.lastError.message}`);
+      }
+      expect(scenarioState!.lastResult).toBeDefined();
+      const result = scenarioState!.lastResult as { status: string };
+      expect(result.status).toBe("success");
+    });
+
+    And("I wait for projections to process", async () => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      await waitUntil(
+        async () => {
+          const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+          return order?.status === "cancelled";
+        },
+        { message: `Order ${orderId} status projection to update` }
+      );
+    });
+
+    And(
+      "the order {string} should exist with status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+        const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+        expect(order).toBeDefined();
+        expect(order?.status).toBe(expectedStatus);
       }
     );
   });
+
+  // --------------------------------------------------------------------------
+  // Scenario: Reservation is released when confirmed order is cancelled
+  // --------------------------------------------------------------------------
+  Scenario("Reservation is released when confirmed order is cancelled", ({ Given, And, When, Then }) => {
+    Given(
+      "a product {string} exists with {int} available stock",
+      async (_ctx: unknown, productId: string, available: number) => {
+        const uniqueProductId = `${productId}-${Date.now()}`;
+        scenarioState!.scenario.productId = uniqueProductId;
+
+        await testMutation(scenarioState!.t, api.inventory.createProduct, {
+          productId: uniqueProductId,
+          name: "Test Product",
+          initialStock: available,
+        });
+      }
+    );
+
+    And(
+      "a draft order {string} exists with items:",
+      async (_ctx: unknown, orderId: string, table: ItemTableRow[]) => {
+        const uniqueOrderId = `${orderId}-${Date.now()}`;
+        const customerId = generateCustomerId();
+        // Use the unique productId we created
+        const items = table.map((row) => ({
+          productId: scenarioState!.scenario.productId!,
+          productName: row.productName,
+          quantity: parseInt(row.quantity, 10),
+          unitPrice: parseFloat(row.unitPrice),
+        }));
+
+        scenarioState!.scenario.orderId = uniqueOrderId;
+        scenarioState!.scenario.customerId = customerId;
+        scenarioState!.scenario.items = items;
+        scenarioState!.scenario.sagaType = "OrderFulfillment";
+        scenarioState!.scenario.sagaId = uniqueOrderId;
+
+        await testMutation(scenarioState!.t, api.testing.createTestOrder, {
+          orderId: uniqueOrderId,
+          customerId,
+          status: "draft",
+          items,
+        });
+      }
+    );
+
+    When("I submit order {string}", async (_ctx: unknown, _orderId: string) => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      try {
+        scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.submitOrder, {
+          orderId,
+        });
+        scenarioState!.lastError = null;
+      } catch (error) {
+        scenarioState!.lastError = error as Error;
+        scenarioState!.lastResult = null;
+      }
+    });
+
+    Then("the command should succeed", () => {
+      if (scenarioState!.lastError) {
+        throw new Error(`Command failed with error: ${scenarioState!.lastError.message}`);
+      }
+      expect(scenarioState!.lastResult).toBeDefined();
+      const result = scenarioState!.lastResult as { status: string };
+      expect(result.status).toBe("success");
+    });
+
+    And(
+      "I wait for the saga to complete with timeout {int}",
+      async (_ctx: unknown, timeoutMs: number) => {
+        const sagaType = scenarioState!.scenario.sagaType!;
+        const sagaId = scenarioState!.scenario.sagaId!;
+
+        scenarioState!.sagaResult = await waitForSagaCompletion(
+          scenarioState!.t,
+          sagaType,
+          sagaId,
+          { timeoutMs }
+        );
+      }
+    );
+
+    And(
+      "the order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        await waitUntil(
+          async () => {
+            const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+            return order?.status === expectedStatus;
+          },
+          { message: `Order ${orderId} to have status ${expectedStatus}` }
+        );
+
+        const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+        expect(order?.status).toBe(expectedStatus);
+      }
+    );
+
+    And(
+      "the product {string} should have {int} available and {int} reserved stock",
+      async (_ctx: unknown, _productIdPlaceholder: string, expectedAvailable: number, expectedReserved: number) => {
+        const productId = scenarioState!.scenario.productId!;
+
+        await waitUntil(
+          async () => {
+            const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+            return product?.availableStock === expectedAvailable && product?.reservedStock === expectedReserved;
+          },
+          { message: `Product ${productId} stock to update` }
+        );
+
+        const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+        expect(product?.availableStock).toBe(expectedAvailable);
+        expect(product?.reservedStock).toBe(expectedReserved);
+      }
+    );
+
+    When(
+      "I cancel order {string} with reason {string}",
+      async (_ctx: unknown, _orderId: string, reason: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        try {
+          scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.cancelOrder, {
+            orderId,
+            reason,
+          });
+          scenarioState!.lastError = null;
+        } catch (error) {
+          scenarioState!.lastError = error as Error;
+          scenarioState!.lastResult = null;
+        }
+      }
+    );
+
+    And("I wait for projections to process", async () => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      await waitUntil(
+        async () => {
+          const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+          return order?.status === "cancelled";
+        },
+        { message: `Order ${orderId} status projection to update` }
+      );
+    });
+
+    And(
+      "the reservation for order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        await waitUntil(
+          async () => {
+            const orderInventory = await testQuery(
+              scenarioState!.t,
+              api.crossContextQueries.getOrderWithInventoryStatus,
+              { orderId }
+            );
+            return orderInventory?.reservationStatus === expectedStatus;
+          },
+          { message: `Reservation for order ${orderId} to have status ${expectedStatus}` }
+        );
+
+        const orderInventory = await testQuery(
+          scenarioState!.t,
+          api.crossContextQueries.getOrderWithInventoryStatus,
+          { orderId }
+        );
+        expect(orderInventory?.reservationStatus).toBe(expectedStatus);
+      }
+    );
+  });
+
+  // --------------------------------------------------------------------------
+  // Scenario: Cancelling draft order does not trigger reservation release
+  // --------------------------------------------------------------------------
+  Scenario("Cancelling draft order does not trigger reservation release", ({ Given, When, Then, And }) => {
+    Given("a draft order {string} exists", async (_ctx: unknown, orderId: string) => {
+      const uniqueOrderId = `${orderId}-${Date.now()}`;
+      const customerId = generateCustomerId();
+
+      scenarioState!.scenario.orderId = uniqueOrderId;
+      scenarioState!.scenario.customerId = customerId;
+
+      await testMutation(scenarioState!.t, api.testing.createTestOrder, {
+        orderId: uniqueOrderId,
+        customerId,
+        status: "draft",
+      });
+    });
+
+    When(
+      "I cancel order {string} with reason {string}",
+      async (_ctx: unknown, _orderId: string, reason: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        try {
+          scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.cancelOrder, {
+            orderId,
+            reason,
+          });
+          scenarioState!.lastError = null;
+        } catch (error) {
+          scenarioState!.lastError = error as Error;
+          scenarioState!.lastResult = null;
+        }
+      }
+    );
+
+    Then("the command should succeed", () => {
+      if (scenarioState!.lastError) {
+        throw new Error(`Command failed with error: ${scenarioState!.lastError.message}`);
+      }
+      expect(scenarioState!.lastResult).toBeDefined();
+      const result = scenarioState!.lastResult as { status: string };
+      expect(result.status).toBe("success");
+    });
+
+    And("I wait for projections to process", async () => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      await waitUntil(
+        async () => {
+          const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+          return order?.status === "cancelled";
+        },
+        { message: `Order ${orderId} status projection to update` }
+      );
+    });
+
+    And(
+      "the order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+        const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+        expect(order).toBeDefined();
+        expect(order?.status).toBe(expectedStatus);
+      }
+    );
+
+    And(
+      "the order {string} should have no reservation",
+      async (_ctx: unknown, _orderId: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        // Draft orders never have reservations, so the projection should show null
+        const orderInventory = await testQuery(
+          scenarioState!.t,
+          api.crossContextQueries.getOrderWithInventoryStatus,
+          { orderId }
+        );
+        // Draft orders may not have a projection record at all, or have null reservationId
+        expect(orderInventory?.reservationId ?? null).toBeNull();
+      }
+    );
+  });
+
+  // --------------------------------------------------------------------------
+  // Scenario: Cancelling submitted order before saga completion releases pending reservation
+  // --------------------------------------------------------------------------
+  Scenario("Cancelling submitted order before saga completion releases pending reservation", ({ Given, And, When, Then }) => {
+    Given(
+      "a product {string} exists with {int} available stock",
+      async (_ctx: unknown, productId: string, available: number) => {
+        const uniqueProductId = `${productId}-${Date.now()}`;
+        scenarioState!.scenario.productId = uniqueProductId;
+
+        await testMutation(scenarioState!.t, api.inventory.createProduct, {
+          productId: uniqueProductId,
+          name: "Test Product",
+          initialStock: available,
+        });
+      }
+    );
+
+    And(
+      "a draft order {string} exists with items:",
+      async (_ctx: unknown, orderId: string, table: ItemTableRow[]) => {
+        const uniqueOrderId = `${orderId}-${Date.now()}`;
+        const customerId = generateCustomerId();
+        // Use the unique productId we created
+        const items = table.map((row) => ({
+          productId: scenarioState!.scenario.productId!,
+          productName: row.productName,
+          quantity: parseInt(row.quantity, 10),
+          unitPrice: parseFloat(row.unitPrice),
+        }));
+
+        scenarioState!.scenario.orderId = uniqueOrderId;
+        scenarioState!.scenario.customerId = customerId;
+        scenarioState!.scenario.items = items;
+        scenarioState!.scenario.sagaType = "OrderFulfillment";
+        scenarioState!.scenario.sagaId = uniqueOrderId;
+
+        await testMutation(scenarioState!.t, api.testing.createTestOrder, {
+          orderId: uniqueOrderId,
+          customerId,
+          status: "draft",
+          items,
+        });
+      }
+    );
+
+    When("I submit order {string}", async (_ctx: unknown, _orderId: string) => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      try {
+        scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.submitOrder, {
+          orderId,
+        });
+        scenarioState!.lastError = null;
+      } catch (error) {
+        scenarioState!.lastError = error as Error;
+        scenarioState!.lastResult = null;
+      }
+    });
+
+    Then("the command should succeed", () => {
+      if (scenarioState!.lastError) {
+        throw new Error(`Command failed with error: ${scenarioState!.lastError.message}`);
+      }
+      expect(scenarioState!.lastResult).toBeDefined();
+      const result = scenarioState!.lastResult as { status: string };
+      expect(result.status).toBe("success");
+    });
+
+    And(
+      "I wait for reservation to be created for order {string}",
+      async (_ctx: unknown, _orderId: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        await waitUntil(
+          async () => {
+            const orderInventory = await testQuery(
+              scenarioState!.t,
+              api.crossContextQueries.getOrderWithInventoryStatus,
+              { orderId }
+            );
+            return orderInventory?.reservationId != null;
+          },
+          { message: `Reservation to be created for order ${orderId}` }
+        );
+      }
+    );
+
+    And(
+      "the product {string} should have reserved stock",
+      async (_ctx: unknown, _productIdPlaceholder: string) => {
+        const productId = scenarioState!.scenario.productId!;
+
+        const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+        expect(product?.reservedStock).toBeGreaterThan(0);
+      }
+    );
+
+    When(
+      "I cancel order {string} with reason {string}",
+      async (_ctx: unknown, _orderId: string, reason: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        try {
+          scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.cancelOrder, {
+            orderId,
+            reason,
+          });
+          scenarioState!.lastError = null;
+        } catch (error) {
+          scenarioState!.lastError = error as Error;
+          scenarioState!.lastResult = null;
+        }
+      }
+    );
+
+    And("I wait for projections to process", async () => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      await waitUntil(
+        async () => {
+          const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+          return order?.status === "cancelled";
+        },
+        { message: `Order ${orderId} status projection to update` }
+      );
+    });
+
+    And(
+      "the order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+        const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+        expect(order).toBeDefined();
+        expect(order?.status).toBe(expectedStatus);
+      }
+    );
+
+    And(
+      "the reservation for order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        await waitUntil(
+          async () => {
+            const orderInventory = await testQuery(
+              scenarioState!.t,
+              api.crossContextQueries.getOrderWithInventoryStatus,
+              { orderId }
+            );
+            return orderInventory?.reservationStatus === expectedStatus;
+          },
+          { message: `Reservation for order ${orderId} to have status ${expectedStatus}` }
+        );
+
+        const orderInventory = await testQuery(
+          scenarioState!.t,
+          api.crossContextQueries.getOrderWithInventoryStatus,
+          { orderId }
+        );
+        expect(orderInventory?.reservationStatus).toBe(expectedStatus);
+      }
+    );
+
+    And(
+      "the product {string} should have {int} available and {int} reserved stock",
+      async (_ctx: unknown, _productIdPlaceholder: string, expectedAvailable: number, expectedReserved: number) => {
+        const productId = scenarioState!.scenario.productId!;
+
+        await waitUntil(
+          async () => {
+            const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+            return product?.availableStock === expectedAvailable && product?.reservedStock === expectedReserved;
+          },
+          { message: `Product ${productId} stock to update` }
+        );
+
+        const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+        expect(product?.availableStock).toBe(expectedAvailable);
+        expect(product?.reservedStock).toBe(expectedReserved);
+      }
+    );
+  });
+
+  // --------------------------------------------------------------------------
+  // Scenario: PM handles already released reservation gracefully
+  // --------------------------------------------------------------------------
+  Scenario("PM handles already released reservation gracefully", ({ Given, And, When, Then }) => {
+    Given(
+      "a product {string} exists with {int} available stock",
+      async (_ctx: unknown, productId: string, available: number) => {
+        const uniqueProductId = `${productId}-${Date.now()}`;
+        scenarioState!.scenario.productId = uniqueProductId;
+
+        await testMutation(scenarioState!.t, api.inventory.createProduct, {
+          productId: uniqueProductId,
+          name: "Test Product",
+          initialStock: available,
+        });
+      }
+    );
+
+    And(
+      "a draft order {string} exists with items:",
+      async (_ctx: unknown, orderId: string, table: ItemTableRow[]) => {
+        const uniqueOrderId = `${orderId}-${Date.now()}`;
+        const customerId = generateCustomerId();
+        // Use the unique productId we created
+        const items = table.map((row) => ({
+          productId: scenarioState!.scenario.productId!,
+          productName: row.productName,
+          quantity: parseInt(row.quantity, 10),
+          unitPrice: parseFloat(row.unitPrice),
+        }));
+
+        scenarioState!.scenario.orderId = uniqueOrderId;
+        scenarioState!.scenario.customerId = customerId;
+        scenarioState!.scenario.items = items;
+        scenarioState!.scenario.sagaType = "OrderFulfillment";
+        scenarioState!.scenario.sagaId = uniqueOrderId;
+
+        await testMutation(scenarioState!.t, api.testing.createTestOrder, {
+          orderId: uniqueOrderId,
+          customerId,
+          status: "draft",
+          items,
+        });
+      }
+    );
+
+    When("I submit order {string}", async (_ctx: unknown, _orderId: string) => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      try {
+        scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.submitOrder, {
+          orderId,
+        });
+        scenarioState!.lastError = null;
+      } catch (error) {
+        scenarioState!.lastError = error as Error;
+        scenarioState!.lastResult = null;
+      }
+    });
+
+    Then("the command should succeed", () => {
+      if (scenarioState!.lastError) {
+        throw new Error(`Command failed with error: ${scenarioState!.lastError.message}`);
+      }
+      expect(scenarioState!.lastResult).toBeDefined();
+      const result = scenarioState!.lastResult as { status: string };
+      expect(result.status).toBe("success");
+    });
+
+    And(
+      "I wait for the saga to complete with timeout {int}",
+      async (_ctx: unknown, timeoutMs: number) => {
+        const sagaType = scenarioState!.scenario.sagaType!;
+        const sagaId = scenarioState!.scenario.sagaId!;
+
+        scenarioState!.sagaResult = await waitForSagaCompletion(
+          scenarioState!.t,
+          sagaType,
+          sagaId,
+          { timeoutMs }
+        );
+      }
+    );
+
+    And(
+      "the order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        await waitUntil(
+          async () => {
+            const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+            return order?.status === expectedStatus;
+          },
+          { message: `Order ${orderId} to have status ${expectedStatus}` }
+        );
+
+        const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+        expect(order?.status).toBe(expectedStatus);
+      }
+    );
+
+    And(
+      "the product {string} should have {int} available and {int} reserved stock",
+      async (_ctx: unknown, _productIdPlaceholder: string, expectedAvailable: number, expectedReserved: number) => {
+        const productId = scenarioState!.scenario.productId!;
+
+        await waitUntil(
+          async () => {
+            const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+            return product?.availableStock === expectedAvailable && product?.reservedStock === expectedReserved;
+          },
+          { message: `Product ${productId} stock to update` }
+        );
+
+        const product = await testQuery(scenarioState!.t, api.inventory.getProduct, { productId });
+        expect(product?.availableStock).toBe(expectedAvailable);
+        expect(product?.reservedStock).toBe(expectedReserved);
+      }
+    );
+
+    When(
+      "I cancel order {string} with reason {string}",
+      async (_ctx: unknown, _orderId: string, reason: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        try {
+          scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.cancelOrder, {
+            orderId,
+            reason,
+          });
+          scenarioState!.lastError = null;
+        } catch (error) {
+          scenarioState!.lastError = error as Error;
+          scenarioState!.lastResult = null;
+        }
+      }
+    );
+
+    And("I wait for projections to process", async () => {
+      const orderId = scenarioState!.scenario.orderId!;
+
+      await waitUntil(
+        async () => {
+          const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, { orderId });
+          return order?.status === "cancelled";
+        },
+        { message: `Order ${orderId} status projection to update` }
+      );
+    });
+
+    And(
+      "the reservation for order {string} should have status {string}",
+      async (_ctx: unknown, _orderId: string, expectedStatus: string) => {
+        const orderId = scenarioState!.scenario.orderId!;
+
+        await waitUntil(
+          async () => {
+            const orderInventory = await testQuery(
+              scenarioState!.t,
+              api.crossContextQueries.getOrderWithInventoryStatus,
+              { orderId }
+            );
+            return orderInventory?.reservationStatus === expectedStatus;
+          },
+          { message: `Reservation for order ${orderId} to have status ${expectedStatus}` }
+        );
+
+        const orderInventory = await testQuery(
+          scenarioState!.t,
+          api.crossContextQueries.getOrderWithInventoryStatus,
+          { orderId }
+        );
+        expect(orderInventory?.reservationStatus).toBe(expectedStatus);
+      }
+    );
+  });
+
 });
 
 // =============================================================================

@@ -17,6 +17,8 @@ export default defineConfig({
   projects: [],
   test: {
     globals: true,
+    // Fail fast (< 10s) if Docker backend isn't running, instead of 60s timeouts per test
+    globalSetup: "./tests/support/checkBackendHealth.ts",
     env: {
       CONVEX_URL: "http://127.0.0.1:3210",
     },

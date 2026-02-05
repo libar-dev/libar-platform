@@ -58,3 +58,48 @@ Feature: Cancel Order (Integration)
     And the order "ord-cancel-res-01" should have status "cancelled"
     And the reservation for order "ord-cancel-res-01" should have status "released"
     And the product "prod-cancel-res-01" should have 100 available and 0 reserved stock
+
+  @edge-case @process-manager
+  Scenario: Cancelling draft order does not trigger reservation release
+    Given a draft order "ord-draft-pm-01" exists
+    When I cancel order "ord-draft-pm-01" with reason "Changed mind early"
+    Then the command should succeed
+    And I wait for projections to process
+    And the order "ord-draft-pm-01" should have status "cancelled"
+    And the order "ord-draft-pm-01" should have no reservation
+
+  @edge-case @process-manager
+  Scenario: Cancelling submitted order before saga completion releases pending reservation
+    Given a product "prod-pending-01" exists with 100 available stock
+    And a draft order "ord-pending-01" exists with items:
+      | productId       | productName | quantity | unitPrice |
+      | prod-pending-01 | Widget      | 10       | 10.00     |
+    When I submit order "ord-pending-01"
+    Then the command should succeed
+    And I wait for reservation to be created for order "ord-pending-01"
+    And the product "prod-pending-01" should have reserved stock
+    When I cancel order "ord-pending-01" with reason "Changed mind before confirmation"
+    Then the command should succeed
+    And I wait for projections to process
+    And the order "ord-pending-01" should have status "cancelled"
+    And the reservation for order "ord-pending-01" should have status "released"
+    And the product "prod-pending-01" should have 100 available and 0 reserved stock
+
+  @idempotency @process-manager
+  Scenario: PM handles already released reservation gracefully
+    Given a product "prod-idemp-01" exists with 100 available stock
+    And a draft order "ord-idemp-01" exists with items:
+      | productId      | productName | quantity | unitPrice |
+      | prod-idemp-01  | Widget      | 10       | 10.00     |
+    When I submit order "ord-idemp-01"
+    Then the command should succeed
+    And I wait for the saga to complete with timeout 60000
+    And the order "ord-idemp-01" should have status "confirmed"
+    And the product "prod-idemp-01" should have 90 available and 10 reserved stock
+    When I cancel order "ord-idemp-01" with reason "First cancel"
+    Then the command should succeed
+    And I wait for projections to process
+    And the reservation for order "ord-idemp-01" should have status "released"
+    And the product "prod-idemp-01" should have 100 available and 0 reserved stock
+    # Stock should remain unchanged after reservation is already released
+    And the product "prod-idemp-01" should have 100 available and 0 reserved stock

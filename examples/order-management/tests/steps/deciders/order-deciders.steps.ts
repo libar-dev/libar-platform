@@ -711,7 +711,7 @@ describeFeature(cancelOrderFeature, ({ Scenario, Background, AfterEachScenario }
     });
   });
 
-  Scenario("Reject cancel for confirmed order", ({ Given, When, Then, And }) => {
+  Scenario("Decide to cancel a confirmed order", ({ Given, When, Then, And }) => {
     Given("an order state:", (_ctx: unknown, table: DataTableRow[]) => {
       state!.orderState = createOrderStateFromTable(table);
     });
@@ -728,8 +728,18 @@ describeFeature(cancelOrderFeature, ({ Scenario, Background, AfterEachScenario }
       expect(state!.result!.status).toBe(expectedStatus);
     });
 
-    And("the rejection code should be {string}", (_ctx: unknown, code: string) => {
-      assertRejectionCode(state!.result, code);
+    And("the event type should be {string}", (_ctx: unknown, eventType: string) => {
+      assertEventType(state!.result, eventType);
+    });
+
+    And("the state update should set status to {string}", (_ctx: unknown, status: string) => {
+      assertStateUpdate(state!.result, "status", status);
+    });
+
+    And("the data should contain reason {string}", (_ctx: unknown, reason: string) => {
+      if (state!.result!.status === "success") {
+        expect((state!.result!.data as { reason: string }).reason).toBe(reason);
+      }
     });
   });
 

@@ -7,13 +7,13 @@
 
 ## Summary
 
-**Overall:** [██████████████░░░░░░] 17/24 (71%)
+**Overall:** [██████████████░░░░░░] 17/25 (68%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 24    |
+| Total Features | 25    |
 | Completed      | 17    |
-| Active         | 0     |
+| Active         | 1     |
 | Planned        | 7     |
 | Product Areas  | 2     |
 | User Roles     | 0     |
@@ -30,7 +30,7 @@
 
 ### Platform
 
-16/23 complete (70%)
+16/24 complete (67%)
 
 - [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](requirements/phase-19-bdd-testing-infrastructure.md)
@@ -48,6 +48,7 @@
 - [✅ Reactive Projections](requirements/phase-17-reactive-projections.md)
 - [✅ Reservation Pattern](requirements/phase-20-reservation-pattern.md)
 - [✅ Saga Orchestration](requirements/phase-06-saga-orchestration.md)
+- [🚧 Confirmed Order Cancellation](requirements/phase-22-confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation - unified operations interface](requirements/phase-18-admin-tooling-consolidation.md)
 - [📋 Circuit Breaker Pattern - external service resilience and budget preservation](requirements/phase-18-circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](requirements/phase-20-deterministic-id-hashing.md)
@@ -79,6 +80,7 @@
 | ✅ Reactive Projections           | Platform     | -         | completed |
 | ✅ Reservation Pattern            | Platform     | -         | completed |
 | ✅ Saga Orchestration             | Platform     | -         | completed |
+| 🚧 Confirmed Order Cancellation   | Platform     | -         | active    |
 | 📋 Admin Tooling Consolidation    | Platform     | -         | planned   |
 | 📋 Circuit Breaker Pattern        | Platform     | -         | planned   |
 | 📋 Deterministic Id Hashing       | Platform     | -         | planned   |

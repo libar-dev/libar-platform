@@ -352,4 +352,28 @@ describeFeature(evolveFeature, ({ Scenario, Background, AfterEachScenario }) => 
       expect(state!.evolvedState!.status).toBe(status);
     });
   });
+
+  Scenario("OrderCancelled changes status from confirmed to cancelled", ({ Given, When, Then }) => {
+    Given("an order state with:", (_ctx: unknown, table: DataTableRow[]) => {
+      const data = tableRowsToObject(table);
+      state!.orderState = createOrderCMS({
+        status: (data.status as OrderCMS["status"]) || "confirmed",
+      });
+    });
+
+    When("OrderCancelled event is applied", () => {
+      const event: OrderCancelledEvent = {
+        eventType: "OrderCancelled" as const,
+        payload: {
+          orderId: state!.orderState!.orderId,
+          reason: "Test cancellation",
+        },
+      };
+      state!.evolvedState = evolveCancelOrder(state!.orderState!, event);
+    });
+
+    Then("state should have status {string}", (_ctx: unknown, status: string) => {
+      expect(state!.evolvedState!.status).toBe(status);
+    });
+  });
 });

@@ -1,0 +1,985 @@
+# ConfirmedOrderCancellation
+
+**Purpose:** Detailed patterns for ConfirmedOrderCancellation
+
+---
+
+## Summary
+
+**Progress:** [██████████░░░░░░░░░░] 1/2 (50%)
+
+| Status       | Count |
+| ------------ | ----- |
+| ✅ Completed | 1     |
+| 🚧 Active    | 1     |
+| 📋 Planned   | 0     |
+| **Total**    | 2     |
+
+---
+
+## 🚧 Active Patterns
+
+### 🚧 Confirmed Order Cancellation
+
+| Property | Value  |
+| -------- | ------ |
+| Status   | active |
+| Effort   | 2d     |
+
+**Problem:** The Order FSM treats `confirmed` as terminal. Orders cannot be
+cancelled after saga confirmation, blocking the Agent BC demo which requires
+3+ cancellations to trigger churn risk detection. The Reservation FSM already
+supports `confirmed -> released`, but no coordination exists to release
+reservations when confirmed orders are cancelled.
+
+**Solution:** Enable cancellation of confirmed orders with automatic reservation release:
+
+1. **FSM change:** Add `confirmed -> cancelled` transition to Order FSM
+2. **Decider change:** Remove `ORDER_ALREADY_CONFIRMED` rejection in CancelOrder
+3. **Process Manager:** ReservationReleaseOnOrderCancel PM releases reservation
+   when a confirmed order is cancelled
+
+**Why It Matters:**
+| Benefit | How |
+| Agent BC enablement | 3+ cancellations trigger churn risk pattern detection |
+| Business flexibility | Customers can cancel even after confirmation |
+| Stock recovery | Reserved inventory returns to available pool |
+| Consistency | Order and Reservation states stay synchronized |
+
+**Cross-Context Coordination:**
+| Event Source | Event | PM Action | Target BC |
+| Orders BC | OrderCancelled | Trigger | PM |
+| PM | ReleaseReservation | Command | Inventory BC |
+| Inventory BC | ReservationReleased | Audit | - |
+
+**Design Decision: PM vs Saga:**
+
+- No compensation needed (simple event -> command)
+- No multi-step coordination
+- No external event awaits
+- Therefore: **Process Manager** is the correct choice (per ADR-033)
+
+#### Dependencies
+
+- Depends on: SagaOrchestration
+- Depends on: AgentAsBoundedContext
+
+#### Acceptance Criteria
+
+**Cancel a confirmed order**
+
+- Given an order "ord-conf-cancel-01" exists with status "confirmed"
+- When I send a CancelOrder command for "ord-conf-cancel-01" with reason "Customer changed mind"
+- Then the command should succeed
+- And the order "ord-conf-cancel-01" status should be "cancelled"
+
+**Cannot cancel already cancelled order (unchanged behavior)**
+
+- Given an order "ord-conf-cancel-02" exists with status "cancelled"
+- When I send a CancelOrder command for "ord-conf-cancel-02" with reason "Double cancel attempt"
+- Then the command should be rejected with code "ORDER_ALREADY_CANCELLED"
+
+**OrderCancelled evolves confirmed state to cancelled**
+
+- Given an order state with status "confirmed"
+- When OrderCancelled event is applied
+- Then state should have status "cancelled"
+
+**Reservation is released after confirmed order cancellation**
+
+- Given a product "prod-rel-01" exists with 10 available and 5 reserved stock
+- And a confirmed order "ord-rel-01" with a confirmed reservation for 5 units
+- When I cancel order "ord-rel-01" with reason "Customer changed mind"
+- Then the order "ord-rel-01" should have status "cancelled"
+- And I wait for projections to process
+- And the reservation for order "ord-rel-01" should have status "released"
+- And the product "prod-rel-01" should have 15 available and 0 reserved stock
+
+**Cancelling draft order does not trigger reservation release**
+
+- Given a draft order "ord-rel-02" exists
+- When I cancel order "ord-rel-02" with reason "Changed mind early"
+- Then the order "ord-rel-02" should have status "cancelled"
+- And no ReleaseReservation command should be emitted
+
+**Cancelling submitted order with pending reservation releases it**
+
+- Given a submitted order "ord-rel-03" with a pending reservation
+- When I cancel order "ord-rel-03" with reason "Changed mind before confirmation"
+- Then the order "ord-rel-03" should have status "cancelled"
+- And the reservation for order "ord-rel-03" should have status "released"
+
+**PM is idempotent for duplicate OrderCancelled events**
+
+- Given a confirmed order "ord-rel-04" with a confirmed reservation
+- When OrderCancelled event is delivered twice for "ord-rel-04"
+- Then the reservation should only be released once
+
+**Three cancellations trigger churn risk agent**
+
+- Given a customer "cust-churn-01" exists
+- And 3 confirmed orders for customer "cust-churn-01"
+- When I cancel all 3 orders for customer "cust-churn-01"
+- Then the churn risk agent should detect the pattern
+- And an approval request should be created for customer outreach
+
+#### Business Rules
+
+**Confirmed orders can be cancelled**
+
+The Order FSM must allow transitioning from `confirmed` to `cancelled`.
+The CancelOrder decider must accept cancellation requests for confirmed orders.
+
+    **FSM Change:**
+
+```typescript
+// Before:
+    confirmed: [], // terminal state
+
+    // After:
+    confirmed: ["cancelled"], // can cancel confirmed orders
+```
+
+**Decider Change:**
+
+```typescript
+// Remove this rejection:
+// if (state.status === "confirmed") {
+//   return rejected("ORDER_ALREADY_CONFIRMED", "...");
+// }
+// Let FSM handle the transition validation
+```
+
+_Verified by: Cancel a confirmed order, Cannot cancel already cancelled order (unchanged behavior), OrderCancelled evolves confirmed state to cancelled_
+
+**Reservation is released when confirmed order is cancelled**
+
+The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
+When triggered, it checks if the order had a reservation and releases it.
+
+    **PM Definition:**
+    | Property | Value |
+    | processManagerName | reservationReleaseOnOrderCancel |
+    | eventSubscriptions | OrderCancelled |
+    | emitsCommands | ReleaseReservation |
+    | context | orders |
+    | correlationStrategy | orderId |
+
+    **PM Logic:**
+
+```typescript
+async function handleOrderCancelled(ctx, event) {
+  // Query orderWithInventoryStatus projection for reservationId
+  const orderStatus = await ctx.db
+    .query("orderWithInventoryStatus")
+    .withIndex("by_orderId", (q) => q.eq("orderId", event.payload.orderId))
+    .first();
+
+  // Only release if reservation exists and is not already released
+  if (orderStatus?.reservationId && orderStatus.reservationStatus !== "released") {
+    return [
+      {
+        commandType: "ReleaseReservation",
+        payload: {
+          reservationId: orderStatus.reservationId,
+          reason: `Order ${event.payload.orderId} cancelled: ${event.payload.reason}`,
+        },
+        causationId: event.eventId,
+        correlationId: event.correlationId,
+      },
+    ];
+  }
+
+  return []; // No command to emit
+}
+```
+
+_Verified by: Reservation is released after confirmed order cancellation, Cancelling draft order does not trigger reservation release, Cancelling submitted order with pending reservation releases it, PM is idempotent for duplicate OrderCancelled events_
+
+**Agent BC demo flow is enabled**
+
+The primary use case is enabling the Agent BC churn risk detection demo.
+
+_Verified by: Three cancellations trigger churn risk agent_
+
+---
+
+## ✅ Completed Patterns
+
+### ✅ Agent As Bounded Context
+
+| Property | Value     |
+| -------- | --------- |
+| Status   | completed |
+| Effort   | 2w        |
+
+**Problem:** AI agents are invoked manually without integration into the
+event-driven architecture. No pattern for agents to react to business events.
+
+**Solution:** AI agents implemented as bounded contexts that:
+
+1. **Subscribe** to event streams via EventBus
+2. **Detect patterns** across events using LLM or rules
+3. **Emit commands** based on detected patterns
+
+This is the culminating pattern demonstrating full platform integration.
+
+**Why It Matters for Convex-Native ES:**
+| Benefit | How |
+| AI-native architecture | Events are natural agent input |
+| Pattern detection | Agents analyze event sequences via LLM |
+| Reactive intelligence | Real-time response to business events |
+| Loose coupling | Agent BC is just another bounded context |
+| Explainability | All decisions audited with reasoning |
+
+**Architectural Decisions:**
+| Decision | Choice | Rationale |
+| EventBus subscription | Workpool-based | Durable, retries, partition ordering (like PM) |
+| Pattern detection | Hybrid (rules + LLM) | Fast rules trigger, LLM adds nuance |
+| Human-in-loop | @convex-dev/workflow | awaitEvent() for approvals + CMS table |
+| State model | Agent BC owns CMS | Separate from @convex-dev/agent threads |
+| LLM integration | @convex-dev/agent + createTool | Tools for command emission and analysis |
+| LLM fault isolation | Phase 18 circuit breaker | Graceful degradation, prevents cascade failures |
+
+**@convex-dev/agent Integration:**
+
+Agent BC uses `@convex-dev/agent` for LLM reasoning while maintaining its own state model.
+
+| Concern | Agent BC Owns | @convex-dev/agent Owns |
+| Event subscription | Yes - EventBus | No |
+| Pattern detection | Yes - rules + trigger | No |
+| LLM reasoning | Delegates | Yes - threads, context |
+| Decision audit | Yes - audit events | No |
+| Thread management | Delegates | Yes - conversation state |
+| Tool execution | Coordinates | Yes - tool runtime |
+
+**Integration Pattern:**
+"""typescript
+import { Agent, createTool } from "@convex-dev/agent";
+
+// Create agent with command emission tool
+const orderAgent = new Agent(components.agent, {
+name: "order-analyzer",
+languageModel: openai("gpt-4"),
+instructions: "Analyze order patterns and suggest actions.",
+tools: {
+emitCommand: createTool({
+description: "Emit a command based on analysis",
+args: z.object({
+type: z.string(),
+payload: z.any(),
+confidence: z.number(),
+reason: z.string(),
+}),
+handler: async (ctx, args) => {
+await agentBC.emitCommand(ctx, args);
+return { emitted: true };
+},
+}),
+},
+});
+
+// Use in event handler
+async function handleEvent(ctx: ActionCtx, event: FatEvent) {
+const { threadId } = await orderAgent.createThread(ctx, {
+userId: event.streamId, // Customer as user
+});
+
+    const result = await orderAgent.generateText(ctx, { threadId }, {
+      prompt: `Analyze this event and decide if action needed: ${JSON.stringify(event)}`,
+    });
+
+    // Decision already emitted via tool if needed
+
+}
+"""
+
+**Alternative Designs (Use-Case Dependent):**
+
+The agent execution model can be implemented with two approaches, chosen based on durability needs:
+
+| Approach | Component | When to Use | Trade-offs |
+| Workpool-based | @convex-dev/workpool | Event-driven, fire-and-forget | Lower overhead, simpler mental model |
+| Workflow-based | @convex-dev/workflow | Multi-step with awaits, sagas | Full durability, survives restarts mid-analysis |
+
+**Option A: Workpool-Based Agent (Recommended Default)**
+"""typescript
+// Fire-and-forget pattern analysis with retry and partitioning
+const agentPool = new Workpool(components.agentPool, {
+maxParallelism: 10,
+retryActionsByDefault: true,
+defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
+});
+
+// Partition by streamId for ordered processing per entity
+await agentPool.enqueueAction(ctx, internal.agent.analyzeEvent, { event }, {
+key: event.streamId, // Maintains order per customer/entity
+onComplete: internal.agent.handleAnalysisResult,
+});
+"""
+
+- Best for: High-throughput event processing, simple analyze-then-emit flows
+- Guarantees: Retry with exponential backoff, partition ordering, onComplete audit
+
+**Checkpoint Pattern (required for Workpool durability):**
+"""typescript
+// Agent checkpoint schema for resumption after restart
+interface AgentCheckpoint {
+agentId: string; // Agent BC identifier (e.g., "churn-detector")
+subscriptionId: string; // Subscription instance ID
+lastProcessedPosition: number; // -1 = no events processed
+lastEventId: string; // For causation tracking
+status: "active" | "paused" | "stopped";
+eventsProcessed: number;
+updatedAt: number;
+}
+
+// onComplete handler updates checkpoint and records audit
+export const handleAnalysisResult = internalMutation({
+args: vOnCompleteValidator(v.object({
+agentId: v.string(),
+eventId: v.string(),
+globalPosition: v.number(),
+correlationId: v.string(),
+})),
+handler: async (ctx, { context, result }) => {
+if (result.kind === "success") {
+// Update checkpoint on success
+await patchAgentCheckpoint(ctx, context.agentId, {
+lastProcessedPosition: context.globalPosition,
+lastEventId: context.eventId,
+});
+// Emit audit event
+await emitAgentAuditEvent(ctx, "AgentAnalysisCompleted", context);
+} else {
+// Record to agent dead letter queue (don't advance checkpoint)
+await recordAgentDeadLetter(ctx, context, result.error);
+await emitAgentAuditEvent(ctx, "AgentAnalysisFailed", context);
+}
+},
+});
+"""
+Note: Checkpoint updates ensure agents resume from the correct position after restarts.
+Failed events are recorded to dead letter queue without advancing the checkpoint.
+
+**Option B: Workflow-Based Agent (Fully Durable)**
+"""typescript
+// Durable agent workflow that survives restarts mid-analysis
+export const agentAnalysisWorkflow = workflow.define({
+args: { event: v.any(), patternWindow: v.any() },
+handler: async (ctx, { event, patternWindow }): Promise<AgentDecision> => {
+// Step 1: Load historical events (durable checkpoint)
+const history = await ctx.runQuery(internal.events.loadWindow, patternWindow);
+
+      // Step 2: LLM analysis (retryable action)
+      const analysis = await ctx.runAction(
+        internal.agent.llmAnalyze,
+        { event, history },
+        { retry: { maxAttempts: 5, initialBackoffMs: 2000, base: 2 } }
+      );
+
+      // Step 3: Human approval if needed (can wait days)
+      if (analysis.requiresApproval) {
+        const approval = await ctx.awaitEvent({ name: "humanApproval" });
+        if (!approval.approved) return { status: "rejected" };
+      }
+
+      // Step 4: Emit command (mutation step)
+      await ctx.runMutation(internal.commands.emit, {
+        command: analysis.suggestedCommand,
+        metadata: { confidence: analysis.confidence, reason: analysis.reason },
+      });
+
+      return { status: "executed", command: analysis.suggestedCommand };
+    },
+
+});
+"""
+
+- Best for: Long-running analysis, human-in-loop with multi-day waits, complex multi-step agents
+- Guarantees: Full durability (survives restarts), awaitEvent for external signals, nested workflows
+
+**Decision Criteria:**
+| Criterion | Use Workpool | Use Workflow |
+| Analysis duration | < 30 seconds | > 30 seconds or unpredictable |
+| Human-in-loop | Separate flow (poll CMS) | awaitEvent() in same flow |
+| Multi-step with waits | No | Yes |
+| Throughput priority | High | Moderate |
+| Complexity | Lower | Higher (determinism rules) |
+
+**Note on Dependencies:** Phase 21 (IntegrationPatterns) is NOT a blocking dependency.
+Agent BC consumes domain events via existing EventBus and fat events (Phase 20).
+Phase 21's Published Language is an optional enhancement for cross-BC integration.
+
+**Note on Scheduling:** For scheduled agent triggers (periodic pattern analysis, approval
+timeouts), Agent BC can use `@convex-dev/crons` directly. The Time-Triggered PM (Phase 23)
+is an optional enhancement providing rate-limiting, hybrid triggers, and PM-specific lifecycle
+management. Basic scheduling does NOT require Phase 23.
+
+**Agent BC Architecture:**
+"""
+EventBus Agent BC Command Bus
+│ │ │
+│ OrderSubmitted ──────>│ Pattern Detection ────────>│ SuggestOutreach
+│ OrderCancelled ──────>│ (@convex-dev/agent) │
+│ PaymentFailed ──────>│ │ │
+│ │ Audit Trail │
+│ │ (AgentDecisionMade) │
+"""
+
+**Core Type Definitions:**
+
+| Type | Location | Description |
+| AgentBCConfig | platform-core/src/agent/types.ts | Full agent configuration |
+| PatternDefinition | platform-core/src/agent/patterns.ts | Pattern with trigger and analysis |
+| PatternWindow | platform-core/src/agent/patterns.ts | Time/event window constraints |
+| AgentSubscription | platform-core/src/agent/subscription.ts | Active subscription handle |
+| AgentDecision | platform-core/src/agent/types.ts | Analysis result with action |
+| HumanInLoopConfig | platform-core/src/agent/approval.ts | Approval workflow settings |
+| AgentCheckpoint | platform-core/src/agent/checkpoint.ts | Position tracking state |
+| AgentAuditEvent | platform-core/src/agent/audit.ts | Decision audit record |
+| RateLimitConfig | platform-core/src/agent/rate-limit.ts | LLM call throttling |
+
+**AgentBCConfig Fields:**
+
+| Field | Type | Required | Default | Description |
+| id | string | Yes | - | Unique agent identifier |
+| subscriptions | string[] | Yes | - | Event types to subscribe |
+| patternWindow | PatternWindow | Yes | - | Window constraints |
+| confidenceThreshold | number | Yes | - | Auto-execute threshold (0-1) |
+| humanInLoop | HumanInLoopConfig | No | {} | Approval requirements |
+| rateLimits | RateLimitConfig | No | null | LLM rate limiting |
+| onEvent | EventHandler | Yes | - | Event processing handler |
+
+**PatternWindow Fields:**
+
+| Field | Type | Required | Default | Description |
+| duration | string | Yes | - | Time window (e.g., 7d, 30d) |
+| eventLimit | number | No | 100 | Max events to load |
+| minEvents | number | No | 1 | Min events to trigger |
+| loadBatchSize | number | No | 50 | Lazy loading batch size |
+
+**AgentDecision Fields:**
+
+| Field | Type | Description |
+| command | string or null | Command to emit, null if no action |
+| payload | unknown | Command payload |
+| confidence | number | Analysis confidence (0-1) |
+| reason | string | Human-readable explanation |
+| requiresApproval | boolean | Needs human review |
+| triggeringEvents | string[] | Event IDs that triggered |
+
+**Key Concepts:**
+| Concept | Description | Example |
+| Event Subscription | Agent subscribes to relevant event types | OrderSubmitted, PaymentFailed |
+| Pattern Window | Events within time window for analysis | 7 days, max 100 events |
+| Confidence Threshold | Minimum confidence for auto-execution | 0.8 (80%) |
+| Human-in-Loop | Flag for review vs auto-execute | Low confidence → review |
+| Audit Trail | All agent decisions logged as events | AgentDecisionMade |
+
+**Pattern Examples:**
+| Pattern | Trigger | Agent Response | Confidence |
+| ChurnRisk | Multiple cancellations in 30d | SuggestCustomerOutreach | 0.75 |
+| FraudRisk | Unusual order frequency | FlagForReview | 0.90 |
+| InventoryAlert | Low stock + high demand | SuggestReorder | 0.85 |
+| AnomalyDetection | Deviation from normal patterns | InvestigateAnomaly | 0.70 |
+
+**Current State (manual invocation):**
+"""typescript
+// Manual agent invocation - not integrated with events
+const response = await agent.chat('Analyze this order');
+"""
+
+**Target State (event-reactive agent):**
+"""typescript
+// Agent BC subscribes to events and emits commands
+const agentBC = createAgentBC({
+subscriptions: ['OrderSubmitted', 'OrderCancelled', 'PaymentFailed'],
+patternWindow: { duration: '7d', eventLimit: 100 },
+confidenceThreshold: 0.8,
+humanInLoop: { requiresApproval: ['HighValueOrder'] },
+onEvent: async (event, ctx) => {
+const analysis = await ctx.agent.analyze(event, ctx.history);
+if (analysis.confidence > ctx.confidenceThreshold) {
+return { command: analysis.suggestedCommand, confidence: analysis.confidence };
+}
+return null;
+}
+});
+"""
+
+**Agent BC Initialization:**
+"""typescript
+// Bootstrap agent BC with EventBus registration
+export async function initializeAgentBC(
+ctx: MutationCtx,
+components: { eventBus: EventBusComponent; agent: AgentComponent },
+config: AgentBCConfig
+): Promise<AgentSubscription> {
+// 1. Validate configuration
+const validation = validateAgentBCConfig(config);
+if (!validation.ok) throw new AgentConfigError(validation.error);
+
+    // 2. Create or resume checkpoint
+    const checkpoint = await getOrCreateCheckpoint(ctx, config.id);
+
+    // 3. Register EventBus subscription
+    const subscription = await components.eventBus.subscribe({
+      name: `agent:${config.id}`,
+      eventTypes: config.subscriptions,
+      handler: internal.agent.handleEvent,
+      startPosition: checkpoint.lastProcessedPosition + 1,
+      partitionKey: (event) => event.streamId,
+    });
+
+    // 4. Return subscription handle
+    return {
+      subscriptionId: subscription.id,
+      agentId: config.id,
+      pause: () => pauseAgent(ctx, config.id),
+      resume: () => resumeAgent(ctx, config.id),
+      unsubscribe: () => unsubscribeAgent(ctx, config.id),
+    };
+
+}
+"""
+
+**AgentSubscription Return Type:**
+
+| Field | Type | Description |
+| subscriptionId | string | EventBus subscription ID |
+| agentId | string | Agent BC identifier |
+| pause | function | Pause event processing |
+| resume | function | Resume from checkpoint |
+| unsubscribe | function | Stop and cleanup |
+
+**Configuration Validators:**
+"""typescript
+import { v } from "convex/values";
+
+export const vPatternWindow = v.object({
+duration: v.string(),
+eventLimit: v.optional(v.number()),
+minEvents: v.optional(v.number()),
+loadBatchSize: v.optional(v.number()),
+});
+
+export const vHumanInLoopConfig = v.object({
+confidenceThreshold: v.optional(v.number()),
+requiresApproval: v.optional(v.array(v.string())),
+autoApprove: v.optional(v.array(v.string())),
+approvalTimeout: v.optional(v.string()),
+});
+
+export const vRateLimitConfig = v.object({
+maxRequestsPerMinute: v.number(),
+maxConcurrent: v.optional(v.number()),
+queueDepth: v.optional(v.number()),
+});
+
+export const vAgentBCConfig = v.object({
+id: v.string(),
+subscriptions: v.array(v.string()),
+patternWindow: vPatternWindow,
+confidenceThreshold: v.number(),
+humanInLoop: v.optional(vHumanInLoopConfig),
+rateLimits: v.optional(vRateLimitConfig),
+});
+"""
+
+#### Dependencies
+
+- Depends on: ReactiveProjections
+- Depends on: EcstFatEvents
+
+#### Acceptance Criteria
+
+**Agent receives subscribed events**
+
+- Given an agent subscribed to OrderSubmitted, OrderCancelled
+- When an OrderSubmitted event is published
+- Then the agent should receive the event
+- And event should include full fat-event payload
+
+**Agent receives filtered events only**
+
+- Given an agent subscribed with filter amount > 100
+- When OrderSubmitted with amount 50 is published
+- And OrderSubmitted with amount 150 is published
+- Then the agent should receive only the 150 event
+
+**Agent receives events in order**
+
+- Given an agent subscribed to OrderSubmitted
+- When events E1, E2, E3 are published in sequence
+- Then the agent receives events in same order
+
+**Agent resumes from last processed position after restart**
+
+- Given an agent subscribed to OrderSubmitted
+- And agent has processed events up to position 100
+- When server restarts
+- And agent subscription resumes
+- Then processing should continue from position 101
+- And no events should be reprocessed
+- And no events should be lost
+
+**Agent configuration validation**
+
+- Given an agent configuration with <violation>
+- When the agent is initialized
+- Then it should fail with code "<error_code>"
+- And error message should indicate "<message>"
+
+**Agent detects multiple cancellations pattern**
+
+- Given events for customer "cust_123":
+- When agent analyzes pattern window
+- Then "ChurnRisk" pattern should be detected
+- And confidence should be above 0.8
+
+| type           | timestamp            |
+| -------------- | -------------------- |
+| OrderCancelled | 2026-01-10T10:00:00Z |
+| OrderCancelled | 2026-01-11T10:00:00Z |
+| OrderCancelled | 2026-01-12T10:00:00Z |
+
+**Agent uses LLM for pattern analysis**
+
+- Given a pattern window with 10 order events
+- When agent invokes LLM analysis
+- Then analysis includes detected patterns
+- And analysis includes confidence scores
+- And analysis includes reasoning
+
+**Pattern window respects time boundary**
+
+- Given events spanning 60 days
+- And pattern window duration is 30 days
+- When agent analyzes pattern
+- Then only events from last 30 days are considered
+
+**Pattern window loads events lazily for memory efficiency**
+
+- Given pattern window duration is 30 days
+- And 1000 events exist within the pattern window
+- When pattern trigger is evaluated
+- Then events should be loaded in batches
+- And memory usage should remain bounded
+- And all relevant events should still be considered for pattern detection
+
+**Pattern definition validation**
+
+- Given a pattern definition with <violation>
+- When the pattern is registered
+- Then it should fail with code "<error_code>"
+
+**Agent emits recommendation command**
+
+- Given a detected ChurnRisk pattern
+- When agent decides to act
+- Then SuggestCustomerOutreach command should be emitted
+- And command should include:
+
+| field           | value                                 |
+| --------------- | ------------------------------------- |
+| reason          | Multiple order cancellations detected |
+| suggestedAction | Proactive support call                |
+| confidence      | 0.85                                  |
+
+**Command includes triggering event references**
+
+- Given a detected pattern from events E1, E2, E3
+- When agent emits command
+- Then command.metadata.eventIds contains [E1.id, E2.id, E3.id]
+- And events can be traced back from command
+
+**Command requires minimum metadata**
+
+- Given an agent attempting to emit command without reason
+- When emitCommand is called
+- Then an error is thrown with code "REASON_REQUIRED"
+
+**LLM rate limit is handled with exponential backoff**
+
+- Given an agent attempting LLM analysis
+- And LLM API returns 429 rate limit error
+- When agent retries the analysis
+- Then retry should use exponential backoff
+- And event processing queue should not be blocked
+- And retry attempts should be logged for observability
+
+**Command validation**
+
+- Given an agent command with <violation>
+- When emitCommand is called
+- Then it should fail with code "<error_code>"
+
+**LLM error handling**
+
+- Given an agent attempting LLM analysis
+- And LLM API returns <error_type>
+- When the error is handled
+- Then recovery action should be "<recovery>"
+- And error should be logged with code "<error_code>"
+
+**Action based on confidence threshold**
+
+- Given confidence threshold is 0.8
+- And agent detects pattern with confidence <confidence>
+- When determining action
+- Then execution mode should be "<mode>"
+
+**High-risk actions always require approval**
+
+- Given an action type in requiresApproval list
+- And agent confidence is 0.99
+- When determining action
+- Then execution mode should be "flag-for-review"
+
+**Pending approval expires after timeout**
+
+- Given an action flagged for review
+- And approval timeout is 24 hours
+- When 24 hours pass without approval
+- Then action status becomes "expired"
+- And AgentActionExpired event is recorded
+
+**Rate limiter throttles excessive LLM calls**
+
+- Given rate limit is 60 requests per minute
+- And agent has made 60 LLM calls this minute
+- When another event triggers LLM analysis
+- Then the call should be queued
+- And processed when rate limit window resets
+
+**Queue overflow triggers backpressure**
+
+- Given queue depth limit is 100
+- And 100 events are queued for LLM analysis
+- When another event arrives
+- Then event should be sent to dead letter queue
+- And AgentQueueOverflow alert should be emitted
+
+**Cost budget exceeded pauses agent**
+
+- Given daily cost budget is 100.00 USD
+- And agent has spent 100.00 USD today
+- When another LLM call is attempted
+- Then agent should be paused
+- And AgentBudgetExceeded alert should be emitted
+
+**Agent decision creates audit event**
+
+- Given an agent decision to emit SuggestCustomerOutreach
+- When the command is emitted
+- Then AgentDecisionMade event should be recorded
+- And event should include pattern, reasoning, and action
+
+**Audit includes LLM metadata**
+
+- Given an agent using LLM for pattern analysis
+- When decision is made
+- Then AgentDecisionMade includes llmContext
+- And llmContext has model, tokens, duration
+
+**Query agent decision history**
+
+- Given agent has made 10 decisions
+- When I query AgentDecisionMade events for agent BC
+- Then I receive all 10 decision records
+- And each includes full audit trail
+
+**Audit captures rejected actions**
+
+- Given an agent decision that was flagged for review
+- And human reviewer rejected the action
+- When AgentActionRejected event is recorded
+- Then it includes reviewerId and rejectionReason
+
+#### Business Rules
+
+**Agent subscribes to relevant event streams**
+
+EventBus delivers events to agent BC like any other subscriber.
+
+    **Subscription API:**
+
+```typescript
+// Agent BC subscribes to specific event types
+const subscription = agentBC.subscribe({
+  eventTypes: ["OrderSubmitted", "OrderCancelled", "PaymentFailed"],
+  filter: (event) => event.payload.amount > 100, // Optional filter
+  handler: agentAnalysisHandler,
+});
+// Events delivered as fat events with full context
+```
+
+_Verified by: Agent receives subscribed events, Agent receives filtered events only, Agent receives events in order, Agent resumes from last processed position after restart, Agent configuration validation_
+
+**Agent detects patterns across events**
+
+Pattern window groups events for analysis (LLM or rule-based).
+
+    **Pattern Detection API:**
+
+```typescript
+// Define pattern with detection criteria
+const churnRiskPattern = definePattern({
+  name: "ChurnRisk",
+  window: { duration: "30d", minEvents: 3 },
+  trigger: (events) => {
+    const cancellations = events.filter((e) => e.type === "OrderCancelled");
+    return cancellations.length >= 3;
+  },
+  analyze: async (events, agent) => {
+    // LLM analysis for deeper insight
+    return await agent.analyze({
+      prompt: "Analyze churn risk from these cancellation patterns",
+      events,
+    });
+  },
+});
+```
+
+_Verified by: Agent detects multiple cancellations pattern, Agent uses LLM for pattern analysis, Pattern window respects time boundary, Pattern window loads events lazily for memory efficiency, Pattern definition validation_
+
+**Agent emits commands with explainability**
+
+Commands include reasoning and suggested action.
+
+    **Command Emission API:**
+
+```typescript
+// Agent emits command with full explainability
+await agentBC.emitCommand({
+  type: "SuggestCustomerOutreach",
+  payload: {
+    customerId: pattern.customerId,
+    suggestedAction: "Proactive support call",
+  },
+  metadata: {
+    patternId: pattern.id,
+    confidence: 0.85,
+    reason: "Multiple order cancellations detected",
+    analysis: analysisResult, // Full LLM response
+    eventIds: triggeringEvents.map((e) => e.id),
+  },
+});
+```
+
+**LLM Fault Isolation (Optional Enhancement):**
+For production deployments, wrap LLM calls with Phase 18's circuit breaker:
+
+```typescript
+const analysis = await withCircuitBreaker(
+  ctx,
+  "llm-provider",
+  async () => {
+    return await agent.analyze({ event, history });
+  },
+  { failureThreshold: 5, resetTimeoutMs: 60000 }
+);
+```
+
+This triggers fallback to rule-based analysis when LLM is unavailable,
+preventing cascade failures during LLM provider outages.
+
+_Verified by: Agent emits recommendation command, Command includes triggering event references, Command requires minimum metadata, LLM rate limit is handled with exponential backoff, Command validation, LLM error handling_
+
+**Human-in-loop controls automatic execution**
+
+High-confidence actions can auto-execute; low-confidence require approval.
+
+    **Human-in-Loop Configuration:**
+
+```typescript
+// Configure approval requirements
+const humanInLoopConfig = {
+  confidenceThreshold: 0.8, // Below this → require approval
+  requiresApproval: [
+    "HighValueOrder", // Always require approval
+    "AccountSuspension", // Always require approval
+  ],
+  autoApprove: [
+    "LowRiskNotification", // Always auto-execute
+  ],
+  approvalTimeout: "24h", // Expire pending approvals
+};
+```
+
+**Approval Timeout Implementation (Workflow sleepUntil):**
+Race approval event vs timeout using workflow primitives:
+
+```typescript
+const expirationTime = Date.now() + config.approvalTimeoutMs;
+const approval = await Promise.race([
+  ctx.awaitEvent({ name: "humanApproval", filter: { actionId } }),
+  ctx.sleepUntil(expirationTime).then(() => ({ expired: true as const })),
+]);
+if ("expired" in approval && approval.expired) {
+  await ctx.runMutation(internal.agent.expireApproval, { actionId });
+  return { status: "expired" };
+}
+```
+
+Using workflow `sleepUntil()` racing with `awaitEvent()` is simpler than
+scheduler-based timeouts because workflow state is inherently durable.
+
+_Verified by: Action based on confidence threshold, High-risk actions always require approval, Pending approval expires after timeout_
+
+**LLM calls are rate-limited to prevent abuse and manage costs**
+
+Rate limiting protects against runaway costs and API throttling.
+
+    **Rate Limit Configuration:**
+
+```typescript
+const rateLimitConfig = {
+  maxRequestsPerMinute: 60, // LLM API calls per minute
+  maxConcurrent: 5, // Concurrent LLM calls
+  queueDepth: 100, // Max queued events before backpressure
+  costBudget: {
+    daily: 100.0, // USD per day
+    alertThreshold: 0.8, // Alert at 80% of budget
+  },
+};
+```
+
+_Verified by: Rate limiter throttles excessive LLM calls, Queue overflow triggers backpressure, Cost budget exceeded pauses agent_
+
+**All agent decisions are audited**
+
+Audit trail captures pattern detection, reasoning, and outcomes.
+
+    **Audit Event Structure:**
+
+```typescript
+// AgentDecisionMade event structure
+    {
+      type: 'AgentDecisionMade',
+      streamId: agentBC.id,
+      payload: {
+        decisionId: 'dec_abc123',
+        patternDetected: 'ChurnRisk',
+        confidence: 0.85,
+        reasoning: 'Customer had 3 cancellations in 14 days',
+        action: {
+          type: 'SuggestCustomerOutreach',
+          executionMode: 'auto-execute',
+        },
+        triggeringEvents: ['evt_1', 'evt_2', 'evt_3'],
+        llmContext: {
+          model: 'claude-3-sonnet',
+          tokens: 1523,
+          duration: 1.2,
+        }
+      }
+    }
+```
+
+_Verified by: Agent decision creates audit event, Audit includes LLM metadata, Query agent decision history, Audit captures rejected actions_
+
+---
+
+[← Back to Roadmap](../ROADMAP.md)

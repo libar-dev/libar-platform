@@ -9,10 +9,16 @@
 
 // PM definitions
 export { orderNotificationPM } from "./orderNotification";
+export { reservationReleasePM } from "./reservationRelease";
 export type { OrderConfirmedPayload } from "./orderNotification";
+export type { OrderCancelledPayload } from "./reservationRelease";
 
 // PM executors
 export { orderNotificationExecutor } from "./orderNotification";
+export { reservationReleaseExecutor } from "./reservationRelease";
 
-// Handler mutations are exposed via internal.processManagers.orderNotification
+// PM handler references for EventBus subscriptions
+export { handleOrderCancelledRef } from "./reservationRelease";
+
+// Handler mutations are exposed via internal.processManagers.*
 // and registered via EventBus subscriptions

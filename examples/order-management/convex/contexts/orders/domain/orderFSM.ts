@@ -25,7 +25,7 @@ import type { OrderStatus } from "./order.js";
  * - draft → cancelled (CancelOrder command)
  * - submitted → confirmed (ConfirmOrder command)
  * - submitted → cancelled (CancelOrder command)
- * - confirmed → (terminal)
+ * - confirmed → cancelled (CancelOrder command)
  * - cancelled → (terminal)
  */
 export const orderFSM = defineFSM<OrderStatus>({
@@ -33,7 +33,7 @@ export const orderFSM = defineFSM<OrderStatus>({
   transitions: {
     draft: ["submitted", "cancelled"],
     submitted: ["confirmed", "cancelled"],
-    confirmed: [], // terminal state
+    confirmed: ["cancelled"], // can cancel confirmed orders
     cancelled: [], // terminal state
   },
 });

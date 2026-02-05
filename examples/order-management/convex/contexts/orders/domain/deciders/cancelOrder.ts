@@ -2,7 +2,7 @@
  * CancelOrder decider - pure decision logic.
  *
  * Validates that an order can be cancelled and produces OrderCancelled event.
- * Only draft and submitted orders can be cancelled.
+ * Draft, submitted, and confirmed orders can be cancelled.
  */
 
 import type { DeciderOutput, Decider } from "@libar-dev/platform-core/decider";
@@ -24,7 +24,7 @@ import type {
  *
  * Invariants:
  * - Order must not already be cancelled
- * - Order must not be confirmed (terminal state)
+ * - FSM must allow transition to cancelled
  *
  * @param state - Current OrderCMS state
  * @param command - CancelOrder command input
@@ -41,15 +41,11 @@ export function decideCancelOrder(
     return rejected("ORDER_ALREADY_CANCELLED", "Order has already been cancelled");
   }
 
-  if (state.status === "confirmed") {
-    return rejected("ORDER_ALREADY_CONFIRMED", "Order has already been confirmed");
-  }
-
-  // Validate FSM transition (handles any other invalid states)
+  // Validate FSM transition (handles invalid states including terminal states)
   if (!orderFSM.canTransition(state.status, "cancelled")) {
     return rejected(
       "ORDER_CANNOT_BE_CANCELLED",
-      `Cannot cancel order in ${state.status} status. Only draft or submitted orders can be cancelled.`
+      `Cannot cancel order in ${state.status} status. Only draft, submitted, or confirmed orders can be cancelled.`
     );
   }
 

@@ -1,7 +1,7 @@
 @libar-docs
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:ConfirmedOrderCancellation
-@libar-docs-status:roadmap
+@libar-docs-status:active
 @libar-docs-phase:22
 @libar-docs-effort:2d
 @libar-docs-product-area:Platform
@@ -43,14 +43,14 @@ Feature: Confirmed Order Cancellation with Reservation Release
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Order FSM confirmed->cancelled transition | Pending | contexts/orders/domain/orderFSM.ts | Yes | behavior |
-      | CancelOrder decider remove confirmed rejection | Pending | contexts/orders/domain/deciders/cancelOrder.ts | Yes | behavior |
-      | ReservationReleaseOnOrderCancel PM | Pending | processManagers/reservationRelease.ts | Yes | integration |
-      | PM subscription registration | Pending | eventSubscriptions.ts | Yes | integration |
-      | order-evolve.feature update | Pending | tests/features/behavior/deciders/order-evolve.feature | - | - |
-      | cancel-order.decider.feature update | Pending | tests/features/behavior/deciders/cancel-order.decider.feature | - | - |
-      | cancel-order.feature (behavior) update | Pending | tests/features/behavior/orders/cancel-order.feature | - | - |
-      | cancel-order.feature (integration) update | Pending | tests/integration-features/orders/cancel-order.feature | - | - |
+      | Order FSM confirmed->cancelled transition | Implemented | contexts/orders/domain/orderFSM.ts | Yes | behavior |
+      | CancelOrder decider remove confirmed rejection | Implemented | contexts/orders/domain/deciders/cancelOrder.ts | Yes | behavior |
+      | ReservationReleaseOnOrderCancel PM | Implemented | processManagers/reservationRelease.ts | Yes | integration |
+      | PM subscription registration | Implemented | eventSubscriptions.ts | Yes | integration |
+      | order-evolve.feature update | Implemented | tests/features/behavior/deciders/order-evolve.feature | - | - |
+      | cancel-order.decider.feature update | Implemented | tests/features/behavior/deciders/cancel-order.decider.feature | - | - |
+      | cancel-order.feature (behavior) update | Implemented | tests/features/behavior/orders/cancel-order.feature | - | - |
+      | cancel-order.feature (integration) update | Implemented | tests/integration-features/orders/cancel-order.feature | - | - |
 
   Rule: Confirmed orders can be cancelled
 
