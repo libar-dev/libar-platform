@@ -5,13 +5,20 @@ Feature: Agent Approval Workflow
   So that automated actions require human oversight before execution
 
   # ===========================================================================
-  # E2E Test Gaps - Critical Integration Flows
+  # E2E Test Coverage and Gaps
   # ===========================================================================
-  # @e2e-required: Full flow from order cancellations -> agent detection -> approval -> command emission
-  #   Setup: Create customer, place 3+ orders, cancel each order
-  #   Expected: Agent detects churn pattern, creates pending approval, admin approves, command emitted
-  #   Timing: May take 5-30s for Workpool to process events
   #
+  # COVERED BY SPECS:
+  # ✓ Full flow from order cancellations -> agent detection -> approval -> command emission
+  #   See: full-order-journey.feature "Full agent trigger journey - Churn risk detection"
+  #
+  # ✓ Decision History tab - agent audit trail visibility
+  #   See: "Agent Decision History Tab" section below
+  #
+  # ✓ Customer Risk Preview - customers approaching threshold
+  #   See: "Customer Risk Preview" section below
+  #
+  # REMAINING E2E GAPS:
   # @e2e-required: Real-time approval list updates when new approval created
   #   Setup: Admin viewing approval list, trigger new cancellation in separate tab
   #   Expected: New approval card appears without page refresh (reactive query)
@@ -24,9 +31,6 @@ Feature: Agent Approval Workflow
   #   Setup: Create approval with short expiration (e.g., 1 minute)
   #   Expected: Cron job marks approval as expired, UI reflects expired state
   #
-  # @e2e-required: Agent pattern detection with projection-based lookup
-  #   Verify: customerCancellations projection is updated on OrderCancelled events
-  #   Verify: Agent uses O(1) projection lookup instead of N+1 event queries
   # ===========================================================================
 
   Background:
@@ -203,6 +207,75 @@ Feature: Agent Approval Workflow
     Given there are no agent checkpoints
     When I view the monitoring tab
     Then I should see an empty state message
+
+  # ===========================================================================
+  # Agent Decision History Tab (Audit Trail)
+  # ===========================================================================
+  # The Decision History tab displays past agent decisions from agentAuditEvents.
+  # This provides visibility into what the agent has detected and decided,
+  # even when no approvals are pending.
+  # ===========================================================================
+
+  @happy-path @audit
+  Scenario: View agent decision history
+    Given the agent has made decisions in the past
+    When I click the "Decision History" tab
+    Then I should see a list of past agent decisions
+    And each decision should display the event type
+    And each decision should display the timestamp
+    And each decision should display the confidence level
+    And each decision should display the action taken
+
+  @audit @detail
+  Scenario: View decision detail with reasoning
+    Given the agent has made a decision with ID "dec_123"
+    When I click on the decision in the history list
+    Then I should see the full reasoning text
+    And I should see the triggering event IDs
+    And I should see whether approval was required
+
+  @empty-state @audit
+  Scenario: Empty decision history
+    Given the agent has not made any decisions yet
+    When I view the "Decision History" tab
+    Then I should see an empty state message
+    And the message should explain what will appear here
+
+  # ===========================================================================
+  # Customer Risk Preview (Pattern Detection Progress)
+  # ===========================================================================
+  # The Risk Preview shows customers approaching the churn detection threshold.
+  # This uses the customerCancellations projection to display:
+  # - Customers with 1+ cancellations (sorted by count descending)
+  # - Progress toward threshold (e.g., "2/3 cancellations")
+  # ===========================================================================
+
+  @happy-path @risk-preview
+  Scenario: View customers approaching churn threshold
+    Given customers exist with the following cancellation counts:
+      | customerId     | cancellations | threshold |
+      | cust_alice     | 2             | 3         |
+      | cust_bob       | 1             | 3         |
+      | cust_charlie   | 0             | 3         |
+    When I view the "Risk Preview" section
+    Then I should see customers ordered by proximity to threshold
+    And I should see "cust_alice" with progress "2/3"
+    And I should see "cust_bob" with progress "1/3"
+    And I should not see "cust_charlie" (no cancellations)
+
+  @risk-preview @progress
+  Scenario: Customer risk progress indicator
+    Given customer "cust_at_risk" has 2 of 3 cancellations
+    When I view the risk preview
+    Then the progress bar for "cust_at_risk" should show approximately 66%
+    And the progress should be accessible (not color-only per WCAG 1.4.1)
+
+  @empty-state @risk-preview
+  Scenario: No customers approaching threshold
+    Given no customers have any cancellations
+    When I view the risk preview
+    Then I should see a message indicating no customers are at risk
+    And the message should explain what will appear here
 
   # ===========================================================================
   # Accessibility

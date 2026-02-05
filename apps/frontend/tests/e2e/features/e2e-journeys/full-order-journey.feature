@@ -223,11 +223,107 @@ Feature: Full Order Journey
     Then the product "DCB Product High" should show "100" units in stock
     And the product "DCB Product Low" should show "5" units in stock
 
+  # ===========================================================================
   # NOTE: "Cancel a draft order" scenario was removed because:
   # 1. The UI doesn't support draft orders - "Create Order" button atomically
   #    creates + adds items + submits the order in one operation
-  # 2. The cancel button only appears for status="draft", but orders go
-  #    directly from non-existent → submitted → confirmed
-  # 3. To test draft cancellation, a "Save as Draft" feature would need
-  #    to be added to the UI first
-  # See: ADR or git history for details
+  # 2. Orders go directly from non-existent → submitted → confirmed
+  # 3. Cancel is now supported for submitted/confirmed orders (see order-detail.feature)
+  # ===========================================================================
+
+  @agent-bc @eventual-consistency @critical
+  Scenario: Full agent trigger journey - Churn risk detection
+    # ============================================
+    # This journey validates the complete Agent BC flow:
+    # 1. Customer places and cancels multiple orders
+    # 2. Agent detects churn risk pattern via customerCancellations projection
+    # 3. Admin reviews and approves agent recommendation
+    # 4. Decision is recorded in audit trail
+    #
+    # NOTE: Default threshold is 3 cancellations in 30 days.
+    # For faster testing, use demo mode (threshold=1) or create 3 orders.
+    # ============================================
+
+    # ============================================
+    # Step 1: Setup - Create product with stock
+    # ============================================
+    Given I am on the admin products page
+    When I fill in product details:
+      | name              | sku     | price |
+      | Agent Test Widget | AGT-001 | 50.00 |
+    And I click "Create Product"
+    Then I should see a success message containing "created successfully"
+
+    When I switch to the "Add Stock" tab
+    And I select the product "Agent Test Widget"
+    And I enter quantity 100
+    And I click "Add Stock"
+    Then I should see a success message containing "Stock added"
+
+    # ============================================
+    # Step 2: Customer creates first order (same customer for all)
+    # ============================================
+    When I navigate to the create order page
+    # Note: Customer ID is auto-generated or can be set if UI supports it
+    And I add "Agent Test Widget" to the cart with quantity 1
+    And I submit the order
+    Then I should be redirected to the order detail page
+    And eventually the order status should be "confirmed"
+
+    # ============================================
+    # Step 3: Cancel first order
+    # ============================================
+    When I click "Cancel Order"
+    And I confirm the cancellation in the dialog
+    Then eventually the order status should be "cancelled"
+
+    # ============================================
+    # Step 4: Create and cancel second order (same customer)
+    # Repeat the flow to reach threshold
+    # ============================================
+    When I navigate to the create order page
+    And I add "Agent Test Widget" to the cart with quantity 1
+    And I submit the order
+    Then I should be redirected to the order detail page
+    And eventually the order status should be "confirmed"
+    When I click "Cancel Order"
+    And I confirm the cancellation in the dialog
+    Then eventually the order status should be "cancelled"
+
+    # ============================================
+    # Step 5: Create and cancel third order (triggers agent)
+    # ============================================
+    When I navigate to the create order page
+    And I add "Agent Test Widget" to the cart with quantity 1
+    And I submit the order
+    Then I should be redirected to the order detail page
+    And eventually the order status should be "confirmed"
+    When I click "Cancel Order"
+    And I confirm the cancellation in the dialog
+    Then eventually the order status should be "cancelled"
+
+    # ============================================
+    # Step 6: Verify agent detected the pattern
+    # Agent processes events via Workpool (may take 5-30s)
+    # ============================================
+    When I navigate to the agents admin page
+    Then eventually I should see a pending approval
+    And the approval should be for "SuggestCustomerOutreach"
+    And the confidence should be displayed
+
+    # ============================================
+    # Step 7: Admin reviews and approves recommendation
+    # ============================================
+    When I click on the pending approval
+    And I enter review note "Verified customer history - proceeding with outreach"
+    And I click "Approve"
+    Then I should see a success indication
+    And I should be redirected to the approvals list
+
+    # ============================================
+    # Step 8: Verify decision recorded in audit trail
+    # ============================================
+    When I click the "Decision History" tab
+    Then I should see the approved decision in the history
+    And the decision should show action "SuggestCustomerOutreach"
+    And the decision should show status "approved"
