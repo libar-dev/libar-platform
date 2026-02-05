@@ -27,8 +27,9 @@ import {
   type PMEventHandlerArgs,
 } from "@libar-dev/platform-core/processManager";
 import { createScopedLogger, type SafeMutationRef } from "@libar-dev/platform-core";
-import { PLATFORM_LOG_LEVEL } from "../infrastructure";
-const logger = createScopedLogger("PM:ReservationRelease", PLATFORM_LOG_LEVEL);
+// NOTE: Do not import PLATFORM_LOG_LEVEL from ../infrastructure here — it creates
+// a circular dependency (eventSubscriptions → this file → infrastructure → eventSubscriptions)
+const logger = createScopedLogger("PM:ReservationRelease", "INFO");
 
 // =============================================================================
 // Mutation References (TS2589 Prevention)
