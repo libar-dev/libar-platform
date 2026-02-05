@@ -1,5 +1,5 @@
 @libar-docs
-@libar-docs-status:active
+@libar-docs-status:completed
 @libar-docs-implements:AgentAsBoundedContext
 @libar-docs-phase:22
 @libar-docs-product-area:Platform
