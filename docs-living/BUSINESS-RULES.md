@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 114 rules from 24 features across 2 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 115 rules from 24 features across 2 product areas.**
 
 ---
 
@@ -1140,6 +1140,12 @@ High-confidence actions can auto-execute; low-confidence require approval.
 
     Using workflow `sleepUntil()` racing with `awaitEvent()` is simpler than
     scheduler-based timeouts because workflow state is inherently durable.
+
+#### LLM calls are rate-limited to prevent abuse and manage costs
+
+Rate limiting protects against runaway costs and API throttling.
+
+    **Rate Limit Configuration:**
 
 #### All agent decisions are audited
 

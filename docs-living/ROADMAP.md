@@ -7,14 +7,14 @@
 
 ## Overall Progress
 
-**Patterns:** [█████████████████░░░] 50/59 (85%)
+**Patterns:** [█████████████████░░░] 52/61 (85%)
 
 **Phases:** 16/20 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 59    |
-| Completed      | 50    |
+| Total Patterns | 61    |
+| Completed      | 52    |
 | Active         | 1     |
 | Planned        | 8     |
 
@@ -22,28 +22,28 @@
 
 ## Phase Navigation
 
-| Phase                                                                                | Progress | Complete |
-| ------------------------------------------------------------------------------------ | -------- | -------- |
-| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                                 | 2/2      | 100%     |
-| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)                 | 1/1      | 100%     |
-| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                 | 1/1      | 100%     |
-| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)            | 1/1      | 100%     |
-| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                        | 1/1      | 100%     |
-| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                   | 3/3      | 100%     |
-| ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                      | 1/1      | 100%     |
-| ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                | 3/3      | 100%     |
-| ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                          | 1/1      | 100%     |
-| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)           | 3/3      | 100%     |
-| ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                          | 2/2      | 100%     |
-| ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)                  | 1/1      | 100%     |
-| ✅ [DynamicConsistencyBoundaries](phases/phase-16-dynamic-consistency-boundaries.md) | 1/1      | 100%     |
-| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)                    | 1/1      | 100%     |
-| 📋 [ProductionHardening](phases/phase-18-production-hardening.md)                    | 3/7      | 43%      |
-| ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
-| 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
-| 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
-| 📋 [AgentAsBoundedContext](phases/phase-22-agent-as-bounded-context.md)              | 0/1      | 0%       |
-| ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
+| Phase                                                                        | Progress | Complete |
+| ---------------------------------------------------------------------------- | -------- | -------- |
+| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                         | 2/2      | 100%     |
+| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)         | 1/1      | 100%     |
+| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)         | 1/1      | 100%     |
+| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)    | 1/1      | 100%     |
+| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                | 1/1      | 100%     |
+| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)           | 3/3      | 100%     |
+| ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)              | 1/1      | 100%     |
+| ✅ [CMSRepository](phases/phase-11-cms-repository.md)                        | 3/3      | 100%     |
+| ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                  | 1/1      | 100%     |
+| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)   | 3/3      | 100%     |
+| ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                  | 2/2      | 100%     |
+| ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)          | 1/1      | 100%     |
+| ✅ [DCBTypes](phases/phase-16-dcb-types.md)                                  | 3/3      | 100%     |
+| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)            | 1/1      | 100%     |
+| 📋 [ProductionHardening](phases/phase-18-production-hardening.md)            | 3/7      | 43%      |
+| ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md) | 1/1      | 100%     |
+| 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)              | 2/3      | 67%      |
+| 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)     | 0/2      | 0%       |
+| 📋 [AgentAsBoundedContext](phases/phase-22-agent-as-bounded-context.md)      | 0/1      | 0%       |
+| ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)   | 1/1      | 100%     |
 
 ---
 
@@ -177,12 +177,14 @@
 
 ---
 
-### ✅ DynamicConsistencyBoundaries
+### ✅ DCBTypes
 
-[███████████████] 1/1 100% complete
+[███████████████] 3/3 100% complete
 
 | Pattern                           | Status    | Description                                                                                                          |
 | --------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| ✅ DCB Scope Key Utilities        | completed | Functions for creating, parsing, and validating scope keys.                                                          |
+| ✅ DCB Types                      | completed | Types for scope-based multi-entity coordination within bounded contexts.                                             |
 | ✅ Dynamic Consistency Boundaries | completed | Problem: Cross-entity invariants within a bounded context currently require sequential commands (no atomicity) or... |
 
 ---

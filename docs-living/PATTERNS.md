@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [█████████████████░░░] 50/59 (85% complete)
+**Overall:** [█████████████████░░░] 52/61 (85% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 50    |
+| ✅ Completed | 52    |
 | 🚧 Active    | 1     |
 | 📋 Planned   | 8     |
-| **Total**    | 59    |
+| **Total**    | 61    |
 
 ---
 
@@ -26,7 +26,7 @@
 - [Event Sourcing](#event-sourcing) (1)
 - [Implements](#implements) (14)
 - [Infra](#infra) (1)
-- [Pattern](#pattern) (11)
+- [Pattern](#pattern) (13)
 
 ---
 
@@ -43,6 +43,8 @@
 | ✅ Command Bus Foundation                                | Completed Before Delivery Process | completed | Problem: Command execution requires idempotency (same command = same result), status tracking, and a standardized...     |
 | ✅ Command Orchestrator                                  | Core                              | completed | The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...     |
 | ✅ Correlation Chain System                              | Pattern                           | completed | Correlation types for tracking causal relationships in command-event flows.                                              |
+| ✅ DCB Scope Key Utilities                               | Pattern                           | completed | Functions for creating, parsing, and validating scope keys.                                                              |
+| ✅ DCB Types                                             | Pattern                           | completed | Types for scope-based multi-entity coordination within bounded contexts.                                                 |
 | ✅ Decider Pattern                                       | DDD                               | completed | Problem: Domain logic embedded in handlers makes testing require infrastructure.                                         |
 | ✅ Dual Write Contract                                   | Core                              | completed | BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...    |
 | ✅ Durable Append via Workpool Actions                   | Implements                        | completed | Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...   |
@@ -188,11 +190,13 @@
 
 ### Pattern
 
-11/11 complete (100%)
+13/13 complete (100%)
 
 - [✅ Bounded Context Identity](patterns/bounded-context-identity.md)
 - [✅ CMS Repository](patterns/cms-repository.md)
 - [✅ Correlation Chain System](patterns/correlation-chain-system.md)
+- [✅ DCB Scope Key Utilities](patterns/dcb-scope-key-utilities.md)
+- [✅ DCB Types](patterns/dcb-types.md)
 - [✅ Event Bus Abstraction](patterns/event-bus-abstraction.md)
 - [✅ Event Upcasting](patterns/event-upcasting.md)
 - [✅ Handler Factories](patterns/handler-factories.md)
@@ -213,14 +217,14 @@ graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
     ProjectionCheckpointing --> EventStoreFoundation
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -263,10 +267,6 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
     ReservationPattern -.-> DynamicConsistencyBoundaries
@@ -299,6 +299,10 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
 ```
 
 ---

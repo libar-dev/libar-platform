@@ -9,7 +9,7 @@
 
 | Metric             | Value |
 | ------------------ | ----- |
-| Completed Patterns | 50    |
+| Completed Patterns | 52    |
 | Completed Phases   | 16    |
 | Total Phases       | 20    |
 
@@ -142,10 +142,12 @@
 </details>
 
 <details>
-<summary>✅ DynamicConsistencyBoundaries (1 patterns)</summary>
+<summary>✅ DCBTypes (3 patterns)</summary>
 
 | Pattern                        | Description                                                                                                          |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| DCB Types                      | Types for scope-based multi-entity coordination within bounded contexts.                                             |
+| DCB Scope Key Utilities        | Functions for creating, parsing, and validating scope keys.                                                          |
 | Dynamic Consistency Boundaries | Problem: Cross-entity invariants within a bounded context currently require sequential commands (no atomicity) or... |
 
 </details>
@@ -192,6 +194,6 @@
 - ✅ Event Store Durability (Phase 18)
 - ✅ Event Store Foundation (Phase 2)
 
-Showing 10 of 50 completed patterns. See quarterly files for full history.
+Showing 10 of 52 completed patterns. See quarterly files for full history.
 
 ---
