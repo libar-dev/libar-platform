@@ -27,11 +27,12 @@ Feature: Cancel Order
     When I send a CancelOrder command for "ord_cancel_003" with reason "Double cancel"
     Then the command should be rejected with code "ORDER_ALREADY_CANCELLED"
 
-  @business-rule
-  Scenario: Cannot cancel confirmed order
+  @happy-path
+  Scenario: Cancel confirmed order
     Given an order "ord_cancel_004" exists with status "confirmed"
-    When I send a CancelOrder command for "ord_cancel_004" with reason "Too late"
-    Then the command should be rejected with code "ORDER_ALREADY_CONFIRMED"
+    When I send a CancelOrder command for "ord_cancel_004" with reason "Changed mind after confirmation"
+    Then the command should succeed
+    And the order "ord_cancel_004" status should be "cancelled"
 
   @validation
   Scenario: Cannot cancel non-existent order

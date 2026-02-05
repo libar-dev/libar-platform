@@ -3,8 +3,8 @@ Feature: Cancel Order Decider
   Pure domain logic for cancelling an order.
 
   The CancelOrder decider validates that:
-  - Order must be in draft or submitted status
-  - Already confirmed or cancelled orders cannot be cancelled
+  - Order must be in draft, submitted, or confirmed status
+  - Already cancelled orders cannot be cancelled
 
   On success, it emits OrderCancelled and transitions to cancelled status.
 
@@ -32,14 +32,16 @@ Feature: Cancel Order Decider
     And the event type should be "OrderCancelled"
     And the state update should set status to "cancelled"
 
-  @validation
-  Scenario: Reject cancel for confirmed order
+  @happy-path
+  Scenario: Decide to cancel a confirmed order
     Given an order state:
       | field  | value     |
       | status | confirmed |
-    When I decide to cancel the order with reason "Too late"
-    Then the decision should be "rejected"
-    And the rejection code should be "ORDER_ALREADY_CONFIRMED"
+    When I decide to cancel the order with reason "Changed mind after confirmation"
+    Then the decision should be "success"
+    And the event type should be "OrderCancelled"
+    And the state update should set status to "cancelled"
+    And the data should contain reason "Changed mind after confirmation"
 
   @validation
   Scenario: Reject cancel for already cancelled order

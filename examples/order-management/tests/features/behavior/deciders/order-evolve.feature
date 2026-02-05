@@ -134,3 +134,11 @@ Feature: Order State Evolution
       | status | submitted |
     When OrderCancelled event is applied
     Then state should have status "cancelled"
+
+  @evolve @status
+  Scenario: OrderCancelled changes status from confirmed to cancelled
+    Given an order state with:
+      | field  | value     |
+      | status | confirmed |
+    When OrderCancelled event is applied
+    Then state should have status "cancelled"
