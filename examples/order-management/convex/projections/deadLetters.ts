@@ -27,18 +27,22 @@ export const onProjectionComplete = internalMutation({
   args: vOnCompleteValidator(
     /**
      * Context passed from CommandOrchestrator's projection enqueue.
-     * The partition key is dynamic (e.g., orderId, productId), so we
-     * use a record type to accept any string keys beyond the required fields.
+     * The partition key is wrapped in a structured field to comply with
+     * Convex validators (which reject dynamic/extra properties).
      */
     v.object({
       eventId: v.string(),
       projectionName: v.string(),
+      // Partition key for workpool ordering (e.g., { name: "orderId", value: "ord_123" })
+      partition: v.optional(
+        v.object({
+          name: v.string(),
+          value: v.string(),
+        })
+      ),
       // Correlation chain for tracing (passed by orchestrator)
       correlationId: v.optional(v.string()),
       causationId: v.optional(v.string()),
-      // Dynamic partition key (e.g., orderId: "ord_123", productId: "prod_456")
-      // Since validators don't support index signatures directly, we rely on
-      // Convex's handling of extra properties in objects.
     })
   ),
   handler: async (ctx, { context, result }) => {

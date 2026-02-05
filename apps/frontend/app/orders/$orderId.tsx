@@ -43,6 +43,11 @@ const getOrderItemsQuery = makeFunctionReference<"query">(
 
 export const Route = createFileRoute("/orders/$orderId")({
   loader: async ({ context, params }) => {
+    // Defensive check - params.orderId should always exist for this route
+    // but guard against edge cases during SSR/hydration transitions
+    if (!params.orderId) {
+      return;
+    }
     // Prefetch order detail and items on the server
     await Promise.all([
       context.queryClient.ensureQueryData(

@@ -545,7 +545,8 @@ export class CommandOrchestrator {
       context: {
         eventId: successResult.event.eventId,
         projectionName: config.projection.projectionName,
-        [partition.name]: partition.value,
+        // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+        partition,
         // Correlation chain for tracing
         correlationId: chain.correlationId,
         causationId: chain.causationId,
@@ -588,7 +589,8 @@ export class CommandOrchestrator {
             context: {
               eventId: successResult.event.eventId,
               projectionName: secondary.projectionName,
-              [secondaryPartition.name]: secondaryPartition.value,
+              // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+              partition: secondaryPartition,
               // Correlation chain for tracing
               correlationId: chain.correlationId,
               causationId: chain.causationId,
