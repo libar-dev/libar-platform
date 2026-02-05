@@ -58,6 +58,6 @@ export function useOrderItems(orderId: string | undefined): {
 
   return {
     items: (data ?? []) as OrderItem[],
-    isLoading: data === undefined,
+    isLoading: !!orderId && data === undefined,
   };
 }

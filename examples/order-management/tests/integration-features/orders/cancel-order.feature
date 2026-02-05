@@ -101,8 +101,6 @@ Feature: Cancel Order (Integration)
     And I wait for projections to process
     And the reservation for order "ord-idemp-01" should have status "released"
     And the product "prod-idemp-01" should have 100 available and 0 reserved stock
-    # Stock should remain unchanged after reservation is already released
-    And the product "prod-idemp-01" should have 100 available and 0 reserved stock
 
   @edge-case @process-manager
   Scenario: PM skips expired reservation when order is cancelled

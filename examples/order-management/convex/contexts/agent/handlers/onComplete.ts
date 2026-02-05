@@ -47,6 +47,7 @@ export const handleChurnRiskOnComplete = internalMutation({
       causationId: v.optional(v.string()),
     })
   ),
+  returns: v.null(),
   handler: async (ctx, { workId, context, result }) => {
     const logger = createPlatformNoOpLogger();
     const agentId = CHURN_RISK_AGENT_ID;
@@ -57,7 +58,7 @@ export const handleChurnRiskOnComplete = internalMutation({
         agentId,
         eventId,
       });
-      return;
+      return null;
     }
 
     if (result.kind === "canceled") {
@@ -65,7 +66,7 @@ export const handleChurnRiskOnComplete = internalMutation({
         agentId,
         eventId,
       });
-      return;
+      return null;
     }
 
     // result.kind === "failed" - create dead letter entry
@@ -135,6 +136,8 @@ export const handleChurnRiskOnComplete = internalMutation({
         error: deadLetter.error,
       });
     }
+
+    return null;
   },
 });
 

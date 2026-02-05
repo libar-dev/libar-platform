@@ -72,6 +72,6 @@ export function useOrderDetail(orderId: string | undefined): {
 
   return {
     order: (data ?? null) as OrderWithInventory | null,
-    isLoading: data === undefined,
+    isLoading: !!orderId && data === undefined,
   };
 }

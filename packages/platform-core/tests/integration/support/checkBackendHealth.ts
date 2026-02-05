@@ -25,7 +25,7 @@ export async function setup(): Promise<void> {
         console.log(`✓ Backend is healthy at ${backendUrl}\n`);
         return;
       }
-    } catch {
+    } catch (error) {
       if (attempt === maxRetries) {
         const port = new URL(backendUrl).port;
         const isInfraPort = port === "3215";
@@ -37,6 +37,7 @@ export async function setup(): Promise<void> {
             `  BACKEND NOT RUNNING\n` +
             `═══════════════════════════════════════════════════════════════════\n` +
             `  Tests require a Convex backend at: ${backendUrl}\n` +
+            `  Last error: ${error instanceof Error ? error.message : String(error)}\n` +
             `\n` +
             `  To fix, run one of these commands:\n` +
             `\n` +

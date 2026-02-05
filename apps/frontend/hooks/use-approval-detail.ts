@@ -45,6 +45,6 @@ export function useApprovalDetail(approvalId: string | undefined): {
 
   return {
     approval: (data ?? null) as PendingApproval | null,
-    isLoading: data === undefined,
+    isLoading: !!approvalId && data === undefined,
   };
 }

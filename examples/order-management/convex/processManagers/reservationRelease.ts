@@ -26,24 +26,27 @@ import {
   type ProcessManagerState,
   type PMEventHandlerArgs,
 } from "@libar-dev/platform-core/processManager";
-import type { SafeMutationRef } from "@libar-dev/platform-core";
+import { createScopedLogger, type SafeMutationRef } from "@libar-dev/platform-core";
+import { PLATFORM_LOG_LEVEL } from "../infrastructure";
+const logger = createScopedLogger("PM:ReservationRelease", PLATFORM_LOG_LEVEL);
+
 // =============================================================================
 // Mutation References (TS2589 Prevention)
 // =============================================================================
 
 const processReleaseCommandRef = makeFunctionReference<"mutation">(
   "processManagers/reservationRelease:processReleaseCommand"
-) as SafeMutationRef;
+) as unknown as SafeMutationRef;
 
 // Reference to internal mutation (avoids circular dependency and TS2589)
 const releaseReservationRef = makeFunctionReference<"mutation">(
   "inventoryInternal:releaseReservation"
-) as SafeMutationRef;
+) as unknown as SafeMutationRef;
 
 // Export for eventSubscriptions.ts
 export const handleOrderCancelledRef = makeFunctionReference<"mutation">(
   "processManagers/reservationRelease:handleOrderCancelled"
-) as FunctionReference<"mutation", FunctionVisibility, PMEventHandlerArgs, unknown>;
+) as unknown as FunctionReference<"mutation", FunctionVisibility, PMEventHandlerArgs, unknown>;
 
 // ============================================================================
 // PM DEFINITION
@@ -141,40 +144,31 @@ async function reservationReleaseHandler(
 
   // No reservation means order was cancelled before reservation was made
   if (!orderWithInventory.reservationId) {
-    console.log(
-      `[ReservationReleasePM] Skipping: order has no reservation`,
-      JSON.stringify({
-        orderId: payload.orderId,
-        eventId: event.eventId,
-        reason: "no_reservation",
-      })
-    );
+    logger.debug("Skipping: order has no reservation", {
+      orderId: payload.orderId,
+      eventId: event.eventId,
+      reason: "no_reservation",
+    });
     return [];
   }
 
   // Skip if reservation is already in a terminal state
   if (orderWithInventory.reservationStatus === "released") {
-    console.log(
-      `[ReservationReleasePM] Skipping: reservation already released`,
-      JSON.stringify({
-        orderId: payload.orderId,
-        reservationId: orderWithInventory.reservationId,
-        eventId: event.eventId,
-        reason: "already_released",
-      })
-    );
+    logger.debug("Skipping: reservation already released", {
+      orderId: payload.orderId,
+      reservationId: orderWithInventory.reservationId,
+      eventId: event.eventId,
+      reason: "already_released",
+    });
     return [];
   }
   if (orderWithInventory.reservationStatus === "expired") {
-    console.log(
-      `[ReservationReleasePM] Skipping: reservation expired`,
-      JSON.stringify({
-        orderId: payload.orderId,
-        reservationId: orderWithInventory.reservationId,
-        eventId: event.eventId,
-        reason: "reservation_expired",
-      })
-    );
+    logger.debug("Skipping: reservation expired", {
+      orderId: payload.orderId,
+      reservationId: orderWithInventory.reservationId,
+      eventId: event.eventId,
+      reason: "reservation_expired",
+    });
     return [];
   }
 
@@ -339,13 +333,10 @@ export const reservationReleaseExecutor = createProcessManagerExecutor<MutationC
     for (const cmd of commands) {
       // Warn if correlationId is missing - aids request tracing
       if (!cmd.correlationId) {
-        console.warn(
-          `[ReservationReleasePM] Command emitted without correlationId`,
-          JSON.stringify({
-            commandType: cmd.commandType,
-            causationId: cmd.causationId,
-          })
-        );
+        logger.warn("Command emitted without correlationId", {
+          commandType: cmd.commandType,
+          causationId: cmd.causationId,
+        });
       }
 
       await ctx.scheduler.runAfter(0, processReleaseCommandRef, {
@@ -364,15 +355,12 @@ export const reservationReleaseExecutor = createProcessManagerExecutor<MutationC
   instanceIdResolver: (event) => {
     const result = z.object({ orderId: z.string() }).safeParse(event.payload);
     if (!result.success) {
-      console.warn(
-        `[ReservationReleasePM] instanceIdResolver fallback to streamId - invalid payload`,
-        JSON.stringify({
-          eventId: event.eventId,
-          eventType: event.eventType,
-          streamId: event.streamId,
-          error: result.error.message,
-        })
-      );
+      logger.warn("instanceIdResolver fallback to streamId - invalid payload", {
+        eventId: event.eventId,
+        eventType: event.eventType,
+        streamId: event.streamId,
+        error: result.error.message,
+      });
       return event.streamId;
     }
     return result.data.orderId;
@@ -460,15 +448,12 @@ export const processReleaseCommand = internalMutation({
     const parseResult = ReleaseReservationPayloadSchema.safeParse(args.payload);
     if (!parseResult.success) {
       const error = `Invalid ReleaseReservation payload: ${parseResult.error.message}`;
-      console.error(
-        `[ReservationReleasePM] Payload validation failed`,
-        JSON.stringify({
-          correlationId: args.correlationId,
-          causationId: args.causationId,
-          error,
-          payload: args.payload,
-        })
-      );
+      logger.error("Payload validation failed", {
+        correlationId: args.correlationId,
+        causationId: args.causationId,
+        error,
+        payload: args.payload,
+      });
 
       // Record dead letter for invalid payload
       await ctx.runMutation(components.eventStore.lib.recordPMDeadLetter, {
@@ -500,27 +485,21 @@ export const processReleaseCommand = internalMutation({
         correlationId: args.correlationId,
       });
 
-      console.log(
-        `[ReservationReleasePM] Successfully released reservation`,
-        JSON.stringify({
-          reservationId: payload.reservationId,
-          correlationId: args.correlationId,
-        })
-      );
+      logger.info("Successfully released reservation", {
+        reservationId: payload.reservationId,
+        correlationId: args.correlationId,
+      });
 
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
 
-      console.error(
-        `[ReservationReleasePM] Command execution failed`,
-        JSON.stringify({
-          reservationId: payload.reservationId,
-          correlationId: args.correlationId,
-          causationId: args.causationId,
-          error: errorMessage,
-        })
-      );
+      logger.error("Command execution failed", {
+        reservationId: payload.reservationId,
+        correlationId: args.correlationId,
+        causationId: args.causationId,
+        error: errorMessage,
+      });
 
       // Record dead letter for command execution failure
       await ctx.runMutation(components.eventStore.lib.recordPMDeadLetter, {

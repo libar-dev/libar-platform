@@ -47,6 +47,6 @@ export function useProduct(productId: string | undefined): {
 
   return {
     product: (data ?? null) as Product | null,
-    isLoading: data === undefined,
+    isLoading: !!productId && data === undefined,
   };
 }
