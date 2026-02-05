@@ -480,8 +480,8 @@ function OrderDetailPage() {
           </Card>
         </div>
 
-        {/* Actions for cancellable orders (draft or submitted) */}
-        {(status === "draft" || status === "submitted") && (
+        {/* Actions for cancellable orders (draft, submitted, or confirmed) */}
+        {(status === "draft" || status === "submitted" || status === "confirmed") && (
           <div className="flex gap-3">
             {/* Submit button only for draft orders */}
             {status === "draft" && (
@@ -500,7 +500,7 @@ function OrderDetailPage() {
                 )}
               </Button>
             )}
-            {/* Cancel button for draft and submitted orders */}
+            {/* Cancel button for draft, submitted, and confirmed orders */}
             <AlertDialog>
               <AlertDialogTrigger
                 variant="destructive"
@@ -514,6 +514,8 @@ function OrderDetailPage() {
                   <AlertDialogTitle>Cancel this order?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. The order will be permanently cancelled.
+                    {status === "confirmed" &&
+                      " Any reserved stock will be released back to inventory."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
