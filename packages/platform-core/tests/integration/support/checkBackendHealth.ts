@@ -50,7 +50,9 @@ export async function setup(): Promise<void> {
         );
       }
 
-      console.log(`  Attempt ${attempt}/${maxRetries}: Backend not ready, retrying in ${retryDelayMs}ms...`);
+      console.log(
+        `  Attempt ${attempt}/${maxRetries}: Backend not ready, retrying in ${retryDelayMs}ms...`
+      );
       await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
     }
   }

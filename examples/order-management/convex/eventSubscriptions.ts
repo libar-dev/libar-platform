@@ -39,7 +39,11 @@ import {
   createAgentSubscription,
   type AgentEventHandlerArgs,
 } from "@libar-dev/platform-bus/agent-subscription";
-import { orderNotificationPM, reservationReleasePM, handleOrderCancelledRef } from "./processManagers";
+import {
+  orderNotificationPM,
+  reservationReleasePM,
+  handleOrderCancelledRef,
+} from "./processManagers";
 import { churnRiskAgentConfig } from "./contexts/agent/_config.js";
 
 // Using makeFunctionReference to bypass FilterApi recursive type resolution (TS2589 prevention)
