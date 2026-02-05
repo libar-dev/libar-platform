@@ -11,6 +11,8 @@ import { usePendingApprovals, type PendingApproval } from "@/hooks/use-pending-a
 import { useActiveAgents, type AgentCheckpoint } from "@/hooks/use-active-agents";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { formatRelativeTime } from "@/lib/formatters";
 
 // Query references for SSR preloading
 const getPendingApprovalsQuery = makeFunctionReference<"query">(
@@ -31,24 +33,28 @@ export const Route = createFileRoute("/admin/agents")({
     ]);
   },
   component: AdminAgentsPage,
+  errorComponent: AgentsErrorFallback,
 });
 
 /**
- * Format relative time for agent status display.
+ * Error fallback component for the agents page.
  */
-function formatAgentTime(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const minutes = Math.floor(diff / (1000 * 60));
-
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+function AgentsErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
+  return (
+    <AppLayout activeNav="agents">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+        <h2 className="text-lg font-semibold text-destructive">Failed to Load Agents</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error.message || "An unexpected error occurred while loading the agents page."}
+        </p>
+        {reset && (
+          <Button variant="outline" className="mt-4" onClick={reset}>
+            Try Again
+          </Button>
+        )}
+      </div>
+    </AppLayout>
+  );
 }
 
 /**
@@ -121,7 +127,7 @@ function AdminAgentsPage() {
             <TabsTrigger value="approvals" data-testid="tab-approvals">
               Pending Approvals
               {pendingApprovals.length > 0 && (
-                <Badge variant="default" className="ml-2">
+                <Badge variant="default" className="ml-2" aria-label={`${pendingApprovals.length} pending approvals`}>
                   {pendingApprovals.length}
                 </Badge>
               )}
@@ -189,7 +195,7 @@ function AdminAgentsPage() {
                           <div className="col-span-2">
                             <span className="text-muted-foreground">Last Updated</span>
                             <p className="font-medium" data-testid="last-updated">
-                              {formatAgentTime(agent.updatedAt)}
+                              {formatRelativeTime(agent.updatedAt)}
                             </p>
                           </div>
                         </div>

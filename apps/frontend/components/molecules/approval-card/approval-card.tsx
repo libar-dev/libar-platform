@@ -4,7 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import type { ApprovalStatus } from "@/hooks/use-pending-approvals";
+import {
+  statusConfig,
+  getConfidenceVariant,
+  getConfidenceLabel,
+  formatConfidence,
+  formatExpirationTime,
+  truncateId,
+  type ApprovalStatus,
+} from "@/lib/approval-utils";
 
 /**
  * Approval data required for the ApprovalCard component
@@ -31,67 +39,6 @@ export interface ApprovalCardProps {
   approval: ApprovalCardApproval;
   /** Callback when the card is clicked */
   onClick?: (approvalId: string) => void;
-}
-
-/**
- * Status display configuration for consistent styling
- */
-const statusConfig: Record<
-  ApprovalStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  pending: { label: "Pending Review", variant: "default" },
-  approved: { label: "Approved", variant: "outline" },
-  rejected: { label: "Rejected", variant: "destructive" },
-  expired: { label: "Expired", variant: "secondary" },
-};
-
-/**
- * Confidence badge colors based on thresholds.
- */
-function getConfidenceVariant(
-  confidence: number
-): "default" | "secondary" | "destructive" | "outline" {
-  if (confidence >= 0.9) return "outline"; // High confidence
-  if (confidence >= 0.7) return "default"; // Medium confidence
-  return "destructive"; // Low confidence
-}
-
-/**
- * Format confidence as percentage.
- */
-function formatConfidence(confidence: number): string {
-  return `${(confidence * 100).toFixed(0)}%`;
-}
-
-/**
- * Truncates ID for display.
- */
-function truncateId(id: string, length = 8): string {
-  if (id.length <= length + 3) return id;
-  return `${id.slice(0, length)}...`;
-}
-
-/**
- * Calculate time remaining until expiration.
- */
-function getExpirationText(expiresAt: number): string {
-  const now = Date.now();
-  const remaining = expiresAt - now;
-
-  if (remaining <= 0) return "Expired";
-
-  const hours = Math.floor(remaining / (1000 * 60 * 60));
-  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return `${days}d left`;
-  }
-  if (hours > 0) {
-    return `${hours}h ${minutes}m left`;
-  }
-  return `${minutes}m left`;
 }
 
 /**
@@ -127,16 +74,21 @@ export function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
   const isInteractive = !!onClick;
   const isPending = approval.status === "pending";
 
+  // Build accessible label for screen readers
+  const accessibleLabel = `Review ${approval.action.type} action from ${approval.agentId}, ${getConfidenceLabel(approval.confidence)} confidence at ${formatConfidence(approval.confidence)}`;
+
   return (
     <Card
       size="sm"
       data-testid={`approval-card-${approval.approvalId}`}
       className={cn(
-        isInteractive && "cursor-pointer transition-shadow hover:ring-2 hover:ring-primary/50"
+        isInteractive &&
+          "cursor-pointer transition-shadow hover:ring-2 hover:ring-primary/50 focus:ring-2 focus:ring-primary/50 focus:outline-none"
       )}
       onClick={isInteractive ? handleClick : undefined}
       role={isInteractive ? "button" : undefined}
       tabIndex={isInteractive ? 0 : undefined}
+      aria-label={isInteractive ? accessibleLabel : undefined}
       onKeyDown={
         isInteractive
           ? (e) => {
@@ -163,7 +115,7 @@ export function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
               {config.label}
             </Badge>
             <Badge variant={getConfidenceVariant(approval.confidence)} data-testid="confidence">
-              {formatConfidence(approval.confidence)} confidence
+              {getConfidenceLabel(approval.confidence)}: {formatConfidence(approval.confidence)}
             </Badge>
           </div>
         </div>
@@ -179,7 +131,7 @@ export function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
           <div className="flex items-center gap-2">
             {isPending && (
               <span className="text-xs text-amber-600" data-testid="expiration">
-                {getExpirationText(approval.expiresAt)}
+                {formatExpirationTime(approval.expiresAt, true)}
               </span>
             )}
             <span className="text-xs text-muted-foreground" data-testid="created-time">

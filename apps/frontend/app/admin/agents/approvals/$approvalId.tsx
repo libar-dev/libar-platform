@@ -23,7 +23,72 @@ export const Route = createFileRoute("/admin/agents/approvals/$approvalId")({
     );
   },
   component: ApprovalDetailPage,
+  errorComponent: ApprovalErrorFallback,
 });
+
+/**
+ * Error fallback component for the approval detail page.
+ */
+function ApprovalErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
+  return (
+    <AppLayout activeNav="agents">
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link to="/admin/agents">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Agents
+            </Button>
+          </Link>
+        </div>
+
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <h2 className="text-lg font-semibold text-destructive">Failed to Load Approval</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error.message || "An unexpected error occurred while loading the approval."}
+          </p>
+          {reset && (
+            <Button variant="outline" className="mt-4" onClick={reset}>
+              Try Again
+            </Button>
+          )}
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
+
+/**
+ * Get the current reviewer ID.
+ *
+ * TODO(auth): Replace with actual auth integration when implemented.
+ *
+ * Implementation options:
+ * 1. Convex Auth: Use `useConvexAuth()` from `convex/react` with Clerk/Auth0
+ *    ```typescript
+ *    import { useConvexAuth } from "convex/react";
+ *    const { isAuthenticated } = useConvexAuth();
+ *    // Then fetch user from your users table
+ *    ```
+ *
+ * 2. Custom auth hook: Create `hooks/use-current-user.ts`
+ *    ```typescript
+ *    export function useCurrentUser() {
+ *      const user = useSuspenseQuery(convexQuery(api.users.me, {}));
+ *      return { userId: user._id, displayName: user.name };
+ *    }
+ *    ```
+ *
+ * 3. Session-based: Use server-side session from route loader
+ *
+ * For now, we use a placeholder that identifies the review action
+ * but does NOT provide actual authentication/authorization.
+ */
+function useReviewerId(): string {
+  // SECURITY: This is a placeholder. In production, this MUST be replaced
+  // with actual authenticated user ID from your auth provider.
+  return "reviewer-placeholder";
+}
 
 /**
  * Approval detail page - review and take action on a specific approval.
@@ -32,9 +97,7 @@ function ApprovalDetailPage() {
   const { approvalId } = Route.useParams();
   const navigate = useNavigate();
   const { approval } = useApprovalDetail(approvalId);
-
-  // TODO: Get actual user ID from auth context
-  const userId = "reviewer-1";
+  const userId = useReviewerId();
 
   const handleActionComplete = () => {
     navigate({ to: "/admin/agents" });

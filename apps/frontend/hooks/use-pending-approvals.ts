@@ -2,11 +2,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
+import { type ApprovalStatus } from "@/lib/approval-utils";
 
-/**
- * Approval status type.
- */
-export type ApprovalStatus = "pending" | "approved" | "rejected" | "expired";
+// Re-export for backward compatibility
+export type { ApprovalStatus } from "@/lib/approval-utils";
 
 /**
  * Pending approval data from the pendingApprovals table.

@@ -15,7 +15,38 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatRelativeTime } from "@/lib/formatters";
 import { useApprovalActions } from "@/hooks/use-approval-actions";
-import type { PendingApproval, ApprovalStatus } from "@/hooks/use-pending-approvals";
+import {
+  statusConfig,
+  getConfidenceVariant,
+  getConfidenceLabel,
+  formatConfidence,
+  formatExpirationTime,
+  type ApprovalStatus,
+} from "@/lib/approval-utils";
+
+/**
+ * Pending approval data from the pendingApprovals table.
+ */
+export interface PendingApproval {
+  _id: string;
+  _creationTime: number;
+  approvalId: string;
+  agentId: string;
+  decisionId: string;
+  action: {
+    type: string;
+    payload: unknown;
+  };
+  confidence: number;
+  reason: string;
+  status: ApprovalStatus;
+  triggeringEventIds: string[];
+  expiresAt: number;
+  createdAt: number;
+  reviewerId?: string;
+  reviewedAt?: number;
+  reviewNote?: string;
+}
 
 /**
  * Props for the ApprovalDetail component
@@ -27,59 +58,6 @@ export interface ApprovalDetailProps {
   userId: string;
   /** Callback after successful action */
   onActionComplete?: () => void;
-}
-
-/**
- * Status display configuration for consistent styling
- */
-const statusConfig: Record<
-  ApprovalStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  pending: { label: "Pending Review", variant: "default" },
-  approved: { label: "Approved", variant: "outline" },
-  rejected: { label: "Rejected", variant: "destructive" },
-  expired: { label: "Expired", variant: "secondary" },
-};
-
-/**
- * Confidence badge colors based on thresholds.
- */
-function getConfidenceVariant(
-  confidence: number
-): "default" | "secondary" | "destructive" | "outline" {
-  if (confidence >= 0.9) return "outline";
-  if (confidence >= 0.7) return "default";
-  return "destructive";
-}
-
-/**
- * Format confidence as percentage.
- */
-function formatConfidence(confidence: number): string {
-  return `${(confidence * 100).toFixed(0)}%`;
-}
-
-/**
- * Calculate time remaining until expiration.
- */
-function getExpirationText(expiresAt: number): string {
-  const now = Date.now();
-  const remaining = expiresAt - now;
-
-  if (remaining <= 0) return "Expired";
-
-  const hours = Math.floor(remaining / (1000 * 60 * 60));
-  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return `${days} days remaining`;
-  }
-  if (hours > 0) {
-    return `${hours} hours, ${minutes} minutes remaining`;
-  }
-  return `${minutes} minutes remaining`;
 }
 
 /**
@@ -156,7 +134,7 @@ export function ApprovalDetail({ approval, userId, onActionComplete }: ApprovalD
                 {config.label}
               </Badge>
               <Badge variant={getConfidenceVariant(approval.confidence)} data-testid="confidence">
-                {formatConfidence(approval.confidence)} confidence
+                {getConfidenceLabel(approval.confidence)}: {formatConfidence(approval.confidence)}
               </Badge>
             </div>
           </div>
@@ -213,7 +191,7 @@ export function ApprovalDetail({ approval, userId, onActionComplete }: ApprovalD
                   className={isExpired ? "text-destructive" : "text-amber-600"}
                   data-testid="expires-at"
                 >
-                  {getExpirationText(approval.expiresAt)}
+                  {formatExpirationTime(approval.expiresAt)}
                 </span>
               </div>
             )}
@@ -286,14 +264,29 @@ export function ApprovalDetail({ approval, userId, onActionComplete }: ApprovalD
         </Card>
       )}
 
-      {/* Error messages */}
+      {/* Loading announcement for screen readers */}
+      {isLoading && (
+        <div className="sr-only" role="status" aria-live="polite">
+          {approve.state === "pending" ? "Approving action..." : "Rejecting action..."}
+        </div>
+      )}
+
+      {/* Error messages with proper accessibility */}
       {approve.error && (
-        <div className="rounded border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+        >
           {approve.error}
         </div>
       )}
       {reject.error && (
-        <div className="rounded border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+        >
           {reject.error}
         </div>
       )}
