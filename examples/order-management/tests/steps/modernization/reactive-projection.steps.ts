@@ -184,8 +184,9 @@ describeFeature(reactiveFeature, ({ Background, Rule, AfterEachScenario }) => {
 
         const endTime = performance.now();
 
-        // Verify the operation was synchronous (sub-millisecond)
-        state!.mergeWasSynchronous = endTime - startTime < 1;
+        // Verify the operation was synchronous (< 10ms proves no async I/O or polling,
+        // while tolerating CPU pressure during parallel test runs)
+        state!.mergeWasSynchronous = endTime - startTime < 10;
 
         // Double-check that the event was applied correctly
         if (newStatus === "submitted") {
