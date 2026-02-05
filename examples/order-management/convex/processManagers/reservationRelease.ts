@@ -99,9 +99,12 @@ export type OrderCancelledPayload = z.infer<typeof OrderCancelledPayloadSchema>;
  *
  * **Eventual Consistency Note:**
  * This handler depends on the `orderWithInventoryStatus` projection being up-to-date.
- * If the projection hasn't processed the reservation event yet (projection lag), the
- * handler will skip by returning an empty array. The EventBus/Workpool infrastructure
- * will redeliver the event on retry, ensuring eventual processing.
+ * If the projection record doesn't exist at all (projection lag), the handler throws
+ * an error to trigger Workpool retry with backoff. This ensures the reservation is
+ * eventually released once the projection catches up.
+ *
+ * If the projection record exists but has no reservationId, that's a legitimate skip
+ * (draft/submitted order cancelled before reservation was made).
  *
  * @see ADR-033 for Process Manager vs Saga distinction
  */
@@ -124,18 +127,16 @@ async function reservationReleaseHandler(
     .withIndex("by_orderId", (q) => q.eq("orderId", payload.orderId))
     .first();
 
-  // No projection record means order was never submitted (draft cancel)
-  // or projection hasn't been created yet
+  // No projection record means projection hasn't caught up yet (projection lag).
+  // Throw to trigger Workpool retry with backoff — returning [] would mark the PM
+  // as "completed" and prevent future redeliveries (permanent skip).
+  // NOTE: Orders created via command flow always get projection records (even drafts
+  // have records with null reservationId), so missing record = projection lag.
   if (!orderWithInventory) {
-    console.log(
-      `[ReservationReleasePM] Skipping: no projection record for order`,
-      JSON.stringify({
-        orderId: payload.orderId,
-        eventId: event.eventId,
-        reason: "draft_order_or_projection_lag",
-      })
+    throw new Error(
+      `[ReservationReleasePM] Projection not ready for order ${payload.orderId}, ` +
+        `event ${event.eventId}. Will retry via Workpool backoff.`
     );
-    return [];
   }
 
   // No reservation means order was cancelled before reservation was made

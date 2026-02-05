@@ -417,7 +417,8 @@ export class CommandOrchestrator {
             context: {
               eventId: failedResult.event.eventId,
               projectionName: config.failedProjection.projectionName,
-              [failedPartition.name]: failedPartition.value,
+              // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+              partition: failedPartition,
               correlationId: chain.correlationId,
               causationId: chain.causationId,
             },
