@@ -227,6 +227,7 @@ describe("ConvexEventBus", () => {
         { context: Record<string, unknown> },
       ];
       expect(options.context.partition).toEqual({ name: "orderId", value: "order_456" });
+      expect(options.context.globalPosition).toBe(1000);
       expect(options.context.subscriptionName).toBe("order.handler");
       expect(options.context.eventId).toBe("evt_test_123");
       expect(options.context.eventType).toBe("OrderSubmitted");

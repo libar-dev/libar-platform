@@ -41,6 +41,7 @@ export const handleChurnRiskOnComplete = internalMutation({
       subscriptionName: v.optional(v.string()),
       eventId: v.string(),
       eventType: v.optional(v.string()),
+      globalPosition: v.optional(v.number()),
       partition: v.optional(v.object({ name: v.string(), value: v.string() })),
       correlationId: v.optional(v.string()),
       causationId: v.optional(v.string()),
@@ -49,7 +50,7 @@ export const handleChurnRiskOnComplete = internalMutation({
   handler: async (ctx, { workId, context, result }) => {
     const logger = createPlatformNoOpLogger();
     const agentId = CHURN_RISK_AGENT_ID;
-    const { eventId, correlationId } = context;
+    const { eventId, globalPosition, correlationId } = context;
 
     if (result.kind === "success") {
       logger.debug("Agent job completed successfully", {
@@ -77,9 +78,13 @@ export const handleChurnRiskOnComplete = internalMutation({
     });
 
     // Create dead letter for investigation/retry
-    // globalPosition not available in EventBus subscription context — use 0 as placeholder
-    // (eventId is sufficient for event lookup during replay)
-    const deadLetter = createAgentDeadLetter(agentId, `sub_${agentId}`, eventId, 0, error);
+    const deadLetter = createAgentDeadLetter(
+      agentId,
+      `sub_${agentId}`,
+      eventId,
+      globalPosition ?? 0,
+      error
+    );
 
     const contextObj: {
       correlationId?: string;
@@ -90,24 +95,46 @@ export const handleChurnRiskOnComplete = internalMutation({
       contextObj.correlationId = correlationId;
     }
 
-    await ctx.db.insert("agentDeadLetters", {
-      agentId: deadLetter.agentId,
-      subscriptionId: deadLetter.subscriptionId,
-      eventId: deadLetter.eventId,
-      globalPosition: deadLetter.globalPosition,
-      error: deadLetter.error,
-      attemptCount: 1,
-      status: "pending" as const,
-      failedAt: Date.now(),
-      workId,
-      context: contextObj,
-    });
+    // Check if this event already has a dead letter entry (handles EventBus redelivery)
+    const existing = await ctx.db
+      .query("agentDeadLetters")
+      .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
+      .first();
 
-    logger.info("Created dead letter entry", {
-      agentId: deadLetter.agentId,
-      eventId: deadLetter.eventId,
-      error: deadLetter.error,
-    });
+    if (existing) {
+      if (existing.status === "pending") {
+        await ctx.db.patch(existing._id, {
+          attemptCount: existing.attemptCount + 1,
+          error: deadLetter.error,
+          failedAt: Date.now(),
+        });
+        logger.warn("Agent dead letter retry", {
+          agentId: deadLetter.agentId,
+          eventId: deadLetter.eventId,
+          attemptCount: existing.attemptCount + 1,
+          error: deadLetter.error,
+        });
+      }
+      // Don't update terminal states (replayed, ignored)
+    } else {
+      await ctx.db.insert("agentDeadLetters", {
+        agentId: deadLetter.agentId,
+        subscriptionId: deadLetter.subscriptionId,
+        eventId: deadLetter.eventId,
+        globalPosition: deadLetter.globalPosition,
+        error: deadLetter.error,
+        attemptCount: 1,
+        status: "pending" as const,
+        failedAt: Date.now(),
+        workId,
+        context: contextObj,
+      });
+      logger.info("Created dead letter entry", {
+        agentId: deadLetter.agentId,
+        eventId: deadLetter.eventId,
+        error: deadLetter.error,
+      });
+    }
   },
 });
 

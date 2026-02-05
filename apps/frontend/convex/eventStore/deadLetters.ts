@@ -1,3 +1,6 @@
+// SYNC NOTE: This file must stay in sync with:
+// examples/order-management/convex/eventStore/deadLetters.ts
+
 /**
  * Dead Letter Queue management for event appends.
  *

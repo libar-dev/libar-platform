@@ -1,3 +1,6 @@
+// SYNC NOTE: This file must stay in sync with:
+// apps/frontend/convex/eventStore/deadLetters.ts
+
 /**
  * Dead Letter Queue management for event appends.
  *

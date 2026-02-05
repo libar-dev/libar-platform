@@ -49,6 +49,8 @@ export const onProjectionComplete = internalMutation({
           value: v.string(),
         })
       ),
+      // Global position for event lookup during replay
+      globalPosition: v.optional(v.number()),
       // Correlation chain for tracing
       correlationId: v.optional(v.string()),
       causationId: v.optional(v.string()),
