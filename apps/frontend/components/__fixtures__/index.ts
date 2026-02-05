@@ -6,7 +6,9 @@
  *
  * @example
  * import { mockProducts, mockOrders, mockOrderItems } from "../__fixtures__";
+ * import { mockApprovals, mockAgentCheckpoints } from "../__fixtures__";
  */
 
 export * from "./products";
 export * from "./orders";
+export * from "./approvals";
