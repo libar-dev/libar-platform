@@ -112,6 +112,91 @@ interface DCBScope {
 
 ```typescript
 /**
+ * Result types for scope operations.
+ */
+type ScopeVersionCheckResult =
+  | { status: "match" }
+  | { status: "mismatch"; currentVersion: number }
+  | { status: "not_found" };
+```
+
+```typescript
+type ScopeCommitResult =
+  | { status: "success"; newVersion: number }
+  | { status: "conflict"; currentVersion: number };
+```
+
+```typescript
+/**
+ * Scope operations interface for DCB execution.
+ *
+ * These operations are provided by the caller (typically wrapping platform-store
+ * component functions) to enable scope-level OCC within the mutation.
+ *
+ * ## Why callbacks instead of direct calls?
+ *
+ * Convex components have isolated databases. The DCB execution logic in
+ * platform-core cannot directly access platform-store tables. Instead, the
+ * caller passes callbacks that wrap component API calls.
+ *
+ * ## Transaction Safety
+ *
+ * All operations run within the same Convex mutation, ensuring atomicity:
+ * - `getScope` reads touch the scope record for Convex's internal OCC
+ * - `commitScope` validates version before committing
+ * - If conflict detected, caller should not persist entity changes
+ *
+ * @example
+ * ```typescript
+ * const scopeOperations: ScopeOperations = {
+ *   getScope: async () => {
+ *     const result = await ctx.runQuery(components.eventStore.lib.getScope, {
+ *       scopeKey: config.scopeKey,
+ *     });
+ *     return result;
+ *   },
+ *   commitScope: async (streamIds) => {
+ *     return ctx.runMutation(components.eventStore.lib.commitScope, {
+ *       scopeKey: config.scopeKey,
+ *       expectedVersion: config.expectedVersion,
+ *       streamIds,
+ *     });
+ *   },
+ * };
+ * ```
+ */
+interface ScopeOperations {
+  /**
+   * Get current scope state.
+   *
+   * Returns scope data if exists, null if scope doesn't exist.
+   * For new scopes (expectedVersion = 0), this may return null.
+   */
+  getScope: () => Promise<{
+    currentVersion: number;
+    tenantId: string;
+    scopeType: string;
+    scopeId: string;
+  } | null>;
+
+  /**
+   * Atomically commit scope version increment with OCC validation.
+   *
+   * This function:
+   * 1. Validates expectedVersion matches current version
+   * 2. Increments version if match
+   * 3. Updates streamIds list for virtual stream queries
+   * 4. Returns success with new version, or conflict with current version
+   *
+   * @param streamIds - Stream IDs to associate with this scope
+   * @returns Commit result with new version or conflict info
+   */
+  commitScope: (streamIds: string[]) => Promise<ScopeCommitResult>;
+}
+```
+
+```typescript
+/**
  * Entity state within a DCB scope.
  *
  * Represents one entity (CMS document) participating in a scope operation.
@@ -151,6 +236,150 @@ interface DCBAggregatedState<TCms> {
  * in this map will be modified.
  */
 type DCBStateUpdates<TUpdate> = Map<string, TUpdate>;
+```
+
+```typescript
+/**
+ * DCB decider function signature.
+ *
+ * Unlike regular deciders that operate on a single entity, DCB deciders
+ * receive aggregated state from all entities in the scope, enabling
+ * cross-entity invariant validation.
+ *
+ * @typeParam TCms - CMS state type for entities in scope
+ * @typeParam TCommand - Command input type
+ * @typeParam TEvent - Event type for success/failure
+ * @typeParam TData - Success data type
+ * @typeParam TStateUpdate - State update type for individual entities
+ */
+type DCBDecider<
+  TCms,
+  TCommand extends object,
+  TEvent extends DeciderEvent,
+  TData extends object,
+  TStateUpdate,
+> = (
+  state: DCBAggregatedState<TCms>,
+  command: TCommand,
+  context: DeciderContext
+) => DeciderOutput<TEvent, TData, DCBStateUpdates<TStateUpdate>>;
+```
+
+```typescript
+/**
+ * Configuration for loading entities in a DCB operation.
+ */
+interface DCBEntityConfig<TCtx, TCms, TId = unknown> {
+  /** Stream IDs of entities to load */
+  streamIds: string[];
+
+  /**
+   * Load function for each entity.
+   *
+   * @param ctx - Mutation context
+   * @param streamId - Stream ID to load
+   * @returns Entity state if found, null if not exists
+   */
+  loadEntity: (
+    ctx: TCtx,
+    streamId: string
+  ) => Promise<{
+    cms: TCms;
+    _id: TId;
+  } | null>;
+}
+```
+
+```typescript
+/**
+ * Configuration for executeWithDCB.
+ *
+ * @typeParam TCtx - Convex mutation context type
+ * @typeParam TCms - CMS state type
+ * @typeParam TCommand - Command input type
+ * @typeParam TEvent - Event type
+ * @typeParam TData - Success data type
+ * @typeParam TStateUpdate - State update type
+ * @typeParam TId - Document ID type
+ */
+interface ExecuteWithDCBConfig<
+  TCtx,
+  TCms,
+  TCommand extends object,
+  TEvent extends DeciderEvent,
+  TData extends object,
+  TStateUpdate,
+  TId = unknown,
+> {
+  /** Scope key for coordination */
+  scopeKey: DCBScopeKey;
+
+  /** Expected scope version for OCC (0 for new scopes) */
+  expectedVersion: number;
+
+  /** Bounded context name */
+  boundedContext: string;
+
+  /** Stream type for events */
+  streamType: string;
+
+  /** Event schema version */
+  schemaVersion: number;
+
+  /**
+   * Event category for taxonomy classification.
+   *
+   * Defaults to "domain" if not specified.
+   * - domain: Internal facts within bounded context for ES replay
+   * - integration: Cross-context communication with versioned contracts
+   * - trigger: ID-only notifications for GDPR compliance
+   * - fat: Full state snapshots for external systems
+   */
+  eventCategory?: EventCategory;
+
+  /**
+   * Scope operations for OCC (Optimistic Concurrency Control).
+   *
+   * These callbacks wrap platform-store component functions to enable
+   * scope-level version checking and committing within the mutation.
+   *
+   * **Required for OCC enforcement.** If not provided, scope version
+   * checking is skipped (useful for testing pure decider logic).
+   */
+  scopeOperations?: ScopeOperations;
+
+  /** Entity loading configuration */
+  entities: DCBEntityConfig<TCtx, TCms, TId>;
+
+  /** Pure decider function */
+  decider: DCBDecider<TCms, TCommand, TEvent, TData, TStateUpdate>;
+
+  /** Command to execute */
+  command: TCommand;
+
+  /**
+   * Apply state update to individual entity.
+   *
+   * Called for each entity with an update in the decider's stateUpdate map.
+   */
+  applyUpdate: (
+    ctx: TCtx,
+    _id: TId,
+    cms: TCms,
+    update: TStateUpdate,
+    version: number,
+    timestamp: number
+  ) => Promise<void>;
+
+  /** Command ID for correlation */
+  commandId: string;
+
+  /** Correlation ID for tracing */
+  correlationId: string;
+
+  /** Optional logger */
+  logger?: Logger;
+}
 ```
 
 ```typescript
@@ -220,20 +449,288 @@ interface DCBConflictResult {
 }
 ```
 
+```typescript
+/**
+ * Deferred DCB execution (retry scheduled via Workpool).
+ *
+ * Returned when an OCC conflict is detected and a retry has been
+ * scheduled. The operation will be retried automatically with the
+ * updated expectedVersion.
+ *
+ * @since Phase 18a
+ */
+interface DCBDeferredResult {
+  status: "deferred";
+  /** Workpool job ID for tracking the scheduled retry */
+  workId: string;
+  /** Which retry attempt was scheduled (0-indexed) */
+  retryAttempt: number;
+  /** Delay in milliseconds before retry executes */
+  scheduledAfterMs: number;
+}
+```
+
+```typescript
+/**
+ * Result type including deferred status for DCB retry operations.
+ *
+ * This extends DCBExecutionResult to include the "deferred" status
+ * returned when a conflict triggers an automatic retry via Workpool.
+ *
+ * @typeParam TData - Success data type from decider
+ * @since Phase 18a
+ */
+type DCBRetryResult<TData extends object> =
+  | DCBSuccessResult<TData>
+  | DCBRejectedResult
+  | DCBFailedResult
+  | DCBDeferredResult;
+```
+
+### Scope Key Utilities
+
+```typescript
+/**
+ * Scope key prefix for tenant isolation.
+ */
+SCOPE_KEY_PREFIX = "tenant:" as const
+```
+
+```typescript
+/**
+ * Create a scope key from components.
+ *
+ * @param tenantId - Tenant ID for isolation
+ * @param scopeType - Type of scope (e.g., "reservation", "order")
+ * @param scopeId - Unique ID within the scope type
+ * @returns Branded scope key
+ * @throws Error if any component is empty or contains invalid characters
+ *
+ * @example
+ * ```typescript
+ * const scopeKey = createScopeKey("tenant_123", "reservation", "res_456");
+ * // Returns: "tenant:tenant_123:reservation:res_456" as DCBScopeKey
+ * ```
+ */
+function createScopeKey(tenantId: string, scopeType: string, scopeId: string): DCBScopeKey;
+```
+
+```typescript
+/**
+ * Create a scope key from components, returning null on invalid input.
+ *
+ * Safe version of createScopeKey that doesn't throw.
+ *
+ * @param tenantId - Tenant ID for isolation
+ * @param scopeType - Type of scope
+ * @param scopeId - Unique ID within the scope type
+ * @returns Branded scope key or null if invalid
+ */
+function tryCreateScopeKey(
+  tenantId: string,
+  scopeType: string,
+  scopeId: string
+): DCBScopeKey | null;
+```
+
+```typescript
+/**
+ * Parse a scope key into its components.
+ *
+ * @param scopeKey - Scope key to parse
+ * @returns Parsed components if valid, null if invalid format
+ *
+ * @example
+ * ```typescript
+ * const parsed = parseScopeKey("tenant:t1:order:o1");
+ * // Returns: { tenantId: "t1", scopeType: "order", scopeId: "o1", raw: "..." }
+ *
+ * const invalid = parseScopeKey("invalid");
+ * // Returns: null
+ * ```
+ */
+function parseScopeKey(scopeKey: string): ParsedScopeKey | null;
+```
+
+```typescript
+/**
+ * Validate a scope key format.
+ *
+ * @param scopeKey - Scope key to validate
+ * @returns Error object if invalid, null if valid
+ *
+ * @example
+ * ```typescript
+ * const error = validateScopeKey("reservation:res_123");
+ * // Returns: { code: "INVALID_SCOPE_KEY_FORMAT", message: "..." }
+ *
+ * const valid = validateScopeKey("tenant:t1:reservation:res_123");
+ * // Returns: null (valid)
+ * ```
+ */
+function validateScopeKey(scopeKey: string): ScopeKeyValidationError | null;
+```
+
+```typescript
+/**
+ * Check if a scope key is valid.
+ *
+ * @param scopeKey - Scope key to check
+ * @returns true if valid
+ */
+function isValidScopeKey(scopeKey: string): scopeKey is DCBScopeKey;
+```
+
+```typescript
+/**
+ * Assert that a scope key is valid, throwing if not.
+ *
+ * @param scopeKey - Scope key to assert
+ * @throws Error if scope key is invalid
+ */
+function assertValidScopeKey(scopeKey: string): asserts scopeKey is DCBScopeKey;
+```
+
+```typescript
+/**
+ * Check if a scope key belongs to a specific tenant.
+ *
+ * @param scopeKey - Scope key to check
+ * @param tenantId - Tenant ID to match
+ * @returns true if scope belongs to tenant
+ */
+function isScopeTenant(scopeKey: DCBScopeKey, tenantId: string): boolean;
+```
+
+```typescript
+/**
+ * Extract tenant ID from scope key.
+ *
+ * @param scopeKey - Scope key to extract from
+ * @returns Tenant ID
+ * @throws Error if scope key is invalid
+ */
+function extractTenantId(scopeKey: DCBScopeKey): string;
+```
+
+```typescript
+/**
+ * Extract scope type from scope key.
+ *
+ * @param scopeKey - Scope key to extract from
+ * @returns Scope type
+ * @throws Error if scope key is invalid
+ */
+function extractScopeType(scopeKey: DCBScopeKey): string;
+```
+
+```typescript
+/**
+ * Extract scope ID from scope key.
+ *
+ * @param scopeKey - Scope key to extract from
+ * @returns Scope ID
+ * @throws Error if scope key is invalid
+ */
+function extractScopeId(scopeKey: DCBScopeKey): string;
+```
+
+### Usage Example
+
+```typescript
+import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core/dcb";
+
+    const result = await executeWithDCB(ctx, {
+      scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamType: "Reservation",
+      schemaVersion: 1,
+      entities: {
+        streamIds: ["product-1", "product-2"],
+        loadEntity: async (ctx, streamId) => {
+          const product = await inventoryRepo.tryLoad(ctx, streamId);
+          return product ? { cms: product, _id: product._id } : null;
+        },
+      },
+      decider: reserveMultipleDecider,
+      command: { orderId: "order_456", items },
+      applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
+        await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
+      },
+      commandId: "cmd_789",
+      correlationId: "corr_abc",
+    });
+
+    switch (result.status) {
+      case "success":
+        // Append result.events to Event Store
+        break;
+      case "rejected":
+        // Business rule violation - result.code, result.reason
+        break;
+      case "conflict":
+        // OCC conflict - retry with fresh state
+        break;
+    }
+```
+
 ## Consequences
 
 ### When to Use DCB vs Alternatives
 
 | Criterion | DCB | Saga | Regular Decider |
-    | --- | --- | --- | --- |
-    | Scope | Single BC | Cross-BC | Single entity |
-    | Consistency | Atomic | Eventual | Atomic |
-    | Use Case | Multi-product reservation | Order fulfillment | Simple updates |
+| --- | --- | --- | --- |
+| Scope | Single BC | Cross-BC | Single entity |
+| Consistency | Atomic | Eventual | Atomic |
+| Use Case | Multi-product reservation | Order fulfillment | Simple updates |
 
 ## Source Mapping - Content Extraction Configuration
 
 The following table defines which content is extracted from which source files:
 
-    | Section | Source File | Extraction Method |
-    | --- | --- | --- |
-    | Core Types | packages/platform-core/src/dcb/types.ts | @extract-shapes tag |
+| Section | Source File | Extraction Method |
+| --- | --- | --- |
+| Core Types | packages/platform-core/src/dcb/types.ts | @extract-shapes tag |
+| Scope Key Utilities | packages/platform-core/src/dcb/scopeKey.ts | @extract-shapes tag |
+| Usage Example | THIS DECISION | Fenced code block |
+
+    **Usage Example:**
+
+    """typescript
+    import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core/dcb";
+
+    const result = await executeWithDCB(ctx, {
+      scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamType: "Reservation",
+      schemaVersion: 1,
+      entities: {
+        streamIds: ["product-1", "product-2"],
+        loadEntity: async (ctx, streamId) => {
+          const product = await inventoryRepo.tryLoad(ctx, streamId);
+          return product ? { cms: product, _id: product._id } : null;
+        },
+      },
+      decider: reserveMultipleDecider,
+      command: { orderId: "order_456", items },
+      applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
+        await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
+      },
+      commandId: "cmd_789",
+      correlationId: "corr_abc",
+    });
+
+    switch (result.status) {
+      case "success":
+        // Append result.events to Event Store
+        break;
+      case "rejected":
+        // Business rule violation - result.code, result.reason
+        break;
+      case "conflict":
+        // OCC conflict - retry with fresh state
+        break;
+    }
+    """

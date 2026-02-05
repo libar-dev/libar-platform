@@ -1,4 +1,11 @@
 /**
+ * @libar-docs
+ * @libar-docs-pattern DCBScopeKeyUtilities
+ * @libar-docs-status completed
+ * @libar-docs-phase 16
+ * @libar-docs-ddd
+ * @libar-docs-extract-shapes SCOPE_KEY_PREFIX, createScopeKey, tryCreateScopeKey, parseScopeKey, validateScopeKey, isValidScopeKey, assertValidScopeKey, isScopeTenant, extractTenantId, extractScopeType, extractScopeId
+ *
  * ## DCB Scope Key Utilities
  *
  * Functions for creating, parsing, and validating scope keys.
