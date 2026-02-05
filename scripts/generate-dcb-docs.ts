@@ -48,7 +48,6 @@ try {
   execSync(cmd, {
     cwd: ROOT_DIR,
     stdio: "inherit",
-    env: { ...process.env },
   });
 
   console.log();
@@ -77,6 +76,14 @@ try {
   listFiles(OUTPUT_DIR);
   console.log();
 } catch (error) {
-  console.error("Generation failed:", error);
+  console.error("Generation failed:");
+  if (error instanceof Error) {
+    console.error(error.message);
+    if ("stderr" in error && error.stderr) {
+      console.error("stderr:", String(error.stderr));
+    }
+  } else {
+    console.error(error);
+  }
   process.exit(1);
 }
