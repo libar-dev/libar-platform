@@ -763,3 +763,63 @@ export const expireExpiredReservations = mutation({
     };
   },
 });
+
+// =============================================================================
+// Agent Testing Wrappers
+// =============================================================================
+
+/**
+ * Get customer cancellations projection data.
+ * Used for testing agent pattern detection via projections.
+ */
+export const getTestCustomerCancellations = query({
+  args: {
+    customerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.db
+      .query("customerCancellations")
+      .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+      .first();
+  },
+});
+
+/**
+ * Get all agent dead letters for testing.
+ */
+export const getTestAgentDeadLetters = query({
+  args: {
+    agentId: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("pending"), v.literal("replayed"), v.literal("ignored"))),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    if (args.agentId && args.status) {
+      return await ctx.db
+        .query("agentDeadLetters")
+        .withIndex("by_agentId_status", (q) =>
+          q.eq("agentId", args.agentId!).eq("status", args.status!)
+        )
+        .take(args.limit ?? 100);
+    }
+
+    if (args.agentId) {
+      return await ctx.db
+        .query("agentDeadLetters")
+        .withIndex("by_agentId_status", (q) => q.eq("agentId", args.agentId!))
+        .take(args.limit ?? 100);
+    }
+
+    if (args.status) {
+      return await ctx.db
+        .query("agentDeadLetters")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(args.limit ?? 100);
+    }
+
+    return await ctx.db.query("agentDeadLetters").take(args.limit ?? 100);
+  },
+});

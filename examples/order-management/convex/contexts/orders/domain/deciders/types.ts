@@ -198,6 +198,7 @@ export interface ConfirmOrderData {
 
 export interface CancelOrderData {
   orderId: string;
+  customerId: string;
   reason: string;
 }
 

@@ -188,3 +188,101 @@ export const getDeadLetterStats = query({
     }));
   },
 });
+
+// =============================================================================
+// APPROVAL QUERIES (Phase 22.4)
+// =============================================================================
+
+/**
+ * Get pending approvals.
+ *
+ * Returns approval requests awaiting human review.
+ * Can filter by agent ID and/or status.
+ *
+ * @example
+ * ```typescript
+ * // Get all pending approvals for an agent
+ * const approvals = await ctx.runQuery(api.queries.agent.getPendingApprovals, {
+ *   agentId: "churn-risk-agent",
+ *   status: "pending",
+ * });
+ *
+ * // Get all pending approvals (no filter)
+ * const allPending = await ctx.runQuery(api.queries.agent.getPendingApprovals, {
+ *   status: "pending",
+ * });
+ * ```
+ */
+export const getPendingApprovals = query({
+  args: {
+    /** Optional: filter by agent ID */
+    agentId: v.optional(v.string()),
+    /** Optional: filter by status */
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+        v.literal("expired")
+      )
+    ),
+    /** Maximum entries to return (default: 100) */
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { agentId, status, limit = 100 }) => {
+    // If both agentId and status are specified, use the compound index
+    if (agentId && status) {
+      return await ctx.db
+        .query("pendingApprovals")
+        .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId).eq("status", status))
+        .order("desc")
+        .take(limit);
+    }
+
+    // If only agentId is specified
+    if (agentId) {
+      return await ctx.db
+        .query("pendingApprovals")
+        .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId))
+        .order("desc")
+        .take(limit);
+    }
+
+    // If only status is specified
+    if (status) {
+      return await ctx.db
+        .query("pendingApprovals")
+        .withIndex("by_status_expiresAt", (q) => q.eq("status", status))
+        .order("desc")
+        .take(limit);
+    }
+
+    // No filter - get all
+    return await ctx.db.query("pendingApprovals").order("desc").take(limit);
+  },
+});
+
+/**
+ * Get a specific approval by ID.
+ *
+ * Returns the full approval record for display in a review UI.
+ *
+ * @example
+ * ```typescript
+ * const approval = await ctx.runQuery(api.queries.agent.getApprovalById, {
+ *   approvalId: "apr_123_abc",
+ * });
+ * ```
+ */
+export const getApprovalById = query({
+  args: {
+    /** Approval ID to look up */
+    approvalId: v.string(),
+  },
+  handler: async (ctx, { approvalId }) => {
+    return await ctx.db
+      .query("pendingApprovals")
+      .withIndex("by_approvalId", (q) => q.eq("approvalId", approvalId))
+      .first();
+  },
+});

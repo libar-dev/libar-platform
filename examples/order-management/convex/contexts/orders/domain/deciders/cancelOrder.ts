@@ -57,6 +57,7 @@ export function decideCancelOrder(
   return success({
     data: {
       orderId: state.orderId,
+      customerId: state.customerId,
       reason: command.reason,
     },
     event: {

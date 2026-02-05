@@ -47,4 +47,16 @@ const detectOrphansRef = makeFunctionReference<"mutation">(
 
 crons.interval("detect-orphaned-intents", { minutes: 5 }, detectOrphansRef);
 
+// =============================================================================
+// AGENT APPROVAL EXPIRATION (Phase 22.4)
+// =============================================================================
+// Expire pending agent approvals that have passed their expiration time.
+// Runs hourly to clean up stale approvals.
+// =============================================================================
+const expirePendingApprovalsRef = makeFunctionReference<"mutation">(
+  "contexts/agent/tools/approval:expirePendingApprovals"
+) as unknown as FunctionReference<"mutation", "internal">;
+
+crons.interval("expire-pending-approvals", { hours: 1 }, expirePendingApprovalsRef);
+
 export default crons;

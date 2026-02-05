@@ -49,7 +49,7 @@ export {
 // Integration Test Helpers
 // =============================================================================
 
-export { testMutation, testQuery, testAction } from "./integration-helpers.js";
+export { testMutation, testQuery, testAction, testInternalMutation } from "./integration-helpers.js";
 
 // =============================================================================
 // Test World (BDD Scenario State)

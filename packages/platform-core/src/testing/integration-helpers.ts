@@ -119,3 +119,36 @@ export async function testAction<Action extends FunctionReference<"action">>(
   const helper = t as unknown as TestableConvexHelper;
   return (await helper.action(action, args)) as FunctionReturnType<Action>;
 }
+
+/**
+ * Type-safe wrapper for ConvexTestingHelper.mutation for internal mutations.
+ *
+ * Use this for testing internal mutations directly in integration tests.
+ * Internal mutations are typically used for infrastructure operations
+ * that shouldn't be exposed in the public API.
+ *
+ * @param t - ConvexTestingHelper instance
+ * @param mutation - Internal mutation function reference from generated API
+ * @param args - Arguments for the mutation
+ * @returns Promise with the mutation result
+ *
+ * @example
+ * ```typescript
+ * import { internal } from "../convex/_generated/api";
+ * import { testInternalMutation } from "@libar-dev/platform-core/testing";
+ *
+ * const result = await testInternalMutation(
+ *   t,
+ *   internal.contexts.agent.tools.approval.recordPendingApproval,
+ *   { approvalId: "apr_123", ... }
+ * );
+ * ```
+ */
+export async function testInternalMutation<Mutation extends FunctionReference<"mutation", "internal">>(
+  t: ConvexTestingHelper,
+  mutation: Mutation,
+  args: FunctionArgs<Mutation>
+): Promise<FunctionReturnType<Mutation>> {
+  const helper = t as unknown as TestableConvexHelper;
+  return (await helper.mutation(mutation, args)) as FunctionReturnType<Mutation>;
+}

@@ -101,6 +101,34 @@ export default defineSchema({
     .index("by_status", ["status", "createdAt"]),
 
   /**
+   * Customer Cancellations - read model for agent pattern detection.
+   * Updated by OrderCancelled events.
+   * Enables O(1) lookup for churn risk detection instead of N+1 queries.
+   *
+   * @since Phase 22 (AgentAsBoundedContext) - N+1 Query Refactor
+   */
+  customerCancellations: defineTable({
+    customerId: v.string(),
+    cancellations: v.array(
+      v.object({
+        orderId: v.string(),
+        eventId: v.string(),
+        globalPosition: v.number(),
+        reason: v.string(),
+        timestamp: v.number(),
+      })
+    ),
+    cancellationCount: v.number(),
+    /** Timestamp of oldest cancellation in rolling window */
+    oldestCancellationAt: v.number(),
+    /** Last processed event's global position for conflict detection */
+    lastGlobalPosition: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_customerId", ["customerId"])
+    .index("by_cancellationCount", ["cancellationCount", "updatedAt"]),
+
+  /**
    * Order Items - read model for order line item details.
    * Updated by OrderItemAdded/OrderItemRemoved events.
    * Enables Order Detail page to display individual items.
@@ -760,4 +788,72 @@ export default defineSchema({
     .index("by_agentId_createdAt", ["agentId", "createdAt"])
     .index("by_status", ["status", "createdAt"])
     .index("by_decisionId", ["decisionId"]),
+
+  /**
+   * Pending Approvals - human-in-loop approval workflow for agent actions.
+   *
+   * Tracks approval requests for low-confidence agent decisions that require
+   * human review before execution.
+   *
+   * Status flow:
+   * - pending: Awaiting human review
+   * - approved: Human approved, command will be emitted
+   * - rejected: Human rejected, action will not be taken
+   * - expired: Approval window expired without decision
+   *
+   * @since Phase 22.4 (AgentAsBoundedContext - Approval Workflow)
+   */
+  pendingApprovals: defineTable({
+    /** Unique approval request ID */
+    approvalId: v.string(),
+
+    /** Agent BC identifier */
+    agentId: v.string(),
+
+    /** Decision ID for correlation with audit events */
+    decisionId: v.string(),
+
+    /** Action awaiting approval */
+    action: v.object({
+      /** Action/command type (e.g., "SuggestCustomerOutreach") */
+      type: v.string(),
+      /** Action payload */
+      payload: v.any(),
+    }),
+
+    /** Confidence score that triggered the review (0-1) */
+    confidence: v.number(),
+
+    /** Reason for the action */
+    reason: v.string(),
+
+    /** Current approval status */
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("expired")
+    ),
+
+    /** Event IDs that triggered this approval request */
+    triggeringEventIds: v.array(v.string()),
+
+    /** When the approval expires */
+    expiresAt: v.number(),
+
+    /** ID of the reviewer (if reviewed) */
+    reviewerId: v.optional(v.string()),
+
+    /** When the review occurred (if reviewed) */
+    reviewedAt: v.optional(v.number()),
+
+    /** Note from reviewer (if any) */
+    reviewNote: v.optional(v.string()),
+
+    /** When the approval was created */
+    createdAt: v.number(),
+  })
+    .index("by_approvalId", ["approvalId"])
+    .index("by_agentId_status", ["agentId", "status"])
+    .index("by_status_expiresAt", ["status", "expiresAt"]),
 });

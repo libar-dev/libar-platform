@@ -25,6 +25,7 @@ import type * as contexts_agent__utils_index from "../contexts/agent/_utils/inde
 import type * as contexts_agent_handlers_eventHandler from "../contexts/agent/handlers/eventHandler.js";
 import type * as contexts_agent_handlers_onComplete from "../contexts/agent/handlers/onComplete.js";
 import type * as contexts_agent_index from "../contexts/agent/index.js";
+import type * as contexts_agent_tools_approval from "../contexts/agent/tools/approval.js";
 import type * as contexts_agent_tools_emitCommand from "../contexts/agent/tools/emitCommand.js";
 import type * as crons from "../crons.js";
 import type * as crossContextQueries from "../crossContextQueries.js";
@@ -45,6 +46,7 @@ import type * as processManagers_index from "../processManagers/index.js";
 import type * as processManagers_orderNotification from "../processManagers/orderNotification.js";
 import type * as projections__helpers from "../projections/_helpers.js";
 import type * as projections_crossContext_orderWithInventory from "../projections/crossContext/orderWithInventory.js";
+import type * as projections_customers_customerCancellations from "../projections/customers/customerCancellations.js";
 import type * as projections_deadLetters from "../projections/deadLetters.js";
 import type * as projections_definitions from "../projections/definitions.js";
 import type * as projections_evolve_index from "../projections/evolve/index.js";
@@ -102,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   "contexts/agent/handlers/eventHandler": typeof contexts_agent_handlers_eventHandler;
   "contexts/agent/handlers/onComplete": typeof contexts_agent_handlers_onComplete;
   "contexts/agent/index": typeof contexts_agent_index;
+  "contexts/agent/tools/approval": typeof contexts_agent_tools_approval;
   "contexts/agent/tools/emitCommand": typeof contexts_agent_tools_emitCommand;
   crons: typeof crons;
   crossContextQueries: typeof crossContextQueries;
@@ -122,6 +125,7 @@ declare const fullApi: ApiFromModules<{
   "processManagers/orderNotification": typeof processManagers_orderNotification;
   "projections/_helpers": typeof projections__helpers;
   "projections/crossContext/orderWithInventory": typeof projections_crossContext_orderWithInventory;
+  "projections/customers/customerCancellations": typeof projections_customers_customerCancellations;
   "projections/deadLetters": typeof projections_deadLetters;
   "projections/definitions": typeof projections_definitions;
   "projections/evolve/index": typeof projections_evolve_index;

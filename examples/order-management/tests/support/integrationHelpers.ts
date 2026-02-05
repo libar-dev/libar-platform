@@ -7,4 +7,9 @@
  * @deprecated Import from @libar-dev/platform-core/testing instead
  */
 
-export { testMutation, testQuery, testAction } from "@libar-dev/platform-core/testing";
+export {
+  testMutation,
+  testQuery,
+  testAction,
+  testInternalMutation,
+} from "@libar-dev/platform-core/testing";

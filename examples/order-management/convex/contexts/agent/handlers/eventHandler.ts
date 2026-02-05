@@ -9,7 +9,7 @@
  * This is a PRODUCTION implementation (not demo stubs):
  * 1. Loads/creates checkpoint from DB
  * 2. Checks idempotency via lastProcessedPosition
- * 3. Loads event history from orderSummaries + eventStore
+ * 3. Loads event history from customerCancellations projection (O(1) lookup)
  * 4. Calls agent's onEvent handler
  * 5. Handles decision (emit command, queue approval)
  * 6. Records audit event
@@ -23,29 +23,7 @@ import { internalMutation } from "../../../_generated/server.js";
 import type { MutationCtx } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
-import { components } from "../../../_generated/api.js";
 import type { Id } from "../../../_generated/dataModel.js";
-
-/**
- * Event record type from the event store.
- * Matches the structure returned by eventStore.lib.readStream.
- */
-interface StoredEventRecord {
-  eventId: string;
-  eventType: string;
-  streamId: string;
-  streamType: string;
-  boundedContext: string;
-  version: number;
-  globalPosition: number;
-  timestamp: number;
-  payload: unknown;
-  metadata?: unknown;
-  correlationId: string;
-  causationId?: string;
-  schemaVersion: number;
-  category: "domain" | "integration" | "trigger" | "fat";
-}
 import {
   createMockAgentRuntime,
   createAgentEventHandler,
@@ -64,6 +42,10 @@ import { churnRiskAgentConfig, extractCustomerId } from "../_config.js";
 // TS2589 Prevention: Declare function references at module level
 const emitAgentCommandRef = makeFunctionReference<"mutation">(
   "contexts/agent/tools/emitCommand:emitAgentCommand"
+) as SafeMutationRef;
+
+const recordPendingApprovalRef = makeFunctionReference<"mutation">(
+  "contexts/agent/tools/approval:recordPendingApproval"
 ) as SafeMutationRef;
 
 // ============================================================================
@@ -261,7 +243,18 @@ export const handleChurnRiskEvent = internalMutation({
         action: result.pendingApproval.action.type,
         confidence: result.pendingApproval.confidence,
       });
-      // TODO: Implement approval workflow with @convex-dev/workflow
+
+      // Persist the pending approval for human review
+      await ctx.runMutation(recordPendingApprovalRef, {
+        approvalId: result.pendingApproval.approvalId,
+        agentId: args.agentId,
+        decisionId: result.pendingApproval.decisionId,
+        action: result.pendingApproval.action,
+        confidence: result.pendingApproval.confidence,
+        reason: result.pendingApproval.reason,
+        triggeringEventIds: [...(result.decision?.triggeringEvents ?? [])],
+        expiresAt: result.pendingApproval.expiresAt,
+      });
     }
 
     // Handle dead letter (if any)
@@ -284,11 +277,15 @@ export const handleChurnRiskEvent = internalMutation({
 /**
  * Load event history for pattern detection.
  *
- * Queries event store for events within the pattern window.
- * For churn risk detection, we need to:
+ * Uses the customerCancellations projection for O(1) lookup instead of N+1 queries.
+ * The projection is updated by the command orchestrator when OrderCancelled events occur.
+ *
+ * For churn risk detection:
  * 1. Extract customer ID from the event
- * 2. Find orders for that customer
- * 3. Load OrderCancelled events from those orders
+ * 2. Query the customerCancellations projection (single O(1) lookup)
+ * 3. Convert to PublishedEvent format for pattern detection
+ *
+ * @since Phase 22 - Refactored from N+1 query pattern to projection-based lookup
  */
 async function loadEventHistory(
   ctx: Pick<MutationCtx, "db" | "runQuery">,
@@ -311,55 +308,48 @@ async function loadEventHistory(
     return [];
   }
 
-  // Query orders by customer from orderSummaries projection
-  const customerOrders = await ctx.db
-    .query("orderSummaries")
+  // O(1) lookup: Query customerCancellations projection directly
+  const customerData = await ctx.db
+    .query("customerCancellations")
     .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
-    .filter((q) => q.gte(q.field("createdAt"), cutoffTime))
-    .take(config.patternWindow.eventLimit ?? 100);
+    .first();
 
-  // For each order, load events from the event store
+  // Build events from projection data
   const events: PublishedEvent[] = [];
 
-  for (const order of customerOrders) {
-    try {
-      const orderEvents = await ctx.runQuery(components.eventStore.lib.readStream, {
-        streamType: "Order",
-        streamId: order.orderId,
-      });
+  if (customerData) {
+    // Filter to cancellations within window and convert to PublishedEvent format
+    const windowCancellations = customerData.cancellations
+      .filter((c) => c.timestamp >= cutoffTime)
+      .map(
+        (c): PublishedEvent => ({
+          eventId: c.eventId,
+          eventType: "OrderCancelled",
+          globalPosition: c.globalPosition,
+          streamType: "Order",
+          streamId: c.orderId,
+          payload: {
+            orderId: c.orderId,
+            customerId: customerId,
+            reason: c.reason,
+          },
+          timestamp: c.timestamp,
+          category: "domain" as const,
+          boundedContext: "orders",
+          schemaVersion: 1,
+          correlation: {
+            correlationId: "",
+            causationId: "",
+          },
+        })
+      );
 
-      // Filter to only cancellation events within window
-      const cancellations = (orderEvents as StoredEventRecord[])
-        .filter((e) => e.eventType === "OrderCancelled" && e.timestamp >= cutoffTime)
-        .map(
-          (e): PublishedEvent => ({
-            eventId: e.eventId,
-            eventType: e.eventType,
-            globalPosition: e.globalPosition,
-            streamType: e.streamType ?? "Order",
-            streamId: e.streamId ?? order.orderId,
-            payload: e.payload,
-            timestamp: e.timestamp,
-            category: "domain" as const,
-            boundedContext: e.boundedContext ?? "orders",
-            schemaVersion: e.schemaVersion ?? 1,
-            correlation: {
-              correlationId: e.correlationId ?? "",
-              causationId: e.causationId ?? "",
-            },
-          })
-        );
-
-      events.push(...cancellations);
-    } catch (_error) {
-      // Silently continue - some orders may not have events in the event store yet
-      // This is expected for newly created orders or orders with minimal activity
-    }
+    events.push(...windowCancellations);
   }
 
-  // Add the current event if it's a cancellation
+  // Add the current event if it's a cancellation and not already in the list
+  // (projection may not have been updated yet for this event)
   if (currentEvent.eventType === "OrderCancelled") {
-    // Only add if not already in the list
     if (!events.some((e) => e.eventId === currentEvent.eventId)) {
       events.push(currentEvent);
     }

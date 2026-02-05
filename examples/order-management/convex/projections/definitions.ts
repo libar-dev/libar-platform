@@ -90,6 +90,29 @@ export const productCatalogProjection = defineProjection({
 });
 
 // =============================================================================
+// Customer Projections (for Agent Pattern Detection)
+// =============================================================================
+
+/**
+ * Customer Cancellations Projection
+ *
+ * Maintains customer-level cancellation history for agent pattern detection.
+ * Enables O(1) lookup instead of N+1 queries for churn risk analysis.
+ *
+ * @since Phase 22 (AgentAsBoundedContext) - N+1 Query Refactor
+ */
+export const customerCancellationsProjection = defineProjection({
+  projectionName: "customerCancellations",
+  description: "Customer cancellation history for agent pattern detection",
+  targetTable: "customerCancellations",
+  partitionKeyField: "customerId",
+  eventSubscriptions: ["OrderCancelled"] as const,
+  context: "orders",
+  type: "primary",
+  category: "logic", // Used by agent business logic, not direct UI
+});
+
+// =============================================================================
 // Cross-Context Projections
 // =============================================================================
 
@@ -136,6 +159,7 @@ export const PROJECTION_DEFINITIONS = {
   activeReservations: activeReservationsProjection,
   productCatalog: productCatalogProjection,
   orderWithInventory: orderWithInventoryProjection,
+  customerCancellations: customerCancellationsProjection,
 } as const;
 
 /**
@@ -164,6 +188,7 @@ projectionRegistry.register(orderSummaryProjection);
 projectionRegistry.register(activeReservationsProjection);
 projectionRegistry.register(productCatalogProjection);
 projectionRegistry.register(orderWithInventoryProjection);
+projectionRegistry.register(customerCancellationsProjection);
 
 // =============================================================================
 // Replay Handler Registry (Phase 18b-1)
@@ -187,6 +212,11 @@ const onOrderConfirmedRef = makeFunctionReference<"mutation">(
 );
 const onOrderCancelledRef = makeFunctionReference<"mutation">(
   "projections/orders/orderSummary:onOrderCancelled"
+);
+
+// Customer cancellations projection handler
+const onCustomerCancellationRef = makeFunctionReference<"mutation">(
+  "projections/customers/customerCancellations:onOrderCancelled"
 );
 
 /**
@@ -260,6 +290,21 @@ replayHandlerRegistry.register("orderSummary", {
       reason: event.payload["reason"] as string | undefined,
       eventId: event.eventId,
       globalPosition: event.globalPosition,
+    }),
+  },
+});
+
+// Register customerCancellations projection handler (for agent pattern detection)
+replayHandlerRegistry.register("customerCancellations", {
+  OrderCancelled: {
+    handler: onCustomerCancellationRef,
+    toArgsFromEvent: (event: StoredEventForReplay) => ({
+      orderId: event.payload["orderId"] as string,
+      customerId: event.payload["customerId"] as string,
+      reason: (event.payload["reason"] as string) ?? "",
+      eventId: event.eventId,
+      globalPosition: event.globalPosition,
+      timestamp: event.timestamp,
     }),
   },
 });

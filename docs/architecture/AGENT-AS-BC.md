@@ -424,6 +424,137 @@ const subscription = createAgentSubscription(myAgentConfig, {
 | `PatternTriggers.all(...triggers)`           | AND combination                     |
 | `PatternTriggers.any(...triggers)`           | OR combination                      |
 
+## Projection-Based Pattern Detection (Phase 22)
+
+For high-volume pattern detection, use dedicated projections instead of N+1 queries:
+
+### The Problem: N+1 Query Pattern
+
+```typescript
+// ❌ N+1 queries - O(N) performance
+const customerOrders = await ctx.db.query("orderSummaries")...;
+for (const order of customerOrders) {
+  const events = await ctx.runQuery(eventStore.lib.readStream, { streamId: order.orderId });
+  // Filter cancellation events...
+}
+```
+
+### The Solution: Customer Cancellations Projection
+
+```typescript
+// ✅ O(1) lookup via projection
+const customerData = await ctx.db
+  .query("customerCancellations")
+  .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
+  .first();
+
+// customerData contains:
+// - cancellations: Array of { orderId, eventId, globalPosition, reason, timestamp }
+// - cancellationCount: number
+// - oldestCancellationAt: number (for window pruning)
+```
+
+### Performance Characteristics
+
+| Approach | Query Complexity | Latency (100 orders) | Scaling |
+| -------- | ---------------- | -------------------- | ------- |
+| N+1 queries | O(N) | 500-2000ms | Poor |
+| Projection | O(1) | 5-20ms | Excellent |
+
+### Projection Schema
+
+```typescript
+customerCancellations: defineTable({
+  customerId: v.string(),
+  cancellations: v.array(v.object({
+    orderId: v.string(),
+    eventId: v.string(),
+    globalPosition: v.number(),
+    reason: v.string(),
+    timestamp: v.number(),
+  })),
+  cancellationCount: v.number(),
+  oldestCancellationAt: v.number(),
+  lastGlobalPosition: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_customerId", ["customerId"])
+  .index("by_cancellationCount", ["cancellationCount", "updatedAt"]),
+```
+
+The projection is updated by the command orchestrator when `OrderCancelled` events occur, maintaining a rolling window of cancellations per customer.
+
+## Approval Workflow (Phase 22)
+
+The approval workflow provides human-in-loop review for low-confidence agent decisions.
+
+### Approval Flow
+
+```
+Agent Decision (confidence < threshold)
+        │
+        ▼
+┌─────────────────┐
+│ pendingApprovals │──────────────────────────────┐
+│   (status:       │                               │
+│    pending)      │                               │
+└────────┬────────┘                               │
+         │                                         │
+    ┌────┴────┐                                   │
+    │         │                                   │
+    ▼         ▼                                   ▼
+┌────────┐ ┌────────┐                       ┌────────┐
+│Approved│ │Rejected│                       │Expired │
+│        │ │        │                       │(cron)  │
+└────┬───┘ └────┬───┘                       └────────┘
+     │          │
+     ▼          ▼
+ ┌───────┐   ┌──────────┐
+ │Command│   │Audit Only│
+ │Emitted│   │(no action)│
+ └───────┘   └──────────┘
+```
+
+### Approval Tables
+
+```typescript
+// Pending approvals table
+pendingApprovals: defineTable({
+  approvalId: v.string(),
+  agentId: v.string(),
+  decisionId: v.string(),
+  action: v.object({ type: v.string(), payload: v.any() }),
+  confidence: v.number(),
+  reason: v.string(),
+  status: v.union(v.literal("pending"), v.literal("approved"),
+                  v.literal("rejected"), v.literal("expired")),
+  triggeringEventIds: v.array(v.string()),
+  expiresAt: v.number(),
+  reviewerId: v.optional(v.string()),
+  reviewedAt: v.optional(v.number()),
+  reviewNote: v.optional(v.string()),
+  createdAt: v.number(),
+})
+```
+
+### Approval Mutations
+
+| Mutation | Description |
+| -------- | ----------- |
+| `recordPendingApproval` | Create approval request (idempotent) |
+| `approveAgentAction` | Approve and emit command |
+| `rejectAgentAction` | Reject with audit trail |
+| `expirePendingApprovals` | Cron handler for expired approvals |
+
+### Expiration Cron
+
+Pending approvals are automatically expired by an hourly cron job:
+
+```typescript
+// crons.ts
+crons.interval("expire-pending-approvals", { hours: 1 }, expirePendingApprovalsRef);
+```
+
 ## Best Practices
 
 1. **Start with rules, add LLM later** - Rule-based triggers are faster and cheaper. Add LLM analysis only for complex patterns.
@@ -437,6 +568,10 @@ const subscription = createAgentSubscription(myAgentConfig, {
 5. **Monitor costs** - Set rate limits and cost budgets for LLM-based analysis.
 
 6. **Audit everything** - Record all decisions for compliance and debugging.
+
+7. **Use projections for pattern detection** - Avoid N+1 queries by maintaining denormalized projections for frequently-accessed patterns (e.g., customer cancellations).
+
+8. **Configure approval workflows carefully** - Balance automation efficiency with risk management through appropriate confidence thresholds.
 
 ## Related Patterns
 

@@ -84,6 +84,11 @@ const deadLetterOnComplete = makeFunctionReference<"mutation">(
   "projections/deadLetters:onProjectionComplete"
 ) as ProjectionHandler;
 
+// Customer cancellations projection handler (for agent pattern detection)
+const customerCancellationsOnCancelled = makeFunctionReference<"mutation">(
+  "projections/customers/customerCancellations:onOrderCancelled"
+) as ProjectionHandler;
+
 // Saga router
 const sagaRouter = makeFunctionReference<"mutation">(
   "sagas/router:routeEvent"
@@ -517,7 +522,7 @@ export const cancelOrderConfig: CommandConfig<
     }),
     getPartitionKey: (args) => ({ name: "orderId", value: args.orderId }),
   },
-  // Cross-context projection
+  // Cross-context projection + customer cancellations for agent pattern detection
   secondaryProjections: [
     {
       handler: orderWithInventoryOnCancelled,
@@ -526,6 +531,22 @@ export const cancelOrderConfig: CommandConfig<
       toProjectionArgs: (args, _result, globalPosition) => ({
         orderId: args.orderId,
         eventId: _result.event.eventId,
+        globalPosition,
+      }),
+      getPartitionKey: (args) => ({ name: "orderId", value: args.orderId }),
+    },
+    // Customer cancellations projection for O(1) agent pattern detection
+    // Note: Workpool partitions by orderId (for ordering), but projection
+    // internally checkpoints by customerId via withCheckpoint
+    {
+      handler: customerCancellationsOnCancelled,
+      onComplete: deadLetterOnComplete,
+      projectionName: "customerCancellations",
+      toProjectionArgs: (args, result, globalPosition) => ({
+        orderId: args.orderId,
+        customerId: result.data.customerId,
+        reason: args.reason,
+        eventId: result.event.eventId,
         globalPosition,
       }),
       getPartitionKey: (args) => ({ name: "orderId", value: args.orderId }),
