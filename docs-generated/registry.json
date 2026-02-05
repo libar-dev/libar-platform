@@ -1,5 +1,8 @@
 {
-  "warnings": [],
+  "warnings": [
+    "deduplication: Duplicate content merged; kept version from THIS DECISION",
+    "deduplication: Duplicate content merged; kept version from THIS DECISION"
+  ],
   "errors": [],
   "patternsProcessed": 1
 }
