@@ -49,39 +49,39 @@
 ```typescript
 import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core/dcb";
 
-    const result = await executeWithDCB(ctx, {
-      scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
-      expectedVersion: 0,
-      boundedContext: "inventory",
-      streamType: "Reservation",
-      schemaVersion: 1,
-      entities: {
-        streamIds: ["product-1", "product-2"],
-        loadEntity: async (ctx, streamId) => {
-          const product = await inventoryRepo.tryLoad(ctx, streamId);
-          return product ? { cms: product, _id: product._id } : null;
-        },
-      },
-      decider: reserveMultipleDecider,
-      command: { orderId: "order_456", items },
-      applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
-        await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
-      },
-      commandId: "cmd_789",
-      correlationId: "corr_abc",
-    });
+const result = await executeWithDCB(ctx, {
+  scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
+  expectedVersion: 0,
+  boundedContext: "inventory",
+  streamType: "Reservation",
+  schemaVersion: 1,
+  entities: {
+    streamIds: ["product-1", "product-2"],
+    loadEntity: async (ctx, streamId) => {
+      const product = await inventoryRepo.tryLoad(ctx, streamId);
+      return product ? { cms: product, _id: product._id } : null;
+    },
+  },
+  decider: reserveMultipleDecider,
+  command: { orderId: "order_456", items },
+  applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
+    await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
+  },
+  commandId: "cmd_789",
+  correlationId: "corr_abc",
+});
 
-    switch (result.status) {
-      case "success":
-        // Append result.events to Event Store
-        break;
-      case "rejected":
-        // Business rule violation - result.code, result.reason
-        break;
-      case "conflict":
-        // OCC conflict - retry with fresh state
-        break;
-    }
+switch (result.status) {
+  case "success":
+    // Append result.events to Event Store
+    break;
+  case "rejected":
+    // Business rule violation - result.code, result.reason
+    break;
+  case "conflict":
+    // OCC conflict - retry with fresh state
+    break;
+}
 ```
 
 ```mermaid
