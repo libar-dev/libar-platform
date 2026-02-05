@@ -19,7 +19,7 @@
  *
  * Status flow: pending → approved/rejected/expired
  *
- * @see DESIGN-2026-005 AD-4 (API Granularity)
+ * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

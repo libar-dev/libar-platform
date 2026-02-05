@@ -24,7 +24,8 @@
  * app.use(agent);
  * ```
  *
- * @see DESIGN-2026-005 for architecture decisions
+ * @see DESIGN-2026-005 for detailed architecture rationale (historical)
+ * @see PDR-010 (Cross-Component Argument Injection)
  */
 import { defineComponent } from "convex/server";
 

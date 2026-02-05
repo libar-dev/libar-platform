@@ -17,7 +17,8 @@
  * Instead of the agent component reaching out to query app-level projections,
  * the app-level caller loads projection data and passes it in.
  *
- * @see DESIGN-2026-005 AD-3 (Cross-Component Projection Access)
+ * @see PDR-010 (Cross-Component Argument Injection)
+ * @see DESIGN-2026-005 AD-3 (historical)
  */
 
 // ============================================================================

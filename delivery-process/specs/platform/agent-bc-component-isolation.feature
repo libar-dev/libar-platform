@@ -88,15 +88,16 @@ Feature: Agent BC Component Isolation - Physical Bounded Context Enforcement
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Agent component definition | planned | @libar-dev/platform-core/src/agent/component/convex.config.ts | Yes | unit |
-      | Agent component schema | planned | @libar-dev/platform-core/src/agent/component/schema.ts | Yes | unit |
-      | Checkpoint public API | planned | @libar-dev/platform-core/src/agent/component/checkpoints.ts | Yes | unit |
-      | Audit public API | planned | @libar-dev/platform-core/src/agent/component/audit.ts | Yes | unit |
-      | Dead letter public API | planned | @libar-dev/platform-core/src/agent/component/deadLetters.ts | Yes | unit |
-      | Command public API | planned | @libar-dev/platform-core/src/agent/component/commands.ts | Yes | unit |
-      | Approval public API | planned | @libar-dev/platform-core/src/agent/component/approvals.ts | Yes | unit |
-      | Cross-component query pattern | planned | @libar-dev/platform-core/src/agent/cross-bc-query.ts | Yes | integration |
-      | Migration guide | planned | docs/migration/AGENT-COMPONENT-MIGRATION.md | No | - |
+      | Agent component definition | stub complete | @libar-dev/platform-core/src/agent/component/convex.config.ts | Yes | integration |
+      | Agent component schema | stub complete | @libar-dev/platform-core/src/agent/component/schema.ts | Yes | integration |
+      | Checkpoint public API | stub complete | @libar-dev/platform-core/src/agent/component/checkpoints.ts | Yes | integration |
+      | Audit public API | stub complete | @libar-dev/platform-core/src/agent/component/audit.ts | Yes | integration |
+      | Dead letter public API | stub complete | @libar-dev/platform-core/src/agent/component/deadLetters.ts | Yes | integration |
+      | Command public API | stub complete | @libar-dev/platform-core/src/agent/component/commands.ts | Yes | integration |
+      | Approval public API | stub complete | @libar-dev/platform-core/src/agent/component/approvals.ts | Yes | integration |
+      | Cross-component query pattern | stub complete | @libar-dev/platform-core/src/agent/cross-bc-query.ts | Yes | integration |
+      | Design session methodology | complete | delivery-process/decisions/pdr-009-design-session-methodology.feature | No | - |
+      | Argument injection pattern | complete | delivery-process/decisions/pdr-010-cross-component-argument-injection.feature | No | - |
 
   # ============================================================================
   # RULE 1: Agent Component Provides Isolated Database

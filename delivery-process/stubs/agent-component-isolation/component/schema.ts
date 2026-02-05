@@ -6,14 +6,16 @@
  * Isolated database for all agent-specific state. These tables are
  * private to the component and accessible only through public API handlers.
  *
- * Tables are identical to the current app-level definitions (schema.ts:610-858)
- * to enable direct data migration with no schema transformation.
+ * Tables match the current app-level definitions (schema.ts:610-858).
+ * During implementation, agent tables move from the shared app schema
+ * to this isolated component schema.
  *
  * @libar-docs
  * @libar-docs-status roadmap
  * @libar-docs-infra
+ * @libar-docs-used-by AgentCheckpoint, AgentAuditEvent, AgentDeadLetter, AgentCommand, PendingApproval
  *
- * @see DESIGN-2026-005 AD-5 (Schema Strategy)
+ * @see DESIGN-2026-005 AD-5 (Schema Strategy, historical)
  */
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
@@ -48,6 +50,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_agentId", ["agentId"])
+    // NEW: Added for O(1) checkpoint lookup by (agentId, subscriptionId) pair.
+    // Current app schema only has by_agentId which requires post-query filtering.
     .index("by_agentId_subscriptionId", ["agentId", "subscriptionId"])
     .index("by_status", ["status", "updatedAt"]),
 
