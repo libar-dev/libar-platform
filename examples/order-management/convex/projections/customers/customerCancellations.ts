@@ -52,63 +52,69 @@ export const onOrderCancelled = internalMutation({
     const eventTimestamp = args.timestamp ?? now;
     const windowCutoff = now - DEFAULT_WINDOW_MS;
 
-    return withCheckpoint(ctx, PROJECTION_NAME, customerId, { eventId, globalPosition }, async () => {
-      // Load existing record
-      const existing = await ctx.db
-        .query("customerCancellations")
-        .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
-        .first();
+    return withCheckpoint(
+      ctx,
+      PROJECTION_NAME,
+      customerId,
+      { eventId, globalPosition },
+      async () => {
+        // Load existing record
+        const existing = await ctx.db
+          .query("customerCancellations")
+          .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
+          .first();
 
-      // Build new cancellation entry
-      const newCancellation = {
-        orderId,
-        eventId,
-        globalPosition,
-        reason,
-        timestamp: eventTimestamp,
-      };
-
-      if (existing) {
-        // Filter to keep only cancellations within the rolling window + new one
-        const updatedCancellations = [
-          ...existing.cancellations.filter((c) => c.timestamp >= windowCutoff),
-          newCancellation,
-        ];
-
-        // Find oldest timestamp for the remaining cancellations
-        const oldestCancellationAt = Math.min(...updatedCancellations.map((c) => c.timestamp));
-
-        await ctx.db.patch(existing._id, {
-          cancellations: updatedCancellations,
-          cancellationCount: updatedCancellations.length,
-          oldestCancellationAt,
-          lastGlobalPosition: globalPosition,
-          updatedAt: now,
-        });
-
-        logger.info("Updated customer cancellations", {
-          customerId,
-          cancellationCount: updatedCancellations.length,
+        // Build new cancellation entry
+        const newCancellation = {
+          orderId,
           eventId,
-        });
-      } else {
-        // Create new record
-        await ctx.db.insert("customerCancellations", {
-          customerId,
-          cancellations: [newCancellation],
-          cancellationCount: 1,
-          oldestCancellationAt: eventTimestamp,
-          lastGlobalPosition: globalPosition,
-          updatedAt: now,
-        });
+          globalPosition,
+          reason,
+          timestamp: eventTimestamp,
+        };
 
-        logger.info("Created customer cancellations record", {
-          customerId,
-          cancellationCount: 1,
-          eventId,
-        });
+        if (existing) {
+          // Filter to keep only cancellations within the rolling window + new one
+          const updatedCancellations = [
+            ...existing.cancellations.filter((c) => c.timestamp >= windowCutoff),
+            newCancellation,
+          ];
+
+          // Find oldest timestamp for the remaining cancellations
+          const oldestCancellationAt = Math.min(...updatedCancellations.map((c) => c.timestamp));
+
+          await ctx.db.patch(existing._id, {
+            cancellations: updatedCancellations,
+            cancellationCount: updatedCancellations.length,
+            oldestCancellationAt,
+            lastGlobalPosition: globalPosition,
+            updatedAt: now,
+          });
+
+          logger.info("Updated customer cancellations", {
+            customerId,
+            cancellationCount: updatedCancellations.length,
+            eventId,
+          });
+        } else {
+          // Create new record
+          await ctx.db.insert("customerCancellations", {
+            customerId,
+            cancellations: [newCancellation],
+            cancellationCount: 1,
+            oldestCancellationAt: eventTimestamp,
+            lastGlobalPosition: globalPosition,
+            updatedAt: now,
+          });
+
+          logger.info("Created customer cancellations record", {
+            customerId,
+            cancellationCount: 1,
+            eventId,
+          });
+        }
       }
-    });
+    );
   },
 });
 

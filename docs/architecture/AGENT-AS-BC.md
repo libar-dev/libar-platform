@@ -456,10 +456,10 @@ const customerData = await ctx.db
 
 ### Performance Characteristics
 
-| Approach | Query Complexity | Latency (100 orders) | Scaling |
-| -------- | ---------------- | -------------------- | ------- |
-| N+1 queries | O(N) | 500-2000ms | Poor |
-| Projection | O(1) | 5-20ms | Excellent |
+| Approach    | Query Complexity | Latency (100 orders) | Scaling   |
+| ----------- | ---------------- | -------------------- | --------- |
+| N+1 queries | O(N)             | 500-2000ms           | Poor      |
+| Projection  | O(1)             | 5-20ms               | Excellent |
 
 ### Projection Schema
 
@@ -526,25 +526,29 @@ pendingApprovals: defineTable({
   action: v.object({ type: v.string(), payload: v.any() }),
   confidence: v.number(),
   reason: v.string(),
-  status: v.union(v.literal("pending"), v.literal("approved"),
-                  v.literal("rejected"), v.literal("expired")),
+  status: v.union(
+    v.literal("pending"),
+    v.literal("approved"),
+    v.literal("rejected"),
+    v.literal("expired")
+  ),
   triggeringEventIds: v.array(v.string()),
   expiresAt: v.number(),
   reviewerId: v.optional(v.string()),
   reviewedAt: v.optional(v.number()),
   reviewNote: v.optional(v.string()),
   createdAt: v.number(),
-})
+});
 ```
 
 ### Approval Mutations
 
-| Mutation | Description |
-| -------- | ----------- |
-| `recordPendingApproval` | Create approval request (idempotent) |
-| `approveAgentAction` | Approve and emit command |
-| `rejectAgentAction` | Reject with audit trail |
-| `expirePendingApprovals` | Cron handler for expired approvals |
+| Mutation                 | Description                          |
+| ------------------------ | ------------------------------------ |
+| `recordPendingApproval`  | Create approval request (idempotent) |
+| `approveAgentAction`     | Approve and emit command             |
+| `rejectAgentAction`      | Reject with audit trail              |
+| `expirePendingApprovals` | Cron handler for expired approvals   |
 
 ### Expiration Cron
 

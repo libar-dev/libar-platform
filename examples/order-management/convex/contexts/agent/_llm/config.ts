@@ -20,9 +20,9 @@ import type { LanguageModelV1 } from "@ai-sdk/provider";
 
 /**
  * Default model for agent pattern analysis.
- * Google Gemini 2.0 Flash is optimized for fast, cost-effective inference.
+ * Google Gemini 3.0 Flash is optimized for fast, cost-effective inference.
  */
-export const OPENROUTER_MODEL = "google/gemini-2.0-flash-001" as const;
+export const OPENROUTER_MODEL = "google/gemini-3-flash-preview" as const;
 
 /**
  * Site URL and name for OpenRouter tracking.

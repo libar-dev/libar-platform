@@ -46,23 +46,19 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = now + 24 * 60 * 60 * 1000; // 24 hours
 
       // Create a pending approval directly (simulating agent handler behavior)
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testRecordPendingApproval,
-        {
-          approvalId,
-          agentId: CHURN_RISK_AGENT_ID,
-          decisionId,
-          action: {
-            type: "SuggestCustomerOutreach",
-            payload: { customerId: "cust_test_123", riskLevel: "medium" },
-          },
-          confidence: 0.75,
-          reason: "Customer cancelled 2 orders in 30 days",
-          triggeringEventIds: ["evt_1", "evt_2"],
-          expiresAt,
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId,
+        action: {
+          type: "SuggestCustomerOutreach",
+          payload: { customerId: "cust_test_123", riskLevel: "medium" },
+        },
+        confidence: 0.75,
+        reason: "Customer cancelled 2 orders in 30 days",
+        triggeringEventIds: ["evt_1", "evt_2"],
+        expiresAt,
+      });
 
       expect(result.approvalId).toBe(approvalId);
       expect(result.created).toBe(true);
@@ -88,38 +84,30 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create first approval
-      const result1 = await testMutation(
-        t,
-        api.testingFunctions.testRecordPendingApproval,
-        {
-          approvalId,
-          agentId: CHURN_RISK_AGENT_ID,
-          decisionId,
-          action: { type: "SuggestCustomerOutreach", payload: {} },
-          confidence: 0.75,
-          reason: "Test reason",
-          triggeringEventIds: [],
-          expiresAt,
-        }
-      );
+      const result1 = await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId,
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId,
+        action: { type: "SuggestCustomerOutreach", payload: {} },
+        confidence: 0.75,
+        reason: "Test reason",
+        triggeringEventIds: [],
+        expiresAt,
+      });
 
       expect(result1.created).toBe(true);
 
       // Try to create duplicate
-      const result2 = await testMutation(
-        t,
-        api.testingFunctions.testRecordPendingApproval,
-        {
-          approvalId, // Same approvalId
-          agentId: CHURN_RISK_AGENT_ID,
-          decisionId: generateDecisionId(), // Different decisionId
-          action: { type: "DifferentAction", payload: {} },
-          confidence: 0.5,
-          reason: "Different reason",
-          triggeringEventIds: ["evt_new"],
-          expiresAt,
-        }
-      );
+      const result2 = await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
+        approvalId, // Same approvalId
+        agentId: CHURN_RISK_AGENT_ID,
+        decisionId: generateDecisionId(), // Different decisionId
+        action: { type: "DifferentAction", payload: {} },
+        confidence: 0.5,
+        reason: "Different reason",
+        triggeringEventIds: ["evt_new"],
+        expiresAt,
+      });
 
       expect(result2.created).toBe(false); // Should not create
 
@@ -162,15 +150,11 @@ describe("Agent Approval Workflow Integration Tests", () => {
       expect(pendingApproval?.status).toBe("pending");
 
       // Approve the action
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentAction,
-        {
-          approvalId,
-          reviewerId,
-          reviewNote: "Customer verified as high-value, outreach approved",
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentAction, {
+        approvalId,
+        reviewerId,
+        reviewNote: "Customer verified as high-value, outreach approved",
+      });
 
       expect(result.success).toBe(true);
 
@@ -181,7 +165,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
 
       expect(approvedApproval?.status).toBe("approved");
       expect(approvedApproval?.reviewerId).toBe(reviewerId);
-      expect(approvedApproval?.reviewNote).toBe("Customer verified as high-value, outreach approved");
+      expect(approvedApproval?.reviewNote).toBe(
+        "Customer verified as high-value, outreach approved"
+      );
       expect(approvedApproval?.reviewedAt).toBeDefined();
 
       // Verify audit event was created
@@ -235,14 +221,10 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Try to approve again
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentAction,
-        {
-          approvalId,
-          reviewerId: "reviewer_2",
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentAction, {
+        approvalId,
+        reviewerId: "reviewer_2",
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("INVALID_STATUS_TRANSITION");
@@ -272,15 +254,11 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Reject the action
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testRejectAgentAction,
-        {
-          approvalId,
-          reviewerId,
-          reviewNote: "Customer already contacted by support team",
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testRejectAgentAction, {
+        approvalId,
+        reviewerId,
+        reviewNote: "Customer already contacted by support team",
+      });
 
       expect(result.success).toBe(true);
 
@@ -333,15 +311,11 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Try to reject
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testRejectAgentAction,
-        {
-          approvalId,
-          reviewerId: "reviewer_2",
-          reviewNote: "Should not work",
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testRejectAgentAction, {
+        approvalId,
+        reviewerId: "reviewer_2",
+        reviewNote: "Should not work",
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("INVALID_STATUS_TRANSITION");
@@ -424,14 +398,10 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Try to approve (should fail due to expiration)
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentAction,
-        {
-          approvalId,
-          reviewerId: "reviewer_late",
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentAction, {
+        approvalId,
+        reviewerId: "reviewer_late",
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("APPROVAL_EXPIRED");
@@ -637,14 +607,10 @@ describe("Agent Approval Workflow Integration Tests", () => {
 
   describe("Error Handling", () => {
     it("should return error for non-existent approval", async () => {
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentAction,
-        {
-          approvalId: "apr_nonexistent_123",
-          reviewerId: "reviewer_test",
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentAction, {
+        approvalId: "apr_nonexistent_123",
+        reviewerId: "reviewer_test",
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("APPROVAL_NOT_FOUND");
@@ -679,15 +645,11 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Try to approve with a reviewer who is ONLY authorized for a different agent
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentActionWithAuth,
-        {
-          approvalId,
-          reviewerId: "reviewer_unauthorized",
-          authorizedAgentIds: ["different-agent-id", "another-agent-id"],
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentActionWithAuth, {
+        approvalId,
+        reviewerId: "reviewer_unauthorized",
+        authorizedAgentIds: ["different-agent-id", "another-agent-id"],
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("UNAUTHORIZED_REVIEWER");
@@ -720,15 +682,11 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Approve with a reviewer who IS authorized for CHURN_RISK_AGENT_ID
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentActionWithAuth,
-        {
-          approvalId,
-          reviewerId: "reviewer_authorized",
-          authorizedAgentIds: [CHURN_RISK_AGENT_ID, "another-agent-id"],
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentActionWithAuth, {
+        approvalId,
+        reviewerId: "reviewer_authorized",
+        authorizedAgentIds: [CHURN_RISK_AGENT_ID, "another-agent-id"],
+      });
 
       expect(result.success).toBe(true);
       expect(result.approvalId).toBe(approvalId);
@@ -762,15 +720,11 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Approve without specifying authorizedAgentIds (no restrictions)
-      const result = await testMutation(
-        t,
-        api.testingFunctions.testApproveAgentActionWithAuth,
-        {
-          approvalId,
-          reviewerId: "reviewer_unrestricted",
-          // No authorizedAgentIds - should be allowed
-        }
-      );
+      const result = await testMutation(t, api.testingFunctions.testApproveAgentActionWithAuth, {
+        approvalId,
+        reviewerId: "reviewer_unrestricted",
+        // No authorizedAgentIds - should be allowed
+      });
 
       expect(result.success).toBe(true);
 

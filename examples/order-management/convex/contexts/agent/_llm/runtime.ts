@@ -102,7 +102,10 @@ export function createOpenRouterAgentRuntime(apiKey?: string): AgentRuntimeConfi
   }
 
   return {
-    analyze: async (prompt: string, events: readonly PublishedEvent[]): Promise<LLMAnalysisResult> => {
+    analyze: async (
+      prompt: string,
+      events: readonly PublishedEvent[]
+    ): Promise<LLMAnalysisResult> => {
       const startTime = Date.now();
 
       // Format events for LLM consumption

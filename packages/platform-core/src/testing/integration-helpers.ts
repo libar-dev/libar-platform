@@ -144,7 +144,9 @@ export async function testAction<Action extends FunctionReference<"action">>(
  * );
  * ```
  */
-export async function testInternalMutation<Mutation extends FunctionReference<"mutation", "internal">>(
+export async function testInternalMutation<
+  Mutation extends FunctionReference<"mutation", "internal">,
+>(
   t: ConvexTestingHelper,
   mutation: Mutation,
   args: FunctionArgs<Mutation>

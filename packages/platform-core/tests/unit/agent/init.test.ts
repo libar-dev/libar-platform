@@ -218,10 +218,12 @@ describe("createAgentEventHandler - pattern window filtering", () => {
       onEvent,
     });
     // Return only 2 events when minEvents is 5
-    const loadHistory = vi.fn().mockResolvedValue([
-      createTestEvent({ eventId: "evt_1", timestamp: Date.now() - 1000 }),
-      createTestEvent({ eventId: "evt_2", timestamp: Date.now() - 500 }),
-    ]);
+    const loadHistory = vi
+      .fn()
+      .mockResolvedValue([
+        createTestEvent({ eventId: "evt_1", timestamp: Date.now() - 1000 }),
+        createTestEvent({ eventId: "evt_2", timestamp: Date.now() - 500 }),
+      ]);
     const ctx = createTestHandlerContext({ config, loadHistory });
     const handler = createAgentEventHandler(ctx);
 
@@ -966,10 +968,12 @@ describe("createAgentEventHandler - full workflow", () => {
       confidenceThreshold: 0.9,
     });
 
-    const loadHistory = vi.fn().mockResolvedValue([
-      createTestEvent({ eventId: "hist_1", timestamp: Date.now() - 3600000 }),
-      createTestEvent({ eventId: "hist_2", timestamp: Date.now() - 1800000 }),
-    ]);
+    const loadHistory = vi
+      .fn()
+      .mockResolvedValue([
+        createTestEvent({ eventId: "hist_1", timestamp: Date.now() - 3600000 }),
+        createTestEvent({ eventId: "hist_2", timestamp: Date.now() - 1800000 }),
+      ]);
 
     const ctx = createTestHandlerContext({
       config,

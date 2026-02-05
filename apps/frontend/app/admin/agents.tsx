@@ -73,9 +73,7 @@ function AdminAgentsPage() {
         {/* Page Header */}
         <div data-testid="admin-agents-page-header">
           <h1 className="text-3xl font-bold tracking-tight">Admin - Agent BC</h1>
-          <p className="text-muted-foreground">
-            Review agent decisions and monitor agent health
-          </p>
+          <p className="text-muted-foreground">Review agent decisions and monitor agent health</p>
         </div>
 
         {/* Summary Cards */}

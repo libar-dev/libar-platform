@@ -64,11 +64,7 @@ export function ApprovalList({
       {title && <h2 className="text-lg font-semibold">{title}</h2>}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredApprovals.map((approval) => (
-          <ApprovalCard
-            key={approval.approvalId}
-            approval={approval}
-            onClick={onApprovalClick}
-          />
+          <ApprovalCard key={approval.approvalId} approval={approval} onClick={onApprovalClick} />
         ))}
       </div>
     </div>
