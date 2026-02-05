@@ -41,9 +41,13 @@ function AgentMonitoringCards({ agents }: { agents: AgentCheckpointFixture[] }) 
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-base">{agent.agentId}</CardTitle>
-                <CardDescription className="font-mono text-xs">{agent.subscriptionId}</CardDescription>
+                <CardDescription className="font-mono text-xs">
+                  {agent.subscriptionId}
+                </CardDescription>
               </div>
-              <Badge variant={agent.status === "active" ? "outline" : "secondary"}>{agent.status}</Badge>
+              <Badge variant={agent.status === "active" ? "outline" : "secondary"}>
+                {agent.status}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>

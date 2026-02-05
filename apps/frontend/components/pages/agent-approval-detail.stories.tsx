@@ -51,7 +51,8 @@ export const PendingApproval: Story = () => {
   );
 };
 PendingApproval.meta = {
-  description: "Approval detail page for a pending approval - shows action panel with approve/reject buttons",
+  description:
+    "Approval detail page for a pending approval - shows action panel with approve/reject buttons",
 };
 
 /**
@@ -123,7 +124,8 @@ export const LowConfidencePending: Story = () => {
   );
 };
 LowConfidencePending.meta = {
-  description: "Approval detail page with low confidence (55%) - destructive badge signals need for careful review",
+  description:
+    "Approval detail page with low confidence (55%) - destructive badge signals need for careful review",
 };
 
 /**
@@ -159,7 +161,8 @@ export const AlreadyApproved: Story = () => {
   );
 };
 AlreadyApproved.meta = {
-  description: "Approval detail page for already approved action - shows review info, no action panel",
+  description:
+    "Approval detail page for already approved action - shows review info, no action panel",
 };
 
 /**
@@ -195,7 +198,8 @@ export const AlreadyRejected: Story = () => {
   );
 };
 AlreadyRejected.meta = {
-  description: "Approval detail page for already rejected action - shows rejection note and review info",
+  description:
+    "Approval detail page for already rejected action - shows rejection note and review info",
 };
 
 /**
@@ -267,7 +271,8 @@ export const ExpiringSoon: Story = () => {
   );
 };
 ExpiringSoon.meta = {
-  description: "Approval detail page for approval expiring soon - amber warning text indicates urgency",
+  description:
+    "Approval detail page for approval expiring soon - amber warning text indicates urgency",
 };
 
 /**
@@ -369,7 +374,8 @@ export const LongReasonText: Story = () => {
   );
 };
 LongReasonText.meta = {
-  description: "Approval detail page with verbose analysis text - tests text wrapping and readability",
+  description:
+    "Approval detail page with verbose analysis text - tests text wrapping and readability",
 };
 
 /**
@@ -405,5 +411,6 @@ export const ManyTriggeringEvents: Story = () => {
   );
 };
 ManyTriggeringEvents.meta = {
-  description: "Approval detail page with 12 triggering events - tests badge wrapping in events section",
+  description:
+    "Approval detail page with 12 triggering events - tests badge wrapping in events section",
 };

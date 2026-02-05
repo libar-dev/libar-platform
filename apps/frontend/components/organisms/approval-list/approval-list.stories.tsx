@@ -8,7 +8,10 @@ const meta: StoryDefault = {
 export default meta;
 
 export const WithApprovals: Story = () => (
-  <ApprovalList approvals={approvalList} onApprovalClick={(id) => console.log("Navigate to:", id)} />
+  <ApprovalList
+    approvals={approvalList}
+    onApprovalClick={(id) => console.log("Navigate to:", id)}
+  />
 );
 WithApprovals.meta = {
   description: "Approval list with multiple approvals of different statuses",

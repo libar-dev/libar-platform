@@ -127,7 +127,11 @@ function AdminAgentsPage() {
             <TabsTrigger value="approvals" data-testid="tab-approvals">
               Pending Approvals
               {pendingApprovals.length > 0 && (
-                <Badge variant="default" className="ml-2" aria-label={`${pendingApprovals.length} pending approvals`}>
+                <Badge
+                  variant="default"
+                  className="ml-2"
+                  aria-label={`${pendingApprovals.length} pending approvals`}
+                >
                   {pendingApprovals.length}
                 </Badge>
               )}

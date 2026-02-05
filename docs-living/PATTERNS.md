@@ -267,6 +267,10 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
     ReservationPattern -.-> DynamicConsistencyBoundaries
@@ -299,10 +303,6 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
 ```
 
 ---
