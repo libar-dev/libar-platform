@@ -18,6 +18,28 @@ Feature: Agent Approval Workflow
   # ✓ Customer Risk Preview - customers approaching threshold
   #   See: "Customer Risk Preview" section below
   #
+  # ✓ Low Stock Alert Agent (SuggestRestock):
+  #   - Approval detail with product context
+  #   - Approve/reject restock suggestion
+  #   - Stock level preview (products approaching threshold)
+  #   See: "Low Stock Alert Agent Scenarios" section below
+  #   See: full-order-journey.feature "Full agent trigger journey - Low stock alert detection"
+  #
+  # ✓ High-Value Order Agent (FlagForVIPReview):
+  #   - Approval detail with order context
+  #   - Approve/reject VIP review flag
+  #   See: "High-Value Order Agent Scenarios" section below
+  #   See: full-order-journey.feature "Full agent trigger journey - High-value order detection"
+  #
+  # ✓ Order Consolidation Agent (SuggestOrderConsolidation):
+  #   - Approval detail with order list
+  #   - Approve/reject consolidation suggestion
+  #   See: "Order Consolidation Agent Scenarios" section below
+  #   See: full-order-journey.feature "Full agent trigger journey - Order consolidation suggestion"
+  #
+  # ✓ Multi-agent filtering in Decision History
+  #   See: "Multi-Agent Decision History" section below
+  #
   # REMAINING E2E GAPS:
   # @e2e-required: Real-time approval list updates when new approval created
   #   Setup: Admin viewing approval list, trigger new cancellation in separate tab
@@ -276,6 +298,224 @@ Feature: Agent Approval Workflow
     When I view the risk preview
     Then I should see a message indicating no customers are at risk
     And the message should explain what will appear here
+
+  # ===========================================================================
+  # Low Stock Alert Agent Scenarios
+  # ===========================================================================
+  # The Low Stock Alert agent monitors inventory events and detects when
+  # product available quantity drops below threshold (default: 5 units).
+  # Subscribes to: StockReserved, StockAdded
+  # Action: SuggestRestock
+  # ===========================================================================
+
+  @agent-bc @low-stock-agent @navigation
+  Scenario: Navigate to low stock restock approval detail
+    Given there is a pending approval "SuggestRestock" from "low-stock-alert-agent"
+    When I click on the approval card
+    Then I should be navigated to the approval detail page
+    And I should see the action type "SuggestRestock"
+    And I should see the product ID in the payload
+    And I should see the recommended restock quantity
+
+  @agent-bc @low-stock-agent @detail
+  Scenario: View low stock alert approval with product context
+    Given there is a pending approval "SuggestRestock" with confidence 0.85
+    When I view the approval detail
+    Then I should see the action type "SuggestRestock"
+    And I should see the agent ID "low-stock-alert-agent"
+    And I should see the confidence badge showing "High: 85%"
+    And I should see the reason explaining low stock detected
+    And the payload should include "productId"
+    And the payload should include "currentQuantity"
+    And the payload should include "recommendedQuantity"
+    And the payload should include "threshold"
+
+  @agent-bc @low-stock-agent @happy-path
+  Scenario: Approve low stock restock suggestion
+    Given there is a pending approval "SuggestRestock" that I can act on
+    When I enter a review note "Approved - ordering 50 units from supplier"
+    And I click "Approve"
+    Then I should see the button text change to "Approving..."
+    And I should be redirected to the approvals list
+    And I should see a success indication
+
+  @agent-bc @low-stock-agent @happy-path
+  Scenario: Reject low stock restock suggestion
+    Given there is a pending approval "SuggestRestock" that I can act on
+    When I enter a review note "Product being discontinued - no restock needed"
+    And I click "Reject"
+    Then I should see the button text change to "Rejecting..."
+    And I should be redirected to the approvals list
+
+  # ===========================================================================
+  # High-Value Order Agent Scenarios
+  # ===========================================================================
+  # The High-Value Order agent monitors submitted orders and flags those
+  # exceeding the value threshold (default: $500) for VIP review.
+  # Subscribes to: OrderSubmitted
+  # Action: FlagForVIPReview
+  # ===========================================================================
+
+  @agent-bc @high-value-agent @navigation
+  Scenario: Navigate to high-value order VIP review approval detail
+    Given there is a pending approval "FlagForVIPReview" from "high-value-order-agent"
+    When I click on the approval card
+    Then I should be navigated to the approval detail page
+    And I should see the action type "FlagForVIPReview"
+    And I should see the order ID in the payload
+    And I should see the order total amount
+
+  @agent-bc @high-value-agent @detail
+  Scenario: View high-value order approval with order context
+    Given there is a pending approval "FlagForVIPReview" with confidence 0.95
+    When I view the approval detail
+    Then I should see the action type "FlagForVIPReview"
+    And I should see the agent ID "high-value-order-agent"
+    And I should see the confidence badge showing "High: 95%"
+    And I should see the reason explaining high-value order detected
+    And the payload should include "orderId"
+    And the payload should include "customerId"
+    And the payload should include "totalAmount"
+    And the payload should include "threshold"
+
+  @agent-bc @high-value-agent @happy-path
+  Scenario: Approve VIP review for high-value order
+    Given there is a pending approval "FlagForVIPReview" that I can act on
+    When I enter a review note "VIP customer - expediting order processing"
+    And I click "Approve"
+    Then I should see the button text change to "Approving..."
+    And I should be redirected to the approvals list
+    And I should see a success indication
+
+  @agent-bc @high-value-agent @happy-path
+  Scenario: Reject VIP review flag
+    Given there is a pending approval "FlagForVIPReview" that I can act on
+    When I enter a review note "Standard processing sufficient - not a VIP account"
+    And I click "Reject"
+    Then I should see the button text change to "Rejecting..."
+    And I should be redirected to the approvals list
+
+  # ===========================================================================
+  # Order Consolidation Suggestion Agent Scenarios
+  # ===========================================================================
+  # The Order Consolidation agent monitors submitted orders and suggests
+  # combining orders when a customer submits 3+ orders within 1 hour.
+  # Subscribes to: OrderSubmitted
+  # Action: SuggestOrderConsolidation
+  # ===========================================================================
+
+  @agent-bc @consolidation-agent @navigation
+  Scenario: Navigate to order consolidation suggestion approval detail
+    Given there is a pending approval "SuggestOrderConsolidation" from "order-consolidation-agent"
+    When I click on the approval card
+    Then I should be navigated to the approval detail page
+    And I should see the action type "SuggestOrderConsolidation"
+    And I should see the customer ID in the payload
+    And I should see the list of order IDs to consolidate
+
+  @agent-bc @consolidation-agent @detail
+  Scenario: View order consolidation approval with order list
+    Given there is a pending approval "SuggestOrderConsolidation" with confidence 0.80
+    When I view the approval detail
+    Then I should see the action type "SuggestOrderConsolidation"
+    And I should see the agent ID "order-consolidation-agent"
+    And I should see the confidence badge showing "High: 80%"
+    And I should see the reason explaining multiple recent orders detected
+    And the payload should include "customerId"
+    And the payload should include "orderIds"
+    And the payload should include "orderCount"
+    And the payload should include "windowHours"
+    And the payload should include "potentialSavings"
+
+  @agent-bc @consolidation-agent @happy-path
+  Scenario: Approve order consolidation suggestion
+    Given there is a pending approval "SuggestOrderConsolidation" that I can act on
+    When I enter a review note "Customer contacted - consolidating orders for single shipment"
+    And I click "Approve"
+    Then I should see the button text change to "Approving..."
+    And I should be redirected to the approvals list
+    And I should see a success indication
+
+  @agent-bc @consolidation-agent @happy-path
+  Scenario: Reject order consolidation suggestion
+    Given there is a pending approval "SuggestOrderConsolidation" that I can act on
+    When I enter a review note "Customer requested separate deliveries to different addresses"
+    And I click "Reject"
+    Then I should see the button text change to "Rejecting..."
+    And I should be redirected to the approvals list
+
+  # ===========================================================================
+  # Multi-Agent Decision History
+  # ===========================================================================
+  # Cross-cutting scenarios for viewing and filtering decisions from
+  # multiple agent types in the Decision History tab.
+  # ===========================================================================
+
+  @agent-bc @audit @multi-agent
+  Scenario: View decision history filtered by agent type
+    Given decisions exist from multiple agents:
+      | agentId                    | actionType                 | count |
+      | churn-risk-agent           | SuggestCustomerOutreach    | 3     |
+      | low-stock-alert-agent      | SuggestRestock             | 2     |
+      | high-value-order-agent     | FlagForVIPReview           | 4     |
+      | order-consolidation-agent  | SuggestOrderConsolidation  | 1     |
+    When I click the "Decision History" tab
+    Then I should see decisions from all agent types
+    And I should be able to filter by agent ID
+
+  @agent-bc @audit @low-stock-agent
+  Scenario: View low stock agent decision in history
+    Given the "low-stock-alert-agent" has made a decision
+    When I click the "Decision History" tab
+    And I click on the "SuggestRestock" decision
+    Then I should see the full reasoning text
+    And I should see the product ID that triggered the alert
+    And I should see whether approval was required
+
+  @agent-bc @audit @high-value-agent
+  Scenario: View high-value order agent decision in history
+    Given the "high-value-order-agent" has made a decision
+    When I click the "Decision History" tab
+    And I click on the "FlagForVIPReview" decision
+    Then I should see the full reasoning text
+    And I should see the order total that triggered the flag
+    And I should see whether approval was required
+
+  @agent-bc @audit @consolidation-agent
+  Scenario: View order consolidation agent decision in history
+    Given the "order-consolidation-agent" has made a decision
+    When I click the "Decision History" tab
+    And I click on the "SuggestOrderConsolidation" decision
+    Then I should see the full reasoning text
+    And I should see the number of orders in the consolidation window
+    And I should see whether approval was required
+
+  # ===========================================================================
+  # Stock Level Preview (Low Stock Alert Agent)
+  # ===========================================================================
+  # Shows products approaching the low stock threshold, similar to
+  # Customer Risk Preview but for inventory.
+  # ===========================================================================
+
+  @agent-bc @stock-preview @low-stock-agent
+  Scenario: View products approaching low stock threshold
+    Given products exist with the following stock levels:
+      | productId      | availableQuantity | threshold |
+      | prod_widget    | 3                 | 5         |
+      | prod_gadget    | 8                 | 5         |
+      | prod_gizmo     | 50                | 5         |
+    When I view the "Stock Preview" section
+    Then I should see products ordered by proximity to threshold
+    And I should see "prod_widget" with status "Critical (3/5)"
+    And I should see "prod_gadget" with status "Warning (8/5)"
+    And I should not see "prod_gizmo" (well above threshold)
+
+  @agent-bc @stock-preview @progress
+  Scenario: Stock level progress indicator
+    Given product "prod_at_risk" has 2 of 5 stock threshold
+    When I view the stock preview
+    Then the progress bar for "prod_at_risk" should show critical level
+    And the progress should be accessible (not color-only per WCAG 1.4.1)
 
   # ===========================================================================
   # Accessibility
