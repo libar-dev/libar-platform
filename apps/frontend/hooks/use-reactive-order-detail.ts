@@ -284,10 +284,10 @@ function getPosition(state: OrderSummaryState): number {
  * ```
  */
 export function useReactiveOrderDetail(
-  orderId: string
+  orderId: string | undefined
 ): ReactiveProjectionResult<OrderSummaryState> {
-  // Subscribe to durable projection
-  const projection = useQuery(getOrderSummaryQuery, { orderId });
+  // Subscribe to durable projection (skip when orderId is undefined)
+  const projection = useQuery(getOrderSummaryQuery, orderId ? { orderId } : "skip");
 
   // Subscribe to recent events after the projection checkpoint
   // We use updatedAt as a proxy for global position since the projection
@@ -302,11 +302,16 @@ export function useReactiveOrderDetail(
   // If bandwidth becomes a concern, consider:
   // 1. Using the "skip" pattern and accepting the latency
   // 2. Adding a dedicated query that combines projection + events in one call
-  const recentEvents = useQuery(getRecentOrderEventsQuery, {
-    orderId,
-    // Note: We can't dynamically pass afterGlobalPosition: projection?.updatedAt
-    // due to React hook rules (can't conditionally call hooks)
-  });
+  const recentEvents = useQuery(
+    getRecentOrderEventsQuery,
+    orderId
+      ? {
+          orderId,
+          // Note: We can't dynamically pass afterGlobalPosition: projection?.updatedAt
+          // due to React hook rules (can't conditionally call hooks)
+        }
+      : "skip"
+  );
 
   // Transform durable projection to our state type
   const projectionState: OrderSummaryState | null | undefined =

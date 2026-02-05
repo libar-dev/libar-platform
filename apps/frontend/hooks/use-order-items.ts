@@ -1,5 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 
@@ -28,11 +27,10 @@ const getOrderItemsQuery = makeFunctionReference<"query">(
 /**
  * Hook to fetch order items for a specific order.
  *
- * Uses TanStack Query + Convex for SSR support with real-time updates.
- * Data is prefetched on the server, then hydrated with live subscriptions.
+ * Uses Convex's native useQuery with "skip" pattern for conditional fetching.
  *
- * @param orderId - The order ID to fetch items for
- * @returns Object containing items array (always defined with Suspense)
+ * @param orderId - The order ID to fetch items for (undefined to skip)
+ * @returns Object containing items array and loading state
  *
  * @example
  * ```tsx
@@ -51,14 +49,15 @@ const getOrderItemsQuery = makeFunctionReference<"query">(
  * }
  * ```
  */
-export function useOrderItems(orderId: string): {
+export function useOrderItems(orderId: string | undefined): {
   items: OrderItem[];
-  isLoading: false; // With Suspense, data is always loaded
+  isLoading: boolean;
 } {
-  const { data } = useSuspenseQuery(convexQuery(getOrderItemsQuery, { orderId }));
+  // Use Convex "skip" pattern when orderId is undefined
+  const data = useQuery(getOrderItemsQuery, orderId ? { orderId } : "skip");
 
   return {
     items: (data ?? []) as OrderItem[],
-    isLoading: false, // Suspense handles loading state
+    isLoading: data === undefined,
   };
 }

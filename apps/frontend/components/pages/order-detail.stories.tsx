@@ -122,6 +122,8 @@ Confirmed.meta = {
 
 /**
  * Order Detail page - submitted order awaiting confirmation
+ *
+ * Submitted orders can be cancelled (triggers Agent BC churn detection on 3+ cancellations).
  */
 export const Submitted: Story = () => {
   const order = mockOrders.submitted;
@@ -169,16 +171,37 @@ export const Submitted: Story = () => {
             ))}
           </CardContent>
         </Card>
+
+        {/* Cancel action - submitted orders can be cancelled */}
+        <div className="flex gap-3">
+          <AlertDialog>
+            <AlertDialogTrigger variant="destructive">Cancel Order</AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancel this order?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. The order will be permanently cancelled.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                <AlertDialogAction>Yes, Cancel Order</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </AppLayout>
   );
 };
 Submitted.meta = {
-  description: "Order detail page for a submitted order with pending reservation",
+  description: "Order detail page for a submitted order with pending reservation and cancel option",
 };
 
 /**
- * Order Detail page - draft order with cancel option
+ * Order Detail page - draft order with submit and cancel options
+ *
+ * Both draft and submitted orders can be cancelled (triggers Agent BC churn detection on 3+ cancellations).
  */
 export const Draft: Story = () => {
   const order = mockOrders.draft;
@@ -233,7 +256,7 @@ export const Draft: Story = () => {
   );
 };
 Draft.meta = {
-  description: "Order detail page for a draft order with cancel dialog",
+  description: "Order detail page for a draft order with submit and cancel options",
 };
 
 /**

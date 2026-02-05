@@ -1,4 +1,4 @@
-import { Outlet, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext, HeadContent, Scripts, Link } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import appCss from "./globals.css?url";
 
@@ -35,6 +35,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
   }),
   component: RootLayout,
+  notFoundComponent: NotFound,
 });
 
 function RootLayout() {
@@ -48,5 +49,17 @@ function RootLayout() {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-bold">404</h1>
+      <p className="mt-2 text-lg text-muted-foreground">Page not found</p>
+      <Link to="/" className="mt-4 text-primary hover:underline">
+        Go to Dashboard
+      </Link>
+    </div>
   );
 }

@@ -137,19 +137,8 @@ function OrderDetailPage() {
   const navigate = useNavigate();
   const { orderId } = Route.useParams();
 
-  // Guard: orderId must be defined before calling hooks
-  // This can be undefined briefly during navigation transitions
-  if (!orderId) {
-    return (
-      <AppLayout activeNav="orders">
-        <div className="space-y-6">
-          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-          <div className="h-10 w-64 animate-pulse rounded bg-muted" />
-          <div className="h-48 animate-pulse rounded-lg bg-muted" />
-        </div>
-      </AppLayout>
-    );
-  }
+  // All hooks must be called unconditionally (Rules of Hooks)
+  // Hooks use "skip" pattern internally when orderId is undefined
 
   // Reactive projection for instant order status updates (10-50ms latency)
   const {
@@ -163,6 +152,34 @@ function OrderDetailPage() {
 
   // Line items from dedicated projection
   const { items, isLoading: itemsLoading } = useOrderItems(orderId);
+
+  const {
+    execute: executeSubmit,
+    state: submitState,
+    error: submitError,
+    reset: resetSubmit,
+  } = useMutationWithFeedback(submitOrderMutation);
+
+  const {
+    execute: executeCancel,
+    state: cancelState,
+    error: cancelError,
+    reset: resetCancel,
+  } = useMutationWithFeedback(cancelOrderMutation);
+
+  // Early return AFTER hooks (safe - doesn't change hook count)
+  // This handles the brief undefined state during navigation transitions
+  if (!orderId) {
+    return (
+      <AppLayout activeNav="orders">
+        <div className="space-y-6">
+          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+          <div className="h-10 w-64 animate-pulse rounded bg-muted" />
+          <div className="h-48 animate-pulse rounded-lg bg-muted" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   // Merge data: reactive for order status, cross-context for reservation
   const order = reactiveOrder
@@ -187,20 +204,6 @@ function OrderDetailPage() {
           reservationStatus: crossContextOrder.reservationStatus,
         }
       : null;
-
-  const {
-    execute: executeSubmit,
-    state: submitState,
-    error: submitError,
-    reset: resetSubmit,
-  } = useMutationWithFeedback(submitOrderMutation);
-
-  const {
-    execute: executeCancel,
-    state: cancelState,
-    error: cancelError,
-    reset: resetCancel,
-  } = useMutationWithFeedback(cancelOrderMutation);
 
   // Show loading only while we don't have order data AND something is still loading
   // This allows the page to render once ANY data source has data (reactive OR cross-context)
@@ -472,23 +475,27 @@ function OrderDetailPage() {
           </Card>
         </div>
 
-        {/* Actions for draft orders */}
-        {status === "draft" && (
+        {/* Actions for cancellable orders (draft or submitted) */}
+        {(status === "draft" || status === "submitted") && (
           <div className="flex gap-3">
-            <Button
-              onClick={handleSubmitOrder}
-              disabled={isActionPending || items.length === 0}
-              data-testid="submit-order-button"
-            >
-              {submitState === "pending" ? (
-                <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Submitting...
-                </>
-              ) : (
-                "Submit Order"
-              )}
-            </Button>
+            {/* Submit button only for draft orders */}
+            {status === "draft" && (
+              <Button
+                onClick={handleSubmitOrder}
+                disabled={isActionPending || items.length === 0}
+                data-testid="submit-order-button"
+              >
+                {submitState === "pending" ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Order"
+                )}
+              </Button>
+            )}
+            {/* Cancel button for draft and submitted orders */}
             <AlertDialog>
               <AlertDialogTrigger
                 variant="destructive"

@@ -63,11 +63,12 @@ const getOrderWithInventoryQuery = makeFunctionReference<"query">(
  * }
  * ```
  */
-export function useOrderDetail(orderId: string): {
+export function useOrderDetail(orderId: string | undefined): {
   order: OrderWithInventory | null;
   isLoading: boolean;
 } {
-  const data = useQuery(getOrderWithInventoryQuery, { orderId });
+  // Use Convex "skip" pattern when orderId is undefined to avoid Rules of Hooks violations
+  const data = useQuery(getOrderWithInventoryQuery, orderId ? { orderId } : "skip");
 
   return {
     order: (data ?? null) as OrderWithInventory | null,
