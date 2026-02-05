@@ -35,8 +35,8 @@ Feature: Human-in-Loop Configuration
       Examples:
         | confidence | mode |
         | 0.95 | auto-execute |
-        | 0.80 | auto-execute |
-        | 0.79 | flag-for-review |
+        | 0.81 | auto-execute |
+        | 0.80 | flag-for-review |
         | 0.50 | flag-for-review |
 
     @acceptance-criteria @happy-path

@@ -35,12 +35,22 @@ import {
   createPMSubscription,
   type PMEventHandlerArgs,
 } from "@libar-dev/platform-core/processManager";
+import {
+  createAgentSubscription,
+  type AgentEventHandlerArgs,
+} from "@libar-dev/platform-bus/agent-subscription";
 import { orderNotificationPM } from "./processManagers";
+import { churnRiskAgentConfig } from "./contexts/agent/_config.js";
 
 // Using makeFunctionReference to bypass FilterApi recursive type resolution (TS2589 prevention)
 const handleOrderConfirmedRef = makeFunctionReference<"mutation">(
   "processManagers/orderNotification:handleOrderConfirmed"
 ) as FunctionReference<"mutation", FunctionVisibility, PMEventHandlerArgs, unknown>;
+
+// Agent handler references (TS2589 prevention)
+const handleChurnRiskEventRef = makeFunctionReference<"mutation">(
+  "contexts/agent/handlers/eventHandler:handleChurnRiskEvent"
+) as FunctionReference<"mutation", FunctionVisibility, AgentEventHandlerArgs, unknown>;
 
 /**
  * Event subscriptions for EventBus.
@@ -58,6 +68,19 @@ export const eventSubscriptions = defineSubscriptions((registry) => {
   registry.add(
     createPMSubscription(orderNotificationPM, {
       handler: handleOrderConfirmedRef,
+    })
+  );
+
+  // ============================================================================
+  // AGENT BC SUBSCRIPTIONS
+  // ============================================================================
+
+  // Churn Risk Agent: OrderCancelled → Pattern Detection → SuggestCustomerOutreach
+  // Priority 250 = after projections (100) and PMs (200), before sagas (300)
+  registry.add(
+    createAgentSubscription(churnRiskAgentConfig, {
+      handler: handleChurnRiskEventRef,
+      priority: 250,
     })
   );
 

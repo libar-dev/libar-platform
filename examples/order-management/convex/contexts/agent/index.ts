@@ -97,7 +97,7 @@ export {
   extractCustomerId,
   calculateChurnConfidence,
   buildChurnReason,
-} from "./config.js";
+} from "./_config.js";
 
 // ============================================================================
 // Patterns
@@ -111,7 +111,7 @@ export {
   highValueChurnPattern,
   createCustomerCancellationTrigger,
   __testing as patternsTesting,
-} from "./patterns/churnRisk.js";
+} from "./_patterns/churnRisk.js";
 
 // ============================================================================
 // Command Types

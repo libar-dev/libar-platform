@@ -14,7 +14,7 @@ import {
   type EmittedAgentCommand,
 } from "@libar-dev/platform-core/agent";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
-import { CHURN_RISK_AGENT_ID } from "../config.js";
+import { CHURN_RISK_AGENT_ID } from "../_config.js";
 
 // ============================================================================
 // Command Types
@@ -98,6 +98,7 @@ export const emitAgentCommand = internalMutation({
     triggeringEventIds: v.array(v.string()),
     patternId: v.optional(v.string()),
     agentId: v.optional(v.string()),
+    correlationId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ commandId: string; command: EmittedAgentCommand }> => {
     const logger = createPlatformNoOpLogger();

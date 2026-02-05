@@ -17,8 +17,8 @@ import {
 import type { AgentInterface, PublishedEvent } from "@libar-dev/platform-core";
 
 // Import shared utilities
-import { groupEventsByCustomer } from "../utils/customer.js";
-import { countRecentEvents } from "../utils/confidence.js";
+import { groupEventsByCustomer } from "../_utils/customer.js";
+import { countRecentEvents } from "../_utils/confidence.js";
 
 // ============================================================================
 // Pattern Constants
@@ -265,7 +265,7 @@ export const highValueChurnPattern: PatternDefinition = definePattern({
 // ============================================================================
 
 // Re-export shared utilities for backwards compatibility in tests
-export { extractCustomerId } from "../utils/customer.js";
+export { extractCustomerId } from "../_utils/customer.js";
 
 export const __testing = {
   buildAnalysisPrompt,

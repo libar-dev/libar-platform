@@ -21,7 +21,7 @@ import {
   extractCustomerId,
   calculateChurnConfidence,
   buildChurnReason,
-} from "./utils/index.js";
+} from "./_utils/index.js";
 
 // ============================================================================
 // Agent Configuration
@@ -147,4 +147,4 @@ export const churnRiskAgentConfig: AgentBCConfig = {
 
 // Helper functions are now in ./utils/
 // Re-export for backwards compatibility in tests
-export { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./utils/index.js";
+export { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./_utils/index.js";

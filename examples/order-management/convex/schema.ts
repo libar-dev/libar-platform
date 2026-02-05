@@ -577,4 +577,137 @@ export default defineSchema({
     .index("by_intentKey", ["intentKey"])
     .index("by_status_createdAt", ["status", "createdAt"])
     .index("by_streamId", ["streamType", "streamId"]),
+
+  // =============================================================================
+  // AGENT BC INFRASTRUCTURE
+  // =============================================================================
+
+  /**
+   * Agent Checkpoints - track agent processing position.
+   * Used for exactly-once semantics and resumption after restart.
+   *
+   * Agent BC lives at app level (not as Convex component) because:
+   * - Agents need cross-BC event access
+   * - Components have isolated databases
+   * - Agents are cross-cutting concerns
+   *
+   * @since Phase 22 (AgentAsBoundedContext)
+   */
+  agentCheckpoints: defineTable({
+    /** Agent BC identifier (e.g., "churn-risk-agent") */
+    agentId: v.string(),
+
+    /** Subscription instance ID */
+    subscriptionId: v.string(),
+
+    /** Last processed global position (-1 = none processed) */
+    lastProcessedPosition: v.number(),
+
+    /** Last processed event ID */
+    lastEventId: v.string(),
+
+    /** Checkpoint status: active, paused, stopped */
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("stopped")
+    ),
+
+    /** Total events processed by this agent */
+    eventsProcessed: v.number(),
+
+    /** Last checkpoint update timestamp */
+    updatedAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_status", ["status", "updatedAt"]),
+
+  /**
+   * Agent Dead Letters - failed event processing.
+   * Separate from projection dead letters due to different semantics.
+   *
+   * Status flow:
+   * - pending: Initial state after failure
+   * - replayed: Successfully re-processed
+   * - ignored: Manually marked as not requiring replay
+   *
+   * @since Phase 22 (AgentAsBoundedContext)
+   */
+  agentDeadLetters: defineTable({
+    /** Agent BC identifier */
+    agentId: v.string(),
+
+    /** Subscription instance ID */
+    subscriptionId: v.string(),
+
+    /** ID of the event that failed processing */
+    eventId: v.string(),
+
+    /** Global position of the failed event */
+    globalPosition: v.number(),
+
+    /** Sanitized error message */
+    error: v.string(),
+
+    /** Number of processing attempts */
+    attemptCount: v.number(),
+
+    /** Dead letter status */
+    status: v.union(
+      v.literal("pending"),
+      v.literal("replayed"),
+      v.literal("ignored")
+    ),
+
+    /** When the failure occurred */
+    failedAt: v.number(),
+
+    /** Workpool work ID for debugging */
+    workId: v.optional(v.string()),
+
+    /** Optional context for debugging */
+    context: v.optional(
+      v.object({
+        correlationId: v.optional(v.string()),
+        errorCode: v.optional(v.string()),
+        ignoreReason: v.optional(v.string()),
+      })
+    ),
+  })
+    .index("by_agentId_status", ["agentId", "status", "failedAt"])
+    .index("by_eventId", ["eventId"])
+    .index("by_status", ["status", "failedAt"]),
+
+  /**
+   * Agent Audit Events - decision tracking for explainability.
+   * Records all agent decisions, approvals, and rejections.
+   *
+   * @since Phase 22 (AgentAsBoundedContext)
+   */
+  agentAuditEvents: defineTable({
+    /** Audit event type */
+    eventType: v.union(
+      v.literal("AgentDecisionMade"),
+      v.literal("AgentActionApproved"),
+      v.literal("AgentActionRejected"),
+      v.literal("AgentActionExpired"),
+      v.literal("AgentAnalysisCompleted"),
+      v.literal("AgentAnalysisFailed")
+    ),
+
+    /** Agent BC identifier */
+    agentId: v.string(),
+
+    /** Unique decision ID for correlation */
+    decisionId: v.string(),
+
+    /** When the event occurred */
+    timestamp: v.number(),
+
+    /** Event-specific payload (varies by eventType) */
+    payload: v.any(),
+  })
+    .index("by_agentId_timestamp", ["agentId", "timestamp"])
+    .index("by_decisionId", ["decisionId"])
+    .index("by_eventType", ["eventType", "timestamp"]),
 });
