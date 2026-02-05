@@ -22,8 +22,8 @@ When a business process spans multiple bounded contexts (e.g., Orders, Inventory
 ```typescript
 // Problem: No atomic transactions across bounded contexts
 async function fulfillOrder(orderId: string) {
-  await ordersBC.confirmOrder(orderId);     // Succeeds
-  await inventoryBC.reserveStock(orderId);  // FAILS - Order is confirmed but no stock reserved!
+  await ordersBC.confirmOrder(orderId); // Succeeds
+  await inventoryBC.reserveStock(orderId); // FAILS - Order is confirmed but no stock reserved!
   await shippingBC.schedulePickup(orderId); // Never reached
 }
 ```
@@ -32,11 +32,11 @@ async function fulfillOrder(orderId: string) {
 
 Without coordination infrastructure:
 
-| Scenario | Result |
-| --- | --- |
+| Scenario                           | Result                                             |
+| ---------------------------------- | -------------------------------------------------- |
 | Step 2 fails after Step 1 succeeds | Inconsistent state (order confirmed, no inventory) |
-| Network timeout after Step 2 | Unknown state (did inventory reserve succeed?) |
-| Server restart mid-process | Lost progress, no recovery path |
+| Network timeout after Step 2       | Unknown state (did inventory reserve succeed?)     |
+| Server restart mid-process         | Lost progress, no recovery path                    |
 
 ---
 
@@ -44,13 +44,13 @@ Without coordination infrastructure:
 
 Sagas use Convex's durable workflow infrastructure to provide:
 
-| Feature | Benefit |
-| --- | --- |
-| Durable execution | Survives server restarts, resumes from last step |
-| Step-by-step persistence | Each completed step is recorded durably |
-| Compensation support | Explicit logic to reverse partial operations |
-| External events | Can pause waiting for external input (e.g., payment confirmation) |
-| Built-in retry | Configurable retry with exponential backoff |
+| Feature                  | Benefit                                                           |
+| ------------------------ | ----------------------------------------------------------------- |
+| Durable execution        | Survives server restarts, resumes from last step                  |
+| Step-by-step persistence | Each completed step is recorded durably                           |
+| Compensation support     | Explicit logic to reverse partial operations                      |
+| External events          | Can pause waiting for external input (e.g., payment confirmation) |
+| Built-in retry           | Configurable retry with exponential backoff                       |
 
 ### 2.1 Infrastructure Setup
 
@@ -81,11 +81,11 @@ export const workflowManager = new WorkflowManager(components.workflow, {
 
 A complete saga implementation requires three components:
 
-| Component | Purpose | Location |
-| --- | --- | --- |
+| Component               | Purpose                             | Location                    |
+| ----------------------- | ----------------------------------- | --------------------------- |
 | **Workflow Definition** | Business logic steps + compensation | `sagas/orderFulfillment.ts` |
-| **Registry** | Idempotency + workflow lifecycle | `sagas/registry.ts` |
-| **Router** | Event-to-saga mapping | `sagas/router.ts` |
+| **Registry**            | Idempotency + workflow lifecycle    | `sagas/registry.ts`         |
+| **Router**              | Event-to-saga mapping               | `sagas/router.ts`           |
 
 ### 3.2 Saga Flow: Trigger to Completion
 
@@ -125,10 +125,12 @@ export const orderFulfillmentWorkflow = workflowManager.define({
   args: {
     orderId: v.string(),
     customerId: v.string(),
-    items: v.array(v.object({
-      productId: v.string(),
-      quantity: v.number(),
-    })),
+    items: v.array(
+      v.object({
+        productId: v.string(),
+        quantity: v.number(),
+      })
+    ),
     correlationId: v.string(),
   },
   returns: v.object({
@@ -171,7 +173,7 @@ export const orderFulfillmentWorkflow = workflowManager.define({
 
     return {
       status: "completed",
-      reservationId: reserveResult.data?.reservationId
+      reservationId: reserveResult.data?.reservationId,
     };
   },
 });
@@ -184,6 +186,7 @@ export const orderFulfillmentWorkflow = workflowManager.define({
 ### 4.1 The Problem: Duplicate Triggers
 
 Events can be delivered multiple times due to:
+
 - Network retries
 - At-least-once delivery guarantees
 - Event reprocessing during recovery
@@ -197,7 +200,7 @@ Without idempotency, each delivery would start a new saga workflow.
 export const startSagaIfNotExists = internalMutation({
   args: {
     sagaType: v.string(),
-    sagaId: v.string(),          // Business identifier (e.g., orderId)
+    sagaId: v.string(), // Business identifier (e.g., orderId)
     triggerEventId: v.string(),
     triggerGlobalPosition: v.number(),
     eventPayload: v.any(),
@@ -207,9 +210,7 @@ export const startSagaIfNotExists = internalMutation({
     // 1. Check for existing saga (idempotency)
     const existing = await ctx.db
       .query("sagas")
-      .withIndex("by_sagaId", (q) =>
-        q.eq("sagaType", args.sagaType).eq("sagaId", args.sagaId)
-      )
+      .withIndex("by_sagaId", (q) => q.eq("sagaType", args.sagaType).eq("sagaId", args.sagaId))
       .first();
 
     if (existing) {
@@ -257,12 +258,12 @@ export const startSagaIfNotExists = internalMutation({
 
 ### 4.3 Idempotency Key Selection
 
-| Entity Type | Recommended sagaId | Rationale |
-| --- | --- | --- |
-| Order processing | `orderId` | One fulfillment saga per order |
-| Payment processing | `paymentId` | One payment saga per payment |
-| User onboarding | `userId` | One onboarding saga per user |
-| Batch job | `batchId` | One saga per batch |
+| Entity Type        | Recommended sagaId | Rationale                      |
+| ------------------ | ------------------ | ------------------------------ |
+| Order processing   | `orderId`          | One fulfillment saga per order |
+| Payment processing | `paymentId`        | One payment saga per payment   |
+| User onboarding    | `userId`           | One onboarding saga per user   |
+| Batch job          | `batchId`          | One saga per batch             |
 
 ---
 
@@ -274,12 +275,12 @@ When step N fails after steps 1..(N-1) succeeded, compensation reverses the comp
 
 ### 5.2 Compensation Table
 
-| Step | Success Action | Compensation Action |
-| --- | --- | --- |
+| Step                 | Success Action           | Compensation Action |
+| -------------------- | ------------------------ | ------------------- |
 | 1. Reserve inventory | Stock marked as reserved | Release reservation |
-| 2. Charge payment | Payment captured | Refund payment |
-| 3. Update order | Order status = confirmed | Cancel order |
-| 4. Schedule shipping | Pickup scheduled | Cancel pickup |
+| 2. Charge payment    | Payment captured         | Refund payment      |
+| 3. Update order      | Order status = confirmed | Cancel order        |
+| 4. Schedule shipping | Pickup scheduled         | Cancel pickup       |
 
 ### 5.3 Compensation Implementation Strategies
 
@@ -298,7 +299,7 @@ handler: async (ctx, args) => {
     return { status: "compensated" };
   }
   // ... continue success path
-}
+};
 ```
 
 **Strategy B: Try-Catch Compensation (Complex)**
@@ -331,21 +332,21 @@ handler: async (ctx, args) => {
     }
     await ctx.runMutation(cancelOrderMutation, {
       orderId: args.orderId,
-      reason: error.message
+      reason: error.message,
     });
     return { status: "compensated", reason: error.message };
   }
-}
+};
 ```
 
 ### 5.4 Compensation Best Practices
 
-| Practice | Rationale |
-| --- | --- |
-| Compensation must be idempotent | May be retried on failure |
-| Log compensation actions | Audit trail for debugging |
-| Handle compensation failures | May need manual intervention |
-| Track partial compensation | Know what was undone |
+| Practice                        | Rationale                    |
+| ------------------------------- | ---------------------------- |
+| Compensation must be idempotent | May be retried on failure    |
+| Log compensation actions        | Audit trail for debugging    |
+| Handle compensation failures    | May need manual intervention |
+| Track partial compensation      | Know what was undone         |
 
 ---
 
@@ -419,14 +420,14 @@ pending ──► running ──► completed
    └──► failed (validation error)
 ```
 
-| Status | Description |
-| --- | --- |
-| `pending` | Saga created, workflow not yet started |
-| `running` | Workflow executing steps |
-| `completed` | All steps succeeded |
-| `compensating` | Executing compensation logic |
-| `compensated` | Compensation completed |
-| `failed` | Unrecoverable failure |
+| Status         | Description                            |
+| -------------- | -------------------------------------- |
+| `pending`      | Saga created, workflow not yet started |
+| `running`      | Workflow executing steps               |
+| `completed`    | All steps succeeded                    |
+| `compensating` | Executing compensation logic           |
+| `compensated`  | Compensation completed                 |
+| `failed`       | Unrecoverable failure                  |
 
 ---
 
@@ -448,25 +449,25 @@ Simple event → command fire-and-forget? ► Process Manager
 
 ### 7.2 Detailed Comparison
 
-| Criterion | Saga | Process Manager |
-| --- | --- | --- |
-| **Compensation** | Built-in, explicit | None (fire-and-forget) |
-| **Durability** | @convex-dev/workflow | @convex-dev/workpool |
-| **External events** | `ctx.awaitEvent()` | Not supported |
-| **Complexity** | Higher (compensation logic) | Lower (just routing) |
-| **Use case** | Order fulfillment, payments | Notifications, analytics |
-| **State tracking** | Full workflow state | Event processing cursor |
-| **Failure handling** | Compensate + retry | Dead letter + retry |
+| Criterion            | Saga                        | Process Manager          |
+| -------------------- | --------------------------- | ------------------------ |
+| **Compensation**     | Built-in, explicit          | None (fire-and-forget)   |
+| **Durability**       | @convex-dev/workflow        | @convex-dev/workpool     |
+| **External events**  | `ctx.awaitEvent()`          | Not supported            |
+| **Complexity**       | Higher (compensation logic) | Lower (just routing)     |
+| **Use case**         | Order fulfillment, payments | Notifications, analytics |
+| **State tracking**   | Full workflow state         | Event processing cursor  |
+| **Failure handling** | Compensate + retry          | Dead letter + retry      |
 
 ### 7.3 Example Scenarios
 
-| Scenario | Pattern | Rationale |
-| --- | --- | --- |
-| Order → Inventory → Shipping | Saga | Needs compensation if shipping fails |
-| Order → Send confirmation email | Process Manager | Fire-and-forget, retry is sufficient |
-| Payment → Wait for webhook → Confirm | Saga | External event (await webhook) |
-| User signup → Analytics event | Process Manager | Simple event translation |
-| Multi-step approval workflow | Saga | External events (human approval) |
+| Scenario                             | Pattern         | Rationale                            |
+| ------------------------------------ | --------------- | ------------------------------------ |
+| Order → Inventory → Shipping         | Saga            | Needs compensation if shipping fails |
+| Order → Send confirmation email      | Process Manager | Fire-and-forget, retry is sufficient |
+| Payment → Wait for webhook → Confirm | Saga            | External event (await webhook)       |
+| User signup → Analytics event        | Process Manager | Simple event translation             |
+| Multi-step approval workflow         | Saga            | External events (human approval)     |
 
 ### 7.4 Hybrid Approach
 
@@ -522,7 +523,7 @@ sagas: defineTable({
 })
   .index("by_sagaId", ["sagaType", "sagaId"])
   .index("by_status", ["sagaType", "status"])
-  .index("by_workflowId", ["workflowId"])
+  .index("by_workflowId", ["workflowId"]);
 ```
 
 ---
@@ -531,23 +532,23 @@ sagas: defineTable({
 
 ### 9.1 Monitoring Queries
 
-| Query | Purpose |
-| --- | --- |
-| `getSagaDetails` | Full saga + workflow status |
-| `getStuckSagas` | Running longer than threshold |
+| Query            | Purpose                        |
+| ---------------- | ------------------------------ |
+| `getSagaDetails` | Full saga + workflow status    |
+| `getStuckSagas`  | Running longer than threshold  |
 | `getFailedSagas` | Failed sagas needing attention |
-| `getSagaStats` | Status counts by saga type |
-| `getSagaSteps` | Workflow step history |
+| `getSagaStats`   | Status counts by saga type     |
+| `getSagaSteps`   | Workflow step history          |
 
 ### 9.2 Intervention Mutations
 
-| Mutation | Use Case |
-| --- | --- |
-| `markSagaFailed` | Force-fail a stuck saga |
-| `markSagaCompensated` | Record manual compensation |
-| `cancelSaga` | Cancel running workflow |
-| `retrySaga` | Reset failed saga to pending |
-| `cleanupSagaWorkflow` | Free workflow storage |
+| Mutation              | Use Case                     |
+| --------------------- | ---------------------------- |
+| `markSagaFailed`      | Force-fail a stuck saga      |
+| `markSagaCompensated` | Record manual compensation   |
+| `cancelSaga`          | Cancel running workflow      |
+| `retrySaga`           | Reset failed saga to pending |
+| `cleanupSagaWorkflow` | Free workflow storage        |
 
 ---
 

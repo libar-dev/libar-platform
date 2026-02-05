@@ -54,13 +54,13 @@ export const handleSubmitOrder = mutation({
 
 **Problems with this approach:**
 
-| Problem | Impact |
-|---------|--------|
-| Testing requires Docker | Slow CI, complex test setup |
-| Business logic hidden in handlers | Hard to understand domain rules |
-| Duplicate validation logic | Inconsistent behavior across handlers |
-| No property-based testing | Cannot verify invariants exhaustively |
-| Difficult to refactor | Business logic entangled with persistence |
+| Problem                           | Impact                                    |
+| --------------------------------- | ----------------------------------------- |
+| Testing requires Docker           | Slow CI, complex test setup               |
+| Business logic hidden in handlers | Hard to understand domain rules           |
+| Duplicate validation logic        | Inconsistent behavior across handlers     |
+| No property-based testing         | Cannot verify invariants exhaustively     |
+| Difficult to refactor             | Business logic entangled with persistence |
 
 ### 1.2 The Goal
 
@@ -87,10 +87,7 @@ function decideSubmitOrder(
 ): DeciderOutput<OrderSubmittedEvent, SubmitOrderData, OrderStateUpdate> {
   // Validate FSM transition (pure check)
   if (!orderFSM.canTransition(state.status, "submitted")) {
-    return rejected(
-      "ORDER_NOT_IN_DRAFT",
-      `Cannot submit order in ${state.status} status.`
-    );
+    return rejected("ORDER_NOT_IN_DRAFT", `Cannot submit order in ${state.status} status.`);
   }
 
   // Validate business invariant (pure check)
@@ -153,13 +150,13 @@ export const submitOrderDecider: Decider<
 
 **Key Rules:**
 
-| Rule | Rationale |
-|------|-----------|
-| No `ctx` parameter | Pure functions cannot access database |
-| No I/O operations | No network calls, no file system |
-| No side effects | Same inputs always produce same outputs |
-| Deterministic | Enables property-based testing |
-| Event payload is source of truth | `evolve` must not recalculate values |
+| Rule                             | Rationale                               |
+| -------------------------------- | --------------------------------------- |
+| No `ctx` parameter               | Pure functions cannot access database   |
+| No I/O operations                | No network calls, no file system        |
+| No side effects                  | Same inputs always produce same outputs |
+| Deterministic                    | Enables property-based testing          |
+| Event payload is source of truth | `evolve` must not recalculate values    |
 
 ---
 
@@ -181,9 +178,9 @@ type DeciderOutput<TEvent, TData, TStateUpdate, TFailEvent> =
 ```typescript
 interface DeciderSuccess<TEvent, TData, TStateUpdate> {
   status: "success";
-  data: TData;           // Returned to caller
-  event: TEvent;         // Event to emit
-  stateUpdate: TStateUpdate;  // CMS update to apply
+  data: TData; // Returned to caller
+  event: TEvent; // Event to emit
+  stateUpdate: TStateUpdate; // CMS update to apply
 }
 ```
 
@@ -192,9 +189,9 @@ interface DeciderSuccess<TEvent, TData, TStateUpdate> {
 ```typescript
 interface DeciderRejected {
   status: "rejected";
-  code: string;          // e.g., "ORDER_NOT_IN_DRAFT"
-  message: string;       // Human-readable explanation
-  context?: UnknownRecord;  // Optional details
+  code: string; // e.g., "ORDER_NOT_IN_DRAFT"
+  message: string; // Human-readable explanation
+  context?: UnknownRecord; // Optional details
 }
 ```
 
@@ -203,26 +200,26 @@ interface DeciderRejected {
 ```typescript
 interface DeciderFailed<TEvent> {
   status: "failed";
-  reason: string;        // Failure explanation
-  event: TEvent;         // Failure event to emit
-  context?: UnknownRecord;  // Optional details
+  reason: string; // Failure explanation
+  event: TEvent; // Failure event to emit
+  context?: UnknownRecord; // Optional details
 }
 ```
 
 **When to use each:**
 
-| Outcome | Use When | Event Emitted | Example |
-|---------|----------|---------------|---------|
-| `success` | Command executed successfully | Yes | Order submitted |
-| `rejected` | Validation failed, no action taken | No | Order not in draft |
-| `failed` | Business failure worth recording | Yes | Stock reservation failed |
+| Outcome    | Use When                           | Event Emitted | Example                  |
+| ---------- | ---------------------------------- | ------------- | ------------------------ |
+| `success`  | Command executed successfully      | Yes           | Order submitted          |
+| `rejected` | Validation failed, no action taken | No            | Order not in draft       |
+| `failed`   | Business failure worth recording   | Yes           | Stock reservation failed |
 
 ### 3.2 DeciderContext - Infrastructure Metadata
 
 ```typescript
 interface DeciderContext {
-  now: number;           // Current timestamp (Date.now())
-  commandId: string;     // For causation tracking
+  now: number; // Current timestamp (Date.now())
+  commandId: string; // For causation tracking
   correlationId: string; // For request tracing
 }
 ```
@@ -245,14 +242,14 @@ interface Decider<TState, TCommand, TEvent, TData, TStateUpdate> {
 
 ### 3.4 Helper Functions
 
-| Function | Returns | Purpose |
-|----------|---------|---------|
-| `success({ data, event, stateUpdate })` | `DeciderSuccess` | Build successful output |
-| `rejected(code, message, context?)` | `DeciderRejected` | Build validation failure |
-| `failed(reason, event, context?)` | `DeciderFailed` | Build business failure with event |
-| `isSuccess(output)` | `boolean` | Type guard for success |
-| `isRejected(output)` | `boolean` | Type guard for rejection |
-| `isFailed(output)` | `boolean` | Type guard for failure |
+| Function                                | Returns           | Purpose                           |
+| --------------------------------------- | ----------------- | --------------------------------- |
+| `success({ data, event, stateUpdate })` | `DeciderSuccess`  | Build successful output           |
+| `rejected(code, message, context?)`     | `DeciderRejected` | Build validation failure          |
+| `failed(reason, event, context?)`       | `DeciderFailed`   | Build business failure with event |
+| `isSuccess(output)`                     | `boolean`         | Type guard for success            |
+| `isRejected(output)`                    | `boolean`         | Type guard for rejection          |
+| `isFailed(output)`                      | `boolean`         | Type guard for failure            |
 
 **Example usage:**
 
@@ -319,15 +316,15 @@ export const handleConfirmOrder = mutation({
 
 **Factory automation:**
 
-| Step | Action | Handled By |
-|------|--------|------------|
-| 1 | Load CMS | `loadState` callback |
-| 2 | Build context | Factory (timestamp, IDs) |
-| 3 | Call decider | Pure function invocation |
-| 4 | Transform result | Factory -> `CommandHandlerResult` |
-| 5 | Build EventData | Factory (adds metadata) |
-| 6 | Apply state update | `applyUpdate` callback |
-| 7 | Handle errors | `handleError` callback |
+| Step | Action             | Handled By                        |
+| ---- | ------------------ | --------------------------------- |
+| 1    | Load CMS           | `loadState` callback              |
+| 2    | Build context      | Factory (timestamp, IDs)          |
+| 3    | Call decider       | Pure function invocation          |
+| 4    | Transform result   | Factory -> `CommandHandlerResult` |
+| 5    | Build EventData    | Factory (adds metadata)           |
+| 6    | Apply state update | `applyUpdate` callback            |
+| 7    | Handle errors      | `handleError` callback            |
 
 ### 4.2 createEntityDeciderHandler - For Entity Creation
 
@@ -340,9 +337,9 @@ const createOrderHandler = createEntityDeciderHandler({
   name: "CreateOrder",
   streamType: "Order",
   schemaVersion: 1,
-  decider: decideCreateOrder,  // Receives TState | null
+  decider: decideCreateOrder, // Receives TState | null
   getEntityId: (args) => args.orderId,
-  tryLoadState: async (ctx, entityId) => orderRepo.tryLoad(ctx, entityId),  // Returns null if not found
+  tryLoadState: async (ctx, entityId) => orderRepo.tryLoad(ctx, entityId), // Returns null if not found
   insert: async (ctx, entityId, stateUpdate, commandInput, version, now) => {
     const cms = createInitialOrderCMS(entityId, commandInput.customerId);
     await ctx.db.insert("orderCMS", {
@@ -355,26 +352,27 @@ const createOrderHandler = createEntityDeciderHandler({
   },
   preValidate: async (ctx, args) => {
     // Optional: cross-entity validation before decider
-    const existingOrder = await ctx.db.query("orderCMS")
+    const existingOrder = await ctx.db
+      .query("orderCMS")
       .withIndex("by_external_id", (q) => q.eq("externalId", args.externalId))
       .first();
     if (existingOrder) {
       return rejectedResult("DUPLICATE_EXTERNAL_ID", "External ID already exists");
     }
-    return undefined;  // Continue with decider
+    return undefined; // Continue with decider
   },
 });
 ```
 
 **Key differences from createDeciderHandler:**
 
-| Aspect | createDeciderHandler | createEntityDeciderHandler |
-|--------|---------------------|---------------------------|
-| State loading | `loadState` (throws if not found) | `tryLoadState` (returns null) |
-| Decider state type | `TState` | `TState \| null` |
-| Persistence | `applyUpdate` (patch) | `insert` (create) |
-| Version | `cms.version + 1` | Always `1` |
-| Pre-validation | Not supported | `preValidate` callback |
+| Aspect             | createDeciderHandler              | createEntityDeciderHandler    |
+| ------------------ | --------------------------------- | ----------------------------- |
+| State loading      | `loadState` (throws if not found) | `tryLoadState` (returns null) |
+| Decider state type | `TState`                          | `TState \| null`              |
+| Persistence        | `applyUpdate` (patch)             | `insert` (create)             |
+| Version            | `cms.version + 1`                 | Always `1`                    |
+| Pre-validation     | Not supported                     | `preValidate` callback        |
 
 ### 4.3 When to Skip Factories
 
@@ -394,7 +392,7 @@ const submitOrderHandlerWithEnrichment = async (ctx, args) => {
     now: Date.now(),
     commandId: args.commandId,
     correlationId: args.correlationId,
-    customerSnapshot,  // Extra data for Fat Events
+    customerSnapshot, // Extra data for Fat Events
   };
 
   // 4. Call decider with enriched context
@@ -406,12 +404,12 @@ const submitOrderHandlerWithEnrichment = async (ctx, args) => {
 
 **When to use custom handlers:**
 
-| Scenario | Use Factory? | Reason |
-|----------|-------------|--------|
-| Standard CRUD | Yes | Reduces boilerplate |
-| Pre-decider enrichment | No | Factory doesn't support context extension |
-| Cross-entity validation | Consider `preValidate` | Entity creation factory supports this |
-| Complex error handling | Maybe | Custom handlers offer more control |
+| Scenario                | Use Factory?           | Reason                                    |
+| ----------------------- | ---------------------- | ----------------------------------------- |
+| Standard CRUD           | Yes                    | Reduces boilerplate                       |
+| Pre-decider enrichment  | No                     | Factory doesn't support context extension |
+| Cross-entity validation | Consider `preValidate` | Entity creation factory supports this     |
+| Complex error handling  | Maybe                  | Custom handlers offer more control        |
 
 ---
 
@@ -431,8 +429,8 @@ export const orderFSM = defineFSM<OrderStatus>({
   transitions: {
     draft: ["submitted", "cancelled"],
     submitted: ["confirmed", "cancelled"],
-    confirmed: [],     // Terminal state
-    cancelled: [],     // Terminal state
+    confirmed: [], // Terminal state
+    cancelled: [], // Terminal state
   },
 });
 ```
@@ -459,13 +457,13 @@ function decideConfirmOrder(
 
 ### 5.3 FSM Methods
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `canTransition(from, to)` | `boolean` | Check if transition valid |
-| `assertTransition(from, to)` | `void` | Throw if invalid |
-| `validTransitions(from)` | `TState[]` | List valid targets |
-| `isTerminal(state)` | `boolean` | Check for end state |
-| `isValidState(state)` | `boolean` | Type guard for state |
+| Method                       | Returns    | Purpose                   |
+| ---------------------------- | ---------- | ------------------------- |
+| `canTransition(from, to)`    | `boolean`  | Check if transition valid |
+| `assertTransition(from, to)` | `void`     | Throw if invalid          |
+| `validTransitions(from)`     | `TState[]` | List valid targets        |
+| `isTerminal(state)`          | `boolean`  | Check for end state       |
+| `isValidState(state)`        | `boolean`  | Type guard for state      |
 
 ### 5.4 FSM State Diagram
 
@@ -511,13 +509,13 @@ Standard modification ────────► Yes ──► createDeciderHan
 
 ### Quick Reference
 
-| Scenario | Factory | Example |
-|----------|---------|---------|
-| Create Order | `createEntityDeciderHandler` | Entity may not exist |
-| Submit Order (with enrichment) | Custom handler | Needs customer snapshot |
-| Confirm Order | `createDeciderHandler` | Standard modification |
-| Cancel Order | `createDeciderHandler` | Standard modification |
-| Add Item to Order | `createDeciderHandler` | Standard modification |
+| Scenario                        | Factory                                         | Example                 |
+| ------------------------------- | ----------------------------------------------- | ----------------------- |
+| Create Order                    | `createEntityDeciderHandler`                    | Entity may not exist    |
+| Submit Order (with enrichment)  | Custom handler                                  | Needs customer snapshot |
+| Confirm Order                   | `createDeciderHandler`                          | Standard modification   |
+| Cancel Order                    | `createDeciderHandler`                          | Standard modification   |
+| Add Item to Order               | `createDeciderHandler`                          | Standard modification   |
 | Create Product (with SKU check) | `createEntityDeciderHandler` with `preValidate` | Cross-entity uniqueness |
 
 ---
@@ -590,7 +588,7 @@ describe("decideSubmitOrder properties", () => {
   it("always transitions to submitted on success", () => {
     fc.assert(
       fc.property(
-        validDraftOrderArbitrary,  // Custom arbitrary for valid orders
+        validDraftOrderArbitrary, // Custom arbitrary for valid orders
         (state) => {
           const result = decideSubmitOrder(state, { orderId: state.orderId }, context);
           return !isSuccess(result) || result.stateUpdate.status === "submitted";
@@ -635,24 +633,24 @@ describe("decideSubmitOrder properties", () => {
 
 ### 8.2 Pattern Relationships
 
-| Pattern | Relationship to Decider |
-|---------|------------------------|
-| **CMS Dual-Write** | Handler applies decider's `stateUpdate` to CMS |
-| **FSM** | Deciders use FSM for transition validation |
-| **Command Orchestrator** | Calls handlers which wrap deciders |
-| **Projections** | Use `evolve` function to process events |
-| **DCB** | Uses specialized `DCBDecider` for multi-entity operations |
-| **Fat Events** | Custom handlers enrich decider context |
+| Pattern                  | Relationship to Decider                                   |
+| ------------------------ | --------------------------------------------------------- |
+| **CMS Dual-Write**       | Handler applies decider's `stateUpdate` to CMS            |
+| **FSM**                  | Deciders use FSM for transition validation                |
+| **Command Orchestrator** | Calls handlers which wrap deciders                        |
+| **Projections**          | Use `evolve` function to process events                   |
+| **DCB**                  | Uses specialized `DCBDecider` for multi-entity operations |
+| **Fat Events**           | Custom handlers enrich decider context                    |
 
 ### 8.3 Decider vs Handler vs Aggregate
 
-| Concern | Decider (Pure) | Handler (Effectful) | Aggregate (Traditional) |
-|---------|----------------|---------------------|------------------------|
-| I/O | Never | Load/persist CMS | Mixed |
-| Side effects | Never | Always | Mixed |
-| Testability | Unit tests (fast) | Integration tests | Integration tests |
-| Returns | `DeciderOutput` | `CommandHandlerResult` | Varies |
-| State | Receives state | Manages loading | Manages internally |
+| Concern      | Decider (Pure)    | Handler (Effectful)    | Aggregate (Traditional) |
+| ------------ | ----------------- | ---------------------- | ----------------------- |
+| I/O          | Never             | Load/persist CMS       | Mixed                   |
+| Side effects | Never             | Always                 | Mixed                   |
+| Testability  | Unit tests (fast) | Integration tests      | Integration tests       |
+| Returns      | `DeciderOutput`   | `CommandHandlerResult` | Varies                  |
+| State        | Receives state    | Manages loading        | Manages internally      |
 
 ---
 
@@ -667,8 +665,8 @@ describe("decideSubmitOrder properties", () => {
 
 ## Package References
 
-| Package | Exports |
-|---------|---------|
-| `@libar-dev/platform-decider` | `DeciderOutput`, `success`, `rejected`, `failed`, `isSuccess`, `isRejected`, `isFailed`, `Decider`, `DeciderContext`, `DeciderEvent` |
-| `@libar-dev/platform-core/decider` | Re-exports from platform-decider + `createDeciderHandler`, `createEntityDeciderHandler` |
-| `@libar-dev/platform-fsm` | `defineFSM`, `FSM`, `FSMDefinition`, `FSMTransitionError` |
+| Package                            | Exports                                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `@libar-dev/platform-decider`      | `DeciderOutput`, `success`, `rejected`, `failed`, `isSuccess`, `isRejected`, `isFailed`, `Decider`, `DeciderContext`, `DeciderEvent` |
+| `@libar-dev/platform-core/decider` | Re-exports from platform-decider + `createDeciderHandler`, `createEntityDeciderHandler`                                              |
+| `@libar-dev/platform-fsm`          | `defineFSM`, `FSM`, `FSMDefinition`, `FSMTransitionError`                                                                            |

@@ -19,13 +19,13 @@ The testing utilities module provides comprehensive infrastructure for Behavior-
 
 The platform enforces **Gherkin as the exclusive testing approach** for domain logic. This is not a preference but a policy designed to maximize the value of event sourcing.
 
-| Traditional Testing | Gherkin-Only Testing |
-|---------------------|---------------------|
-| Tests as implementation detail | Tests as living documentation |
-| Developers-only readability | Domain expert readability |
-| Duplicated test setup | Reusable step definitions |
-| Scattered test organization | Feature-organized specifications |
-| Tests divorced from requirements | Executable acceptance criteria |
+| Traditional Testing              | Gherkin-Only Testing             |
+| -------------------------------- | -------------------------------- |
+| Tests as implementation detail   | Tests as living documentation    |
+| Developers-only readability      | Domain expert readability        |
+| Duplicated test setup            | Reusable step definitions        |
+| Scattered test organization      | Feature-organized specifications |
+| Tests divorced from requirements | Executable acceptance criteria   |
 
 ### 1.2 The Perfect Mapping
 
@@ -42,12 +42,12 @@ expect(result.event).toBe(...)    And OrderSubmitted event should be emitted
 
 ### 1.3 Migration Pattern
 
-| From (.test.ts) | To (.feature) |
-|-----------------|---------------|
-| `describe/it` blocks with expect assertions | `Scenario` with Given/When/Then steps |
+| From (.test.ts)                             | To (.feature)                                       |
+| ------------------------------------------- | --------------------------------------------------- |
+| `describe/it` blocks with expect assertions | `Scenario` with Given/When/Then steps               |
 | `decideSubmitOrder(null, command, context)` | `Given no existing order, When SubmitOrder command` |
-| `expect(result.isSuccess).toBe(true)` | `Then the result should be success` |
-| `expect(result.event.type).toBe(...)` | `And OrderSubmitted event should be emitted` |
+| `expect(result.isSuccess).toBe(true)`       | `Then the result should be success`                 |
+| `expect(result.event.type).toBe(...)`       | `And OrderSubmitted event should be emitted`        |
 
 ### 1.4 Testing Layers
 
@@ -88,10 +88,10 @@ Deciders are **pure functions** with no side effects:
 ```typescript
 // Decider signature - pure function
 function decideSubmitOrder(
-  state: OrderCMS | null,    // Current state (or null for creation)
+  state: OrderCMS | null, // Current state (or null for creation)
   command: SubmitOrderCommand,
   context: DeciderContext
-): DeciderOutput<OrderSubmittedEvent, Partial<OrderCMS>>
+): DeciderOutput<OrderSubmittedEvent, Partial<OrderCMS>>;
 ```
 
 **No `ctx`**, **no I/O**, **no database** = test without infrastructure.
@@ -183,22 +183,18 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario }) => {
 
 Convex components (Workpool, Workflow, Action Retrier) have **isolated databases with no cleanup API**. The parent app cannot access component-internal state.
 
-| Anti-Pattern | Problem |
-|--------------|---------|
+| Anti-Pattern                  | Problem                                |
+| ----------------------------- | -------------------------------------- |
 | `clearAll()` before each test | Kills Workpool loop, causes OCC errors |
-| Manual table truncation | Race conditions with background jobs |
-| Shared entity IDs | State pollution between tests |
+| Manual table truncation       | Race conditions with background jobs   |
+| Shared entity IDs             | State pollution between tests          |
 
 ### 3.2 Solution: Namespace Prefixing
 
 Every entity ID is prefixed with a unique test run identifier:
 
 ```typescript
-import {
-  testRunId,
-  withPrefix,
-  generateTestRunId
-} from "@libar-dev/platform-core/testing";
+import { testRunId, withPrefix, generateTestRunId } from "@libar-dev/platform-core/testing";
 
 // Module-level singleton (shared within test suite)
 console.log(testRunId); // "r1a2bxy"
@@ -222,12 +218,12 @@ Length: 7 characters
 
 **API Reference:**
 
-| Function | Purpose |
-|----------|---------|
-| `generateTestRunId()` | Create unique 7-char test run ID |
-| `testRunId` | Module-level singleton (consistent within suite) |
-| `withPrefix(id)` | Prefix ID with singleton testRunId |
-| `withCustomPrefix(runId, id)` | Prefix with custom run ID |
+| Function                      | Purpose                                          |
+| ----------------------------- | ------------------------------------------------ |
+| `generateTestRunId()`         | Create unique 7-char test run ID                 |
+| `testRunId`                   | Module-level singleton (consistent within suite) |
+| `withPrefix(id)`              | Prefix ID with singleton testRunId               |
+| `withCustomPrefix(runId, id)` | Prefix with custom run ID                        |
 
 ### 3.4 Docker Restart Pattern
 
@@ -241,20 +237,20 @@ All state wiped               Fresh state
 
 **Environment-Specific Commands:**
 
-| Environment | Command | Port |
-|-------------|---------|------|
-| Integration tests | `just restart` | 3210 |
+| Environment          | Command              | Port |
+| -------------------- | -------------------- | ---- |
+| Integration tests    | `just restart`       | 3210 |
 | Infrastructure tests | `just restart-infra` | 3215 |
-| Local development | `just dev-reset` | 3220 |
-| E2E tests | `just e2e-restart` | 3230 |
+| Local development    | `just dev-reset`     | 3220 |
+| E2E tests            | `just e2e-restart`   | 3230 |
 
 ### 3.5 When to Use Each Pattern
 
-| Pattern | Use When |
-|---------|----------|
-| Namespace prefixing | Within a test suite, tests run in parallel |
-| Docker restart | Between test suites, need guaranteed clean state |
-| Both combined | Maximum isolation for integration test suites |
+| Pattern             | Use When                                         |
+| ------------------- | ------------------------------------------------ |
+| Namespace prefixing | Within a test suite, tests run in parallel       |
+| Docker restart      | Between test suites, need guaranteed clean state |
+| Both combined       | Maximum isolation for integration test suites    |
 
 ---
 
@@ -298,12 +294,13 @@ const order = await waitUntil(
   {
     message: `Order ${orderId} to be confirmed`,
     timeoutMs: 10000,
-    pollIntervalMs: 100
+    pollIntervalMs: 100,
   }
 );
 ```
 
 **Behavior:**
+
 - Returns the truthy value when condition is met
 - Throws on timeout with descriptive message
 - First call happens immediately (no initial delay)
@@ -316,10 +313,9 @@ Simpler boolean-only variant:
 import { waitFor } from "@libar-dev/platform-core/testing";
 
 // Wait for order to be confirmed (no return value needed)
-await waitFor(
-  async () => (await getOrder(orderId))?.status === "confirmed",
-  { message: "Order to be confirmed" }
-);
+await waitFor(async () => (await getOrder(orderId))?.status === "confirmed", {
+  message: "Order to be confirmed",
+});
 ```
 
 ### 4.3 Options Reference
@@ -341,8 +337,8 @@ interface WaitOptions {
 
 ```typescript
 import {
-  DEFAULT_TIMEOUT_MS,      // 30000 (30 seconds)
-  DEFAULT_POLL_INTERVAL_MS // 100 (100ms)
+  DEFAULT_TIMEOUT_MS, // 30000 (30 seconds)
+  DEFAULT_POLL_INTERVAL_MS, // 100 (100ms)
 } from "@libar-dev/platform-core/testing";
 ```
 
@@ -444,13 +440,13 @@ if (isTestEnvironment()) {
 
 The guard uses a multi-layer detection strategy:
 
-| Check | Environment | Result |
-|-------|-------------|--------|
-| `globalThis.__CONVEX_TEST_MODE__ === true` | convex-test unit tests | Allow |
-| `process` is undefined | convex-test runtime | Allow |
-| `process.env.IS_TEST` is set | Explicit test mode | Allow |
-| `CONVEX_CLOUD_URL` is NOT set | Self-hosted Docker | Allow |
-| `CONVEX_CLOUD_URL` IS set | Cloud production | **Block** |
+| Check                                      | Environment            | Result    |
+| ------------------------------------------ | ---------------------- | --------- |
+| `globalThis.__CONVEX_TEST_MODE__ === true` | convex-test unit tests | Allow     |
+| `process` is undefined                     | convex-test runtime    | Allow     |
+| `process.env.IS_TEST` is set               | Explicit test mode     | Allow     |
+| `CONVEX_CLOUD_URL` is NOT set              | Self-hosted Docker     | Allow     |
+| `CONVEX_CLOUD_URL` IS set                  | Cloud production       | **Block** |
 
 ### 5.4 Usage in Bounded Context Components
 
@@ -502,10 +498,7 @@ In BDD testing, the **World** is the shared context across all steps within a si
 #### Unit Test World
 
 ```typescript
-import {
-  BaseUnitTestWorld,
-  createBaseUnitTestWorld
-} from "@libar-dev/platform-core/testing";
+import { BaseUnitTestWorld, createBaseUnitTestWorld } from "@libar-dev/platform-core/testing";
 
 // Extend for domain-specific fields
 interface OrderUnitTestWorld extends BaseUnitTestWorld {
@@ -526,7 +519,7 @@ const world = createBaseUnitTestWorld(t) as OrderUnitTestWorld;
 ```typescript
 import {
   BaseIntegrationTestWorld,
-  createBaseIntegrationTestWorld
+  createBaseIntegrationTestWorld,
 } from "@libar-dev/platform-core/testing";
 
 // Extend for domain-specific fields
@@ -545,13 +538,13 @@ const world = createBaseIntegrationTestWorld(t) as OrderIntegrationTestWorld;
 
 ### 6.3 World API Reference
 
-| Type | Field | Purpose |
-|------|-------|---------|
-| `BaseTestWorld<T>` | `t` | Test backend instance |
-| | `lastResult` | Result from last operation |
-| | `lastError` | Error from last operation (null if success) |
-| | `scenario` | Scenario-specific key-value storage |
-| `BaseIntegrationTestWorld` | `backendUrl` | Backend URL for connection info |
+| Type                       | Field        | Purpose                                     |
+| -------------------------- | ------------ | ------------------------------------------- |
+| `BaseTestWorld<T>`         | `t`          | Test backend instance                       |
+|                            | `lastResult` | Result from last operation                  |
+|                            | `lastError`  | Error from last operation (null if success) |
+|                            | `scenario`   | Scenario-specific key-value storage         |
+| `BaseIntegrationTestWorld` | `backendUrl` | Backend URL for connection info             |
 
 ### 6.4 Reset Between Scenarios
 
@@ -580,7 +573,7 @@ import {
   testMutation,
   testQuery,
   waitUntil,
-  withPrefix
+  withPrefix,
 } from "@libar-dev/platform-core/testing";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../convex/_generated/api";
@@ -624,9 +617,10 @@ describeFeature(feature, ({ BeforeAllScenarios, AfterEachScenario, Scenario }) =
 
     Then("the order should be in submitted status", async () => {
       const order = await waitUntil(
-        () => testQuery(world.t, api.orders.getOrderSummary, {
-          orderId: world.scenario.orderId!,
-        }),
+        () =>
+          testQuery(world.t, api.orders.getOrderSummary, {
+            orderId: world.scenario.orderId!,
+          }),
         { message: "Order to appear in projection" }
       );
       expect(order.status).toBe("submitted");
@@ -646,11 +640,7 @@ describeFeature(feature, ({ BeforeAllScenarios, AfterEachScenario, Scenario }) =
 ### 7.2 Type-Safe Wrappers
 
 ```typescript
-import {
-  testMutation,
-  testQuery,
-  testAction
-} from "@libar-dev/platform-core/testing";
+import { testMutation, testQuery, testAction } from "@libar-dev/platform-core/testing";
 import { api } from "../convex/_generated/api";
 
 // Instead of: await t.mutation(api.orders.createOrder, args)
@@ -673,11 +663,11 @@ const sent = await testAction(t, api.actions.sendNotification, {
 
 ### 7.3 API Reference
 
-| Function | Purpose |
-|----------|---------|
+| Function                          | Purpose                 |
+| --------------------------------- | ----------------------- |
 | `testMutation(t, mutation, args)` | Type-safe mutation call |
-| `testQuery(t, query, args)` | Type-safe query call |
-| `testAction(t, action, args)` | Type-safe action call |
+| `testQuery(t, query, args)`       | Type-safe query call    |
+| `testAction(t, action, args)`     | Type-safe action call   |
 
 ---
 
@@ -703,7 +693,7 @@ import {
   parseTableValue,
   getRequiredField,
   getOptionalField,
-  type DataTableRow
+  type DataTableRow,
 } from "@libar-dev/platform-core/testing";
 
 // In step definition
@@ -726,12 +716,12 @@ Given("order details:", (_ctx: unknown, table: DataTableRow[]) => {
 ### 8.3 Type Parsing
 
 ```typescript
-parseTableValue("42", "int")       // 42 (number)
-parseTableValue("3.14", "float")   // 3.14 (number)
-parseTableValue("true", "boolean") // true (boolean)
-parseTableValue("yes", "boolean")  // true
-parseTableValue("1", "boolean")    // true
-parseTableValue("hello", "string") // "hello"
+parseTableValue("42", "int"); // 42 (number)
+parseTableValue("3.14", "float"); // 3.14 (number)
+parseTableValue("true", "boolean"); // true (boolean)
+parseTableValue("yes", "boolean"); // true
+parseTableValue("1", "boolean"); // true
+parseTableValue("hello", "string"); // "hello"
 ```
 
 ---

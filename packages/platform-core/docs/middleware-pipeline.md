@@ -199,13 +199,13 @@ const enrichmentMiddleware: Middleware = {
 
 ### 3.1 Standard Order Constants
 
-| Order | Middleware            | Purpose                                |
-|-------|-----------------------|----------------------------------------|
-| 10    | Structure Validation  | Zod schema validation                  |
-| 20    | Domain Validation     | Business rule pre-checks               |
-| 30    | Authorization         | RBAC/permission checks                 |
-| 40    | Logging               | Command execution tracing              |
-| 50    | Rate Limiting         | API protection                         |
+| Order | Middleware           | Purpose                   |
+| ----- | -------------------- | ------------------------- |
+| 10    | Structure Validation | Zod schema validation     |
+| 20    | Domain Validation    | Business rule pre-checks  |
+| 30    | Authorization        | RBAC/permission checks    |
+| 40    | Logging              | Command execution tracing |
+| 50    | Rate Limiting        | API protection            |
 
 ```typescript
 import { MIDDLEWARE_ORDER } from "@libar-dev/platform-core";
@@ -231,10 +231,14 @@ const validationMiddleware = createStructureValidationMiddleware({
     CreateOrder: z.object({
       orderId: z.string().startsWith("ord_"),
       customerId: z.string().startsWith("cust_"),
-      items: z.array(z.object({
-        productId: z.string(),
-        quantity: z.number().positive(),
-      })).min(1),
+      items: z
+        .array(
+          z.object({
+            productId: z.string(),
+            quantity: z.number().positive(),
+          })
+        )
+        .min(1),
     }),
     AddOrderItem: z.object({
       orderId: z.string(),
@@ -258,6 +262,7 @@ const validationMiddleware = createRegistryValidationMiddleware(commandRegistry,
 ```
 
 **Rejection result:**
+
 ```typescript
 {
   status: "rejected",
@@ -303,14 +308,14 @@ const domainMiddleware = createDomainValidationMiddleware({
 
 **Available CommonValidators:**
 
-| Validator           | Purpose                                     |
-|---------------------|---------------------------------------------|
-| `requiredString`    | Non-empty string validation                 |
-| `positiveNumber`    | Number > 0                                  |
-| `nonNegativeNumber` | Number >= 0                                 |
-| `numberRange`       | Number within min/max bounds                |
-| `matchesPattern`    | String matches regex                        |
-| `startsWithPrefix`  | String starts with prefix                   |
+| Validator           | Purpose                      |
+| ------------------- | ---------------------------- |
+| `requiredString`    | Non-empty string validation  |
+| `positiveNumber`    | Number > 0                   |
+| `nonNegativeNumber` | Number >= 0                  |
+| `numberRange`       | Number within min/max bounds |
+| `matchesPattern`    | String matches regex         |
+| `startsWithPrefix`  | String starts with prefix    |
 
 ### 3.4 Authorization Middleware (Order: 30)
 
@@ -336,9 +341,9 @@ const roleChecker = createRoleBasedChecker(
 
 // Owner-based authorization (users can only modify their own resources)
 const ownerChecker = createOwnerBasedChecker(
-  (ctx) => ctx.command.args.ownerId as string,  // Resource owner
-  (ctx) => ctx.custom.userId as string,         // Current user
-  ["admin", "superadmin"]                        // Admin bypass roles
+  (ctx) => ctx.command.args.ownerId as string, // Resource owner
+  (ctx) => ctx.custom.userId as string, // Current user
+  ["admin", "superadmin"] // Admin bypass roles
 );
 
 // Combine checkers (all must pass)
@@ -394,7 +399,7 @@ import {
 const loggingMiddleware = createLoggingMiddleware({
   logger: createConvexLogger(console, "[Command]"),
   includePayload: false, // Security: don't log sensitive data
-  includeTiming: true,   // Log duration in ms
+  includeTiming: true, // Log duration in ms
 });
 
 // JSON logger for aggregation systems
@@ -443,13 +448,10 @@ import { rateLimiter } from "./rateLimits";
 
 const rateLimitMiddleware = createRateLimitMiddleware({
   // Factory creates checker per-request with access to Convex ctx
-  checkerFactory: (ctx) =>
-    createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx.raw),
+  checkerFactory: (ctx) => createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx.raw),
 
   // Key strategy for rate limit bucket
-  getKey: RateLimitKeys.byUserAndCommand(
-    (ctx) => ctx.custom.userId as string ?? "anonymous"
-  ),
+  getKey: RateLimitKeys.byUserAndCommand((ctx) => (ctx.custom.userId as string) ?? "anonymous"),
 
   // System commands exempt from rate limiting
   skipFor: ["GetSystemHealth", "CleanupExpiredReservations"],
@@ -458,13 +460,13 @@ const rateLimitMiddleware = createRateLimitMiddleware({
 
 **Available key strategies:**
 
-| Strategy            | Key Format                           | Use Case                    |
-|---------------------|--------------------------------------|-----------------------------|
-| `byUserId`          | `user:{userId}`                      | Per-user limits             |
-| `byCommandType`     | `command:{type}`                     | Per-command-type limits     |
-| `byUserAndCommand`  | `user:{userId}:{type}`               | Per-user per-command limits |
-| `byAggregateId`     | `aggregate:{type}:{id}`              | Per-resource limits         |
-| `byIpAddress`       | `ip:{address}`                       | IP-based limits             |
+| Strategy           | Key Format              | Use Case                    |
+| ------------------ | ----------------------- | --------------------------- |
+| `byUserId`         | `user:{userId}`         | Per-user limits             |
+| `byCommandType`    | `command:{type}`        | Per-command-type limits     |
+| `byUserAndCommand` | `user:{userId}:{type}`  | Per-user per-command limits |
+| `byAggregateId`    | `aggregate:{type}:{id}` | Per-resource limits         |
+| `byIpAddress`      | `ip:{address}`          | IP-based limits             |
 
 **Rate limiter setup (convex/rateLimits.ts):**
 
@@ -622,9 +624,7 @@ const userContextMiddleware: Middleware = {
     // Load user profile from database
     const user = await convexCtx.db
       .query("users")
-      .withIndex("by_tokenIdentifier", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
+      .withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
       .unique();
 
     return {

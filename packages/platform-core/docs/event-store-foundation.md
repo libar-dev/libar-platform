@@ -17,13 +17,13 @@ The Event Store Foundation provides centralized event storage for the Convex-Nat
 
 Event Sourcing requires centralized storage for domain events with several guarantees:
 
-| Requirement | Traditional Challenge | Event Store Solution |
-|-------------|----------------------|---------------------|
-| **Ordering** | Events must be processed in order | Stream versions + global positions |
-| **Concurrency** | Concurrent writes can corrupt state | Optimistic Concurrency Control (OCC) |
-| **Projections** | Need cross-stream ordering | Global position for checkpoint resumption |
-| **Audit** | Events must be immutable | No update/delete operations exposed |
-| **Evolution** | Event schemas change over time | Schema versioning + category taxonomy |
+| Requirement     | Traditional Challenge               | Event Store Solution                      |
+| --------------- | ----------------------------------- | ----------------------------------------- |
+| **Ordering**    | Events must be processed in order   | Stream versions + global positions        |
+| **Concurrency** | Concurrent writes can corrupt state | Optimistic Concurrency Control (OCC)      |
+| **Projections** | Need cross-stream ordering          | Global position for checkpoint resumption |
+| **Audit**       | Events must be immutable            | No update/delete operations exposed       |
+| **Evolution**   | Event schemas change over time      | Schema versioning + category taxonomy     |
 
 Without infrastructure for stream-based storage, bounded contexts cannot maintain audit trails or support projection-based read models.
 
@@ -48,35 +48,35 @@ Each stream represents a single entity (aggregate) identified by a composite key
 
 The `events` table stores all domain events:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `eventId` | string | Unique event identifier |
-| `eventType` | string | Event type name (e.g., "OrderCreated") |
-| `streamType` | string | Entity type |
-| `streamId` | string | Entity identifier |
-| `version` | number | Per-stream sequence number (1, 2, 3...) |
-| `globalPosition` | number | Cross-stream ordering value |
-| `boundedContext` | string | Owning bounded context |
-| `category` | enum | Event taxonomy (domain/integration/trigger/fat) |
-| `schemaVersion` | number | For upcasting pipeline |
-| `correlationId` | string | Request correlation tracking |
-| `causationId` | string? | Parent event/command ID |
-| `timestamp` | number | Unix timestamp (ms) |
-| `payload` | any | Event data (intentionally untyped at storage layer) |
-| `metadata` | any? | Extensible metadata |
-| `idempotencyKey` | string? | Duplicate detection key |
+| Field            | Type    | Description                                         |
+| ---------------- | ------- | --------------------------------------------------- |
+| `eventId`        | string  | Unique event identifier                             |
+| `eventType`      | string  | Event type name (e.g., "OrderCreated")              |
+| `streamType`     | string  | Entity type                                         |
+| `streamId`       | string  | Entity identifier                                   |
+| `version`        | number  | Per-stream sequence number (1, 2, 3...)             |
+| `globalPosition` | number  | Cross-stream ordering value                         |
+| `boundedContext` | string  | Owning bounded context                              |
+| `category`       | enum    | Event taxonomy (domain/integration/trigger/fat)     |
+| `schemaVersion`  | number  | For upcasting pipeline                              |
+| `correlationId`  | string  | Request correlation tracking                        |
+| `causationId`    | string? | Parent event/command ID                             |
+| `timestamp`      | number  | Unix timestamp (ms)                                 |
+| `payload`        | any     | Event data (intentionally untyped at storage layer) |
+| `metadata`       | any?    | Extensible metadata                                 |
+| `idempotencyKey` | string? | Duplicate detection key                             |
 
 ### 2.3 Streams Table Schema
 
 The `streams` table tracks per-stream metadata for OCC:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `streamType` | string | Entity type |
-| `streamId` | string | Entity identifier |
-| `currentVersion` | number | Latest version in stream |
-| `createdAt` | number | Stream creation timestamp |
-| `updatedAt` | number | Last event append timestamp |
+| Field            | Type   | Description                 |
+| ---------------- | ------ | --------------------------- |
+| `streamType`     | string | Entity type                 |
+| `streamId`       | string | Entity identifier           |
+| `currentVersion` | number | Latest version in stream    |
+| `createdAt`      | number | Stream creation timestamp   |
+| `updatedAt`      | number | Last event append timestamp |
 
 ### 2.4 Indexes
 
@@ -107,11 +107,11 @@ Projections need to process events in causal order across ALL streams. Per-strea
 globalPosition = timestamp * 1,000,000 + streamHash * 1,000 + (version % 1000)
 ```
 
-| Component | Multiplier | Purpose |
-|-----------|-----------|---------|
-| `timestamp` | 1,000,000 | Primary sort key (time ordering) |
-| `streamHash` | 1,000 | Stream differentiation (0-999 buckets) |
-| `version % 1000` | 1 | Tiebreaker within stream (0-999) |
+| Component        | Multiplier | Purpose                                |
+| ---------------- | ---------- | -------------------------------------- |
+| `timestamp`      | 1,000,000  | Primary sort key (time ordering)       |
+| `streamHash`     | 1,000      | Stream differentiation (0-999 buckets) |
+| `version % 1000` | 1          | Tiebreaker within stream (0-999)       |
 
 ### 3.3 Stream Hash Calculation
 
@@ -127,12 +127,12 @@ const streamHash = Math.abs(hash % 1000);
 
 ### 3.4 Guarantees
 
-| Guarantee | How Achieved |
-|-----------|--------------|
-| **Globally unique** | Stream hash differentiates concurrent appends |
-| **Time-ordered** | Timestamp as primary sort key |
-| **Monotonic within stream** | Version increment ensures stream ordering |
-| **No collisions** | Same ms + same hash bucket + same version % 1000 is effectively impossible |
+| Guarantee                   | How Achieved                                                               |
+| --------------------------- | -------------------------------------------------------------------------- |
+| **Globally unique**         | Stream hash differentiates concurrent appends                              |
+| **Time-ordered**            | Timestamp as primary sort key                                              |
+| **Monotonic within stream** | Version increment ensures stream ordering                                  |
+| **No collisions**           | Same ms + same hash bucket + same version % 1000 is effectively impossible |
 
 ### 3.5 Precision Trade-off
 
@@ -167,11 +167,11 @@ if (result.status === "conflict") {
 
 ### 4.2 Version Rules
 
-| Scenario | expectedVersion | Behavior |
-|----------|----------------|----------|
-| New stream | 0 | Creates stream with version 1 |
-| Existing stream | Current version | Appends and increments version |
-| Version mismatch | Any | Returns `conflict` with currentVersion |
+| Scenario         | expectedVersion | Behavior                               |
+| ---------------- | --------------- | -------------------------------------- |
+| New stream       | 0               | Creates stream with version 1          |
+| Existing stream  | Current version | Appends and increments version         |
+| Version mismatch | Any             | Returns `conflict` with currentVersion |
 
 ### 4.3 Conflict Resolution
 
@@ -229,8 +229,8 @@ Read events from a specific stream:
 const events = await eventStore.readStream(ctx, {
   streamType: "Order",
   streamId: "ord_123",
-  fromVersion: 0,  // Optional: start after this version
-  limit: 1000,     // Optional: max events to return
+  fromVersion: 0, // Optional: start after this version
+  limit: 1000, // Optional: max events to return
 });
 
 // Returns: StoredEvent[] ordered by version
@@ -243,10 +243,10 @@ Read events globally for projections:
 ```typescript
 // Query: readFromPosition
 const events = await eventStore.readFromPosition(ctx, {
-  fromPosition: lastCheckpoint,  // Exclusive: events > this position
-  limit: 100,                    // Max events to return
-  eventTypes: ["OrderCreated"],  // Optional: filter (in-memory)
-  boundedContext: "orders",      // Optional: filter (query-level)
+  fromPosition: lastCheckpoint, // Exclusive: events > this position
+  limit: 100, // Max events to return
+  eventTypes: ["OrderCreated"], // Optional: filter (in-memory)
+  boundedContext: "orders", // Optional: filter (query-level)
 });
 
 // Returns: StoredEvent[] ordered by globalPosition
@@ -283,41 +283,45 @@ const existing = await eventStore.getByIdempotencyKey(ctx, {
 
 Events are categorized for different processing needs:
 
-| Category | Purpose | Payload Content | Use Case |
-|----------|---------|-----------------|----------|
-| `domain` | Internal facts within BC | Minimal, ES-focused | CMS rebuild, BC projections |
-| `integration` | Cross-context communication | Versioned contracts | BC-to-BC event publishing |
-| `trigger` | ID-only notifications | Just entity IDs | GDPR compliance, minimal data |
-| `fat` | Full state snapshots | Complete entity state | External system sync |
+| Category      | Purpose                     | Payload Content       | Use Case                      |
+| ------------- | --------------------------- | --------------------- | ----------------------------- |
+| `domain`      | Internal facts within BC    | Minimal, ES-focused   | CMS rebuild, BC projections   |
+| `integration` | Cross-context communication | Versioned contracts   | BC-to-BC event publishing     |
+| `trigger`     | ID-only notifications       | Just entity IDs       | GDPR compliance, minimal data |
+| `fat`         | Full state snapshots        | Complete entity state | External system sync          |
 
 ### 6.1 Default Behavior
 
 ```typescript
 // Category defaults to "domain" if not specified
-events: [{
-  eventId: "evt_123",
-  eventType: "OrderCreated",
-  payload: { orderId, customerId },
-  // category: "domain" (implicit)
-  // schemaVersion: 1 (implicit)
-}]
+events: [
+  {
+    eventId: "evt_123",
+    eventType: "OrderCreated",
+    payload: { orderId, customerId },
+    // category: "domain" (implicit)
+    // schemaVersion: 1 (implicit)
+  },
+];
 ```
 
 ### 6.2 Integration Events
 
 ```typescript
 // Cross-BC communication with versioned contract
-events: [{
-  eventId: "evt_456",
-  eventType: "OrderShipped",
-  category: "integration",
-  schemaVersion: 2,  // Contract version
-  payload: {
-    orderId: "ord_123",
-    shippedAt: timestamp,
-    trackingNumber: "TRK123",
+events: [
+  {
+    eventId: "evt_456",
+    eventType: "OrderShipped",
+    category: "integration",
+    schemaVersion: 2, // Contract version
+    payload: {
+      orderId: "ord_123",
+      shippedAt: timestamp,
+      trackingNumber: "TRK123",
+    },
   },
-}]
+];
 ```
 
 ### 6.3 Querying by Category
@@ -344,13 +348,13 @@ Once an event is appended to a stream, it **cannot be modified or deleted**. Eve
 
 Immutability is enforced at the API level - the Event Store provides no update or delete operations for events:
 
-| Operation | Available? | Rationale |
-|-----------|-----------|-----------|
-| `appendToStream` | Yes | Create new events |
-| `readStream` | Yes | Read events |
-| `readFromPosition` | Yes | Read for projections |
-| `updateEvent` | **No** | Events are immutable |
-| `deleteEvent` | **No** | Events are immutable |
+| Operation          | Available? | Rationale            |
+| ------------------ | ---------- | -------------------- |
+| `appendToStream`   | Yes        | Create new events    |
+| `readStream`       | Yes        | Read events          |
+| `readFromPosition` | Yes        | Read for projections |
+| `updateEvent`      | **No**     | Events are immutable |
+| `deleteEvent`      | **No**     | Events are immutable |
 
 ### 7.3 Schema Evolution
 
@@ -399,11 +403,11 @@ async function processProjection(ctx, projection) {
 
 ### 8.2 Exactly-Once Semantics
 
-| Guarantee | How Achieved |
-|-----------|--------------|
-| No events missed | Checkpoint persisted after processing |
+| Guarantee               | How Achieved                               |
+| ----------------------- | ------------------------------------------ |
+| No events missed        | Checkpoint persisted after processing      |
 | No duplicate processing | globalPosition is monotonically increasing |
-| Resumable | Query from lastProcessedPosition |
+| Resumable               | Query from lastProcessedPosition           |
 
 ### 8.3 Projection Status Table
 
@@ -449,14 +453,14 @@ const result = await eventStore.appendToStream(ctx, {
 
 ### 9.2 Available Methods
 
-| Method | Purpose |
-|--------|---------|
-| `appendToStream(ctx, args)` | Append events with OCC |
-| `readStream(ctx, args)` | Read from specific stream |
+| Method                        | Purpose                       |
+| ----------------------------- | ----------------------------- |
+| `appendToStream(ctx, args)`   | Append events with OCC        |
+| `readStream(ctx, args)`       | Read from specific stream     |
 | `readFromPosition(ctx, args)` | Read globally for projections |
-| `getStreamVersion(ctx, args)` | Get current stream version |
-| `getByCorrelation(ctx, args)` | Query by correlation ID |
-| `getGlobalPosition(ctx)` | Get current global position |
+| `getStreamVersion(ctx, args)` | Get current stream version    |
+| `getByCorrelation(ctx, args)` | Query by correlation ID       |
+| `getGlobalPosition(ctx)`      | Get current global position   |
 
 ---
 

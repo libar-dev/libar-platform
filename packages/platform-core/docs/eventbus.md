@@ -33,6 +33,7 @@ async function handleOrderSubmitted(ctx, event) {
 ```
 
 **Problems:**
+
 - Command handlers become a coordination point
 - Adding new subscribers requires modifying producers
 - No centralized retry or dead letter handling
@@ -51,6 +52,7 @@ const result = await commandOrchestrator.execute(ctx, config, args);
 ```
 
 **Benefits:**
+
 - Producers don't know about consumers
 - Adding subscribers is configuration-only
 - Centralized Workpool delivery with retries
@@ -64,32 +66,33 @@ const result = await commandOrchestrator.execute(ctx, config, args);
 
 A `PublishedEvent` contains all metadata required for routing and processing:
 
-| Field            | Type            | Description                                 |
-|------------------|-----------------|---------------------------------------------|
-| `eventId`        | `string`        | Unique event identifier                     |
+| Field            | Type            | Description                                     |
+| ---------------- | --------------- | ----------------------------------------------- |
+| `eventId`        | `string`        | Unique event identifier                         |
 | `eventType`      | `string`        | Event type for routing (e.g., "OrderSubmitted") |
-| `streamType`     | `string`        | Aggregate type (e.g., "Order")              |
-| `streamId`       | `string`        | Aggregate instance ID                       |
-| `category`       | `EventCategory` | Event category for filtering                |
-| `schemaVersion`  | `number`        | Schema version for upcasting                |
-| `boundedContext` | `string`        | Source bounded context                      |
-| `globalPosition` | `number`        | Global position in event store              |
-| `timestamp`      | `number`        | Creation timestamp                          |
-| `payload`        | `TPayload`      | Event-specific data                         |
-| `correlation`    | `object`        | `correlationId`, `causationId`, `userId?`   |
+| `streamType`     | `string`        | Aggregate type (e.g., "Order")                  |
+| `streamId`       | `string`        | Aggregate instance ID                           |
+| `category`       | `EventCategory` | Event category for filtering                    |
+| `schemaVersion`  | `number`        | Schema version for upcasting                    |
+| `boundedContext` | `string`        | Source bounded context                          |
+| `globalPosition` | `number`        | Global position in event store                  |
+| `timestamp`      | `number`        | Creation timestamp                              |
+| `payload`        | `TPayload`      | Event-specific data                             |
+| `correlation`    | `object`        | `correlationId`, `causationId`, `userId?`       |
 
 ### 2.2 Subscription Filter
 
 Filters determine which events a subscription receives. All criteria use **OR logic** within a field and **AND logic** between fields.
 
-| Filter Field       | Description                           | Example                           |
-|--------------------|---------------------------------------|-----------------------------------|
-| `eventTypes`       | Match specific event types            | `["OrderSubmitted", "OrderCancelled"]` |
-| `categories`       | Match event categories                | `["domain", "integration"]`       |
-| `boundedContexts`  | Match source bounded contexts         | `["orders", "inventory"]`         |
-| `streamTypes`      | Match aggregate types                 | `["Order", "Customer"]`           |
+| Filter Field      | Description                   | Example                                |
+| ----------------- | ----------------------------- | -------------------------------------- |
+| `eventTypes`      | Match specific event types    | `["OrderSubmitted", "OrderCancelled"]` |
+| `categories`      | Match event categories        | `["domain", "integration"]`            |
+| `boundedContexts` | Match source bounded contexts | `["orders", "inventory"]`              |
+| `streamTypes`     | Match aggregate types         | `["Order", "Customer"]`                |
 
 **Matching Rules:**
+
 - Empty filter = wildcard (matches all events)
 - Multiple values in a field = OR (matches any)
 - Multiple fields = AND (all must match)
@@ -100,8 +103,8 @@ Partition keys enable ordered processing for events that share a key:
 
 ```typescript
 interface PartitionKey {
-  name: string;   // Key name (e.g., "orderId")
-  value: string;  // Key value (e.g., "order_123")
+  name: string; // Key name (e.g., "orderId")
+  value: string; // Key value (e.g., "order_123")
 }
 ```
 
@@ -111,12 +114,12 @@ interface PartitionKey {
 
 Subscriptions execute in priority order (lower numbers run first):
 
-| Priority Range | Typical Use                    |
-|----------------|--------------------------------|
-| 1-99           | Critical infrastructure        |
-| 100 (default)  | Projections                    |
-| 200            | Process Managers               |
-| 300+           | Sagas, async tasks             |
+| Priority Range | Typical Use             |
+| -------------- | ----------------------- |
+| 1-99           | Critical infrastructure |
+| 100 (default)  | Projections             |
+| 200            | Process Managers        |
+| 300+           | Sagas, async tasks      |
 
 This ensures projections update read models before process managers or sagas react to them.
 
@@ -164,10 +167,7 @@ export const eventSubscriptions = defineSubscriptions((registry) => {
     .build();
 
   // Wildcard audit subscription - matches all domain events
-  registry
-    .subscribe("audit.logger", internal.audit.logEvent)
-    .forCategories("domain")
-    .build();
+  registry.subscribe("audit.logger", internal.audit.logEvent).forCategories("domain").build();
 });
 ```
 
@@ -192,7 +192,10 @@ const subscription = createSubscription(
 The `createPMSubscription` helper bridges PM definitions to EventBus:
 
 ```typescript
-import { createPMSubscription, type PMEventHandlerArgs } from "@libar-dev/platform-core/processManager";
+import {
+  createPMSubscription,
+  type PMEventHandlerArgs,
+} from "@libar-dev/platform-core/processManager";
 
 const orderNotificationPM = defineProcessManager({
   processManagerName: "orderNotification",
@@ -215,19 +218,19 @@ export const eventSubscriptions = defineSubscriptions((registry) => {
 
 **PM Handler Args:** The default transformer provides:
 
-| Field             | Description                           |
-|-------------------|---------------------------------------|
-| `eventId`         | Event identifier                      |
-| `eventType`       | Event type                            |
-| `globalPosition`  | For idempotency checking              |
-| `correlationId`   | Correlation chain ID                  |
-| `streamType`      | Aggregate type                        |
-| `streamId`        | Aggregate instance ID                 |
-| `payload`         | Event payload                         |
-| `timestamp`       | Event timestamp                       |
-| `category`        | Event category                        |
-| `boundedContext`  | Source bounded context                |
-| `instanceId`      | PM instance ID (from correlation strategy) |
+| Field            | Description                                |
+| ---------------- | ------------------------------------------ |
+| `eventId`        | Event identifier                           |
+| `eventType`      | Event type                                 |
+| `globalPosition` | For idempotency checking                   |
+| `correlationId`  | Correlation chain ID                       |
+| `streamType`     | Aggregate type                             |
+| `streamId`       | Aggregate instance ID                      |
+| `payload`        | Event payload                              |
+| `timestamp`      | Event timestamp                            |
+| `category`       | Event category                             |
+| `boundedContext` | Source bounded context                     |
+| `instanceId`     | PM instance ID (from correlation strategy) |
 
 ### 3.4 Wildcard Subscriptions
 
@@ -297,13 +300,13 @@ import { DEFAULT_PM_SUBSCRIPTION_PRIORITY } from "@libar-dev/platform-core/proce
 
 ### 4.3 Recommended Priority Ranges
 
-| Use Case                | Priority | Rationale                              |
-|-------------------------|----------|----------------------------------------|
-| Critical infrastructure | 1-50     | Must run before anything else          |
-| Projections             | 100      | Update read models first               |
-| Process Managers        | 200      | React to updated state                 |
-| Sagas                   | 300      | Cross-BC coordination after local ops  |
-| Audit/Analytics         | 400+     | Non-critical, can run last             |
+| Use Case                | Priority | Rationale                             |
+| ----------------------- | -------- | ------------------------------------- |
+| Critical infrastructure | 1-50     | Must run before anything else         |
+| Projections             | 100      | Update read models first              |
+| Process Managers        | 200      | React to updated state                |
+| Sagas                   | 300      | Cross-BC coordination after local ops |
+| Audit/Analytics         | 400+     | Non-critical, can run last            |
 
 ---
 
@@ -313,10 +316,10 @@ import { DEFAULT_PM_SUBSCRIPTION_PRIORITY } from "@libar-dev/platform-core/proce
 
 The platform supports **two models** for projection triggering:
 
-| Model                 | Mechanism                          | When to Use                         |
-|-----------------------|------------------------------------|-------------------------------------|
-| **Direct (CommandConfig)** | Orchestrator triggers projection directly | Simple 1:1 command-to-projection |
-| **EventBus**          | Orchestrator publishes, EventBus routes | Multiple subscribers per event type |
+| Model                      | Mechanism                                 | When to Use                         |
+| -------------------------- | ----------------------------------------- | ----------------------------------- |
+| **Direct (CommandConfig)** | Orchestrator triggers projection directly | Simple 1:1 command-to-projection    |
+| **EventBus**               | Orchestrator publishes, EventBus routes   | Multiple subscribers per event type |
 
 **Important:** Do NOT duplicate projections in both models. If a projection is triggered via CommandConfig, don't also subscribe it via EventBus.
 
@@ -387,10 +390,10 @@ Use consistent naming conventions:
 
 ```typescript
 // Format: <domain>.<operation>
-"orderSummary.onOrderSubmitted"
-"inventory.onStockReserved"
-"pm:orderNotification"        // Process Managers use pm: prefix
-"audit.logDomainEvent"
+"orderSummary.onOrderSubmitted";
+"inventory.onStockReserved";
+"pm:orderNotification"; // Process Managers use pm: prefix
+"audit.logDomainEvent";
 ```
 
 ### 6.2 Avoid Duplicate Delivery
@@ -416,6 +419,7 @@ defineSubscriptions((registry) => {
 ### 6.3 Error Handling
 
 EventBus propagates Workpool enqueue errors. If a subscription fails to enqueue:
+
 - The error is propagated immediately
 - Subsequent subscriptions are NOT processed
 - The event is still persisted in the Event Store
@@ -441,10 +445,7 @@ try {
 describe("EventBus subscriptions", () => {
   it("matches OrderSubmitted events", () => {
     const subscriptions = defineSubscriptions((registry) => {
-      registry
-        .subscribe("orderHandler", mockHandler)
-        .forEventTypes("OrderSubmitted")
-        .build();
+      registry.subscribe("orderHandler", mockHandler).forEventTypes("OrderSubmitted").build();
     });
 
     const bus = new ConvexEventBus(mockWorkpool, subscriptions);
@@ -459,11 +460,11 @@ describe("EventBus subscriptions", () => {
 
 The EventBus builds an index for fast subscription lookup:
 
-| Index Type       | Lookup Key        | Use Case                          |
-|------------------|-------------------|-----------------------------------|
-| `byEventType`    | Event type string | Most common - specific event types |
-| `byCategory`     | Event category    | Category-wide subscriptions       |
-| `wildcards`      | N/A               | No filter - matches all           |
+| Index Type    | Lookup Key        | Use Case                           |
+| ------------- | ----------------- | ---------------------------------- |
+| `byEventType` | Event type string | Most common - specific event types |
+| `byCategory`  | Event category    | Category-wide subscriptions        |
+| `wildcards`   | N/A               | No filter - matches all            |
 
 **Performance note:** For high-volume event types, prefer specific `eventTypes` filters over wildcards.
 
@@ -482,11 +483,7 @@ class ConvexEventBus implements EventBus {
   );
 
   // Publish event to matching subscriptions
-  publish(
-    ctx: MutationCtx,
-    event: PublishedEvent,
-    chain: CorrelationChain
-  ): Promise<PublishResult>;
+  publish(ctx: MutationCtx, event: PublishedEvent, chain: CorrelationChain): Promise<PublishResult>;
 
   // Get subscriptions matching a filter
   getMatchingSubscriptions(filter: SubscriptionFilter): EventSubscription[];

@@ -20,12 +20,12 @@ The Bounded Context Foundation pattern provides **physical database isolation** 
 
 DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity. Without physical isolation, accidental coupling between contexts undermines the benefits of domain-driven design.
 
-| Challenge | Traditional Approach | Risk |
-|-----------|---------------------|------|
-| Database access | Convention-based | Developers can accidentally query across boundaries |
-| API contracts | Documentation only | No compile-time enforcement |
-| Data ownership | Team agreement | Shared tables create hidden dependencies |
-| Auth context | Implicit sharing | Security assumptions leak across boundaries |
+| Challenge       | Traditional Approach | Risk                                                |
+| --------------- | -------------------- | --------------------------------------------------- |
+| Database access | Convention-based     | Developers can accidentally query across boundaries |
+| API contracts   | Documentation only   | No compile-time enforcement                         |
+| Data ownership  | Team agreement       | Shared tables create hidden dependencies            |
+| Auth context    | Implicit sharing     | Security assumptions leak across boundaries         |
 
 ### 1.2 The Convex Component Solution
 
@@ -37,8 +37,8 @@ import orders from "./contexts/orders/convex.config";
 import inventory from "./contexts/inventory/convex.config";
 
 const app = defineApp();
-app.use(orders);     // Isolated DB: orderCMS
-app.use(inventory);  // Isolated DB: inventoryCMS, reservationCMS
+app.use(orders); // Isolated DB: orderCMS
+app.use(inventory); // Isolated DB: inventoryCMS, reservationCMS
 ```
 
 **Result:** The Orders context cannot accidentally query Inventory tables - they exist in separate, physically isolated databases.
@@ -62,12 +62,12 @@ ctx.runMutation(components.orders.handlers.createOrder, args);
 
 ### 2.2 What Gets Isolated
 
-| Aspect | Inside Component | At Parent Level |
-|--------|-----------------|-----------------|
-| Database tables | Fully accessible via `ctx.db` | Invisible - must use handler API |
-| Scheduled functions | Run independently | Cannot be cancelled by parent |
-| Internal state | Direct access | Opaque - no introspection API |
-| Document IDs | `Id<"orderCMS">` | Converted to `string` at boundary |
+| Aspect              | Inside Component              | At Parent Level                   |
+| ------------------- | ----------------------------- | --------------------------------- |
+| Database tables     | Fully accessible via `ctx.db` | Invisible - must use handler API  |
+| Scheduled functions | Run independently             | Cannot be cancelled by parent     |
+| Internal state      | Direct access                 | Opaque - no introspection API     |
+| Document IDs        | `Id<"orderCMS">`              | Converted to `string` at boundary |
 
 ### 2.3 Component Configuration Example
 
@@ -86,10 +86,10 @@ import inventory from "./contexts/inventory/convex.config";
 const app = defineApp();
 
 // Each component has its OWN isolated database
-app.use(eventStore);   // events, streams tables
-app.use(commandBus);   // commands table
-app.use(orders);       // orderCMS table
-app.use(inventory);    // inventoryCMS, reservationCMS tables
+app.use(eventStore); // events, streams tables
+app.use(commandBus); // commands table
+app.use(orders); // orderCMS table
+app.use(inventory); // inventoryCMS, reservationCMS tables
 
 export default app;
 ```
@@ -100,13 +100,13 @@ export default app;
 
 ### 3.1 Critical Boundary Constraints
 
-| Rule | Implication | Error Handling |
-|------|-------------|----------------|
-| **No direct table access** | Parent cannot `ctx.db.query("orderCMS")` | Table does not exist error |
-| **No auth passthrough** | `ctx.auth` doesn't cross boundaries | Must pass `userId` explicitly |
-| **IDs become strings** | `Id<"table">` inside → `string` at boundary | Type conversion required |
-| **No env vars** | Components can't access `process.env` | Pass configuration as args |
-| **No programmatic cleanup** | Cannot delete component data from parent | Use Docker restart for tests |
+| Rule                        | Implication                                 | Error Handling                |
+| --------------------------- | ------------------------------------------- | ----------------------------- |
+| **No direct table access**  | Parent cannot `ctx.db.query("orderCMS")`    | Table does not exist error    |
+| **No auth passthrough**     | `ctx.auth` doesn't cross boundaries         | Must pass `userId` explicitly |
+| **IDs become strings**      | `Id<"table">` inside → `string` at boundary | Type conversion required      |
+| **No env vars**             | Components can't access `process.env`       | Pass configuration as args    |
+| **No programmatic cleanup** | Cannot delete component data from parent    | Use Docker restart for tests  |
 
 ### 3.2 Auth Context Handling
 
@@ -124,7 +124,7 @@ export const createOrder = mutation({
     await ctx.runMutation(components.orders.handlers.createOrder, {
       orderId: args.orderId,
       customerId: args.customerId,
-      userId,  // Explicitly passed - component cannot access ctx.auth
+      userId, // Explicitly passed - component cannot access ctx.auth
     });
   },
 });
@@ -142,9 +142,9 @@ const order: Doc<"orderCMS"> = await ctx.db.get(internalId);
 
 // Return business IDs (strings) to parent
 return {
-  orderId: order.orderId,      // string - business ID
-  version: order.version,      // number
-  status: order.status,        // string
+  orderId: order.orderId, // string - business ID
+  version: order.version, // number
+  status: order.status, // string
   // Do NOT return: order._id  // Id<"orderCMS"> - meaningless outside
 };
 ```
@@ -178,13 +178,14 @@ export const processOrder = mutation({
 ### 4.2 Caught Exceptions: Sub-Transaction Rollback
 
 If a component mutation call throws and the caller catches the exception:
+
 - **Only the component's writes roll back**
 - Parent writes (before the call) are preserved
 
 ```typescript
 export const processWithFallback = mutation({
   handler: async (ctx, args) => {
-    await ctx.db.insert("logs", { event: "started" });  // Will commit
+    await ctx.db.insert("logs", { event: "started" }); // Will commit
 
     try {
       // Component throws (e.g., rate limit exceeded)
@@ -207,11 +208,11 @@ export const processWithFallback = mutation({
 
 ### 4.3 Implications for DDD/ES/CQRS
 
-| Pattern | Implication |
-|---------|-------------|
-| Command handlers | CMS and Event Store writes commit atomically |
-| Projection processing | Atomic updates across read models |
-| Saga compensation | Must be explicit (separate mutation calls) - caught exceptions only roll back the component that threw |
+| Pattern               | Implication                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| Command handlers      | CMS and Event Store writes commit atomically                                                           |
+| Projection processing | Atomic updates across read models                                                                      |
+| Saga compensation     | Must be explicit (separate mutation calls) - caught exceptions only roll back the component that threw |
 
 ---
 
@@ -222,10 +223,7 @@ export const processWithFallback = mutation({
 Each bounded context should define a contract that specifies its public API. The contract serves as documentation and enables type-safe integration.
 
 ```typescript
-import type {
-  DualWriteContextContract,
-  CMSTypeDefinition
-} from "@libar-dev/platform-bc";
+import type { DualWriteContextContract, CMSTypeDefinition } from "@libar-dev/platform-bc";
 
 export const OrdersContextContract = {
   identity: {
@@ -254,14 +252,14 @@ export const OrdersContextContract = {
 
 ### 5.2 Contract Components
 
-| Component | Purpose | Example |
-|-----------|---------|---------|
-| `identity` | Context identification and metadata | Name, description, version, streamTypePrefix |
-| `executionMode` | Execution pattern ("dual-write") | CMS + Event in same transaction |
-| `commandTypes` | Commands the context handles | `["CreateOrder", "SubmitOrder"]` |
-| `eventTypes` | Events the context produces | `["OrderCreated", "OrderSubmitted"]` |
-| `cmsTypes` | CMS tables with schema versions | Table names and currentStateVersion |
-| `errorCodes` | Domain errors that can be returned | Business rule violations |
+| Component       | Purpose                             | Example                                      |
+| --------------- | ----------------------------------- | -------------------------------------------- |
+| `identity`      | Context identification and metadata | Name, description, version, streamTypePrefix |
+| `executionMode` | Execution pattern ("dual-write")    | CMS + Event in same transaction              |
+| `commandTypes`  | Commands the context handles        | `["CreateOrder", "SubmitOrder"]`             |
+| `eventTypes`    | Events the context produces         | `["OrderCreated", "OrderSubmitted"]`         |
+| `cmsTypes`      | CMS tables with schema versions     | Table names and currentStateVersion          |
+| `errorCodes`    | Domain errors that can be returned  | Business rule violations                     |
 
 ### 5.3 BoundedContextIdentity
 
@@ -271,7 +269,7 @@ The identity interface provides core metadata for the bounded context:
 interface BoundedContextIdentity {
   // Unique context name (lowercase, no spaces)
   // Used as identifier in logs, event routing, and integrations
-  name: string;  // e.g., "orders", "inventory"
+  name: string; // e.g., "orders", "inventory"
 
   // Human-readable description of the context's purpose
   description: string;
@@ -282,7 +280,7 @@ interface BoundedContextIdentity {
 
   // Prefix used for event stream types in the Event Store
   // All events from this context will have streams like `{prefix}:{entityId}`
-  streamTypePrefix: string;  // e.g., "Order" produces "Order:order_123"
+  streamTypePrefix: string; // e.g., "Order" produces "Order:order_123"
 }
 ```
 
@@ -357,7 +355,7 @@ import {
   defineCommand,
   defineEvent,
   defineProjection,
-  defineProcessManager
+  defineProcessManager,
 } from "@libar-dev/platform-bc";
 
 // Command definition with preserved literal types
@@ -376,7 +374,7 @@ const OrderCreatedDef = defineEvent({
   eventType: "OrderCreated",
   description: "Emitted when a new order is created",
   sourceAggregate: "Order",
-  category: "domain",  // domain | integration | trigger | fat
+  category: "domain", // domain | integration | trigger | fat
   schemaVersion: 1,
   producedBy: ["CreateOrder"],
 });
@@ -389,15 +387,15 @@ const orderSummaryProjection = defineProjection({
   partitionKeyField: "orderId",
   eventSubscriptions: ["OrderCreated", "OrderSubmitted"] as const,
   context: "orders",
-  type: "primary",     // primary | secondary | cross-context
-  category: "view",    // logic | view | reporting | integration
+  type: "primary", // primary | secondary | cross-context
+  category: "view", // logic | view | reporting | integration
 });
 
 // Process manager definition with validation
 const notificationPM = defineProcessManager({
   processManagerName: "orderNotification",
   description: "Sends notification when order is confirmed",
-  triggerType: "event",  // event | time | hybrid
+  triggerType: "event", // event | time | hybrid
   eventSubscriptions: ["OrderConfirmed"] as const,
   emitsCommands: ["SendNotification"],
   context: "orders",
@@ -435,12 +433,12 @@ if (isClientExposed(projectionCategory)) {
 
 ### 6.6 Projection Categories Reference
 
-| Category | Purpose | Query Pattern | Client Exposed |
-|----------|---------|---------------|----------------|
-| `logic` | Internal command validation | Internal only | No |
-| `view` | Denormalized for UI queries | Client queries | Yes (reactive) |
-| `reporting` | Analytics and aggregations | Async/batch | Admin only |
-| `integration` | Cross-context synchronization | EventBus | No |
+| Category      | Purpose                       | Query Pattern  | Client Exposed |
+| ------------- | ----------------------------- | -------------- | -------------- |
+| `logic`       | Internal command validation   | Internal only  | No             |
+| `view`        | Denormalized for UI queries   | Client queries | Yes (reactive) |
+| `reporting`   | Analytics and aggregations    | Async/batch    | Admin only     |
+| `integration` | Cross-context synchronization | EventBus       | No             |
 
 ---
 

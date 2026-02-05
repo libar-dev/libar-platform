@@ -17,10 +17,10 @@ This example app exists to **serve platform development** ([ADR-008](../../docs-
 
 ## Patterns Demonstrated
 
-| Pattern               | Phase | Code                                                                                       | Documentation                                                                   |
-| --------------------- | ----- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| CMS Dual-Write        | 02    | [`commands.ts`](convex/contexts/orders/handlers/commands.ts)                               | [ADR-001](../../../docs/architecture/decisions/ADR-001-dual-write-pattern.md)   |
-| Pure Deciders         | 14    | [`createOrder.ts`](convex/contexts/orders/domain/deciders/createOrder.ts)                  | [CLAUDE.md](../../../CLAUDE.md#pure-deciders-replace-aggregates)                |
+| Pattern               | Phase | Code                                                                                       | Documentation                                                                          |
+| --------------------- | ----- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| CMS Dual-Write        | 02    | [`commands.ts`](convex/contexts/orders/handlers/commands.ts)                               | [ADR-001](../../../docs/architecture/decisions/ADR-001-dual-write-pattern.md)          |
+| Pure Deciders         | 14    | [`createOrder.ts`](convex/contexts/orders/domain/deciders/createOrder.ts)                  | [CLAUDE.md](../../../CLAUDE.md#pure-deciders-replace-aggregates)                       |
 | Projection Categories | 15    | [`definitions.ts`](convex/projections/definitions.ts)                                      | [projection-categories.md](../../packages/platform-core/docs/projection-categories.md) |
 | DCB                   | 16    | [`reserveMultipleDCB.ts`](convex/contexts/inventory/domain/deciders/reserveMultipleDCB.ts) | [dcb-architecture.md](../../packages/platform-core/docs/dcb-architecture.md)           |
 | Reactive Projections  | 17    | [`orderSummary.evolve.ts`](convex/projections/evolve/orderSummary.evolve.ts)               | [reactive-projections.md](../../packages/platform-core/docs/reactive-projections.md)   |

@@ -201,14 +201,15 @@ Commands progress through well-defined states:
 
 ### 3.2 Status Definitions
 
-| Status     | Event Emitted | Meaning                                           | Example                          |
-| ---------- | ------------- | ------------------------------------------------- | -------------------------------- |
-| `pending`  | No            | Command received, execution in progress           | API received request             |
-| `executed` | Yes           | Command succeeded, business outcome recorded      | Order created successfully       |
-| `rejected` | No            | Business rule violation, no state change          | Invalid order status for action  |
-| `failed`   | Yes           | Business failure with event (e.g., compensation)  | Insufficient stock for reserve   |
+| Status     | Event Emitted | Meaning                                          | Example                         |
+| ---------- | ------------- | ------------------------------------------------ | ------------------------------- |
+| `pending`  | No            | Command received, execution in progress          | API received request            |
+| `executed` | Yes           | Command succeeded, business outcome recorded     | Order created successfully      |
+| `rejected` | No            | Business rule violation, no state change         | Invalid order status for action |
+| `failed`   | Yes           | Business failure with event (e.g., compensation) | Insufficient stock for reserve  |
 
 **Key Distinction:**
+
 - `rejected` = Validation error, NOT recorded in event store
 - `failed` = Business outcome that IS recorded (triggers compensation flows)
 
@@ -252,15 +253,15 @@ The CommandOrchestrator is the single execution path for all commands. Every com
 
 ### 4.1 Step-by-Step Flow
 
-| Step | Action               | Component        | Purpose                              |
-| ---- | -------------------- | ---------------- | ------------------------------------ |
-| 1    | Record command       | Command Bus      | Idempotency check + pending status   |
-| 2    | Middleware pipeline  | -                | Auth, validation, logging, rate limit|
-| 3    | Call handler         | Bounded Context  | CMS update via Decider               |
-| 4    | Handle rejection     | -                | Early exit if business rule violated |
-| 5    | Append event         | Event Store      | Audit trail + projection source      |
-| 6    | Trigger projection   | Workpool         | Update read models asynchronously    |
-| 7    | Update status        | Command Bus      | Final status + cached result         |
+| Step | Action              | Component       | Purpose                               |
+| ---- | ------------------- | --------------- | ------------------------------------- |
+| 1    | Record command      | Command Bus     | Idempotency check + pending status    |
+| 2    | Middleware pipeline | -               | Auth, validation, logging, rate limit |
+| 3    | Call handler        | Bounded Context | CMS update via Decider                |
+| 4    | Handle rejection    | -               | Early exit if business rule violated  |
+| 5    | Append event        | Event Store     | Audit trail + projection source       |
+| 6    | Trigger projection  | Workpool        | Update read models asynchronously     |
+| 7    | Update status       | Command Bus     | Final status + cached result          |
 
 ### 4.2 Visual Flow
 
@@ -352,14 +353,14 @@ export class CommandOrchestrator {
 
 ### 4.4 Guarantees
 
-| Guarantee              | How Enforced                                        |
-| ---------------------- | --------------------------------------------------- |
-| Idempotency            | Command Bus deduplication BEFORE any execution      |
-| Dual-write atomicity   | CMS + Event in same mutation transaction            |
-| OCC protection         | Event Store version conflict detection              |
-| Projection triggering  | Workpool enqueue for every successful command       |
-| Correlation tracking   | Chain created at step 1, flows through all steps    |
-| Error consistency      | Same rejection/failure handling across all commands |
+| Guarantee             | How Enforced                                        |
+| --------------------- | --------------------------------------------------- |
+| Idempotency           | Command Bus deduplication BEFORE any execution      |
+| Dual-write atomicity  | CMS + Event in same mutation transaction            |
+| OCC protection        | Event Store version conflict detection              |
+| Projection triggering | Workpool enqueue for every successful command       |
+| Correlation tracking  | Chain created at step 1, flows through all steps    |
+| Error consistency     | Same rejection/failure handling across all commands |
 
 ---
 
@@ -372,21 +373,21 @@ Every command creates a correlation chain that flows through the entire executio
 ```typescript
 // From @libar-dev/platform-core/src/correlation/chain.ts
 interface CorrelationChain {
-  commandId: CommandId;      // Unique command identifier
-  correlationId: CorrelationId;  // Links all related operations
-  causationId: CausationId;  // Direct cause of this operation
-  initiatedAt: number;       // Timestamp
-  userId?: string;           // Optional user context
-  context?: UnknownRecord;   // Additional trace context
+  commandId: CommandId; // Unique command identifier
+  correlationId: CorrelationId; // Links all related operations
+  causationId: CausationId; // Direct cause of this operation
+  initiatedAt: number; // Timestamp
+  userId?: string; // Optional user context
+  context?: UnknownRecord; // Additional trace context
 }
 ```
 
 ### 5.2 Correlation vs Causation
 
-| ID              | Purpose                                      | Behavior              |
-| --------------- | -------------------------------------------- | --------------------- |
-| `correlationId` | Links all operations in a request flow       | Preserved across chain|
-| `causationId`   | Identifies the direct cause of an operation  | Changes with each hop |
+| ID              | Purpose                                     | Behavior               |
+| --------------- | ------------------------------------------- | ---------------------- |
+| `correlationId` | Links all operations in a request flow      | Preserved across chain |
+| `causationId`   | Identifies the direct cause of an operation | Changes with each hop  |
 
 ```
 User Request → Command A (correlationId: corr_1, causationId: cmd_A)
@@ -405,17 +406,17 @@ The `commandEventCorrelations` table tracks which events each command produced:
 ```typescript
 // From @libar-dev/platform-bus/src/component/schema.ts
 commandEventCorrelations: defineTable({
-  commandId: v.string(),         // The command that produced the event(s)
+  commandId: v.string(), // The command that produced the event(s)
   eventIds: v.array(v.string()), // Event IDs produced
-  commandType: v.string(),       // For filtering/analytics
-  boundedContext: v.string(),    // For filtering
+  commandType: v.string(), // For filtering/analytics
+  boundedContext: v.string(), // For filtering
   createdAt: v.number(),
   ttl: v.number(),
   expiresAt: v.number(),
 })
   .index("by_commandId", ["commandId"])
   .index("by_context", ["boundedContext", "createdAt"])
-  .index("by_expiresAt", ["expiresAt"])
+  .index("by_expiresAt", ["expiresAt"]);
 ```
 
 ### 5.4 Usage for Debugging
@@ -460,14 +461,17 @@ Request → [Middleware 1] → [Middleware 2] → [Middleware N] → Handler
 ```typescript
 // From @libar-dev/platform-core/src/middleware/types.ts
 interface Middleware<TCustom = UnknownRecord> {
-  name: string;   // Unique identifier
-  order: number;  // Execution order (lower = earlier)
+  name: string; // Unique identifier
+  order: number; // Execution order (lower = earlier)
 
   // Called before handler - can short-circuit
   before?(ctx: MiddlewareContext<TCustom>): Promise<MiddlewareBeforeResult<TCustom>>;
 
   // Called after handler - can transform result
-  after?(ctx: MiddlewareContext<TCustom>, result: CommandHandlerResult): Promise<CommandHandlerResult>;
+  after?(
+    ctx: MiddlewareContext<TCustom>,
+    result: CommandHandlerResult
+  ): Promise<CommandHandlerResult>;
 }
 ```
 
@@ -550,11 +554,11 @@ commands: defineTable({
   ttl: v.number(),
   expiresAt: v.number(),
 })
-  .index("by_commandId", ["commandId"])      // Idempotency lookup
-  .index("by_correlationId", ["metadata.correlationId"])  // Tracing
-  .index("by_status", ["status", "metadata.timestamp"])   // Status queries
-  .index("by_context", ["targetContext", "metadata.timestamp"])  // Context filtering
-  .index("by_expiresAt", ["expiresAt"])      // Cleanup queries
+  .index("by_commandId", ["commandId"]) // Idempotency lookup
+  .index("by_correlationId", ["metadata.correlationId"]) // Tracing
+  .index("by_status", ["status", "metadata.timestamp"]) // Status queries
+  .index("by_context", ["targetContext", "metadata.timestamp"]) // Context filtering
+  .index("by_expiresAt", ["expiresAt"]); // Cleanup queries
 ```
 
 ### 7.2 TTL-Based Cleanup

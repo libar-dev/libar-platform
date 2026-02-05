@@ -100,14 +100,14 @@ Need compensation/rollback on failure?
 
 ### 2.3 Use Case Examples
 
-| Scenario                          | Pattern          | Why                                            |
-| --------------------------------- | ---------------- | ---------------------------------------------- |
-| Send confirmation email           | Process Manager  | No compensation needed                         |
-| Reserve inventory for order       | Saga             | Needs compensation if payment fails            |
-| Check expired reservations hourly | Process Manager  | Time-triggered, fire-and-forget                |
-| Order fulfillment (multi-step)    | Saga             | Payment -> Inventory -> Shipping coordination  |
-| Route event to external webhook   | Process Manager  | Fire-and-forget notification                   |
-| Payment processing with retry     | Saga             | Needs rollback on final failure                |
+| Scenario                          | Pattern         | Why                                           |
+| --------------------------------- | --------------- | --------------------------------------------- |
+| Send confirmation email           | Process Manager | No compensation needed                        |
+| Reserve inventory for order       | Saga            | Needs compensation if payment fails           |
+| Check expired reservations hourly | Process Manager | Time-triggered, fire-and-forget               |
+| Order fulfillment (multi-step)    | Saga            | Payment -> Inventory -> Shipping coordination |
+| Route event to external webhook   | Process Manager | Fire-and-forget notification                  |
+| Payment processing with retry     | Saga            | Needs rollback on final failure               |
 
 ---
 
@@ -117,15 +117,16 @@ Need compensation/rollback on failure?
 
 Process Managers support three trigger mechanisms:
 
-| Trigger Type | Description                        | Use Case                                      |
-| ------------ | ---------------------------------- | --------------------------------------------- |
-| `event`      | Reacts to domain/integration events| Send notification when order ships            |
-| `time`       | Runs on a schedule (cron)          | Release expired reservations every 5 minutes  |
-| `hybrid`     | Both event and time triggered      | Check fulfillment status on event OR hourly   |
+| Trigger Type | Description                         | Use Case                                     |
+| ------------ | ----------------------------------- | -------------------------------------------- |
+| `event`      | Reacts to domain/integration events | Send notification when order ships           |
+| `time`       | Runs on a schedule (cron)           | Release expired reservations every 5 minutes |
+| `hybrid`     | Both event and time triggered       | Check fulfillment status on event OR hourly  |
 
 ### 3.2 PM Instance Identity
 
 Each PM instance is identified by a combination of:
+
 - **Process Manager Name**: The PM type (e.g., `"orderNotification"`)
 - **Instance ID**: Derived from the event (e.g., `orderId`)
 
@@ -133,7 +134,9 @@ The instance ID is computed via the **correlation strategy**:
 
 ```typescript
 // Correlation by event property
-correlationStrategy: { correlationProperty: "orderId" }
+correlationStrategy: {
+  correlationProperty: "orderId";
+}
 
 // Instance ID for event: { orderId: "ord_123", ... }
 // Result: "ord_123"
@@ -166,12 +169,12 @@ PM instances progress through a simple lifecycle:
                                processing
 ```
 
-| State        | Description                                    | Valid Transitions           |
-| ------------ | ---------------------------------------------- | --------------------------- |
-| `idle`       | Waiting for trigger event                      | START -> processing         |
-| `processing` | Currently handling an event                    | SUCCESS -> completed, FAIL -> failed |
-| `completed`  | Successfully finished (terminal for one-shot) | RESET -> idle (time-triggered) |
-| `failed`     | Processing failed, requires investigation     | RETRY -> processing, RESET -> idle |
+| State        | Description                                   | Valid Transitions                    |
+| ------------ | --------------------------------------------- | ------------------------------------ |
+| `idle`       | Waiting for trigger event                     | START -> processing                  |
+| `processing` | Currently handling an event                   | SUCCESS -> completed, FAIL -> failed |
+| `completed`  | Successfully finished (terminal for one-shot) | RESET -> idle (time-triggered)       |
+| `failed`     | Processing failed, requires investigation     | RETRY -> processing, RESET -> idle   |
 
 ### 3.4 Idempotency via Global Position
 
@@ -277,16 +280,18 @@ export const orderNotificationExecutor = createProcessManagerExecutor<MutationCt
       orderId: string;
       customerEmail: string;
     };
-    return [{
-      commandType: "SendNotification",
-      payload: {
-        type: "order_confirmation",
-        orderId,
-        email: customerEmail,
+    return [
+      {
+        commandType: "SendNotification",
+        payload: {
+          type: "order_confirmation",
+          orderId,
+          email: customerEmail,
+        },
+        causationId: event.eventId,
+        correlationId: event.correlationId,
       },
-      causationId: event.eventId,
-      correlationId: event.correlationId,
-    }];
+    ];
   },
 
   // Instance ID resolution (optional, defaults to streamId)
@@ -372,14 +377,14 @@ registry.add(subscription);
 
 ### 5.2 Key Components
 
-| Component              | Purpose                                          | Location                        |
-| ---------------------- | ------------------------------------------------ | ------------------------------- |
-| `ProcessManagerDefinition` | Formal metadata for PM                       | `@libar-dev/platform-bc`        |
-| `ProcessManagerExecutor`   | Runtime execution with lifecycle management  | `processManager/executor.ts`    |
-| `ProcessManagerRegistry`   | Centralized PM lookup by event type          | `processManager/registry.ts`    |
-| `withPMCheckpoint`         | Idempotency wrapper for PM handlers          | `processManager/withPMCheckpoint.ts` |
-| `createPMSubscription`     | EventBus subscription from PM definition     | `processManager/subscription.ts`|
-| Lifecycle FSM              | State transition validation                  | `processManager/lifecycle.ts`   |
+| Component                  | Purpose                                     | Location                             |
+| -------------------------- | ------------------------------------------- | ------------------------------------ |
+| `ProcessManagerDefinition` | Formal metadata for PM                      | `@libar-dev/platform-bc`             |
+| `ProcessManagerExecutor`   | Runtime execution with lifecycle management | `processManager/executor.ts`         |
+| `ProcessManagerRegistry`   | Centralized PM lookup by event type         | `processManager/registry.ts`         |
+| `withPMCheckpoint`         | Idempotency wrapper for PM handlers         | `processManager/withPMCheckpoint.ts` |
+| `createPMSubscription`     | EventBus subscription from PM definition    | `processManager/subscription.ts`     |
+| Lifecycle FSM              | State transition validation                 | `processManager/lifecycle.ts`        |
 
 ### 5.3 Processing Flow
 
@@ -401,22 +406,24 @@ Failed PM processing is captured in a dead letter queue for investigation:
 
 ```typescript
 interface ProcessManagerDeadLetter {
-  processManagerName: string;  // PM that failed
-  instanceId: string;          // Instance that failed
-  eventId?: string;            // Triggering event
-  error: string;               // Error message
-  attemptCount: number;        // Number of attempts
+  processManagerName: string; // PM that failed
+  instanceId: string; // Instance that failed
+  eventId?: string; // Triggering event
+  error: string; // Error message
+  attemptCount: number; // Number of attempts
   status: "pending" | "replayed" | "ignored";
-  failedCommand?: {            // Command that failed to emit
+  failedCommand?: {
+    // Command that failed to emit
     commandType: string;
     payload: Record<string, unknown>;
   };
-  context?: Record<string, unknown>;  // Additional debug context
-  failedAt: number;            // Timestamp
+  context?: Record<string, unknown>; // Additional debug context
+  failedAt: number; // Timestamp
 }
 ```
 
 Dead letters can be:
+
 - **Replayed**: Fix the issue and retry processing
 - **Ignored**: Mark as obsolete (e.g., event no longer relevant)
 
@@ -442,6 +449,7 @@ const reservationExpirationPM = defineProcessManager({
 ```
 
 Time-triggered PMs:
+
 - Use `RESET` transition to return from `completed` to `idle`
 - Don't require event subscriptions
 - Are registered via `getTimeTriggeredPMs()` in the registry
@@ -491,16 +499,16 @@ const results = await multiExecutor.processAll(ctx, event);
 
 ### Summary Decision Matrix
 
-| Requirement                    | Use PM | Use Saga |
-| ------------------------------ | ------ | -------- |
-| Event -> single command        | Yes    | -        |
-| Event -> multiple commands     | Yes    | -        |
-| Multi-step with compensation   | -      | Yes      |
-| Wait for external event        | -      | Yes      |
-| Time-triggered processing      | Yes    | -        |
-| Hybrid (event + time)          | Yes    | -        |
-| Fire-and-forget notification   | Yes    | -        |
-| Payment with rollback          | -      | Yes      |
+| Requirement                  | Use PM | Use Saga |
+| ---------------------------- | ------ | -------- |
+| Event -> single command      | Yes    | -        |
+| Event -> multiple commands   | Yes    | -        |
+| Multi-step with compensation | -      | Yes      |
+| Wait for external event      | -      | Yes      |
+| Time-triggered processing    | Yes    | -        |
+| Hybrid (event + time)        | Yes    | -        |
+| Fire-and-forget notification | Yes    | -        |
+| Payment with rollback        | -      | Yes      |
 
 ---
 
