@@ -1,5 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import type { Product } from "./use-products";
@@ -16,17 +15,17 @@ const getProductQuery = makeFunctionReference<"query">("inventory:getProduct") a
 /**
  * Hook to fetch a single product by ID.
  *
- * Uses TanStack Query + Convex for SSR support with real-time updates.
- * Data is prefetched on the server, then hydrated with live subscriptions.
+ * Uses Convex's native useQuery with "skip" pattern for conditional fetching.
  *
- * @param productId - The product ID to fetch
- * @returns Object containing the product (or null)
+ * @param productId - The product ID to fetch (undefined to skip the query)
+ * @returns Object containing the product (or null) and loading state
  *
  * @example
  * ```tsx
  * function ProductDetail({ productId }: { productId: string }) {
- *   const { product } = useProduct(productId);
+ *   const { product, isLoading } = useProduct(productId);
  *
+ *   if (isLoading) return <Skeleton />;
  *   if (!product) return <NotFound />;
  *
  *   return (
@@ -39,14 +38,15 @@ const getProductQuery = makeFunctionReference<"query">("inventory:getProduct") a
  * }
  * ```
  */
-export function useProduct(productId: string): {
+export function useProduct(productId: string | undefined): {
   product: Product | null;
-  isLoading: false; // With Suspense, data is always loaded
+  isLoading: boolean;
 } {
-  const { data } = useSuspenseQuery(convexQuery(getProductQuery, { productId }));
+  // Use Convex "skip" pattern when productId is undefined to avoid calling query with empty args
+  const data = useQuery(getProductQuery, productId ? { productId } : "skip");
 
   return {
     product: (data ?? null) as Product | null,
-    isLoading: false, // Suspense handles loading state
+    isLoading: data === undefined,
   };
 }

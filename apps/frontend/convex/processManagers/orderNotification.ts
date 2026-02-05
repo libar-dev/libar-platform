@@ -1,3 +1,6 @@
+// SYNC NOTE: This file must stay in sync with:
+// examples/order-management/convex/processManagers/orderNotification.ts
+
 /**
  * Order Notification Process Manager
  *

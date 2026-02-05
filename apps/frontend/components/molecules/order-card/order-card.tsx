@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { useMounted } from "@/hooks";
 import type { OrderStatus } from "@/types";
 
 /**
@@ -67,6 +68,7 @@ function truncateOrderId(orderId: string): string {
  * ```
  */
 export function OrderCard({ order, onClick }: OrderCardProps) {
+  const mounted = useMounted();
   const config = statusConfig[order.status];
 
   const handleClick = () => {
@@ -119,7 +121,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
             </span>
           </div>
           <span className="text-xs text-muted-foreground" data-testid="order-time">
-            {formatRelativeTime(order.createdAt)}
+            {mounted ? formatRelativeTime(order.createdAt) : "\u00A0"}
           </span>
         </div>
       </CardContent>

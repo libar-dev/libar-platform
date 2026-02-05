@@ -9,6 +9,7 @@
 
 import { internalMutation } from "../../../_generated/server.js";
 import { v } from "convex/values";
+import { vOnCompleteValidator } from "@convex-dev/workpool";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
 import { createAgentDeadLetter } from "@libar-dev/platform-core/agent";
 import { CHURN_RISK_AGENT_ID } from "../_config.js";
@@ -35,89 +36,78 @@ import { CHURN_RISK_AGENT_ID } from "../_config.js";
  * ```
  */
 export const handleChurnRiskOnComplete = internalMutation({
-  args: {
-    workId: v.string(),
-    status: v.union(v.literal("success"), v.literal("error")),
-    result: v.optional(v.any()),
-    error: v.optional(v.string()),
-    retryCount: v.number(),
-    args: v.any(),
-  },
-  handler: async (ctx, args) => {
+  args: vOnCompleteValidator(
+    v.object({
+      subscriptionName: v.optional(v.string()),
+      eventId: v.string(),
+      eventType: v.optional(v.string()),
+      partition: v.optional(v.object({ name: v.string(), value: v.string() })),
+      correlationId: v.optional(v.string()),
+      causationId: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx, { workId, context, result }) => {
     const logger = createPlatformNoOpLogger();
-    const { workId, status, error, retryCount, args: jobArgs } = args;
+    const agentId = CHURN_RISK_AGENT_ID;
+    const { eventId, correlationId } = context;
 
-    // Extract event info from job args
-    const eventId = jobArgs?.eventId as string | undefined;
-    const globalPosition = jobArgs?.globalPosition as number | undefined;
-    const agentId = (jobArgs?.agentId as string | undefined) ?? CHURN_RISK_AGENT_ID;
-
-    if (status === "success") {
-      // Job completed successfully
+    if (result.kind === "success") {
       logger.debug("Agent job completed successfully", {
-        workId,
         agentId,
         eventId,
       });
-
-      // Update metrics (optional)
-      // await ctx.db.patch(metricsId, {
-      //   successCount: metrics.successCount + 1,
-      //   lastSuccessAt: Date.now(),
-      // });
-
       return;
     }
 
-    // Job failed - create dead letter entry
+    if (result.kind === "canceled") {
+      logger.debug("Agent job canceled", {
+        agentId,
+        eventId,
+      });
+      return;
+    }
+
+    // result.kind === "failed" - create dead letter entry
+    const error = result.error;
+
     logger.warn("Agent job failed", {
-      workId,
       agentId,
       eventId,
       error,
-      retryCount,
     });
 
     // Create dead letter for investigation/retry
-    if (eventId && globalPosition !== undefined) {
-      const deadLetter = createAgentDeadLetter(
-        agentId,
-        `sub_${agentId}`, // subscriptionId
-        eventId,
-        globalPosition,
-        error ?? "Unknown error"
-      );
+    // globalPosition not available in EventBus subscription context — use 0 as placeholder
+    // (eventId is sufficient for event lookup during replay)
+    const deadLetter = createAgentDeadLetter(agentId, `sub_${agentId}`, eventId, 0, error);
 
-      // Store in dead letter queue - PRODUCTION IMPLEMENTATION
-      const correlationId = jobArgs?.correlationId as string | undefined;
-      const contextObj: {
-        correlationId?: string;
-        errorCode?: string;
-        ignoreReason?: string;
-      } = {};
-      if (correlationId) {
-        contextObj.correlationId = correlationId;
-      }
-
-      await ctx.db.insert("agentDeadLetters", {
-        agentId: deadLetter.agentId,
-        subscriptionId: deadLetter.subscriptionId,
-        eventId: deadLetter.eventId,
-        globalPosition: deadLetter.globalPosition,
-        error: deadLetter.error,
-        attemptCount: retryCount + 1,
-        status: "pending" as const,
-        failedAt: Date.now(),
-        workId,
-        context: contextObj,
-      });
-
-      logger.info("Created dead letter entry", {
-        agentId: deadLetter.agentId,
-        eventId: deadLetter.eventId,
-        error: deadLetter.error,
-      });
+    const contextObj: {
+      correlationId?: string;
+      errorCode?: string;
+      ignoreReason?: string;
+    } = {};
+    if (correlationId) {
+      contextObj.correlationId = correlationId;
     }
+
+    await ctx.db.insert("agentDeadLetters", {
+      agentId: deadLetter.agentId,
+      subscriptionId: deadLetter.subscriptionId,
+      eventId: deadLetter.eventId,
+      globalPosition: deadLetter.globalPosition,
+      error: deadLetter.error,
+      attemptCount: 1,
+      status: "pending" as const,
+      failedAt: Date.now(),
+      workId,
+      context: contextObj,
+    });
+
+    logger.info("Created dead letter entry", {
+      agentId: deadLetter.agentId,
+      eventId: deadLetter.eventId,
+      error: deadLetter.error,
+    });
   },
 });
 

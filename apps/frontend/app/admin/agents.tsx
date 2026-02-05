@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatRelativeTime } from "@/lib/formatters";
+import { useMounted } from "@/hooks";
 
 // Query references for SSR preloading
 const getPendingApprovalsQuery = makeFunctionReference<"query">(
@@ -65,6 +66,7 @@ function AgentsErrorFallback({ error, reset }: { error: Error; reset?: () => voi
  * - Monitoring tab: View active agent checkpoints and health
  */
 function AdminAgentsPage() {
+  const mounted = useMounted();
   const navigate = useNavigate();
   const { approvals: pendingApprovals } = usePendingApprovals({ status: "pending" });
   const { agents } = useActiveAgents();
@@ -199,7 +201,7 @@ function AdminAgentsPage() {
                           <div className="col-span-2">
                             <span className="text-muted-foreground">Last Updated</span>
                             <p className="font-medium" data-testid="last-updated">
-                              {formatRelativeTime(agent.updatedAt)}
+                              {mounted ? formatRelativeTime(agent.updatedAt) : "\u00A0"}
                             </p>
                           </div>
                         </div>

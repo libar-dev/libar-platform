@@ -161,8 +161,8 @@ function evolveOrderSummary(
   const payload = event.payload;
   // Derive timestamp from event for deterministic results across client/server
   // The event store includes _creationTime on all events, accessible via payload._creationTime
-  // Falls back to Date.now() for backwards compatibility with events missing timestamps
-  const now = (payload._creationTime as number) ?? (payload.timestamp as number) ?? Date.now();
+  // Falls back to 0 for events missing timestamps (deterministic, makes missing data visible)
+  const now = (payload._creationTime as number) ?? (payload.timestamp as number) ?? 0;
 
   switch (event.eventType) {
     case "OrderCreated": {

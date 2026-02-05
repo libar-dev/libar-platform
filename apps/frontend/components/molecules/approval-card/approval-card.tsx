@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { useMounted } from "@/hooks";
 import {
   statusConfig,
   getConfidenceVariant,
@@ -63,6 +64,7 @@ export interface ApprovalCardProps {
  * ```
  */
 export function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
+  const mounted = useMounted();
   const config = statusConfig[approval.status];
 
   const handleClick = () => {
@@ -131,11 +133,11 @@ export function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
           <div className="flex items-center gap-2">
             {isPending && (
               <span className="text-xs text-amber-600" data-testid="expiration">
-                {formatExpirationTime(approval.expiresAt, true)}
+                {mounted ? formatExpirationTime(approval.expiresAt, true) : "\u00A0"}
               </span>
             )}
             <span className="text-xs text-muted-foreground" data-testid="created-time">
-              {formatRelativeTime(approval.createdAt)}
+              {mounted ? formatRelativeTime(approval.createdAt) : "\u00A0"}
             </span>
           </div>
         </div>
