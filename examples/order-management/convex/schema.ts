@@ -692,7 +692,9 @@ export default defineSchema({
       v.literal("AgentActionRejected"),
       v.literal("AgentActionExpired"),
       v.literal("AgentAnalysisCompleted"),
-      v.literal("AgentAnalysisFailed")
+      v.literal("AgentAnalysisFailed"),
+      v.literal("CommandEmitted"),
+      v.literal("CommandProcessed")
     ),
 
     /** Agent BC identifier */
@@ -710,4 +712,60 @@ export default defineSchema({
     .index("by_agentId_timestamp", ["agentId", "timestamp"])
     .index("by_decisionId", ["decisionId"])
     .index("by_eventType", ["eventType", "timestamp"]),
+
+  /**
+   * Agent Commands - persists commands emitted by agents.
+   * Tracks command lifecycle from emission through processing.
+   *
+   * @since Phase 22 (AgentAsBoundedContext)
+   */
+  agentCommands: defineTable({
+    /** Agent BC identifier */
+    agentId: v.string(),
+
+    /** Command type (e.g., "SuggestCustomerOutreach") */
+    type: v.string(),
+
+    /** Command payload data */
+    payload: v.any(),
+
+    /** Command processing status */
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+
+    /** Confidence score (0-1) */
+    confidence: v.number(),
+
+    /** Human-readable explanation */
+    reason: v.string(),
+
+    /** Event IDs that triggered this command */
+    triggeringEventIds: v.array(v.string()),
+
+    /** Unique decision ID for correlation */
+    decisionId: v.string(),
+
+    /** Optional pattern ID that detected this */
+    patternId: v.optional(v.string()),
+
+    /** Optional correlation ID for tracing */
+    correlationId: v.optional(v.string()),
+
+    /** When the command was created */
+    createdAt: v.number(),
+
+    /** When the command was processed (if processed) */
+    processedAt: v.optional(v.number()),
+
+    /** Error message if command failed */
+    error: v.optional(v.string()),
+  })
+    .index("by_agentId_status", ["agentId", "status"])
+    .index("by_agentId_createdAt", ["agentId", "createdAt"])
+    .index("by_status", ["status", "createdAt"])
+    .index("by_decisionId", ["decisionId"]),
 });

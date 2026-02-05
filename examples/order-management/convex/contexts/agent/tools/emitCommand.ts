@@ -103,6 +103,7 @@ export const emitAgentCommand = internalMutation({
   handler: async (ctx, args): Promise<{ commandId: string; command: EmittedAgentCommand }> => {
     const logger = createPlatformNoOpLogger();
     const agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
+    const now = Date.now();
 
     // Create the emitted command with full explainability
     const command = createEmittedAgentCommand(
@@ -122,31 +123,58 @@ export const emitAgentCommand = internalMutation({
       confidence: command.metadata.confidence,
     });
 
-    // Store the command for processing
-    // In a real implementation:
-    // const commandId = await ctx.db.insert("agentCommands", {
-    //   ...command,
-    //   status: "pending",
-    //   createdAt: Date.now(),
-    // });
+    // Generate command ID for external reference
+    const commandId = `cmd_${now}_${Math.random().toString(36).substring(2, 8)}`;
 
-    // For demo, generate a command ID
-    const commandId = `cmd_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    // Store the command in the database
+    // Note: Only include optional fields if they have values
+    const commandRecord: {
+      agentId: string;
+      type: string;
+      payload: unknown;
+      status: "pending";
+      confidence: number;
+      reason: string;
+      triggeringEventIds: string[];
+      decisionId: string;
+      patternId?: string;
+      correlationId?: string;
+      createdAt: number;
+    } = {
+      agentId,
+      type: command.type,
+      payload: command.payload,
+      status: "pending",
+      confidence: command.metadata.confidence,
+      reason: command.metadata.reason,
+      triggeringEventIds: [...command.metadata.eventIds],
+      decisionId: command.metadata.decisionId,
+      createdAt: now,
+    };
+
+    // Only add optional fields if they have values
+    if (command.metadata.patternId) {
+      commandRecord.patternId = command.metadata.patternId;
+    }
+    if (args.correlationId) {
+      commandRecord.correlationId = args.correlationId;
+    }
+
+    await ctx.db.insert("agentCommands", commandRecord);
 
     // Record in audit trail
-    // await ctx.db.insert("agentAuditEvents", {
-    //   eventType: "AgentDecisionMade",
-    //   agentId,
-    //   decisionId: command.metadata.decisionId,
-    //   timestamp: Date.now(),
-    //   payload: {
-    //     patternDetected: args.patternId ?? "churn-risk",
-    //     confidence: args.confidence,
-    //     reasoning: args.reason,
-    //     action: { type: args.commandType, executionMode: "auto-execute" },
-    //     triggeringEvents: args.triggeringEventIds,
-    //   },
-    // });
+    await ctx.db.insert("agentAuditEvents", {
+      eventType: "CommandEmitted",
+      agentId,
+      decisionId: command.metadata.decisionId,
+      timestamp: now,
+      payload: {
+        commandId,
+        commandType: command.type,
+        confidence: command.metadata.confidence,
+        reason: command.metadata.reason,
+      },
+    });
 
     return { commandId, command };
   },
@@ -172,20 +200,18 @@ export const getPendingCommands = internalQuery({
     agentId: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
-  handler: async (_ctx, args) => {
-    const _agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
-    const _limit = args.limit ?? 10;
+  handler: async (ctx, args) => {
+    const agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
+    const limit = args.limit ?? 10;
 
-    // In a real implementation:
-    // const commands = await _ctx.db
-    //   .query("agentCommands")
-    //   .withIndex("by_agentId_status", (q) =>
-    //     q.eq("agentId", _agentId).eq("status", "pending")
-    //   )
-    //   .take(_limit);
+    const commands = await ctx.db
+      .query("agentCommands")
+      .withIndex("by_agentId_status", (q) =>
+        q.eq("agentId", agentId).eq("status", "pending")
+      )
+      .take(limit);
 
-    // Demo: return empty array
-    return [];
+    return commands;
   },
 });
 
@@ -206,36 +232,39 @@ export const getCommandHistory = internalQuery({
     days: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
-  handler: async (_ctx, args) => {
-    const _agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
-    const _days = args.days ?? 7;
-    const _limit = args.limit ?? 100;
+  handler: async (ctx, args) => {
+    const agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
+    const days = args.days ?? 7;
+    const limit = args.limit ?? 100;
 
-    const _cutoffTime = Date.now() - _days * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000;
 
-    // In a real implementation:
-    // const commands = await _ctx.db
-    //   .query("agentCommands")
-    //   .withIndex("by_agentId_createdAt", (q) =>
-    //     q.eq("agentId", _agentId).gte("createdAt", _cutoffTime)
-    //   )
-    //   .order("desc")
-    //   .take(_limit);
+    const commands = await ctx.db
+      .query("agentCommands")
+      .withIndex("by_agentId_createdAt", (q) =>
+        q.eq("agentId", agentId).gte("createdAt", cutoffTime)
+      )
+      .order("desc")
+      .take(limit);
 
-    // Demo: return empty array
-    return [];
+    return commands;
   },
 });
 
 // ============================================================================
-// Command Processing (Mock)
+// Command Processing
 // ============================================================================
 
 /**
  * Process a pending command.
  *
- * In a production system, this would be handled by the Command Bus.
- * For demo purposes, this mutation simulates command execution.
+ * Looks up command by decisionId, updates status through lifecycle,
+ * and records audit events.
+ *
+ * In a production system, real handlers would route to external systems:
+ * - SuggestCustomerOutreach: Send notification to CRM
+ * - LogChurnRisk: Record risk score in analytics
+ * - FlagCustomerForReview: Create support ticket
  */
 export const processCommand = internalMutation({
   args: {
@@ -243,36 +272,76 @@ export const processCommand = internalMutation({
   },
   handler: async (ctx, { commandId }) => {
     const logger = createPlatformNoOpLogger();
+    const now = Date.now();
 
     logger.info("Processing agent command", { commandId });
 
-    // In a real implementation:
-    // 1. Load the command
-    // 2. Route to appropriate handler based on command type
-    // 3. Execute the command
-    // 4. Update status to "completed" or "failed"
-    // 5. Record in audit trail
+    // Load the command by decisionId (commandId contains the decision ID pattern)
+    // Commands are keyed by decisionId for correlation
+    let command = await ctx.db
+      .query("agentCommands")
+      .withIndex("by_decisionId", (q) => q.eq("decisionId", commandId))
+      .first();
 
-    // const command = await ctx.db.get(commandId);
-    // if (!command) throw new Error("Command not found");
-    //
-    // switch (command.type) {
-    //   case "SuggestCustomerOutreach":
-    //     await handleSuggestOutreach(ctx, command.payload);
-    //     break;
-    //   case "LogChurnRisk":
-    //     await handleLogChurnRisk(ctx, command.payload);
-    //     break;
-    //   case "FlagCustomerForReview":
-    //     await handleFlagForReview(ctx, command.payload);
-    //     break;
-    // }
-    //
-    // await ctx.db.patch(commandId, {
-    //   status: "completed",
-    //   completedAt: Date.now(),
-    // });
+    if (!command) {
+      // If not found by decisionId, try filtering by the commandId pattern
+      // This supports both lookup methods
+      const allPending = await ctx.db
+        .query("agentCommands")
+        .withIndex("by_status", (q) => q.eq("status", "pending"))
+        .take(100);
 
-    return { success: true, commandId };
+      const matchingCommand = allPending.find(
+        (c) => c.decisionId === commandId || c.decisionId.includes(commandId.split("_")[1] ?? "")
+      );
+
+      if (!matchingCommand) {
+        throw new Error(`Command not found: ${commandId}`);
+      }
+
+      command = matchingCommand;
+    }
+
+    // Update status to processing
+    await ctx.db.patch(command._id, { status: "processing" as const });
+
+    try {
+      // Route to appropriate handler based on command type
+      // For now, just log and mark as completed
+      logger.info("Command processed", {
+        commandType: command.type,
+        decisionId: command.decisionId,
+      });
+
+      // Update status to completed
+      await ctx.db.patch(command._id, {
+        status: "completed" as const,
+        processedAt: now,
+      });
+
+      // Record audit event
+      await ctx.db.insert("agentAuditEvents", {
+        eventType: "CommandProcessed",
+        agentId: command.agentId,
+        decisionId: command.decisionId,
+        timestamp: now,
+        payload: {
+          commandId,
+          commandType: command.type,
+          outcome: "completed",
+        },
+      });
+
+      return { success: true, commandId };
+    } catch (error) {
+      // Update status to failed
+      await ctx.db.patch(command._id, {
+        status: "failed" as const,
+        error: error instanceof Error ? error.message : String(error),
+        processedAt: now,
+      });
+
+      throw error;
+    }
   },
 });

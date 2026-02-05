@@ -20,10 +20,32 @@
  */
 
 import { internalMutation } from "../../../_generated/server.js";
+import type { MutationCtx } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
 import type { Id } from "../../../_generated/dataModel.js";
+
+/**
+ * Event record type from the event store.
+ * Matches the structure returned by eventStore.lib.readStream.
+ */
+interface StoredEventRecord {
+  eventId: string;
+  eventType: string;
+  streamId: string;
+  streamType: string;
+  boundedContext: string;
+  version: number;
+  globalPosition: number;
+  timestamp: number;
+  payload: unknown;
+  metadata?: unknown;
+  correlationId: string;
+  causationId?: string;
+  schemaVersion: number;
+  category: "domain" | "integration" | "trigger" | "fat";
+}
 import {
   createMockAgentRuntime,
   createAgentEventHandler,
@@ -276,7 +298,7 @@ export const handleChurnRiskEvent = internalMutation({
  * 3. Load OrderCancelled events from those orders
  */
 async function loadEventHistory(
-  ctx: { db: any; runQuery: any },
+  ctx: Pick<MutationCtx, "db" | "runQuery">,
   currentEvent: PublishedEvent,
   _streamId: string
 ): Promise<PublishedEvent[]> {
@@ -299,8 +321,8 @@ async function loadEventHistory(
   // Query orders by customer from orderSummaries projection
   const customerOrders = await ctx.db
     .query("orderSummaries")
-    .withIndex("by_customerId", (q: any) => q.eq("customerId", customerId))
-    .filter((q: any) => q.gte(q.field("createdAt"), cutoffTime))
+    .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
+    .filter((q) => q.gte(q.field("createdAt"), cutoffTime))
     .take(config.patternWindow.eventLimit ?? 100);
 
   // For each order, load events from the event store
@@ -317,13 +339,13 @@ async function loadEventHistory(
       );
 
       // Filter to only cancellation events within window
-      const cancellations = orderEvents
+      const cancellations = (orderEvents as StoredEventRecord[])
         .filter(
-          (e: any) =>
+          (e) =>
             e.eventType === "OrderCancelled" && e.timestamp >= cutoffTime
         )
         .map(
-          (e: any): PublishedEvent => ({
+          (e): PublishedEvent => ({
             eventId: e.eventId,
             eventType: e.eventType,
             globalPosition: e.globalPosition,

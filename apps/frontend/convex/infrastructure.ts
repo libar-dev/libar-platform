@@ -308,9 +308,16 @@ export const durableAppendPool: WorkpoolClient = isConvexTestMode
  * - 3 retry attempts with exponential backoff when enabled
  * - INFO logging for observability
  *
+ * Note: Type assertion needed because apps/frontend generated types are
+ * out of sync with installed @convex-dev/workflow v0.3.4. The generated
+ * api.d.ts is missing `list` and `listByName` methods that were added
+ * in newer versions. Run `npx convex dev` when deployment is available
+ * to regenerate types and remove this workaround.
+ *
  * @see workpoolParallelism for conditional parallelism explanation
  */
-export const workflowManager = new WorkflowManager(components.workflow, {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const workflowManager = new WorkflowManager(components.workflow as any, {
   workpoolOptions: {
     maxParallelism: workpoolParallelism,
     retryActionsByDefault: false,
