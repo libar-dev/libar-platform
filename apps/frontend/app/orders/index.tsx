@@ -7,7 +7,7 @@ import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
 import { OrderList } from "@/components/organisms/order-list";
 import { Button } from "@/components/ui/button";
-import { useOrders } from "@/hooks";
+import { useOrders, useMounted } from "@/hooks";
 import type { OrderSummary } from "@/hooks/use-orders";
 
 // Query reference for SSR preloading (matching hooks/use-orders.ts)
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/orders/")({
  * Uses the orderSummaries projection for efficient reads.
  */
 function OrdersPage() {
+  const mounted = useMounted();
   const { orders, isLoading } = useOrders();
   const navigate = useNavigate();
 
@@ -46,10 +47,10 @@ function OrdersPage() {
           </Link>
         </div>
 
-        {/* Order List */}
+        {/* Order List - treat SSR as loading to avoid hydration mismatch */}
         <OrderList
           orders={orders}
-          isLoading={isLoading}
+          isLoading={!mounted || isLoading}
           onOrderClick={(orderId) => navigate({ to: `/orders/${orderId}` })}
         />
       </div>
