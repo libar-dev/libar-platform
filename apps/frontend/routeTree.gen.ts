@@ -16,6 +16,8 @@ import { Route as OrdersIndexRouteImport } from './app/orders/index'
 import { Route as OrdersNewRouteImport } from './app/orders/new'
 import { Route as OrdersOrderIdRouteImport } from './app/orders/$orderId'
 import { Route as AdminProductsRouteImport } from './app/admin/products'
+import { Route as AdminAgentsRouteImport } from './app/admin/agents'
+import { Route as AdminAgentsApprovalsApprovalIdRouteImport } from './app/admin/agents/approvals/$approvalId'
 
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
@@ -52,33 +54,50 @@ const AdminProductsRoute = AdminProductsRouteImport.update({
   path: '/admin/products',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAgentsRoute = AdminAgentsRouteImport.update({
+  id: '/admin/agents',
+  path: '/admin/agents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAgentsApprovalsApprovalIdRoute =
+  AdminAgentsApprovalsApprovalIdRouteImport.update({
+    id: '/approvals/$approvalId',
+    path: '/approvals/$approvalId',
+    getParentRoute: () => AdminAgentsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRoute
+  '/admin/agents': typeof AdminAgentsRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/orders/new': typeof OrdersNewRoute
   '/orders/': typeof OrdersIndexRoute
+  '/admin/agents/approvals/$approvalId': typeof AdminAgentsApprovalsApprovalIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/products': typeof ProductsRoute
+  '/admin/agents': typeof AdminAgentsRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/orders/new': typeof OrdersNewRoute
   '/orders': typeof OrdersIndexRoute
+  '/admin/agents/approvals/$approvalId': typeof AdminAgentsApprovalsApprovalIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/orders': typeof OrdersRouteWithChildren
   '/products': typeof ProductsRoute
+  '/admin/agents': typeof AdminAgentsRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/orders/new': typeof OrdersNewRoute
   '/orders/': typeof OrdersIndexRoute
+  '/admin/agents/approvals/$approvalId': typeof AdminAgentsApprovalsApprovalIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -86,33 +105,40 @@ export interface FileRouteTypes {
     | '/'
     | '/orders'
     | '/products'
+    | '/admin/agents'
     | '/admin/products'
     | '/orders/$orderId'
     | '/orders/new'
     | '/orders/'
+    | '/admin/agents/approvals/$approvalId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/products'
+    | '/admin/agents'
     | '/admin/products'
     | '/orders/$orderId'
     | '/orders/new'
     | '/orders'
+    | '/admin/agents/approvals/$approvalId'
   id:
     | '__root__'
     | '/'
     | '/orders'
     | '/products'
+    | '/admin/agents'
     | '/admin/products'
     | '/orders/$orderId'
     | '/orders/new'
     | '/orders/'
+    | '/admin/agents/approvals/$approvalId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   ProductsRoute: typeof ProductsRoute
+  AdminAgentsRoute: typeof AdminAgentsRouteWithChildren
   AdminProductsRoute: typeof AdminProductsRoute
 }
 
@@ -167,6 +193,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/agents': {
+      id: '/admin/agents'
+      path: '/admin/agents'
+      fullPath: '/admin/agents'
+      preLoaderRoute: typeof AdminAgentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/agents/approvals/$approvalId': {
+      id: '/admin/agents/approvals/$approvalId'
+      path: '/approvals/$approvalId'
+      fullPath: '/admin/agents/approvals/$approvalId'
+      preLoaderRoute: typeof AdminAgentsApprovalsApprovalIdRouteImport
+      parentRoute: typeof AdminAgentsRoute
+    }
   }
 }
 
@@ -185,10 +225,23 @@ const OrdersRouteChildren: OrdersRouteChildren = {
 const OrdersRouteWithChildren =
   OrdersRoute._addFileChildren(OrdersRouteChildren)
 
+interface AdminAgentsRouteChildren {
+  AdminAgentsApprovalsApprovalIdRoute: typeof AdminAgentsApprovalsApprovalIdRoute
+}
+
+const AdminAgentsRouteChildren: AdminAgentsRouteChildren = {
+  AdminAgentsApprovalsApprovalIdRoute: AdminAgentsApprovalsApprovalIdRoute,
+}
+
+const AdminAgentsRouteWithChildren = AdminAgentsRoute._addFileChildren(
+  AdminAgentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OrdersRoute: OrdersRouteWithChildren,
   ProductsRoute: ProductsRoute,
+  AdminAgentsRoute: AdminAgentsRouteWithChildren,
   AdminProductsRoute: AdminProductsRoute,
 }
 export const routeTree = rootRouteImport

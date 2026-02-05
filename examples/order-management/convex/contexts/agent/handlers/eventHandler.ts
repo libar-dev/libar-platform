@@ -25,13 +25,13 @@ import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import type { Id } from "../../../_generated/dataModel.js";
 import {
-  createMockAgentRuntime,
   createAgentEventHandler,
   createInitialAgentCheckpoint,
   parseDuration,
   type AgentEventHandlerResult,
   type AgentCheckpoint,
 } from "@libar-dev/platform-core/agent";
+import { createOpenRouterAgentRuntime } from "../_llm/index.js";
 import {
   createPlatformNoOpLogger,
   type PublishedEvent,
@@ -155,9 +155,14 @@ export const handleChurnRiskEvent = internalMutation({
     }
 
     // 4. Create handler and process
+    // Uses OpenRouter runtime when OPENROUTER_API_KEY is set, otherwise falls back to mock
+    // Note: In Convex, process.env is available but not typed. We use a type assertion.
+    // The API key should be set via: npx convex env set OPENROUTER_API_KEY "sk-or-v1-..."
+    const globalProcess = globalThis as { process?: { env?: Record<string, string> } };
+    const apiKey = globalProcess.process?.env?.["OPENROUTER_API_KEY"];
     const handler = createAgentEventHandler({
       config: churnRiskAgentConfig,
-      runtime: createMockAgentRuntime(), // Use real runtime when LLM integration is needed
+      runtime: createOpenRouterAgentRuntime(apiKey),
       logger,
 
       // Load event history from the event store
@@ -264,6 +269,47 @@ export const handleChurnRiskEvent = internalMutation({
         eventId: result.deadLetter.eventId,
         error: result.deadLetter.error,
       });
+
+      // Build dead letter record for persistence
+      // For exactOptionalPropertyTypes compatibility, only include context if it has values
+      const deadLetterRecord: {
+        agentId: string;
+        subscriptionId: string;
+        eventId: string;
+        globalPosition: number;
+        error: string;
+        attemptCount: number;
+        status: "pending" | "replayed" | "ignored";
+        failedAt: number;
+        context?: { correlationId?: string; errorCode?: string; ignoreReason?: string };
+      } = {
+        agentId: result.deadLetter.agentId,
+        subscriptionId: result.deadLetter.subscriptionId,
+        eventId: result.deadLetter.eventId,
+        globalPosition: result.deadLetter.globalPosition,
+        error: result.deadLetter.error,
+        attemptCount: result.deadLetter.attemptCount,
+        status: result.deadLetter.status,
+        failedAt: result.deadLetter.failedAt,
+      };
+
+      // Add context only if it exists and has at least one field
+      if (result.deadLetter.context) {
+        const ctx: { correlationId?: string; errorCode?: string } = {};
+        if (result.deadLetter.context.correlationId !== undefined) {
+          ctx.correlationId = result.deadLetter.context.correlationId;
+        }
+        if (result.deadLetter.context.errorCode !== undefined) {
+          ctx.errorCode = result.deadLetter.context.errorCode;
+        }
+        // Only add context if it has at least one defined property
+        if (Object.keys(ctx).length > 0) {
+          deadLetterRecord.context = ctx;
+        }
+      }
+
+      // Persist dead letter for replay/investigation
+      await ctx.db.insert("agentDeadLetters", deadLetterRecord);
     }
 
     return result;

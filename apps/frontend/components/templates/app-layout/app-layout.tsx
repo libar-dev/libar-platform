@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * Navigation type for the app
  */
-export type NavItem = "dashboard" | "products" | "orders" | "admin";
+export type NavItem = "dashboard" | "products" | "orders" | "admin" | "agents";
 
 /**
  * Props for the AppLayout component
@@ -108,19 +108,47 @@ function SettingsIcon() {
 }
 
 /**
+ * Bot icon for agents
+ */
+function BotIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
+    </svg>
+  );
+}
+
+/**
  * Navigation items configuration
  */
 const navItems = [
   { href: "/", label: "Dashboard", icon: HomeIcon, nav: "dashboard" as NavItem },
   { href: "/products", label: "Products", icon: PackageIcon, nav: "products" as NavItem },
   { href: "/orders", label: "Orders", icon: ShoppingCartIcon, nav: "orders" as NavItem },
-  { href: "/admin/products", label: "Admin", icon: SettingsIcon, nav: "admin" as NavItem },
+  { href: "/admin/products", label: "Inventory", icon: SettingsIcon, nav: "admin" as NavItem },
+  { href: "/admin/agents", label: "Agents", icon: BotIcon, nav: "agents" as NavItem },
 ];
 
 /**
  * Detect active nav from pathname
  */
 function getActiveNavFromPathname(pathname: string): NavItem {
+  if (pathname.startsWith("/admin/agents")) return "agents";
   if (pathname.startsWith("/admin")) return "admin";
   if (pathname.startsWith("/orders")) return "orders";
   if (pathname.startsWith("/products")) return "products";
