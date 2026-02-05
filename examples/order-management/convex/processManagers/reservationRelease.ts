@@ -93,6 +93,14 @@ export type OrderCancelledPayload = z.infer<typeof OrderCancelledPayloadSchema>;
  * Only emits command if:
  * - Order has a reservation (reservationId exists in projection)
  * - Reservation is not already released or expired
+ *
+ * **Eventual Consistency Note:**
+ * This handler depends on the `orderWithInventoryStatus` projection being up-to-date.
+ * If the projection hasn't processed the reservation event yet (projection lag), the
+ * handler will skip by returning an empty array. The EventBus/Workpool infrastructure
+ * will redeliver the event on retry, ensuring eventual processing.
+ *
+ * @see ADR-033 for Process Manager vs Saga distinction
  */
 async function reservationReleaseHandler(
   ctx: MutationCtx,

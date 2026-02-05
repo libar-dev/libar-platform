@@ -786,6 +786,54 @@ export const getTestCustomerCancellations = query({
 });
 
 /**
+ * Update orderWithInventoryStatus projection for testing.
+ * Useful for testing edge cases like expired reservations.
+ */
+export const updateTestOrderInventoryStatus = mutation({
+  args: {
+    orderId: v.string(),
+    reservationId: v.optional(v.string()),
+    reservationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("confirmed"),
+        v.literal("released"),
+        v.literal("expired")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    console.log(
+      "Updating orderWithInventoryStatus:",
+      args.orderId,
+      "reservationStatus:",
+      args.reservationStatus
+    );
+
+    const existing = await ctx.db
+      .query("orderWithInventoryStatus")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+      .first();
+
+    if (!existing) {
+      throw new Error(`Order ${args.orderId} not found in orderWithInventoryStatus projection`);
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    if (args.reservationId !== undefined) {
+      updates["reservationId"] = args.reservationId;
+    }
+    if (args.reservationStatus !== undefined) {
+      updates["reservationStatus"] = args.reservationStatus;
+    }
+
+    await ctx.db.patch(existing._id, updates);
+    return { success: true };
+  },
+});
+
+/**
  * Get all agent dead letters for testing.
  */
 export const getTestAgentDeadLetters = query({

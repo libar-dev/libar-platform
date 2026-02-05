@@ -103,3 +103,22 @@ Feature: Cancel Order (Integration)
     And the product "prod-idemp-01" should have 100 available and 0 reserved stock
     # Stock should remain unchanged after reservation is already released
     And the product "prod-idemp-01" should have 100 available and 0 reserved stock
+
+  @edge-case @process-manager
+  Scenario: PM skips expired reservation when order is cancelled
+    Given a product "prod-expired-01" exists with 100 available stock
+    And a draft order "ord-expired-01" exists with items:
+      | productId         | productName | quantity | unitPrice |
+      | prod-expired-01   | Widget      | 10       | 10.00     |
+    When I submit order "ord-expired-01"
+    Then the command should succeed
+    And I wait for the saga to complete with timeout 60000
+    And the order "ord-expired-01" should have status "confirmed"
+    And I set the reservation status to "expired" for order "ord-expired-01"
+    And the product "prod-expired-01" should have 90 available and 10 reserved stock
+    When I cancel order "ord-expired-01" with reason "Cancel after expiration"
+    Then the command should succeed
+    And I wait for projections to process
+    And the order "ord-expired-01" should have status "cancelled"
+    # Stock should remain unchanged because PM skipped expired reservation
+    And the product "prod-expired-01" should have 90 available and 10 reserved stock
