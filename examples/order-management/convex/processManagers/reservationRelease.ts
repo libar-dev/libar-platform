@@ -75,6 +75,14 @@ const OrderCancelledPayloadSchema = z.object({
 });
 
 /**
+ * Zod schema for ReleaseReservation command payload validation.
+ */
+const ReleaseReservationPayloadSchema = z.object({
+  reservationId: z.string(),
+  reason: z.string(),
+});
+
+/**
  * OrderCancelled event payload type (inferred from Zod schema).
  */
 export type OrderCancelledPayload = z.infer<typeof OrderCancelledPayloadSchema>;
@@ -108,19 +116,53 @@ async function reservationReleaseHandler(
   // No projection record means order was never submitted (draft cancel)
   // or projection hasn't been created yet
   if (!orderWithInventory) {
+    console.log(
+      `[ReservationReleasePM] Skipping: no projection record for order`,
+      JSON.stringify({
+        orderId: payload.orderId,
+        eventId: event.eventId,
+        reason: "draft_order_or_projection_lag",
+      })
+    );
     return [];
   }
 
   // No reservation means order was cancelled before reservation was made
   if (!orderWithInventory.reservationId) {
+    console.log(
+      `[ReservationReleasePM] Skipping: order has no reservation`,
+      JSON.stringify({
+        orderId: payload.orderId,
+        eventId: event.eventId,
+        reason: "no_reservation",
+      })
+    );
     return [];
   }
 
   // Skip if reservation is already in a terminal state
   if (orderWithInventory.reservationStatus === "released") {
+    console.log(
+      `[ReservationReleasePM] Skipping: reservation already released`,
+      JSON.stringify({
+        orderId: payload.orderId,
+        reservationId: orderWithInventory.reservationId,
+        eventId: event.eventId,
+        reason: "already_released",
+      })
+    );
     return [];
   }
   if (orderWithInventory.reservationStatus === "expired") {
+    console.log(
+      `[ReservationReleasePM] Skipping: reservation expired`,
+      JSON.stringify({
+        orderId: payload.orderId,
+        reservationId: orderWithInventory.reservationId,
+        eventId: event.eventId,
+        reason: "reservation_expired",
+      })
+    );
     return [];
   }
 
@@ -283,6 +325,17 @@ export const reservationReleaseExecutor = createProcessManagerExecutor<MutationC
   // Command emission via scheduler for fire-and-forget dispatch
   commandEmitter: async (ctx: MutationCtx, commands: EmittedCommand[]) => {
     for (const cmd of commands) {
+      // Warn if correlationId is missing - aids request tracing
+      if (!cmd.correlationId) {
+        console.warn(
+          `[ReservationReleasePM] Command emitted without correlationId`,
+          JSON.stringify({
+            commandType: cmd.commandType,
+            causationId: cmd.causationId,
+          })
+        );
+      }
+
       await ctx.scheduler.runAfter(0, processReleaseCommandRef, {
         commandType: cmd.commandType,
         payload: cmd.payload,
@@ -298,7 +351,19 @@ export const reservationReleaseExecutor = createProcessManagerExecutor<MutationC
   // Use orderId from event payload as instance ID
   instanceIdResolver: (event) => {
     const result = z.object({ orderId: z.string() }).safeParse(event.payload);
-    return result.success ? result.data.orderId : event.streamId;
+    if (!result.success) {
+      console.warn(
+        `[ReservationReleasePM] instanceIdResolver fallback to streamId - invalid payload`,
+        JSON.stringify({
+          eventId: event.eventId,
+          eventType: event.eventType,
+          streamId: event.streamId,
+          error: result.error.message,
+        })
+      );
+      return event.streamId;
+    }
+    return result.data.orderId;
   },
 });
 
@@ -360,6 +425,12 @@ export const handleOrderCancelled = internalMutation({
  *
  * Uses the existing releaseReservationConfig for proper dual-write and projection
  * triggering.
+ *
+ * Error Handling:
+ * - Validates payload with Zod before execution
+ * - Catches and logs command execution errors
+ * - Records dead letter for failed commands to enable debugging
+ * - Returns success/failure status for observability
  */
 export const processReleaseCommand = internalMutation({
   args: {
@@ -368,19 +439,96 @@ export const processReleaseCommand = internalMutation({
     correlationId: v.string(),
     causationId: v.string(),
   },
-  returns: v.null(),
+  returns: v.object({
+    success: v.boolean(),
+    error: v.optional(v.string()),
+  }),
   handler: async (ctx, args) => {
-    // Import dynamically to avoid circular dependencies
-    const { commandOrchestrator } = await import("../infrastructure");
+    // Validate payload with Zod for type safety and clear error messages
+    const parseResult = ReleaseReservationPayloadSchema.safeParse(args.payload);
+    if (!parseResult.success) {
+      const error = `Invalid ReleaseReservation payload: ${parseResult.error.message}`;
+      console.error(
+        `[ReservationReleasePM] Payload validation failed`,
+        JSON.stringify({
+          correlationId: args.correlationId,
+          causationId: args.causationId,
+          error,
+          payload: args.payload,
+        })
+      );
 
-    const payload = args.payload as { reservationId: string; reason: string };
+      // Record dead letter for invalid payload
+      await ctx.runMutation(components.eventStore.lib.recordPMDeadLetter, {
+        processManagerName: reservationReleasePM.processManagerName,
+        instanceId: `command-${args.causationId}`,
+        error,
+        attemptCount: 1,
+        failedCommand: {
+          commandType: args.commandType,
+          payload: (args.payload ?? {}) as Record<string, unknown>,
+        },
+        context: {
+          correlationId: args.correlationId,
+          causationId: args.causationId,
+        },
+      });
 
-    // Execute via CommandOrchestrator for proper dual-write + projection
-    await commandOrchestrator.execute(ctx, releaseReservationConfig, {
-      reservationId: payload.reservationId,
-      reason: payload.reason,
-    });
+      return { success: false, error };
+    }
 
-    return null;
+    const payload = parseResult.data;
+
+    try {
+      // Import dynamically to avoid circular dependencies
+      const { commandOrchestrator } = await import("../infrastructure");
+
+      // Execute via CommandOrchestrator for proper dual-write + projection
+      await commandOrchestrator.execute(ctx, releaseReservationConfig, {
+        reservationId: payload.reservationId,
+        reason: payload.reason,
+      });
+
+      console.log(
+        `[ReservationReleasePM] Successfully released reservation`,
+        JSON.stringify({
+          reservationId: payload.reservationId,
+          correlationId: args.correlationId,
+        })
+      );
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      console.error(
+        `[ReservationReleasePM] Command execution failed`,
+        JSON.stringify({
+          reservationId: payload.reservationId,
+          correlationId: args.correlationId,
+          causationId: args.causationId,
+          error: errorMessage,
+        })
+      );
+
+      // Record dead letter for command execution failure
+      await ctx.runMutation(components.eventStore.lib.recordPMDeadLetter, {
+        processManagerName: reservationReleasePM.processManagerName,
+        instanceId: payload.reservationId,
+        error: errorMessage,
+        attemptCount: 1,
+        failedCommand: {
+          commandType: args.commandType,
+          payload: payload as Record<string, unknown>,
+        },
+        context: {
+          correlationId: args.correlationId,
+          causationId: args.causationId,
+          reservationId: payload.reservationId,
+        },
+      });
+
+      return { success: false, error: errorMessage };
+    }
   },
 });
