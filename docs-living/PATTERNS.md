@@ -7,12 +7,12 @@
 
 ## Progress
 
-**Overall:** [█████████████████░░░] 52/61 (85% complete)
+**Overall:** [█████████████████░░░] 53/61 (87% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 52    |
-| 🚧 Active    | 2     |
+| ✅ Completed | 53    |
+| 🚧 Active    | 1     |
 | 📋 Planned   | 7     |
 | **Total**    | 61    |
 
@@ -34,6 +34,7 @@
 
 | Pattern                                                  | Category                          | Status    | Description                                                                                                              |
 | -------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ✅ Agent As Bounded Context                              | DDD                               | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
 | ✅ Bdd Testing Infrastructure                            | DDD                               | completed | Problem: Domain logic tests require infrastructure (Docker, database).                                                   |
 | ✅ Bounded Context Foundation                            | Completed Before Delivery Process | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
 | ✅ Bounded Context Identity                              | Pattern                           | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
@@ -86,7 +87,6 @@
 | ✅ Types for event replay and projection rebuilding.     | Implements                        | completed | Types for event replay and projection rebuilding.                                                                        |
 | ✅ Workpool Partition Key Types                          | Implements                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
 | ✅ Workpool Partitioning Strategy                        | Implements                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
-| 🚧 Agent As Bounded Context                              | DDD                               | active    | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
 | 🚧 Command Config Partition Key Validation               | Implements                        | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
@@ -127,8 +127,9 @@
 
 ### DDD
 
-11/19 complete (58%)
+12/19 complete (63%)
 
+- [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
 - [✅ Decider Pattern](patterns/decider-pattern.md)
 - [✅ Durable Function Adapters](patterns/durable-function-adapters.md)
@@ -140,7 +141,6 @@
 - [✅ Projection Categories](patterns/projection-categories.md)
 - [✅ Reactive Projections](patterns/reactive-projections.md)
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
-- [🚧 Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
@@ -219,13 +219,13 @@ graph TD
     ProjectionCheckpointing --> EventStoreFoundation
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
-    MiddlewarePipeline --> CommandBusFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
@@ -267,6 +267,10 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
     ReservationPattern -.-> DynamicConsistencyBoundaries
@@ -299,10 +303,6 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
 ```
 
 ---

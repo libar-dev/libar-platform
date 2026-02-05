@@ -7,13 +7,13 @@
 
 ## Summary
 
-**Overall:** [█████████████░░░░░░░] 16/24 (67%)
+**Overall:** [██████████████░░░░░░] 17/24 (71%)
 
 | Metric         | Value |
 | -------------- | ----- |
 | Total Features | 24    |
-| Completed      | 16    |
-| Active         | 1     |
+| Completed      | 17    |
+| Active         | 0     |
 | Planned        | 7     |
 | Product Areas  | 2     |
 | User Roles     | 0     |
@@ -30,8 +30,9 @@
 
 ### Platform
 
-15/23 complete (65%)
+16/23 complete (70%)
 
+- [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](requirements/phase-19-bdd-testing-infrastructure.md)
 - [✅ Bounded Context Foundation](requirements/phase-11-bounded-context-foundation.md)
 - [✅ Command Bus Foundation](requirements/phase-03-command-bus-foundation.md)
@@ -47,7 +48,6 @@
 - [✅ Reactive Projections](requirements/phase-17-reactive-projections.md)
 - [✅ Reservation Pattern](requirements/phase-20-reservation-pattern.md)
 - [✅ Saga Orchestration](requirements/phase-06-saga-orchestration.md)
-- [🚧 Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [📋 Admin Tooling Consolidation - unified operations interface](requirements/phase-18-admin-tooling-consolidation.md)
 - [📋 Circuit Breaker Pattern - external service resilience and budget preservation](requirements/phase-18-circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](requirements/phase-20-deterministic-id-hashing.md)
@@ -62,6 +62,7 @@
 
 | Feature                           | Product Area | User Role | Status    |
 | --------------------------------- | ------------ | --------- | --------- |
+| ✅ Agent As Bounded Context       | Platform     | -         | completed |
 | ✅ Bdd Testing Infrastructure     | Platform     | -         | completed |
 | ✅ Bounded Context Foundation     | Platform     | -         | completed |
 | ✅ Command Bus Foundation         | Platform     | -         | completed |
@@ -78,7 +79,6 @@
 | ✅ Reactive Projections           | Platform     | -         | completed |
 | ✅ Reservation Pattern            | Platform     | -         | completed |
 | ✅ Saga Orchestration             | Platform     | -         | completed |
-| 🚧 Agent As Bounded Context       | Platform     | -         | active    |
 | 📋 Admin Tooling Consolidation    | Platform     | -         | planned   |
 | 📋 Circuit Breaker Pattern        | Platform     | -         | planned   |
 | 📋 Deterministic Id Hashing       | Platform     | -         | planned   |

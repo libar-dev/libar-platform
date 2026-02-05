@@ -1,7 +1,7 @@
 @libar-docs
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:AgentAsBoundedContext
-@libar-docs-status:active
+@libar-docs-status:completed
 @libar-docs-phase:22
 @libar-docs-effort:2w
 @libar-docs-product-area:Platform

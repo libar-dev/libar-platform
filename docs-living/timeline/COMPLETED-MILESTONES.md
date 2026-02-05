@@ -9,8 +9,8 @@
 
 | Metric             | Value |
 | ------------------ | ----- |
-| Completed Patterns | 52    |
-| Completed Phases   | 16    |
+| Completed Patterns | 53    |
+| Completed Phases   | 17    |
 | Total Phases       | 20    |
 
 ---
@@ -171,6 +171,15 @@
 </details>
 
 <details>
+<summary>✅ AgentAsBoundedContext (1 patterns)</summary>
+
+| Pattern                  | Description                                                                                     |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| Agent As Bounded Context | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
+
+</details>
+
+<details>
 <summary>✅ ExampleAppModernization (1 patterns)</summary>
 
 | Pattern                   | Description                                                                                    |
@@ -183,7 +192,7 @@
 
 ## Recent Completions
 
-- ✅ Example App Modernization (Phase 23)
+- ✅ Agent As Bounded Context (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
 - ✅ Command Bus Foundation (Phase 3)
@@ -194,6 +203,6 @@
 - ✅ Event Replay Infrastructure (Phase 18)
 - ✅ Event Store Durability (Phase 18)
 
-Showing 10 of 52 completed patterns. See quarterly files for full history.
+Showing 10 of 53 completed patterns. See quarterly files for full history.
 
 ---
