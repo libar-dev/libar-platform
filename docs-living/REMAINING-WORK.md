@@ -11,8 +11,8 @@
 
 | Status              | Count |
 | ------------------- | ----- |
-| 🚧 Active           | 1     |
-| 📋 Planned          | 8     |
+| 🚧 Active           | 2     |
+| 📋 Planned          | 7     |
 | **Total Remaining** | 9     |
 
 ---
@@ -24,7 +24,7 @@
 | 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)        | 4         | 0      | 43%      |
 | 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)          | 1         | 0      | 67%      |
 | 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md) | 2         | 0      | 0%       |
-| 📋 [AgentAsBoundedContext](remaining/phase-22-agent-as-bounded-context.md)  | 1         | 0      | 0%       |
+| 🚧 [AgentAsBoundedContext](remaining/phase-22-agent-as-bounded-context.md)  | 1         | 1      | 0%       |
 | 🚧 Backlog (No Phase)                                                       | 1         | 1      | 0%       |
 
 ---
@@ -33,8 +33,8 @@
 
 | Priority          | Count |
 | ----------------- | ----- |
-| 🚧 In Progress    | 1     |
-| ✅ Ready to Start | 6     |
+| 🚧 In Progress    | 2     |
+| ✅ Ready to Start | 5     |
 | ⚠️ Blocked        | 2     |
 
 ### Top Ready to Start
@@ -44,7 +44,6 @@
 - Production Hardening (Phase 18)
 - Deterministic Id Hashing (Phase 20)
 - Integration Patterns21a (Phase 21)
-- Agent As Bounded Context (Phase 22)
 
 ---
 
@@ -57,7 +56,5 @@ Items ready to start (no blocking dependencies):
 - 📋 Production Hardening (Phase 18) - 3w
 - 📋 Deterministic Id Hashing (Phase 20) - 2d
 - 📋 Integration Patterns21a (Phase 21) - 1w
-
-Showing 5 of 6 actionable items.
 
 ---

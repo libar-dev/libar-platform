@@ -11,20 +11,20 @@
 | Status       | Count |
 | ------------ | ----- |
 | ✅ Completed | 0     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 1     |
+| 🚧 Active    | 1     |
+| 📋 Planned   | 0     |
 | **Total**    | 1     |
 
 ---
 
-## 📋 Planned Patterns
+## 🚧 Active Patterns
 
-### 📋 Agent As Bounded Context
+### 🚧 Agent As Bounded Context
 
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 2w      |
+| Property | Value  |
+| -------- | ------ |
+| Status   | active |
+| Effort   | 2w     |
 
 **Problem:** AI agents are invoked manually without integration into the
 event-driven architecture. No pattern for agents to react to business events.

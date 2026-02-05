@@ -183,6 +183,7 @@
 
 ## Recent Completions
 
+- ✅ Example App Modernization (Phase 23)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
 - ✅ Command Bus Foundation (Phase 3)
@@ -192,7 +193,6 @@
 - ✅ Ecst Fat Events (Phase 20)
 - ✅ Event Replay Infrastructure (Phase 18)
 - ✅ Event Store Durability (Phase 18)
-- ✅ Event Store Foundation (Phase 2)
 
 Showing 10 of 52 completed patterns. See quarterly files for full history.
 

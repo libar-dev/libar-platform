@@ -17,7 +17,12 @@ import type * as commands_durableOrchestrator from "../commands/durableOrchestra
 import type * as commands_inventory_configs from "../commands/inventory/configs.js";
 import type * as commands_orders_configs from "../commands/orders/configs.js";
 import type * as commands_registry from "../commands/registry.js";
+import type * as contexts_agent_config from "../contexts/agent/config.js";
+import type * as contexts_agent_handlers_eventHandler from "../contexts/agent/handlers/eventHandler.js";
+import type * as contexts_agent_handlers_onComplete from "../contexts/agent/handlers/onComplete.js";
 import type * as contexts_agent_index from "../contexts/agent/index.js";
+import type * as contexts_agent_patterns_churnRisk from "../contexts/agent/patterns/churnRisk.js";
+import type * as contexts_agent_tools_emitCommand from "../contexts/agent/tools/emitCommand.js";
 import type * as crons from "../crons.js";
 import type * as crossContextQueries from "../crossContextQueries.js";
 import type * as dcb_retryExecution from "../dcb/retryExecution.js";
@@ -85,7 +90,12 @@ declare const fullApi: ApiFromModules<{
   "commands/inventory/configs": typeof commands_inventory_configs;
   "commands/orders/configs": typeof commands_orders_configs;
   "commands/registry": typeof commands_registry;
+  "contexts/agent/config": typeof contexts_agent_config;
+  "contexts/agent/handlers/eventHandler": typeof contexts_agent_handlers_eventHandler;
+  "contexts/agent/handlers/onComplete": typeof contexts_agent_handlers_onComplete;
   "contexts/agent/index": typeof contexts_agent_index;
+  "contexts/agent/patterns/churnRisk": typeof contexts_agent_patterns_churnRisk;
+  "contexts/agent/tools/emitCommand": typeof contexts_agent_tools_emitCommand;
   crons: typeof crons;
   crossContextQueries: typeof crossContextQueries;
   "dcb/retryExecution": typeof dcb_retryExecution;

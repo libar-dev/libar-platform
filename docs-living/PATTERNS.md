@@ -12,8 +12,8 @@
 | Status       | Count |
 | ------------ | ----- |
 | ✅ Completed | 52    |
-| 🚧 Active    | 1     |
-| 📋 Planned   | 8     |
+| 🚧 Active    | 2     |
+| 📋 Planned   | 7     |
 | **Total**    | 61    |
 
 ---
@@ -86,9 +86,9 @@
 | ✅ Types for event replay and projection rebuilding.     | Implements                        | completed | Types for event replay and projection rebuilding.                                                                        |
 | ✅ Workpool Partition Key Types                          | Implements                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
 | ✅ Workpool Partitioning Strategy                        | Implements                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
+| 🚧 Agent As Bounded Context                              | DDD                               | active    | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
 | 🚧 Command Config Partition Key Validation               | Implements                        | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
-| 📋 Agent As Bounded Context                              | DDD                               | planned   | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
 | 📋 Health Observability                                  | DDD                               | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
@@ -140,8 +140,8 @@
 - [✅ Projection Categories](patterns/projection-categories.md)
 - [✅ Reactive Projections](patterns/reactive-projections.md)
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
+- [🚧 Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
-- [📋 Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
 - [📋 Health Observability](patterns/health-observability.md)
@@ -217,15 +217,15 @@ graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
     ProjectionCheckpointing --> EventStoreFoundation
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
+    MiddlewarePipeline --> CommandBusFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
-    MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters

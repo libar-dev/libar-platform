@@ -1,4 +1,4 @@
-# 📋 Agent As Bounded Context
+# 🚧 Agent As Bounded Context
 
 **Purpose:** Detailed requirements for the Agent As Bounded Context feature
 
@@ -8,7 +8,7 @@
 
 | Property     | Value    |
 | ------------ | -------- |
-| Status       | planned  |
+| Status       | active   |
 | Product Area | Platform |
 | Phase        | 22       |
 
@@ -778,18 +778,18 @@ _Verified by: Agent decision creates audit event, Audit includes LLM metadata, Q
 
 ## Deliverables
 
-- Agent BC example (planned)
-- EventBus subscription for agents (planned)
-- Pattern detection framework (planned)
-- Command emission from agents (planned)
-- Agent audit trail (planned)
-- Human-in-loop configuration (planned)
-- Agent checkpoint types (planned)
-- Agent types and validators (planned)
-- Agent initialization (planned)
-- Rate limiting config (planned)
-- Dead letter handler (planned)
-- Agent as BC documentation (planned)
+- Agent BC example (completed)
+- EventBus subscription for agents (completed)
+- Pattern detection framework (completed)
+- Command emission from agents (completed)
+- Agent audit trail (completed)
+- Human-in-loop configuration (completed)
+- Agent checkpoint types (completed)
+- Agent types and validators (completed)
+- Agent initialization (completed)
+- Rate limiting config (completed)
+- Dead letter handler (completed)
+- Agent as BC documentation (completed)
 
 ---
 

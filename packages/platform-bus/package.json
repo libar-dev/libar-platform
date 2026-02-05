@@ -10,6 +10,11 @@
       "types": "./dist/client/index.d.ts",
       "default": "./dist/client/index.js"
     },
+    "./agent-subscription": {
+      "@convex-dev/component-source": "./src/agent-subscription.ts",
+      "types": "./dist/agent-subscription.d.ts",
+      "default": "./dist/agent-subscription.js"
+    },
     "./convex.config": {
       "@convex-dev/component-source": "./src/component/convex.config.ts",
       "types": "./dist/component/convex.config.d.ts",

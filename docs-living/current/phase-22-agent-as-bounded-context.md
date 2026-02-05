@@ -1,34 +1,29 @@
-# AgentAsBoundedContext - Remaining Work
+# AgentAsBoundedContext
 
-**Purpose:** Detailed remaining work for AgentAsBoundedContext
+**Purpose:** Active work details for AgentAsBoundedContext
 
 ---
 
-## Summary
+## Progress
 
 **Progress:** [░░░░░░░░░░░░░░░░░░░░] 0/1 (0%)
 
-**Remaining:** 1 patterns (1 active, 0 planned)
+| Status       | Count |
+| ------------ | ----- |
+| ✅ Completed | 0     |
+| 🚧 Active    | 1     |
+| 📋 Planned   | 0     |
+| **Total**    | 1     |
 
 ---
 
-## 🚧 In Progress
-
-| Pattern                     | Effort | Business Value |
-| --------------------------- | ------ | -------------- |
-| 🚧 Agent As Bounded Context | 2w     | -              |
-
----
-
-## All Remaining Patterns
+## 🚧 Active Work
 
 ### 🚧 Agent As Bounded Context
 
-| Property     | Value                              |
-| ------------ | ---------------------------------- |
-| Status       | active                             |
-| Effort       | 2w                                 |
-| Dependencies | ReactiveProjections, EcstFatEvents |
+| Property | Value |
+| -------- | ----- |
+| Effort   | 2w    |
 
 **Problem:** AI agents are invoked manually without integration into the
 event-driven architecture. No pattern for agents to react to business events.
@@ -403,6 +398,26 @@ humanInLoop: v.optional(vHumanInLoopConfig),
 rateLimits: v.optional(vRateLimitConfig),
 });
 """
+
+#### Deliverables
+
+- 📋 Agent BC example (completed)
+- 📋 EventBus subscription for agents (completed)
+- 📋 Pattern detection framework (completed)
+- 📋 Command emission from agents (completed)
+- 📋 Agent audit trail (completed)
+- 📋 Human-in-loop configuration (completed)
+- 📋 Agent checkpoint types (completed)
+- 📋 Agent types and validators (completed)
+- 📋 Agent initialization (completed)
+- 📋 Rate limiting config (completed)
+- 📋 Dead letter handler (completed)
+- 📋 Agent as BC documentation (completed)
+
+#### Dependencies
+
+- Depends on: ReactiveProjections
+- Depends on: EcstFatEvents
 
 #### Acceptance Criteria
 
@@ -794,4 +809,4 @@ _Verified by: Agent decision creates audit event, Audit includes LLM metadata, Q
 
 ---
 
-[← Back to Remaining Work](../REMAINING-WORK.md)
+[← Back to Current Work](../CURRENT-WORK.md)

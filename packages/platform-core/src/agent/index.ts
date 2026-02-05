@@ -25,73 +25,480 @@
  *
  * @example
  * ```typescript
- * // Create agent BC that reacts to OrderSubmitted events
- * const agentBC = createAgentBC({
- *   subscriptions: ['OrderSubmitted', 'PaymentReceived'],
+ * import { initializeAgentBC, type AgentBCConfig } from "@libar-dev/platform-core/agent";
+ *
+ * const config: AgentBCConfig = {
+ *   id: "churn-risk-agent",
+ *   subscriptions: ["OrderCancelled", "OrderRefunded"],
+ *   patternWindow: { duration: "30d", minEvents: 3 },
+ *   confidenceThreshold: 0.8,
  *   onEvent: async (event, ctx) => {
- *     const decision = await ctx.agent.reason(event);
- *     if (decision.shouldReserveInventory) {
- *       return { command: 'ReserveStock', payload: decision.reservation };
+ *     const analysis = await ctx.agent.analyze(
+ *       "Detect customer churn risk based on cancellation patterns",
+ *       ctx.history
+ *     );
+ *
+ *     if (analysis.confidence > ctx.config.confidenceThreshold) {
+ *       return {
+ *         command: "SuggestCustomerOutreach",
+ *         payload: { customerId: event.streamId, risk: analysis.confidence },
+ *         confidence: analysis.confidence,
+ *         reason: analysis.reasoning,
+ *         requiresApproval: analysis.confidence < 0.9,
+ *         triggeringEvents: analysis.patterns[0]?.matchingEventIds ?? [event.eventId],
+ *       };
  *     }
- *   }
- * });
+ *     return null;
+ *   },
+ * };
  * ```
+ *
+ * @module agent
  */
 
-/**
- * Configuration for Agent Bounded Context.
- *
- * Defines event subscriptions and reasoning handler for autonomous
- * command emission based on domain event patterns.
- */
-export interface AgentBCConfig {
-  /** Event types to subscribe to */
-  readonly subscriptions: readonly string[];
-  /** Agent reasoning handler invoked for each subscribed event */
-  readonly onEvent: (event: unknown, ctx: AgentContext) => Promise<AgentDecision | null>;
-}
+// ============================================================================
+// Error Codes
+// ============================================================================
 
-/**
- * Context provided to agent reasoning handler.
- *
- * Provides access to agent reasoning capabilities and event history
- * for context-aware decision making.
- */
-export interface AgentContext {
-  /** Agent reasoning interface (integrates with @convex-dev/agent) */
-  readonly agent: {
-    readonly reason: (event: unknown) => Promise<unknown>;
-  };
-  /** Event history for context (recent events in stream) */
-  readonly history: readonly unknown[];
-}
+export { AGENT_CONFIG_ERROR_CODES } from "./types.js";
+export type { AgentConfigErrorCode } from "./types.js";
 
-/**
- * Decision output from agent reasoning.
- *
- * Represents a command to be emitted based on agent's pattern
- * detection and reasoning over domain events.
- */
-export interface AgentDecision {
-  /** Command type to emit */
-  readonly command: string;
-  /** Command payload */
-  readonly payload: unknown;
-  /** Confidence score (0-1, optional) */
-  readonly confidence?: number;
-}
+// ============================================================================
+// Core Types
+// ============================================================================
 
-/**
- * Create Agent Bounded Context.
- *
- * Registers an AI agent as a first-class bounded context that
- * subscribes to domain events and autonomously emits commands.
- *
- * @param _config - Agent BC configuration (unused - roadmap pattern)
- * @returns Agent BC instance (opaque handle)
- *
- * @throws Error - Pattern not yet implemented (roadmap)
- */
-export function createAgentBC(_config: AgentBCConfig): unknown {
-  throw new Error("AgentAsBoundedContext not yet implemented - roadmap pattern");
-}
+export type {
+  // Pattern Window
+  PatternWindow,
+
+  // Human-in-Loop
+  HumanInLoopConfig,
+
+  // Rate Limiting
+  AgentRateLimitConfig,
+
+  // Decision Types
+  AgentDecision,
+  LLMAnalysisResult,
+  DetectedPattern,
+  LLMContext,
+
+  // Execution Context
+  AgentExecutionContext,
+  AgentInterface,
+  AgentCheckpointState,
+
+  // Configuration
+  AgentEventHandler,
+  AgentBCConfig,
+
+  // Validation
+  AgentConfigValidationResult,
+} from "./types.js";
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+export { validateAgentBCConfig } from "./types.js";
+
+// ============================================================================
+// Checkpoint
+// ============================================================================
+
+export {
+  // Constants
+  AGENT_CHECKPOINT_STATUSES,
+
+  // Schemas
+  AgentCheckpointStatusSchema,
+  AgentCheckpointSchema,
+
+  // Factory Functions
+  createInitialAgentCheckpoint,
+  applyCheckpointUpdate,
+
+  // Helper Functions
+  shouldProcessAgentEvent,
+  isAgentActive,
+  isAgentPaused,
+  isAgentStopped,
+  isValidAgentCheckpoint,
+} from "./checkpoint.js";
+
+export type {
+  // Types
+  AgentCheckpointStatus,
+  AgentCheckpoint,
+  AgentCheckpointUpdate,
+
+  // Schema Types
+  AgentCheckpointSchemaType,
+  AgentCheckpointStatusSchemaType,
+} from "./checkpoint.js";
+
+// ============================================================================
+// Patterns
+// ============================================================================
+
+export {
+  // Error Codes
+  PATTERN_ERROR_CODES,
+
+  // Schemas
+  PatternWindowSchema,
+
+  // Factory Functions
+  definePattern,
+
+  // Duration Parsing
+  parseDuration,
+  isValidDuration,
+
+  // Validation
+  validatePatternDefinition,
+
+  // Helper Functions
+  calculateWindowBoundary,
+  filterEventsInWindow,
+  hasMinimumEvents,
+
+  // Common Triggers
+  PatternTriggers,
+} from "./patterns.js";
+
+export type {
+  // Error Types
+  PatternErrorCode,
+
+  // Pattern Types
+  PatternTrigger,
+  PatternAnalyzer,
+  PatternAnalysisResult,
+  PatternDefinition,
+  PatternValidationResult,
+
+  // Schema Types
+  PatternWindowSchemaType,
+} from "./patterns.js";
+
+// ============================================================================
+// Rate Limiting
+// ============================================================================
+
+export {
+  // Error Codes
+  RATE_LIMIT_ERROR_CODES,
+
+  // Schemas
+  CostBudgetSchema,
+  AgentRateLimitConfigSchema,
+
+  // Constants
+  DEFAULT_RATE_LIMIT_VALUES,
+
+  // Factory Functions
+  createDefaultRateLimitConfig,
+  createRateLimitConfigWithBudget,
+  createRateLimitError,
+
+  // Validation
+  validateRateLimitConfig,
+
+  // Type Guards
+  isRateLimitError,
+  isRetryableError,
+  isPermanentError,
+
+  // Helper Functions
+  calculateBackoffDelay,
+  getEffectiveRateLimitConfig,
+  wouldExceedBudget,
+  isAtAlertThreshold,
+} from "./rate-limit.js";
+
+export type {
+  // Error Types
+  RateLimitErrorCode,
+  RateLimitError,
+  RateLimitValidationResult,
+
+  // Schema Types
+  CostBudgetSchemaType,
+  AgentRateLimitConfigSchemaType,
+} from "./rate-limit.js";
+
+// ============================================================================
+// Dead Letter
+// ============================================================================
+
+export {
+  // Error Codes
+  DEAD_LETTER_ERROR_CODES,
+
+  // Constants
+  AGENT_DEAD_LETTER_STATUSES,
+
+  // Schemas
+  AgentDeadLetterStatusSchema,
+  AgentDeadLetterContextSchema,
+  AgentDeadLetterSchema,
+
+  // Factory Functions
+  createAgentDeadLetter,
+  incrementDeadLetterAttempt,
+
+  // Status Transition Functions
+  markDeadLetterReplayed,
+  markDeadLetterIgnored,
+
+  // Type Guards
+  isAgentDeadLetterStatus,
+  isDeadLetterPending,
+  isDeadLetterReplayed,
+  isDeadLetterIgnored,
+
+  // Validation
+  validateAgentDeadLetter,
+} from "./dead-letter.js";
+
+export type {
+  // Error Types
+  DeadLetterErrorCode,
+
+  // Types
+  AgentDeadLetterStatus,
+  AgentDeadLetterContext,
+  AgentDeadLetter,
+
+  // Schema Types
+  AgentDeadLetterSchemaType,
+  AgentDeadLetterStatusSchemaType,
+  AgentDeadLetterContextSchemaType,
+} from "./dead-letter.js";
+
+// ============================================================================
+// Audit
+// ============================================================================
+
+export {
+  // Constants
+  AGENT_AUDIT_EVENT_TYPES,
+
+  // Schemas
+  AgentAuditEventTypeSchema,
+  AuditLLMContextSchema,
+  AuditActionSchema,
+  AgentDecisionMadePayloadSchema,
+  AgentActionApprovedPayloadSchema,
+  AgentActionRejectedPayloadSchema,
+  AgentActionExpiredPayloadSchema,
+  AgentAnalysisCompletedPayloadSchema,
+  AgentAnalysisFailedPayloadSchema,
+  AgentAuditEventSchema,
+
+  // ID Generation
+  generateDecisionId,
+
+  // Factory Functions
+  createAgentDecisionAudit,
+  createAgentActionApprovedAudit,
+  createAgentActionRejectedAudit,
+  createAgentActionExpiredAudit,
+  createAgentAnalysisCompletedAudit,
+  createAgentAnalysisFailedAudit,
+
+  // Type Guards
+  isAgentAuditEventType,
+  isDecisionAuditEvent,
+  isApprovalAuditEvent,
+  isRejectionAuditEvent,
+
+  // Validation
+  validateAgentAuditEvent,
+} from "./audit.js";
+
+export type {
+  // Types
+  AgentAuditEventType,
+  AuditLLMContext,
+  AuditAction,
+  AgentDecisionMadePayload,
+  AgentActionApprovedPayload,
+  AgentActionRejectedPayload,
+  AgentActionExpiredPayload,
+  AgentAnalysisCompletedPayload,
+  AgentAnalysisFailedPayload,
+  AgentAuditEventBase,
+  AgentAuditEvent,
+
+  // Schema Types
+  AgentAuditEventTypeSchemaType,
+  AgentDecisionMadePayloadSchemaType,
+  AgentActionApprovedPayloadSchemaType,
+  AgentActionRejectedPayloadSchemaType,
+  AgentActionExpiredPayloadSchemaType,
+  AuditLLMContextSchemaType,
+  AuditActionSchemaType,
+} from "./audit.js";
+
+// ============================================================================
+// Approval
+// ============================================================================
+
+export {
+  // Error Codes
+  APPROVAL_ERROR_CODES,
+
+  // Constants
+  APPROVAL_STATUSES,
+  DEFAULT_APPROVAL_TIMEOUT_MS,
+
+  // Schemas
+  ApprovalStatusSchema,
+  ApprovalActionSchema,
+  PendingApprovalSchema,
+
+  // Timeout Parsing
+  parseApprovalTimeout,
+  isValidApprovalTimeout,
+  calculateExpirationTime,
+
+  // Approval Determination
+  shouldRequireApproval,
+
+  // ID Generation
+  generateApprovalId,
+
+  // Factory Functions
+  createPendingApproval,
+
+  // Status Transition Functions
+  approveAction,
+  rejectAction,
+  expireAction,
+
+  // Type Guards
+  isApprovalStatus,
+  isApprovalPending,
+  isApprovalApproved,
+  isApprovalRejected,
+  isApprovalExpired,
+  isApprovalActionable,
+
+  // Validation
+  validatePendingApproval,
+
+  // Helper Functions
+  getRemainingApprovalTime,
+  formatRemainingApprovalTime,
+} from "./approval.js";
+
+export type {
+  // Error Types
+  ApprovalErrorCode,
+
+  // Types
+  ApprovalStatus,
+  ApprovalAction,
+  PendingApproval,
+
+  // Schema Types
+  ApprovalStatusSchemaType,
+  PendingApprovalSchemaType,
+  ApprovalActionSchemaType,
+} from "./approval.js";
+
+// ============================================================================
+// Commands
+// ============================================================================
+
+export {
+  // Error Codes
+  COMMAND_EMISSION_ERROR_CODES,
+
+  // Schemas
+  EmittedAgentCommandMetadataSchema,
+  EmittedAgentCommandSchema,
+
+  // Validation
+  validateAgentCommand,
+
+  // Factory Functions
+  createEmittedAgentCommand,
+  createCommandFromDecision,
+
+  // Type Guards
+  isEmittedAgentCommand,
+  hasPatternId,
+  hasAnalysisData,
+} from "./commands.js";
+
+export type {
+  // Error Types
+  CommandEmissionErrorCode,
+
+  // Types
+  EmittedAgentCommandMetadata,
+  EmittedAgentCommand,
+  CommandEmissionValidationResult,
+  ValidateCommandArgs,
+  CreateEmittedAgentCommandOptions,
+  CreateCommandFromDecisionOptions,
+
+  // Schema Types
+  EmittedAgentCommandMetadataSchemaType,
+  EmittedAgentCommandSchemaType,
+} from "./commands.js";
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+export {
+  // Error Codes
+  AGENT_INIT_ERROR_CODES,
+
+  // Constants
+  DEFAULT_AGENT_SUBSCRIPTION_PRIORITY,
+
+  // Mock Runtime
+  createMockAgentRuntime,
+  createAgentInterface,
+
+  // Handler Transform
+  toAgentHandlerArgs,
+
+  // Event Handler Factory
+  createAgentEventHandler,
+
+  // Subscription Factory
+  createAgentSubscription,
+
+  // Lifecycle Functions
+  generateSubscriptionId,
+  initializeAgentBC,
+  shutdownAgentBC,
+} from "./init.js";
+
+export type {
+  // Error Types
+  AgentInitErrorCode,
+
+  // Subscription Types
+  AgentSubscription,
+  AgentBCHandle,
+
+  // Runtime Types
+  AgentRuntimeConfig,
+
+  // Initialization Types
+  InitializeAgentBCOptions,
+  InitializeAgentBCResult,
+
+  // Handler Types
+  AgentEventHandlerArgs,
+  CreateAgentEventHandlerContext,
+  AgentEventHandlerResult,
+  CreateAgentSubscriptionOptions,
+} from "./init.js";

@@ -13,8 +13,8 @@
 | -------------- | ----- |
 | Total Features | 24    |
 | Completed      | 16    |
-| Active         | 0     |
-| Planned        | 8     |
+| Active         | 1     |
+| Planned        | 7     |
 | Product Areas  | 2     |
 | User Roles     | 0     |
 
@@ -47,8 +47,8 @@
 - [✅ Reactive Projections](requirements/phase-17-reactive-projections.md)
 - [✅ Reservation Pattern](requirements/phase-20-reservation-pattern.md)
 - [✅ Saga Orchestration](requirements/phase-06-saga-orchestration.md)
+- [🚧 Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [📋 Admin Tooling Consolidation - unified operations interface](requirements/phase-18-admin-tooling-consolidation.md)
-- [📋 Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [📋 Circuit Breaker Pattern - external service resilience and budget preservation](requirements/phase-18-circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](requirements/phase-20-deterministic-id-hashing.md)
 - [📋 Health Observability - production monitoring and k8s integration](requirements/phase-18-health-observability.md)
@@ -78,8 +78,8 @@
 | ✅ Reactive Projections           | Platform     | -         | completed |
 | ✅ Reservation Pattern            | Platform     | -         | completed |
 | ✅ Saga Orchestration             | Platform     | -         | completed |
+| 🚧 Agent As Bounded Context       | Platform     | -         | active    |
 | 📋 Admin Tooling Consolidation    | Platform     | -         | planned   |
-| 📋 Agent As Bounded Context       | Platform     | -         | planned   |
 | 📋 Circuit Breaker Pattern        | Platform     | -         | planned   |
 | 📋 Deterministic Id Hashing       | Platform     | -         | planned   |
 | 📋 Health Observability           | Platform     | -         | planned   |

@@ -1,148 +1,199 @@
-/** @libar-docs */
-
 /**
+ * @libar-docs
  * @libar-docs-ddd @libar-docs-core
  * @libar-docs-pattern AgentAsBoundedContext
- * @libar-docs-status roadmap
+ * @libar-docs-status active
  * @libar-docs-phase 22
  * @libar-docs-depends-on IntegrationPatterns,ReactiveProjections
  * @libar-docs-brief docs/project-management/aggregate-less-pivot/pattern-briefs/08-agent-as-bc.md
  *
  * ## Agent as Bounded Context - AI-Driven Event Reactors
  *
- * Demonstrate AI agent as event reactor pattern with autonomous command emission.
+ * Demonstrates the Agent as Bounded Context pattern where AI agents subscribe to
+ * domain events via EventBus and emit commands based on pattern detection.
  *
- * Implements AI agent as first-class bounded context subscribing to domain events via
- * EventBus and emitting commands autonomously. Demonstrates pattern detection (e.g.,
- * order submission → inventory reservation) with LLM-based reasoning. Integrates with
- * @convex-dev/agent for production-ready agent orchestration.
- *
- * ### When to Use
- *
- * - When domain logic benefits from LLM reasoning (pattern detection, classification)
- * - When you need autonomous command emission based on event patterns
- * - When implementing recommendation engines or intelligent automation
- * - When exploring AI-native bounded contexts
- *
- * ### Architecture
+ * ### Architecture Overview
  *
  * ```
- * EventBus
- *    ↓ (subscribe to OrderCreated, etc.)
- * Agent BC
- *    ↓ (LLM reasoning)
- * Pattern Detection
- *    ↓ (emit commands)
- * Command Bus
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │                           EventBus                                      │
+ * │  (publishes OrderCancelled, OrderRefunded, OrderComplaintFiled, etc.)  │
+ * └────────────────────────────────┬────────────────────────────────────────┘
+ *                                  │ subscribe
+ *                                  ▼
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │                      Agent BC (Churn Risk)                             │
+ * │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐            │
+ * │ │   Checkpoint    │ │     Pattern     │ │     Config      │            │
+ * │ │   (Position)    │ │   (Detection)   │ │  (Subscriptions)│            │
+ * │ └─────────────────┘ └─────────────────┘ └─────────────────┘            │
+ * │           │                   │                   │                    │
+ * │           └───────────────────┼───────────────────┘                    │
+ * │                               ▼                                        │
+ * │ ┌───────────────────────────────────────────────────────────────────┐  │
+ * │ │                     Event Handler                                 │  │
+ * │ │  1. Load checkpoint (idempotency)                                 │  │
+ * │ │  2. Load event history (pattern window)                           │  │
+ * │ │  3. Evaluate pattern trigger                                      │  │
+ * │ │  4. Make decision (rule-based or LLM)                             │  │
+ * │ │  5. Emit command (with explainability)                            │  │
+ * │ │  6. Update checkpoint                                             │  │
+ * │ └───────────────────────────────────────────────────────────────────┘  │
+ * └────────────────────────────────┬────────────────────────────────────────┘
+ *                                  │ emit command
+ *                                  ▼
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │                           Command Bus                                   │
+ * │              (routes SuggestCustomerOutreach, etc.)                    │
+ * └─────────────────────────────────────────────────────────────────────────┘
  * ```
  *
- * ### Key Capabilities
+ * ### Key Concepts
  *
- * - **Event Subscription**: Listen to domain events across contexts
- * - **LLM Reasoning**: Use Claude/GPT for pattern detection and decision-making
- * - **Autonomous Commands**: Emit commands without human intervention
- * - **State Management**: Track agent reasoning state and decisions
+ * - **Agent BC**: AI agent treated as a first-class bounded context
+ * - **Pattern Detection**: Rules + optional LLM for complex patterns
+ * - **Autonomous Commands**: Agent emits commands with full explainability
+ * - **Human-in-Loop**: Configurable approval workflow for low-confidence decisions
+ * - **Checkpoint Pattern**: Position tracking for exactly-once semantics
  *
- * ### Example Patterns
+ * ### Example: Churn Risk Detection
  *
- * - **Order Optimization**: Detect bulk orders → suggest bulk pricing
- * - **Inventory Management**: Low stock + high demand → trigger restock
- * - **Fraud Detection**: Suspicious pattern → flag for review
- * - **Customer Service**: Support ticket → auto-categorize and route
+ * This example implements a churn risk agent that:
+ * 1. Subscribes to OrderCancelled events via EventBus
+ * 2. Tracks cancellation patterns per customer (30-day window)
+ * 3. Detects churn risk when a customer cancels 3+ orders
+ * 4. Emits SuggestCustomerOutreach command with confidence score
  *
  * @example
  * ```typescript
- * // Agent BC subscribes to events
- * export const agentEventHandler = internalMutation({
- *   args: { event: v.object({ type: v.string(), payload: v.any() }) },
- *   handler: async (ctx, { event }) => {
- *     if (event.type === 'OrderCreated') {
- *       // LLM reasoning
- *       const analysis = await analyzeOrder(event.payload);
+ * import { createAgentSubscription } from "@libar-dev/platform-bus/agent-subscription";
+ * import { churnRiskAgentConfig } from "./config";
  *
- *       if (analysis.needsInventoryReservation) {
- *         // Emit command autonomously
- *         await ctx.runMutation(api.commands.reserveInventory, {
- *           orderId: event.payload.orderId,
- *           reason: analysis.reason
- *         });
- *       }
- *     }
- *   }
+ * // Create EventBus subscription for the agent
+ * const subscription = createAgentSubscription(churnRiskAgentConfig, {
+ *   handler: internal.contexts.agent.handlers.eventHandler.handleChurnRiskEvent,
+ *   onComplete: internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
+ *   priority: 250, // Run after projections (100) and PMs (200)
+ * });
+ *
+ * // Register with EventBus
+ * const subscriptions = defineSubscriptions((registry) => {
+ *   registry.add(subscription);
  * });
  * ```
- */
-
-/**
- * Agent state for reasoning persistence.
- */
-export interface AgentState {
-  /** Agent ID */
-  agentId: string;
-  /** Current reasoning context */
-  context: unknown;
-  /** Decision history */
-  decisions: Array<{
-    timestamp: number;
-    eventType: string;
-    action: string;
-    reasoning: string;
-  }>;
-  /** Agent metadata */
-  metadata: {
-    model: string;
-    temperature: number;
-  };
-}
-
-/**
- * Pattern detection result from LLM.
- */
-export interface PatternDetectionResult {
-  /** Detected pattern type */
-  pattern: string;
-  /** Confidence score (0-1) */
-  confidence: number;
-  /** LLM reasoning explanation */
-  reasoning: string;
-  /** Recommended actions */
-  actions: Array<{
-    commandType: string;
-    params: Record<string, unknown>;
-  }>;
-}
-
-/**
- * Configuration for agent BC.
- */
-export interface AgentBCConfig {
-  /** Agent name/ID */
-  name: string;
-  /** Event types to subscribe to */
-  subscribeTo: string[];
-  /** LLM configuration */
-  llm: {
-    model: string;
-    temperature: number;
-  };
-}
-
-/**
- * Analyze event with LLM reasoning.
  *
- * @param event - Domain event
- * @returns Pattern detection result
+ * @module contexts/agent
  */
-export function analyzeEvent(_event: unknown): Promise<PatternDetectionResult> {
-  throw new Error("AgentAsBoundedContext not yet implemented - roadmap pattern");
-}
 
-/**
- * Initialize agent bounded context.
- *
- * @param config - Agent configuration
- * @returns Agent state
- */
-export function initializeAgentBC(_config: AgentBCConfig): Promise<AgentState> {
-  throw new Error("AgentAsBoundedContext not yet implemented - roadmap pattern");
-}
+// ============================================================================
+// Configuration
+// ============================================================================
+
+export {
+  CHURN_RISK_AGENT_ID,
+  CHURN_RISK_SUBSCRIPTIONS,
+  churnRiskAgentConfig,
+  __testing as configTesting,
+} from "./config.js";
+
+// ============================================================================
+// Patterns
+// ============================================================================
+
+export {
+  CHURN_RISK_PATTERN_NAME,
+  MIN_CANCELLATIONS,
+  CHURN_RISK_WINDOW_DURATION,
+  churnRiskPattern,
+  highValueChurnPattern,
+  createCustomerCancellationTrigger,
+  __testing as patternsTesting,
+} from "./patterns/churnRisk.js";
+
+// ============================================================================
+// Command Types
+// ============================================================================
+
+export {
+  CHURN_RISK_COMMANDS,
+  type SuggestCustomerOutreachPayload,
+  type LogChurnRiskPayload,
+  type FlagCustomerForReviewPayload,
+} from "./tools/emitCommand.js";
+
+// ============================================================================
+// Re-exports from Platform Core (for convenience)
+// ============================================================================
+
+export type {
+  // Core Types
+  AgentBCConfig,
+  AgentDecision,
+  AgentExecutionContext,
+  PatternWindow,
+  HumanInLoopConfig,
+
+  // Pattern Types
+  PatternDefinition,
+  PatternTrigger,
+  PatternAnalysisResult,
+
+  // Checkpoint Types
+  AgentCheckpoint,
+  AgentCheckpointStatus,
+
+  // Command Types
+  EmittedAgentCommand,
+  EmittedAgentCommandMetadata,
+
+  // Approval Types
+  PendingApproval,
+  ApprovalStatus,
+
+  // Dead Letter Types
+  AgentDeadLetter,
+  AgentDeadLetterStatus,
+
+  // Audit Types
+  AgentAuditEvent,
+  AgentAuditEventType,
+} from "@libar-dev/platform-core/agent";
+
+export {
+  // Pattern Helpers
+  definePattern,
+  PatternTriggers,
+  parseDuration,
+  calculateWindowBoundary,
+  filterEventsInWindow,
+
+  // Checkpoint Helpers
+  createInitialAgentCheckpoint,
+  shouldProcessAgentEvent,
+  isAgentActive,
+
+  // Command Helpers
+  createEmittedAgentCommand,
+  createCommandFromDecision,
+
+  // Approval Helpers
+  shouldRequireApproval,
+  createPendingApproval,
+
+  // Audit Helpers
+  createAgentDecisionAudit,
+
+  // Init Helpers
+  createMockAgentRuntime,
+  createAgentEventHandler,
+  initializeAgentBC,
+} from "@libar-dev/platform-core/agent";
+
+// Re-export subscription helper from platform-bus
+export {
+  createAgentSubscription,
+  DEFAULT_AGENT_SUBSCRIPTION_PRIORITY,
+  type AgentEventHandlerArgs,
+  type AgentDefinitionForSubscription,
+  type CreateAgentSubscriptionOptions,
+} from "@libar-dev/platform-bus/agent-subscription";

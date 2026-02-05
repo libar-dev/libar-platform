@@ -15,8 +15,8 @@
 | -------------- | ----- |
 | Total Patterns | 61    |
 | Completed      | 52    |
-| Active         | 1     |
-| Planned        | 8     |
+| Active         | 2     |
+| Planned        | 7     |
 
 ---
 
@@ -42,7 +42,7 @@
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md) | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)              | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)     | 0/2      | 0%       |
-| 📋 [AgentAsBoundedContext](phases/phase-22-agent-as-bounded-context.md)      | 0/1      | 0%       |
+| 🚧 [AgentAsBoundedContext](phases/phase-22-agent-as-bounded-context.md)      | 0/1      | 0%       |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)   | 1/1      | 100%     |
 
 ---
@@ -248,13 +248,13 @@
 
 ---
 
-### 📋 AgentAsBoundedContext
+### 🚧 AgentAsBoundedContext
 
 [░░░░░░░░░░░░░░░] 0/1 0% complete
 
-| Pattern                     | Status  | Description                                                                                     |
-| --------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| 📋 Agent As Bounded Context | planned | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
+| Pattern                     | Status | Description                                                                                     |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| 🚧 Agent As Bounded Context | active | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
 
 ---
 

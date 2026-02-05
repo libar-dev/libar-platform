@@ -90,6 +90,10 @@
     "./dcb": {
       "types": "./dist/dcb/index.d.ts",
       "default": "./dist/dcb/index.js"
+    },
+    "./agent": {
+      "types": "./dist/agent/index.d.ts",
+      "default": "./dist/agent/index.js"
     }
   },
   "files": [
