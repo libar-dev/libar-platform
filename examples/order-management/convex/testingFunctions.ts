@@ -384,3 +384,131 @@ export const invokeOrderNotificationPMDirectly = mutation({
     });
   },
 });
+
+// ============================================================================
+// AGENT APPROVAL WORKFLOW TESTING
+// ============================================================================
+// Public wrappers for internal approval mutations.
+// Integration tests cannot call internal mutations directly via ConvexClient.
+// ============================================================================
+
+const recordPendingApprovalRef = makeFunctionReference<"mutation">(
+  "contexts/agent/tools/approval:recordPendingApproval"
+) as unknown as FunctionReference<"mutation", "internal">;
+
+const approveAgentActionRef = makeFunctionReference<"mutation">(
+  "contexts/agent/tools/approval:approveAgentAction"
+) as unknown as FunctionReference<"mutation", "internal">;
+
+const rejectAgentActionRef = makeFunctionReference<"mutation">(
+  "contexts/agent/tools/approval:rejectAgentAction"
+) as unknown as FunctionReference<"mutation", "internal">;
+
+const expirePendingApprovalsRef = makeFunctionReference<"mutation">(
+  "contexts/agent/tools/approval:expirePendingApprovals"
+) as unknown as FunctionReference<"mutation", "internal">;
+
+/**
+ * Record a pending approval for testing.
+ *
+ * This exposes the internal recordPendingApproval mutation for integration tests.
+ * Tests cannot call internal functions directly, so this wrapper is required.
+ */
+export const testRecordPendingApproval = mutation({
+  args: {
+    approvalId: v.string(),
+    agentId: v.string(),
+    decisionId: v.string(),
+    action: v.object({
+      type: v.string(),
+      payload: v.any(),
+    }),
+    confidence: v.number(),
+    reason: v.string(),
+    triggeringEventIds: v.array(v.string()),
+    expiresAt: v.number(),
+  },
+  returns: v.object({
+    approvalId: v.string(),
+    created: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    return await ctx.runMutation(recordPendingApprovalRef, args);
+  },
+});
+
+/**
+ * Approve an agent action for testing.
+ *
+ * This exposes the internal approveAgentAction mutation for integration tests.
+ */
+export const testApproveAgentAction = mutation({
+  args: {
+    approvalId: v.string(),
+    reviewerId: v.string(),
+    reviewNote: v.optional(v.string()),
+  },
+  returns: v.union(
+    v.object({
+      success: v.literal(true),
+      approvalId: v.string(),
+    }),
+    v.object({
+      success: v.literal(false),
+      error: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    return await ctx.runMutation(approveAgentActionRef, args);
+  },
+});
+
+/**
+ * Reject an agent action for testing.
+ *
+ * This exposes the internal rejectAgentAction mutation for integration tests.
+ */
+export const testRejectAgentAction = mutation({
+  args: {
+    approvalId: v.string(),
+    reviewerId: v.string(),
+    reviewNote: v.optional(v.string()),
+  },
+  returns: v.union(
+    v.object({
+      success: v.literal(true),
+      approvalId: v.string(),
+    }),
+    v.object({
+      success: v.literal(false),
+      error: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    return await ctx.runMutation(rejectAgentActionRef, args);
+  },
+});
+
+/**
+ * Expire pending approvals for testing.
+ *
+ * This exposes the internal expirePendingApprovals mutation for integration tests.
+ * Simulates the cron job that expires stale approvals.
+ */
+export const testExpirePendingApprovals = mutation({
+  args: {},
+  returns: v.object({
+    expiredCount: v.number(),
+  }),
+  handler: async (ctx) => {
+    ensureTestEnvironment();
+
+    return await ctx.runMutation(expirePendingApprovalsRef, {});
+  },
+});

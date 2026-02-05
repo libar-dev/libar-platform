@@ -12,9 +12,9 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
-import { api, internal } from "../../../convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 import { waitUntil, DEFAULT_TIMEOUT_MS } from "../../support/localBackendHelpers";
-import { testQuery, testInternalMutation } from "../../support/integrationHelpers";
+import { testQuery, testMutation } from "../../support/integrationHelpers";
 import { CHURN_RISK_AGENT_ID } from "../../../convex/contexts/agent/_config";
 
 // Extended timeout for integration tests (15 seconds)
@@ -46,9 +46,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = now + 24 * 60 * 60 * 1000; // 24 hours
 
       // Create a pending approval directly (simulating agent handler behavior)
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.recordPendingApproval,
+        api.testingFunctions.testRecordPendingApproval,
         {
           approvalId,
           agentId: CHURN_RISK_AGENT_ID,
@@ -88,9 +88,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create first approval
-      const result1 = await testInternalMutation(
+      const result1 = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.recordPendingApproval,
+        api.testingFunctions.testRecordPendingApproval,
         {
           approvalId,
           agentId: CHURN_RISK_AGENT_ID,
@@ -106,9 +106,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       expect(result1.created).toBe(true);
 
       // Try to create duplicate
-      const result2 = await testInternalMutation(
+      const result2 = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.recordPendingApproval,
+        api.testingFunctions.testRecordPendingApproval,
         {
           approvalId, // Same approvalId
           agentId: CHURN_RISK_AGENT_ID,
@@ -141,7 +141,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create pending approval
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId,
@@ -162,9 +162,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       expect(pendingApproval?.status).toBe("pending");
 
       // Approve the action
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.approveAgentAction,
+        api.testingFunctions.testApproveAgentAction,
         {
           approvalId,
           reviewerId,
@@ -216,26 +216,28 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create and approve
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      // Note: Must include at least one triggering event ID since approval
+      // emits a command which requires event IDs for traceability
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId,
         action: { type: "TestAction", payload: {} },
         confidence: 0.8,
         reason: "Test",
-        triggeringEventIds: [],
+        triggeringEventIds: ["evt_double_approval_test"],
         expiresAt,
       });
 
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.approveAgentAction, {
+      await testMutation(t, api.testingFunctions.testApproveAgentAction, {
         approvalId,
         reviewerId: "reviewer_1",
       });
 
       // Try to approve again
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.approveAgentAction,
+        api.testingFunctions.testApproveAgentAction,
         {
           approvalId,
           reviewerId: "reviewer_2",
@@ -255,7 +257,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create pending approval
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId,
@@ -270,9 +272,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Reject the action
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.rejectAgentAction,
+        api.testingFunctions.testRejectAgentAction,
         {
           approvalId,
           reviewerId,
@@ -312,26 +314,28 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create and approve
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      // Note: Must include at least one triggering event ID since approval
+      // emits a command which requires event IDs for traceability
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId,
         action: { type: "TestAction", payload: {} },
         confidence: 0.8,
         reason: "Test",
-        triggeringEventIds: [],
+        triggeringEventIds: ["evt_reject_approved_test"],
         expiresAt,
       });
 
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.approveAgentAction, {
+      await testMutation(t, api.testingFunctions.testApproveAgentAction, {
         approvalId,
         reviewerId: "reviewer_1",
       });
 
       // Try to reject
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.rejectAgentAction,
+        api.testingFunctions.testRejectAgentAction,
         {
           approvalId,
           reviewerId: "reviewer_2",
@@ -352,7 +356,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() - 1000; // 1 second ago
 
       // Create approval that's already expired
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId,
@@ -373,9 +377,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       expect(beforeExpire?.status).toBe("pending");
 
       // Run the expiration cron
-      const expireResult = await testInternalMutation(
+      const expireResult = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.expirePendingApprovals,
+        api.testingFunctions.testExpirePendingApprovals,
         {}
       );
 
@@ -408,7 +412,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() - 1000; // Already expired
 
       // Create expired approval
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId,
@@ -420,9 +424,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       // Try to approve (should fail due to expiration)
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.approveAgentAction,
+        api.testingFunctions.testApproveAgentAction,
         {
           approvalId,
           reviewerId: "reviewer_late",
@@ -441,7 +445,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create two pending approvals
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId: approvalId1,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId: generateDecisionId(),
@@ -452,7 +456,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
         expiresAt,
       });
 
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId: approvalId2,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId: generateDecisionId(),
@@ -481,18 +485,20 @@ describe("Agent Approval Workflow Integration Tests", () => {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       // Create and approve
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.recordPendingApproval, {
+      // Note: Must include at least one triggering event ID since approval
+      // emits a command which requires event IDs for traceability
+      await testMutation(t, api.testingFunctions.testRecordPendingApproval, {
         approvalId,
         agentId: CHURN_RISK_AGENT_ID,
         decisionId: generateDecisionId(),
         action: { type: "TestAction", payload: {} },
         confidence: 0.8,
         reason: "Test",
-        triggeringEventIds: [],
+        triggeringEventIds: ["evt_filter_status_test"],
         expiresAt,
       });
 
-      await testInternalMutation(t, internal.contexts.agent.tools.approval.approveAgentAction, {
+      await testMutation(t, api.testingFunctions.testApproveAgentAction, {
         approvalId,
         reviewerId: "reviewer_filter_test",
       });
@@ -510,9 +516,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
 
   describe("Error Handling", () => {
     it("should return error for non-existent approval", async () => {
-      const result = await testInternalMutation(
+      const result = await testMutation(
         t,
-        internal.contexts.agent.tools.approval.approveAgentAction,
+        api.testingFunctions.testApproveAgentAction,
         {
           approvalId: "apr_nonexistent_123",
           reviewerId: "reviewer_test",
