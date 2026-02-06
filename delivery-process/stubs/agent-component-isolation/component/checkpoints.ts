@@ -24,6 +24,7 @@
 
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { AGENT_AUDIT_EVENT_TYPES } from "./schema.js";
 
 // ============================================================================
 // Shared Validators
@@ -35,6 +36,10 @@ const checkpointStatusValidator = v.union(
   v.literal("stopped"),
   v.literal("error_recovery")
 );
+
+const auditEventTypeValidator = v.union(
+  ...AGENT_AUDIT_EVENT_TYPES.map((t) => v.literal(t))
+) as ReturnType<typeof v.union>;
 
 // ============================================================================
 // Mutations
@@ -155,6 +160,76 @@ export const patchConfigOverrides = mutation({
     //   }
     //   return { patchedCount: checkpoints.length };
     //
+    throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
+  },
+});
+
+/**
+ * Transition agent lifecycle: update all checkpoint statuses and record an
+ * audit event in a single component mutation.
+ *
+ * Combines the effect of `updateStatus` + `audit.record` into one component call,
+ * saving one component-boundary crossing (each crossing costs one mutation from
+ * the plan quota). Note: the parent mutation is already a single Convex transaction
+ * regardless of how many component calls it makes — this consolidation is a
+ * performance optimization, not an atomicity fix.
+ *
+ * Idempotency: if a lifecycle transition with the given `commandId` has already
+ * been applied (audit event exists for this commandId), returns early.
+ *
+ * Called by lifecycle command handlers (DS-5 review fix) instead of separate mutations.
+ *
+ * @example
+ * ```typescript
+ * await ctx.runMutation(components.agentBC.checkpoints.transitionLifecycle, {
+ *   commandId: "cmd_lifecycle_001",
+ *   agentId: "churn-risk-agent",
+ *   status: "paused",
+ *   auditEvent: {
+ *     eventType: "AgentPaused",
+ *     decisionId: "lifecycle_churn-risk-agent_1706140800000_a1b2",
+ *     timestamp: Date.now(),
+ *     payload: { reason: "maintenance", correlationId: "corr_xyz" },
+ *   },
+ * });
+ * ```
+ */
+export const transitionLifecycle = mutation({
+  args: {
+    commandId: v.string(),
+    agentId: v.string(),
+    status: checkpointStatusValidator,
+    auditEvent: v.object({
+      eventType: auditEventTypeValidator,
+      decisionId: v.string(),
+      timestamp: v.number(),
+      payload: v.any(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    // IMPLEMENTATION NOTE:
+    // 1. Idempotency: query agentAuditEvents by decisionId. If an audit event
+    //    with this decisionId already exists, return early (OCC retry scenario).
+    //    The commandId is stored in the audit payload for caller-level dedup.
+    //
+    // 2. Query all checkpoints by agentId (by_agentId index)
+    //
+    // 3. Update all checkpoint statuses:
+    //    for (const cp of checkpoints) {
+    //      await ctx.db.patch(cp._id, { status: args.status, updatedAt: Date.now() });
+    //    }
+    //
+    // 4. Insert audit event (same transaction):
+    //    await ctx.db.insert("agentAuditEvents", {
+    //      eventType: args.auditEvent.eventType,
+    //      agentId: args.agentId,
+    //      decisionId: args.auditEvent.decisionId,
+    //      timestamp: args.auditEvent.timestamp,
+    //      payload: args.auditEvent.payload,
+    //    });
+    //
+    // Consolidation benefit: one component-boundary crossing instead of two,
+    // saving one mutation from the plan quota per lifecycle command.
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
   },
 });

@@ -191,6 +191,8 @@ export interface AgentComponentAPI {
     readonly update: FunctionReference<"mutation">;
     /** Update checkpoint status (lifecycle transitions, DS-5) */
     readonly updateStatus: FunctionReference<"mutation">;
+    /** Combined lifecycle transition: update status + record audit in one component call (DS-5 review fix) */
+    readonly transitionLifecycle: FunctionReference<"mutation">;
     /** Patch checkpoint config overrides (ReconfigureAgent, DS-5) */
     readonly patchConfigOverrides: FunctionReference<"mutation">;
     /** Primary lookup by (agentId, subscriptionId) — O(1) via compound index */

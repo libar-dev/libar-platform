@@ -28,6 +28,8 @@ import type { AgentConfigOverrides } from "./checkpoint-status-extension.js";
 interface BaseLifecycleCommand {
   /** Lifecycle command type discriminant */
   readonly type: string;
+  /** Unique command ID for idempotency (caller-generated or auto-generated) */
+  readonly commandId: string;
   /** Target agent ID */
   readonly agentId: string;
   /** Correlation ID for tracing */
@@ -189,6 +191,7 @@ export const configOverridesValidator = v.object({
  * Convex validator for StartAgent args.
  */
 export const startAgentArgsValidator = v.object({
+  commandId: v.string(),
   agentId: v.string(),
   correlationId: v.string(),
 });
@@ -197,6 +200,7 @@ export const startAgentArgsValidator = v.object({
  * Convex validator for PauseAgent args.
  */
 export const pauseAgentArgsValidator = v.object({
+  commandId: v.string(),
   agentId: v.string(),
   correlationId: v.string(),
   reason: v.optional(v.string()),
@@ -206,6 +210,7 @@ export const pauseAgentArgsValidator = v.object({
  * Convex validator for ResumeAgent args.
  */
 export const resumeAgentArgsValidator = v.object({
+  commandId: v.string(),
   agentId: v.string(),
   correlationId: v.string(),
 });
@@ -214,6 +219,7 @@ export const resumeAgentArgsValidator = v.object({
  * Convex validator for StopAgent args.
  */
 export const stopAgentArgsValidator = v.object({
+  commandId: v.string(),
   agentId: v.string(),
   correlationId: v.string(),
   reason: v.optional(v.string()),
@@ -223,6 +229,7 @@ export const stopAgentArgsValidator = v.object({
  * Convex validator for ReconfigureAgent args.
  */
 export const reconfigureAgentArgsValidator = v.object({
+  commandId: v.string(),
   agentId: v.string(),
   correlationId: v.string(),
   configOverrides: configOverridesValidator,
