@@ -131,7 +131,7 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 ### DS-2: Action/Mutation Handler Architecture
 
-**Status: NOT STARTED**
+**Status: COMPLETE**
 **Source:** 22b core (Rule 1 + Rule 3)
 **Depends on:** DS-1
 
@@ -139,20 +139,51 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 - `createAgentActionHandler()` factory replacing current `createAgentEventHandler()`
 - Action -> onComplete flow: how action results (AgentDecision) flow to persistence mutation
-- State loading pattern: `runQuery` in action for checkpoint + event history
-- `onComplete` field addition to `CreateAgentSubscriptionOptions` (platform-bus change)
+- State loading pattern: `runQuery` in action for checkpoint + event history + injected data
+- EventSubscription as discriminated union (`MutationSubscription | ActionSubscription`)
+- Agent subscription factory extension for action handlers
 - LLM fallback strategy (graceful degradation to rules)
 - Error handling: action failure vs onComplete failure
+- Two-layer idempotency: action check (best-effort) + onComplete OCC check (correctness)
 
-**Key Design Decisions:**
+**Key Decisions (9 total):**
 
-| Decision                            | Why It Needs Design                                                                                                                                                    |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| EventStore access for event history | `loadHistory` queries EventStore (separate component) — not covered by PDR-010 argument injection. Options: extend injection, direct cross-component query, or hybrid. |
-| Factory API shape                   | Must work for both LLM-enabled and rule-only agents                                                                                                                    |
-| State loading                       | Actions can't use `ctx.db` -- need `runQuery` through component API                                                                                                    |
-| onComplete contract                 | What data flows from action -> onComplete? Full decision or just result?                                                                                               |
-| Retry semantics                     | Workpool retries actions but not mutations -- idempotency implications                                                                                                 |
+| AD   | Decision                                                       | Category     | PDR     |
+| ---- | -------------------------------------------------------------- | ------------ | ------- |
+| AD-1 | Unified action model (no dual mutation/action paths)           | architecture | PDR-011 |
+| AD-2 | EventSubscription as discriminated union with handlerType      | architecture | PDR-011 |
+| AD-3 | State loading via ctx.runQuery (not ctx.db)                    | architecture | —       |
+| AD-4 | Explicit injectedData in AgentExecutionContext                 | architecture | PDR-011 |
+| AD-5 | onComplete data contract: AgentActionResult + AgentWorkpoolCtx | design       | PDR-011 |
+| AD-6 | Two-layer idempotency (no partition ordering available)        | architecture | PDR-011 |
+| AD-7 | Persistence ordering: checkpoint updated LAST                  | design       | PDR-011 |
+| AD-8 | Two factory APIs: action handler + onComplete handler          | design       | PDR-011 |
+| AD-9 | AgentBCConfig.onEvent callback stays unchanged                 | design       | PDR-011 |
+
+**Deliverables:**
+
+| #   | Deliverable                     | Location                                                                       |
+| --- | ------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | Decision spec                   | `delivery-process/decisions/pdr-011-agent-action-handler-architecture.feature` |
+| 2   | Action handler factory stub     | `delivery-process/stubs/agent-action-handler/action-handler.ts`                |
+| 3   | onComplete handler factory stub | `delivery-process/stubs/agent-action-handler/oncomplete-handler.ts`            |
+| 4   | EventSubscription type stub     | `delivery-process/stubs/agent-action-handler/event-subscription-types.ts`      |
+| 5   | Agent subscription options stub | `delivery-process/stubs/agent-action-handler/agent-subscription.ts`            |
+
+**DS-1 Open Questions Resolved:**
+
+| Question                                                | Answer                                                                                                                                                                |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1: How does `createAgentEventHandler` adapt?           | Replaced by `createAgentActionHandler`. Returns internalAction, not internalMutation.                                                                                 |
+| Q2: How does agent access EventStore for event history? | Action uses `ctx.runQuery()` to app-level projection query handlers. The `customerCancellations` projection suffices for churn-risk. Full EventStore access deferred. |
+
+**Open Questions for Holistic Review:**
+
+1. DS-3: Rate limiter check point — inside action (before LLM) wastes Workpool slot when rate-limited. Consider rate-limit-then-enqueue at EventBus level?
+2. DS-4: How does `AgentBCConfig.onEvent` evolve into `PatternDefinition[]`? The `injectedData` addition needs to be compatible.
+3. DS-5: Lifecycle FSM pause/resume — paused agent should reject events in the action (fast return null), not just rely on checkpoint status check.
+4. DS-7: Admin UI needs the same app-level query handlers that actions use. Shared query layer opportunity.
+5. Future: When Workpool adds key-based ordering, update EventBus to pass `partitionKey.value` as `key`. This eliminates the concurrent-action concern entirely and makes the onComplete checkpoint check a pure defense-in-depth measure.
 
 ---
 
@@ -274,7 +305,7 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 | Session | Source Spec     | Deliverables | Rules | Design Weight | Status      |
 | ------- | --------------- | ------------ | ----- | ------------- | ----------- |
 | DS-1    | 22a             | 11           | 2     | Heavy         | Complete    |
-| DS-2    | 22b (core)      | 3            | 2     | Heavy         | Not started |
+| DS-2    | 22b (core)      | 5            | 3     | Heavy         | Complete    |
 | DS-3    | 22b (rest)      | 5            | 1     | Medium        | Not started |
 | DS-4    | 22c (Rules 1,3) | 6            | 2     | Medium        | Not started |
 | DS-5    | 22c (Rule 2)    | 5            | 1     | Medium        | Not started |

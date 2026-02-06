@@ -1,0 +1,346 @@
+/**
+ * Agent Action Handler Factory — DS-2 Stub
+ *
+ * Replaces `createAgentEventHandler` (init.ts) with an action-based handler
+ * that can call external APIs (LLM). All persistence happens in the onComplete
+ * mutation, not in the action.
+ *
+ * @target platform-core/src/agent/action-handler.ts
+ *
+ * ## Design Decisions
+ *
+ * - AD-1: Unified action model — all agents use actions, even rule-only ones
+ * - AD-4: Explicit injectedData separates projection data from event history
+ * - AD-8: Separate factory from onComplete handler
+ * - AD-9: AgentBCConfig.onEvent callback stays unchanged
+ *
+ * @see PDR-011 (Agent Action Handler Architecture)
+ * @see PDR-010 (Cross-Component Argument Injection)
+ * @since DS-2 (Action/Mutation Handler Architecture)
+ */
+
+// ============================================================================
+// State Loading Types
+// ============================================================================
+
+/**
+ * Callback type for loading agent state inside an action.
+ *
+ * Actions cannot use `ctx.db` — they must use `ctx.runQuery()` to load
+ * state from agent component and app-level projections.
+ *
+ * Each agent provides its own loadState implementation at the app level,
+ * giving it access to component APIs and app-level query handlers.
+ *
+ * @example
+ * ```typescript
+ * const loadState: AgentStateLoader = async (ctx, args) => {
+ *   // Load checkpoint from agent component
+ *   const checkpoint = await ctx.runQuery(
+ *     components.agent.checkpoints.getByAgentId,
+ *     { agentId: args.agentId }
+ *   );
+ *
+ *   // Load projection data from app-level query handler
+ *   const customerId = extractCustomerId(args);
+ *   const cancellations = await ctx.runQuery(
+ *     api.projections.customerCancellations.getByCustomerId,
+ *     { customerId }
+ *   );
+ *
+ *   return {
+ *     checkpoint,
+ *     eventHistory: cancellations.asEvents(),  // Or empty if using injectedData
+ *     injectedData: { customerCancellationHistory: cancellations },
+ *   };
+ * };
+ * ```
+ */
+export type AgentStateLoader = (
+  ctx: ActionCtx,
+  args: AgentEventHandlerArgs
+) => Promise<AgentActionState>;
+
+/**
+ * State loaded by the action for pattern detection.
+ *
+ * Replaces the mutation-era pattern of loading from `ctx.db` directly.
+ * The loadState callback populates this via `ctx.runQuery()` calls.
+ */
+export interface AgentActionState {
+  /**
+   * Agent checkpoint (position tracking).
+   * Null if this is the agent's first event.
+   */
+  readonly checkpoint: AgentCheckpoint | null;
+
+  /**
+   * Event history within the pattern window.
+   * Real PublishedEvents only — no projection data squeezed into event format.
+   *
+   * May be empty if the agent only uses injectedData (projection-based patterns).
+   */
+  readonly eventHistory: readonly PublishedEvent[];
+
+  /**
+   * Cross-component projection data loaded via ctx.runQuery.
+   * Type-erased at the platform level. Each agent casts to its specific type.
+   *
+   * This replaces the mutation-era pattern of forcing projection data into
+   * fake PublishedEvent format (see eventHandler.ts:364-394).
+   *
+   * @example
+   * ```typescript
+   * // In churn-risk agent's onEvent handler:
+   * const data = ctx.injectedData as ChurnRiskInjectedData;
+   * const cancellations = data.customerCancellationHistory;
+   * ```
+   */
+  readonly injectedData: Record<string, unknown>;
+}
+
+// ============================================================================
+// Action Result Types
+// ============================================================================
+
+/**
+ * Result returned by the agent action handler.
+ *
+ * This is the `returnValue` in Workpool's onComplete callback:
+ * `result: { kind: "success", returnValue: AgentActionResult }`
+ *
+ * The action returns the analysis result. All persistence happens
+ * in the onComplete mutation.
+ */
+export interface AgentActionResult {
+  /**
+   * Decision made by the agent, or null if no pattern detected.
+   * Uses the existing AgentDecision type from types.ts.
+   */
+  readonly decision: AgentDecision | null;
+
+  /**
+   * How the decision was reached.
+   *
+   * - "llm": LLM was called and produced the analysis
+   * - "rule-based": Pure rule-based analysis (no LLM configured or needed)
+   * - "rule-based-fallback": LLM was configured but unavailable, fell back to rules
+   */
+  readonly analysisMethod: "llm" | "rule-based" | "rule-based-fallback";
+
+  /**
+   * LLM call metrics for cost tracking and audit.
+   * Only present when analysisMethod is "llm".
+   */
+  readonly llmMetrics?: {
+    /** Model identifier (e.g., "anthropic/claude-sonnet-4-5-20250929") */
+    readonly model: string;
+    /** Total tokens consumed */
+    readonly tokens: number;
+    /** LLM call duration in milliseconds */
+    readonly durationMs: number;
+    /** @convex-dev/agent thread ID if thread-per-customer model used */
+    readonly threadId?: string;
+  };
+
+  /**
+   * Error message if analysis partially failed.
+   * Present when analysisMethod is "rule-based-fallback" to record the LLM error.
+   */
+  readonly error?: string;
+}
+
+// ============================================================================
+// Updated AgentExecutionContext (AD-4)
+// ============================================================================
+
+/**
+ * Context provided to the agent's onEvent handler.
+ *
+ * EVOLUTION from current AgentExecutionContext:
+ * - Added `injectedData` for cross-component projection data (AD-4)
+ * - `history` now contains ONLY real PublishedEvents (no fake projection data)
+ *
+ * The existing `agent`, `checkpoint`, and `config` fields are unchanged.
+ */
+export interface AgentExecutionContext {
+  /**
+   * Agent reasoning interface (integrates with @convex-dev/agent).
+   * Provides analyze() and reason() methods for LLM interaction.
+   */
+  readonly agent: AgentInterface;
+
+  /**
+   * Recent events within the pattern window.
+   * Contains ONLY real PublishedEvents from the event stream.
+   * No projection-derived fake events.
+   */
+  readonly history: readonly PublishedEvent[];
+
+  /**
+   * Current agent checkpoint state (read-only view).
+   */
+  readonly checkpoint: AgentCheckpointState;
+
+  /**
+   * Agent configuration (read-only).
+   */
+  readonly config: Readonly<AgentBCConfig>;
+
+  /**
+   * Cross-component projection data loaded by the action's loadState callback.
+   *
+   * Type-erased at the platform level. Each agent casts to its specific
+   * injected data type defined in its cross-bc-query.ts.
+   *
+   * @example
+   * ```typescript
+   * // In churn-risk onEvent handler:
+   * const { customerCancellationHistory } = ctx.injectedData as ChurnRiskInjectedData;
+   * ```
+   */
+  readonly injectedData: Record<string, unknown>;
+}
+
+// ============================================================================
+// Factory Configuration
+// ============================================================================
+
+/**
+ * Configuration for the agent action handler factory.
+ *
+ * The factory creates an internalAction that:
+ * 1. Calls loadState to get checkpoint + history + injectedData
+ * 2. Checks idempotency (best-effort, not atomic)
+ * 3. Creates AgentExecutionContext
+ * 4. Calls config.onEvent(event, context) — the user's pure handler
+ * 5. If LLM runtime provided and trigger fires, calls LLM analysis
+ * 6. Returns AgentActionResult (no persistence)
+ */
+export interface AgentActionHandlerConfig {
+  /**
+   * Agent BC configuration.
+   * Contains onEvent handler, subscriptions, patternWindow, etc.
+   * The onEvent signature is unchanged from the mutation era.
+   */
+  readonly agentConfig: AgentBCConfig;
+
+  /**
+   * LLM runtime for analysis.
+   * Optional — if not provided, agent uses pure rule-based analysis.
+   * If provided but unavailable at runtime, falls back to rules.
+   */
+  readonly runtime?: AgentRuntimeConfig;
+
+  /**
+   * State loading callback.
+   * Called inside the action to load checkpoint, history, and injected data.
+   * Uses ctx.runQuery() to access component APIs and app-level queries.
+   *
+   * Each agent provides its own implementation at the app level.
+   */
+  readonly loadState: AgentStateLoader;
+
+  /**
+   * Logger instance.
+   */
+  readonly logger?: Logger;
+}
+
+// ============================================================================
+// Factory Function
+// ============================================================================
+
+/**
+ * Create an agent action handler.
+ *
+ * Replaces `createAgentEventHandler` from init.ts.
+ * Returns an internalAction (not internalMutation).
+ *
+ * The action:
+ * 1. Loads state via the loadState callback (ctx.runQuery)
+ * 2. Checks idempotency via checkpoint position (best-effort)
+ * 3. Creates AgentExecutionContext with separated history + injectedData
+ * 4. Calls config.onEvent(event, context)
+ * 5. Optionally calls LLM for analysis
+ * 6. Returns AgentActionResult (decision + metadata)
+ *
+ * All persistence happens in the onComplete mutation (see oncomplete-handler.ts).
+ *
+ * @param config - Action handler configuration
+ * @returns An internalAction to be registered as a Convex action
+ *
+ * @example
+ * ```typescript
+ * // In convex/contexts/agent/handlers/analyzeEvent.ts
+ * export const analyzeEvent = createAgentActionHandler({
+ *   agentConfig: churnRiskAgentConfig,
+ *   runtime: createOpenRouterRuntime(apiKey),
+ *   loadState: async (ctx, args) => ({
+ *     checkpoint: await ctx.runQuery(
+ *       components.agent.checkpoints.getByAgentId,
+ *       { agentId: args.agentId }
+ *     ),
+ *     eventHistory: [],  // Using projection data instead
+ *     injectedData: {
+ *       customerCancellationHistory: await ctx.runQuery(
+ *         api.projections.customerCancellations.getByCustomerId,
+ *         { customerId: extractCustomerId(args) }
+ *       ),
+ *     },
+ *   }),
+ * });
+ * ```
+ */
+export function createAgentActionHandler(
+  _config: AgentActionHandlerConfig
+): void /* RegisteredAction<"internal", AgentEventHandlerArgs, AgentActionResult> */ {
+  // Stub: implementation deferred to coding session
+  // The actual function returns an internalAction definition.
+  //
+  // Internal flow:
+  // 1. const state = await config.loadState(ctx, args);
+  // 2. if (state.checkpoint && event.globalPosition <= state.checkpoint.lastProcessedPosition) return null;
+  // 3. const executionContext = buildContext(state, config);
+  // 4. const decision = await config.agentConfig.onEvent(event, executionContext);
+  // 5. if (decision && config.runtime) { /* optional LLM enrichment */ }
+  // 6. return { decision, analysisMethod, llmMetrics };
+}
+
+// ============================================================================
+// Type Aliases (referenced but defined elsewhere)
+// ============================================================================
+
+// These types are defined in their respective source files.
+// Listed here for stub completeness — not redefined.
+//
+// From platform-core/src/agent/types.ts:
+//   - AgentBCConfig
+//   - AgentDecision
+//   - AgentCheckpoint
+//   - AgentCheckpointState
+//   - AgentInterface
+//   - AgentRuntimeConfig
+//
+// From platform-core/src/eventbus/types.ts:
+//   - PublishedEvent
+//
+// From platform-bus/src/agent-subscription.ts:
+//   - AgentEventHandlerArgs
+//
+// From platform-core/src/logging/types.ts:
+//   - Logger
+//
+// Convex server types:
+//   - ActionCtx (from convex/server)
+
+type ActionCtx = unknown; // Placeholder for Convex ActionCtx
+type AgentBCConfig = unknown;
+type AgentDecision = unknown;
+type AgentCheckpoint = unknown;
+type AgentCheckpointState = unknown;
+type AgentInterface = unknown;
+type AgentRuntimeConfig = unknown;
+type PublishedEvent = unknown;
+type AgentEventHandlerArgs = unknown;
+type Logger = unknown;
