@@ -47,7 +47,7 @@ Feature: PDR-011 Agent Action Handler Architecture
     | AD-1 | Unified action model (no dual mutation/action paths) | Single code path. Rule-only agents skip LLM but use same action-onComplete flow |
     | AD-4 | Explicit injectedData in AgentExecutionContext | Separates projection data from event history. No more fake PublishedEvents from projections |
     | AD-5 | onComplete data contract: action returns AgentActionResult, context carries event metadata | Clean separation. onComplete has everything needed for persistence |
-    | AD-7 | Persistence ordering: audit, command, approval, checkpoint LAST | Partial failure leaves checkpoint un-advanced, event replayed safely |
+    | AD-7 | Persistence ordering: checkpoint read FIRST, updated LAST | Read-first ensures checkpoint enters OCC read set early, maximizing conflict detection window. Write ordering within a single atomic mutation is a code readability convention, not a failure recovery mechanism |
     | AD-8 | Two factory APIs: createAgentActionHandler + createAgentOnCompleteHandler | onComplete is generic and reusable across agents. Action is agent-specific |
     | AD-9 | AgentBCConfig.onEvent callback stays unchanged | Infrastructure changes around it. DS-4 may evolve to PatternDefinition API |
 
@@ -265,9 +265,11 @@ Feature: PDR-011 Agent Action Handler Architecture
     are OCC-serialized by Convex. The second mutation retries and sees the
     checkpoint already advanced past its event. It skips persistence.
 
-    The checkpoint-LAST ordering (AD-7) ensures that if onComplete fails after
-    recording audit but before updating checkpoint, the event replays and
-    the idempotent audit recording is safe.
+    The checkpoint read-FIRST ordering (AD-7) ensures the checkpoint document
+    enters the OCC read set early, maximizing the conflict detection window
+    for concurrent onComplete mutations. Within a single atomic Convex mutation,
+    all writes commit or none do — there is no "partial failure" scenario.
+    The idempotent audit recording is a defense-in-depth measure for OCC retries.
 
     Partition Ordering Future:
     """

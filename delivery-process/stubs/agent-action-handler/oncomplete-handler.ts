@@ -150,10 +150,16 @@ export interface AgentOnCompleteArgs {
  * - deadLetters.ts: record
  */
 export interface AgentComponentAPI {
-  /** Checkpoint API — ctx.runMutation(components.agent.checkpoints.*) */
+  /** Checkpoint API — ctx.runQuery/runMutation(components.agent.checkpoints.*) */
   readonly checkpoints: {
+    /** Primary lookup by (agentId, subscriptionId) — O(1) via compound index */
+    readonly getByAgentAndSubscription: FunctionRef;
+    /** Admin/monitoring queries — returns all checkpoints for an agent */
     readonly getByAgentId: FunctionRef;
+    /** Advance checkpoint position after successful processing */
     readonly update: FunctionRef;
+    /** Idempotent load-or-create for first-event handling */
+    readonly loadOrCreate: FunctionRef;
   };
 
   /** Audit API — ctx.runMutation(components.agent.audit.*) */
@@ -233,7 +239,12 @@ export interface AgentDeadLetterInput {
  *
  * Returns an internalMutation for Workpool's onComplete callback.
  *
- * Persistence order (AD-7 — checkpoint LAST):
+ * ⚠️  NO-THROW ZONE: If the onComplete mutation throws a non-OCC error, it rolls
+ * back silently. The Workpool considers the work "done" — no re-dispatch occurs.
+ * Every operation MUST be wrapped in try-catch. Failures must be logged and
+ * dead-lettered, never thrown. See: Finding C in DS-1/DS-2 review.
+ *
+ * Persistence order (AD-7 — checkpoint read FIRST, updated LAST):
  * 1. On success:
  *    a. Record audit event via agent component (idempotent by decisionId)
  *    b. Record command if decision includes one (idempotent by decisionId)
@@ -261,8 +272,10 @@ export interface AgentDeadLetterInput {
  * export const onAgentComplete = createAgentOnCompleteHandler({
  *   agentComponent: {
  *     checkpoints: {
+ *       getByAgentAndSubscription: components.agent.checkpoints.getByAgentAndSubscription,
  *       getByAgentId: components.agent.checkpoints.getByAgentId,
  *       update: components.agent.checkpoints.update,
+ *       loadOrCreate: components.agent.checkpoints.loadOrCreate,
  *     },
  *     audit: { record: components.agent.audit.record },
  *     commands: { record: components.agent.commands.record },
@@ -277,20 +290,42 @@ export function createAgentOnCompleteHandler(
 ): void /* RegisteredMutation<"internal", AgentOnCompleteArgs, void> */ {
   // Stub: implementation deferred to coding session
   //
+  // ⚠️  NO-THROW ZONE: Every operation in onComplete MUST be wrapped in try-catch.
+  // If the onComplete mutation throws a non-OCC error, it rolls back silently.
+  // The Workpool considers the work "done" — no re-dispatch occurs.
+  // Failures must be logged and dead-lettered, never thrown.
+  //
   // Internal flow:
   // 1. const { context, result } = args;
-  // 2. // Idempotency check (AD-6)
-  //    const checkpoint = await ctx.runQuery(component.checkpoints.getByAgentId, ...);
-  //    if (checkpoint && checkpoint.lastProcessedPosition >= context.globalPosition) return;
+  //
+  // 2. // Idempotency check (AD-6) — use loadOrCreate for first-event handling
+  //    // loadOrCreate is idempotent: returns existing checkpoint or creates one.
+  //    // Using a mutation (not query) means the checkpoint enters the OCC write set
+  //    // immediately, which is correct since we always want to update it.
+  //    const { checkpoint } = await ctx.runMutation(
+  //      component.checkpoints.loadOrCreate,
+  //      { agentId: context.agentId, subscriptionId: context.subscriptionId }
+  //    );
+  //    if (checkpoint.lastProcessedPosition >= context.globalPosition) return;
+  //
   // 3. if (result.kind === "failed") { recordDeadLetter(); return; }
   //    if (result.kind === "canceled") { return; }
-  // 4. const { decision, analysisMethod, llmMetrics } = result.returnValue;
+  //
+  // 4. const { decisionId, decision, analysisMethod, llmMetrics } = result.returnValue;
+  //
   // 5. if (decision) {
-  //      await ctx.runMutation(component.audit.record, { ... });
-  //      if (decision.command) await ctx.runMutation(component.commands.record, { ... });
-  //      if (decision.requiresApproval) await ctx.runMutation(component.approvals.create, { ... });
+  //      await ctx.runMutation(component.audit.record, { decisionId, ... });
+  //      if (decision.command) await ctx.runMutation(component.commands.record, { decisionId, ... });
+  //      if (decision.requiresApproval) await ctx.runMutation(component.approvals.create, { decisionId, ... });
   //    }
-  // 6. await ctx.runMutation(component.checkpoints.update, { ... }); // LAST
+  //
+  // 6. await ctx.runMutation(component.checkpoints.update, {
+  //      agentId: context.agentId,
+  //      subscriptionId: context.subscriptionId,
+  //      lastProcessedPosition: context.globalPosition,
+  //      lastEventId: context.eventId,
+  //      incrementEventsProcessed: true,
+  //    }); // LAST — ensures OCC conflict detection window is maximized
 }
 
 // ============================================================================
@@ -298,6 +333,14 @@ export function createAgentOnCompleteHandler(
 // ============================================================================
 
 type AgentActionResult = import("./action-handler.js").AgentActionResult;
-type FunctionRef = unknown; // Placeholder for Convex FunctionReference
+// Placeholder for Convex FunctionReference.
+// IMPLEMENTATION NOTE: At implementation time, replace with properly typed refs:
+//   readonly getByAgentAndSubscription: FunctionReference<"query", "internal">;
+//   readonly update: FunctionReference<"mutation", "internal">;
+//   readonly loadOrCreate: FunctionReference<"mutation", "internal">;
+//   readonly record: FunctionReference<"mutation", "internal">;
+//   readonly create: FunctionReference<"mutation", "internal">;
+// This prevents mis-assigning refs (e.g., audit.record in checkpoints.update slot).
+type FunctionRef = unknown;
 type MutationCtx = unknown; // Placeholder for Convex MutationCtx
 type Logger = unknown;

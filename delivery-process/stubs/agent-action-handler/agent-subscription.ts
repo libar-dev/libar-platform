@@ -277,60 +277,20 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
 }
 
 // ============================================================================
-// Batch Factory Extension
+// Batch Factory Extension — DEFERRED
 // ============================================================================
 
-/**
- * Create multiple agent ACTION subscriptions from an array of definitions.
- *
- * Action variant of the existing `createAgentSubscriptions` batch factory.
- *
- * @param definitions - Array of agent definitions
- * @param handlerMap - Map of agent IDs to { actionHandler, onComplete } pairs
- * @param options - Common options for all subscriptions
- * @returns Array of ActionSubscriptions
- *
- * @example
- * ```typescript
- * const subscriptions = createAgentActionSubscriptions(
- *   [churnRiskAgent, sentimentAnalysisAgent],
- *   {
- *     "churn-risk-agent": {
- *       actionHandler: internal.agents.churnRisk.analyzeEvent,
- *       onComplete: internal.agents.churnRisk.onComplete,
- *     },
- *     "sentiment-agent": {
- *       actionHandler: internal.agents.sentiment.analyzeEvent,
- *       onComplete: internal.agents.sentiment.onComplete,
- *     },
- *   },
- *   { retry: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 } },
- * );
- * ```
- */
-export function createAgentActionSubscriptions<
-  THandlerArgs extends UnknownRecord = AgentEventHandlerArgs,
->(
-  _definitions: readonly AgentDefinitionForSubscription[],
-  _handlerMap: Record<
-    string,
-    {
-      actionHandler: FunctionReference<"action", FunctionVisibility, THandlerArgs, unknown>;
-      onComplete: FunctionReference<
-        "mutation",
-        FunctionVisibility,
-        WorkpoolOnCompleteArgs,
-        unknown
-      >;
-    }
-  >,
-  _options?: Omit<
-    CreateAgentActionSubscriptionOptions<THandlerArgs>,
-    "actionHandler" | "onComplete"
-  >
-): void /* ActionSubscription<THandlerArgs>[] */ {
-  // Stub: implementation deferred to coding session
-}
+// NOTE: Batch factory `createAgentActionSubscriptions` deferred until
+// multi-agent support is needed. Only one agent (churn-risk) exists today.
+// The single-subscription factory above is sufficient. Adding the batch
+// factory prematurely would introduce untested abstraction overhead.
+//
+// When a second agent is added, implement:
+//   function createAgentActionSubscriptions<THandlerArgs>(
+//     definitions: AgentDefinitionForSubscription[],
+//     handlerMap: Record<string, { actionHandler, onComplete }>,
+//     options?: CommonOptions,
+//   ): ActionSubscription<THandlerArgs>[]
 
 // ============================================================================
 // Type Aliases (referenced but defined elsewhere)

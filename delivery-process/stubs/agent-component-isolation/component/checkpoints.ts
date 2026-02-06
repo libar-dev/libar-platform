@@ -32,7 +32,8 @@ import { v } from "convex/values";
 const checkpointStatusValidator = v.union(
   v.literal("active"),
   v.literal("paused"),
-  v.literal("stopped")
+  v.literal("stopped"),
+  v.literal("error_recovery")
 );
 
 // ============================================================================
@@ -121,9 +122,38 @@ export const updateStatus = mutation({
 // ============================================================================
 
 /**
+ * Get checkpoint by (agentId, subscriptionId) pair.
+ *
+ * Primary lookup for onComplete handlers. An agent may have multiple
+ * subscriptions (e.g., one per event type group), so `getByAgentId` alone
+ * is insufficient — it returns the wrong checkpoint if multiple exist.
+ *
+ * Uses the `by_agentId_subscriptionId` compound index for O(1) lookup.
+ *
+ * @example
+ * ```typescript
+ * const checkpoint = await ctx.runQuery(
+ *   components.agent.checkpoints.getByAgentAndSubscription,
+ *   { agentId: "churn-risk-agent", subscriptionId: "sub_churn_001" }
+ * );
+ * ```
+ */
+export const getByAgentAndSubscription = query({
+  args: {
+    agentId: v.string(),
+    subscriptionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
+  },
+});
+
+/**
  * Get checkpoint by agent ID.
  *
  * Returns the current checkpoint state for monitoring and debugging.
+ * For onComplete handlers, prefer `getByAgentAndSubscription` which
+ * uses the compound index for exact lookup.
  *
  * @example
  * ```typescript
@@ -155,7 +185,9 @@ export const getByAgentId = query({
  * ```
  */
 export const listActive = query({
-  args: {},
+  args: {
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx) => {
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
   },

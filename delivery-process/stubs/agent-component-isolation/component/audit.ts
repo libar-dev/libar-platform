@@ -69,6 +69,19 @@ export const record = mutation({
     payload: v.any(),
   },
   handler: async (ctx, args) => {
+    // IMPLEMENTATION NOTE: Idempotency check by decisionId + eventType.
+    //
+    // PDR-011 Rule 3 states: "The audit record operation is idempotent via decisionId."
+    // The `by_decisionId` index (schema.ts:90) supports this. On OCC retry of the
+    // onComplete mutation, this handler may be called again for the same decision.
+    // The idempotency check prevents duplicate audit events:
+    //
+    //   const existing = await ctx.db
+    //     .query("agentAuditEvents")
+    //     .withIndex("by_decisionId", q => q.eq("decisionId", args.decisionId))
+    //     .first();
+    //   if (existing && existing.eventType === args.eventType) return;
+    //
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
   },
 });

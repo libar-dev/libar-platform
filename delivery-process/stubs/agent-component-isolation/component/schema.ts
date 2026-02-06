@@ -40,8 +40,13 @@ export default defineSchema({
     /** Last processed event ID */
     lastEventId: v.string(),
 
-    /** Checkpoint status: active, paused, stopped */
-    status: v.union(v.literal("active"), v.literal("paused"), v.literal("stopped")),
+    /** Checkpoint status: active, paused, stopped, error_recovery (DS-5 FSM) */
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("stopped"),
+      v.literal("error_recovery")
+    ),
 
     /** Total events processed by this agent */
     eventsProcessed: v.number(),

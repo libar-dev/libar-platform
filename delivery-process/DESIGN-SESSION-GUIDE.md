@@ -8,9 +8,30 @@
 
 ---
 
+## Source Spec Reference
+
+Plan-level specs that drive each design session. Include the relevant spec(s) as context
+when starting a session.
+
+| Phase | Pattern                    | Spec File                                               | Product Area |
+| ----- | -------------------------- | ------------------------------------------------------- | ------------ |
+| 22    | AgentAsBoundedContext      | `specs/platform/agent-as-bounded-context.feature`       | Platform     |
+| 22a   | AgentBCComponentIsolation  | `specs/platform/agent-bc-component-isolation.feature`   | Platform     |
+| 22b   | AgentLLMIntegration        | `specs/platform/agent-llm-integration.feature`          | Platform     |
+| 22c   | AgentCommandInfrastructure | `specs/platform/agent-command-infrastructure.feature`   | Platform     |
+| 22d   | AgentChurnRiskCompletion   | `specs/example-app/agent-churn-risk-completion.feature` | ExampleApp   |
+| 22e   | AgentAdminFrontend         | `specs/example-app/agent-admin-frontend.feature`        | ExampleApp   |
+
+**Two-layer relationship:** Platform specs (22a-22c) define infrastructure capabilities.
+Example app specs (22d-22e) consume those capabilities and serve as outside-in validation
+for platform design sessions.
+
+---
+
 ## Design Session Prompt Template
 
-Use this prompt to start each design session. Replace `**DS-X**` with the session number.
+Use this prompt to start each design session. Replace `**DS-X**` with the session number
+and include the source spec(s) listed in the DS-X section.
 
 ---
 
@@ -25,6 +46,16 @@ For this session we should do **DS-X**.
 @deps-packages/delivery-process/docs/METHODOLOGY.md
 @deps-packages/delivery-process/docs/SESSION-GUIDES.md
 
+## Source Specs (from DS-X section in DESIGN-SESSION-GUIDE.md)
+
+Include the plan-level spec for this DS session:
+@libar-platform/delivery-process/specs/...  (see Source Spec Reference table)
+
+For platform DS sessions (DS-2 through DS-5), also include consumer specs
+for outside-in validation:
+@libar-platform/delivery-process/specs/example-app/agent-churn-risk-completion.feature
+@libar-platform/delivery-process/specs/example-app/agent-admin-frontend.feature
+
 ## Critical Reminders
 
 1. This is NOT an implementation session. Once we do all design sessions we will do
@@ -35,6 +66,8 @@ For this session we should do **DS-X**.
    indicating real destination. Never directly in package source.
 4. Open questions section: note interactions with other DS sessions.
    These get resolved during holistic review.
+5. Check consumer specs (22d, 22e) for requirements that validate your design.
+   Note API gaps or mismatches as open questions for holistic review.
 ```
 
 ---
@@ -78,6 +111,7 @@ DS-5 (Lifecycle) and DS-7 (Frontend) are off the critical path.
 
 **Status: COMPLETE**
 **Source:** 22a (full spec)
+**Spec:** `specs/platform/agent-bc-component-isolation.feature`
 
 **Scope:**
 
@@ -133,6 +167,7 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Status: COMPLETE**
 **Source:** 22b core (Rule 1 + Rule 3)
+**Spec:** `specs/platform/agent-llm-integration.feature` Rules 1, 3
 **Depends on:** DS-1
 
 **Scope:**
@@ -191,8 +226,15 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Status: NOT STARTED**
 **Source:** 22b (Rule 2 + remaining deliverables)
+**Spec:** `specs/platform/agent-llm-integration.feature` Rule 2
 **Depends on:** DS-2
 **Can parallel with:** DS-4, DS-5
+
+**Consumer validation:**
+
+- 22d Rule 1: Hybrid LLM flow — fallback to rules validates circuit breaker design
+- 22d Rule 1 S3: "LLM unavailable falls back to rule-based confidence" — validates degradation path
+- 22d Rule 1 S4: Confidence threshold 0.8 is config-driven — validates cost budget doesn't break threshold logic
 
 **Scope:**
 
@@ -201,6 +243,20 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 - Rate limiter integration (`@convex-dev/rate-limiter` token bucket per agent)
 - Cost budget tracking: daily USD limit with auto-pause
 - Circuit breaker for LLM outages
+
+**Critical Constraint (from DS-1/DS-2 review):**
+
+`rateLimiter.limit()` runs in mutations only. Agent handlers are actions. Actions cannot
+call mutations atomically — `ctx.runMutation()` from an action is a separate transaction.
+DS-3 must use the **reservation pattern** (`reserve: true`) to atomically check AND reserve
+capacity in a single mutation call before enqueueing the action:
+
+```typescript
+const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
+  count: numTokens,
+  reserve: true,
+});
+```
 
 **Key Design Decisions:**
 
@@ -217,8 +273,17 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Status: NOT STARTED**
 **Source:** 22c (Rules 1, 3)
+**Spec:** `specs/platform/agent-command-infrastructure.feature` Rules 1, 3
 **Depends on:** DS-2
 **Can parallel with:** DS-3, DS-5
+
+**Consumer validation:**
+
+- 22d Rule 3: SuggestCustomerOutreach is the first concrete command needing routing
+- 22d Rule 3 S1: "CommandOrchestrator processes the command" — validates command bridge design
+- 22d Rule 3 S3: "handler throws → dead letter" — validates failure-to-dead-letter flow
+- **API gap (command bridge):** Commands recorded inside agent component must reach app-level
+  CommandOrchestrator. Design the onComplete → orchestrator bridge explicitly.
 
 **Scope:**
 
@@ -242,9 +307,15 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Status: NOT STARTED**
 **Source:** 22c (Rule 2)
+**Spec:** `specs/platform/agent-command-infrastructure.feature` Rule 2
 **Depends on:** DS-1, DS-2
 **Can parallel with:** DS-3, DS-4
 **Off critical path** -- agent works without pause/resume
+
+**Consumer validation:**
+
+- 22d Rule 2: Approval expiration cron — open question: does pausing an agent affect its pending approvals?
+- 22e Rule 1: Dead letter panel — paused agent may still have dead letters that need management
 
 **Scope:**
 
@@ -267,8 +338,16 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Status: NOT STARTED**
 **Source:** 22d (full spec)
+**Spec:** `specs/example-app/agent-churn-risk-completion.feature`
 **Depends on:** DS-1, DS-2, DS-3, DS-4
 **Can parallel with:** DS-7
+
+**Consumes platform APIs from:**
+
+- DS-1: `components.agent.*` for checkpoints, audit, commands, approvals, dead letters
+- DS-2: `createAgentActionHandler` + `createAgentOnCompleteHandler` factories
+- DS-3: LLM thread adapter, rate limiter, circuit breaker
+- DS-4: CommandOrchestrator integration, PatternDefinition API
 
 **Scope:**
 
@@ -286,9 +365,23 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Status: NOT STARTED**
 **Source:** 22e (full spec)
+**Spec:** `specs/example-app/agent-admin-frontend.feature`
 **Depends on:** DS-1 (component API shape for hooks)
 **Can parallel with:** DS-6
 **Off critical path**
+
+**Consumes platform APIs from:**
+
+- DS-1: `components.agent.deadLetters.*`, `components.agent.audit.*`, `components.agent.approvals.*`
+
+**Known API gaps (from consumer spec analysis):**
+
+- Audit query lacks `actionType` top-level field for decision history filtering by command type
+  (22e Rule 2 S2: "filter by SuggestCustomerOutreach"). Currently buried in `payload`.
+- Audit query lacks `fromTimestamp`/`toTimestamp` args for time range filtering
+  (22e Rule 2: `?from=2026-01-01&to=2026-02-01`). Index `by_agentId_timestamp` supports it
+  but query API doesn't expose it.
+- Both are minor schema/API extensions — design during this session or holistic review.
 
 **Scope:**
 
@@ -323,3 +416,8 @@ After all design sessions complete, review across all DS sessions:
 - [ ] TS2589 strategy covers all new references
 - [ ] Decision specs created for lasting architectural choices
 - [ ] Stubs reviewed for completeness before implementation
+- [ ] Consumer spec validation: platform APIs satisfy 22d/22e requirements
+- [ ] API gap: audit `actionType` field for decision history filtering (DS-7)
+- [ ] API gap: audit `fromTimestamp`/`toTimestamp` for time range queries (DS-7)
+- [ ] API gap: command bridge from agent component to CommandOrchestrator (DS-4)
+- [ ] 22d deliverable location: "Agent component migration" location correction

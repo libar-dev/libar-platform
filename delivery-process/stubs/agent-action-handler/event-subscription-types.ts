@@ -179,6 +179,40 @@ export interface ActionSubscription<
    * Agent-specific recommendation: 3 attempts, 1000ms initial, base 2.
    */
   readonly retry?: RetryBehavior;
+
+  /**
+   * Transform event + subscription metadata into Workpool context.
+   *
+   * Called by EventBus when dispatching to construct the context object
+   * passed through Workpool to the onComplete handler. This keeps EventBus
+   * generic — the agent subscription factory defines the context shape,
+   * not EventBus.
+   *
+   * Required for action subscriptions. Mutation subscriptions use the
+   * default EventBus context shape (subscriptionName, eventId, eventType,
+   * partition, correlationId, causationId).
+   *
+   * @example
+   * ```typescript
+   * toWorkpoolContext: (event, chain, subscriptionName) => ({
+   *   agentId: extractAgentId(subscriptionName),
+   *   subscriptionId: subscriptionName,
+   *   eventId: event.eventId,
+   *   eventType: event.eventType,
+   *   globalPosition: event.globalPosition,
+   *   correlationId: chain.correlationId,
+   *   causationId: event.eventId,
+   *   streamId: event.streamId,
+   *   streamType: event.streamType,
+   *   boundedContext: event.boundedContext,
+   * })
+   * ```
+   */
+  readonly toWorkpoolContext: (
+    event: PublishedEvent,
+    chain: CorrelationChain,
+    subscriptionName: string
+  ) => Record<string, unknown>;
 }
 
 // ============================================================================
@@ -195,9 +229,11 @@ export interface ActionSubscription<
  * ConvexEventBus narrows via:
  * ```typescript
  * if (subscription.handlerType === "action") {
+ *   const context = subscription.toWorkpoolContext(event, chain, subscription.name);
  *   await workpool.enqueueAction(ctx, subscription.handler, args, {
  *     onComplete: subscription.onComplete,
  *     retry: subscription.retry,
+ *     context,
  *   });
  * } else {
  *   await workpool.enqueueMutation(ctx, subscription.handler, args, {
