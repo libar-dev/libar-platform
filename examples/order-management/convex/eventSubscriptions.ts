@@ -1,32 +1,16 @@
 /**
- * EventBus subscription definitions.
+ * @libar-docs
+ * @libar-docs-pattern EventSubscriptionRegistry
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-uses OrderNotificationPM, ReservationReleasePM, AgentAsBoundedContext
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * This file defines event subscriptions for the pub/sub event delivery model.
- * Includes:
- * - Process Manager subscriptions (event → command flows)
- * - Audit logging subscriptions (when added)
- * - Cross-context event listeners
- *
- * NOTE: Do NOT duplicate projections that are already triggered via CommandConfig,
- * as that would cause double delivery of the same event.
- *
- * **Import patterns:**
- * - Use `internal.xxx` for project-level handlers (e.g., audit, analytics, PMs)
- * - Use `components.xxx` for calling Convex component functions from handlers
- *
- * @example Adding a subscription:
- * ```typescript
- * registry
- *   .subscribe("auditLog.onAnyEvent", internal.audit.logEvent)
- *   .forCategories("domain")
- *   .withTransform((event, chain) => ({
- *     eventId: event.eventId,
- *     eventType: event.eventType,
- *     timestamp: event.timestamp,
- *     correlationId: chain.correlationId,
- *   }))
- *   .build();
- * ```
+ * EventBus pub/sub subscription definitions.
+ * PM subscriptions (priority 200) + Agent subscriptions (priority 250).
+ * NOTE: Projections via CommandConfig are NOT duplicated here.
  */
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";

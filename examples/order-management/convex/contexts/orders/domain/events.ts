@@ -1,15 +1,15 @@
 /**
- * Order domain events.
+ * @libar-docs
+ * @libar-docs-pattern OrderDomainEvents
+ * @libar-docs-status completed
+ * @libar-docs-event-sourcing
+ * @libar-docs-arch-role bounded-context
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer domain
+ * @libar-docs-used-by OrderCommandHandlers, OrderSummaryProjection, OrderFulfillmentSaga, OrderNotificationPM, ReservationReleasePM
  *
- * All events use createDomainEventSchema which adds:
- * - category: "domain" (event taxonomy)
- * - schemaVersion: explicit versioning for upcasting support
- *
- * ## Schema Versioning
- *
- * - V1: Original schemas (OrderCreated, OrderSubmitted, etc.)
- * - V2: OrderSubmitted enriched with CustomerSnapshot (Fat Events pattern)
- *
+ * Orders BC domain events (6 types, 2 schema versions).
+ * V1: Original schemas. V2: OrderSubmitted with CustomerSnapshot (Fat Events).
  * Use upcasters to migrate V1 events to V2 at read time.
  */
 import { z } from "zod";

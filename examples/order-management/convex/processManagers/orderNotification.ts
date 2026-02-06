@@ -1,18 +1,17 @@
 /**
- * Order Notification Process Manager
+ * @libar-docs
+ * @libar-docs-pattern OrderNotificationPM
+ * @libar-docs-status completed
+ * @libar-docs-saga
+ * @libar-docs-arch-role process-manager
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses OrderCommandHandlers
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Demonstrates the PM pattern: event → command emission.
- * When OrderConfirmed event is received, emits SendNotification command
- * to notify the customer their order has been confirmed.
- *
- * Unlike Sagas (multi-step with compensation), Process Managers are
- * fire-and-forget coordinators that react to events and emit commands.
- *
- * Architecture:
- * 1. EventBus delivers OrderConfirmed to this PM via subscription
- * 2. PM handler creates SendNotification command
- * 3. Command is emitted via Workpool for durability
- * 4. PM state tracks last processed globalPosition for idempotency
+ * Process manager: OrderConfirmed -> SendNotification command.
+ * Fire-and-forget coordinator (no compensation, unlike Sagas).
+ * Subscribed via EventBus at PM priority (200).
  *
  * @see ADR-033 for Process Manager vs Saga distinction
  */

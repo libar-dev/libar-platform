@@ -1,18 +1,16 @@
 /**
- * Order aggregate decider functions.
+ * @libar-docs
+ * @libar-docs-pattern OrderDeciders
+ * @libar-docs-status completed
+ * @libar-docs-decider
+ * @libar-docs-arch-role decider
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer domain
+ * @libar-docs-used-by OrderCommandHandlers
  *
- * Pure functions that encapsulate domain decision logic.
+ * Pure decision functions for Order aggregate.
  * Each decider validates invariants and produces events.
- *
- * @example
- * ```typescript
- * import { decideSubmitOrder } from "./deciders";
- *
- * const result = decideSubmitOrder(orderCMS, { orderId: "ord_123" }, context);
- * if (result.status === "success") {
- *   // proceed with event emission
- * }
- * ```
+ * No I/O, no ctx — pure functions only.
  */
 
 // Types

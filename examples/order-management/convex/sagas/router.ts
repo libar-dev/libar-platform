@@ -1,8 +1,14 @@
 /**
- * Event routing for saga triggering.
+ * @libar-docs
+ * @libar-docs-pattern SagaRouter
+ * @libar-docs-status completed
+ * @libar-docs-saga
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-uses OrderFulfillmentSaga
  *
- * Routes domain events to appropriate saga workflows.
- * Called after event append to determine if a saga should be started.
+ * Routes domain events to saga workflows.
+ * Currently: OrderSubmitted -> OrderFulfillment saga (idempotent start).
  */
 
 import { internalMutation } from "../_generated/server";

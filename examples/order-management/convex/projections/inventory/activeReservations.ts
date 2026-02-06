@@ -1,12 +1,16 @@
 /**
- * ActiveReservations projection handlers (app-level).
+ * @libar-docs
+ * @libar-docs-pattern ActiveReservationsProjection
+ * @libar-docs-status completed
+ * @libar-docs-projection
+ * @libar-docs-arch-role projection
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses InventoryCommandHandlers
  *
- * Updates the activeReservations read model based on reservation events.
- * Also updates productCatalog and stockAvailability for stock level changes.
- *
- * CRITICAL: These handlers use EVENT DATA ONLY - no CMS access!
- * This is proper Event Sourcing: projections are built from events only.
- * The enriched events (with items array) enable this pattern.
+ * Tracks active stock reservations and updates stock levels.
+ * Handles StockReserved, ReservationConfirmed, ReservationReleased,
+ * ReservationExpired. Uses EVENT DATA ONLY — proper ES projection.
  */
 import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";
