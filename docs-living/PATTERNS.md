@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [█████████████████░░░] 53/62 (85% complete)
+**Overall:** [████████████████░░░░] 53/67 (79% complete)
 
 | Status       | Count |
 | ------------ | ----- |
 | ✅ Completed | 53    |
 | 🚧 Active    | 2     |
-| 📋 Planned   | 7     |
-| **Total**    | 62    |
+| 📋 Planned   | 12    |
+| **Total**    | 67    |
 
 ---
 
@@ -22,7 +22,7 @@
 
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (9)
-- [DDD](#ddd) (20)
+- [DDD](#ddd) (25)
 - [Event Sourcing](#event-sourcing) (1)
 - [Implements](#implements) (14)
 - [Infra](#infra) (1)
@@ -90,6 +90,11 @@
 | 🚧 Command Config Partition Key Validation               | Implements                        | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
+| 📋 Agent Admin Frontend                                  | DDD                               | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                          |
+| 📋 Agent BC Component Isolation                          | DDD                               | planned   | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...                |
+| 📋 Agent Churn Risk Completion                           | DDD                               | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps...  |
+| 📋 Agent Command Infrastructure                          | DDD                               | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                   |
+| 📋 Agent LLM Integration                                 | DDD                               | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.           |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
 | 📋 Health Observability                                  | DDD                               | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
@@ -128,7 +133,7 @@
 
 ### DDD
 
-12/20 complete (60%)
+12/25 complete (48%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
@@ -144,6 +149,11 @@
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
 - [🚧 Confirmed Order Cancellation](patterns/confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
+- [📋 Agent Admin Frontend](patterns/agent-admin-frontend.md)
+- [📋 Agent BC Component Isolation](patterns/agent-bc-component-isolation.md)
+- [📋 Agent Churn Risk Completion](patterns/agent-churn-risk-completion.md)
+- [📋 Agent Command Infrastructure](patterns/agent-command-infrastructure.md)
+- [📋 Agent LLM Integration](patterns/agent-llm-integration.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
 - [📋 Health Observability](patterns/health-observability.md)
@@ -218,14 +228,15 @@ Pattern relationships and dependencies:
 graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
+    ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -257,8 +268,10 @@ graph TD
     Durable_Append_via_Workpool_Actions --> Workpool
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
-    DualWriteContract --> BoundedContextIdentity
     CorrelationChainSystem --> EventStoreFoundation
+    DualWriteContract --> BoundedContextIdentity
+    Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
+    Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -266,13 +279,6 @@ graph TD
     Partition_Key_Helper_Functions ..-> WorkpoolPartitioningStrategy
     Per_Projection_Partition_Configuration ..-> WorkpoolPartitioningStrategy
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
-    ProjectionCheckpointing --> EventStoreFoundation
-    Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
-    Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
     ReservationPattern -.-> DynamicConsistencyBoundaries
@@ -302,11 +308,20 @@ graph TD
     BoundedContextFoundation -.-> EventStoreFoundation
     BoundedContextFoundation -.-> CommandBusFoundation
     BddTestingInfrastructure -.-> DeciderPattern
+    AgentLLMIntegration -.-> AgentBCComponentIsolation
+    AgentCommandInfrastructure -.-> AgentLLMIntegration
+    AgentBCComponentIsolation -.-> AgentAsBoundedContext
     AgentAsBoundedContext -.-> ReactiveProjections
     AgentAsBoundedContext -.-> EcstFatEvents
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---

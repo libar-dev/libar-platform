@@ -7,43 +7,43 @@
 
 ## Overall Progress
 
-**Patterns:** [█████████████████░░░] 53/62 (85%)
+**Patterns:** [████████████████░░░░] 53/67 (79%)
 
 **Phases:** 16/20 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 62    |
+| Total Patterns | 67    |
 | Completed      | 53    |
 | Active         | 2     |
-| Planned        | 7     |
+| Planned        | 12    |
 
 ---
 
 ## Phase Navigation
 
-| Phase                                                                            | Progress | Complete |
-| -------------------------------------------------------------------------------- | -------- | -------- |
-| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                             | 2/2      | 100%     |
-| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)             | 1/1      | 100%     |
-| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)             | 1/1      | 100%     |
-| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)        | 1/1      | 100%     |
-| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                    | 1/1      | 100%     |
-| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                          | 3/3      | 100%     |
-| ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                  | 1/1      | 100%     |
-| ✅ [CMSRepository](phases/phase-11-cms-repository.md)                            | 3/3      | 100%     |
-| ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                      | 1/1      | 100%     |
-| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)       | 3/3      | 100%     |
-| ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                      | 2/2      | 100%     |
-| ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)              | 1/1      | 100%     |
-| ✅ [DCBTypes](phases/phase-16-dcb-types.md)                                      | 3/3      | 100%     |
-| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)                | 1/1      | 100%     |
-| 📋 [ProductionHardening](phases/phase-18-production-hardening.md)                | 3/7      | 43%      |
-| ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)     | 1/1      | 100%     |
-| 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                  | 2/3      | 67%      |
-| 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)         | 0/2      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](phases/phase-22-confirmed-order-cancellation.md) | 1/2      | 50%      |
-| ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)       | 1/1      | 100%     |
+| Phase                                                                         | Progress | Complete |
+| ----------------------------------------------------------------------------- | -------- | -------- |
+| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                          | 2/2      | 100%     |
+| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)          | 1/1      | 100%     |
+| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)          | 1/1      | 100%     |
+| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)     | 1/1      | 100%     |
+| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                 | 1/1      | 100%     |
+| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)            | 3/3      | 100%     |
+| ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)               | 1/1      | 100%     |
+| ✅ [CMSRepository](phases/phase-11-cms-repository.md)                         | 3/3      | 100%     |
+| ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                   | 1/1      | 100%     |
+| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)    | 3/3      | 100%     |
+| ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                   | 2/2      | 100%     |
+| ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)           | 1/1      | 100%     |
+| ✅ [DCBTypes](phases/phase-16-dcb-types.md)                                   | 3/3      | 100%     |
+| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)             | 1/1      | 100%     |
+| 📋 [ProductionHardening](phases/phase-18-production-hardening.md)             | 3/7      | 43%      |
+| ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)  | 1/1      | 100%     |
+| 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)               | 2/3      | 67%      |
+| 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)      | 0/2      | 0%       |
+| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md) | 1/7      | 14%      |
+| ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)    | 1/1      | 100%     |
 
 ---
 
@@ -100,7 +100,7 @@
 
 ---
 
-### ✅ EventUpcasting
+### ✅ EventBusAbstraction
 
 [███████████████] 3/3 100% complete
 
@@ -248,14 +248,19 @@
 
 ---
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
-[████████░░░░░░░] 1/2 50% complete
+[██░░░░░░░░░░░░░] 1/7 14% complete
 
-| Pattern                         | Status    | Description                                                                                     |
-| ------------------------------- | --------- | ----------------------------------------------------------------------------------------------- |
-| ✅ Agent As Bounded Context     | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
-| 🚧 Confirmed Order Cancellation | active    | Problem: The Order FSM treats `confirmed` as terminal.                                          |
+| Pattern                         | Status    | Description                                                                                                             |
+| ------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 📋 Agent Admin Frontend         | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                         |
+| ✅ Agent As Bounded Context     | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                         |
+| 📋 Agent BC Component Isolation | planned   | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...               |
+| 📋 Agent Churn Risk Completion  | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps... |
+| 📋 Agent Command Infrastructure | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                  |
+| 📋 Agent LLM Integration        | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.          |
+| 🚧 Confirmed Order Cancellation | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                  |
 
 ---
 

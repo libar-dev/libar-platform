@@ -5,7 +5,87 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 118 rules from 25 features across 2 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 132 rules from 30 features across 2 product areas.**
+
+---
+
+## Example App / Phase 22
+
+### AgentAdminFrontend
+
+_The admin UI at `/admin/agents` has several gaps identified in the_
+
+#### Dead letters are visible and actionable
+
+- **Invariant:** Admin UI must display dead letter entries with replay/ignore actions. Each action must provide feedback via toast notification. Dead letters are operational concerns that require visibility for system health monitoring.
+
+- **Rationale:** Without dead letter UI, operators cannot manage failed agent event processing. The backend has full API support (`queryDeadLetters`, `replayDeadLetter`, `ignoreDeadLetter`) but this data is invisible to users.
+
+| Column     | Source               | Purpose                  |
+| ---------- | -------------------- | ------------------------ |
+| Agent      | deadLetter.agentId   | Which agent failed       |
+| Event Type | deadLetter.eventType | What event failed        |
+| Error      | deadLetter.error     | Why it failed            |
+| Status     | deadLetter.status    | pending/replayed/ignored |
+| Timestamp  | deadLetter.createdAt | When it failed           |
+| Actions    | buttons              | Replay / Ignore          |
+
+#### Decision history supports filtering
+
+- **Invariant:** Decision history must be filterable by agent ID, action type, and time range. Filters persist in URL query parameters for shareability and browser back/forward navigation.
+
+- **Rationale:** High-volume agents produce many audit events. Without filtering, the decision history is unusable for analysis. URL-persisted filters enable sharing specific views with team members and support browser navigation.
+
+| Filter      | URL Param                       | Default     | Description              |
+| ----------- | ------------------------------- | ----------- | ------------------------ |
+| Agent ID    | ?agent=churn-risk               | All agents  | Filter by specific agent |
+| Action Type | ?action=SuggestCustomerOutreach | All actions | Filter by command type   |
+| Time Range  | ?from=2026-01-01&to=2026-02-01  | Last 7 days | Date range filter        |
+
+#### Actions provide feedback via toast
+
+- **Invariant:** All mutating actions (approve, reject, replay, ignore) must show toast notifications for success and error states. Toasts use accessible ARIA attributes and auto-dismiss after a reasonable timeout.
+
+- **Rationale:** Users need immediate feedback that their action was processed. The current implementation performs mutations silently — the user clicks "Approve" and has no visual confirmation that it worked or failed.
+
+| Action             | Success Message                     | Error Behavior         |
+| ------------------ | ----------------------------------- | ---------------------- |
+| Approve            | "Approval recorded for {agentId}"   | Show error with reason |
+| Reject             | "Action rejected"                   | Show error with reason |
+| Replay dead letter | "Dead letter replayed successfully" | Show error with reason |
+| Ignore dead letter | "Dead letter ignored"               | Show error with reason |
+
+_[agent-admin-frontend.feature](libar-platform/delivery-process/specs/example-app/agent-admin-frontend.feature)_
+
+### AgentChurnRiskCompletion
+
+_The churn-risk agent in the order-management example app has working_
+
+#### Churn-risk agent uses hybrid LLM flow
+
+- **Invariant:** Pattern trigger is evaluated first (rule-based, no LLM cost). If trigger fires (3+ cancellations in 30 days), LLM analysis provides confidence score and reasoning. Trigger failure skips LLM call entirely.
+
+- **Rationale:** Rule-based triggers are cheap and deterministic. LLM analysis adds value only when patterns warrant deeper investigation. This hybrid approach minimizes API costs while providing rich analysis when needed.
+
+| Step                | Cost                   | Frequency                           |
+| ------------------- | ---------------------- | ----------------------------------- |
+| Rule trigger check  | ~0 (local computation) | Every OrderCancelled event          |
+| LLM analysis        | ~$0.001-0.01 per call  | Only when 3+ cancellations detected |
+| Total per detection | ~$0.01                 | Rare (subset of customers)          |
+
+#### Approvals expire after configured timeout
+
+- **Invariant:** Pending approvals must transition to "expired" status after `approvalTimeout` elapses (default 24 hours). A cron job runs periodically to expire stale approvals.
+
+- **Rationale:** Pending approvals cannot linger indefinitely. Without expiration, the system accumulates stale decisions that may no longer be relevant. The cron approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
+
+#### Emitted commands route to domain handlers
+
+- **Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes through CommandOrchestrator to a handler that creates the actual outreach task and emits a domain event.
+
+- **Rationale:** Currently commands are stored in `agentCommands` but never processed. Completing the routing makes the agent actionable — its analysis leads to real business outcomes rather than entries in a table.
+
+_[agent-churn-risk-completion.feature](libar-platform/delivery-process/specs/example-app/agent-churn-risk-completion.feature)_
 
 ---
 
@@ -1154,6 +1234,86 @@ Audit trail captures pattern detection, reasoning, and outcomes.
     **Audit Event Structure:**
 
 _[agent-as-bounded-context.feature](libar-platform/delivery-process/specs/platform/agent-as-bounded-context.feature)_
+
+### AgentBCComponentIsolation
+
+_Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,_
+
+#### Agent component provides isolated database
+
+- **Invariant:** All agent-specific state (checkpoints, audit events, dead letters, commands, pending approvals) must reside in the agent component's isolated database. No agent data in the shared app schema.
+
+- **Rationale:** Physical BC isolation prevents accidental coupling. Parent app mutations cannot query agent tables directly — this is enforced by Convex's component architecture, not just convention. This matches the orders/inventory pattern where each BC owns its tables via `defineComponent()`.
+
+#### Cross-component queries use explicit API
+
+- **Invariant:** Agent BC must access external data (like `customerCancellations` projection) through explicit cross-component query patterns, never through direct table access.
+
+- **Rationale:** Maintains BC isolation while enabling necessary data access. The `customerCancellations` projection lives at the app level (owned by CommandOrchestrator), so the agent handler must receive this data as an argument or query it through a well-defined interface.
+
+| Data Source           | Owner            | Consumer           | Access Pattern                |
+| --------------------- | ---------------- | ------------------ | ----------------------------- |
+| customerCancellations | App (projection) | Agent handler      | Passed as argument to handler |
+| Order events          | EventBus         | Agent subscription | Delivered via Workpool        |
+| Agent decisions       | Agent component  | Admin UI queries   | Via component API             |
+
+_[agent-bc-component-isolation.feature](libar-platform/delivery-process/specs/platform/agent-bc-component-isolation.feature)_
+
+### AgentCommandInfrastructure
+
+_Three interconnected gaps in agent command infrastructure:_
+
+#### Emitted commands are routed to handlers
+
+- **Invariant:** Commands emitted by agents must flow through CommandOrchestrator and be processed by registered handlers. Commands cannot remain unprocessed in a table.
+
+- **Rationale:** The current `agentCommands` table receives inserts from `emitAgentCommand()` but nothing acts on them. The emitted `SuggestCustomerOutreach` command sits with status "pending" forever. For the agent to have real impact, its commands must reach domain handlers.
+
+| Step | Action                              | Component             |
+| ---- | ----------------------------------- | --------------------- |
+| 1    | Agent decides to emit command       | Agent action handler  |
+| 2    | Command recorded in onComplete      | Agent component       |
+| 3    | CommandOrchestrator.execute()       | Platform orchestrator |
+| 4    | Target BC handler processes command | Domain BC             |
+| 5    | Command status updated              | Agent component       |
+
+#### Agent lifecycle is controlled via commands
+
+- **Invariant:** Agent state changes (start, pause, resume, stop, reconfigure) must happen via commands, not direct database manipulation. Each transition is validated by the lifecycle FSM and recorded in the audit trail.
+
+- **Rationale:** Commands provide audit trail, FSM validation, and consistent state transitions. Direct DB manipulation bypasses these safeguards. The lifecycle FSM prevents invalid transitions (e.g., pausing an already-stopped agent).
+
+#### Pattern definitions are the single source of truth
+
+- **Invariant:** Each agent references named patterns from a registry. The pattern's `trigger()` and `analyze()` functions are used by the event handler, eliminating parallel implementations.
+
+- **Rationale:** The current codebase has two disconnected pattern implementations: `_config.ts` with inline rule-based detection and `_patterns/churnRisk.ts` with formal `PatternDefinition` including LLM analysis. This creates confusion about which code path runs in production and makes the LLM analysis unreachable.
+
+_[agent-command-infrastructure.feature](libar-platform/delivery-process/specs/platform/agent-command-infrastructure.feature)_
+
+### AgentLLMIntegration
+
+_The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
+
+#### Agent event handlers are actions for LLM integration
+
+- **Invariant:** Agent event handlers that require LLM analysis must be Convex actions, not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete mutation handler, never in the action.
+
+- **Rationale:** Convex mutations cannot make external HTTP calls. The action/mutation split enables LLM integration while maintaining atomic state persistence. Actions are retryable by Workpool (mutations are not — they rely on OCC auto-retry).
+
+#### Rate limiting is enforced before LLM calls
+
+- **Invariant:** Every LLM call must check rate limits before execution. Exceeded limits queue the event for later retry or send to dead letter if queue is full.
+
+- **Rationale:** LLM API costs can spiral quickly under high event volume. Rate limiting protects against runaway costs and external API throttling. The existing `rateLimits` config in `AgentBCConfig` defines the limits — this rule enforces them at runtime.
+
+#### Agent subscriptions support onComplete callbacks
+
+- **Invariant:** `CreateAgentSubscriptionOptions` must include an optional `onComplete` field that receives Workpool completion callbacks, enabling agent-specific dead letter handling and checkpoint updates.
+
+- **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete` field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler), agents need custom completion logic: checkpoint updates, agent-specific audit events, and rate limit tracking. Without this field, the agent-specific `handleChurnRiskOnComplete` handler is orphaned — defined but never wired.
+
+_[agent-llm-integration.feature](libar-platform/delivery-process/specs/platform/agent-llm-integration.feature)_
 
 ### ConfirmedOrderCancellation
 

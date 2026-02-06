@@ -7,14 +7,14 @@
 
 ## Summary
 
-**Overall:** [██████████████░░░░░░] 17/25 (68%)
+**Overall:** [███████████░░░░░░░░░] 17/30 (57%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 25    |
+| Total Features | 30    |
 | Completed      | 17    |
 | Active         | 1     |
-| Planned        | 7     |
+| Planned        | 12    |
 | Product Areas  | 2     |
 | User Roles     | 0     |
 
@@ -24,13 +24,15 @@
 
 ### ExampleApp
 
-1/1 complete (100%)
+1/3 complete (33%)
 
 - [✅ Example App Modernization](requirements/phase-23-example-app-modernization.md)
+- [📋 Agent Admin Frontend](requirements/phase-22-agent-admin-frontend.md)
+- [📋 Agent Churn Risk Completion](requirements/phase-22-agent-churn-risk-completion.md)
 
 ### Platform
 
-16/24 complete (67%)
+16/27 complete (59%)
 
 - [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](requirements/phase-19-bdd-testing-infrastructure.md)
@@ -50,6 +52,9 @@
 - [✅ Saga Orchestration](requirements/phase-06-saga-orchestration.md)
 - [🚧 Confirmed Order Cancellation](requirements/phase-22-confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation - unified operations interface](requirements/phase-18-admin-tooling-consolidation.md)
+- [📋 Agent BC Component Isolation](requirements/phase-22-agent-bc-component-isolation.md)
+- [📋 Agent Command Infrastructure](requirements/phase-22-agent-command-infrastructure.md)
+- [📋 Agent LLM Integration](requirements/phase-22-agent-llm-integration.md)
 - [📋 Circuit Breaker Pattern - external service resilience and budget preservation](requirements/phase-18-circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](requirements/phase-20-deterministic-id-hashing.md)
 - [📋 Health Observability - production monitoring and k8s integration](requirements/phase-18-health-observability.md)
@@ -82,6 +87,11 @@
 | ✅ Saga Orchestration             | Platform     | -         | completed |
 | 🚧 Confirmed Order Cancellation   | Platform     | -         | active    |
 | 📋 Admin Tooling Consolidation    | Platform     | -         | planned   |
+| 📋 Agent Admin Frontend           | ExampleApp   | -         | planned   |
+| 📋 Agent BC Component Isolation   | Platform     | -         | planned   |
+| 📋 Agent Churn Risk Completion    | ExampleApp   | -         | planned   |
+| 📋 Agent Command Infrastructure   | Platform     | -         | planned   |
+| 📋 Agent LLM Integration          | Platform     | -         | planned   |
 | 📋 Circuit Breaker Pattern        | Platform     | -         | planned   |
 | 📋 Deterministic Id Hashing       | Platform     | -         | planned   |
 | 📋 Health Observability           | Platform     | -         | planned   |

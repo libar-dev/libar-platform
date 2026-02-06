@@ -6,14 +6,14 @@
 
 ## Progress
 
-**Progress:** [██████████░░░░░░░░░░] 1/2 (50%)
+**Progress:** [███░░░░░░░░░░░░░░░░░] 1/7 (14%)
 
 | Status       | Count |
 | ------------ | ----- |
 | ✅ Completed | 1     |
 | 🚧 Active    | 1     |
-| 📋 Planned   | 0     |
-| **Total**    | 2     |
+| 📋 Planned   | 5     |
+| **Total**    | 7     |
 
 ---
 
@@ -219,6 +219,21 @@ _Verified by: Three cancellations trigger churn risk agent_
 | Pattern                     | Description                                                                                     |
 | --------------------------- | ----------------------------------------------------------------------------------------------- |
 | ✅ Agent As Bounded Context | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
+
+---
+
+<details>
+<summary>📋 Upcoming (5)</summary>
+
+| Pattern                         | Effort |
+| ------------------------------- | ------ |
+| 📋 Agent Admin Frontend         | 1w     |
+| 📋 Agent BC Component Isolation | 1w     |
+| 📋 Agent Churn Risk Completion  | 1w     |
+| 📋 Agent Command Infrastructure | 1w     |
+| 📋 Agent LLM Integration        | 1w     |
+
+</details>
 
 ---
 

@@ -7,13 +7,13 @@
 
 ## Summary
 
-**Overall Progress:** [█████████████████░░░] 53/62 (85%)
+**Overall Progress:** [████████████████░░░░] 53/67 (79%)
 
 | Status              | Count |
 | ------------------- | ----- |
 | 🚧 Active           | 2     |
-| 📋 Planned          | 7     |
-| **Total Remaining** | 9     |
+| 📋 Planned          | 12    |
+| **Total Remaining** | 14    |
 
 ---
 
@@ -24,7 +24,7 @@
 | 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)                | 4         | 0      | 43%      |
 | 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                  | 1         | 0      | 67%      |
 | 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)         | 2         | 0      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](remaining/phase-22-confirmed-order-cancellation.md) | 1         | 1      | 50%      |
+| 🚧 [ConfirmedOrderCancellation](remaining/phase-22-confirmed-order-cancellation.md) | 6         | 1      | 14%      |
 | 🚧 Backlog (No Phase)                                                               | 1         | 1      | 0%       |
 
 ---
@@ -34,8 +34,8 @@
 | Priority          | Count |
 | ----------------- | ----- |
 | 🚧 In Progress    | 2     |
-| ✅ Ready to Start | 5     |
-| ⚠️ Blocked        | 2     |
+| ✅ Ready to Start | 6     |
+| ⚠️ Blocked        | 6     |
 
 ### Top Ready to Start
 
@@ -44,6 +44,7 @@
 - Production Hardening (Phase 18)
 - Deterministic Id Hashing (Phase 20)
 - Integration Patterns21a (Phase 21)
+- Agent BC Component Isolation (Phase 22)
 
 ---
 
@@ -56,5 +57,7 @@ Items ready to start (no blocking dependencies):
 - 📋 Production Hardening (Phase 18) - 3w
 - 📋 Deterministic Id Hashing (Phase 20) - 2d
 - 📋 Integration Patterns21a (Phase 21) - 1w
+
+Showing 5 of 6 actionable items.
 
 ---

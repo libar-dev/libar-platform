@@ -72,6 +72,7 @@ export const record = mutation({
     decisionId: v.string(),
     patternId: v.optional(v.string()),
     correlationId: v.optional(v.string()),
+    routingAttempts: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
@@ -97,6 +98,7 @@ export const updateStatus = mutation({
     decisionId: v.string(),
     status: commandStatusValidator,
     error: v.optional(v.string()),
+    incrementRoutingAttempts: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
@@ -124,6 +126,29 @@ export const queryByAgent = query({
     agentId: v.string(),
     status: v.optional(commandStatusValidator),
     limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
+  },
+});
+
+/**
+ * Get a command by its decision ID.
+ *
+ * Used by the command bridge (routeAgentCommand mutation) to load the
+ * full command record before routing through CommandOrchestrator.
+ *
+ * @example
+ * ```typescript
+ * const command = await ctx.runQuery(components.agent.commands.getByDecisionId, {
+ *   decisionId: "dec_123_abc",
+ * });
+ * if (!command) { /* command not found or already processed *\/ }
+ * ```
+ */
+export const getByDecisionId = query({
+  args: {
+    decisionId: v.string(),
   },
   handler: async (ctx, args) => {
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");

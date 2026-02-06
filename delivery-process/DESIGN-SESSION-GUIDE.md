@@ -271,7 +271,7 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 ### DS-4: Command Routing & Pattern Unification
 
-**Status: NOT STARTED**
+**Status: COMPLETE**
 **Source:** 22c (Rules 1, 3)
 **Spec:** `specs/platform/agent-command-infrastructure.feature` Rules 1, 3
 **Depends on:** DS-2
@@ -282,8 +282,7 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 - 22d Rule 3: SuggestCustomerOutreach is the first concrete command needing routing
 - 22d Rule 3 S1: "CommandOrchestrator processes the command" — validates command bridge design
 - 22d Rule 3 S3: "handler throws → dead letter" — validates failure-to-dead-letter flow
-- **API gap (command bridge):** Commands recorded inside agent component must reach app-level
-  CommandOrchestrator. Design the onComplete → orchestrator bridge explicitly.
+- **API gap (command bridge):** RESOLVED — Command bridge via scheduled mutation from onComplete
 
 **Scope:**
 
@@ -291,15 +290,44 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 - Command config registration pattern
 - Unified `PatternDefinition` API: `trigger()` + `analyze()`
 - Pattern registry: named pattern lookup
-- `AgentBCConfig` redesign: `patterns: PatternDefinition[]` replaces `onEvent`
+- `AgentBCConfig` redesign: `patterns: string[]` (names from registry) replaces `onEvent`
+- Command bridge: scheduled mutation routes commands through orchestrator
 
-**Key Design Decisions:**
+**Key Decisions (6 total):**
 
-| Decision                      | Why Complex                                                   |
-| ----------------------------- | ------------------------------------------------------------- |
-| Command routing integration   | Decision -> onComplete -> command -> orchestrator flow        |
-| Pattern executor control flow | Iterate patterns, short-circuit, aggregate results            |
-| Config backward compatibility | `AgentBCConfig` shape change, migration for churn-risk config |
+| AD   | Decision                                                           | Category     | PDR     |
+| ---- | ------------------------------------------------------------------ | ------------ | ------- |
+| AD-1 | PatternRegistry follows CommandRegistry singleton pattern          | architecture | PDR-012 |
+| AD-2 | AgentBCConfig uses XOR for onEvent vs patterns                     | architecture | PDR-012 |
+| AD-3 | PatternExecutor iterates with short-circuit on first match         | design       | PDR-012 |
+| AD-4 | Command bridge via scheduled mutation from onComplete              | architecture | PDR-012 |
+| AD-5 | AgentCommandRouter maps agent command types to orchestrator routes | design       | PDR-012 |
+| AD-6 | AgentActionResult gains patternId field                            | design       | PDR-012 |
+
+**Deliverables:**
+
+| #   | Deliverable                  | Location                                                           |
+| --- | ---------------------------- | ------------------------------------------------------------------ |
+| 1   | Decision spec                | `delivery-process/decisions/pdr-012-agent-command-routing.feature` |
+| 2   | Pattern Registry stub        | `delivery-process/stubs/agent-command-routing/pattern-registry.ts` |
+| 3   | AgentBCConfig evolution stub | `delivery-process/stubs/agent-command-routing/agent-bc-config.ts`  |
+| 4   | Pattern Executor stub        | `delivery-process/stubs/agent-command-routing/pattern-executor.ts` |
+| 5   | AgentCommandRouter stub      | `delivery-process/stubs/agent-command-routing/command-router.ts`   |
+| 6   | Command Bridge stub          | `delivery-process/stubs/agent-command-routing/command-bridge.ts`   |
+
+**DS-2 Open Questions Resolved:**
+
+| Question                                                                | Answer                                                                                                         |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Q2: How does `AgentBCConfig.onEvent` evolve into `PatternDefinition[]`? | `onEvent` becomes optional. New `patterns: string[]` references registry. XOR constraint. Backward compatible. |
+
+**Open Questions for Holistic Review:**
+
+1. DS-3: How does PatternExecutor interact with rate limiter? Proposed: check before `analyze()` (expensive LLM), not before `trigger()` (cheap boolean).
+2. DS-5: When agent is paused, should pending commands still route? Proposed: YES — pausing stops event delivery, not command lifecycle.
+3. DS-6: Should command routing use Workpool instead of scheduler? Proposed: defer — scheduler sufficient for MVP, DS-6 can upgrade.
+4. DS-7: Admin UI needs `commands.getByDecisionId` query (not in DS-1 API). Add during holistic review or DS-7.
+5. Future: Multi-pattern matching strategy — short-circuit vs aggregate. Proposed: short-circuit for DS-4, defer aggregation to future DS.
 
 ---
 
@@ -400,7 +428,7 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 | DS-1    | 22a             | 11           | 2     | Heavy         | Complete    |
 | DS-2    | 22b (core)      | 5            | 3     | Heavy         | Complete    |
 | DS-3    | 22b (rest)      | 5            | 1     | Medium        | Not started |
-| DS-4    | 22c (Rules 1,3) | 6            | 2     | Medium        | Not started |
+| DS-4    | 22c (Rules 1,3) | 6            | 2     | Medium        | Complete    |
 | DS-5    | 22c (Rule 2)    | 5            | 1     | Medium        | Not started |
 | DS-6    | 22d             | 8            | 3     | Light-medium  | Not started |
 | DS-7    | 22e             | 12           | 3     | Light-medium  | Not started |
@@ -419,5 +447,7 @@ After all design sessions complete, review across all DS sessions:
 - [ ] Consumer spec validation: platform APIs satisfy 22d/22e requirements
 - [ ] API gap: audit `actionType` field for decision history filtering (DS-7)
 - [ ] API gap: audit `fromTimestamp`/`toTimestamp` for time range queries (DS-7)
-- [ ] API gap: command bridge from agent component to CommandOrchestrator (DS-4)
+- [x] API gap: command bridge from agent component to CommandOrchestrator (DS-4) — RESOLVED: scheduled mutation via `routeAgentCommand`
+- [x] API gap: `commands.getByDecisionId` query needed for command bridge (DS-4 open Q4) — RESOLVED: Added to DS-1 commands stub
+- [ ] PatternExecutor + rate limiter interaction point (DS-4 open Q1 / DS-3)
 - [ ] 22d deliverable location: "Agent component migration" location correction

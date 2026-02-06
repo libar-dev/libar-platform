@@ -316,6 +316,16 @@ export function createAgentOnCompleteHandler(
   // 5. if (decision) {
   //      await ctx.runMutation(component.audit.record, { decisionId, ... });
   //      if (decision.command) await ctx.runMutation(component.commands.record, { decisionId, ... });
+  //
+  //      // DS-4 EXTENSION POINT: Schedule command routing (PDR-012 step 2b)
+  //      // if (decision.command) {
+  //      //   await ctx.scheduler.runAfter(0, routeAgentCommandRef, {
+  //      //     decisionId, commandType: decision.command, agentId: context.agentId,
+  //      //     correlationId: context.correlationId, patternId: result.returnValue.patternId,
+  //      //   });
+  //      // }
+  //      // See: stubs/agent-command-routing/command-bridge.ts for full integration
+  //
   //      if (decision.requiresApproval) await ctx.runMutation(component.approvals.create, { decisionId, ... });
   //    }
   //

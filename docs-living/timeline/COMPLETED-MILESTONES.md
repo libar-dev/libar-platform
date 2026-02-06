@@ -112,12 +112,12 @@
 </details>
 
 <details>
-<summary>✅ ProcessManagerLifecycle (3 patterns)</summary>
+<summary>✅ LoggingInfrastructure (3 patterns)</summary>
 
 | Pattern                   | Description                                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Process Manager Lifecycle | FSM for managing PM state transitions (idle/processing/completed/failed) with validation.                                |
 | Logging Infrastructure    | Factory for domain-specific loggers with scope prefixes and level filtering.                                             |
+| Process Manager Lifecycle | FSM for managing PM state transitions (idle/processing/completed/failed) with validation.                                |
 | Package Architecture      | The original @convex-es/core package grew to 25+ modules, creating issues: - Large bundle size for consumers who only... |
 
 </details>
@@ -183,6 +183,7 @@
 
 ## Recent Completions
 
+- ✅ Example App Modernization (Phase 23)
 - ✅ Agent As Bounded Context (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
@@ -192,7 +193,6 @@
 - ✅ Dynamic Consistency Boundaries (Phase 16)
 - ✅ Ecst Fat Events (Phase 20)
 - ✅ Event Replay Infrastructure (Phase 18)
-- ✅ Event Store Durability (Phase 18)
 
 Showing 10 of 53 completed patterns. See quarterly files for full history.
 
