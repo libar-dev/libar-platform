@@ -1,4 +1,9 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
+ *
  * AgentBCConfig Evolution — DS-4 Stub
  *
  * Evolves AgentBCConfig to support pattern-based detection alongside the
@@ -8,16 +13,16 @@
  * Also adds patternId to AgentActionResult to flow pattern identity from
  * PatternExecutor through onComplete to commands.record.
  *
- * @target platform-core/src/agent/types.ts (evolution of existing)
+ * Target: platform-core/src/agent/types.ts (evolution of existing)
  *
  * ## Design Decisions
  *
  * - AD-2: AgentBCConfig uses XOR for onEvent vs patterns
  * - AD-6: AgentActionResult gains patternId field
  *
- * @see PDR-012 (Agent Command Routing & Pattern Unification)
- * @see PDR-011 (Agent Action Handler Architecture) — AD-9 evolves here
- * @since DS-4 (Command Routing & Pattern Unification)
+ * See: PDR-012 (Agent Command Routing & Pattern Unification)
+ * See: PDR-011 (Agent Action Handler Architecture) — AD-9 evolves here
+ * Since: DS-4 (Command Routing & Pattern Unification)
  */
 
 // ============================================================================
@@ -217,7 +222,7 @@ export function validateAgentBCConfig(config: Partial<AgentBCConfig>): AgentConf
 // The field is already included there with comment: "Added by DS-4 (PDR-012 AD-6)"
 //
 // DO NOT redefine AgentActionResult here. At implementation time, import from
-// platform-core/src/agent/action-handler.ts (the @target of the canonical stub).
+// platform-core/src/agent/action-handler.ts (the target of the canonical stub).
 //
 // patternId flow: PatternExecutor → AgentActionResult → onComplete → commands.record
 type AgentActionResult = import("./types-placeholder.js").AgentActionResult;

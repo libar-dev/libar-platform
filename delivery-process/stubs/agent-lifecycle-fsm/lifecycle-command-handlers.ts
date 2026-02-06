@@ -1,7 +1,10 @@
 /**
- * @target platform-core/src/agent/lifecycle-handlers.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
  *
- * Lifecycle Command Handlers
+ * Lifecycle Command Handlers — DS-5 Stub
  *
  * Five internalMutation handlers for agent lifecycle transitions. Each handler
  * follows the same pattern: load → validate → mutate → audit → return.
@@ -9,13 +12,15 @@
  * These are infrastructure mutations (PDR-013 AD-3) — they bypass CommandOrchestrator
  * and call the agent component API directly.
  *
+ * Target: platform-core/src/agent/lifecycle-handlers.ts
+ *
  * DS-5 Design Session: Agent Lifecycle FSM
  * PDR: pdr-013-agent-lifecycle-fsm (AD-3)
  *
- * @see lifecycle-fsm.ts — FSM transition validation
- * @see lifecycle-command-types.ts — command and result types
- * @see lifecycle-audit-events.ts — audit event types and payloads
- * @see delivery-process/stubs/agent-component-isolation/component/checkpoints.ts — component API
+ * See: lifecycle-fsm.ts — FSM transition validation
+ * See: lifecycle-command-types.ts — command and result types
+ * See: lifecycle-audit-events.ts — audit event types and payloads
+ * See: delivery-process/stubs/agent-component-isolation/component/checkpoints.ts — component API
  */
 
 import type { MutationCtx } from "convex/server";

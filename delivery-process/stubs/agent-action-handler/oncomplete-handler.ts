@@ -1,11 +1,16 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentLLMIntegration
+ *
  * Agent onComplete Handler Factory — DS-2 Stub
  *
  * Creates a Workpool onComplete mutation that persists all agent state
  * after the action handler completes. This is the persistence phase of
  * the action/mutation split.
  *
- * @target platform-core/src/agent/oncomplete-handler.ts
+ * Target: platform-core/src/agent/oncomplete-handler.ts
  *
  * ## Design Decisions
  *
@@ -15,8 +20,8 @@
  * - AD-7: Persistence ordering — checkpoint updated LAST
  * - AD-8: Separate factory from action handler
  *
- * @see PDR-011 (Agent Action Handler Architecture)
- * @since DS-2 (Action/Mutation Handler Architecture)
+ * See: PDR-011 (Agent Action Handler Architecture)
+ * Since: DS-2 (Action/Mutation Handler Architecture)
  */
 
 import type { FunctionReference } from "convex/server";

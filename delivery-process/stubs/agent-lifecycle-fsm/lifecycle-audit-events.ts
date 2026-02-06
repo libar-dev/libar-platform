@@ -1,17 +1,22 @@
 /**
- * @target platform-core/src/agent/component/audit.ts (extends existing auditEventTypeValidator)
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
  *
- * Lifecycle Audit Event Types
+ * Lifecycle Audit Event Types — DS-5 Stub
  *
  * Six new audit event types for agent lifecycle transitions. These extend the
  * DS-1 audit schema (currently 8 event types → 14 total after DS-5).
  *
+ * Target: platform-core/src/agent/component/audit.ts (extends existing auditEventTypeValidator)
+ *
  * DS-5 Design Session: Agent Lifecycle FSM
  * PDR: pdr-013-agent-lifecycle-fsm
  *
- * @modifies delivery-process/stubs/agent-component-isolation/component/schema.ts
+ * Modifies: delivery-process/stubs/agent-component-isolation/component/schema.ts
  *   The agentAuditEvents.eventType union (lines 71-80) must include these 6 new types.
- * @modifies delivery-process/stubs/agent-component-isolation/component/audit.ts
+ * Modifies: delivery-process/stubs/agent-component-isolation/component/audit.ts
  *   The auditEventTypeValidator must include these 6 new types.
  */
 

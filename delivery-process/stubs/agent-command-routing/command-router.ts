@@ -1,4 +1,9 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
+ *
  * Agent Command Router — DS-4 Stub
  *
  * Maps agent command types to their orchestrator routes. When an agent emits
@@ -6,7 +11,7 @@
  * CommandConfig to use and how to transform agent command payload to
  * orchestrator args format.
  *
- * @target platform-core/src/agent/command-router.ts
+ * Target: platform-core/src/agent/command-router.ts
  *
  * ## Design Decisions
  *
@@ -19,10 +24,10 @@
  * map to the command bridge factory, not registered in a global singleton.
  * Add registry back when multi-agent support requires dynamic route discovery.
  *
- * @see PDR-012 (Agent Command Routing & Pattern Unification)
- * @see CommandRegistry (platform-core/src/registry/CommandRegistry.ts)
- * @see CommandOrchestrator (platform-core/src/orchestration/CommandOrchestrator.ts)
- * @since DS-4 (Command Routing & Pattern Unification)
+ * See: PDR-012 (Agent Command Routing & Pattern Unification)
+ * See: CommandRegistry (platform-core/src/registry/CommandRegistry.ts)
+ * See: CommandOrchestrator (platform-core/src/orchestration/CommandOrchestrator.ts)
+ * Since: DS-4 (Command Routing & Pattern Unification)
  */
 
 // ============================================================================

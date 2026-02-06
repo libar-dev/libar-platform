@@ -1,10 +1,15 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentLLMIntegration
+ *
  * EventSubscription Discriminated Union — DS-2 Stub
  *
  * Extends EventSubscription from a single-interface (mutation-only) to a
  * discriminated union supporting both mutation and action handlers.
  *
- * @target platform-core/src/eventbus/types.ts (replace EventSubscription definition)
+ * Target: platform-core/src/eventbus/types.ts (replace EventSubscription definition)
  *
  * ## Design Decision
  *
@@ -15,8 +20,8 @@
  * - ActionResult = { kind: "success" } | { kind: "failed" } | { kind: "canceled" } (durability)
  * - WorkpoolRunResult (same pattern, orchestration)
  *
- * @see PDR-011 (Agent Action Handler Architecture)
- * @since DS-2 (Action/Mutation Handler Architecture)
+ * See: PDR-011 (Agent Action Handler Architecture)
+ * Since: DS-2 (Action/Mutation Handler Architecture)
  */
 
 // ============================================================================

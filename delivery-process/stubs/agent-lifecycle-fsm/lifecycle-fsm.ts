@@ -1,17 +1,22 @@
 /**
- * @target platform-core/src/agent/lifecycle-fsm.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
  *
- * Agent Lifecycle FSM
+ * Agent Lifecycle FSM — DS-5 Stub
  *
  * Formal state machine governing agent start/pause/resume/stop/reconfigure transitions.
  * Follows the event-driven Map pattern established by ProcessManagerLifecycle and
  * ProjectionLifecycle.
  *
+ * Target: platform-core/src/agent/lifecycle-fsm.ts
+ *
  * DS-5 Design Session: Agent Lifecycle FSM
  * PDR: pdr-013-agent-lifecycle-fsm (AD-1)
  *
- * @see platform-core/src/processManager/lifecycle.ts — template pattern (identical structure)
- * @see platform-core/src/projections/lifecycle.ts — also uses this pattern (has PAUSE/RESUME)
+ * See: platform-core/src/processManager/lifecycle.ts — template pattern (identical structure)
+ * See: platform-core/src/projections/lifecycle.ts — also uses this pattern (has PAUSE/RESUME)
  */
 
 // ============================================================================

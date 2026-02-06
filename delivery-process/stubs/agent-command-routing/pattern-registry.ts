@@ -1,11 +1,16 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
+ *
  * Pattern Registry — DS-4 Stub
  *
  * Validates pattern definitions passed directly on AgentBCConfig.patterns.
  * Patterns are PatternDefinition[] on the config object, not looked up by
  * name from a global singleton.
  *
- * @target platform-core/src/agent/pattern-registry.ts
+ * Target: platform-core/src/agent/pattern-registry.ts
  *
  * ## Design Decisions
  *
@@ -17,9 +22,9 @@
  * on AgentBCConfig. Add registry back when multi-agent support requires
  * shared pattern discovery.
  *
- * @see PDR-012 (Agent Command Routing & Pattern Unification)
- * @see CommandRegistry (platform-core/src/registry/CommandRegistry.ts)
- * @since DS-4 (Command Routing & Pattern Unification)
+ * See: PDR-012 (Agent Command Routing & Pattern Unification)
+ * See: CommandRegistry (platform-core/src/registry/CommandRegistry.ts)
+ * Since: DS-4 (Command Routing & Pattern Unification)
  */
 
 // ============================================================================

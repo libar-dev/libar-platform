@@ -1,11 +1,16 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
+ *
  * Pattern Executor — DS-4 Stub
  *
  * Iterates an agent's pattern array, calling trigger() then analyze() for
  * each pattern. Short-circuits on the first detected match to avoid
  * unnecessary LLM calls. Returns a simplified execution summary for audit.
  *
- * @target platform-core/src/agent/pattern-executor.ts
+ * Target: platform-core/src/agent/pattern-executor.ts
  *
  * ## Design Decisions
  *
@@ -13,9 +18,9 @@
  * - Array order equals developer-controlled priority
  * - Trigger-only patterns (no analyze) produce rule-based decisions
  *
- * @see PDR-012 (Agent Command Routing & Pattern Unification)
- * @see PatternDefinition (platform-core/src/agent/patterns.ts)
- * @since DS-4 (Command Routing & Pattern Unification)
+ * See: PDR-012 (Agent Command Routing & Pattern Unification)
+ * See: PatternDefinition (platform-core/src/agent/patterns.ts)
+ * Since: DS-4 (Command Routing & Pattern Unification)
  *
  * ## Type Extensions
  *

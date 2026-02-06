@@ -55,7 +55,8 @@ Feature: PDR-009 Design Session Methodology
       Given a design session that defines API contracts
       When handler signatures and schemas are specified
       Then code stubs are created in delivery-process/stubs/{pattern-name}/
-      And each stub has a @target JSDoc comment indicating its real destination
+      And each stub has @libar-docs-implements linking to the parent pattern
+      And the real destination is indicated by "Target:" plain text in the JSDoc
 
   Rule: Decision - Stubs live outside compilation in delivery-process/stubs/
 
@@ -72,9 +73,11 @@ Feature: PDR-009 Design Session Methodology
 
     Stub rules:
     | Rule | Description |
-    | @target comment | Each stub file has a @target JSDoc indicating its real destination path |
+    | @libar-docs-implements | Each stub uses @libar-docs-implements to link to the parent pattern |
+    | Target: annotation | Each stub has a "Target:" plain text line indicating its real destination path |
+    | @libar-docs-* tags first | All @libar-docs-* tags MUST appear first in the JSDoc block |
     | Pattern-based naming | Folder names use the pattern/feature name, not session numbers |
-    | Implementation moves stubs | During implementation, stubs move from stubs/ to @target locations |
+    | Implementation moves stubs | During implementation, stubs move from stubs/ to Target: locations |
     | Step definition stubs | Use existing tests/planning-stubs/ pattern (already excluded from test runner) |
 
     Naming convention: delivery-process/stubs/{pattern-name-kebab-case}/
@@ -91,7 +94,9 @@ Feature: PDR-009 Design Session Methodology
     Scenario: Stub file has target annotation
       Given a code stub in delivery-process/stubs/agent-component-isolation/
       When reviewing the stub file
-      Then it contains a @target JSDoc comment like "@target platform-core/src/agent/component/checkpoints.ts"
+      Then @libar-docs-* tags appear first in the JSDoc block
+      And it contains @libar-docs-implements linking to the parent pattern
+      And the real destination is indicated by "Target:" plain text
 
     @acceptance-criteria
     Scenario: Stubs use pattern-based folder naming
@@ -132,9 +137,10 @@ Feature: PDR-009 Design Session Methodology
     - Zero tsconfig/eslint configuration changes for design sessions
     - Decision specs provide structured traceability with tags
     - Pattern-based naming is stable across planning cycles
-    - @target comments create clear link from design to implementation
+    - @libar-docs-implements + Target: annotations create clear link from design to implementation
 
     Negative outcomes:
     - Stubs are not type-checked until implementation moves them to target locations
     - Additional step needed during implementation to move stubs
     - Design category adds a third taxonomy value to track
+

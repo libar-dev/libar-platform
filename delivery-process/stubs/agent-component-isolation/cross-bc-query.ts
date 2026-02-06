@@ -1,24 +1,25 @@
 /**
- * @target platform-core/src/agent/cross-bc-query.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-uses AgentBCConfig
  *
- * Cross-Component Query Types for Agent BC
+ * Cross-Component Query Types for Agent BC — DS-1 Stub
  *
  * Defines the data shapes for argument injection pattern. The app-level
  * caller pre-loads projection data and passes it as handler arguments,
  * keeping the agent component truly isolated.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-uses AgentBCConfig
+ * Target: platform-core/src/agent/cross-bc-query.ts
  *
  * ## Cross-BC Query Pattern - Argument Injection
  *
  * Instead of the agent component reaching out to query app-level projections,
  * the app-level caller loads projection data and passes it in.
  *
- * @see PDR-010 (Cross-Component Argument Injection)
- * @see DESIGN-2026-005 AD-3 (historical)
+ * See: PDR-010 (Cross-Component Argument Injection)
+ * See: DESIGN-2026-005 AD-3 (historical)
  */
 
 // ============================================================================

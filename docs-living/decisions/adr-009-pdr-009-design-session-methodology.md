@@ -50,9 +50,11 @@ placed in real source folders:
 
     Stub rules:
     | Rule | Description |
-    | @target comment | Each stub file has a @target JSDoc indicating its real destination path |
+    | @libar-docs-implements | Each stub uses @libar-docs-implements to link to the parent pattern |
+    | Target: annotation | Each stub has a "Target:" plain text line indicating its real destination path |
+    | @libar-docs-* tags first | All @libar-docs-* tags MUST appear first in the JSDoc block |
     | Pattern-based naming | Folder names use the pattern/feature name, not session numbers |
-    | Implementation moves stubs | During implementation, stubs move from stubs/ to @target locations |
+    | Implementation moves stubs | During implementation, stubs move from stubs/ to Target: locations |
     | Step definition stubs | Use existing tests/planning-stubs/ pattern (already excluded from test runner) |
 
     Naming convention: delivery-process/stubs/{pattern-name-kebab-case}/
@@ -85,7 +87,7 @@ contracts that are specific to a feature but have lasting reference value.
 
 ## Consequences
 
-Positive outcomes: - Stubs never break compilation or linting - Zero tsconfig/eslint configuration changes for design sessions - Decision specs provide structured traceability with tags - Pattern-based naming is stable across planning cycles - @target comments create clear link from design to implementation
+Positive outcomes: - Stubs never break compilation or linting - Zero tsconfig/eslint configuration changes for design sessions - Decision specs provide structured traceability with tags - Pattern-based naming is stable across planning cycles - @libar-docs-implements + Target: annotations create clear link from design to implementation
 
     Negative outcomes:
     - Stubs are not type-checked until implementation moves them to target locations

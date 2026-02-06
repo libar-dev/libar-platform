@@ -1,17 +1,18 @@
 /**
- * @target platform-core/src/agent/component/approvals.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-uses PendingApproval, HumanInLoopConfig
+ * @libar-docs-used-by EventHandler, ApprovalWorkflow, AdminUI
  *
- * Agent Component - Approval Public API
+ * Agent Component - Approval Public API — DS-1 Stub
  *
  * Provides human-in-loop approval workflow for agent actions.
  * Low-confidence agent decisions are flagged for human review before
  * commands are emitted.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-uses PendingApproval, HumanInLoopConfig
- * @libar-docs-used-by EventHandler, ApprovalWorkflow, AdminUI
+ * Target: platform-core/src/agent/component/approvals.ts
  *
  * ## Approval API - Human-in-Loop Workflow
  *
@@ -19,7 +20,7 @@
  *
  * Status flow: pending → approved/rejected/expired
  *
- * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
+ * See: DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

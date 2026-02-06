@@ -1,10 +1,15 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentLLMIntegration
+ *
  * Agent Subscription Factory — DS-2 Stub
  *
  * Extends the existing `createAgentSubscription` factory to produce
  * `ActionSubscription` variants when an action handler is provided.
  *
- * @target platform-bus/src/agent-subscription.ts (merge with existing)
+ * Target: platform-bus/src/agent-subscription.ts (merge with existing)
  *
  * ## Design Decisions
  *
@@ -20,9 +25,9 @@
  * `createAgentSubscription` remain unchanged. New overloads extend
  * the factory to support both mutation and action variants.
  *
- * @see PDR-011 (Agent Action Handler Architecture)
- * @see event-subscription-types.ts (ActionSubscription / MutationSubscription)
- * @since DS-2 (Action/Mutation Handler Architecture)
+ * See: PDR-011 (Agent Action Handler Architecture)
+ * See: event-subscription-types.ts (ActionSubscription / MutationSubscription)
+ * Since: DS-2 (Action/Mutation Handler Architecture)
  */
 
 // ============================================================================

@@ -1,11 +1,16 @@
 /**
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
+ *
  * Command Bridge — DS-4 Stub
  *
  * Bridges agent command recording (onComplete step 2) with command routing
  * through CommandOrchestrator. Uses Workpool to keep persistence and routing
  * in separate transactions with built-in retry and failure handling.
  *
- * @target platform-core/src/agent/command-bridge.ts
+ * Target: platform-core/src/agent/command-bridge.ts
  *
  * ## Design Decisions
  *
@@ -20,10 +25,10 @@
  * 3. **AgentCommandRouteMap (DS-4)** — Looks up route, transforms args
  * 4. **CommandOrchestrator (existing)** — Executes the transformed command
  *
- * @see PDR-012 (Agent Command Routing & Pattern Unification)
- * @see PDR-011 (Agent Action Handler Architecture) — onComplete persistence order
- * @see AgentCommandRouteMap (command-router.ts)
- * @since DS-4 (Command Routing & Pattern Unification)
+ * See: PDR-012 (Agent Command Routing & Pattern Unification)
+ * See: PDR-011 (Agent Action Handler Architecture) — onComplete persistence order
+ * See: AgentCommandRouteMap (command-router.ts)
+ * Since: DS-4 (Command Routing & Pattern Unification)
  */
 
 import type { AgentComponentAPI } from "../agent-action-handler/oncomplete-handler.js";

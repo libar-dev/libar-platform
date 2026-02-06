@@ -1,23 +1,24 @@
 /**
- * @target platform-core/src/agent/component/audit.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-uses AgentAuditEvent
+ * @libar-docs-used-by EventHandler, AdminUI
  *
- * Agent Component - Audit Public API
+ * Agent Component - Audit Public API — DS-1 Stub
  *
  * Provides audit event recording and querying for agent decision explainability.
  * Every agent decision, approval, rejection, and analysis result is recorded
  * as an audit event for compliance and debugging.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-uses AgentAuditEvent
- * @libar-docs-used-by EventHandler, AdminUI
+ * Target: platform-core/src/agent/component/audit.ts
  *
  * ## Audit API - Decision Tracking
  *
  * Access via: `components.agentBC.audit.*`
  *
- * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
+ * See: DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

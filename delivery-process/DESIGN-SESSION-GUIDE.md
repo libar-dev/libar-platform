@@ -71,8 +71,8 @@ include completed platform stubs they consume instead:
    holistic reviews and iterate on details as necessary.
 2. No design documents. Record important decisions as decision specs (.feature)
    in delivery-process/decisions/.
-3. Code stubs go in delivery-process/stubs/{pattern-name}/ with @target comments
-   indicating real destination. Never directly in package source.
+3. Code stubs go in delivery-process/stubs/{pattern-name}/ with @libar-docs-implements
+   tags and Target: annotations indicating real destination. Never directly in package source.
 4. Open questions section: note interactions with other DS sessions.
    These get resolved during holistic review.
 5. Check consumer specs (22d, 22e) for requirements that validate your design.

@@ -1,6 +1,8 @@
 /**
- * @target platform-core/src/eventbus/ConvexEventBus.ts (modify publish method)
- * @target platform-core/src/orchestration/types.ts (extend WorkpoolClient interface)
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentLLMIntegration
  *
  * EventBus Publish Update — DS-2 Stub
  *
@@ -11,9 +13,12 @@
  * This is the highest-complexity implementation change in DS-2 because it
  * modifies the central dispatch path that all subscriptions flow through.
  *
- * @see event-subscription-types.ts (EventSubscription discriminated union)
- * @see PDR-011 (Agent Action Handler Architecture)
- * @since DS-2 (Action/Mutation Handler Architecture)
+ * Target: platform-core/src/eventbus/ConvexEventBus.ts (modify publish method)
+ * Target: platform-core/src/orchestration/types.ts (extend WorkpoolClient interface)
+ *
+ * See: event-subscription-types.ts (EventSubscription discriminated union)
+ * See: PDR-011 (Agent Action Handler Architecture)
+ * Since: DS-2 (Action/Mutation Handler Architecture)
  */
 
 // ============================================================================

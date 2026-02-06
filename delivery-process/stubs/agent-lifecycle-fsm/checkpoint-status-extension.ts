@@ -1,18 +1,23 @@
 /**
- * @target platform-core/src/agent/checkpoint.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentCommandInfrastructure
  *
- * Checkpoint Status Extension for Agent Lifecycle FSM
+ * Checkpoint Status Extension for Agent Lifecycle FSM — DS-5 Stub
  *
  * Extends the existing AgentCheckpointStatus (3 states) to include error_recovery
  * (4 states), aligning production code with the DS-1 component schema stub.
  * Adds configOverrides field for ReconfigureAgent command support.
  *
+ * Target: platform-core/src/agent/checkpoint.ts
+ *
  * DS-5 Design Session: Agent Lifecycle FSM
  * PDR: pdr-013-agent-lifecycle-fsm (AD-2, AD-5)
  *
- * @modifies platform-core/src/agent/checkpoint.ts — extends existing types
- * @see delivery-process/stubs/agent-component-isolation/component/schema.ts (DS-1, lines 44-49)
- * @see platform-core/src/processManager/types.ts — precedent for status const arrays
+ * Modifies: platform-core/src/agent/checkpoint.ts — extends existing types
+ * See: delivery-process/stubs/agent-component-isolation/component/schema.ts (DS-1, lines 44-49)
+ * See: platform-core/src/processManager/types.ts — precedent for status const arrays
  */
 
 import { z } from "zod";

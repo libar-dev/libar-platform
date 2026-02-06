@@ -1,23 +1,24 @@
 /**
- * @target platform-core/src/agent/component/commands.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-uses EmittedAgentCommand
+ * @libar-docs-used-by EventHandler, CommandOrchestrator, AdminUI
  *
- * Agent Component - Command Public API
+ * Agent Component - Command Public API — DS-1 Stub
  *
  * Provides command recording, status tracking, and querying for
  * commands emitted by agents. Commands flow from agent decisions
  * through the CommandOrchestrator to domain handlers.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-uses EmittedAgentCommand
- * @libar-docs-used-by EventHandler, CommandOrchestrator, AdminUI
+ * Target: platform-core/src/agent/component/commands.ts
  *
  * ## Command API - Agent Command Lifecycle
  *
  * Access via: `components.agentBC.commands.*`
  *
- * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
+ * See: DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

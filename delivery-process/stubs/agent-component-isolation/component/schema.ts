@@ -1,7 +1,11 @@
 /**
- * @target platform-core/src/agent/component/schema.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-used-by AgentCheckpoint, AgentAuditEvent, AgentDeadLetter, AgentCommand, PendingApproval
  *
- * Agent Component Schema
+ * Agent Component Schema — DS-1 Stub
  *
  * Isolated database for all agent-specific state. These tables are
  * private to the component and accessible only through public API handlers.
@@ -10,12 +14,8 @@
  * During implementation, agent tables move from the shared app schema
  * to this isolated component schema.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-used-by AgentCheckpoint, AgentAuditEvent, AgentDeadLetter, AgentCommand, PendingApproval
- *
- * @see DESIGN-2026-005 AD-5 (Schema Strategy, historical)
+ * Target: platform-core/src/agent/component/schema.ts
+ * See: DESIGN-2026-005 AD-5 (Schema Strategy, historical)
  */
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";

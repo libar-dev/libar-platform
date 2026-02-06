@@ -1,16 +1,17 @@
 /**
- * @target platform-core/src/agent/component/convex.config.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-uses AgentBCConfig
  *
- * Agent Component Definition
+ * Agent Component Definition — DS-1 Stub
  *
  * Defines the agent bounded context as a Convex component with isolated database.
  * All agent-specific state (checkpoints, audit events, dead letters, commands,
  * pending approvals) resides in this component's isolated tables.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-uses AgentBCConfig
+ * Target: platform-core/src/agent/component/convex.config.ts
  *
  * ## Agent Component - Isolated BC State
  *
@@ -48,9 +49,9 @@
  *   onComplete: ctx.runMutation(agentBC.audit.*) + ctx.runMutation(agentBC.checkpoints.*)
  * ```
  *
- * @see DESIGN-2026-005 for detailed architecture rationale (historical)
- * @see PDR-010 (Cross-Component Argument Injection)
- * @see DESIGN-SESSION-GUIDE.md Holistic Review Checklist
+ * See: DESIGN-2026-005 for detailed architecture rationale (historical)
+ * See: PDR-010 (Cross-Component Argument Injection)
+ * See: DESIGN-SESSION-GUIDE.md Holistic Review Checklist
  */
 import { defineComponent } from "convex/server";
 

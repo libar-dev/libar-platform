@@ -1,23 +1,24 @@
 /**
- * @target platform-core/src/agent/component/checkpoints.ts
+ * @libar-docs
+ * @libar-docs-status roadmap
+ * @libar-docs-infra
+ * @libar-docs-implements AgentBCComponentIsolation
+ * @libar-docs-uses AgentCheckpoint
+ * @libar-docs-used-by EventHandler, AdminUI
  *
- * Agent Component - Checkpoint Public API
+ * Agent Component - Checkpoint Public API — DS-1 Stub
  *
  * Provides checkpoint operations for exactly-once event processing semantics.
  * Each agent+subscription pair maintains a checkpoint tracking the last
  * processed global position.
  *
- * @libar-docs
- * @libar-docs-status roadmap
- * @libar-docs-infra
- * @libar-docs-uses AgentCheckpoint
- * @libar-docs-used-by EventHandler, AdminUI
+ * Target: platform-core/src/agent/component/checkpoints.ts
  *
  * ## Checkpoint API - Position Tracking
  *
  * Access via: `components.agentBC.checkpoints.*`
  *
- * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
+ * See: DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
