@@ -7,12 +7,12 @@
 
 ## Summary
 
-**Overall Progress:** [████████████████░░░░] 55/69 (80%)
+**Overall Progress:** [████████████████░░░░] 54/68 (79%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 69    |
-| Completed      | 55    |
+| Total Patterns | 68    |
+| Completed      | 54    |
 | Active         | 2     |
 | Planned        | 12    |
 | Active Phases  | 1     |
@@ -23,7 +23,7 @@
 
 ### 🚧 AgentChurnRiskCompletion
 
-[██░░░░░░░░░░░░░] 1/7 14% complete (1 done, 1 active, 5 planned)
+[░░░░░░░░░░░░░░░] 0/6 0% complete (0 done, 1 active, 5 planned)
 
 | Pattern                         | Description                                            |
 | ------------------------------- | ------------------------------------------------------ |

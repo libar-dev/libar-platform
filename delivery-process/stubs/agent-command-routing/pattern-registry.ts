@@ -10,7 +10,7 @@
  * ## Design Decisions
  *
  * - AD-1: Originally followed CommandRegistry singleton pattern
- * - AD-2: AgentBCConfig references patterns by name (not inline objects)
+ * - AD-2: AgentBCConfig receives PatternDefinition[] directly (simplified from name-based lookup)
  *
  * SIMPLIFICATION (holistic review, item 2.1): Replaced singleton class with
  * plain validation function. Single agent passes PatternDefinition[] directly
@@ -32,8 +32,6 @@
 export const PATTERN_REGISTRY_ERROR_CODES = {
   /** Pattern with this name already registered */
   DUPLICATE_PATTERN: "DUPLICATE_PATTERN",
-  /** Pattern name not found in registry */
-  PATTERN_NOT_FOUND: "PATTERN_NOT_FOUND",
   /** Pattern definition is invalid */
   INVALID_PATTERN: "INVALID_PATTERN",
   /** Pattern name is required */
@@ -44,39 +42,6 @@ export const PATTERN_REGISTRY_ERROR_CODES = {
 
 export type PatternRegistryErrorCode =
   (typeof PATTERN_REGISTRY_ERROR_CODES)[keyof typeof PATTERN_REGISTRY_ERROR_CODES];
-
-// ============================================================================
-// Introspection Types
-// ============================================================================
-
-/**
- * Metadata returned by admin/introspection APIs.
- *
- * Provides pattern information without exposing the trigger/analyze functions.
- * Used by admin UI and monitoring tools.
- */
-export interface PatternInfo {
-  /** Pattern name (unique identifier) */
-  readonly name: string;
-
-  /** Human-readable description */
-  readonly description?: string;
-
-  /** Pattern window configuration */
-  readonly window: PatternWindow;
-
-  /** Whether pattern has a trigger function (always true) */
-  readonly hasTrigger: true;
-
-  /** Whether pattern has an LLM-powered analyze function */
-  readonly hasAnalyze: boolean;
-
-  /** Optional tags for filtering */
-  readonly tags: readonly string[];
-
-  /** Registration timestamp */
-  readonly registeredAt: number;
-}
 
 // ============================================================================
 // Pattern Validation

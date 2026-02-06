@@ -35,8 +35,6 @@ export const DS4_CONFIG_ERROR_CODES = {
   NO_EVENT_HANDLER: "NO_EVENT_HANDLER",
   /** Agent cannot have both onEvent and patterns */
   CONFLICTING_HANDLERS: "CONFLICTING_HANDLERS",
-  /** Pattern name not found in registry */
-  PATTERN_NOT_FOUND: "PATTERN_NOT_FOUND",
 } as const;
 
 /**
@@ -54,7 +52,7 @@ export const DS4_CONFIG_ERROR_CODES = {
  *
  * EVOLUTION from DS-2:
  * - `onEvent` is now OPTIONAL (was required)
- * - `patterns` field added (array of pattern names from registry)
+ * - `patterns` field added (array of PatternDefinition objects)
  * - XOR constraint: exactly one of `onEvent` or `patterns` must be set
  *
  * In `onEvent` mode (legacy):
@@ -77,13 +75,13 @@ export const DS4_CONFIG_ERROR_CODES = {
  *   onEvent: async (event, ctx) => { ... },
  * };
  *
- * // New mode (patterns) — uses registered PatternDefinitions:
+ * // New mode (patterns) — PatternDefinition objects passed directly:
  * const config: AgentBCConfig = {
  *   id: "churn-risk-agent",
  *   subscriptions: ["OrderCancelled"],
  *   patternWindow: { duration: "30d" },  // Master loading window
  *   confidenceThreshold: 0.8,
- *   patterns: ["churn-risk", "high-value-churn-risk"],
+ *   patterns: [churnRiskPattern, highValueChurnPattern],
  * };
  * ```
  */
@@ -135,28 +133,26 @@ export interface AgentBCConfig {
   readonly onEvent?: AgentEventHandler;
 
   /**
-   * Pattern names from PatternRegistry for pattern-based detection.
+   * Pattern definitions for pattern-based detection.
    *
-   * Each name is resolved from globalPatternRegistry at handler creation.
-   * Patterns are evaluated in array order (first match wins).
+   * Patterns are evaluated in array order by PatternExecutor (first match wins).
+   * Validated via `validatePatternDefinitions()` from pattern-registry.ts.
    *
    * NEW in DS-4 — alternative to `onEvent`.
    * XOR constraint: exactly one of `onEvent` or `patterns` must be set.
    *
    * @example
    * ```typescript
-   * // Register patterns first:
-   * globalPatternRegistry.register(churnRiskPattern, ["churn"]);
-   * globalPatternRegistry.register(highValueChurnPattern, ["churn", "high-value"]);
+   * import { churnRiskPattern } from "./_patterns/churnRisk.js";
+   * import { highValueChurnPattern } from "./_patterns/highValueChurn.js";
    *
-   * // Reference by name in config:
    * const config: AgentBCConfig = {
-   *   patterns: ["churn-risk", "high-value-churn-risk"],
+   *   patterns: [churnRiskPattern, highValueChurnPattern],
    *   // ... other fields
    * };
    * ```
    */
-  readonly patterns?: readonly string[];
+  readonly patterns?: readonly PatternDefinition[];
 }
 
 // ============================================================================
@@ -168,7 +164,7 @@ export interface AgentBCConfig {
  *
  * EVOLUTION from existing validateAgentBCConfig:
  * - Adds XOR check: exactly one of `onEvent` or `patterns` must be set
- * - Validates pattern names against globalPatternRegistry
+ * - Validates patterns via validatePatternDefinitions() from pattern-registry.ts
  *
  * IMPLEMENTATION NOTE: Extend the existing validateAgentBCConfig function
  * in platform-core/src/agent/types.ts. Add the new checks after the
@@ -200,19 +196,11 @@ export function validateAgentBCConfig(config: Partial<AgentBCConfig>): AgentConf
     };
   }
 
-  // DS-4: Validate pattern names exist in registry
+  // DS-4: Validate pattern definitions
   if (hasPatterns && config.patterns) {
-    // IMPLEMENTATION NOTE: Import globalPatternRegistry from pattern-registry.ts
-    // const { globalPatternRegistry } = await import("./pattern-registry.js");
-    for (const name of config.patterns) {
-      // if (!globalPatternRegistry.has(name)) {
-      //   return {
-      //     valid: false,
-      //     code: DS4_CONFIG_ERROR_CODES.PATTERN_NOT_FOUND,
-      //     message: `Pattern "${name}" not found in registry`,
-      //   };
-      // }
-    }
+    // Delegate to validatePatternDefinitions() from pattern-registry.ts
+    // const result = validatePatternDefinitions(config.patterns);
+    // if (!result.valid) return result;
   }
 
   return { valid: true };
@@ -267,18 +255,18 @@ type AgentActionResult = import("./types-placeholder.js").AgentActionResult;
  * };
  * ```
  *
- * AFTER (DS-4 — patterns from registry):
+ * AFTER (DS-4 — PatternDefinition objects on config):
  * ```typescript
- * // Step 1: Register the existing PatternDefinition
- * globalPatternRegistry.register(churnRiskPattern, ["churn"]);
+ * // Step 1: PatternDefinition already exists in _patterns/churnRisk.ts
+ * import { churnRiskPattern } from "./_patterns/churnRisk.js";
  *
- * // Step 2: Update config to reference patterns by name
+ * // Step 2: Pass PatternDefinition objects directly on config
  * const config: AgentBCConfig = {
  *   id: "churn-risk-agent",
  *   subscriptions: ["OrderCancelled"],
  *   patternWindow: { duration: "30d" },  // Master loading window
  *   confidenceThreshold: 0.8,
- *   patterns: ["churn-risk"],
+ *   patterns: [churnRiskPattern],
  *   // onEvent removed — patterns handle detection + analysis
  * };
  *
@@ -302,6 +290,7 @@ type AgentActionResult = import("./types-placeholder.js").AgentActionResult;
 // Type Aliases (referenced but defined elsewhere)
 // ============================================================================
 
+type PatternDefinition = import("./types-placeholder.js").PatternDefinition;
 type PatternWindow = import("./types-placeholder.js").PatternWindow;
 type HumanInLoopConfig = import("./types-placeholder.js").HumanInLoopConfig;
 type AgentRateLimitConfig = import("./types-placeholder.js").AgentRateLimitConfig;

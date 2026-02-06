@@ -36,13 +36,14 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
     CommandOrchestrator pipeline. Commands cannot remain with status "pending"
     in the agent component indefinitely.
 
-    The command bridge uses a scheduled mutation from onComplete (not inline)
-    to keep persistence and routing in separate transactions.
+    The command bridge uses Workpool dispatch from onComplete (not inline)
+    to keep persistence and routing in separate transactions with built-in
+    retry and failure handling.
 
     Architectural Decisions:
 
     | AD | Decision | Rationale |
-    | AD-4 | Command bridge via scheduled mutation from onComplete | CommandOrchestrator is complex (7 steps, Workpool triggers). Separate transaction allows independent retry. Failure in routing does not affect audit/checkpoint persistence |
+    | AD-4 | Command bridge via Workpool dispatch from onComplete | Separate transaction with built-in retry. Failure in routing does not affect audit/checkpoint persistence |
     | AD-5 | AgentCommandRouter maps agent command types to orchestrator routes | Agent commands carry metadata (confidence, reason, patternId) that regular commands do not. Transform layer bridges the format gap |
     | AD-6 | AgentActionResult gains patternId field | PatternExecutor sets patternId. Flows through onComplete to commands.record. Placed on transport type (not AgentDecision) because it is execution metadata, not domain output |
 
@@ -56,7 +57,7 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
 
     DS-4 addition (after step 2, before step 3):
       2b. If command was recorded:
-          ctx.scheduler.runAfter(0, routeAgentCommand, {
+          workpool.enqueue(ctx, routeAgentCommand, {
             decisionId, commandType, agentId, correlationId
           })
     """
@@ -87,13 +88,6 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
       ) => Record<string, unknown>;
     }
     """
-
-    Why Scheduled Mutation (Not Inline or Workpool):
-
-    | Option | Pros | Cons | Verdict |
-    | Inline in onComplete | Single transaction | Complex onComplete, routing failure blocks checkpoint | Rejected |
-    | Scheduled mutation | Clean separation, independent retry | Extra scheduling hop | Chosen |
-    | Workpool | Built-in retry, ordering, monitoring | Over-engineering for current needs | Deferred to DS-6 |
 
     @acceptance-criteria @happy-path
     Scenario: Command routes through orchestrator to domain handler
@@ -132,35 +126,15 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
 
   Rule: PatternDefinition array replaces onEvent as the detection mechanism
 
-    Each agent references named patterns from a registry. The patterns trigger()
-    and analyze() functions are used by the action handler, eliminating parallel
-    implementations (inline onEvent vs formal PatternDefinition).
+    Each agent passes PatternDefinition[] directly on AgentBCConfig. The patterns
+    trigger() and analyze() functions are used by the action handler, eliminating
+    parallel implementations (inline onEvent vs formal PatternDefinition).
 
     Architectural Decisions:
 
     | AD | Decision | Rationale |
-    | AD-1 | PatternRegistry follows CommandRegistry singleton pattern | Consistency with established platform patterns. Enables discoverability for admin UI and validation at registration time |
-    | AD-2 | AgentBCConfig uses XOR for onEvent vs patterns | Backward compatible: existing onEvent agents unchanged. New agents use patterns. Clean migration path with validation preventing ambiguity |
-    | AD-3 | PatternExecutor iterates with short-circuit on first match | Simple, predictable. Array order equals developer-controlled priority. Avoids unnecessary LLM calls after first detection |
-    | AD-7 | Fail-closed default for analyze() failures | LLM outage must not cause mass command emission. onAnalyzeFailure defaults to "skip". Patterns opt into "fallback-to-trigger" explicitly |
-    | AD-8 | defaultCommand on PatternDefinition for trigger-only patterns | Without defaultCommand, trigger-only patterns produce command: null decisions that cannot route. Enables simple threshold patterns to emit commands without analyze() |
-
-    PatternRegistry API (mirrors CommandRegistry):
-    """typescript
-    class PatternRegistry {
-      static getInstance(): PatternRegistry;
-      static resetForTesting(): void;
-      register(pattern: PatternDefinition, tags?: readonly string[]): void;
-      get(name: string): PatternDefinition | undefined;
-      has(name: string): boolean;
-      list(): PatternInfo[];
-      listByTag(tag: string): PatternInfo[];
-      size(): number;
-      clear(): void;
-    }
-
-    export const globalPatternRegistry = PatternRegistry.getInstance();
-    """
+    | AD-2 | AgentBCConfig uses XOR for onEvent vs patterns (PatternDefinition[]) | Backward compatible: existing onEvent agents unchanged. New agents use patterns |
+    | AD-3 | PatternExecutor iterates with short-circuit on first match | Array order equals developer-controlled priority. Avoids unnecessary LLM calls |
 
     AgentBCConfig Evolution:
     """typescript
@@ -174,7 +148,7 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
 
       // XOR: exactly one must be set
       readonly onEvent?: AgentEventHandler;       // Legacy: manual handler
-      readonly patterns?: readonly string[];       // New: pattern names from registry
+      readonly patterns?: readonly PatternDefinition[];  // New: pattern objects
     }
     """
 
@@ -183,14 +157,13 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
     | Condition | Result | Error Code |
     | Neither onEvent nor patterns | Invalid | NO_EVENT_HANDLER |
     | Both onEvent and patterns | Invalid | CONFLICTING_HANDLERS |
-    | Pattern name not in registry | Invalid | PATTERN_NOT_FOUND |
     | Only onEvent set | Valid (legacy) | - |
     | Only patterns set | Valid (new) | - |
 
     PatternExecutor Control Flow:
     """
     For each pattern in config.patterns (array order = priority):
-      1. Resolve pattern from registry by name
+      1. Pattern comes from config.patterns directly
       2. Filter events to patterns own window
       3. Check hasMinimumEvents — skip if insufficient
       4. Call pattern.trigger(events) — cheap boolean, no I/O
@@ -229,14 +202,6 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
     """
 
     @acceptance-criteria @happy-path
-    Scenario: Agent config references patterns from registry
-      Given a PatternDefinition "churn-risk" is registered in globalPatternRegistry
-      And an AgentBCConfig has patterns ["churn-risk"]
-      When the config is validated
-      Then validation passes because the pattern exists in the registry
-      And the agent handler resolves patterns by name at startup
-
-    @acceptance-criteria @happy-path
     Scenario: Handler uses trigger for cheap detection before LLM
       Given a pattern with trigger requiring 3+ OrderCancelled events
       And an event stream with 2 OrderCancelled events
@@ -257,30 +222,3 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
       And the result is wrapped in an AgentDecision with analysisMethod "llm"
       And the executor short-circuits (no further patterns evaluated)
 
-    @acceptance-criteria @validation
-    Scenario: Unknown pattern name fails validation
-      Given an AgentBCConfig with patterns ["nonexistent-pattern"]
-      And "nonexistent-pattern" is NOT registered in globalPatternRegistry
-      When the config is validated
-      Then validation fails with code PATTERN_NOT_FOUND
-      And the error message includes the pattern name "nonexistent-pattern"
-
-    @acceptance-criteria @error-handling
-    Scenario: LLM failure defaults to skip (fail-closed)
-      Given a pattern with trigger requiring 3+ events AND an analyze function
-      And an event stream with 5 matching events (trigger would fire)
-      And the LLM is unavailable (analyze throws)
-      When the PatternExecutor evaluates this pattern
-      Then pattern.trigger returns true
-      And pattern.analyze throws an error
-      And the pattern is SKIPPED (no command emitted) because onAnalyzeFailure defaults to "skip"
-      And the executor continues to the next pattern
-
-    @acceptance-criteria @error-handling
-    Scenario: Pattern opts into trigger fallback on LLM failure
-      Given a pattern with onAnalyzeFailure set to "fallback-to-trigger"
-      And the LLM is unavailable (analyze throws)
-      When the PatternExecutor evaluates this pattern
-      Then pattern.trigger returns true
-      And pattern.analyze throws an error
-      And a rule-based-fallback decision is produced from trigger data

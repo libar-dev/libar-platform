@@ -7,12 +7,12 @@
 
 ## Summary
 
-**Overall:** [████████████░░░░░░░░] 19/32 (59%)
+**Overall:** [████████████░░░░░░░░] 18/31 (58%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 32    |
-| Completed      | 19    |
+| Total Features | 31    |
+| Completed      | 18    |
 | Active         | 1     |
 | Planned        | 12    |
 | Product Areas  | 2     |
@@ -32,9 +32,8 @@
 
 ### Platform
 
-18/29 complete (62%)
+17/28 complete (61%)
 
-- [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](requirements/phase-19-bdd-testing-infrastructure.md)
 - [✅ Bounded Context Foundation](requirements/phase-11-bounded-context-foundation.md)
 - [✅ Command Bus Foundation](requirements/phase-03-command-bus-foundation.md)
@@ -70,7 +69,6 @@
 
 | Feature                           | Product Area | User Role | Status    |
 | --------------------------------- | ------------ | --------- | --------- |
-| ✅ Agent As Bounded Context       | Platform     | -         | completed |
 | ✅ Bdd Testing Infrastructure     | Platform     | -         | completed |
 | ✅ Bounded Context Foundation     | Platform     | -         | completed |
 | ✅ Command Bus Foundation         | Platform     | -         | completed |

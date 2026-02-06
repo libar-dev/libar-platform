@@ -7,14 +7,14 @@
 
 ## Overall Progress
 
-**Patterns:** [████████████████░░░░] 55/69 (80%)
+**Patterns:** [████████████████░░░░] 54/68 (79%)
 
 **Phases:** 16/20 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 69    |
-| Completed      | 55    |
+| Total Patterns | 68    |
+| Completed      | 54    |
 | Active         | 2     |
 | Planned        | 12    |
 
@@ -42,7 +42,7 @@
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
-| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 1/7      | 14%      |
+| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 0/6      | 0%       |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
 
 ---
@@ -252,17 +252,16 @@
 
 ### 🚧 AgentChurnRiskCompletion
 
-[██░░░░░░░░░░░░░] 1/7 14% complete
+[░░░░░░░░░░░░░░░] 0/6 0% complete
 
-| Pattern                         | Status    | Description                                                                                                             |
-| ------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 📋 Agent Admin Frontend         | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                         |
-| ✅ Agent As Bounded Context     | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                         |
-| 📋 Agent BC Component Isolation | planned   | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...               |
-| 📋 Agent Churn Risk Completion  | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps... |
-| 📋 Agent Command Infrastructure | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                  |
-| 📋 Agent LLM Integration        | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.          |
-| 🚧 Confirmed Order Cancellation | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                  |
+| Pattern                         | Status  | Description                                                                                                             |
+| ------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 📋 Agent Admin Frontend         | planned | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                         |
+| 📋 Agent BC Component Isolation | planned | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...               |
+| 📋 Agent Churn Risk Completion  | planned | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps... |
+| 📋 Agent Command Infrastructure | planned | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                  |
+| 📋 Agent LLM Integration        | planned | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.          |
+| 🚧 Confirmed Order Cancellation | active  | Problem: The Order FSM treats `confirmed` as terminal.                                                                  |
 
 ---
 

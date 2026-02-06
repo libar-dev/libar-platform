@@ -9,7 +9,7 @@
 
 | Metric             | Value |
 | ------------------ | ----- |
-| Completed Patterns | 55    |
+| Completed Patterns | 54    |
 | Completed Phases   | 16    |
 | Total Phases       | 20    |
 
@@ -183,7 +183,6 @@
 
 ## Recent Completions
 
-- ✅ Agent As Bounded Context (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
 - ✅ Command Bus Foundation (Phase 3)
@@ -193,7 +192,8 @@
 - ✅ Dynamic Consistency Boundaries (Phase 16)
 - ✅ Ecst Fat Events (Phase 20)
 - ✅ Event Replay Infrastructure (Phase 18)
+- ✅ Event Store Durability (Phase 18)
 
-Showing 10 of 55 completed patterns. See quarterly files for full history.
+Showing 10 of 54 completed patterns. See quarterly files for full history.
 
 ---

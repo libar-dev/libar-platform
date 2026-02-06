@@ -6,14 +6,14 @@
 
 ## Progress
 
-**Progress:** [███░░░░░░░░░░░░░░░░░] 1/7 (14%)
+**Progress:** [░░░░░░░░░░░░░░░░░░░░] 0/6 (0%)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 1     |
+| ✅ Completed | 0     |
 | 🚧 Active    | 1     |
 | 📋 Planned   | 5     |
-| **Total**    | 7     |
+| **Total**    | 6     |
 
 ---
 
@@ -211,14 +211,6 @@ _Verified by: Reservation is released after confirmed order cancellation, Cancel
 The primary use case is enabling the Agent BC churn risk detection demo.
 
 _Verified by: Three cancellations trigger churn risk agent_
-
----
-
-## ✅ Recently Completed
-
-| Pattern                     | Description                                                                                     |
-| --------------------------- | ----------------------------------------------------------------------------------------------- |
-| ✅ Agent As Bounded Context | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
 
 ---
 

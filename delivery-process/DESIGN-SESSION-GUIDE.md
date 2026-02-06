@@ -58,6 +58,13 @@ for outside-in validation:
 @libar-platform/delivery-process/specs/example-app/agent-churn-risk-completion.feature
 @libar-platform/delivery-process/specs/example-app/agent-admin-frontend.feature
 
+For consumer DS sessions (DS-6, DS-7 — which ARE the consumer specs),
+include completed platform stubs they consume instead:
+@libar-platform/delivery-process/stubs/agent-component-isolation/
+@libar-platform/delivery-process/stubs/agent-action-handler/
+@libar-platform/delivery-process/stubs/agent-command-routing/
+@libar-platform/delivery-process/stubs/agent-lifecycle-fsm/
+
 ## Critical Reminders
 
 1. This is NOT an implementation session. Once we do all design sessions we will do
@@ -152,13 +159,8 @@ DS-5 (Lifecycle) and DS-7 (Frontend) are off the critical path.
 
 **Open Questions for Holistic Review:**
 
-1. DS-2: How does `createAgentEventHandler` adapt? New `ComponentContext` parameter?
-2. DS-2: How does agent component access EventStore for event history?
-   `loadHistory` (init.ts:363-366) currently queries EventStore directly. After isolation,
-   this is a cross-component query not covered by PDR-010 (which only addresses app-level projections).
-3. DS-4: Command routing extensibility — `commands.record` may need additional fields
-4. DS-5: Lifecycle FSM states — verify `status` union covers all states
-5. DS-7: Admin UI queries — ensure responses have enough data without N+1
+1. DS-4: Command routing extensibility — `commands.record` may need additional fields
+2. DS-7: Admin UI queries — ensure responses have enough data without N+1
 
 **Note:** DS-1 was created before the stubs-in-delivery-process pattern was established.
 The design document (DESIGN-2026-005) has been superseded per PDR-009 methodology.
@@ -217,10 +219,8 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 **Open Questions for Holistic Review:**
 
 1. DS-3: Rate limiter check point — inside action (before LLM) wastes Workpool slot when rate-limited. Consider rate-limit-then-enqueue at EventBus level?
-2. DS-4: How does `AgentBCConfig.onEvent` evolve into `PatternDefinition[]`? The `injectedData` addition needs to be compatible.
-3. DS-5: Lifecycle FSM pause/resume — paused agent should reject events in the action (fast return null), not just rely on checkpoint status check.
-4. DS-7: Admin UI needs the same app-level query handlers that actions use. Shared query layer opportunity.
-5. Future: When Workpool adds key-based ordering, update EventBus to pass `partitionKey.value` as `key`. This eliminates the concurrent-action concern entirely and makes the onComplete checkpoint check a pure defense-in-depth measure.
+2. DS-7: Admin UI needs the same app-level query handlers that actions use. Shared query layer opportunity.
+3. Future: When Workpool adds key-based ordering, update EventBus to pass `partitionKey.value` as `key`. This eliminates the concurrent-action concern entirely and makes the onComplete checkpoint check a pure defense-in-depth measure.
 
 ---
 
@@ -284,25 +284,25 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 - 22d Rule 3: SuggestCustomerOutreach is the first concrete command needing routing
 - 22d Rule 3 S1: "CommandOrchestrator processes the command" — validates command bridge design
 - 22d Rule 3 S3: "handler throws → dead letter" — validates failure-to-dead-letter flow
-- **API gap (command bridge):** RESOLVED — Command bridge via scheduled mutation from onComplete
+- **API gap (command bridge):** RESOLVED — Command bridge via Workpool dispatch from onComplete
 
 **Scope:**
 
 - Agent command router: `SuggestCustomerOutreach` -> CommandOrchestrator
 - Command config registration pattern
 - Unified `PatternDefinition` API: `trigger()` + `analyze()`
-- Pattern registry: named pattern lookup
-- `AgentBCConfig` redesign: `patterns: string[]` (names from registry) replaces `onEvent`
-- Command bridge: scheduled mutation routes commands through orchestrator
+- Pattern validation: `validatePatternDefinitions()` for array-based patterns
+- `AgentBCConfig` redesign: `patterns: PatternDefinition[]` replaces `onEvent` (XOR constraint)
+- Command bridge: Workpool dispatch routes commands through orchestrator
 
 **Key Decisions (6 total):**
 
 | AD   | Decision                                                           | Category     | PDR     |
 | ---- | ------------------------------------------------------------------ | ------------ | ------- |
-| AD-1 | PatternRegistry follows CommandRegistry singleton pattern          | architecture | PDR-012 |
+| AD-1 | `validatePatternDefinitions()` plain function (registry deferred)  | architecture | PDR-012 |
 | AD-2 | AgentBCConfig uses XOR for onEvent vs patterns                     | architecture | PDR-012 |
 | AD-3 | PatternExecutor iterates with short-circuit on first match         | design       | PDR-012 |
-| AD-4 | Command bridge via scheduled mutation from onComplete              | architecture | PDR-012 |
+| AD-4 | Command bridge via Workpool dispatch from onComplete               | architecture | PDR-012 |
 | AD-5 | AgentCommandRouter maps agent command types to orchestrator routes | design       | PDR-012 |
 | AD-6 | AgentActionResult gains patternId field                            | design       | PDR-012 |
 
@@ -326,10 +326,8 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 **Open Questions for Holistic Review:**
 
 1. DS-3: How does PatternExecutor interact with rate limiter? Proposed: check before `analyze()` (expensive LLM), not before `trigger()` (cheap boolean).
-2. DS-5: When agent is paused, should pending commands still route? Proposed: YES — pausing stops event delivery, not command lifecycle.
-3. DS-6: Should command routing use Workpool instead of scheduler? Proposed: defer — scheduler sufficient for MVP, DS-6 can upgrade.
-4. DS-7: Admin UI needs `commands.getByDecisionId` query (not in DS-1 API). Add during holistic review or DS-7.
-5. Future: Multi-pattern matching strategy — short-circuit vs aggregate. Proposed: short-circuit for DS-4, defer aggregation to future DS.
+2. DS-7: Admin UI needs `commands.getByDecisionId` query (not in DS-1 API). Add during holistic review or DS-7.
+3. Future: Multi-pattern matching strategy — short-circuit vs aggregate. Proposed: short-circuit for DS-4, defer aggregation to future DS.
 
 ---
 
@@ -396,7 +394,12 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 3. DS-7: Admin UI lifecycle controls — `checkpoints.getByAgentId` query (DS-1) sufficient for displaying agent state. No additional API needed.
 4. Future: Skipped-event audit trail — should action handler record lightweight "EventSkipped" entries during pause? Currently events are silently skipped.
 5. Future: Multiple subscriptions per agent — lifecycle is agent-level, not subscription-level. Should individual subscription pause be supported?
-6. Future: ReconfigureAgent field set — could `humanInLoop` config also be runtime-configurable?
+
+**Implementation Optimization Note:**
+The 5 lifecycle command handlers (Start, Pause, Resume, Stop, Reconfigure) follow a near-identical
+pattern: validate FSM transition → apply update → record audit event. At implementation time,
+consider a table-driven approach mapping `(command, fromState, toState, auditEventType)` to reduce
+boilerplate to a single handler factory.
 
 ---
 
@@ -461,15 +464,15 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 ## Summary Table
 
-| Session | Source Spec     | Deliverables | Rules | Design Weight | Status      |
-| ------- | --------------- | ------------ | ----- | ------------- | ----------- |
-| DS-1    | 22a             | 11           | 2     | Heavy         | Complete    |
-| DS-2    | 22b (core)      | 5            | 3     | Heavy         | Complete    |
-| DS-3    | 22b (rest)      | 5            | 1     | Medium        | Not started |
-| DS-4    | 22c (Rules 1,3) | 6            | 2     | Medium        | Complete    |
-| DS-5    | 22c (Rule 2)    | 6            | 1     | Medium        | Complete    |
-| DS-6    | 22d             | 8            | 3     | Light-medium  | Not started |
-| DS-7    | 22e             | 12           | 3     | Light-medium  | Not started |
+| Session | Source Spec     | Deliverables    | Rules | Design Weight | Status      |
+| ------- | --------------- | --------------- | ----- | ------------- | ----------- |
+| DS-1    | 22a             | 11              | 2     | Heavy         | Complete    |
+| DS-2    | 22b (core)      | 5               | 3     | Heavy         | Complete    |
+| DS-3    | 22b (rest)      | ~5 (projected)  | 1     | Medium        | Not started |
+| DS-4    | 22c (Rules 1,3) | 6               | 2     | Medium        | Complete    |
+| DS-5    | 22c (Rule 2)    | 6               | 1     | Medium        | Complete    |
+| DS-6    | 22d             | ~8 (projected)  | 3     | Light-medium  | Not started |
+| DS-7    | 22e             | ~12 (projected) | 3     | Light-medium  | Not started |
 
 ---
 
@@ -483,26 +486,37 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 After all design sessions complete, review across all DS sessions:
 
-- [ ] Cross-DS dependencies resolved (open questions from each DS)
-- [x] API contracts consistent across component boundary — Resolved: unified AgentComponentAPI (holistic review)
-- [ ] TS2589 strategy covers all new references
-- [ ] Decision specs created for lasting architectural choices
-- [ ] Stubs reviewed for completeness before implementation
-- [ ] Consumer spec validation: platform APIs satisfy 22d/22e requirements
-- [ ] API gap: audit `actionType` field for decision history filtering (DS-7)
-- [ ] API gap: audit `fromTimestamp`/`toTimestamp` for time range queries (DS-7)
-- [x] API gap: command bridge from agent component to CommandOrchestrator (DS-4) — RESOLVED: scheduled mutation via `routeAgentCommand`
-- [x] API gap: `commands.getByDecisionId` query needed for command bridge (DS-4 open Q4) — RESOLVED: Added to DS-1 commands stub
-- [ ] PatternExecutor + rate limiter interaction point (DS-4 open Q1 / DS-3) — Blocked: DS-3
-- [ ] error_recovery trigger mechanism: consecutive failure threshold + cooldown (DS-5 open Q1 / DS-3) — Blocked: DS-3
-- [ ] Cost budget exceeded auto-pause via ENTER_ERROR_RECOVERY (DS-5 open Q2 / DS-3)
-- [ ] Skipped-event audit trail during pause — silent skip vs lightweight audit (DS-5 open Q4)
-- [x] ReconfigureAgent runtime-configurable field set — extend beyond confidenceThreshold/patternWindow/rateLimits? (DS-5 open Q6) — Resolved: documented in checkpoint-status-extension.ts
-- [ ] 22d deliverable location: "Agent component migration" location correction
+### Resolved
+
+- [x] API contracts consistent across component boundary — unified AgentComponentAPI (holistic review)
+- [x] Command bridge from agent component to CommandOrchestrator — Workpool dispatch via `routeAgentCommand`
+- [x] `commands.getByDecisionId` query for command bridge — added to DS-1 commands stub
+- [x] ReconfigureAgent runtime-configurable field set — documented in checkpoint-status-extension.ts
+
+### Blocked on DS-3
+
+- [ ] PatternExecutor + rate limiter interaction point (DS-4 open Q1)
+- [ ] error_recovery trigger mechanism: consecutive failure threshold + cooldown (DS-5 open Q1)
+- [ ] Cost budget exceeded auto-pause via ENTER_ERROR_RECOVERY (DS-5 open Q2)
 - [ ] DS-3 prereq: AgentRuntimeConfig vs Agent class integration boundary
 - [ ] DS-3 prereq: AI SDK v4→v5 migration (peer dep conflict)
 - [ ] DS-3 prereq: LLM call pattern (generateObject vs Agent.generateText)
 - [ ] DS-3 prereq: Built-in usageHandler vs custom cost tracking
 - [ ] DS-3 prereq: Rate limiter enforcement point (app-level action, handler, or EventBus?)
 
-~~DS-3 Pre-requisites~~ — Moved to holistic review checklist above.
+### Open for Review
+
+- [ ] Cross-DS dependencies resolved (open questions from each DS)
+- [ ] TS2589 strategy covers all new references
+- [ ] Decision specs created for lasting architectural choices
+- [ ] Stubs reviewed for completeness before implementation
+- [ ] Consumer spec validation: platform APIs satisfy 22d/22e requirements
+- [ ] API gap: audit `actionType` field for decision history filtering (DS-7)
+- [ ] API gap: audit `fromTimestamp`/`toTimestamp` for time range queries (DS-7)
+- [ ] Skipped-event audit trail during pause — silent skip vs lightweight audit (DS-5 open Q4)
+- [ ] 22d deliverable location: "Agent component migration" location correction
+- [ ] Implementation: consider table-driven lifecycle handlers to reduce 5-handler boilerplate (DS-5)
+
+## Architectural insights:
+
+- The **mutation→action shift** is about durability, not just LLM access. The durability reference makes a critical distinction: Workpool retries actions but NOT mutations (mutations rely on OCC auto-retry only). The current agent handler is a mutation dispatched via Workpool, which means if it fails for any non-OCC reason, there's no retry. By switching to an action, the agent gains Workpool-managed retries with exponential backoff — making the entire pipeline more resilient. The LLM-calling capability is a bonus on top of the durability improvement.

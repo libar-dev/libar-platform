@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [████████████████░░░░] 55/69 (80% complete)
+**Overall:** [████████████████░░░░] 54/68 (79% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 55    |
+| ✅ Completed | 54    |
 | 🚧 Active    | 2     |
 | 📋 Planned   | 12    |
-| **Total**    | 69    |
+| **Total**    | 68    |
 
 ---
 
@@ -22,7 +22,7 @@
 
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (9)
-- [DDD](#ddd) (27)
+- [DDD](#ddd) (26)
 - [Event Sourcing](#event-sourcing) (1)
 - [Implements](#implements) (14)
 - [Infra](#infra) (1)
@@ -34,7 +34,6 @@
 
 | Pattern                                                  | Category                          | Status    | Description                                                                                                              |
 | -------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
-| ✅ Agent As Bounded Context                              | DDD                               | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
 | ✅ Bdd Testing Infrastructure                            | DDD                               | completed | Problem: Domain logic tests require infrastructure (Docker, database).                                                   |
 | ✅ Bounded Context Foundation                            | Completed Before Delivery Process | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
 | ✅ Bounded Context Identity                              | Pattern                           | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
@@ -135,9 +134,8 @@
 
 ### DDD
 
-14/27 complete (52%)
+13/26 complete (50%)
 
-- [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
 - [✅ Decider Pattern](patterns/decider-pattern.md)
 - [✅ Durable Events Integration](patterns/durable-events-integration.md)
@@ -231,11 +229,10 @@ Pattern relationships and dependencies:
 ```mermaid
 graph TD
     HandlerFactories --> DeciderPattern
-    DualWriteContract --> BoundedContextIdentity
     CMSRepository --> CMSDualWrite
-    ProjectionCheckpointing --> EventStoreFoundation
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
+    ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
@@ -274,6 +271,7 @@ graph TD
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
+    DualWriteContract --> BoundedContextIdentity
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -283,12 +281,6 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
@@ -325,11 +317,15 @@ graph TD
     AgentLLMIntegration -.-> AgentBCComponentIsolation
     AgentCommandInfrastructure -.-> AgentLLMIntegration
     AgentBCComponentIsolation -.-> AgentAsBoundedContext
-    AgentAsBoundedContext -.-> ReactiveProjections
-    AgentAsBoundedContext -.-> EcstFatEvents
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---
