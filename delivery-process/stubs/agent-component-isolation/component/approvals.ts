@@ -15,7 +15,7 @@
  *
  * ## Approval API - Human-in-Loop Workflow
  *
- * Access via: `components.agent.approvals.*`
+ * Access via: `components.agentBC.approvals.*`
  *
  * Status flow: pending → approved/rejected/expired
  *
@@ -50,7 +50,7 @@ const approvalStatusValidator = v.union(
  *
  * @example
  * ```typescript
- * const result = await ctx.runMutation(components.agent.approvals.create, {
+ * const result = await ctx.runMutation(components.agentBC.approvals.create, {
  *   approvalId: "apr_123_abc",
  *   agentId: "churn-risk-agent",
  *   decisionId: "dec_123_abc",
@@ -89,7 +89,7 @@ export const create = mutation({
  *
  * @example
  * ```typescript
- * const result = await ctx.runMutation(components.agent.approvals.approve, {
+ * const result = await ctx.runMutation(components.agentBC.approvals.approve, {
  *   approvalId: "apr_123_abc",
  *   reviewerId: "user_456",
  *   reviewNote: "Customer is high-value, proceeding with outreach",
@@ -119,7 +119,7 @@ export const approve = mutation({
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.approvals.reject, {
+ * await ctx.runMutation(components.agentBC.approvals.reject, {
  *   approvalId: "apr_123_abc",
  *   reviewerId: "user_456",
  *   reviewNote: "False positive - customer already contacted",
@@ -147,7 +147,7 @@ export const reject = mutation({
  * ```typescript
  * // From a cron job:
  * const { expiredCount } = await ctx.runMutation(
- *   components.agent.approvals.expirePending, {}
+ *   components.agentBC.approvals.expirePending, {}
  * );
  * ```
  */
@@ -159,6 +159,35 @@ export const expirePending = mutation({
 });
 
 // ============================================================================
+// IMPLEMENTATION NOTE — Cron Migration (Finding F-8)
+// ============================================================================
+//
+// The current approval expiration cron at crons.ts:56 calls:
+//   ctx.db.query("pendingApprovals").withIndex("by_expiresAt", ...)
+//
+// After migration to the agent component, the cron CANNOT access component
+// tables directly (Convex component isolation). The cron must call through
+// the component API via an app-level wrapper mutation:
+//
+//   // In convex/crons.ts (app level):
+//   crons.interval("expire-pending-approvals", { hours: 1 }, internal.crons.expireApprovals);
+//
+//   // In convex/crons.ts or convex/infrastructure/agentCrons.ts:
+//   export const expireApprovals = internalMutation({
+//     handler: async (ctx) => {
+//       const { expiredCount } = await ctx.runMutation(
+//         components.agentBC.approvals.expirePending, {}
+//       );
+//       if (expiredCount > 0) {
+//         console.log(`Expired ${expiredCount} pending approvals`);
+//       }
+//     },
+//   });
+//
+// The component's expirePending mutation handles the actual query + patch
+// logic internally. The app-level wrapper is a thin delegation layer.
+
+// ============================================================================
 // Queries
 // ============================================================================
 
@@ -168,14 +197,14 @@ export const expirePending = mutation({
  * @example
  * ```typescript
  * // All pending approvals for an agent
- * const pending = await ctx.runQuery(components.agent.approvals.queryApprovals, {
+ * const pending = await ctx.runQuery(components.agentBC.approvals.queryApprovals, {
  *   agentId: "churn-risk-agent",
  *   status: "pending",
  *   limit: 50,
  * });
  *
  * // All approvals regardless of agent or status
- * const all = await ctx.runQuery(components.agent.approvals.queryApprovals, {});
+ * const all = await ctx.runQuery(components.agentBC.approvals.queryApprovals, {});
  * ```
  */
 export const queryApprovals = query({
@@ -196,7 +225,7 @@ export const queryApprovals = query({
  *
  * @example
  * ```typescript
- * const approval = await ctx.runQuery(components.agent.approvals.getById, {
+ * const approval = await ctx.runQuery(components.agentBC.approvals.getById, {
  *   approvalId: "apr_123_abc",
  * });
  * ```

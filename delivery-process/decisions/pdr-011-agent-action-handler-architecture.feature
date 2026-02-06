@@ -317,3 +317,52 @@ Feature: PDR-011 Agent Action Handler Architecture
       And the audit record operation is idempotent via decisionId
       And the checkpoint is updated on retry
       And no duplicate audit events exist
+
+  # ============================================================================
+  # AMENDMENT: Holistic Review Findings F-3, F-6 (2026-02-06)
+  # ============================================================================
+
+  Rule: Amendment — Holistic review findings F-3, F-6
+
+    Applied during cross-DS architectural review of DS-1/DS-2/DS-4/DS-5.
+
+    F-3 Confirmation (Orphaned onComplete):
+
+    The existing mutation-based agent handler (handleChurnRiskOnComplete at
+    examples/order-management/convex/contexts/agent/onComplete.ts) is never invoked
+    because the current CreateAgentSubscriptionOptions in platform-bus/src/agent-subscription.ts
+    lacks an onComplete field. Agent dead letters fall through to the projection-specific
+    default handler (projections/deadLetters.ts). This is a pre-existing bug, not a design
+    regression. PDR-011 Rule 2 ActionSubscription with REQUIRED onComplete is the fix.
+    The mutation overload CreateAgentSubscriptionOptions should also gain an OPTIONAL
+    onComplete field to wire custom dead letter handling for non-action agents.
+
+    F-6 Decision (AD-10 — Per-Subscription Pool Routing):
+
+    | AD | Decision | Rationale |
+    | AD-10 | ActionSubscription and MutationSubscription gain optional pool field | Agent LLM actions (1-10s) must not block sub-50ms projection processing. EventBus uses subscription.pool when present, falls back to default shared pool |
+
+    Pool topology at app level:
+    """
+    app.use(workpool, { name: "agentPool" });      // For agent LLM actions
+    app.use(workpool, { name: "projectionPool" });  // For projection mutations
+    """
+
+    EventBus dispatch with pool routing:
+    """typescript
+    const pool = subscription.pool ?? this.defaultWorkpool;
+    if (subscription.handlerType === "action") {
+      await pool.enqueueAction(ctx, subscription.handler, args, { ... });
+    } else {
+      await pool.enqueueMutation(ctx, subscription.handler, args, { ... });
+    }
+    """
+
+    @amendment @holistic-review
+    Scenario: EventBus uses subscription-specific pool when available
+      Given an ActionSubscription with a dedicated agentPool
+      And a MutationSubscription with no pool specified
+      When EventBus dispatches to the ActionSubscription
+      Then it uses agentPool.enqueueAction
+      When EventBus dispatches to the MutationSubscription
+      Then it uses the default shared workpool.enqueueMutation

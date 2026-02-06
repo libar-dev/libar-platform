@@ -106,6 +106,16 @@ export interface MutationSubscription<
     WorkpoolOnCompleteArgs,
     unknown
   >;
+
+  /**
+   * Dedicated Workpool for this subscription type (Finding F-6, AD-10).
+   *
+   * When provided, EventBus uses this pool instead of the shared default.
+   * Optional for mutation subscriptions — falls back to EventBus default pool.
+   *
+   * @see ActionSubscription.pool for full rationale
+   */
+  readonly pool?: WorkpoolClient;
 }
 
 // ============================================================================
@@ -148,6 +158,32 @@ export interface ActionSubscription<
    * Dispatched via workpool.enqueueAction().
    */
   readonly handler: FunctionReference<"action", FunctionVisibility, THandlerArgs, unknown>;
+
+  /**
+   * Dedicated Workpool for this subscription type (Finding F-6, AD-10).
+   *
+   * Agent LLM actions take 1-10s. Projection mutations take <50ms.
+   * Sharing a single Workpool causes head-of-line blocking where slow
+   * agent actions prevent time-critical projection updates from processing.
+   *
+   * When provided, EventBus uses this pool instead of the shared default.
+   * Agent subscriptions use `agentPool`, projections use `projectionPool`.
+   *
+   * Installation at app level:
+   * ```typescript
+   * app.use(workpool, { name: "agentPool" });     // For agent LLM actions
+   * app.use(workpool, { name: "projectionPool" }); // For projection mutations
+   * ```
+   *
+   * EventBus dispatch logic:
+   * ```typescript
+   * const pool = subscription.pool ?? this.defaultWorkpool;
+   * await pool.enqueueAction(ctx, subscription.handler, args, { ... });
+   * ```
+   *
+   * @see DESIGN-SESSION-GUIDE.md Holistic Review Checklist
+   */
+  readonly pool?: WorkpoolClient;
 
   /**
    * onComplete handler for persistence — REQUIRED for actions.
@@ -285,7 +321,7 @@ export function isMutationSubscription<T extends UnknownRecord>(
 //   - FunctionReference, FunctionVisibility
 //
 // From deps-packages/workpool:
-//   - RetryBehavior
+//   - RetryBehavior, WorkpoolClient
 
 // ============================================================================
 // MIGRATION STRATEGY — Backward-Compatible EventSubscription Evolution
@@ -329,3 +365,4 @@ type WorkpoolOnCompleteArgs = unknown;
 type FunctionReference<_T extends string, _V = unknown, _A = unknown, _R = unknown> = unknown;
 type FunctionVisibility = unknown;
 type RetryBehavior = unknown;
+type WorkpoolClient = unknown;

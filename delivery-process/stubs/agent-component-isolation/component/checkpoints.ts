@@ -15,7 +15,7 @@
  *
  * ## Checkpoint API - Position Tracking
  *
- * Access via: `components.agent.checkpoints.*`
+ * Access via: `components.agentBC.checkpoints.*`
  *
  * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
@@ -49,7 +49,7 @@ const checkpointStatusValidator = v.union(
  * @example
  * ```typescript
  * const { checkpoint, isNew } = await ctx.runMutation(
- *   components.agent.checkpoints.loadOrCreate,
+ *   components.agentBC.checkpoints.loadOrCreate,
  *   { agentId: "churn-risk-agent", subscriptionId: "sub_churn_001" }
  * );
  * ```
@@ -72,7 +72,7 @@ export const loadOrCreate = mutation({
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.checkpoints.update, {
+ * await ctx.runMutation(components.agentBC.checkpoints.update, {
  *   agentId: "churn-risk-agent",
  *   subscriptionId: "sub_churn_001",
  *   lastProcessedPosition: event.globalPosition,
@@ -101,7 +101,7 @@ export const update = mutation({
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.checkpoints.updateStatus, {
+ * await ctx.runMutation(components.agentBC.checkpoints.updateStatus, {
  *   agentId: "churn-risk-agent",
  *   status: "paused",
  * });
@@ -127,7 +127,7 @@ export const updateStatus = mutation({
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.checkpoints.patchConfigOverrides, {
+ * await ctx.runMutation(components.agentBC.checkpoints.patchConfigOverrides, {
  *   agentId: "churn-risk-agent",
  *   configOverrides: { confidenceThreshold: 0.9 },
  * });
@@ -175,7 +175,7 @@ export const patchConfigOverrides = mutation({
  * @example
  * ```typescript
  * const checkpoint = await ctx.runQuery(
- *   components.agent.checkpoints.getByAgentAndSubscription,
+ *   components.agentBC.checkpoints.getByAgentAndSubscription,
  *   { agentId: "churn-risk-agent", subscriptionId: "sub_churn_001" }
  * );
  * ```
@@ -200,7 +200,7 @@ export const getByAgentAndSubscription = query({
  * @example
  * ```typescript
  * const checkpoint = await ctx.runQuery(
- *   components.agent.checkpoints.getByAgentId,
+ *   components.agentBC.checkpoints.getByAgentId,
  *   { agentId: "churn-risk-agent" }
  * );
  * ```
@@ -222,7 +222,7 @@ export const getByAgentId = query({
  * @example
  * ```typescript
  * const activeAgents = await ctx.runQuery(
- *   components.agent.checkpoints.listActive, {}
+ *   components.agentBC.checkpoints.listActive, {}
  * );
  * ```
  */

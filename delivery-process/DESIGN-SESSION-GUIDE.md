@@ -491,3 +491,11 @@ After all design sessions complete, review across all DS sessions:
 - [ ] Skipped-event audit trail during pause — silent skip vs lightweight audit (DS-5 open Q4)
 - [ ] ReconfigureAgent runtime-configurable field set — extend beyond confidenceThreshold/patternWindow/rateLimits? (DS-5 open Q6)
 - [ ] 22d deliverable location: "Agent component migration" location correction
+
+DS-3 Pre-requisites (from cross-DS review, 2026-02-06 — resolved findings applied to stubs/PDRs):
+
+- [ ] `AgentRuntimeConfig` vs `Agent` class integration boundary — keep bespoke, adopt `Agent`, or hybrid?
+- [ ] AI SDK v4→v5 migration (2 files: `_llm/config.ts`, `_llm/runtime.ts`) — peer dep conflict blocks runtime
+- [ ] LLM call pattern: `generateObject` (stateless, structured) vs `Agent.generateText` (threads, tools)
+- [ ] Evaluate `@convex-dev/agent` built-in `usageHandler` vs custom cost tracking
+- [ ] Rate limiter enforcement point: app-level action, handler, or EventBus? (`reserve: true` constraint)

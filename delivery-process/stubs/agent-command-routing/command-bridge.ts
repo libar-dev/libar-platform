@@ -346,11 +346,11 @@ export function createCommandBridgeMutation(
  * export const routeAgentCommand = createCommandBridgeMutation({
  *   agentComponent: {
  *     commands: {
- *       getByDecisionId: components.agent.commands.getByDecisionId,
- *       updateStatus: components.agent.commands.updateStatus,
+ *       getByDecisionId: components.agentBC.commands.getByDecisionId,
+ *       updateStatus: components.agentBC.commands.updateStatus,
  *     },
  *     audit: {
- *       record: components.agent.audit.record,
+ *       record: components.agentBC.audit.record,
  *     },
  *   },
  *   commandRouter: globalAgentCommandRouter,
@@ -369,7 +369,7 @@ export interface CommandBridgeConfig {
       /**
        * Load command by decisionId.
        *
-       * Maps to: `components.agent.commands.getByDecisionId`
+       * Maps to: `components.agentBC.commands.getByDecisionId`
        * @see agent-component-isolation/component/commands.ts
        */
       readonly getByDecisionId: FunctionRef;
@@ -435,7 +435,7 @@ export interface CommandBridgeConfig {
  *   args: { limit: v.optional(v.number()) },
  *   handler: async (ctx, args) => {
  *     const pending = await ctx.runQuery(
- *       components.agent.commands.getPending,
+ *       components.agentBC.commands.getPending,
  *       { limit: args.limit ?? 50 }
  *     );
  *
@@ -443,7 +443,7 @@ export interface CommandBridgeConfig {
  *       // Check if command has exceeded max routing attempts
  *       if ((command.routingAttempts ?? 0) >= MAX_ROUTING_ATTEMPTS) {
  *         await ctx.runMutation(
- *           components.agent.commands.updateStatus,
+ *           components.agentBC.commands.updateStatus,
  *           {
  *             decisionId: command.decisionId,
  *             status: "failed",

@@ -15,7 +15,7 @@
  *
  * ## Audit API - Decision Tracking
  *
- * Access via: `components.agent.audit.*`
+ * Access via: `components.agentBC.audit.*`
  *
  * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
@@ -66,7 +66,7 @@ const auditEventTypeValidator = v.union(
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.audit.record, {
+ * await ctx.runMutation(components.agentBC.audit.record, {
  *   eventType: "AgentDecisionMade",
  *   agentId: "churn-risk-agent",
  *   decisionId: "dec_123_abc",
@@ -113,7 +113,7 @@ export const record = mutation({
  *
  * @example
  * ```typescript
- * const decisions = await ctx.runQuery(components.agent.audit.queryByAgent, {
+ * const decisions = await ctx.runQuery(components.agentBC.audit.queryByAgent, {
  *   agentId: "churn-risk-agent",
  *   eventType: "AgentDecisionMade",
  *   limit: 10,
@@ -138,7 +138,7 @@ export const queryByAgent = query({
  *
  * @example
  * ```typescript
- * const audit = await ctx.runQuery(components.agent.audit.getByDecisionId, {
+ * const audit = await ctx.runQuery(components.agentBC.audit.getByDecisionId, {
  *   decisionId: "dec_123_abc",
  * });
  * ```

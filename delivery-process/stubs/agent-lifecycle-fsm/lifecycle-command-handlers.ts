@@ -568,12 +568,12 @@ export async function handleReconfigureAgent(
  * const handlers = createLifecycleHandlers({
  *   agentComponent: {
  *     checkpoints: {
- *       getByAgentId: components.agent.checkpoints.getByAgentId,
- *       updateStatus: components.agent.checkpoints.updateStatus,
- *       patchConfigOverrides: components.agent.checkpoints.patchConfigOverrides,
+ *       getByAgentId: components.agentBC.checkpoints.getByAgentId,
+ *       updateStatus: components.agentBC.checkpoints.updateStatus,
+ *       patchConfigOverrides: components.agentBC.checkpoints.patchConfigOverrides,
  *     },
  *     audit: {
- *       record: components.agent.audit.record,
+ *       record: components.agentBC.audit.record,
  *     },
  *   },
  *   logger: createLogger("agent-lifecycle"),

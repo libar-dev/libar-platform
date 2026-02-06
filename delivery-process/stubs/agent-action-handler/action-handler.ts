@@ -37,7 +37,7 @@
  * const loadState: AgentStateLoader = async (ctx, args) => {
  *   // Load checkpoint from agent component (compound index lookup)
  *   const checkpoint = await ctx.runQuery(
- *     components.agent.checkpoints.getByAgentAndSubscription,
+ *     components.agentBC.checkpoints.getByAgentAndSubscription,
  *     { agentId: args.agentId, subscriptionId: args.subscriptionId }
  *   );
  *
@@ -306,7 +306,7 @@ export interface AgentActionHandlerConfig {
  *   runtime: createOpenRouterRuntime(apiKey),
  *   loadState: async (ctx, args) => ({
  *     checkpoint: await ctx.runQuery(
- *       components.agent.checkpoints.getByAgentAndSubscription,
+ *       components.agentBC.checkpoints.getByAgentAndSubscription,
  *       { agentId: args.agentId, subscriptionId: args.subscriptionId }
  *     ),
  *     eventHistory: [],  // Using projection data instead

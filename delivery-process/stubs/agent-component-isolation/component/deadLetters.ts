@@ -15,7 +15,7 @@
  *
  * ## Dead Letter API - Failed Event Management
  *
- * Access via: `components.agent.deadLetters.*`
+ * Access via: `components.agentBC.deadLetters.*`
  *
  * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
@@ -55,7 +55,7 @@ const contextValidator = v.optional(
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.deadLetters.record, {
+ * await ctx.runMutation(components.agentBC.deadLetters.record, {
  *   agentId: "churn-risk-agent",
  *   subscriptionId: "sub_churn_001",
  *   eventId: "evt_123",
@@ -65,6 +65,26 @@ const contextValidator = v.optional(
  * });
  * ```
  */
+// IMPLEMENTATION NOTE — Upsert Semantics (Finding F-11)
+//
+// The `record` mutation MUST implement UPSERT, not blind insert:
+//   1. Query by (agentId, eventId) using compound index
+//   2. If existing record found AND status === "pending":
+//      → ctx.db.patch(existing._id, { error, attemptCount, updatedAt })
+//   3. If no existing record:
+//      → ctx.db.insert("agentDeadLetters", { ...args, status: "pending", createdAt })
+//
+// Why upsert:
+// - The onComplete handler uses upsert (existing behavior in projections/deadLetters.ts)
+// - The eventHandler path uses blind insert (eventStore/deadLetters.ts)
+// - These inconsistent paths must be consolidated in the agent component
+// - Upsert prevents duplicate dead letters when the same event fails multiple times
+//   (e.g., Workpool retries → first failure creates record, subsequent failures update it)
+//
+// The upsert is safe because:
+// - (agentId, eventId) is a unique compound key in the dead letters table
+// - Only "pending" records can be updated (replayed/ignored records are immutable)
+//
 export const record = mutation({
   args: {
     agentId: v.string(),
@@ -90,7 +110,7 @@ export const record = mutation({
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.deadLetters.updateStatus, {
+ * await ctx.runMutation(components.agentBC.deadLetters.updateStatus, {
  *   eventId: "evt_123",
  *   newStatus: "ignored",
  *   ignoreReason: "Duplicate event from EventBus replay",
@@ -117,7 +137,7 @@ export const updateStatus = mutation({
  *
  * @example
  * ```typescript
- * const pending = await ctx.runQuery(components.agent.deadLetters.queryByAgent, {
+ * const pending = await ctx.runQuery(components.agentBC.deadLetters.queryByAgent, {
  *   agentId: "churn-risk-agent",
  *   status: "pending",
  *   limit: 50,
@@ -142,7 +162,7 @@ export const queryByAgent = query({
  *
  * @example
  * ```typescript
- * const stats = await ctx.runQuery(components.agent.deadLetters.getStats, {});
+ * const stats = await ctx.runQuery(components.agentBC.deadLetters.getStats, {});
  * // Returns: [{ agentId: "churn-risk-agent", pendingCount: 3 }]
  * ```
  */

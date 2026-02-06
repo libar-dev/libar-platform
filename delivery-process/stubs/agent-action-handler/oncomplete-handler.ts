@@ -185,7 +185,7 @@ export interface AgentOnCompleteArgs {
  * - deadLetters.ts: record
  */
 export interface AgentComponentAPI {
-  /** Checkpoint API — ctx.runQuery/runMutation(components.agent.checkpoints.*) */
+  /** Checkpoint API — ctx.runQuery/runMutation(components.agentBC.checkpoints.*) */
   readonly checkpoints: {
     /** Primary lookup by (agentId, subscriptionId) — O(1) via compound index */
     readonly getByAgentAndSubscription: FunctionRef;
@@ -197,22 +197,22 @@ export interface AgentComponentAPI {
     readonly loadOrCreate: FunctionRef;
   };
 
-  /** Audit API — ctx.runMutation(components.agent.audit.*) */
+  /** Audit API — ctx.runMutation(components.agentBC.audit.*) */
   readonly audit: {
     readonly record: FunctionRef;
   };
 
-  /** Commands API — ctx.runMutation(components.agent.commands.*) */
+  /** Commands API — ctx.runMutation(components.agentBC.commands.*) */
   readonly commands: {
     readonly record: FunctionRef;
   };
 
-  /** Approvals API — ctx.runMutation(components.agent.approvals.*) */
+  /** Approvals API — ctx.runMutation(components.agentBC.approvals.*) */
   readonly approvals: {
     readonly create: FunctionRef;
   };
 
-  /** Dead Letters API — ctx.runMutation(components.agent.deadLetters.*) */
+  /** Dead Letters API — ctx.runMutation(components.agentBC.deadLetters.*) */
   readonly deadLetters: {
     readonly record: FunctionRef;
   };
@@ -307,15 +307,15 @@ export interface AgentDeadLetterInput {
  * export const onAgentComplete = createAgentOnCompleteHandler({
  *   agentComponent: {
  *     checkpoints: {
- *       getByAgentAndSubscription: components.agent.checkpoints.getByAgentAndSubscription,
- *       getByAgentId: components.agent.checkpoints.getByAgentId,
- *       update: components.agent.checkpoints.update,
- *       loadOrCreate: components.agent.checkpoints.loadOrCreate,
+ *       getByAgentAndSubscription: components.agentBC.checkpoints.getByAgentAndSubscription,
+ *       getByAgentId: components.agentBC.checkpoints.getByAgentId,
+ *       update: components.agentBC.checkpoints.update,
+ *       loadOrCreate: components.agentBC.checkpoints.loadOrCreate,
  *     },
- *     audit: { record: components.agent.audit.record },
- *     commands: { record: components.agent.commands.record },
- *     approvals: { create: components.agent.approvals.create },
- *     deadLetters: { record: components.agent.deadLetters.record },
+ *     audit: { record: components.agentBC.audit.record },
+ *     commands: { record: components.agentBC.commands.record },
+ *     approvals: { create: components.agentBC.approvals.create },
+ *     deadLetters: { record: components.agentBC.deadLetters.record },
  *   },
  * });
  * ```

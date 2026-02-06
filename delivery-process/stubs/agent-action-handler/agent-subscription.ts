@@ -277,7 +277,7 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
 }
 
 // ============================================================================
-// EXISTING CODE GAP — onComplete Not Wired in Current Agent Subscription
+// EXISTING CODE GAP — onComplete Not Wired (Finding F-3, Confirmed)
 // ============================================================================
 //
 // The existing `CreateAgentSubscriptionOptions` in platform-bus/src/agent-subscription.ts

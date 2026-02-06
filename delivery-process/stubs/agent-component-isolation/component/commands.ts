@@ -15,7 +15,7 @@
  *
  * ## Command API - Agent Command Lifecycle
  *
- * Access via: `components.agent.commands.*`
+ * Access via: `components.agentBC.commands.*`
  *
  * @see DESIGN-2026-005 AD-4 (API Granularity, historical)
  */
@@ -49,7 +49,7 @@ const commandStatusValidator = v.union(
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.commands.record, {
+ * await ctx.runMutation(components.agentBC.commands.record, {
  *   agentId: "churn-risk-agent",
  *   type: "SuggestCustomerOutreach",
  *   payload: { customerId: "cust_123", suggestedAction: "discount-offer" },
@@ -87,7 +87,7 @@ export const record = mutation({
  *
  * @example
  * ```typescript
- * await ctx.runMutation(components.agent.commands.updateStatus, {
+ * await ctx.runMutation(components.agentBC.commands.updateStatus, {
  *   decisionId: "dec_123_abc",
  *   status: "completed",
  * });
@@ -114,7 +114,7 @@ export const updateStatus = mutation({
  *
  * @example
  * ```typescript
- * const commands = await ctx.runQuery(components.agent.commands.queryByAgent, {
+ * const commands = await ctx.runQuery(components.agentBC.commands.queryByAgent, {
  *   agentId: "churn-risk-agent",
  *   status: "pending",
  *   limit: 20,
@@ -140,7 +140,7 @@ export const queryByAgent = query({
  *
  * @example
  * ```typescript
- * const command = await ctx.runQuery(components.agent.commands.getByDecisionId, {
+ * const command = await ctx.runQuery(components.agentBC.commands.getByDecisionId, {
  *   decisionId: "dec_123_abc",
  * });
  * if (!command) { /* command not found or already processed *\/ }
@@ -163,7 +163,7 @@ export const getByDecisionId = query({
  *
  * @example
  * ```typescript
- * const pending = await ctx.runQuery(components.agent.commands.getPending, {
+ * const pending = await ctx.runQuery(components.agentBC.commands.getPending, {
  *   limit: 100,
  * });
  * ```
