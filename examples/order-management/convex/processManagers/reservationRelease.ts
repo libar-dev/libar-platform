@@ -1,14 +1,17 @@
 /**
- * Reservation Release Process Manager
+ * @libar-docs
+ * @libar-docs-pattern ReservationReleasePM
+ * @libar-docs-status completed
+ * @libar-docs-saga
+ * @libar-docs-arch-role process-manager
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses InventoryCommandHandlers, OrderWithInventoryProjection
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Releases reservations when confirmed orders are cancelled.
- * Enables the Agent BC churn risk demo by allowing confirmed order cancellation.
- *
- * Architecture:
- * 1. EventBus delivers OrderCancelled to this PM via subscription
- * 2. PM queries orderWithInventoryStatus projection for reservationId
- * 3. If reservation exists and not already released, emits ReleaseReservation command
- * 4. PM state tracks last processed globalPosition for idempotency
+ * Process manager: OrderCancelled -> ReleaseReservation command.
+ * Queries orderWithInventory projection to check active reservation exists before emitting release.
+ * Subscribed via EventBus at PM priority (200).
  *
  * @see ADR-033 for Process Manager vs Saga distinction
  */

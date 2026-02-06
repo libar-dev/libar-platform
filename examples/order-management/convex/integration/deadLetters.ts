@@ -1,12 +1,13 @@
 /**
- * Dead Letter Queue management for cross-context event publications.
+ * @libar-docs
+ * @libar-docs-pattern IntegrationDeadLetters
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
- * Handles failed publication delivery with support for:
- * - Recording failures from Workpool onComplete callbacks
- * - Updating publication status
- * - Manual retry/ignore
- *
- * @since Phase 18b (EventStoreDurability)
+ * Dead letter queue management for cross-context event publications.
+ * Handles failed integration event processing with replay and ignore operations.
  */
 import { internalMutation, internalQuery } from "../_generated/server";
 import { v } from "convex/values";

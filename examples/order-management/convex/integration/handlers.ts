@@ -1,9 +1,13 @@
 /**
- * Integration event handlers.
+ * @libar-docs
+ * @libar-docs-pattern IntegrationEventHandlers
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
- * These handlers receive integration events from other bounded contexts.
- * They demonstrate the Published Language pattern - loosely coupled
- * subscribers reacting to cross-context events.
+ * Integration event handlers. Processes integration events from the Published Language
+ * and dispatches to appropriate bounded context commands.
  */
 
 // Console declaration for Convex edge runtime

@@ -1,11 +1,13 @@
 /**
- * Integration events for cross-context communication.
+ * @libar-docs
+ * @libar-docs-pattern IntegrationEventSchemas
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
- * These events follow the Published Language pattern from DDD:
- * - Minimal DTO payloads (only what consumers need)
- * - Versioned schemas for contract evolution
- * - No internal domain details exposed
- * - Stable contracts between bounded contexts
+ * Integration event schema definitions for cross-context communication.
+ * Published Language pattern — defines the contract for external consumers.
  */
 import { z } from "zod";
 import { createIntegrationEventSchema } from "@libar-dev/platform-core";

@@ -1,14 +1,15 @@
 /**
- * Integration event routes.
+ * @libar-docs
+ * @libar-docs-pattern IntegrationRoutes
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-uses OrderCommandHandlers
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Defines translation from domain events to integration events
- * following the Published Language pattern.
- *
- * Each route specifies:
- * - Source domain event type (what triggers the integration)
- * - Target integration event type (what gets published)
- * - Translator function (domain payload → minimal DTO)
- * - Handlers to notify (who receives the integration event)
+ * Integration event routes. Translates internal domain events to integration
+ * events for external consumers. Currently: OrderSubmitted -> OrderPlacedIntegration.
  */
 import type { z } from "zod";
 import { makeFunctionReference } from "convex/server";

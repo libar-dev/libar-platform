@@ -4,6 +4,8 @@
  * @libar-docs-status completed
  * @libar-docs-implements DurableEventsIntegration
  * @libar-docs-saga
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
  * Mock Payment Actions - Simulated external payment service.
  *

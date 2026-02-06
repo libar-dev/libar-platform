@@ -1,22 +1,18 @@
 /**
- * Churn Risk Agent Event Handler
+ * @libar-docs
+ * @libar-docs-pattern ChurnRiskEventHandler
+ * @libar-docs-status completed
+ * @libar-docs-command
+ * @libar-docs-arch-role command-handler
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses CustomerCancellationsProjection, AgentAsBoundedContext
  *
- * Handles events for the churn risk detection agent.
- * This mutation is called by the EventBus when matching events are published.
+ * Churn risk event handler. Processes OrderCancelled events with checkpoint/idempotency.
+ * Loads cancellation history from customerCancellations projection, runs LLM pattern
+ * detection (3+ in 30 days), emits SuggestCustomerOutreach command.
  *
- * ## Implementation
- *
- * This is a PRODUCTION implementation (not demo stubs):
- * 1. Loads/creates checkpoint from DB
- * 2. Checks idempotency via lastProcessedPosition
- * 3. Loads event history from customerCancellations projection (O(1) lookup)
- * 4. Calls agent's onEvent handler
- * 5. Handles decision (emit command, queue approval)
- * 6. Records audit event
- * 7. Updates checkpoint in DB
- *
- * @module contexts/agent/handlers/eventHandler
- * @since Phase 22 (AgentAsBoundedContext)
+ * @since Phase 22
  */
 
 import { internalMutation } from "../../../_generated/server.js";

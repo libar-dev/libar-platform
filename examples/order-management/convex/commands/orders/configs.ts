@@ -1,8 +1,16 @@
 /**
- * Command configurations for the Orders bounded context.
+ * @libar-docs
+ * @libar-docs-pattern OrderCommandConfigs
+ * @libar-docs-status completed
+ * @libar-docs-command
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses OrderSummaryProjection, OrderWithInventoryProjection, OrderItemsProjection, CustomerCancellationsProjection
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Each configuration defines how to execute a command using the
- * dual-write + projection pattern via CommandOrchestrator.
+ * Command configs for 6 order commands. Wires each command to primary/secondary
+ * projections, saga routes, and integration events.
  */
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";

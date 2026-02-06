@@ -1,15 +1,14 @@
 /**
- * App-level public API for Inventory.
+ * @libar-docs
+ * @libar-docs-pattern InventoryPublicAPI
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer infrastructure
  *
- * This file uses the CommandOrchestrator to reduce boilerplate.
- * Each command mutation is now ~10 lines instead of ~120 lines.
- *
- * The CommandOrchestrator handles:
- * - Command Bus idempotency
- * - Component handler invocation
- * - Event Store append (including ReservationFailed events)
- * - Projection triggering via Workpool
- * - Command status updates
+ * App-level public API for Inventory bounded context.
+ * Exposes CommandOrchestrator-backed mutations for external consumers.
  */
 import { mutation, query, internalMutation } from "./_generated/server";
 import { components } from "./_generated/api";

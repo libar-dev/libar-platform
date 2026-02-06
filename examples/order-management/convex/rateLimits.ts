@@ -1,13 +1,13 @@
 /**
- * Rate Limit Definitions
+ * @libar-docs
+ * @libar-docs-pattern RateLimitDefinitions
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
  * Centralized rate limit configuration for the order-management application.
  * Uses @convex-dev/rate-limiter for production-grade limiting with sharding.
- *
- * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
  */
 import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
 import { components } from "./_generated/api";

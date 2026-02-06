@@ -1,15 +1,14 @@
 /**
- * App-level public API for Orders.
+ * @libar-docs
+ * @libar-docs-pattern OrderPublicAPI
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer infrastructure
  *
- * This file uses the CommandOrchestrator to reduce boilerplate.
- * Each command mutation is now ~10 lines instead of ~120 lines.
- *
- * The CommandOrchestrator handles:
- * - Command Bus idempotency
- * - Component handler invocation
- * - Event Store append
- * - Projection triggering via Workpool
- * - Command status updates
+ * App-level public API for Orders bounded context.
+ * Exposes CommandOrchestrator-backed mutations for external consumers.
  */
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";

@@ -1,8 +1,15 @@
 /**
- * Saga completion handlers using workflow onComplete callbacks.
+ * @libar-docs
+ * @libar-docs-pattern SagaCompletionHandler
+ * @libar-docs-status completed
+ * @libar-docs-saga
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-uses SagaRegistry
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * This module handles saga status tracking via workflow's onComplete API,
- * replacing manual status updates inside workflow handlers.
+ * Workflow onComplete callback handler. Updates saga status on completion
+ * and cleans up workflow state.
  */
 import { internalMutation } from "../_generated/server";
 import { v } from "convex/values";

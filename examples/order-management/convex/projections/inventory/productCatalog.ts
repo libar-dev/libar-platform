@@ -1,10 +1,15 @@
 /**
- * ProductCatalog projection handlers (app-level).
+ * @libar-docs
+ * @libar-docs-pattern ProductCatalogProjection
+ * @libar-docs-status completed
+ * @libar-docs-projection
+ * @libar-docs-arch-role projection
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses InventoryCommandHandlers
  *
- * Updates the productCatalog read model based on product events.
- * Also updates stockAvailability as a secondary projection.
- *
- * NOTE: These handlers receive all data via event args - no CMS access.
+ * Product catalog read model. Handles ProductCreated, StockAdded.
+ * Also updates stockAvailability as secondary projection.
  */
 import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";

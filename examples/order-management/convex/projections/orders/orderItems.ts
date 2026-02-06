@@ -1,11 +1,15 @@
 /**
- * OrderItems projection handlers (app-level).
+ * @libar-docs
+ * @libar-docs-pattern OrderItemsProjection
+ * @libar-docs-status completed
+ * @libar-docs-projection
+ * @libar-docs-arch-role projection
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses OrderCommandHandlers
  *
- * Updates the orderItems read model based on order item events.
- * Enables the Order Detail page to display individual line items.
- *
- * NOTE: These handlers receive all data via event args - no CMS access.
- * This is proper Event Sourcing: projections are built from events only.
+ * Order line items read model. Upsert behavior for individual items.
+ * Handles OrderItemAdded, OrderItemRemoved.
  */
 import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";

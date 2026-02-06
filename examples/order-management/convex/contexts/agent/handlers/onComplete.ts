@@ -1,10 +1,15 @@
 /**
- * Churn Risk Agent onComplete Handler
+ * @libar-docs
+ * @libar-docs-pattern AgentOnCompleteHandler
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-uses AgentAsBoundedContext
  *
- * Handles Workpool job completion for the churn risk agent.
- * Used for dead letter tracking and checkpoint updates.
- *
- * @module contexts/agent/handlers/onComplete
+ * Workpool job completion handler for agent BC. Manages dead letter tracking,
+ * replay, and ignore operations for failed agent event processing.
  */
 
 import { internalMutation } from "../../../_generated/server.js";

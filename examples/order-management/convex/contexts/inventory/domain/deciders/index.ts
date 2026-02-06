@@ -1,16 +1,15 @@
 /**
- * Inventory Deciders - Pure decision logic for Inventory bounded context.
+ * @libar-docs
+ * @libar-docs-pattern InventoryDeciders
+ * @libar-docs-status completed
+ * @libar-docs-decider
+ * @libar-docs-arch-role decider
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer domain
+ * @libar-docs-used-by InventoryCommandHandlers
  *
- * This module exports all decider types, functions, and complete Decider objects.
- *
- * Usage:
- * - Import specific decider functions for handler wiring
- * - Import full Decider objects for property-based testing and event replay
- * - Import types for handler type definitions
- *
- * Pattern Reference:
- * - Single-entity: createProduct, addStock, confirmReservation
- * - Hybrid (multi-entity): reserveStock, releaseReservation, expireReservation
+ * Pure decision functions for Inventory aggregate (product + reservation).
+ * SKU uniqueness, stock sufficiency, reservation lifecycle invariants. No I/O.
  */
 
 // =============================================================================

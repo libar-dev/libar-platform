@@ -1,61 +1,14 @@
 /**
- * DCB Retry Execution - Reference Implementation
- *
- * This file demonstrates the pattern for integrating withDCBRetry into
- * command handlers. It shows the self-referential retry pattern where
- * the retry mutation schedules itself for re-execution on OCC conflicts.
- *
  * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
+ * @libar-docs-pattern DCBRetryExecution
  * @libar-docs-status active
  * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
- * ## Pattern Overview
- *
- * ```
- * Client → executeWithDCBRetry → executeWithDCB
- *                                      │
- *                    ┌─────────────────┴─────────────────┐
- *                    │                                   │
- *                success/rejected/failed            conflict
- *                    │                                   │
- *                    ▼                                   ▼
- *              return result              withDCBRetry.handleResult
- *                                                        │
- *                                    ┌───────────────────┴────────┐
- *                                    │                            │
- *                              attempt < max              attempt >= max
- *                                    │                            │
- *                                    ▼                            ▼
- *                           enqueue retry              return rejected
- *                           (to dcbRetryPool)         (MAX_RETRIES_EXCEEDED)
- *                                    │
- *                                    ▼
- *                          return deferred
- *                                    │
- *                        (Workpool executes later)
- *                                    │
- *                                    ▼
- *                          executeWithDCBRetry (same mutation, new attempt)
- * ```
- *
- * ## Key Concepts
- *
- * 1. **Self-Referential Pattern**: The mutation schedules itself for retry.
- *    This allows state to be passed through attempts (like expectedVersion).
- *
- * 2. **Partition Key Ordering**: All retries for the same scope use the same
- *    partition key (`dcb:{scopeKey}`), ensuring FIFO execution and preventing
- *    concurrent retry collisions.
- *
- * 3. **Version Tracking**: Each retry uses the `currentVersion` from the
- *    previous conflict as its `expectedVersion`, avoiding stale version checks.
- *
- * 4. **Attempt Counting**: The `attempt` argument is incremented with each
- *    retry, allowing maxAttempts enforcement.
- *
- * @module dcb/retryExecution
- * @since Phase 18a
+ * DCB Retry Execution — reference implementation for integrating withDCBRetry
+ * into command handlers. Self-referential retry pattern where the retry mutation
+ * schedules itself for re-execution on OCC conflicts.
  */
 
 import { internalMutation } from "../_generated/server";

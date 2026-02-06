@@ -1,8 +1,16 @@
 /**
- * Command configurations for the Inventory bounded context.
+ * @libar-docs
+ * @libar-docs-pattern InventoryCommandConfigs
+ * @libar-docs-status completed
+ * @libar-docs-command
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses ActiveReservationsProjection, ProductCatalogProjection, OrderWithInventoryProjection
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Each configuration defines how to execute a command using the
- * dual-write + projection pattern via CommandOrchestrator.
+ * Command configs for 7 inventory commands. Wires each command to
+ * primary/secondary projections including cross-context orderWithInventory.
  */
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";

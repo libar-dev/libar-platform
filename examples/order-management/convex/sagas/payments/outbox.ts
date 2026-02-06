@@ -4,6 +4,8 @@
  * @libar-docs-status completed
  * @libar-docs-implements DurableEventsIntegration
  * @libar-docs-saga
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
  * Payment Outbox Handler - Captures payment action results as events.
  *

@@ -1,9 +1,15 @@
 /**
- * Inventory domain events.
+ * @libar-docs
+ * @libar-docs-pattern InventoryDomainEvents
+ * @libar-docs-status completed
+ * @libar-docs-event-sourcing
+ * @libar-docs-arch-role bounded-context
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer domain
+ * @libar-docs-used-by InventoryCommandHandlers, OrderWithInventoryProjection, ActiveReservationsProjection, ProductCatalogProjection
  *
- * All events use createDomainEventSchema which adds:
- * - category: "domain" (event taxonomy)
- * - schemaVersion: explicit versioning for upcasting support
+ * Inventory BC domain events (7 types). Product lifecycle (Created, StockAdded)
+ * and reservation lifecycle (Reserved, Failed, Confirmed, Released, Expired).
  */
 import { z } from "zod";
 import { createDomainEventSchema } from "@libar-dev/platform-core";

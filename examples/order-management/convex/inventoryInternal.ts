@@ -1,13 +1,14 @@
 /**
+ * @libar-docs
+ * @libar-docs-pattern InventoryInternalMutations
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context inventory
+ * @libar-docs-arch-layer infrastructure
+ *
  * Internal mutations for Inventory operations.
- *
- * These are used by the Order Fulfillment saga to:
- * 1. Reserve stock for an order
- * 2. Confirm a reservation (makes permanent)
- * 3. Release a reservation (compensation)
- *
- * These use the extended CommandOrchestrator that handles { status: "failed" }
- * for business failures like insufficient stock.
+ * Used by sagas and process managers for programmatic inventory commands.
  */
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";

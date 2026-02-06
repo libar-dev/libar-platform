@@ -1,12 +1,15 @@
 /**
- * Projection Definitions
+ * @libar-docs
+ * @libar-docs-pattern ProjectionDefinitions
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
  *
- * Formal projection definitions using the defineProjection() helper.
- * This replaces the previous PROJECTION_DEPENDENCIES object literal
- * with type-safe, documented projection definitions.
+ * Registry of all projection definitions and replay handler registry.
+ * Central configuration for projection infrastructure.
  *
- * @module projections/definitions
- * @since Phase 12 (Projection Registry & Lifecycle)
+ * @since Phase 12
  */
 
 import { defineProjection } from "@libar-dev/platform-bc";

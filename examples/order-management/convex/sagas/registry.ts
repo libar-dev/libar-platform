@@ -1,8 +1,14 @@
 /**
- * Saga registry for idempotent saga management.
+ * @libar-docs
+ * @libar-docs-pattern SagaRegistry
+ * @libar-docs-status completed
+ * @libar-docs-saga
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-used-by SagaRouter, OrderFulfillmentSaga
  *
- * Ensures each saga is started only once per business identifier (sagaId).
- * Uses the `sagas` table for saga state tracking.
+ * Saga registry providing idempotent saga start (startSagaIfNotExists),
+ * status tracking, and Zod payload validation at runtime.
  */
 import { internalMutation, internalQuery } from "../_generated/server";
 import { v } from "convex/values";

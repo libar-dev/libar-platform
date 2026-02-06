@@ -1,3 +1,14 @@
+/**
+ * @libar-docs
+ * @libar-docs-pattern AppCompositionRoot
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ *
+ * Application composition root. Mounts all Convex components (workpool, workflow,
+ * event store, command bus, rate limiter) and bounded contexts (orders, inventory).
+ */
 import { defineApp } from "convex/server";
 
 // NPM components

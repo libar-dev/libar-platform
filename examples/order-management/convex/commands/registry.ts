@@ -1,16 +1,15 @@
 /**
- * Command Registry Integration
+ * @libar-docs
+ * @libar-docs-pattern CommandRegistry
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-uses OrderCommandHandlers, InventoryCommandHandlers
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Registers all Order commands with the CommandRegistry for:
- * - Command discovery and introspection
- * - Schema validation via structure middleware
- * - Categorization and documentation
- *
- * NOTE: This registry coexists with commandConfigs.ts by design:
- * - commandConfigs.ts: Source of truth for command execution logic
- * - commandRegistry.ts: Provides metadata, validation, and introspection
- *
- * Both patterns serve different purposes and are intended to be used together.
+ * Command registry with Zod validation schemas per command type.
+ * Used by registry validation middleware for runtime args validation.
  */
 import { z } from "zod";
 import { globalRegistry } from "@libar-dev/platform-core";

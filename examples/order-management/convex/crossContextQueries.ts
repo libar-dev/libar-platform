@@ -1,50 +1,13 @@
 /**
- * Cross-Context Query APIs.
+ * @libar-docs
+ * @libar-docs-pattern CrossContextReadModel
+ * @libar-docs-status completed
+ * @libar-docs-cqrs
+ * @libar-docs-arch-role read-model
+ * @libar-docs-arch-layer application
  *
- * These queries read from projections that combine data from multiple bounded contexts.
- * This is only possible because projections live at the app level (not inside components).
- *
- * ## Architecture Pattern
- *
- * In this DDD + Event Sourcing architecture:
- * - **Bounded Contexts** (Orders, Inventory) are isolated components with their own databases
- * - **Projections** live at the app level and can listen to events from ALL contexts
- * - **Cross-context projections** combine data from multiple contexts into unified read models
- *
- * ## How It Works
- *
- * 1. OrderSubmitted event → updates `orderWithInventoryStatus.orderStatus`
- * 2. StockReserved event → updates `orderWithInventoryStatus.reservationStatus`
- * 3. Queries read from the unified projection table
- *
- * ## Consistency Model
- *
- * These projections are **eventually consistent**:
- * - Write commands return immediately (CMS + Event appended synchronously)
- * - Projections update asynchronously via Workpool
- * - Queries may show stale data for a few seconds after a command
- *
- * For real-time updates after commands, use the returned data from the command mutation.
- *
- * ## Usage Examples
- *
- * ```typescript
- * // Get single order with full inventory status (dashboard view)
- * const order = await ctx.runQuery(api.crossContextQueries.getOrderWithInventoryStatus, {
- *   orderId: "order_123"
- * });
- *
- * // Get customer's order history
- * const orders = await ctx.runQuery(api.crossContextQueries.getCustomerOrdersWithInventoryStatus, {
- *   customerId: "customer_456",
- *   limit: 20
- * });
- *
- * // Admin: find all submitted orders pending confirmation
- * const pending = await ctx.runQuery(api.crossContextQueries.getOrdersWithInventoryByStatus, {
- *   orderStatus: "submitted"
- * });
- * ```
+ * Cross-context query APIs. Combines data from multiple bounded contexts
+ * into unified read models for the frontend. Uses app-level projections.
  */
 import { query } from "./_generated/server";
 import { v } from "convex/values";

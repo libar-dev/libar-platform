@@ -1,11 +1,16 @@
 /**
- * Customer Cancellations Projection
+ * @libar-docs
+ * @libar-docs-pattern CustomerCancellationsProjection
+ * @libar-docs-status completed
+ * @libar-docs-projection
+ * @libar-docs-arch-role projection
+ * @libar-docs-arch-context orders
+ * @libar-docs-arch-layer application
+ * @libar-docs-uses OrderCommandHandlers
+ * @libar-docs-used-by AgentAsBoundedContext
  *
- * Maintains the customerCancellations read model for agent pattern detection.
- * Replaces O(N) queries in the churn risk agent with O(1) projection lookup.
- *
- * @module projections/customers/customerCancellations
- * @since Phase 22 (AgentAsBoundedContext) - N+1 Query Refactor
+ * Customer cancellation history with rolling 30-day window.
+ * Provides getCustomerCancellations() for churn risk agent pattern detection. Added in Phase 22.
  */
 import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";

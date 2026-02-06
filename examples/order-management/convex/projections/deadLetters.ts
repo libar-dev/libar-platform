@@ -2,12 +2,17 @@
 // apps/frontend/convex/projections/deadLetters.ts
 
 /**
- * Dead Letter Queue management for projections.
+ * @libar-docs
+ * @libar-docs-pattern ProjectionDeadLetters
+ * @libar-docs-status completed
+ * @libar-docs-infra
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-layer infrastructure
+ * @libar-docs-used-by OrderManagementInfrastructure
  *
- * Handles failed projection processing with support for:
- * - Recording failures
- * - Manual replay/ignore
- * - Retry workflow
+ * Dead letter queue for failed projection and subscription handlers.
+ * Shared onComplete handler for both direct projections and EventBus delivery.
+ * Provides replay, ignore, and bulk retry operations.
  */
 import { mutation, query, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
