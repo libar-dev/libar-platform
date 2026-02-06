@@ -247,20 +247,7 @@ export function getAllAgentTransitions(): readonly AgentLifecycleTransition[] {
   return VALID_TRANSITIONS;
 }
 
-/**
- * Check if a state is terminal.
- *
- * Agent lifecycle has NO terminal states — `stopped` is restartable via START.
- * This differs from PM lifecycle where `completed` is terminal.
- *
- * @param state - State to check
- * @returns Always false (no terminal states)
- */
-export function isTerminalState(state: AgentLifecycleState): boolean {
-  // Suppress unused parameter lint — signature matches PM lifecycle API contract
-  void state;
-  return false;
-}
+// No terminal state in agent lifecycle — agents can always be restarted
 
 /**
  * Check if a state indicates an error condition.

@@ -29,31 +29,15 @@ import { v } from "convex/values";
 // Shared Validators
 // ============================================================================
 
+// Uses AGENT_AUDIT_EVENT_TYPES from schema.ts for validation
+import { AGENT_AUDIT_EVENT_TYPES } from "./schema.js";
+
 /**
- * All 16 audit event types — matches schema.ts union.
- * Includes forward-declarations for DS-4 and DS-5 types.
+ * Audit event type validator — built from shared AGENT_AUDIT_EVENT_TYPES constant.
  */
 const auditEventTypeValidator = v.union(
-  // DS-1: Core agent events (8 types)
-  v.literal("AgentDecisionMade"),
-  v.literal("AgentActionApproved"),
-  v.literal("AgentActionRejected"),
-  v.literal("AgentActionExpired"),
-  v.literal("AgentAnalysisCompleted"),
-  v.literal("AgentAnalysisFailed"),
-  v.literal("CommandEmitted"),
-  v.literal("CommandProcessed"),
-  // DS-4: Command routing events (2 types, PDR-012)
-  v.literal("AgentCommandRouted"),
-  v.literal("AgentCommandRoutingFailed"),
-  // DS-5: Lifecycle events (6 types, PDR-013)
-  v.literal("AgentStarted"),
-  v.literal("AgentPaused"),
-  v.literal("AgentResumed"),
-  v.literal("AgentStopped"),
-  v.literal("AgentReconfigured"),
-  v.literal("AgentErrorRecoveryStarted")
-);
+  ...AGENT_AUDIT_EVENT_TYPES.map((t) => v.literal(t))
+) as ReturnType<typeof v.union>;
 
 // ============================================================================
 // Mutations

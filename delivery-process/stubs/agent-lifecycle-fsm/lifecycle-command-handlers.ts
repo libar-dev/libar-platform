@@ -18,7 +18,7 @@
  * @see delivery-process/stubs/agent-component-isolation/component/checkpoints.ts — component API
  */
 
-import type { MutationCtx, FunctionReference } from "convex/server";
+import type { MutationCtx } from "convex/server";
 // L1 fix: Import Logger from local path, not from @libar-dev/platform-core,
 // to avoid circular dependency: eventSubscriptions → PM → infrastructure → eventSubscriptions
 import type { Logger } from "../logging/types.js";
@@ -38,35 +38,9 @@ import {
 // Handler Configuration
 // ============================================================================
 
-/**
- * Subset of AgentComponentAPI used by lifecycle handlers.
- *
- * Only needs checkpoints and audit — lifecycle commands don't interact
- * with dead letters, commands, or approvals.
- *
- * H3 fix: Uses FunctionReference-based pattern matching DS-2's oncomplete-handler.
- * Convex components have isolated databases — you CANNOT pass `ctx` across the
- * component boundary. The correct pattern is `ctx.runQuery(ref, args)` or
- * `ctx.runMutation(ref, args)` where `ref` is a FunctionReference.
- *
- * @see stubs/agent-action-handler/oncomplete-handler.ts — DS-2 establishes this pattern
- * @see stubs/agent-component-isolation/component/checkpoints.ts — component API definitions
- */
-export interface LifecycleComponentAPI {
-  readonly checkpoints: {
-    /** FunctionRef for query: load all checkpoints for an agent (by_agentId index) */
-    readonly getByAgentId: FunctionReference<"query">;
-    /** FunctionRef for mutation: update checkpoint status */
-    readonly updateStatus: FunctionReference<"mutation">;
-    /** FunctionRef for mutation: patch checkpoint config overrides (ReconfigureAgent) */
-    readonly patchConfigOverrides: FunctionReference<"mutation">;
-  };
-
-  readonly audit: {
-    /** FunctionRef for mutation: record an audit event (idempotent by decisionId) */
-    readonly record: FunctionReference<"mutation">;
-  };
-}
+// Uses unified AgentComponentAPI from oncomplete-handler.ts
+// Each consumer uses only the subset it needs — TypeScript structural typing handles this.
+import type { AgentComponentAPI } from "../agent-action-handler/oncomplete-handler.js";
 
 /**
  * Checkpoint document shape from the agent component.
@@ -84,8 +58,8 @@ interface AgentCheckpointDoc {
  * Configuration for creating lifecycle command handlers.
  */
 export interface LifecycleHandlerConfig {
-  /** Agent component API (checkpoints + audit) */
-  readonly agentComponent: LifecycleComponentAPI;
+  /** Agent component API (lifecycle handlers use checkpoints + audit subset) */
+  readonly agentComponent: AgentComponentAPI;
   /** Optional logger */
   readonly logger?: Logger;
 }

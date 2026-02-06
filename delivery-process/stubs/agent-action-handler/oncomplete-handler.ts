@@ -19,6 +19,8 @@
  * @since DS-2 (Action/Mutation Handler Architecture)
  */
 
+import type { FunctionReference } from "convex/server";
+
 // ============================================================================
 // Workpool Context Type
 // ============================================================================
@@ -172,49 +174,79 @@ export interface AgentOnCompleteArgs {
 // ============================================================================
 
 /**
- * Typed interface to the agent component's public API.
+ * Unified API interface for the agent Convex component.
  *
- * The onComplete handler uses this to persist state via the agent component,
- * respecting component isolation (no `ctx.db` access to component tables).
+ * All consumers (onComplete handler, lifecycle handlers, command bridge)
+ * use this single interface. Each consumer accesses only the subset it needs.
+ * TypeScript structural typing ensures type safety without requiring separate interfaces.
  *
- * These correspond to the DS-1 stubs:
- * - checkpoints.ts: loadOrCreate, update
- * - audit.ts: record
- * - commands.ts: record
- * - approvals.ts: create
- * - deadLetters.ts: record
+ * @see component/checkpoints.ts, component/audit.ts, etc. for implementations
  */
 export interface AgentComponentAPI {
   /** Checkpoint API — ctx.runQuery/runMutation(components.agentBC.checkpoints.*) */
   readonly checkpoints: {
-    /** Primary lookup by (agentId, subscriptionId) — O(1) via compound index */
-    readonly getByAgentAndSubscription: FunctionRef;
-    /** Admin/monitoring queries — returns all checkpoints for an agent */
-    readonly getByAgentId: FunctionRef;
-    /** Advance checkpoint position after successful processing */
-    readonly update: FunctionRef;
     /** Idempotent load-or-create for first-event handling */
-    readonly loadOrCreate: FunctionRef;
+    readonly loadOrCreate: FunctionReference<"mutation">;
+    /** Advance checkpoint position after successful processing */
+    readonly update: FunctionReference<"mutation">;
+    /** Update checkpoint status (lifecycle transitions, DS-5) */
+    readonly updateStatus: FunctionReference<"mutation">;
+    /** Patch checkpoint config overrides (ReconfigureAgent, DS-5) */
+    readonly patchConfigOverrides: FunctionReference<"mutation">;
+    /** Primary lookup by (agentId, subscriptionId) — O(1) via compound index */
+    readonly getByAgentAndSubscription: FunctionReference<"query">;
+    /** Admin/monitoring queries — returns all checkpoints for an agent */
+    readonly getByAgentId: FunctionReference<"query">;
+    /** List all active checkpoints (monitoring, DS-5) */
+    readonly listActive: FunctionReference<"query">;
   };
 
-  /** Audit API — ctx.runMutation(components.agentBC.audit.*) */
+  /** Audit API — ctx.runQuery/runMutation(components.agentBC.audit.*) */
   readonly audit: {
-    readonly record: FunctionRef;
+    /** Record an audit event (idempotent by decisionId) */
+    readonly record: FunctionReference<"mutation">;
+    /** Query audit events by agent */
+    readonly queryByAgent: FunctionReference<"query">;
+    /** Correlate audit events with commands via decisionId */
+    readonly getByDecisionId: FunctionReference<"query">;
   };
 
-  /** Commands API — ctx.runMutation(components.agentBC.commands.*) */
+  /** Commands API — ctx.runQuery/runMutation(components.agentBC.commands.*) */
   readonly commands: {
-    readonly record: FunctionRef;
+    /** Record a command emitted by an agent */
+    readonly record: FunctionReference<"mutation">;
+    /** Update command status (pending → processing → completed/failed) */
+    readonly updateStatus: FunctionReference<"mutation">;
+    /** Load command by decisionId (DS-4 routing) */
+    readonly getByDecisionId: FunctionReference<"query">;
+    /** Query commands by agent */
+    readonly queryByAgent: FunctionReference<"query">;
+    /** Get pending commands (DS-4 sweep recovery) */
+    readonly getPending: FunctionReference<"query">;
   };
 
-  /** Approvals API — ctx.runMutation(components.agentBC.approvals.*) */
+  /** Approvals API — ctx.runQuery/runMutation(components.agentBC.approvals.*) */
   readonly approvals: {
-    readonly create: FunctionRef;
+    /** Create a pending approval request */
+    readonly create: FunctionReference<"mutation">;
+    /** Approve a pending approval */
+    readonly approve: FunctionReference<"mutation">;
+    /** Reject a pending approval */
+    readonly reject: FunctionReference<"mutation">;
+    /** Query approvals by agent and status */
+    readonly queryApprovals: FunctionReference<"query">;
   };
 
-  /** Dead Letters API — ctx.runMutation(components.agentBC.deadLetters.*) */
+  /** Dead Letters API — ctx.runQuery/runMutation(components.agentBC.deadLetters.*) */
   readonly deadLetters: {
-    readonly record: FunctionRef;
+    /** Record a dead letter for failed event processing */
+    readonly record: FunctionReference<"mutation">;
+    /** Update dead letter status (pending → replayed/ignored) */
+    readonly updateStatus: FunctionReference<"mutation">;
+    /** Query dead letters by agent */
+    readonly queryByAgent: FunctionReference<"query">;
+    /** Get dead letter statistics for monitoring */
+    readonly getStats: FunctionReference<"query">;
   };
 }
 
@@ -245,24 +277,7 @@ export interface AgentOnCompleteConfig {
    */
   readonly logger?: Logger;
 
-  /**
-   * Optional custom dead letter handler.
-   * If not provided, uses the standard agent component deadLetters.record API.
-   * Useful for agents that need custom error categorization.
-   */
-  readonly onDeadLetter?: (ctx: MutationCtx, deadLetter: AgentDeadLetterInput) => Promise<void>;
-}
-
-/**
- * Dead letter input for custom handlers.
- */
-export interface AgentDeadLetterInput {
-  readonly agentId: string;
-  readonly subscriptionId: string;
-  readonly eventId: string;
-  readonly globalPosition: number;
-  readonly error: string;
-  readonly correlationId: string;
+  // Custom dead letter handlers deferred — global handler suffices for now
 }
 
 // ============================================================================
@@ -378,14 +393,5 @@ export function createAgentOnCompleteHandler(
 // ============================================================================
 
 type AgentActionResult = import("./action-handler.js").AgentActionResult;
-// Placeholder for Convex FunctionReference.
-// IMPLEMENTATION NOTE: At implementation time, replace with properly typed refs:
-//   readonly getByAgentAndSubscription: FunctionReference<"query", "internal">;
-//   readonly update: FunctionReference<"mutation", "internal">;
-//   readonly loadOrCreate: FunctionReference<"mutation", "internal">;
-//   readonly record: FunctionReference<"mutation", "internal">;
-//   readonly create: FunctionReference<"mutation", "internal">;
-// This prevents mis-assigning refs (e.g., audit.record in checkpoints.update slot).
-type FunctionRef = unknown;
 type MutationCtx = unknown; // Placeholder for Convex MutationCtx
 type Logger = unknown;

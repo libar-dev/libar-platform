@@ -389,7 +389,7 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       | Agent checkpoint types | completed | @libar-dev/platform-core/src/agent/checkpoint.ts | Yes | unit |
       | Agent types and validators | completed | @libar-dev/platform-core/src/agent/types.ts | Yes | unit |
       | Agent initialization | completed | @libar-dev/platform-core/src/agent/init.ts | Yes | unit |
-      | Rate limiting config | completed | @libar-dev/platform-core/src/agent/rate-limit.ts | Yes | unit |
+      | Rate limiting config | stub complete | @libar-dev/platform-core/src/agent/rate-limit.ts | Yes | unit |
       | Dead letter handler | completed | @libar-dev/platform-core/src/agent/dead-letter.ts | Yes | unit |
       | Agent as BC documentation | completed | docs/architecture/AGENT-AS-BC.md | No | - |
 
@@ -415,6 +415,9 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       Then the agent should receive the event
       And event should include full fat-event payload
 
+    # NOTE (holistic review): Payload-level filtering is handled by the pattern
+    # trigger() function, making a separate subscription-level filter redundant.
+    # This scenario validates the conceptual behavior; implementation uses trigger().
     @acceptance-criteria @happy-path
     Scenario: Agent receives filtered events only
       Given an agent subscribed with filter amount > 100
@@ -640,21 +643,10 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
     };
     """
 
-    **Approval Timeout Implementation (Workflow sleepUntil):**
-    Race approval event vs timeout using workflow primitives:
-    """typescript
-    const expirationTime = Date.now() + config.approvalTimeoutMs;
-    const approval = await Promise.race([
-      ctx.awaitEvent({ name: "humanApproval", filter: { actionId } }),
-      ctx.sleepUntil(expirationTime).then(() => ({ expired: true as const })),
-    ]);
-    if ("expired" in approval && approval.expired) {
-      await ctx.runMutation(internal.agent.expireApproval, { actionId });
-      return { status: "expired" };
-    }
-    """
-    Using workflow `sleepUntil()` racing with `awaitEvent()` is simpler than
-    scheduler-based timeouts because workflow state is inherently durable.
+    **Approval Timeout Implementation (Cron-based expiration):**
+    Approval expiration uses a periodic cron job that queries pending approvals
+    past their timeout. This is simpler than per-approval workflow orchestration
+    and matches the component API design (approvals.expirePending mutation).
 
     @acceptance-criteria @happy-path
     Scenario Outline: Action based on confidence threshold
@@ -684,46 +676,12 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       Then action status becomes "expired"
       And AgentActionExpired event is recorded
 
-  Rule: LLM calls are rate-limited to prevent abuse and manage costs
+  Rule: LLM calls are rate-limited
 
-    Rate limiting protects against runaway costs and API throttling.
+    Rate limiting behavior including token bucket throttling, queue overflow handling,
+    and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
 
-    **Rate Limit Configuration:**
-    """typescript
-    const rateLimitConfig = {
-      maxRequestsPerMinute: 60,    // LLM API calls per minute
-      maxConcurrent: 5,            // Concurrent LLM calls
-      queueDepth: 100,             // Max queued events before backpressure
-      costBudget: {
-        daily: 100.00,             // USD per day
-        alertThreshold: 0.8,       // Alert at 80% of budget
-      },
-    };
-    """
-
-    @acceptance-criteria @happy-path
-    Scenario: Rate limiter throttles excessive LLM calls
-      Given rate limit is 60 requests per minute
-      And agent has made 60 LLM calls this minute
-      When another event triggers LLM analysis
-      Then the call should be queued
-      And processed when rate limit window resets
-
-    @acceptance-criteria @edge-case
-    Scenario: Queue overflow triggers backpressure
-      Given queue depth limit is 100
-      And 100 events are queued for LLM analysis
-      When another event arrives
-      Then event should be sent to dead letter queue
-      And AgentQueueOverflow alert should be emitted
-
-    @acceptance-criteria @validation
-    Scenario: Cost budget exceeded pauses agent
-      Given daily cost budget is 100.00 USD
-      And agent has spent 100.00 USD today
-      When another LLM call is attempted
-      Then agent should be paused
-      And AgentBudgetExceeded alert should be emitted
+    @see agent-llm-integration.feature Rule: Rate limiting is enforced before LLM calls
 
   Rule: All agent decisions are audited
 

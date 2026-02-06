@@ -14,6 +14,11 @@
  * - Agent commands carry metadata (confidence, reason, patternId) that regular
  *   commands do not. The toOrchestratorArgs transform bridges this gap.
  *
+ * SIMPLIFICATION (holistic review, item 2.1): Replaced singleton class with
+ * plain config map type and utility functions. Routes are passed as a config
+ * map to the command bridge factory, not registered in a global singleton.
+ * Add registry back when multi-agent support requires dynamic route discovery.
+ *
  * @see PDR-012 (Agent Command Routing & Pattern Unification)
  * @see CommandRegistry (platform-core/src/registry/CommandRegistry.ts)
  * @see CommandOrchestrator (platform-core/src/orchestration/CommandOrchestrator.ts)
@@ -109,9 +114,8 @@ export interface RoutingContext {
  *     customerId: (command.payload as SuggestOutreachPayload).customerId,
  *     riskLevel: (command.payload as SuggestOutreachPayload).riskLevel,
  *     cancellationCount: (command.payload as SuggestOutreachPayload).cancellationCount,
- *     agentDecisionId: command.decisionId,
- *     agentConfidence: command.confidence,
  *     correlationId: context.correlationId,
+ *     metadata: { agentDecisionId: command.decisionId, agentPatternId: command.patternId },
  *   }),
  * };
  * ```
@@ -151,144 +155,58 @@ export type RouteResult =
     };
 
 // ============================================================================
-// Router Implementation
+// Route Map & Utilities
 // ============================================================================
 
 /**
- * Agent command router.
+ * Agent command route configuration.
  *
- * Maps agent command types to their orchestrator routes. Used by the
- * command bridge (routeAgentCommand mutation) to look up how to
- * process recorded agent commands.
+ * Routes are passed as a config map to the command bridge factory,
+ * NOT registered in a global singleton. This eliminates singleton scaffolding
+ * for the single-agent case.
  *
- * Routes are registered at app startup, typically alongside CommandRegistry
- * registrations. Each route must reference a command type that exists in
- * the CommandRegistry.
+ * SIMPLIFICATION (holistic review): Replaced singleton class with plain type.
+ * Add registry back when multi-agent support requires dynamic route discovery.
  *
  * @example
  * ```typescript
- * // In app startup / command registration module:
- * import { globalAgentCommandRouter } from "@libar-dev/platform-core/agent";
- *
- * globalAgentCommandRouter.register({
- *   commandType: "SuggestCustomerOutreach",
- *   boundedContext: "customer-outreach",
- *   toOrchestratorArgs: (command, context) => ({
- *     customerId: command.payload.customerId,
- *     agentDecisionId: command.decisionId,
- *     correlationId: context.correlationId,
- *   }),
- * });
- *
- * // In command bridge mutation:
- * const route = globalAgentCommandRouter.getRoute("SuggestCustomerOutreach");
- * if (!route) { /* handle unknown route * / }
- * const args = route.toOrchestratorArgs(command, context);
- * await orchestrator.execute(ctx, commandConfig, args);
+ * const routes: AgentCommandRouteMap = {
+ *   SuggestCustomerOutreach: {
+ *     commandType: "SuggestCustomerOutreach",
+ *     boundedContext: "customer-outreach",
+ *     toOrchestratorArgs: (command, context) => ({
+ *       customerId: command.payload.customerId,
+ *       correlationId: context.correlationId,
+ *       metadata: { agentDecisionId: command.decisionId },
+ *     }),
+ *   },
+ * };
  * ```
  */
-export class AgentCommandRouter {
-  private static instance: AgentCommandRouter | null = null;
-  private routes: Map<string, AgentCommandRoute> = new Map();
+export type AgentCommandRouteMap = Readonly<Record<string, AgentCommandRoute>>;
 
-  private constructor() {}
-
-  /**
-   * Get the singleton instance.
-   *
-   * Follows the same pattern as CommandRegistry.getInstance() and
-   * PatternRegistry.getInstance() for consistency (AD-1).
-   */
-  static getInstance(): AgentCommandRouter {
-    if (!AgentCommandRouter.instance) {
-      AgentCommandRouter.instance = new AgentCommandRouter();
-    }
-    return AgentCommandRouter.instance;
-  }
-
-  /**
-   * Reset singleton for testing.
-   * Clears instance so next getInstance() creates fresh router.
-   */
-  static resetForTesting(): void {
-    AgentCommandRouter.instance = null;
-  }
-
-  /**
-   * Register a command route.
-   *
-   * @param route - Route definition
-   * @throws Error if route for this command type already exists
-   *
-   * IMPLEMENTATION NOTE: At registration time, also validate that
-   * CommandRegistry.getInstance().has(route.commandType) is true.
-   * This ensures the route points to a valid command handler.
-   */
-  register(route: AgentCommandRoute): void {
-    if (this.routes.has(route.commandType)) {
-      throw new Error(
-        `Duplicate route registration: "${route.commandType}" is already registered ` +
-          `for bounded context "${this.routes.get(route.commandType)!.boundedContext}"`
-      );
-    }
-
-    // IMPLEMENTATION NOTE: Validate CommandRegistry has this command type.
-    // Commented out in stub because CommandRegistry is in a different module:
-    //
-    // if (!CommandRegistry.getInstance().has(route.commandType)) {
-    //   throw new Error(
-    //     `Cannot register route for "${route.commandType}": ` +
-    //     `no CommandConfig found in CommandRegistry`
-    //   );
-    // }
-
-    this.routes.set(route.commandType, route);
-  }
-
-  /**
-   * Get route for a command type.
-   *
-   * @returns AgentCommandRoute or undefined if no route registered
-   */
-  getRoute(commandType: string): AgentCommandRoute | undefined {
-    return this.routes.get(commandType);
-  }
-
-  /**
-   * Check if a route is registered for a command type.
-   */
-  hasRoute(commandType: string): boolean {
-    return this.routes.has(commandType);
-  }
-
-  /**
-   * List all registered routes (for introspection).
-   */
-  listRoutes(): ReadonlyArray<{ commandType: string; boundedContext: string }> {
-    return Array.from(this.routes.values()).map((route) => ({
-      commandType: route.commandType,
-      boundedContext: route.boundedContext,
-    }));
-  }
-
-  /**
-   * Get count of registered routes.
-   */
-  size(): number {
-    return this.routes.size;
-  }
-
-  /**
-   * Clear all routes (for testing only).
-   */
-  clear(): void {
-    this.routes.clear();
-  }
+/**
+ * Look up a route from the route map.
+ */
+export function getRoute(
+  routes: AgentCommandRouteMap,
+  commandType: string
+): AgentCommandRoute | undefined {
+  return routes[commandType];
 }
 
 /**
- * Global router instance for app-wide route registration.
- *
- * Convenience export — equivalent to `AgentCommandRouter.getInstance()`.
+ * Validate route map at initialization time.
+ * Ensures all routes point to valid CommandRegistry entries.
  */
-export const globalAgentCommandRouter = AgentCommandRouter.getInstance();
+export function validateRoutes(
+  routes: AgentCommandRouteMap
+  // commandRegistry: CommandRegistry — injected for validation
+): RouteResult[] {
+  const results: RouteResult[] = [];
+  for (const [commandType, _route] of Object.entries(routes)) {
+    // IMPLEMENTATION NOTE: Check CommandRegistry.getInstance().has(commandType)
+    results.push({ success: true, commandType });
+  }
+  return results;
+}

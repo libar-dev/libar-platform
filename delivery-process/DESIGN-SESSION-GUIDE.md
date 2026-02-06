@@ -6,6 +6,8 @@
 > **Process methodology** (stub management, decision categories, naming conventions)
 > is captured in PDR-009 (Design Session Methodology).
 
+**Make breaking changes to improve the design:** We are designing bespoke application architecture and none of the packages are released. Example app does not have a permanent state - it is a demo app.
+
 ---
 
 ## Source Spec Reference
@@ -473,10 +475,16 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 ## Holistic Review Checklist
 
+> **Holistic Review Update (2026-02-06):** Cross-DS review applied improvements to:
+> type unification (AgentComponentAPI), registry simplification (PatternRegistry → array,
+> AgentCommandRouter → config map), command bridge (Workpool instead of scheduler),
+> spec dedup (rate limiting consolidated to 22b), and convention fixes (error code patterns).
+> See plan: `.claude/plans/crispy-leaping-thompson.md`
+
 After all design sessions complete, review across all DS sessions:
 
 - [ ] Cross-DS dependencies resolved (open questions from each DS)
-- [ ] API contracts consistent across component boundary
+- [x] API contracts consistent across component boundary — Resolved: unified AgentComponentAPI (holistic review)
 - [ ] TS2589 strategy covers all new references
 - [ ] Decision specs created for lasting architectural choices
 - [ ] Stubs reviewed for completeness before implementation
@@ -485,17 +493,16 @@ After all design sessions complete, review across all DS sessions:
 - [ ] API gap: audit `fromTimestamp`/`toTimestamp` for time range queries (DS-7)
 - [x] API gap: command bridge from agent component to CommandOrchestrator (DS-4) — RESOLVED: scheduled mutation via `routeAgentCommand`
 - [x] API gap: `commands.getByDecisionId` query needed for command bridge (DS-4 open Q4) — RESOLVED: Added to DS-1 commands stub
-- [ ] PatternExecutor + rate limiter interaction point (DS-4 open Q1 / DS-3)
-- [ ] error_recovery trigger mechanism: consecutive failure threshold + cooldown (DS-5 open Q1 / DS-3)
+- [ ] PatternExecutor + rate limiter interaction point (DS-4 open Q1 / DS-3) — Blocked: DS-3
+- [ ] error_recovery trigger mechanism: consecutive failure threshold + cooldown (DS-5 open Q1 / DS-3) — Blocked: DS-3
 - [ ] Cost budget exceeded auto-pause via ENTER_ERROR_RECOVERY (DS-5 open Q2 / DS-3)
 - [ ] Skipped-event audit trail during pause — silent skip vs lightweight audit (DS-5 open Q4)
-- [ ] ReconfigureAgent runtime-configurable field set — extend beyond confidenceThreshold/patternWindow/rateLimits? (DS-5 open Q6)
+- [x] ReconfigureAgent runtime-configurable field set — extend beyond confidenceThreshold/patternWindow/rateLimits? (DS-5 open Q6) — Resolved: documented in checkpoint-status-extension.ts
 - [ ] 22d deliverable location: "Agent component migration" location correction
+- [ ] DS-3 prereq: AgentRuntimeConfig vs Agent class integration boundary
+- [ ] DS-3 prereq: AI SDK v4→v5 migration (peer dep conflict)
+- [ ] DS-3 prereq: LLM call pattern (generateObject vs Agent.generateText)
+- [ ] DS-3 prereq: Built-in usageHandler vs custom cost tracking
+- [ ] DS-3 prereq: Rate limiter enforcement point (app-level action, handler, or EventBus?)
 
-DS-3 Pre-requisites (from cross-DS review, 2026-02-06 — resolved findings applied to stubs/PDRs):
-
-- [ ] `AgentRuntimeConfig` vs `Agent` class integration boundary — keep bespoke, adopt `Agent`, or hybrid?
-- [ ] AI SDK v4→v5 migration (2 files: `_llm/config.ts`, `_llm/runtime.ts`) — peer dep conflict blocks runtime
-- [ ] LLM call pattern: `generateObject` (stateless, structured) vs `Agent.generateText` (threads, tools)
-- [ ] Evaluate `@convex-dev/agent` built-in `usageHandler` vs custom cost tracking
-- [ ] Rate limiter enforcement point: app-level action, handler, or EventBus? (`reserve: true` constraint)
+~~DS-3 Pre-requisites~~ — Moved to holistic review checklist above.

@@ -39,6 +39,12 @@ export const DS4_CONFIG_ERROR_CODES = {
   PATTERN_NOT_FOUND: "PATTERN_NOT_FOUND",
 } as const;
 
+/**
+ * MIGRATION NOTE: Production types.ts has onEvent as REQUIRED.
+ * At DS-4 implementation time, change production AgentBCConfig.onEvent to optional.
+ * The XOR constraint (onEvent XOR patterns) is enforced by validateAgentBCConfig().
+ */
+
 // ============================================================================
 // Evolved AgentBCConfig
 // ============================================================================
@@ -285,9 +291,10 @@ type AgentActionResult = import("./types-placeholder.js").AgentActionResult;
 // PatternDefinition Evolution — @see pattern-executor.ts
 // ============================================================================
 //
-// DS-4 adds two optional fields to PatternDefinition (platform-core/src/agent/patterns.ts:91):
-//   - onAnalyzeFailure?: "fallback-to-trigger" | "skip"  (AD-7)
-//   - defaultCommand?: { type: string; payloadBuilder: (events) => unknown }  (AD-8)
+// REMOVED (holistic review): onAnalyzeFailure and defaultCommand fields.
+// - onAnalyzeFailure: spec only describes a global fallback, not per-pattern control.
+//   Global fallback: if analyze() throws, falls back to rule-based scoring.
+// - defaultCommand: no spec exercises trigger-only command emission.
 //
 // Full evolution documented in stubs/agent-command-routing/pattern-executor.ts.
 

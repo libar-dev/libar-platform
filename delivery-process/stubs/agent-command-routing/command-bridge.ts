@@ -2,42 +2,44 @@
  * Command Bridge — DS-4 Stub
  *
  * Bridges agent command recording (onComplete step 2) with command routing
- * through CommandOrchestrator. Uses a scheduled mutation to keep persistence
- * and routing in separate transactions.
+ * through CommandOrchestrator. Uses Workpool to keep persistence and routing
+ * in separate transactions with built-in retry and failure handling.
  *
  * @target platform-core/src/agent/command-bridge.ts
  *
  * ## Design Decisions
  *
- * - AD-4: Scheduled mutation from onComplete (not inline, not Workpool)
- * - AD-5: AgentCommandRouter maps command types to orchestrator routes
- * - AD-6: patternId flows through AgentActionResult → commands.record → routing context
+ * - AD-4: Workpool dispatch from onComplete (CHANGED from scheduler.runAfter — holistic review item 2.2)
+ * - AD-5: AgentCommandRouteMap maps command types to orchestrator routes
+ * - AD-6: patternId flows through AgentActionResult -> commands.record -> routing context
  *
  * ## Integration Points
  *
- * 1. **onComplete handler (DS-2)** — After recording command, schedules `routeAgentCommand`
+ * 1. **onComplete handler (DS-2)** — After recording command, enqueues via Workpool
  * 2. **Agent Component commands API (DS-1)** — Loads command by decisionId, updates status
- * 3. **AgentCommandRouter (DS-4)** — Looks up route, transforms args
+ * 3. **AgentCommandRouteMap (DS-4)** — Looks up route, transforms args
  * 4. **CommandOrchestrator (existing)** — Executes the transformed command
  *
  * @see PDR-012 (Agent Command Routing & Pattern Unification)
  * @see PDR-011 (Agent Action Handler Architecture) — onComplete persistence order
- * @see AgentCommandRouter (command-router.ts)
+ * @see AgentCommandRouteMap (command-router.ts)
  * @since DS-4 (Command Routing & Pattern Unification)
  */
+
+import type { AgentComponentAPI } from "../agent-action-handler/oncomplete-handler.js";
 
 // ============================================================================
 // Scheduling Args
 // ============================================================================
 
 /**
- * Arguments for the scheduled `routeAgentCommand` mutation.
+ * Arguments for the `routeAgentCommand` mutation.
  *
- * These are passed via `ctx.scheduler.runAfter(0, routeAgentCommand, args)`.
+ * These are passed via Workpool enqueue.
  * Minimal set: just enough to load the command and establish routing context.
  *
  * The actual command payload is loaded from the agent component, not passed
- * through the scheduler — keeps scheduling args small and avoids duplication.
+ * through the Workpool — keeps enqueue args small and avoids duplication.
  */
 export interface RouteAgentCommandArgs {
   /** Decision ID to load command by */
@@ -122,7 +124,7 @@ export interface AgentCommandRoutedEvent {
  * Integration point in DS-2 onComplete handler.
  *
  * After step 2 (command recording) and before step 3 (approval creation),
- * schedule the routing mutation if a command was recorded.
+ * enqueue the routing mutation via Workpool if a command was recorded.
  *
  * IMPLEMENTATION NOTE: Add this block to the createAgentOnCompleteHandler
  * implementation in oncomplete-handler.ts:
@@ -132,23 +134,32 @@ export interface AgentCommandRoutedEvent {
  * // 1. Record audit event
  * // 2. Record command if decision includes one
  *
- * // DS-4 ADDITION (step 2b): Schedule command routing
+ * // DS-4 ADDITION (step 2b): Enqueue command routing via Workpool
+ * // CHANGED (holistic review): Use Workpool instead of scheduler.runAfter(0).
+ * // Workpool provides built-in retry, onComplete for failure handling,
+ * // and eliminates the need for manual sweep cron.
  * if (decision.command && commandRecorded) {
  *   try {
- *     await ctx.scheduler.runAfter(0, internal.agent.commandBridge.routeAgentCommand, {
- *       decisionId: result.returnValue.decisionId,
- *       commandType: decision.command,
- *       agentId: context.agentId,
- *       correlationId: context.correlationId,
- *       patternId: result.returnValue.patternId,
+ *     await ctx.runMutation(config.agentPool.enqueueMutation, {
+ *       fnRef: routeAgentCommandRef,
+ *       fnArgs: {
+ *         decisionId: result.returnValue.decisionId,
+ *         commandType: decision.command,
+ *         agentId: context.agentId,
+ *         correlationId: context.correlationId,
+ *         patternId: result.returnValue.patternId,
+ *       },
+ *       options: {
+ *         onComplete: commandRoutingOnCompleteRef,
+ *       },
  *     });
- *   } catch (scheduleError) {
- *     // NO-THROW ZONE: Log scheduling failure but don't throw.
- *     // Command remains "pending" — can be retried via admin API or cron.
- *     logger.error("Failed to schedule command routing", {
+ *   } catch (enqueueError) {
+ *     // NO-THROW ZONE: Log enqueue failure but don't throw.
+ *     // Command remains "pending" — can be retried via admin API.
+ *     logger.error("Failed to enqueue command routing", {
  *       decisionId: result.returnValue.decisionId,
  *       commandType: decision.command,
- *       error: String(scheduleError),
+ *       error: String(enqueueError),
  *     });
  *   }
  * }
@@ -159,11 +170,14 @@ export interface AgentCommandRoutedEvent {
  *
  * Key Design Points:
  *
- * - `runAfter(0, ...)` — separate transaction, immediate execution
- * - NO-THROW: Scheduling failure doesn't block checkpoint advancement
- * - Command stays "pending" if scheduling fails — recoverable via admin/cron
+ * - Workpool enqueue — separate transaction, built-in retry and dead-letter
+ * - NO-THROW: Enqueue failure doesn't block checkpoint advancement
+ * - Command stays "pending" if enqueue fails — recoverable via admin API
  * - patternId flows from AgentActionResult.patternId through to routing context
  */
+
+// REMOVED (holistic review): Sweep cron for stale commands eliminated.
+// Workpool handles retry and dead-letter automatically.
 
 // ============================================================================
 // routeAgentCommand Mutation
@@ -172,24 +186,24 @@ export interface AgentCommandRoutedEvent {
 /**
  * Route an agent command through CommandOrchestrator.
  *
- * This is an internalMutation scheduled by the onComplete handler.
+ * This is an internalMutation enqueued via Workpool by the onComplete handler.
  * It runs in its own transaction, separate from the persistence phase.
  *
  * Flow:
  * 1. Load command from agent component by decisionId
- * 2. Look up route in AgentCommandRouter
- * 3. If no route → update status "failed" + audit event → return
+ * 2. Look up route in AgentCommandRouteMap
+ * 3. If no route -> update status "failed" + audit event -> return
  * 4. Update status "processing"
  * 5. Transform args via route.toOrchestratorArgs()
  * 6. Call CommandOrchestrator.execute()
- * 7. On success → update status "completed" + audit event
- * 8. On failure → update status "failed" with error
+ * 7. On success -> update status "completed" + audit event
+ * 8. On failure -> update status "failed" with error
  *
  * Error Handling:
- * - Unknown route: status → "failed", audit → AgentCommandRoutingFailed
- * - Orchestrator failure: status → "failed" with error message
+ * - Unknown route: status -> "failed", audit -> AgentCommandRoutingFailed
+ * - Orchestrator failure: status -> "failed" with error message
  * - Orchestrator duplicate: no-op (command already processed)
- * - Load failure: mutation throws → Convex retries automatically
+ * - Load failure: mutation throws -> Workpool retries automatically
  *
  * IMPLEMENTATION NOTE: This becomes an internalMutation in
  * platform-core/src/agent/command-bridge.ts. The factory pattern
@@ -237,8 +251,8 @@ export function createCommandBridgeMutation(
   //      return; // Idempotent: skip if already routed
   //    }
   //
-  // 2. Look up route in AgentCommandRouter:
-  //    const route = config.commandRouter.getRoute(args.commandType);
+  // 2. Look up route in AgentCommandRouteMap:
+  //    const route = getRoute(config.commandRoutes, args.commandType);
   //    if (!route) {
   //      // No route registered — fail the command
   //      await ctx.runMutation(config.agentComponent.commands.updateStatus, {
@@ -257,11 +271,10 @@ export function createCommandBridgeMutation(
   //      return;
   //    }
   //
-  // 3. Update status to "processing" and increment routing attempts:
+  // 3. Update status to "processing":
   //    await ctx.runMutation(config.agentComponent.commands.updateStatus, {
   //      decisionId: args.decisionId,
   //      status: "processing",
-  //      incrementRoutingAttempts: true,
   //    });
   //
   // 4. Transform args and execute through orchestrator:
@@ -273,7 +286,13 @@ export function createCommandBridgeMutation(
   //        streamId: undefined,
   //      };
   //
+  //      // Use CommandOrchestrator's standard metadata field for agent context:
   //      const orchestratorArgs = route.toOrchestratorArgs(command, routingContext);
+  //      orchestratorArgs.correlationId = args.correlationId; // Standard field
+  //      orchestratorArgs.metadata = {
+  //        agentDecisionId: command.decisionId,
+  //        agentPatternId: command.patternId,
+  //      };
   //
   //      // Look up CommandConfig from CommandRegistry
   //      const commandConfig = config.commandRegistry.getConfig(args.commandType);
@@ -284,13 +303,7 @@ export function createCommandBridgeMutation(
   //        );
   //      }
   //
-  //      await config.commandOrchestrator.execute(ctx, commandConfig, {
-  //        ...orchestratorArgs,
-  //        // Inject agent metadata for tracing
-  //        _agentDecisionId: args.decisionId,
-  //        _agentCorrelationId: args.correlationId,
-  //        _agentPatternId: args.patternId,
-  //      });
+  //      await config.commandOrchestrator.execute(ctx, commandConfig, orchestratorArgs);
   //
   //      // Success: update status
   //      await ctx.runMutation(config.agentComponent.commands.updateStatus, {
@@ -337,7 +350,7 @@ export function createCommandBridgeMutation(
  *
  * Provides all external dependencies needed by routeAgentCommand:
  * - Agent component API for loading/updating commands
- * - Command router for route lookup
+ * - Command route map for route lookup
  * - Command registry for CommandConfig lookup
  * - Command orchestrator for execution
  *
@@ -353,7 +366,7 @@ export function createCommandBridgeMutation(
  *       record: components.agentBC.audit.record,
  *     },
  *   },
- *   commandRouter: globalAgentCommandRouter,
+ *   commandRoutes: agentCommandRoutes,
  *   commandRegistry: CommandRegistry.getInstance(),
  *   commandOrchestrator: orchestratorInstance,
  *   logger: createLogger("command-bridge", "INFO"),
@@ -362,31 +375,16 @@ export function createCommandBridgeMutation(
  */
 export interface CommandBridgeConfig {
   /**
-   * Agent component API references (subset needed for routing).
+   * Agent component API (command bridge uses commands + audit subset).
    */
-  readonly agentComponent: {
-    readonly commands: {
-      /**
-       * Load command by decisionId.
-       *
-       * Maps to: `components.agentBC.commands.getByDecisionId`
-       * @see agent-component-isolation/component/commands.ts
-       */
-      readonly getByDecisionId: FunctionRef;
-      /** Update command status (pending → processing → completed/failed) */
-      readonly updateStatus: FunctionRef;
-    };
-    readonly audit: {
-      /** Record audit event */
-      readonly record: FunctionRef;
-    };
-  };
+  readonly agentComponent: AgentComponentAPI;
 
   /**
-   * Agent command router for route lookup.
-   * Typically: `globalAgentCommandRouter`
+   * Agent command route map for route lookup.
+   * CHANGED (holistic review): Was `commandRouter: AgentCommandRouter` (singleton).
+   * Now accepts a plain config map.
    */
-  readonly commandRouter: AgentCommandRouter;
+  readonly commandRoutes: AgentCommandRouteMap;
 
   /**
    * Command registry for CommandConfig lookup.
@@ -400,7 +398,7 @@ export interface CommandBridgeConfig {
    * Command orchestrator for executing the routed command.
    *
    * Calls the full 7-step pipeline:
-   * Record → Middleware → Handler → Rejection → Event → Projection → Status
+   * Record -> Middleware -> Handler -> Rejection -> Event -> Projection -> Status
    */
   readonly commandOrchestrator: CommandOrchestratorInterface;
 
@@ -411,81 +409,6 @@ export interface CommandBridgeConfig {
 }
 
 // ============================================================================
-// Recovery: Pending Command Sweep
-// ============================================================================
-
-/**
- * Sweep for pending commands that were never routed.
- *
- * If the scheduler call in onComplete fails, commands remain "pending"
- * indefinitely. This sweep function finds and re-routes them.
- *
- * Intended to be called by:
- * - A cron job (e.g., every 5 minutes)
- * - An admin action (manual trigger)
- *
- * IMPLEMENTATION NOTE: This is a safety net, not the primary routing path.
- * In normal operation, onComplete's `ctx.scheduler.runAfter(0, ...)` handles
- * all routing. The sweep only catches edge cases where scheduling failed.
- *
- * @example
- * ```typescript
- * // As a cron job:
- * export const sweepPendingCommands = internalMutation({
- *   args: { limit: v.optional(v.number()) },
- *   handler: async (ctx, args) => {
- *     const pending = await ctx.runQuery(
- *       components.agentBC.commands.getPending,
- *       { limit: args.limit ?? 50 }
- *     );
- *
- *     for (const command of pending) {
- *       // Check if command has exceeded max routing attempts
- *       if ((command.routingAttempts ?? 0) >= MAX_ROUTING_ATTEMPTS) {
- *         await ctx.runMutation(
- *           components.agentBC.commands.updateStatus,
- *           {
- *             decisionId: command.decisionId,
- *             status: "failed",
- *             error: `Max routing attempts exceeded (${MAX_ROUTING_ATTEMPTS})`,
- *           }
- *         );
- *         continue;
- *       }
- *
- *       // Check if command has been pending for > staleness threshold
- *       const age = Date.now() - command._creationTime;
- *       if (age > STALE_COMMAND_THRESHOLD_MS) {
- *         // NOTE: If routeAgentCommand is concurrently processing this command,
- *         // duplicate scheduling may occur. This is harmless: the status check
- *         // in routeAgentCommand (step 1) skips commands not in "pending" state.
- *         await ctx.scheduler.runAfter(0, routeAgentCommandRef, {
- *           decisionId: command.decisionId,
- *           commandType: command.type,
- *           agentId: command.agentId,
- *           correlationId: command.correlationId ?? `sweep_${Date.now()}`,
- *           patternId: command.patternId,
- *         });
- *       }
- *     }
- *   },
- * });
- * ```
- *
- * Staleness Threshold:
- * - Normal routing happens within milliseconds (runAfter(0))
- * - A command "pending" for > 30 seconds is likely stuck
- * - Default threshold: 30_000ms (30 seconds)
- */
-const STALE_COMMAND_THRESHOLD_MS = 30_000;
-
-/**
- * Maximum number of routing attempts before marking a command as permanently failed.
- * Prevents infinite retry loops when a command consistently fails to route.
- */
-const MAX_ROUTING_ATTEMPTS = 3;
-
-// ============================================================================
 // Sequence Diagram: Full Command Routing Flow
 // ============================================================================
 
@@ -494,8 +417,8 @@ const MAX_ROUTING_ATTEMPTS = 3;
  *
  * ```
  * ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
- * │  Workpool     │     │  onComplete   │     │  Scheduler   │     │  Command     │
- * │  (action)     │     │  (mutation)   │     │  (runAfter)  │     │  Bridge      │
+ * │  Workpool     │     │  onComplete   │     │  Workpool    │     │  Command     │
+ * │  (action)     │     │  (mutation)   │     │  (enqueue)   │     │  Bridge      │
  * └──────┬───────┘     └──────┬───────┘     └──────┬───────┘     └──────┬───────┘
  *        │                     │                     │                     │
  *        │  AgentActionResult  │                     │                     │
@@ -504,7 +427,7 @@ const MAX_ROUTING_ATTEMPTS = 3;
  *        │                     │                     │                     │
  *        │                     │ 1. Record audit     │                     │
  *        │                     │ 2. Record command   │                     │
- *        │                     │ 2b. Schedule routing │                     │
+ *        │                     │ 2b. Enqueue routing │                     │
  *        │                     │────────────────────>│                     │
  *        │                     │                     │                     │
  *        │                     │ 3. Create approval  │                     │
@@ -539,7 +462,7 @@ const MAX_ROUTING_ATTEMPTS = 3;
  * - If Transaction 2 fails, Transaction 1 is unaffected
  * - Command remains recorded, checkpoint is advanced
  * - Command status reflects the routing outcome
- * - Sweep cron can retry failed/stuck commands
+ * - Workpool handles retry and dead-letter automatically
  */
 
 // ============================================================================
@@ -547,7 +470,7 @@ const MAX_ROUTING_ATTEMPTS = 3;
 // ============================================================================
 
 // From command-router.ts:
-type AgentCommandRouter = import("./command-router.js").AgentCommandRouter;
+type AgentCommandRouteMap = import("./command-router.js").AgentCommandRouteMap;
 type RoutingContext = import("./command-router.js").RoutingContext;
 
 // Interfaces for external dependencies (minimal surface):
@@ -564,40 +487,28 @@ interface CommandOrchestratorInterface {
 // FAILURE RECOVERY — routeAgentCommand Error Handling
 // ============================================================================
 //
-// routeAgentCommand runs via ctx.scheduler.runAfter(0, ...) — a plain Convex
-// scheduled mutation. Unlike Workpool-managed functions, it has NO automatic
-// retry, monitoring, or dead letter handling.
-//
-// If routeAgentCommand fails, the command remains in "pending" status forever.
+// CHANGED (holistic review): routeAgentCommand is now enqueued via Workpool,
+// which provides built-in retry with backoff and onComplete for failure handling.
+// This eliminates the need for a manual sweep cron.
 //
 // Recovery strategy (layered):
 //
-// 1. PRIMARY — Convex auto-retry on OCC:
-//    routeAgentCommand is a mutation. If it fails due to OCC conflict (another
-//    mutation modified the same command concurrently), Convex automatically retries.
-//    This handles the most common failure mode.
+// 1. PRIMARY — Workpool automatic retry:
+//    Workpool retries failed mutations with exponential backoff.
+//    This handles transient failures (OCC, network, etc.) automatically.
 //
-// 2. SECONDARY — Failure recording:
-//    Non-OCC failures (e.g., CommandOrchestrator.execute throws) are caught
-//    within routeAgentCommand. The handler updates command status to "failed"
-//    and records an AgentCommandRoutingFailed audit event. The command is NOT
-//    stuck in "pending" — it moves to a visible "failed" state.
+// 2. SECONDARY — Workpool onComplete callback:
+//    On permanent failure, the onComplete callback records the failure
+//    (updates command status to "failed" and records audit event).
+//    The command moves to a visible "failed" state.
 //
 // 3. TERTIARY — Admin UI manual re-routing (DS-7):
-//    Admin panel provides commands.getByStatus("failed") query + re-schedule action.
+//    Admin panel provides commands.getByStatus("failed") query + re-enqueue action.
 //    Operator can inspect the failure, fix the underlying issue, and re-trigger.
 //
-// 4. FUTURE — Cron-based stale command detector:
-//    A scheduled cron (e.g., every 5 minutes) queries commands stuck in "pending"
-//    beyond a threshold (e.g., 30 seconds). These are commands where the
-//    ctx.scheduler.runAfter itself failed (extremely rare — Convex scheduler is durable).
-//    The cron either re-schedules or moves to "failed" with a timeout reason.
-//
-// IMPORTANT: The audit event + command status update in step 2 happen atomically
-// within the same mutation transaction. If the mutation itself fails to commit,
-// the command stays in "pending" and falls into the cron detector (step 4).
+// IMPORTANT: The audit event + command status update in the onComplete callback
+// happen atomically within the same mutation transaction.
 
 // Placeholders:
-type FunctionRef = unknown;
 type MutationCtx = unknown;
 type Logger = unknown;

@@ -20,6 +20,32 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+/**
+ * All valid agent audit event types across design sessions.
+ * DS-1: 8 base types, DS-4: 2 routing types, DS-5: 6 lifecycle types.
+ */
+export const AGENT_AUDIT_EVENT_TYPES = [
+  // DS-1 base
+  "PatternDetected",
+  "CommandEmitted",
+  "ApprovalRequested",
+  "ApprovalGranted",
+  "ApprovalRejected",
+  "ApprovalExpired",
+  "DeadLetterRecorded",
+  "CheckpointUpdated",
+  // DS-4 command routing
+  "AgentCommandRouted",
+  "AgentCommandRoutingFailed",
+  // DS-5 lifecycle
+  "AgentStarted",
+  "AgentPaused",
+  "AgentResumed",
+  "AgentStopped",
+  "AgentReconfigured",
+  "AgentErrorRecoveryStarted",
+] as const;
+
 export default defineSchema({
   /**
    * Agent Checkpoints - position tracking for exactly-once semantics.
@@ -40,6 +66,8 @@ export default defineSchema({
     /** Last processed event ID */
     lastEventId: v.string(),
 
+    // Status includes "error_recovery" (4th state). See checkpoint-status-extension.ts (DS-5).
+    // Production checkpoint.ts AGENT_CHECKPOINT_STATUSES must be updated from 3→4 states at DS-1 implementation.
     /** Checkpoint status: active, paused, stopped, error_recovery (DS-5 FSM) */
     status: v.union(
       v.literal("active"),
@@ -76,30 +104,12 @@ export default defineSchema({
    */
   agentAuditEvents: defineTable({
     /**
-     * Audit event type — all 16 types declared from day one to avoid schema migration.
-     * Schema includes forward-declarations for DS-4 and DS-5 event types.
+     * Audit event type — all types declared from day one to avoid schema migration.
+     * Uses AGENT_AUDIT_EVENT_TYPES constant for single source of truth.
      */
-    eventType: v.union(
-      // DS-1: Core agent events (8 types)
-      v.literal("AgentDecisionMade"),
-      v.literal("AgentActionApproved"),
-      v.literal("AgentActionRejected"),
-      v.literal("AgentActionExpired"),
-      v.literal("AgentAnalysisCompleted"),
-      v.literal("AgentAnalysisFailed"),
-      v.literal("CommandEmitted"),
-      v.literal("CommandProcessed"),
-      // DS-4: Command routing events (2 types, PDR-012)
-      v.literal("AgentCommandRouted"),
-      v.literal("AgentCommandRoutingFailed"),
-      // DS-5: Lifecycle events (6 types, PDR-013)
-      v.literal("AgentStarted"),
-      v.literal("AgentPaused"),
-      v.literal("AgentResumed"),
-      v.literal("AgentStopped"),
-      v.literal("AgentReconfigured"),
-      v.literal("AgentErrorRecoveryStarted")
-    ),
+    eventType: v.union(...AGENT_AUDIT_EVENT_TYPES.map((t) => v.literal(t))) as ReturnType<
+      typeof v.union
+    >,
 
     /** Agent BC identifier */
     agentId: v.string(),
@@ -210,6 +220,9 @@ export default defineSchema({
 
     /** Optional correlation ID for tracing */
     correlationId: v.optional(v.string()),
+
+    /** Number of routing attempts (DS-4 sweep recovery) */
+    routingAttempts: v.optional(v.number()),
 
     /** When the command was created */
     createdAt: v.number(),

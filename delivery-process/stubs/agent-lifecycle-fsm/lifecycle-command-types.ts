@@ -129,8 +129,16 @@ export interface AgentLifecycleSuccess {
 
 /**
  * Error codes for lifecycle command failures.
+ *
+ * Uses const object + derived union pattern (matching platform convention).
  */
-export type AgentLifecycleErrorCode = "INVALID_LIFECYCLE_TRANSITION" | "AGENT_NOT_FOUND";
+export const AGENT_LIFECYCLE_ERROR_CODES = {
+  INVALID_LIFECYCLE_TRANSITION: "INVALID_LIFECYCLE_TRANSITION",
+  AGENT_NOT_FOUND: "AGENT_NOT_FOUND",
+} as const;
+
+export type AgentLifecycleErrorCode =
+  (typeof AGENT_LIFECYCLE_ERROR_CODES)[keyof typeof AGENT_LIFECYCLE_ERROR_CODES];
 
 /**
  * Failed lifecycle command result.
