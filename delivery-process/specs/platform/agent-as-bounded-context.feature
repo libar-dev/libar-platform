@@ -681,7 +681,7 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
     Rate limiting behavior including token bucket throttling, queue overflow handling,
     and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
 
-    @see agent-llm-integration.feature Rule: Rate limiting is enforced before LLM calls
+    See agent-llm-integration.feature Rule: Rate limiting is enforced before LLM calls
 
   Rule: All agent decisions are audited
 

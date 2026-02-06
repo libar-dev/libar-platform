@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 140 rules from 31 features across 2 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 146 rules from 32 features across 2 product areas.**
 
 ---
 
@@ -1322,6 +1322,59 @@ _[integration-patterns-21b.feature](libar-platform/delivery-process/specs/platfo
 ---
 
 ## Platform / Phase 22
+
+### AgentAsBoundedContext
+
+_AI agents are invoked manually without integration into the_
+
+#### Agent subscribes to relevant event streams
+
+EventBus delivers events to agent BC like any other subscriber.
+
+    **Subscription API:**
+
+#### Agent detects patterns across events
+
+Pattern window groups events for analysis (LLM or rule-based).
+
+    **Pattern Detection API:**
+
+#### Agent emits commands with explainability
+
+Commands include reasoning and suggested action.
+
+    **Command Emission API:**
+
+
+    **LLM Fault Isolation (Optional Enhancement):**
+    For production deployments, wrap LLM calls with Phase 18's circuit breaker:
+
+    This triggers fallback to rule-based analysis when LLM is unavailable,
+    preventing cascade failures during LLM provider outages.
+
+#### Human-in-loop controls automatic execution
+
+High-confidence actions can auto-execute; low-confidence require approval.
+
+    **Human-in-Loop Configuration:**
+
+
+    **Approval Timeout Implementation (Cron-based expiration):**
+    Approval expiration uses a periodic cron job that queries pending approvals
+    past their timeout.
+
+#### LLM calls are rate-limited
+
+Rate limiting behavior including token bucket throttling, queue overflow handling,
+and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
+
+#### All agent decisions are audited
+
+Audit trail captures pattern detection, reasoning, and outcomes.
+
+    **Audit Event Structure:**
+
+_[agent-as-bounded-context.feature](libar-platform/delivery-process/specs/platform/agent-as-bounded-context.feature)_
 
 ### AgentBCComponentIsolation
 

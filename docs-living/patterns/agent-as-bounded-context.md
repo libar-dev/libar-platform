@@ -546,30 +546,6 @@ rateLimits: v.optional(vRateLimitConfig),
 - Then action status becomes "expired"
 - And AgentActionExpired event is recorded
 
-**Rate limiter throttles excessive LLM calls**
-
-- Given rate limit is 60 requests per minute
-- And agent has made 60 LLM calls this minute
-- When another event triggers LLM analysis
-- Then the call should be queued
-- And processed when rate limit window resets
-
-**Queue overflow triggers backpressure**
-
-- Given queue depth limit is 100
-- And 100 events are queued for LLM analysis
-- When another event arrives
-- Then event should be sent to dead letter queue
-- And AgentQueueOverflow alert should be emitted
-
-**Cost budget exceeded pauses agent**
-
-- Given daily cost budget is 100.00 USD
-- And agent has spent 100.00 USD today
-- When another LLM call is attempted
-- Then agent should be paused
-- And AgentBudgetExceeded alert should be emitted
-
 **Agent decision creates audit event**
 
 - Given an agent decision to emit SuggestCustomerOutreach
@@ -709,45 +685,19 @@ const humanInLoopConfig = {
 };
 ```
 
-**Approval Timeout Implementation (Workflow sleepUntil):**
-Race approval event vs timeout using workflow primitives:
-
-```typescript
-const expirationTime = Date.now() + config.approvalTimeoutMs;
-const approval = await Promise.race([
-  ctx.awaitEvent({ name: "humanApproval", filter: { actionId } }),
-  ctx.sleepUntil(expirationTime).then(() => ({ expired: true as const })),
-]);
-if ("expired" in approval && approval.expired) {
-  await ctx.runMutation(internal.agent.expireApproval, { actionId });
-  return { status: "expired" };
-}
-```
-
-Using workflow `sleepUntil()` racing with `awaitEvent()` is simpler than
-scheduler-based timeouts because workflow state is inherently durable.
+**Approval Timeout Implementation (Cron-based expiration):**
+Approval expiration uses a periodic cron job that queries pending approvals
+past their timeout. This is simpler than per-approval workflow orchestration
+and matches the component API design (approvals.expirePending mutation).
 
 _Verified by: Action based on confidence threshold, High-risk actions always require approval, Pending approval expires after timeout_
 
-**LLM calls are rate-limited to prevent abuse and manage costs**
+**LLM calls are rate-limited**
 
-Rate limiting protects against runaway costs and API throttling.
+Rate limiting behavior including token bucket throttling, queue overflow handling,
+and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
 
-    **Rate Limit Configuration:**
-
-```typescript
-const rateLimitConfig = {
-  maxRequestsPerMinute: 60, // LLM API calls per minute
-  maxConcurrent: 5, // Concurrent LLM calls
-  queueDepth: 100, // Max queued events before backpressure
-  costBudget: {
-    daily: 100.0, // USD per day
-    alertThreshold: 0.8, // Alert at 80% of budget
-  },
-};
-```
-
-_Verified by: Rate limiter throttles excessive LLM calls, Queue overflow triggers backpressure, Cost budget exceeded pauses agent_
+    See agent-llm-integration.feature Rule: Rate limiting is enforced before LLM calls
 
 **All agent decisions are audited**
 

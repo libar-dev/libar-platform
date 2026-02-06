@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [████████████████░░░░] 54/68 (79% complete)
+**Overall:** [████████████████░░░░] 55/69 (80% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 54    |
+| ✅ Completed | 55    |
 | 🚧 Active    | 2     |
 | 📋 Planned   | 12    |
-| **Total**    | 68    |
+| **Total**    | 69    |
 
 ---
 
@@ -25,7 +25,7 @@
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (2)
 - [CQRS](#cqrs) (1)
-- [DDD](#ddd) (31)
+- [DDD](#ddd) (32)
 - [Decider](#decider) (1)
 - [Event Sourcing](#event-sourcing) (12)
 - [Implements](#implements) (2)
@@ -39,6 +39,7 @@
 
 | Pattern                                                  | Category                          | Status    | Description                                                                                                              |
 | -------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ✅ Agent As Bounded Context                              | DDD                               | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
 | ✅ Bdd Testing Infrastructure                            | DDD                               | completed | Problem: Domain logic tests require infrastructure (Docker, database).                                                   |
 | ✅ Bounded Context Foundation                            | Completed Before Delivery Process | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
 | ✅ Bounded Context Identity                              | DDD                               | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
@@ -159,8 +160,9 @@
 
 ### DDD
 
-18/31 complete (58%)
+19/32 complete (59%)
 
+- [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
 - [✅ Bounded Context Identity](patterns/bounded-context-identity.md)
 - [✅ DCB Scope Key Utilities](patterns/dcb-scope-key-utilities.md)
@@ -321,6 +323,12 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
@@ -357,15 +365,11 @@ graph TD
     AgentLLMIntegration -.-> AgentBCComponentIsolation
     AgentCommandInfrastructure -.-> AgentLLMIntegration
     AgentBCComponentIsolation -.-> AgentAsBoundedContext
+    AgentAsBoundedContext -.-> ReactiveProjections
+    AgentAsBoundedContext -.-> EcstFatEvents
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---
