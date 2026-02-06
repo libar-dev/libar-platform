@@ -1,16 +1,17 @@
 # ✅ Workpool Partitioning Strategy
 
-**Purpose:** Detailed documentation for the Workpool Partitioning Strategy pattern
+**Purpose:** Detailed requirements for the Workpool Partitioning Strategy feature
 
 ---
 
 ## Overview
 
-| Property | Value     |
-| -------- | --------- |
-| Status   | completed |
-| Category | DDD       |
-| Phase    | 18        |
+| Property       | Value                                  |
+| -------------- | -------------------------------------- |
+| Status         | completed                              |
+| Product Area   | Platform                               |
+| Business Value | projection ordering and occ prevention |
+| Phase          | 18                                     |
 
 ## Description
 
@@ -39,21 +40,6 @@ or implemented consistently. Without proper partitioning:
 | DCB alignment | Partition keys can match DCB scope keys for coherent retry |
 
 **Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to delivery-process)
-
-## Dependencies
-
-- Depends on: DurableFunctionAdapters
-
-## Implementations
-
-Files that implement this pattern:
-
-- [`validation.ts`](../../packages/platform-core/src/orchestration/validation.ts) - ## Command Config Partition Key Validation
-- [`complexity.ts`](../../packages/platform-core/src/workpool/partitioning/complexity.ts) - ## Projection Complexity Classifier
-- [`config.ts`](../../packages/platform-core/src/workpool/partitioning/config.ts) - ## Per-Projection Partition Configuration
-- [`helpers.ts`](../../packages/platform-core/src/workpool/partitioning/helpers.ts) - ## Partition Key Helper Functions
-- [`index.ts`](../../packages/platform-core/src/workpool/partitioning/index.ts) - ## Workpool Partitioning Strategy
-- [`types.ts`](../../packages/platform-core/src/workpool/partitioning/types.ts) - ## Workpool Partition Key Types
 
 ## Acceptance Criteria
 
@@ -537,6 +523,26 @@ const handler = withDCBRetry(ctx, {
 
 _Verified by: DCB retry partition aligns with scope, Aligned partition prevents interleaving_
 
+## Deliverables
+
+- Partition key types (complete)
+- Partition key helpers (complete)
+- Partition key guidelines doc (complete)
+- Per-projection config type (complete)
+- Projection complexity classifier (complete)
+- Command config partition validation (complete)
+
+## Implementations
+
+Files that implement this pattern:
+
+- [`validation.ts`](../../packages/platform-core/src/orchestration/validation.ts) - ## Command Config Partition Key Validation
+- [`complexity.ts`](../../packages/platform-core/src/workpool/partitioning/complexity.ts) - ## Projection Complexity Classifier
+- [`config.ts`](../../packages/platform-core/src/workpool/partitioning/config.ts) - ## Per-Projection Partition Configuration
+- [`helpers.ts`](../../packages/platform-core/src/workpool/partitioning/helpers.ts) - ## Partition Key Helper Functions
+- [`index.ts`](../../packages/platform-core/src/workpool/partitioning/index.ts) - ## Workpool Partitioning Strategy
+- [`types.ts`](../../packages/platform-core/src/workpool/partitioning/types.ts) - ## Workpool Partition Key Types
+
 ---
 
-[← Back to Pattern Registry](../PATTERNS.md)
+[← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)

@@ -7,12 +7,12 @@
 
 ## Summary
 
-**Overall:** [███████████░░░░░░░░░] 17/30 (57%)
+**Overall:** [████████████░░░░░░░░] 19/32 (59%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 30    |
-| Completed      | 17    |
+| Total Features | 32    |
+| Completed      | 19    |
 | Active         | 1     |
 | Planned        | 12    |
 | Product Areas  | 2     |
@@ -32,13 +32,14 @@
 
 ### Platform
 
-16/27 complete (59%)
+18/29 complete (62%)
 
 - [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](requirements/phase-19-bdd-testing-infrastructure.md)
 - [✅ Bounded Context Foundation](requirements/phase-11-bounded-context-foundation.md)
 - [✅ Command Bus Foundation](requirements/phase-03-command-bus-foundation.md)
 - [✅ Decider Pattern](requirements/phase-14-decider-pattern.md)
+- [✅ Durable Events Integration - production reliability and failure recovery](requirements/phase-18-durable-events-integration.md)
 - [✅ Durable Function Adapters - production grade reliability with minimal code](requirements/phase-18-durable-function-adapters.md)
 - [✅ Dynamic Consistency Boundaries](requirements/phase-16-dynamic-consistency-boundaries.md)
 - [✅ Ecst Fat Events](requirements/phase-20-ecst-fat-events.md)
@@ -50,6 +51,7 @@
 - [✅ Reactive Projections](requirements/phase-17-reactive-projections.md)
 - [✅ Reservation Pattern](requirements/phase-20-reservation-pattern.md)
 - [✅ Saga Orchestration](requirements/phase-06-saga-orchestration.md)
+- [✅ Workpool Partitioning Strategy - projection ordering and occ prevention](requirements/phase-18-workpool-partitioning-strategy.md)
 - [🚧 Confirmed Order Cancellation](requirements/phase-22-confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation - unified operations interface](requirements/phase-18-admin-tooling-consolidation.md)
 - [📋 Agent BC Component Isolation](requirements/phase-22-agent-bc-component-isolation.md)
@@ -73,6 +75,7 @@
 | ✅ Bounded Context Foundation     | Platform     | -         | completed |
 | ✅ Command Bus Foundation         | Platform     | -         | completed |
 | ✅ Decider Pattern                | Platform     | -         | completed |
+| ✅ Durable Events Integration     | Platform     | -         | completed |
 | ✅ Durable Function Adapters      | Platform     | -         | completed |
 | ✅ Dynamic Consistency Boundaries | Platform     | -         | completed |
 | ✅ Ecst Fat Events                | Platform     | -         | completed |
@@ -85,6 +88,7 @@
 | ✅ Reactive Projections           | Platform     | -         | completed |
 | ✅ Reservation Pattern            | Platform     | -         | completed |
 | ✅ Saga Orchestration             | Platform     | -         | completed |
+| ✅ Workpool Partitioning Strategy | Platform     | -         | completed |
 | 🚧 Confirmed Order Cancellation   | Platform     | -         | active    |
 | 📋 Admin Tooling Consolidation    | Platform     | -         | planned   |
 | 📋 Agent Admin Frontend           | ExampleApp   | -         | planned   |

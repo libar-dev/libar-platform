@@ -3,7 +3,7 @@
 @libar-docs-release:v0.3.0
 @libar-docs-status:completed
 @libar-docs-completed:2026-01-09
-@libar-docs-unlock-reason:Correcting status after restoration - was completed before deletion
+@libar-docs-unlock-reason:Correcting-status-after-restoration
 @libar-docs-quarter:Q1-2026
 Feature: v0.3.0 - TypeScript Taxonomy Migration
 

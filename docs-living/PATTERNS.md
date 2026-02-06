@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [████████████████░░░░] 53/67 (79% complete)
+**Overall:** [████████████████░░░░] 55/69 (80% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 53    |
+| ✅ Completed | 55    |
 | 🚧 Active    | 2     |
 | 📋 Planned   | 12    |
-| **Total**    | 67    |
+| **Total**    | 69    |
 
 ---
 
@@ -22,7 +22,7 @@
 
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (9)
-- [DDD](#ddd) (25)
+- [DDD](#ddd) (27)
 - [Event Sourcing](#event-sourcing) (1)
 - [Implements](#implements) (14)
 - [Infra](#infra) (1)
@@ -50,6 +50,7 @@
 | ✅ Dual Write Contract                                   | Core                              | completed | BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...    |
 | ✅ Durable Append via Workpool Actions                   | Implements                        | completed | Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...   |
 | ✅ Durable Cross-Context Event Publication               | Implements                        | completed | Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.                     |
+| ✅ Durable Events Integration                            | DDD                               | completed | Problem: Phase 18 delivered durability primitives to `platform-core`, but the example app's main command flow still...   |
 | ✅ Durable Function Adapters                             | DDD                               | completed | Problem: Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses in-memory...            |
 | ✅ Dynamic Consistency Boundaries                        | DDD                               | completed | Problem: Cross-entity invariants within a bounded context currently require sequential commands (no atomicity) or...     |
 | ✅ Ecst Fat Events                                       | Event Sourcing                    | completed | Problem: Thin events require consumers to query back to the source BC, creating coupling and requiring synchronous...    |
@@ -87,6 +88,7 @@
 | ✅ Types for event replay and projection rebuilding.     | Implements                        | completed | Types for event replay and projection rebuilding.                                                                        |
 | ✅ Workpool Partition Key Types                          | Implements                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
 | ✅ Workpool Partitioning Strategy                        | Implements                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
+| ✅ Workpool Partitioning Strategy                        | DDD                               | completed | Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event... |
 | 🚧 Command Config Partition Key Validation               | Implements                        | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
@@ -133,11 +135,12 @@
 
 ### DDD
 
-12/25 complete (48%)
+14/27 complete (52%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
 - [✅ Decider Pattern](patterns/decider-pattern.md)
+- [✅ Durable Events Integration](patterns/durable-events-integration.md)
 - [✅ Durable Function Adapters](patterns/durable-function-adapters.md)
 - [✅ Dynamic Consistency Boundaries](patterns/dynamic-consistency-boundaries.md)
 - [✅ Event Replay Infrastructure](patterns/event-replay-infrastructure.md)
@@ -147,6 +150,7 @@
 - [✅ Projection Categories](patterns/projection-categories.md)
 - [✅ Reactive Projections](patterns/reactive-projections.md)
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
+- [✅ Workpool Partitioning Strategy](patterns/workpool-partitioning-strategy.md)
 - [🚧 Confirmed Order Cancellation](patterns/confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
 - [📋 Agent Admin Frontend](patterns/agent-admin-frontend.md)
@@ -232,13 +236,13 @@ graph TD
     ProjectionCheckpointing --> EventStoreFoundation
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
-    MiddlewarePipeline --> CommandBusFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
@@ -285,6 +289,7 @@ graph TD
     ExampleAppModernization -.-> ReservationPattern
     AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
     AgentAdminFrontend -.-> AgentChurnRiskCompletion
+    WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
     ReservationPattern -.-> DynamicConsistencyBoundaries
@@ -305,6 +310,9 @@ graph TD
     EcstFatEvents -.-> DeciderPattern
     DynamicConsistencyBoundaries -.-> DeciderPattern
     DurableFunctionAdapters -.-> DCB
+    DurableEventsIntegration -.-> ProductionHardening
+    DurableEventsIntegration -.-> DurableFunctionAdapters
+    DurableEventsIntegration -.-> EventReplayInfrastructure
     DeterministicIdHashing -.-> EventStoreFoundation
     DeciderPattern -.-> platform_fsm
     ConfirmedOrderCancellation -.-> SagaOrchestration

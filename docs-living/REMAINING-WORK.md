@@ -7,7 +7,7 @@
 
 ## Summary
 
-**Overall Progress:** [████████████████░░░░] 53/67 (79%)
+**Overall Progress:** [████████████████░░░░] 55/69 (80%)
 
 | Status              | Count |
 | ------------------- | ----- |
@@ -19,13 +19,13 @@
 
 ## By Phase
 
-| Phase                                                                               | Remaining | Active | Complete |
-| ----------------------------------------------------------------------------------- | --------- | ------ | -------- |
-| 📋 [ProductionHardening](remaining/phase-18-production-hardening.md)                | 4         | 0      | 43%      |
-| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                  | 1         | 0      | 67%      |
-| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)         | 2         | 0      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](remaining/phase-22-confirmed-order-cancellation.md) | 6         | 1      | 14%      |
-| 🚧 Backlog (No Phase)                                                               | 1         | 1      | 0%       |
+| Phase                                                                                   | Remaining | Active | Complete |
+| --------------------------------------------------------------------------------------- | --------- | ------ | -------- |
+| 📋 [WorkpoolPartitioningStrategy](remaining/phase-18-workpool-partitioning-strategy.md) | 4         | 0      | 56%      |
+| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                      | 1         | 0      | 67%      |
+| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)             | 2         | 0      | 0%       |
+| 🚧 [AgentChurnRiskCompletion](remaining/phase-22-agent-churn-risk-completion.md)        | 6         | 1      | 14%      |
+| 🚧 Backlog (No Phase)                                                                   | 1         | 1      | 0%       |
 
 ---
 

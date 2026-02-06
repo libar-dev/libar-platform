@@ -2,7 +2,7 @@
 @libar-docs-pattern:ReleaseV020
 @libar-docs-release:v0.2.0
 @libar-docs-status:active
-@libar-docs-unlock-reason:Restoring file deleted during package extraction
+@libar-docs-unlock-reason:Restoring-file-deleted-during-package-extraction
 @libar-docs-quarter:Q1-2026
 @libar-docs-phase:release
 @libar-docs-depends-on:v0.1.0

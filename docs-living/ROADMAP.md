@@ -7,14 +7,14 @@
 
 ## Overall Progress
 
-**Patterns:** [████████████████░░░░] 53/67 (79%)
+**Patterns:** [████████████████░░░░] 55/69 (80%)
 
 **Phases:** 16/20 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 67    |
-| Completed      | 53    |
+| Total Patterns | 69    |
+| Completed      | 55    |
 | Active         | 2     |
 | Planned        | 12    |
 
@@ -22,28 +22,28 @@
 
 ## Phase Navigation
 
-| Phase                                                                            | Progress | Complete |
-| -------------------------------------------------------------------------------- | -------- | -------- |
-| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                             | 2/2      | 100%     |
-| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)             | 1/1      | 100%     |
-| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)             | 1/1      | 100%     |
-| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)        | 1/1      | 100%     |
-| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                    | 1/1      | 100%     |
-| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                          | 3/3      | 100%     |
-| ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                  | 1/1      | 100%     |
-| ✅ [CMSRepository](phases/phase-11-cms-repository.md)                            | 3/3      | 100%     |
-| ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                      | 1/1      | 100%     |
-| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)       | 3/3      | 100%     |
-| ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                      | 2/2      | 100%     |
-| ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)              | 1/1      | 100%     |
-| ✅ [DCBTypes](phases/phase-16-dcb-types.md)                                      | 3/3      | 100%     |
-| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)                | 1/1      | 100%     |
-| 📋 [ProductionHardening](phases/phase-18-production-hardening.md)                | 3/7      | 43%      |
-| ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)     | 1/1      | 100%     |
-| 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                  | 2/3      | 67%      |
-| 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)         | 0/2      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](phases/phase-22-confirmed-order-cancellation.md) | 1/7      | 14%      |
-| ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)       | 1/1      | 100%     |
+| Phase                                                                                | Progress | Complete |
+| ------------------------------------------------------------------------------------ | -------- | -------- |
+| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                                 | 2/2      | 100%     |
+| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)                 | 1/1      | 100%     |
+| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                 | 1/1      | 100%     |
+| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)            | 1/1      | 100%     |
+| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                        | 1/1      | 100%     |
+| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                              | 3/3      | 100%     |
+| ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                      | 1/1      | 100%     |
+| ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                | 3/3      | 100%     |
+| ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                          | 1/1      | 100%     |
+| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)           | 3/3      | 100%     |
+| ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                          | 2/2      | 100%     |
+| ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)                  | 1/1      | 100%     |
+| ✅ [DCBTypes](phases/phase-16-dcb-types.md)                                          | 3/3      | 100%     |
+| ✅ [ReactiveProjections](phases/phase-17-reactive-projections.md)                    | 1/1      | 100%     |
+| 📋 [WorkpoolPartitioningStrategy](phases/phase-18-workpool-partitioning-strategy.md) | 5/9      | 56%      |
+| ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
+| 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
+| 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
+| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 1/7      | 14%      |
+| ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
 
 ---
 
@@ -199,19 +199,21 @@
 
 ---
 
-### 📋 ProductionHardening
+### 📋 WorkpoolPartitioningStrategy
 
-[██████░░░░░░░░░] 3/7 43% complete
+[████████░░░░░░░] 5/9 56% complete
 
-| Pattern                        | Status    | Description                                                                                                            |
-| ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 📋 Admin Tooling Consolidation | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                               |
-| 📋 Circuit Breaker Pattern     | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                |
-| ✅ Durable Function Adapters   | completed | Problem: Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses in-memory...          |
-| ✅ Event Replay Infrastructure | completed | Problem: When projections become corrupted, require schema migration, or drift from the Event Store due to bugs,...    |
-| ✅ Event Store Durability      | completed | Problem: The dual-write pattern (CMS + Event) works when both operations are in the same mutation, but several...      |
-| 📋 Health Observability        | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or... |
-| 📋 Production Hardening        | planned   | Problem: Structured logging (Phase 13) exists but no metrics collection, distributed tracing, or admin tooling for...  |
+| Pattern                           | Status    | Description                                                                                                              |
+| --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 📋 Admin Tooling Consolidation    | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
+| 📋 Circuit Breaker Pattern        | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
+| ✅ Durable Events Integration     | completed | Problem: Phase 18 delivered durability primitives to `platform-core`, but the example app's main command flow still...   |
+| ✅ Durable Function Adapters      | completed | Problem: Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses in-memory...            |
+| ✅ Event Replay Infrastructure    | completed | Problem: When projections become corrupted, require schema migration, or drift from the Event Store due to bugs,...      |
+| ✅ Event Store Durability         | completed | Problem: The dual-write pattern (CMS + Event) works when both operations are in the same mutation, but several...        |
+| 📋 Health Observability           | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
+| 📋 Production Hardening           | planned   | Problem: Structured logging (Phase 13) exists but no metrics collection, distributed tracing, or admin tooling for...    |
+| ✅ Workpool Partitioning Strategy | completed | Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event... |
 
 ---
 
@@ -248,7 +250,7 @@
 
 ---
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
 [██░░░░░░░░░░░░░] 1/7 14% complete
 

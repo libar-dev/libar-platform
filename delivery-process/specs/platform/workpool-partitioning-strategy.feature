@@ -2,7 +2,7 @@
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:WorkpoolPartitioningStrategy
 @libar-docs-status:completed
-@libar-docs-unlock-reason:Fix curried helper usage example per PR review
+@libar-docs-unlock-reason:Fix-curried-helper-usage-example-per-PR-review
 @libar-docs-phase:18c
 @libar-docs-effort:3d
 @libar-docs-product-area:Platform

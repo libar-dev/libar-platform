@@ -196,64 +196,64 @@ horizontally via sharding—no in-memory implementations in production.
     middleware pipeline to use `@convex-dev/rate-limiter` without any changes to middleware code.
 
     **Interface Contract (existing):**
-    """typescript
-    // platform-core/src/middleware/types.ts - EXISTING interface
-    export type RateLimitChecker = (key: string) => Promise<RateLimitResult>;
 
-    export interface RateLimitResult {
-      allowed: boolean;
-      retryAfterMs?: number;
-    }
-    """
+```typescript
+// platform-core/src/middleware/types.ts - EXISTING interface
+export type RateLimitChecker = (key: string) => Promise<RateLimitResult>;
 
-    **Adapter Implementation:**
-    """typescript
-    // platform-core/src/middleware/rateLimitAdapter.ts - NEW
-    import type { RateLimiter } from "@convex-dev/rate-limiter";
-    import type { MutationCtx } from "convex/server";
-    import type { RateLimitChecker, RateLimitResult } from "./types.js";
+export interface RateLimitResult {
+  allowed: boolean;
+  retryAfterMs?: number;
+}
+```
 
-    /**
-     * Create a RateLimitChecker that delegates to @convex-dev/rate-limiter.
-     *
-     * @param rateLimiter - Instance from the mounted component
-     * @param limitName - Named limit from rateLimiter config
-     * @returns Factory that creates RateLimitChecker for a given ctx
-     *
-     * @example
-     * ```typescript
-     * // In convex/rateLimits.ts
-     * export const rateLimiter = new RateLimiter(components.rateLimiter, {
-     *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
-     * });
-     *
-     * // In middleware setup
-     * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
-     * const result = await checker(`user:${userId}`);
-     * ```
-     */
-    export function createConvexRateLimitAdapter(
-      rateLimiter: RateLimiter,
-      limitName: string
-    ): (ctx: MutationCtx) => RateLimitChecker {
-      return (ctx: MutationCtx): RateLimitChecker => {
-        return async (key: string): Promise<RateLimitResult> => {
-          const status = await rateLimiter.limit(ctx, limitName, { key });
-          return {
-            allowed: status.ok,
-            retryAfterMs: status.retryAfter,
-          };
-        };
+**Adapter Implementation:**
+
+```typescript
+// platform-core/src/middleware/rateLimitAdapter.ts - NEW
+import type { RateLimiter } from "@convex-dev/rate-limiter";
+import type { MutationCtx } from "convex/server";
+import type { RateLimitChecker, RateLimitResult } from "./types.js";
+
+/**
+ * Create a RateLimitChecker that delegates to @convex-dev/rate-limiter.
+ *
+ * @param rateLimiter - Instance from the mounted component
+ * @param limitName - Named limit from rateLimiter config
+ * @returns Factory that creates RateLimitChecker for a given ctx
+ *
+ * @example
+ * // In convex/rateLimits.ts
+ * export const rateLimiter = new RateLimiter(components.rateLimiter, {
+ *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
+ * });
+ *
+ * // In middleware setup
+ * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
+ * const result = await checker("user:" + userId);
+ */
+export function createConvexRateLimitAdapter(
+  rateLimiter: RateLimiter,
+  limitName: string
+): (ctx: MutationCtx) => RateLimitChecker {
+  return (ctx: MutationCtx): RateLimitChecker => {
+    return async (key: string): Promise<RateLimitResult> => {
+      const status = await rateLimiter.limit(ctx, limitName, { key });
+      return {
+        allowed: status.ok,
+        retryAfterMs: status.retryAfter,
       };
-    }
-    """
+    };
+  };
+}
+```
 
-    **Sharding Guidelines (from CONVEX-DURABILITY-REFERENCE.md Section 7):**
-    | Expected QPS | Recommended Shards |
-    | < 50 | None (default) |
-    | 50-200 | 5-10 |
-    | 200-1000 | 10-50 |
-    | > 1000 | 50+ |
+**Sharding Guidelines (from CONVEX-DURABILITY-REFERENCE.md Section 7):**
+| Expected QPS | Recommended Shards |
+| < 50 | None (default) |
+| 50-200 | 5-10 |
+| 200-1000 | 10-50 |
+| > 1000 | 50+ |
 
     **Formula:** `shards ≈ QPS / 2`
 

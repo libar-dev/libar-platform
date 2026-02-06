@@ -118,7 +118,6 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
      * @returns Factory that creates RateLimitChecker for a given ctx
      *
      * @example
-     * ```typescript
      * // In convex/rateLimits.ts
      * export const rateLimiter = new RateLimiter(components.rateLimiter, {
      *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
@@ -126,8 +125,7 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
      *
      * // In middleware setup
      * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
-     * const result = await checker(`user:${userId}`);
-     * ```
+     * const result = await checker("user:" + userId);
      */
     export function createConvexRateLimitAdapter(
       rateLimiter: RateLimiter,

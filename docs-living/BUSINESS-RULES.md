@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 132 rules from 30 features across 2 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 146 rules from 32 features across 2 product areas.**
 
 ---
 
@@ -646,6 +646,66 @@ Different services have different failure characteristics.
 
 _[circuit-breaker-pattern.feature](libar-platform/delivery-process/specs/platform/circuit-breaker-pattern.feature)_
 
+### DurableEventsIntegration
+
+_Phase 18 delivered durability primitives to `platform-core`, but the example app's_
+
+#### Events are appended idempotently using command-derived keys
+
+- **Invariant:** For any (commandId, eventType) tuple, at most one event can exist in the event store. Duplicate append attempts return the existing event without modification.
+
+- **Rationale:** Commands may be retried due to network partitions, client timeouts, or infrastructure failures. Without idempotency, retries would create duplicate events, corrupting projections and triggering duplicate side effects.
+
+#### Commands record intent before execution and completion after success
+
+- **Invariant:** Every command execution must have exactly one matching completion event. An intent without completion after timeout indicates a stuck or crashed command.
+
+- **Rationale:** Distributed systems fail in subtle ways - network partitions, process crashes, deadlocks. Intent bracketing creates an audit trail that enables detection of commands that started but never finished, enabling automated recovery or human intervention.
+
+#### Critical events use Workpool-backed durable append
+
+- **Invariant:** A durably-enqueued event will eventually be persisted or moved to dead letter. The Workpool guarantees at-least-once execution with automatic retry and backoff.
+
+- **Rationale:** Some events are too important to lose - payment confirmations, order submissions that trigger sagas, inventory reservations. These must survive transient failures (network issues, temporary unavailability) and be retried automatically.
+
+| Event                | Why Critical                       |
+| -------------------- | ---------------------------------- |
+| OrderSubmitted       | Triggers saga, must start workflow |
+| PaymentCompleted     | Financial record, must persist     |
+| ReservationConfirmed | Inventory commitment               |
+
+#### External action results are captured as events using outbox pattern
+
+- **Invariant:** Every external action completion (success or failure) results in exactly one corresponding event. The outbox handler uses idempotent append to prevent duplicate events.
+
+- **Rationale:** Actions calling external APIs (Stripe, email services, etc.) are at-most-once by default. If the action succeeds but subsequent processing fails, the side effect is orphaned. The outbox pattern uses the guaranteed `onComplete` callback to capture results as domain events, ensuring audit trail and enabling downstream processing.
+
+#### Projection handlers quarantine malformed events
+
+- **Invariant:** A malformed event that fails processing N times will be quarantined and excluded from further processing. The projection will continue with remaining events.
+
+- **Rationale:** Malformed events (schema violations, missing references, data corruption) should not block all projection processing indefinitely. Quarantining allows the system to continue while preserving the problematic events for investigation and potential replay after code fixes are deployed.
+
+#### Projections can be rebuilt from the event stream
+
+- **Invariant:** A projection can be rebuilt from any starting position in the event stream. The rebuilt projection will eventually converge to the same state as if built incrementally.
+
+- **Rationale:** Projection data can become corrupted (bugs, schema migrations gone wrong, manual data fixes). The event stream is the source of truth - projections are derived views that can be reconstructed at any time. This is a key benefit of event sourcing.
+
+#### Scheduled job detects and alerts on orphaned command intents
+
+- **Invariant:** Any intent in "pending" status for longer than timeoutMs will be detected and transitioned to "abandoned" status. Operators are alerted for investigation.
+
+- **Rationale:** Network partitions, process crashes, and deadlocks can leave commands in an incomplete state. Automated detection ensures these don't go unnoticed, enabling timely investigation and potential data recovery.
+
+#### End-to-end durability is verified via integration tests
+
+- **Invariant:** Integration tests must exercise the complete durability stack in a real Convex environment with actual database operations, Workpool execution, and event store.
+
+- **Rationale:** Unit tests with mocks cannot verify the integration of multiple durability patterns working together. Integration tests ensure the patterns compose correctly and handle real-world scenarios like OCC conflicts and concurrent operations.
+
+_[durable-events-integration.feature](libar-platform/delivery-process/specs/platform/durable-events-integration.feature)_
+
 ### DurableFunctionAdapters
 
 _Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses_
@@ -987,6 +1047,90 @@ Production systems use @convex-dev durable function components for reliability.
 | Workflow       | Multi-step sagas      | Compensation + awaitEvent        | Cross-BC coordination           |
 
 _[production-hardening.feature](libar-platform/delivery-process/specs/platform/production-hardening.feature)_
+
+### WorkpoolPartitioningStrategy
+
+_ADR-018 defines critical partition key strategies for preventing OCC conflicts_
+
+#### Per-entity projections use streamId as partition key
+
+- **Invariant:** Events for the same entity must process in the exact order they occurred in the Event Store—no out-of-order processing per entity.
+
+- **Rationale:** Out-of-order event processing causes projection corruption. An ItemRemoved event processed before ItemAdded results in invalid state. Using `streamId` as partition key serializes per-entity while allowing cross-entity parallelism for throughput.
+
+| Projection Type               | Partition Key | Parallelism | Rationale                        |
+| ----------------------------- | ------------- | ----------- | -------------------------------- |
+| Per-entity (orderSummary)     | streamId      | High (10+)  | Events for same entity serialize |
+| Per-item (orderItems)         | orderId       | High (10+)  | Items for same order serialize   |
+| Entity lookup (productLookup) | productId     | High (10+)  | Single entity consistency        |
+
+**Implementation:** `@libar-dev/platform-core/src/workpool/partitioning/helpers.ts`
+
+#### Customer-scoped projections use customerId as partition key
+
+- **Invariant:** All events affecting a customer's aggregate view must process in FIFO order for that customer—regardless of which entity generated the event.
+
+- **Rationale:** Customer-scoped projections (order history, metrics, preferences) combine data from multiple entities. Processing order-123's event before order-122's event corrupts chronological customer views. Customer partition serializes all customer-affecting events.
+
+| Projection Type      | Partition Key | Parallelism | Rationale                   |
+| -------------------- | ------------- | ----------- | --------------------------- |
+| Customer history     | customerId    | Medium (5)  | Customer-scoped consistency |
+| Customer metrics     | customerId    | Medium (5)  | Aggregate per customer      |
+| Customer preferences | customerId    | Medium (5)  | Single customer state       |
+
+**Implementation:** `@libar-dev/platform-core/src/workpool/partitioning/helpers.ts`
+
+#### Global rollup projections use single partition key or maxParallelism 1
+
+- **Invariant:** Global aggregate projections must serialize all updates—no concurrent writes to the same aggregate document.
+
+- **Rationale:** Global rollups (daily sales, inventory totals) write to a single document. Concurrent workers cause read-modify-write races: Worker A reads 100, Worker B reads 100, both write—one update is lost. Single partition key or maxParallelism:1 guarantees sequential processing.
+
+| Projection Type    | Strategy          | Rationale                     |
+| ------------------ | ----------------- | ----------------------------- |
+| Daily sales rollup | key: "global"     | Single aggregate document     |
+| Global metrics     | maxParallelism: 1 | Dedicated low-throughput pool |
+| Inventory totals   | key: "global"     | Cross-product aggregation     |
+
+**Implementation:** `GLOBAL_PARTITION_KEY`
+
+#### Cross-context projections use correlationId or sagaId as partition key
+
+- **Invariant:** Events within a saga/workflow must process in causal order across all bounded contexts—saga step N+1 must not process before step N.
+
+- **Rationale:** Cross-context projections join data from multiple BCs coordinated by a saga. Processing OrderConfirmed before StockReserved shows "confirmed" status with missing reservation data. Saga partition key ensures causal ordering.
+
+| Projection Type    | Partition Key | Parallelism | Rationale                   |
+| ------------------ | ------------- | ----------- | --------------------------- |
+| Cross-context join | correlationId | Medium (5)  | Saga-scoped consistency     |
+| Integration view   | sagaId        | Medium (5)  | Workflow-scoped consistency |
+| Event chain view   | correlationId | Medium (5)  | Causal ordering             |
+
+**Implementation:** `@libar-dev/platform-core/src/workpool/partitioning/helpers.ts`
+
+#### Partition key selection follows decision tree
+
+- **Invariant:** Every projection config must have an explicit `getPartitionKey` function—implicit or missing partition keys are rejected at validation time.
+
+- **Rationale:** Wrong partition keys cause subtle bugs: too fine-grained wastes throughput, too coarse-grained causes out-of-order processing, missing keys serialize everything. Mandatory explicit selection forces intentional design.
+
+**Implementation:** `@libar-dev/platform-core/src/orchestration/validation.ts`
+
+#### DCB retry partition keys align with scope keys for coherent retry
+
+- **Invariant:** DCB retry partition keys must derive from scope keys so retries serialize with new operations on the same scope—no interleaving.
+
+- **Rationale:** Misaligned partition keys allow retry attempt 2 for scope X to interleave with new operation for scope X, causing the retry to read stale state. Aligned keys guarantee sequential processing of all scope-affecting work.
+
+| DCB Scope                | DCB Scope Key                   | Projection Partition Key   |
+| ------------------------ | ------------------------------- | -------------------------- |
+| Single entity            | `tenant:T:entity:Order:ord-123` | `Order:ord-123` (streamId) |
+| Multi-entity reservation | `tenant:T:reservation:res-456`  | `res-456` (reservationId)  |
+| Customer operation       | `tenant:T:customer:cust-789`    | `cust-789` (customerId)    |
+
+**Implementation:** `withDCBRetry`
+
+_[workpool-partitioning-strategy.feature](libar-platform/delivery-process/specs/platform/workpool-partitioning-strategy.feature)_
 
 ---
 

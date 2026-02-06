@@ -2,7 +2,7 @@
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:DurableEventsIntegration
 @libar-docs-status:completed
-@libar-docs-unlock-reason:All 13 deliverables implemented and verified - transitioning to completed
+@libar-docs-unlock-reason:All-13-deliverables-implemented-and-verified
 @libar-docs-phase:18.5
 @libar-docs-effort:4d
 @libar-docs-product-area:Platform

@@ -3,7 +3,7 @@
 @foundation
 @libar-docs-pattern:RepoLevelDocsGeneration
 @libar-docs-status:completed
-@libar-docs-unlock-reason:'Path update after submodule migration (PR #120)'
+@libar-docs-unlock-reason:Path-update-after-submodule-migration-PR-120
 @libar-docs-phase:100
 @libar-docs-quarter:Q1-2026
 @libar-docs-effort:4h
