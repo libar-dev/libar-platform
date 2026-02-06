@@ -9,7 +9,7 @@
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Category | Pattern   |
+| Category | CQRS      |
 | Phase    | 12        |
 
 ## Description

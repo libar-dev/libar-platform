@@ -9,7 +9,7 @@
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Category | Pattern   |
+| Category | Command   |
 | Phase    | 10        |
 
 ## Description

@@ -6,11 +6,11 @@
 
 ## Overview
 
-| Property | Value     |
-| -------- | --------- |
-| Status   | completed |
-| Category | Pattern   |
-| Phase    | 4         |
+| Property | Value      |
+| -------- | ---------- |
+| Status   | completed  |
+| Category | Projection |
+| Phase    | 4          |
 
 ## Description
 

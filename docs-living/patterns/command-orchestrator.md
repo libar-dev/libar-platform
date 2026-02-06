@@ -9,7 +9,7 @@
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Category | Core      |
+| Category | Command   |
 
 ## Description
 

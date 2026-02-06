@@ -6,10 +6,10 @@
 
 ## Overview
 
-| Property | Value      |
-| -------- | ---------- |
-| Status   | active     |
-| Category | Implements |
+| Property | Value   |
+| -------- | ------- |
+| Status   | active  |
+| Category | Command |
 
 ## Description
 

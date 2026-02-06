@@ -6,10 +6,10 @@
 
 ## Overview
 
-| Property | Value      |
-| -------- | ---------- |
-| Status   | completed  |
-| Category | Implements |
+| Property | Value          |
+| -------- | -------------- |
+| Status   | completed      |
+| Category | Event Sourcing |
 
 ## Description
 

@@ -20,13 +20,18 @@
 
 ## Categories
 
+- [Arch](#arch) (1)
+- [Command](#command) (4)
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
-- [Core](#core) (9)
-- [DDD](#ddd) (26)
-- [Event Sourcing](#event-sourcing) (1)
-- [Implements](#implements) (14)
+- [Core](#core) (2)
+- [CQRS](#cqrs) (1)
+- [DDD](#ddd) (31)
+- [Decider](#decider) (1)
+- [Event Sourcing](#event-sourcing) (12)
+- [Implements](#implements) (2)
 - [Infra](#infra) (1)
-- [Pattern](#pattern) (13)
+- [Pattern](#pattern) (3)
+- [Projection](#projection) (6)
 
 ---
 
@@ -36,59 +41,59 @@
 | -------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
 | ✅ Bdd Testing Infrastructure                            | DDD                               | completed | Problem: Domain logic tests require infrastructure (Docker, database).                                                   |
 | ✅ Bounded Context Foundation                            | Completed Before Delivery Process | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
-| ✅ Bounded Context Identity                              | Pattern                           | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
+| ✅ Bounded Context Identity                              | DDD                               | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
 | ✅ CMS Dual Write                                        | Core                              | completed | Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...      |
 | ✅ CMS Repository                                        | Pattern                           | completed | Factory for typed data access with automatic schema upcasting in dual-write handlers.                                    |
-| ✅ Command Bus                                           | Core                              | completed | Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.                        |
+| ✅ Command Bus                                           | Command                           | completed | Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.                        |
 | ✅ Command Bus Foundation                                | Completed Before Delivery Process | completed | Problem: Command execution requires idempotency (same command = same result), status tracking, and a standardized...     |
-| ✅ Command Orchestrator                                  | Core                              | completed | The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...     |
+| ✅ Command Orchestrator                                  | Command                           | completed | The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...     |
 | ✅ Correlation Chain System                              | Pattern                           | completed | Correlation types for tracking causal relationships in command-event flows.                                              |
-| ✅ DCB Scope Key Utilities                               | Pattern                           | completed | Functions for creating, parsing, and validating scope keys.                                                              |
-| ✅ DCB Types                                             | Pattern                           | completed | Types for scope-based multi-entity coordination within bounded contexts.                                                 |
+| ✅ DCB Scope Key Utilities                               | DDD                               | completed | Functions for creating, parsing, and validating scope keys.                                                              |
+| ✅ DCB Types                                             | DDD                               | completed | Types for scope-based multi-entity coordination within bounded contexts.                                                 |
 | ✅ Decider Pattern                                       | DDD                               | completed | Problem: Domain logic embedded in handlers makes testing require infrastructure.                                         |
 | ✅ Dual Write Contract                                   | Core                              | completed | BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...    |
-| ✅ Durable Append via Workpool Actions                   | Implements                        | completed | Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...   |
-| ✅ Durable Cross-Context Event Publication               | Implements                        | completed | Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.                     |
+| ✅ Durable Append via Workpool Actions                   | Event Sourcing                    | completed | Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...   |
+| ✅ Durable Cross-Context Event Publication               | Event Sourcing                    | completed | Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.                     |
 | ✅ Durable Events Integration                            | DDD                               | completed | Problem: Phase 18 delivered durability primitives to `platform-core`, but the example app's main command flow still...   |
 | ✅ Durable Function Adapters                             | DDD                               | completed | Problem: Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses in-memory...            |
 | ✅ Dynamic Consistency Boundaries                        | DDD                               | completed | Problem: Cross-entity invariants within a bounded context currently require sequential commands (no atomicity) or...     |
 | ✅ Ecst Fat Events                                       | Event Sourcing                    | completed | Problem: Thin events require consumers to query back to the source BC, creating coupling and requiring synchronous...    |
-| ✅ Event Store Durability                                | Core                              | completed | Guaranteed event persistence patterns for Convex-native event sourcing.                                                  |
-| ✅ Event Store Durability Types                          | Core                              | completed | Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...      |
-| ✅ Event Bus Abstraction                                 | Pattern                           | completed | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.                                 |
+| ✅ Event Store Durability                                | Event Sourcing                    | completed | Guaranteed event persistence patterns for Convex-native event sourcing.                                                  |
+| ✅ Event Store Durability Types                          | Event Sourcing                    | completed | Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...      |
+| ✅ Event Bus Abstraction                                 | Event Sourcing                    | completed | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.                                 |
 | ✅ Event Replay Infrastructure                           | DDD                               | completed | Problem: When projections become corrupted, require schema migration, or drift from the Event Store due to bugs,...      |
-| ✅ Event Store                                           | Core                              | completed | Central event storage component for Event Sourcing.                                                                      |
+| ✅ Event Store                                           | Event Sourcing                    | completed | Central event storage component for Event Sourcing.                                                                      |
 | ✅ Event Store Durability                                | DDD                               | completed | Problem: The dual-write pattern (CMS + Event) works when both operations are in the same mutation, but several...        |
 | ✅ Event Store Foundation                                | Completed Before Delivery Process | completed | Problem: Event Sourcing requires centralized storage for domain events with ordering guarantees, concurrency control,... |
-| ✅ Event Upcasting                                       | Pattern                           | completed | Transforms events from older schema versions to current version at read time.                                            |
+| ✅ Event Upcasting                                       | Event Sourcing                    | completed | Transforms events from older schema versions to current version at read time.                                            |
 | ✅ Example App Modernization                             | DDD                               | completed | Problem: The `order-management` example app has grown organically during platform development.                           |
-| ✅ Foundation Infrastructure                             | Core                              | completed | Consolidates old roadmap phases 0-13 into a single completed milestone.                                                  |
-| ✅ Handler Factories                                     | Pattern                           | completed | The Decider pattern separates pure business logic from infrastructure concerns, enabling unit testing without...         |
-| ✅ Idempotent Event Append                               | Implements                        | completed | Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...         |
-| ✅ Intent/Completion Event Pattern                       | Implements                        | completed | Long-running operations bracket with intent and completion events for visibility, timeout detection, and...              |
-| ✅ Invariant Framework                                   | Pattern                           | completed | Factory for declarative business rule validation with typed error codes.                                                 |
+| ✅ Foundation Infrastructure                             | Arch                              | completed | Consolidates old roadmap phases 0-13 into a single completed milestone.                                                  |
+| ✅ Handler Factories                                     | Decider                           | completed | The Decider pattern separates pure business logic from infrastructure concerns, enabling unit testing without...         |
+| ✅ Idempotent Event Append                               | Event Sourcing                    | completed | Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...         |
+| ✅ Intent/Completion Event Pattern                       | Event Sourcing                    | completed | Long-running operations bracket with intent and completion events for visibility, timeout detection, and...              |
+| ✅ Invariant Framework                                   | DDD                               | completed | Factory for declarative business rule validation with typed error codes.                                                 |
 | ✅ Logging Infrastructure                                | Infra                             | completed | Factory for domain-specific loggers with scope prefixes and level filtering.                                             |
-| ✅ Middleware Pipeline                                   | Pattern                           | completed | Orchestrates middleware execution in the correct order.                                                                  |
-| ✅ Outbox Pattern for Action Results                     | Implements                        | completed | Captures external API results (success or failure) as domain events using the `onComplete` callback guarantee from...    |
+| ✅ Middleware Pipeline                                   | Command                           | completed | Orchestrates middleware execution in the correct order.                                                                  |
+| ✅ Outbox Pattern for Action Results                     | Event Sourcing                    | completed | Captures external API results (success or failure) as domain events using the `onComplete` callback guarantee from...    |
 | ✅ Package Architecture                                  | DDD                               | completed | The original @convex-es/core package grew to 25+ modules, creating issues: - Large bundle size for consumers who only... |
-| ✅ Partition Key Helper Functions                        | Implements                        | completed | Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.     |
-| ✅ Per-Projection Partition Configuration                | Implements                        | completed | Defines configuration types and constants for projection partitioning including parallelism recommendations based on...  |
-| ✅ Poison Event Handling                                 | Implements                        | completed | Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...   |
-| ✅ Process Manager                                       | Core                              | completed | Process Manager module for event-reactive coordination.                                                                  |
+| ✅ Partition Key Helper Functions                        | Projection                        | completed | Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.     |
+| ✅ Per-Projection Partition Configuration                | Projection                        | completed | Defines configuration types and constants for projection partitioning including parallelism recommendations based on...  |
+| ✅ Poison Event Handling                                 | Event Sourcing                    | completed | Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...   |
+| ✅ Process Manager                                       | DDD                               | completed | Process Manager module for event-reactive coordination.                                                                  |
 | ✅ Process Manager Lifecycle                             | Pattern                           | completed | FSM for managing PM state transitions (idle/processing/completed/failed) with validation.                                |
 | ✅ Progress calculation utilities for replay operations. | Implements                        | completed | Progress calculation utilities for replay operations.                                                                    |
-| ✅ Projection Complexity Classifier                      | Implements                        | completed | Analyzes projection characteristics and recommends appropriate partition strategies using a decision tree approach.      |
+| ✅ Projection Complexity Classifier                      | Projection                        | completed | Analyzes projection characteristics and recommends appropriate partition strategies using a decision tree approach.      |
 | ✅ Projection Categories                                 | DDD                               | completed | Problem: Projections exist but categories are implicit.                                                                  |
-| ✅ Projection Checkpointing                              | Pattern                           | completed | Projection checkpoint helper for idempotent event processing.                                                            |
-| ✅ Query Abstraction                                     | Pattern                           | completed | Query factory functions for creating type-safe read model queries.                                                       |
+| ✅ Projection Checkpointing                              | Projection                        | completed | Projection checkpoint helper for idempotent event processing.                                                            |
+| ✅ Query Abstraction                                     | CQRS                              | completed | Query factory functions for creating type-safe read model queries.                                                       |
 | ✅ Reactive Projections                                  | DDD                               | completed | Problem: Workpool-based projections have 100-500ms latency.                                                              |
 | ✅ Reservation Pattern                                   | DDD                               | completed | Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...   |
 | ✅ Saga Orchestration                                    | Completed Before Delivery Process | completed | Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...    |
 | ✅ Types for event replay and projection rebuilding.     | Implements                        | completed | Types for event replay and projection rebuilding.                                                                        |
-| ✅ Workpool Partition Key Types                          | Implements                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
-| ✅ Workpool Partitioning Strategy                        | Implements                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
+| ✅ Workpool Partition Key Types                          | Projection                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
+| ✅ Workpool Partitioning Strategy                        | Projection                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
 | ✅ Workpool Partitioning Strategy                        | DDD                               | completed | Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event... |
-| 🚧 Command Config Partition Key Validation               | Implements                        | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
+| 🚧 Command Config Partition Key Validation               | Command                           | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
 | 📋 Agent Admin Frontend                                  | DDD                               | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                          |
@@ -105,6 +110,25 @@
 
 ---
 
+### Arch
+
+1/1 complete (100%)
+
+- [✅ Foundation Infrastructure](patterns/foundation-infrastructure.md)
+
+---
+
+### Command
+
+3/4 complete (75%)
+
+- [✅ Command Bus](patterns/command-bus.md)
+- [✅ Command Orchestrator](patterns/command-orchestrator.md)
+- [✅ Middleware Pipeline](patterns/middleware-pipeline.md)
+- [🚧 Command Config Partition Key Validation](patterns/command-config-partition-key-validation.md)
+
+---
+
 ### Completed Before Delivery Process
 
 4/4 complete (100%)
@@ -118,25 +142,29 @@
 
 ### Core
 
-9/9 complete (100%)
+2/2 complete (100%)
 
 - [✅ CMS Dual Write](patterns/cms-dual-write.md)
-- [✅ Command Bus](patterns/command-bus.md)
-- [✅ Command Orchestrator](patterns/command-orchestrator.md)
 - [✅ Dual Write Contract](patterns/dual-write-contract.md)
-- [✅ Event Store Durability](patterns/event-store-durability.md)
-- [✅ Event Store Durability Types](patterns/event-store-durability-types.md)
-- [✅ Event Store](patterns/event-store.md)
-- [✅ Foundation Infrastructure](patterns/foundation-infrastructure.md)
-- [✅ Process Manager](patterns/process-manager.md)
+
+---
+
+### CQRS
+
+1/1 complete (100%)
+
+- [✅ Query Abstraction](patterns/query-abstraction.md)
 
 ---
 
 ### DDD
 
-13/26 complete (50%)
+18/31 complete (58%)
 
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
+- [✅ Bounded Context Identity](patterns/bounded-context-identity.md)
+- [✅ DCB Scope Key Utilities](patterns/dcb-scope-key-utilities.md)
+- [✅ DCB Types](patterns/dcb-types.md)
 - [✅ Decider Pattern](patterns/decider-pattern.md)
 - [✅ Durable Events Integration](patterns/durable-events-integration.md)
 - [✅ Durable Function Adapters](patterns/durable-function-adapters.md)
@@ -144,7 +172,9 @@
 - [✅ Event Replay Infrastructure](patterns/event-replay-infrastructure.md)
 - [✅ Event Store Durability](patterns/event-store-durability.md)
 - [✅ Example App Modernization](patterns/example-app-modernization.md)
+- [✅ Invariant Framework](patterns/invariant-framework.md)
 - [✅ Package Architecture](patterns/package-architecture.md)
+- [✅ Process Manager](patterns/process-manager.md)
 - [✅ Projection Categories](patterns/projection-categories.md)
 - [✅ Reactive Projections](patterns/reactive-projections.md)
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
@@ -165,32 +195,39 @@
 
 ---
 
-### Event Sourcing
+### Decider
 
 1/1 complete (100%)
 
+- [✅ Handler Factories](patterns/handler-factories.md)
+
+---
+
+### Event Sourcing
+
+12/12 complete (100%)
+
+- [✅ Durable Append via Workpool Actions](patterns/durable-append-via-workpool-actions.md)
+- [✅ Durable Cross-Context Event Publication](patterns/durable-cross-context-event-publication.md)
 - [✅ Ecst Fat Events](patterns/ecst-fat-events.md)
+- [✅ Event Store Durability](patterns/event-store-durability.md)
+- [✅ Event Store Durability Types](patterns/event-store-durability-types.md)
+- [✅ Event Bus Abstraction](patterns/event-bus-abstraction.md)
+- [✅ Event Store](patterns/event-store.md)
+- [✅ Event Upcasting](patterns/event-upcasting.md)
+- [✅ Idempotent Event Append](patterns/idempotent-event-append.md)
+- [✅ Intent/Completion Event Pattern](patterns/intent-completion-event-pattern.md)
+- [✅ Outbox Pattern for Action Results](patterns/outbox-pattern-for-action-results.md)
+- [✅ Poison Event Handling](patterns/poison-event-handling.md)
 
 ---
 
 ### Implements
 
-13/14 complete (93%)
+2/2 complete (100%)
 
-- [✅ Durable Append via Workpool Actions](patterns/durable-append-via-workpool-actions.md)
-- [✅ Durable Cross-Context Event Publication](patterns/durable-cross-context-event-publication.md)
-- [✅ Idempotent Event Append](patterns/idempotent-event-append.md)
-- [✅ Intent/Completion Event Pattern](patterns/intent-completion-event-pattern.md)
-- [✅ Outbox Pattern for Action Results](patterns/outbox-pattern-for-action-results.md)
-- [✅ Partition Key Helper Functions](patterns/partition-key-helper-functions.md)
-- [✅ Per-Projection Partition Configuration](patterns/per-projection-partition-configuration.md)
-- [✅ Poison Event Handling](patterns/poison-event-handling.md)
 - [✅ Progress calculation utilities for replay operations.](patterns/progress-calculation-utilities-for-replay-operations.md)
-- [✅ Projection Complexity Classifier](patterns/projection-complexity-classifier.md)
 - [✅ Types for event replay and projection rebuilding.](patterns/types-for-event-replay-and-projection-rebuilding.md)
-- [✅ Workpool Partition Key Types](patterns/workpool-partition-key-types.md)
-- [✅ Workpool Partitioning Strategy](patterns/workpool-partitioning-strategy.md)
-- [🚧 Command Config Partition Key Validation](patterns/command-config-partition-key-validation.md)
 
 ---
 
@@ -204,21 +241,24 @@
 
 ### Pattern
 
-13/13 complete (100%)
+3/3 complete (100%)
 
-- [✅ Bounded Context Identity](patterns/bounded-context-identity.md)
 - [✅ CMS Repository](patterns/cms-repository.md)
 - [✅ Correlation Chain System](patterns/correlation-chain-system.md)
-- [✅ DCB Scope Key Utilities](patterns/dcb-scope-key-utilities.md)
-- [✅ DCB Types](patterns/dcb-types.md)
-- [✅ Event Bus Abstraction](patterns/event-bus-abstraction.md)
-- [✅ Event Upcasting](patterns/event-upcasting.md)
-- [✅ Handler Factories](patterns/handler-factories.md)
-- [✅ Invariant Framework](patterns/invariant-framework.md)
-- [✅ Middleware Pipeline](patterns/middleware-pipeline.md)
 - [✅ Process Manager Lifecycle](patterns/process-manager-lifecycle.md)
+
+---
+
+### Projection
+
+6/6 complete (100%)
+
+- [✅ Partition Key Helper Functions](patterns/partition-key-helper-functions.md)
+- [✅ Per-Projection Partition Configuration](patterns/per-projection-partition-configuration.md)
+- [✅ Projection Complexity Classifier](patterns/projection-complexity-classifier.md)
 - [✅ Projection Checkpointing](patterns/projection-checkpointing.md)
-- [✅ Query Abstraction](patterns/query-abstraction.md)
+- [✅ Workpool Partition Key Types](patterns/workpool-partition-key-types.md)
+- [✅ Workpool Partitioning Strategy](patterns/workpool-partitioning-strategy.md)
 
 ---
 

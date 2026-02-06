@@ -9,7 +9,7 @@
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Category | Pattern   |
+| Category | Decider   |
 | Phase    | 14        |
 
 ## Description

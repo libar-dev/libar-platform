@@ -9,7 +9,7 @@
 | Property | Value      |
 | -------- | ---------- |
 | Status   | completed  |
-| Category | Implements |
+| Category | Projection |
 
 ## Description
 

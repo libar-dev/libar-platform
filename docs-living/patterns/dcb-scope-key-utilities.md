@@ -9,7 +9,7 @@
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Category | Pattern   |
+| Category | DDD       |
 | Phase    | 16        |
 
 ## Description

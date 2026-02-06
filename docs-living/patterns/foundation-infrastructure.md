@@ -9,7 +9,7 @@
 | Property | Value     |
 | -------- | --------- |
 | Status   | completed |
-| Category | Core      |
+| Category | Arch      |
 | Phase    | 1         |
 
 ## Description

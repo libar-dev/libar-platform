@@ -6,11 +6,11 @@
 
 ## Overview
 
-| Property | Value     |
-| -------- | --------- |
-| Status   | completed |
-| Category | Pattern   |
-| Phase    | 9         |
+| Property | Value          |
+| -------- | -------------- |
+| Status   | completed      |
+| Category | Event Sourcing |
+| Phase    | 9              |
 
 ## Description
 
