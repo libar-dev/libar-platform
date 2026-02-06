@@ -112,12 +112,12 @@
 </details>
 
 <details>
-<summary>✅ LoggingInfrastructure (3 patterns)</summary>
+<summary>✅ ProcessManagerLifecycle (3 patterns)</summary>
 
 | Pattern                   | Description                                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Logging Infrastructure    | Factory for domain-specific loggers with scope prefixes and level filtering.                                             |
 | Process Manager Lifecycle | FSM for managing PM state transitions (idle/processing/completed/failed) with validation.                                |
+| Logging Infrastructure    | Factory for domain-specific loggers with scope prefixes and level filtering.                                             |
 | Package Architecture      | The original @convex-es/core package grew to 25+ modules, creating issues: - Large bundle size for consumers who only... |
 
 </details>

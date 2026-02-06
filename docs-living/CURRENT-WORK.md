@@ -21,7 +21,7 @@
 
 ## Active Phases
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
 [██░░░░░░░░░░░░░] 1/7 14% complete (1 done, 1 active, 5 planned)
 
@@ -40,7 +40,7 @@
 - 📋 cancel-order.feature (behavior) update
 - 📋 cancel-order.feature (integration) update
 
-[View ConfirmedOrderCancellation details →](current/phase-22-confirmed-order-cancellation.md)
+[View AgentChurnRiskCompletion details →](current/phase-22-agent-churn-risk-completion.md)
 
 ---
 

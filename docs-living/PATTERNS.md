@@ -227,17 +227,18 @@ Pattern relationships and dependencies:
 ```mermaid
 graph TD
     HandlerFactories --> DeciderPattern
+    DualWriteContract --> BoundedContextIdentity
     CMSRepository --> CMSDualWrite
+    ProjectionCheckpointing --> EventStoreFoundation
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
-    ProjectionCheckpointing --> EventStoreFoundation
+    MiddlewarePipeline --> CommandBusFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
@@ -269,9 +270,6 @@ graph TD
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
-    DualWriteContract --> BoundedContextIdentity
-    Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
-    Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -279,6 +277,14 @@ graph TD
     Partition_Key_Helper_Functions ..-> WorkpoolPartitioningStrategy
     Per_Projection_Partition_Configuration ..-> WorkpoolPartitioningStrategy
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
+    Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
+    Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
     ReservationPattern -.-> DynamicConsistencyBoundaries
@@ -316,12 +322,6 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---

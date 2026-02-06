@@ -333,7 +333,7 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 ### DS-5: Agent Lifecycle FSM
 
-**Status: NOT STARTED**
+**Status: COMPLETE**
 **Source:** 22c (Rule 2)
 **Spec:** `specs/platform/agent-command-infrastructure.feature` Rule 2
 **Depends on:** DS-1, DS-2
@@ -342,23 +342,59 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 **Consumer validation:**
 
-- 22d Rule 2: Approval expiration cron — open question: does pausing an agent affect its pending approvals?
-- 22e Rule 1: Dead letter panel — paused agent may still have dead letters that need management
+- 22d Rule 2: Approval expiration cron — pausing agent does NOT affect pending approvals (own expiration lifecycle)
+- 22e Rule 1: Dead letter panel — paused agent may still have dead letters that need management (unaffected by pause)
 
 **Scope:**
 
 - Lifecycle FSM: `stopped -> active -> paused -> active`, `error_recovery`
 - 5 command handlers (Start, Pause, Resume, Stop, Reconfigure)
-- Pause/resume interaction with EventBus subscription
-- Checkpoint preservation across state transitions
+- Pause mechanism: handler-level gate (events seen-but-skipped, checkpoint advances)
+- Config overrides on checkpoint for ReconfigureAgent
+- 6 new lifecycle audit event types
 
-**Key Design Decisions:**
+**Key Decisions (6 total):**
 
-| Decision                    | Why Complex                                                       |
-| --------------------------- | ----------------------------------------------------------------- |
-| Subscription management     | "Paused" must stop event delivery; Workpool doesn't support pause |
-| Error recovery automation   | `error_recovery -> active` via timer? backoff?                    |
-| Reconfigure without restart | Hot-reload config while preserving checkpoint                     |
+| AD   | Decision                                                                  | Category     | PDR     |
+| ---- | ------------------------------------------------------------------------- | ------------ | ------- |
+| AD-1 | Follow PM lifecycle Map pattern (not platform-fsm/defineFSM)              | architecture | PDR-013 |
+| AD-2 | Lifecycle state stored in checkpoint status field                         | architecture | PDR-013 |
+| AD-3 | Lifecycle commands are infrastructure mutations (not CommandOrchestrator) | architecture | PDR-013 |
+| AD-4 | Paused events advance checkpoint (seen-but-skipped semantics)             | design       | PDR-013 |
+| AD-5 | Config overrides stored on checkpoint table                               | design       | PDR-013 |
+| AD-6 | error_recovery transition deferred to DS-3 (circuit breaker)              | design       | PDR-013 |
+
+**Deliverables:**
+
+| #   | Deliverable                     | Location                                                                    |
+| --- | ------------------------------- | --------------------------------------------------------------------------- |
+| 1   | Decision spec                   | `delivery-process/decisions/pdr-013-agent-lifecycle-fsm.feature`            |
+| 2   | Lifecycle FSM stub              | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-fsm.ts`               |
+| 3   | Lifecycle command types stub    | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-types.ts`     |
+| 4   | Lifecycle command handlers stub | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-handlers.ts`  |
+| 5   | Lifecycle audit events stub     | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-audit-events.ts`      |
+| 6   | Checkpoint status extension     | `delivery-process/stubs/agent-lifecycle-fsm/checkpoint-status-extension.ts` |
+
+**DS-2 Open Questions Resolved:**
+
+| Question                                                                         | Answer                                                                                  |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Q3: Lifecycle FSM pause/resume — paused agent should reject events in the action | Confirmed: handler-level gate advances checkpoint (AD-4). Action returns null decision. |
+
+**DS-4 Open Questions Resolved:**
+
+| Question                                                       | Answer                                                                                                     |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Q2: When agent is paused, should pending commands still route? | YES — pausing stops event analysis, not command lifecycle. Commands already in pipeline complete normally. |
+
+**Open Questions for Holistic Review:**
+
+1. DS-3: error_recovery trigger mechanism — consecutive failure threshold, cooldown duration, exponential backoff. DS-5 only provides FSM transitions.
+2. DS-3: Rate limiter check point — should cost budget exceeded auto-trigger PauseAgent via ENTER_ERROR_RECOVERY?
+3. DS-7: Admin UI lifecycle controls — `checkpoints.getByAgentId` query (DS-1) sufficient for displaying agent state. No additional API needed.
+4. Future: Skipped-event audit trail — should action handler record lightweight "EventSkipped" entries during pause? Currently events are silently skipped.
+5. Future: Multiple subscriptions per agent — lifecycle is agent-level, not subscription-level. Should individual subscription pause be supported?
+6. Future: ReconfigureAgent field set — could `humanInLoop` config also be runtime-configurable?
 
 ---
 
@@ -429,7 +465,7 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 | DS-2    | 22b (core)      | 5            | 3     | Heavy         | Complete    |
 | DS-3    | 22b (rest)      | 5            | 1     | Medium        | Not started |
 | DS-4    | 22c (Rules 1,3) | 6            | 2     | Medium        | Complete    |
-| DS-5    | 22c (Rule 2)    | 5            | 1     | Medium        | Not started |
+| DS-5    | 22c (Rule 2)    | 6            | 1     | Medium        | Complete    |
 | DS-6    | 22d             | 8            | 3     | Light-medium  | Not started |
 | DS-7    | 22e             | 12           | 3     | Light-medium  | Not started |
 
@@ -450,4 +486,8 @@ After all design sessions complete, review across all DS sessions:
 - [x] API gap: command bridge from agent component to CommandOrchestrator (DS-4) — RESOLVED: scheduled mutation via `routeAgentCommand`
 - [x] API gap: `commands.getByDecisionId` query needed for command bridge (DS-4 open Q4) — RESOLVED: Added to DS-1 commands stub
 - [ ] PatternExecutor + rate limiter interaction point (DS-4 open Q1 / DS-3)
+- [ ] error_recovery trigger mechanism: consecutive failure threshold + cooldown (DS-5 open Q1 / DS-3)
+- [ ] Cost budget exceeded auto-pause via ENTER_ERROR_RECOVERY (DS-5 open Q2 / DS-3)
+- [ ] Skipped-event audit trail during pause — silent skip vs lightweight audit (DS-5 open Q4)
+- [ ] ReconfigureAgent runtime-configurable field set — extend beyond confidenceThreshold/patternWindow/rateLimits? (DS-5 open Q6)
 - [ ] 22d deliverable location: "Agent component migration" location correction
