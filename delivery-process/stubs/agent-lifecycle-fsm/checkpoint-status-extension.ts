@@ -70,13 +70,21 @@ export interface AgentConfigOverrides {
   readonly patternWindowDuration?: string;
 
   /**
-   * Override rate limits. Merged over AgentBCConfig.rateLimits.
-   * Shape matches AgentRateLimitConfig from agent/types.ts.
+   * Override rate limits. Uses Partial<AgentRateLimitConfig> to match existing field names.
+   * @see platform-core/src/agent/types.ts:120-148 for AgentRateLimitConfig
    */
   readonly rateLimits?: {
-    readonly maxEventsPerMinute?: number;
-    readonly maxLLMCallsPerHour?: number;
-    readonly dailyCostBudgetUSD?: number;
+    /** Override max LLM API calls per minute */
+    readonly maxRequestsPerMinute?: number;
+    /** Override max concurrent LLM calls */
+    readonly maxConcurrent?: number;
+    /** Override max queued events before backpressure */
+    readonly queueDepth?: number;
+    /** Override cost budget (nested — deep-merged with base config) */
+    readonly costBudget?: {
+      readonly daily?: number;
+      readonly alertThreshold?: number;
+    };
   };
 }
 
@@ -89,9 +97,15 @@ export const AgentConfigOverridesSchema = z
     patternWindowDuration: z.string().optional(),
     rateLimits: z
       .object({
-        maxEventsPerMinute: z.number().positive().optional(),
-        maxLLMCallsPerHour: z.number().positive().optional(),
-        dailyCostBudgetUSD: z.number().positive().optional(),
+        maxRequestsPerMinute: z.number().positive().optional(),
+        maxConcurrent: z.number().positive().optional(),
+        queueDepth: z.number().positive().optional(),
+        costBudget: z
+          .object({
+            daily: z.number().positive().optional(),
+            alertThreshold: z.number().min(0).max(1).optional(),
+          })
+          .optional(),
       })
       .optional(),
   })
@@ -226,21 +240,13 @@ export function resolveEffectiveConfig(
   baseConfig: {
     readonly confidenceThreshold: number;
     readonly patternWindow: { readonly duration: string };
-    readonly rateLimits?: {
-      readonly maxEventsPerMinute?: number;
-      readonly maxLLMCallsPerHour?: number;
-      readonly dailyCostBudgetUSD?: number;
-    };
+    readonly rateLimits?: AgentRateLimitConfig;
   },
   overrides?: AgentConfigOverrides
 ): {
   confidenceThreshold: number;
   patternWindowDuration: string;
-  rateLimits?: {
-    maxEventsPerMinute?: number;
-    maxLLMCallsPerHour?: number;
-    dailyCostBudgetUSD?: number;
-  };
+  rateLimits?: AgentRateLimitConfig;
 } {
   if (!overrides) {
     return {
@@ -250,9 +256,35 @@ export function resolveEffectiveConfig(
     };
   }
 
+  // Deep merge for rateLimits — costBudget is a nested object that needs
+  // field-level merging, not wholesale replacement.
+  const mergedRateLimits = overrides.rateLimits
+    ? {
+        ...baseConfig.rateLimits,
+        ...overrides.rateLimits,
+        costBudget: overrides.rateLimits.costBudget
+          ? {
+              ...baseConfig.rateLimits?.costBudget,
+              ...overrides.rateLimits.costBudget,
+            }
+          : baseConfig.rateLimits?.costBudget,
+      }
+    : baseConfig.rateLimits;
+
   return {
     confidenceThreshold: overrides.confidenceThreshold ?? baseConfig.confidenceThreshold,
     patternWindowDuration: overrides.patternWindowDuration ?? baseConfig.patternWindow.duration,
-    rateLimits: overrides.rateLimits ?? baseConfig.rateLimits,
+    rateLimits: mergedRateLimits as AgentRateLimitConfig | undefined,
   };
 }
+
+// @see platform-core/src/agent/types.ts:120-148
+type AgentRateLimitConfig = {
+  readonly maxRequestsPerMinute: number;
+  readonly maxConcurrent?: number;
+  readonly queueDepth?: number;
+  readonly costBudget?: {
+    readonly daily: number;
+    readonly alertThreshold: number;
+  };
+};

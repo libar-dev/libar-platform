@@ -87,6 +87,41 @@ export interface AgentWorkpoolContext {
 }
 
 // ============================================================================
+// Context Construction — How EventBus Populates AgentWorkpoolContext
+// ============================================================================
+//
+// The EventBus constructs this context at dispatch time using the
+// ActionSubscription's `toWorkpoolContext` callback:
+//
+//   // In ConvexEventBus.publish (action branch):
+//   const context = subscription.toWorkpoolContext(event, chain, subscription.name);
+//   await workpool.enqueueAction(ctx, handler, args, { context, onComplete, retry });
+//
+// The subscription factory builds toWorkpoolContext from the agent definition:
+//
+//   toWorkpoolContext: (event, chain, subscriptionName) => ({
+//     agentId: agentDefinition.id,                // From AgentBCConfig.id
+//     subscriptionId: subscriptionName,            // Subscription name = unique per agent
+//     eventId: event.eventId,                      // From PublishedEvent
+//     eventType: event.eventType,                  // From PublishedEvent
+//     globalPosition: event.globalPosition,        // From PublishedEvent — used for checkpoint
+//     correlationId: chain.correlationId,          // From CorrelationChain
+//     causationId: event.eventId,                  // Event that caused this processing
+//     streamId: event.streamId,                    // From PublishedEvent
+//     streamType: event.streamType,                // From PublishedEvent
+//     boundedContext: event.boundedContext,         // From PublishedEvent
+//   })
+//
+// In the onComplete handler, access via `args.context`:
+//   const { agentId, subscriptionId, globalPosition, ... } = args.context;
+//
+// And the action's return value via `args.result`:
+//   if (args.result.kind === "success") {
+//     const actionResult: AgentActionResult = args.result.returnValue;
+//     const { decisionId, decision, analysisMethod, patternId } = actionResult;
+//   }
+
+// ============================================================================
 // onComplete Args Type
 // ============================================================================
 

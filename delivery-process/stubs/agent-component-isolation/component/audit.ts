@@ -29,7 +29,12 @@ import { v } from "convex/values";
 // Shared Validators
 // ============================================================================
 
+/**
+ * All 16 audit event types — matches schema.ts union.
+ * Includes forward-declarations for DS-4 and DS-5 types.
+ */
 const auditEventTypeValidator = v.union(
+  // DS-1: Core agent events (8 types)
   v.literal("AgentDecisionMade"),
   v.literal("AgentActionApproved"),
   v.literal("AgentActionRejected"),
@@ -37,7 +42,17 @@ const auditEventTypeValidator = v.union(
   v.literal("AgentAnalysisCompleted"),
   v.literal("AgentAnalysisFailed"),
   v.literal("CommandEmitted"),
-  v.literal("CommandProcessed")
+  v.literal("CommandProcessed"),
+  // DS-4: Command routing events (2 types, PDR-012)
+  v.literal("AgentCommandRouted"),
+  v.literal("AgentCommandRoutingFailed"),
+  // DS-5: Lifecycle events (6 types, PDR-013)
+  v.literal("AgentStarted"),
+  v.literal("AgentPaused"),
+  v.literal("AgentResumed"),
+  v.literal("AgentStopped"),
+  v.literal("AgentReconfigured"),
+  v.literal("AgentErrorRecoveryStarted")
 );
 
 // ============================================================================
@@ -136,3 +151,44 @@ export const getByDecisionId = query({
     throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
   },
 });
+
+// ============================================================================
+// @future DS-7: Admin Frontend Query Extensions
+// ============================================================================
+//
+// Consumer spec 22e (agent-admin-frontend.feature) Rule 2 requires:
+//
+// 1. Filter by action type (e.g., "SuggestCustomerOutreach"):
+//    Currently actionType is buried in the payload field. Either:
+//    - Add top-level `actionType` field to agentAuditEvents schema, OR
+//    - Filter client-side from queryByAgent results (simpler but less efficient)
+//
+//    Proposed query:
+//    export const queryByAgentAndActionType = query({
+//      args: {
+//        agentId: v.string(),
+//        actionType: v.string(),
+//        limit: v.optional(v.number()),
+//        cursor: v.optional(v.string()),
+//      },
+//      handler: async (ctx, args) => { ... },
+//    });
+//
+// 2. Time range filtering (e.g., ?from=2026-01-01&to=2026-02-01):
+//    The by_agentId_timestamp index already supports range queries.
+//    Just need to expose fromTimestamp/toTimestamp args.
+//
+//    Proposed query:
+//    export const queryByAgentAndTimeRange = query({
+//      args: {
+//        agentId: v.string(),
+//        fromTimestamp: v.number(),
+//        toTimestamp: v.number(),
+//        limit: v.optional(v.number()),
+//        cursor: v.optional(v.string()),
+//      },
+//      handler: async (ctx, args) => { ... },
+//    });
+//
+// Decision: Defer to DS-7 or holistic review. Both queries are straightforward
+// extensions of the existing index structure.

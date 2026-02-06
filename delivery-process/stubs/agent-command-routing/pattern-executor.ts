@@ -248,7 +248,7 @@ export async function executePatterns(
       } catch (analyzeError) {
         // AD-7: Fail-closed default for analyze() failures.
         // LLM outage must not cause mass command emission.
-        const failureMode = (pattern as PatternDefinitionWithExtensions).onAnalyzeFailure ?? "skip";
+        const failureMode = pattern.onAnalyzeFailure ?? "skip";
 
         if (failureMode === "fallback-to-trigger") {
           // Explicit opt-in: fall back to trigger-based decision
@@ -412,7 +412,7 @@ export function buildDecisionFromTrigger(
 
   // AD-8: Use defaultCommand if defined on the pattern.
   // This allows trigger-only patterns to emit routable commands.
-  const extended = pattern as PatternDefinitionWithExtensions;
+  const extended = pattern; // DS-4 extension fields (onAnalyzeFailure, defaultCommand) on PatternDefinition
   const defaultCmd = extended.defaultCommand;
 
   const command = defaultCmd?.type ?? null;
@@ -455,18 +455,27 @@ type PatternAnalysisResultWithCommand = PatternAnalysisResult & {
   readonly command?: { readonly type: string; readonly payload: unknown };
 };
 
-// DS-4 extensions to PatternDefinition (AD-7, AD-8):
-// These fields will be added to the base PatternDefinition type at implementation time.
-// Using a local extension type for the stub to avoid modifying the placeholder import.
-type PatternDefinitionWithExtensions = PatternDefinition & {
-  /** AD-7: Behavior when analyze() throws. Default: "skip" (fail-closed). */
-  readonly onAnalyzeFailure?: "fallback-to-trigger" | "skip";
-  /** AD-8: Default command for trigger-only patterns. */
-  readonly defaultCommand?: {
-    readonly type: string;
-    readonly payloadBuilder: (events: readonly PublishedEvent[]) => unknown;
-  };
-};
+// @evolution: PatternDefinition at platform-core/src/agent/patterns.ts:91 gains these optional fields:
+//
+//   interface PatternDefinition {
+//     // ... existing fields (name, description, window, trigger, analyze) ...
+//
+//     /** AD-7: Behavior when analyze() throws. Default: "skip" (fail-closed). */
+//     readonly onAnalyzeFailure?: "fallback-to-trigger" | "skip";
+//
+//     /** AD-8: Default command for trigger-only patterns (no analyze function). */
+//     readonly defaultCommand?: {
+//       readonly type: string;
+//       readonly payloadBuilder: (events: readonly EventInWindow[]) => unknown;
+//     };
+//   }
+//
+// Also add to PatternAnalysisResult (patterns.ts:54):
+//   readonly command?: { readonly type: string; readonly payload: unknown };
+//
+// These are accessed directly on PatternDefinition below (stubs don't compile —
+// clarity over type safety). At implementation, add to the real interface and
+// update validatePatternDefinition() to accept the new fields.
 
 // From platform-core/src/agent/types.ts:
 type AgentBCConfig = import("./types-placeholder.js").AgentBCConfig;

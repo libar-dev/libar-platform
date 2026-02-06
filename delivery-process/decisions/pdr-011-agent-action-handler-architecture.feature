@@ -49,7 +49,7 @@ Feature: PDR-011 Agent Action Handler Architecture
     | AD-5 | onComplete data contract: action returns AgentActionResult, context carries event metadata | Clean separation. onComplete has everything needed for persistence |
     | AD-7 | Persistence ordering: checkpoint read FIRST, updated LAST | Read-first ensures checkpoint enters OCC read set early, maximizing conflict detection window. Write ordering within a single atomic mutation is a code readability convention, not a failure recovery mechanism |
     | AD-8 | Two factory APIs: createAgentActionHandler + createAgentOnCompleteHandler | onComplete is generic and reusable across agents. Action is agent-specific |
-    | AD-9 | AgentBCConfig.onEvent callback stays unchanged | Infrastructure changes around it. DS-4 may evolve to PatternDefinition API |
+    | AD-9 | AgentBCConfig.onEvent callback stays unchanged | Infrastructure changes around it. DS-4 may evolve to PatternDefinition API. Note: onEvent is unchanged within DS-2 scope. DS-4 (PDR-012 AD-2) adds `patterns: string[]` as an XOR alternative — agents use either onEvent OR patterns, not both. This maintains backward compatibility: existing agents keep onEvent, new agents can use the patterns API |
 
     The Fundamental Constraint:
 

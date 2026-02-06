@@ -560,6 +560,43 @@ interface CommandOrchestratorInterface {
   execute(ctx: MutationCtx, config: unknown, args: Record<string, unknown>): Promise<void>;
 }
 
+// ============================================================================
+// FAILURE RECOVERY — routeAgentCommand Error Handling
+// ============================================================================
+//
+// routeAgentCommand runs via ctx.scheduler.runAfter(0, ...) — a plain Convex
+// scheduled mutation. Unlike Workpool-managed functions, it has NO automatic
+// retry, monitoring, or dead letter handling.
+//
+// If routeAgentCommand fails, the command remains in "pending" status forever.
+//
+// Recovery strategy (layered):
+//
+// 1. PRIMARY — Convex auto-retry on OCC:
+//    routeAgentCommand is a mutation. If it fails due to OCC conflict (another
+//    mutation modified the same command concurrently), Convex automatically retries.
+//    This handles the most common failure mode.
+//
+// 2. SECONDARY — Failure recording:
+//    Non-OCC failures (e.g., CommandOrchestrator.execute throws) are caught
+//    within routeAgentCommand. The handler updates command status to "failed"
+//    and records an AgentCommandRoutingFailed audit event. The command is NOT
+//    stuck in "pending" — it moves to a visible "failed" state.
+//
+// 3. TERTIARY — Admin UI manual re-routing (DS-7):
+//    Admin panel provides commands.getByStatus("failed") query + re-schedule action.
+//    Operator can inspect the failure, fix the underlying issue, and re-trigger.
+//
+// 4. FUTURE — Cron-based stale command detector:
+//    A scheduled cron (e.g., every 5 minutes) queries commands stuck in "pending"
+//    beyond a threshold (e.g., 30 seconds). These are commands where the
+//    ctx.scheduler.runAfter itself failed (extremely rare — Convex scheduler is durable).
+//    The cron either re-schedules or moves to "failed" with a timeout reason.
+//
+// IMPORTANT: The audit event + command status update in step 2 happen atomically
+// within the same mutation transaction. If the mutation itself fails to commit,
+// the command stays in "pending" and falls into the cron detector (step 4).
+
 // Placeholders:
 type FunctionRef = unknown;
 type MutationCtx = unknown;

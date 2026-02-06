@@ -232,12 +232,21 @@ export type LifecycleAuditPayload =
 /**
  * Generate a lifecycle-specific decisionId.
  *
- * Format: `lifecycle_${agentId}_${timestamp}`
+ * Format: `lifecycle_${agentId}_${timestamp}_${randomSuffix}`
  *
  * Lifecycle events are not triggered by pattern analysis, so they don't have
  * a globalPosition-based decisionId. This format prevents collision with
  * analysis-triggered decisionIds (`dec_${agentId}_${globalPosition}`).
+ *
+ * L6 fix: Added random suffix to prevent collision when two lifecycle commands
+ * execute in the same millisecond (e.g., concurrent stop + start via admin UI).
  */
 export function createLifecycleDecisionId(agentId: string, timestamp: number = Date.now()): string {
-  return `lifecycle_${agentId}_${timestamp}`;
+  const randomSuffix = Math.random().toString(36).slice(2, 6);
+  return `lifecycle_${agentId}_${timestamp}_${randomSuffix}`;
 }
+
+// @future: Consider lightweight "EventSkipped" audit entries during pause.
+// Would enable audit trail of events seen-but-skipped when agent is paused.
+// Useful for observability: operator can see which events arrived during downtime.
+// Deferred to holistic review — high volume concern (every skipped event = 1 audit row).

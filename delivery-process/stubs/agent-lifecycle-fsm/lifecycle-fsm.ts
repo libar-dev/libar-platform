@@ -115,6 +115,11 @@ const VALID_TRANSITIONS: readonly AgentLifecycleTransition[] = [
   // From paused
   { from: "paused", event: "RESUME", to: "active" },
   { from: "paused", event: "STOP", to: "stopped" },
+  // OPEN QUESTION (Holistic Review): Should `paused + RECONFIGURE -> paused` be valid?
+  // Current design: paused + RECONFIGURE -> active (implicit resume).
+  // Alternative: allow config update without resume. Use case: operator changes
+  // confidence threshold while agent is paused for investigation, wants it to stay paused.
+  // Decision: Keep current design for DS-5. Revisit if admin UI use cases demand it.
   { from: "paused", event: "RECONFIGURE", to: "active" },
 
   // From error_recovery

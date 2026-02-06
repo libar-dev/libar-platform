@@ -18,17 +18,20 @@
  * @see delivery-process/stubs/agent-component-isolation/component/checkpoints.ts — component API
  */
 
-import type { MutationCtx } from "convex/server";
-import type { Logger } from "@libar-dev/platform-core";
+import type { MutationCtx, FunctionReference } from "convex/server";
+// L1 fix: Import Logger from local path, not from @libar-dev/platform-core,
+// to avoid circular dependency: eventSubscriptions → PM → infrastructure → eventSubscriptions
+import type { Logger } from "../logging/types.js";
 import type { AgentLifecycleState } from "./lifecycle-fsm.js";
 import type { AgentConfigOverrides } from "./checkpoint-status-extension.js";
 import type { AgentLifecycleResult } from "./lifecycle-command-types.js";
-import type {
-  AgentStartedPayload,
-  AgentPausedPayload,
-  AgentResumedPayload,
-  AgentStoppedPayload,
-  AgentReconfiguredPayload,
+import {
+  createLifecycleDecisionId,
+  type AgentStartedPayload,
+  type AgentPausedPayload,
+  type AgentResumedPayload,
+  type AgentStoppedPayload,
+  type AgentReconfiguredPayload,
 } from "./lifecycle-audit-events.js";
 
 // ============================================================================
@@ -40,50 +43,28 @@ import type {
  *
  * Only needs checkpoints and audit — lifecycle commands don't interact
  * with dead letters, commands, or approvals.
+ *
+ * H3 fix: Uses FunctionReference-based pattern matching DS-2's oncomplete-handler.
+ * Convex components have isolated databases — you CANNOT pass `ctx` across the
+ * component boundary. The correct pattern is `ctx.runQuery(ref, args)` or
+ * `ctx.runMutation(ref, args)` where `ref` is a FunctionReference.
+ *
+ * @see stubs/agent-action-handler/oncomplete-handler.ts — DS-2 establishes this pattern
+ * @see stubs/agent-component-isolation/component/checkpoints.ts — component API definitions
  */
 export interface LifecycleComponentAPI {
   readonly checkpoints: {
-    /**
-     * Load all checkpoints for an agent.
-     * Uses by_agentId index for O(log n) lookup.
-     */
-    readonly getByAgentId: (
-      ctx: MutationCtx,
-      args: { agentId: string }
-    ) => Promise<ReadonlyArray<AgentCheckpointDoc>>;
-
-    /**
-     * Update checkpoint status.
-     * Atomic mutation on the agent component.
-     */
-    readonly updateStatus: (
-      ctx: MutationCtx,
-      args: { agentId: string; status: string }
-    ) => Promise<void>;
-
-    /**
-     * Patch checkpoint with config overrides (for ReconfigureAgent).
-     */
-    readonly patchConfigOverrides: (
-      ctx: MutationCtx,
-      args: { agentId: string; configOverrides: AgentConfigOverrides }
-    ) => Promise<void>;
+    /** FunctionRef for query: load all checkpoints for an agent (by_agentId index) */
+    readonly getByAgentId: FunctionReference<"query">;
+    /** FunctionRef for mutation: update checkpoint status */
+    readonly updateStatus: FunctionReference<"mutation">;
+    /** FunctionRef for mutation: patch checkpoint config overrides (ReconfigureAgent) */
+    readonly patchConfigOverrides: FunctionReference<"mutation">;
   };
 
   readonly audit: {
-    /**
-     * Record an audit event. Idempotent by decisionId.
-     */
-    readonly record: (
-      ctx: MutationCtx,
-      args: {
-        eventType: string;
-        agentId: string;
-        decisionId: string;
-        timestamp: number;
-        payload: unknown;
-      }
-    ) => Promise<void>;
+    /** FunctionRef for mutation: record an audit event (idempotent by decisionId) */
+    readonly record: FunctionReference<"mutation">;
   };
 }
 
@@ -169,7 +150,7 @@ export async function handleStartAgent(
   const { agentComponent, logger } = config;
 
   // 1. Load checkpoints
-  const checkpoints = await agentComponent.checkpoints.getByAgentId(ctx, {
+  const checkpoints = await ctx.runQuery(agentComponent.checkpoints.getByAgentId, {
     agentId: args.agentId,
   });
 
@@ -197,7 +178,7 @@ export async function handleStartAgent(
   }
 
   // 3. Update all checkpoint statuses
-  await agentComponent.checkpoints.updateStatus(ctx, {
+  await ctx.runMutation(agentComponent.checkpoints.updateStatus, {
     agentId: args.agentId,
     status: "active",
   });
@@ -209,10 +190,10 @@ export async function handleStartAgent(
     resumeFromPosition: checkpoints[0]!.lastProcessedPosition,
   };
 
-  await agentComponent.audit.record(ctx, {
+  await ctx.runMutation(agentComponent.audit.record, {
     eventType: "AgentStarted",
     agentId: args.agentId,
-    decisionId: `lifecycle_${args.agentId}_${Date.now()}`,
+    decisionId: createLifecycleDecisionId(args.agentId),
     timestamp: Date.now(),
     payload,
   });
@@ -254,7 +235,7 @@ export async function handlePauseAgent(
 ): Promise<AgentLifecycleResult> {
   const { agentComponent, logger } = config;
 
-  const checkpoints = await agentComponent.checkpoints.getByAgentId(ctx, {
+  const checkpoints = await ctx.runQuery(agentComponent.checkpoints.getByAgentId, {
     agentId: args.agentId,
   });
 
@@ -278,7 +259,7 @@ export async function handlePauseAgent(
     };
   }
 
-  await agentComponent.checkpoints.updateStatus(ctx, {
+  await ctx.runMutation(agentComponent.checkpoints.updateStatus, {
     agentId: args.agentId,
     status: "paused",
   });
@@ -290,10 +271,10 @@ export async function handlePauseAgent(
     eventsProcessedAtPause: checkpoints[0]!.eventsProcessed,
   };
 
-  await agentComponent.audit.record(ctx, {
+  await ctx.runMutation(agentComponent.audit.record, {
     eventType: "AgentPaused",
     agentId: args.agentId,
-    decisionId: `lifecycle_${args.agentId}_${Date.now()}`,
+    decisionId: createLifecycleDecisionId(args.agentId),
     timestamp: Date.now(),
     payload,
   });
@@ -334,7 +315,7 @@ export async function handleResumeAgent(
 ): Promise<AgentLifecycleResult> {
   const { agentComponent, logger } = config;
 
-  const checkpoints = await agentComponent.checkpoints.getByAgentId(ctx, {
+  const checkpoints = await ctx.runQuery(agentComponent.checkpoints.getByAgentId, {
     agentId: args.agentId,
   });
 
@@ -358,7 +339,7 @@ export async function handleResumeAgent(
     };
   }
 
-  await agentComponent.checkpoints.updateStatus(ctx, {
+  await ctx.runMutation(agentComponent.checkpoints.updateStatus, {
     agentId: args.agentId,
     status: "active",
   });
@@ -368,10 +349,10 @@ export async function handleResumeAgent(
     correlationId: args.correlationId,
   };
 
-  await agentComponent.audit.record(ctx, {
+  await ctx.runMutation(agentComponent.audit.record, {
     eventType: "AgentResumed",
     agentId: args.agentId,
-    decisionId: `lifecycle_${args.agentId}_${Date.now()}`,
+    decisionId: createLifecycleDecisionId(args.agentId),
     timestamp: Date.now(),
     payload,
   });
@@ -411,7 +392,7 @@ export async function handleStopAgent(
 ): Promise<AgentLifecycleResult> {
   const { agentComponent, logger } = config;
 
-  const checkpoints = await agentComponent.checkpoints.getByAgentId(ctx, {
+  const checkpoints = await ctx.runQuery(agentComponent.checkpoints.getByAgentId, {
     agentId: args.agentId,
   });
 
@@ -436,7 +417,7 @@ export async function handleStopAgent(
     };
   }
 
-  await agentComponent.checkpoints.updateStatus(ctx, {
+  await ctx.runMutation(agentComponent.checkpoints.updateStatus, {
     agentId: args.agentId,
     status: "stopped",
   });
@@ -448,10 +429,10 @@ export async function handleStopAgent(
     stoppedAtPosition: checkpoints[0]!.lastProcessedPosition,
   };
 
-  await agentComponent.audit.record(ctx, {
+  await ctx.runMutation(agentComponent.audit.record, {
     eventType: "AgentStopped",
     agentId: args.agentId,
-    decisionId: `lifecycle_${args.agentId}_${Date.now()}`,
+    decisionId: createLifecycleDecisionId(args.agentId),
     timestamp: Date.now(),
     payload,
   });
@@ -498,7 +479,7 @@ export async function handleReconfigureAgent(
 ): Promise<AgentLifecycleResult> {
   const { agentComponent, logger } = config;
 
-  const checkpoints = await agentComponent.checkpoints.getByAgentId(ctx, {
+  const checkpoints = await ctx.runQuery(agentComponent.checkpoints.getByAgentId, {
     agentId: args.agentId,
   });
 
@@ -524,14 +505,14 @@ export async function handleReconfigureAgent(
   }
 
   // Apply config overrides to checkpoint
-  await agentComponent.checkpoints.patchConfigOverrides(ctx, {
+  await ctx.runMutation(agentComponent.checkpoints.patchConfigOverrides, {
     agentId: args.agentId,
     configOverrides: args.configOverrides,
   });
 
   // If paused, implicitly resume to active
   if (currentState === "paused") {
-    await agentComponent.checkpoints.updateStatus(ctx, {
+    await ctx.runMutation(agentComponent.checkpoints.updateStatus, {
       agentId: args.agentId,
       status: "active",
     });
@@ -544,10 +525,10 @@ export async function handleReconfigureAgent(
     correlationId: args.correlationId,
   };
 
-  await agentComponent.audit.record(ctx, {
+  await ctx.runMutation(agentComponent.audit.record, {
     eventType: "AgentReconfigured",
     agentId: args.agentId,
-    decisionId: `lifecycle_${args.agentId}_${Date.now()}`,
+    decisionId: createLifecycleDecisionId(args.agentId),
     timestamp: Date.now(),
     payload,
   });
@@ -585,7 +566,16 @@ export async function handleReconfigureAgent(
  * ```typescript
  * // In convex/agent/lifecycle.ts:
  * const handlers = createLifecycleHandlers({
- *   agentComponent: components.agent,
+ *   agentComponent: {
+ *     checkpoints: {
+ *       getByAgentId: components.agent.checkpoints.getByAgentId,
+ *       updateStatus: components.agent.checkpoints.updateStatus,
+ *       patchConfigOverrides: components.agent.checkpoints.patchConfigOverrides,
+ *     },
+ *     audit: {
+ *       record: components.agent.audit.record,
+ *     },
+ *   },
  *   logger: createLogger("agent-lifecycle"),
  * });
  *

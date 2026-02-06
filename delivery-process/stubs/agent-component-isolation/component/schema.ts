@@ -53,6 +53,14 @@ export default defineSchema({
 
     /** Last checkpoint update timestamp */
     updatedAt: v.number(),
+
+    /**
+     * Runtime config overrides (DS-5, PDR-013 AD-5).
+     * Forward-declared here to avoid schema migration when DS-5 is implemented.
+     * Stores partial AgentBCConfig overrides applied via ReconfigureAgent command.
+     * Merged with base AgentBCConfig at handler invocation time.
+     */
+    configOverrides: v.optional(v.any()),
   })
     .index("by_agentId", ["agentId"])
     // NEW: Added for O(1) checkpoint lookup by (agentId, subscriptionId) pair.
@@ -67,8 +75,12 @@ export default defineSchema({
    * @since Phase 22 (AgentAsBoundedContext)
    */
   agentAuditEvents: defineTable({
-    /** Audit event type */
+    /**
+     * Audit event type — all 16 types declared from day one to avoid schema migration.
+     * Schema includes forward-declarations for DS-4 and DS-5 event types.
+     */
     eventType: v.union(
+      // DS-1: Core agent events (8 types)
       v.literal("AgentDecisionMade"),
       v.literal("AgentActionApproved"),
       v.literal("AgentActionRejected"),
@@ -76,7 +88,17 @@ export default defineSchema({
       v.literal("AgentAnalysisCompleted"),
       v.literal("AgentAnalysisFailed"),
       v.literal("CommandEmitted"),
-      v.literal("CommandProcessed")
+      v.literal("CommandProcessed"),
+      // DS-4: Command routing events (2 types, PDR-012)
+      v.literal("AgentCommandRouted"),
+      v.literal("AgentCommandRoutingFailed"),
+      // DS-5: Lifecycle events (6 types, PDR-013)
+      v.literal("AgentStarted"),
+      v.literal("AgentPaused"),
+      v.literal("AgentResumed"),
+      v.literal("AgentStopped"),
+      v.literal("AgentReconfigured"),
+      v.literal("AgentErrorRecoveryStarted")
     ),
 
     /** Agent BC identifier */

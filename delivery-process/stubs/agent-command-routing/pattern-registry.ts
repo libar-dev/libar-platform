@@ -280,6 +280,24 @@ export class PatternRegistry {
 export const globalPatternRegistry = PatternRegistry.getInstance();
 
 // ============================================================================
+// NAMING CONVENTION — Agent-Scoped Pattern Names
+// ============================================================================
+//
+// Pattern names SHOULD be agent-scoped to prevent collisions when multiple
+// agents register patterns:
+//
+//   Format: `{agentId}/{patternName}`
+//   Example: `churn-risk/cancellation-pattern`
+//   Example: `churn-risk/refund-surge`
+//   Example: `fraud-detection/velocity-check`
+//
+// The registry validates uniqueness at registration time (existing behavior).
+// No code change needed — this is a convention for implementors.
+//
+// If two agents both register a pattern named "high-risk" without scoping,
+// the second registration throws (duplicate name). Agent-scoping prevents this.
+
+// ============================================================================
 // Type Aliases (referenced but defined elsewhere)
 // ============================================================================
 

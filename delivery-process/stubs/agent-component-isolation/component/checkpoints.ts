@@ -117,6 +117,48 @@ export const updateStatus = mutation({
   },
 });
 
+/**
+ * Patch config overrides for all checkpoints of an agent (DS-5, PDR-013 AD-5).
+ *
+ * Called by ReconfigureAgent lifecycle command. Updates the configOverrides
+ * field on ALL checkpoints for the given agentId in a single atomic mutation.
+ *
+ * Pattern matches updateStatus (above) which also operates on all checkpoints by agentId.
+ *
+ * @example
+ * ```typescript
+ * await ctx.runMutation(components.agent.checkpoints.patchConfigOverrides, {
+ *   agentId: "churn-risk-agent",
+ *   configOverrides: { confidenceThreshold: 0.9 },
+ * });
+ * ```
+ */
+export const patchConfigOverrides = mutation({
+  args: {
+    agentId: v.string(),
+    configOverrides: v.any(),
+  },
+  handler: async (ctx, args) => {
+    // IMPLEMENTATION NOTE: Iterate all checkpoints by agentId and patch configOverrides.
+    // This relies on the by_agentId index for efficient lookup.
+    // Atomic: all patches commit or none do (Convex mutation guarantee).
+    //
+    //   const checkpoints = await ctx.db
+    //     .query("agentCheckpoints")
+    //     .withIndex("by_agentId", q => q.eq("agentId", args.agentId))
+    //     .collect();
+    //   for (const checkpoint of checkpoints) {
+    //     await ctx.db.patch(checkpoint._id, {
+    //       configOverrides: args.configOverrides,
+    //       updatedAt: Date.now(),
+    //     });
+    //   }
+    //   return { patchedCount: checkpoints.length };
+    //
+    throw new Error("AgentBCComponentIsolation not yet implemented - roadmap pattern");
+  },
+});
+
 // ============================================================================
 // Queries
 // ============================================================================

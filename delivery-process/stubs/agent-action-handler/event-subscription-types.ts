@@ -287,6 +287,39 @@ export function isMutationSubscription<T extends UnknownRecord>(
 // From deps-packages/workpool:
 //   - RetryBehavior
 
+// ============================================================================
+// MIGRATION STRATEGY — Backward-Compatible EventSubscription Evolution
+// ============================================================================
+//
+// The current EventSubscription (platform-core/src/eventbus/types.ts:98-133)
+// is a single interface with `handler: FunctionReference<"mutation">`.
+// Every existing subscription (projections, PMs, sagas) has no `handlerType`.
+//
+// The discriminated union above is a BREAKING CHANGE. To migrate safely:
+//
+// Step 1: Make `handlerType` OPTIONAL on MutationSubscription.
+//   - Default to "mutation" when absent in ConvexEventBus.publish.
+//   - All existing subscriptions continue to work without changes.
+//
+// Step 2: Add `enqueueAction` to WorkpoolClient interface.
+//   - platform-core/src/orchestration/types.ts currently only has enqueueMutation/Batch.
+//   - Add: enqueueAction<TArgs>(ctx, actionRef, args, options): Promise<string>
+//   - @see stubs/agent-action-handler/eventbus-publish-update.ts for interface
+//
+// Step 3: Update ConvexEventBus.publish to branch on handlerType.
+//   - @see stubs/agent-action-handler/eventbus-publish-update.ts for dispatch logic
+//
+// Step 4: Sweep all existing subscriptions to add explicit `handlerType: "mutation"`.
+//   - Affected: projections/*, processManagers/*, sagas/*, infrastructure/*
+//   - This is a mechanical change — no behavior modification.
+//
+// Step 5: Make `handlerType` REQUIRED on the union type.
+//   - Remove the optional treatment from Step 1.
+//   - TypeScript enforces all subscription definitions include handlerType.
+//
+// IMPORTANT: Steps 1-3 can ship in one PR. Steps 4-5 are a follow-up cleanup PR.
+// This phased approach avoids a big-bang migration.
+
 type UnknownRecord = Record<string, unknown>;
 type SubscriptionFilter = unknown;
 type PartitionKey = unknown;

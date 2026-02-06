@@ -277,6 +277,29 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
 }
 
 // ============================================================================
+// EXISTING CODE GAP — onComplete Not Wired in Current Agent Subscription
+// ============================================================================
+//
+// The existing `CreateAgentSubscriptionOptions` in platform-bus/src/agent-subscription.ts
+// does NOT have an `onComplete` field. The current subscription registration at
+// examples/order-management/convex/infrastructure/eventSubscriptions.ts (line ~93-97)
+// never passes onComplete to the agent subscription.
+//
+// This means:
+// 1. The existing mutation-based agent handler (`handleChurnRiskOnComplete` at
+//    examples/order-management/convex/contexts/agent/onComplete.ts) exists but is
+//    never invoked because it's not wired into the subscription.
+// 2. Agent dead letter tracking relies on the EventBus default onComplete handler
+//    (projections/deadLetters.ts) which is projection-specific, not agent-specific.
+//
+// FIX REQUIRED at implementation time:
+// - Add optional `onComplete` field to existing `CreateAgentSubscriptionOptions`
+//   (for mutation subscriptions that want custom dead letter handling)
+// - Wire the agent's onComplete in eventSubscriptions.ts
+// - This stub's `CreateAgentActionSubscriptionOptions` correctly makes `onComplete`
+//   REQUIRED for the new action path (actions cannot persist without it)
+
+// ============================================================================
 // Batch Factory Extension — DEFERRED
 // ============================================================================
 

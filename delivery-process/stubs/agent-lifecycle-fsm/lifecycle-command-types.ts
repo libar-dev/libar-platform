@@ -155,15 +155,24 @@ export type AgentLifecycleResult = AgentLifecycleSuccess | AgentLifecycleFailure
 
 /**
  * Convex validator for config overrides (used in ReconfigureAgent args).
+ *
+ * Field names align with AgentRateLimitConfig in platform-core/src/agent/types.ts:120-148.
+ * @see checkpoint-status-extension.ts — AgentConfigOverrides TypeScript type
  */
 export const configOverridesValidator = v.object({
   confidenceThreshold: v.optional(v.number()),
   patternWindowDuration: v.optional(v.string()),
   rateLimits: v.optional(
     v.object({
-      maxEventsPerMinute: v.optional(v.number()),
-      maxLLMCallsPerHour: v.optional(v.number()),
-      dailyCostBudgetUSD: v.optional(v.number()),
+      maxRequestsPerMinute: v.optional(v.number()),
+      maxConcurrent: v.optional(v.number()),
+      queueDepth: v.optional(v.number()),
+      costBudget: v.optional(
+        v.object({
+          daily: v.optional(v.number()),
+          alertThreshold: v.optional(v.number()),
+        })
+      ),
     })
   ),
 });
@@ -214,18 +223,30 @@ export const reconfigureAgentArgsValidator = v.object({
 /**
  * Convex validator for lifecycle result (for return types).
  */
+/**
+ * L2 fix: Use explicit state literal unions instead of loose v.string().
+ * This ensures Convex validates that state values are actual lifecycle states,
+ * matching the AgentLifecycleState type from lifecycle-fsm.ts.
+ */
+const lifecycleStateValidator = v.union(
+  v.literal("active"),
+  v.literal("paused"),
+  v.literal("stopped"),
+  v.literal("error_recovery")
+);
+
 export const lifecycleResultValidator = v.union(
   v.object({
     success: v.literal(true),
     agentId: v.string(),
-    previousState: v.string(),
-    newState: v.string(),
+    previousState: lifecycleStateValidator,
+    newState: lifecycleStateValidator,
   }),
   v.object({
     success: v.literal(false),
     agentId: v.string(),
-    code: v.string(),
+    code: v.union(v.literal("INVALID_LIFECYCLE_TRANSITION"), v.literal("AGENT_NOT_FOUND")),
     message: v.string(),
-    currentState: v.optional(v.string()),
+    currentState: v.optional(lifecycleStateValidator),
   })
 );
