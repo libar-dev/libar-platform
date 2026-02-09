@@ -58,6 +58,17 @@ reservations when confirmed orders are cancelled.
 - No external event awaits
 - Therefore: **Process Manager** is the correct choice (per ADR-033)
 
+#### Deliverables
+
+- ✅ Order FSM confirmed->cancelled transition (complete)
+- ✅ CancelOrder decider remove confirmed rejection (complete)
+- ✅ ReservationReleaseOnOrderCancel PM (complete)
+- ✅ PM subscription registration (complete)
+- ✅ order-evolve.feature update (complete)
+- ✅ cancel-order.decider.feature update (complete)
+- ✅ cancel-order.feature (behavior) update (complete)
+- ✅ cancel-order.feature (integration) update (complete)
+
 #### Dependencies
 
 - Depends on: SagaOrchestration

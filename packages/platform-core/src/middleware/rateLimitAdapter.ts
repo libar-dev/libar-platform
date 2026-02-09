@@ -6,7 +6,7 @@
  * requiring changes to the middleware pipeline.
  *
  * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
+ * @libar-docs-implements DurableFunctionAdapters
  * @libar-docs-status active
  * @libar-docs-infra
  * @libar-docs-uses RateLimitChecker

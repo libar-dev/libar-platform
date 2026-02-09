@@ -1,3 +1,4 @@
+@libar-docs
 @libar-docs-release:vNEXT
 @process-enhancements
 @epic

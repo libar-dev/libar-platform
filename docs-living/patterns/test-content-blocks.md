@@ -1,17 +1,16 @@
 # 📋 Test Content Blocks
 
-**Purpose:** Detailed requirements for the Test Content Blocks feature
+**Purpose:** Detailed documentation for the Test Content Blocks pattern
 
 ---
 
 ## Overview
 
-| Property       | Value                        |
-| -------------- | ---------------------------- |
-| Status         | planned                      |
-| Product Area   | DeliveryProcess              |
-| Business Value | test what generators capture |
-| Phase          | 100                          |
+| Property | Value   |
+| -------- | ------- |
+| Status   | planned |
+| Category | DDD     |
+| Phase    | 100     |
 
 ## Description
 
@@ -93,11 +92,6 @@ This helps organize complex features into logical business domains.
 
 _Verified by: Simple scenario under second rule, Scenario with examples table_
 
-## Deliverables
-
-- Demo item 1 (pending)
-- Demo item 2 (complete)
-
 ---
 
-[← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)
+[← Back to Pattern Registry](../PATTERNS.md)

@@ -2,7 +2,7 @@
  * ECST Type Definitions
  *
  * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @libar-docs-implements EcstFatEvents
  * @libar-docs-status completed
  * @libar-docs-event-sourcing
  *

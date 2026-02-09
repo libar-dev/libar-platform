@@ -2,7 +2,7 @@
  * Fat Event Builder - Creates ECST (Event-Carried State Transfer) events
  *
  * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @libar-docs-implements EcstFatEvents
  * @libar-docs-status completed
  * @libar-docs-event-sourcing
  *

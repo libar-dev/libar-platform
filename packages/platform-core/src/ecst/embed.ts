@@ -2,7 +2,7 @@
  * Entity Embedding Helpers - Snapshot entity data into fat events
  *
  * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @libar-docs-implements EcstFatEvents
  * @libar-docs-status completed
  * @libar-docs-event-sourcing
  *

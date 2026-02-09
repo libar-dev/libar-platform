@@ -2,7 +2,7 @@
  * ## DCB Retry Helper - Automatic OCC Conflict Retry via Workpool
  *
  * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
+ * @libar-docs-implements DurableFunctionAdapters
  * @libar-docs-status completed
  * @libar-docs-infra
  * @libar-docs-uses DCB, Workpool

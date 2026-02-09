@@ -7,20 +7,30 @@
 
 ## Summary
 
-**Overall:** [████████████░░░░░░░░] 19/32 (59%)
+**Overall:** [███████████░░░░░░░░░] 21/37 (57%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 32    |
-| Completed      | 19    |
-| Active         | 1     |
-| Planned        | 12    |
-| Product Areas  | 2     |
+| Total Features | 37    |
+| Completed      | 21    |
+| Active         | 2     |
+| Planned        | 14    |
+| Product Areas  | 3     |
 | User Roles     | 0     |
 
 ---
 
 ## By Product Area
+
+### DeliveryProcess
+
+2/5 complete (40%)
+
+- [✅ Process Metadata Expansion - enable variance and governance tracking](requirements/phase-100-process-metadata-expansion.md)
+- [✅ Repo Level Docs Generation - enable multi source documentation generation](requirements/phase-100-repo-level-docs-generation.md)
+- [🚧 Process Enhancements - unify process enhancement opportunities](requirements/phase-100-process-enhancements.md)
+- [📋 Codec Driven Reference Generation - eliminate recipe files via codec composition](requirements/phase-100-codec-driven-reference-generation.md)
+- [📋 Test Content Blocks - test what generators capture](requirements/phase-100-test-content-blocks.md)
 
 ### ExampleApp
 
@@ -68,39 +78,44 @@
 
 ## All Features
 
-| Feature                           | Product Area | User Role | Status    |
-| --------------------------------- | ------------ | --------- | --------- |
-| ✅ Agent As Bounded Context       | Platform     | -         | completed |
-| ✅ Bdd Testing Infrastructure     | Platform     | -         | completed |
-| ✅ Bounded Context Foundation     | Platform     | -         | completed |
-| ✅ Command Bus Foundation         | Platform     | -         | completed |
-| ✅ Decider Pattern                | Platform     | -         | completed |
-| ✅ Durable Events Integration     | Platform     | -         | completed |
-| ✅ Durable Function Adapters      | Platform     | -         | completed |
-| ✅ Dynamic Consistency Boundaries | Platform     | -         | completed |
-| ✅ Ecst Fat Events                | Platform     | -         | completed |
-| ✅ Event Replay Infrastructure    | Platform     | -         | completed |
-| ✅ Event Store Durability         | Platform     | -         | completed |
-| ✅ Event Store Foundation         | Platform     | -         | completed |
-| ✅ Example App Modernization      | ExampleApp   | -         | completed |
-| ✅ Package Architecture           | Platform     | -         | completed |
-| ✅ Projection Categories          | Platform     | -         | completed |
-| ✅ Reactive Projections           | Platform     | -         | completed |
-| ✅ Reservation Pattern            | Platform     | -         | completed |
-| ✅ Saga Orchestration             | Platform     | -         | completed |
-| ✅ Workpool Partitioning Strategy | Platform     | -         | completed |
-| 🚧 Confirmed Order Cancellation   | Platform     | -         | active    |
-| 📋 Admin Tooling Consolidation    | Platform     | -         | planned   |
-| 📋 Agent Admin Frontend           | ExampleApp   | -         | planned   |
-| 📋 Agent BC Component Isolation   | Platform     | -         | planned   |
-| 📋 Agent Churn Risk Completion    | ExampleApp   | -         | planned   |
-| 📋 Agent Command Infrastructure   | Platform     | -         | planned   |
-| 📋 Agent LLM Integration          | Platform     | -         | planned   |
-| 📋 Circuit Breaker Pattern        | Platform     | -         | planned   |
-| 📋 Deterministic Id Hashing       | Platform     | -         | planned   |
-| 📋 Health Observability           | Platform     | -         | planned   |
-| 📋 Integration Patterns21a        | Platform     | -         | planned   |
-| 📋 Integration Patterns21b        | Platform     | -         | planned   |
-| 📋 Production Hardening           | Platform     | -         | planned   |
+| Feature                              | Product Area    | User Role | Status    |
+| ------------------------------------ | --------------- | --------- | --------- |
+| ✅ Agent As Bounded Context          | Platform        | -         | completed |
+| ✅ Bdd Testing Infrastructure        | Platform        | -         | completed |
+| ✅ Bounded Context Foundation        | Platform        | -         | completed |
+| ✅ Command Bus Foundation            | Platform        | -         | completed |
+| ✅ Decider Pattern                   | Platform        | -         | completed |
+| ✅ Durable Events Integration        | Platform        | -         | completed |
+| ✅ Durable Function Adapters         | Platform        | -         | completed |
+| ✅ Dynamic Consistency Boundaries    | Platform        | -         | completed |
+| ✅ Ecst Fat Events                   | Platform        | -         | completed |
+| ✅ Event Replay Infrastructure       | Platform        | -         | completed |
+| ✅ Event Store Durability            | Platform        | -         | completed |
+| ✅ Event Store Foundation            | Platform        | -         | completed |
+| ✅ Example App Modernization         | ExampleApp      | -         | completed |
+| ✅ Package Architecture              | Platform        | -         | completed |
+| ✅ Process Metadata Expansion        | DeliveryProcess | -         | completed |
+| ✅ Projection Categories             | Platform        | -         | completed |
+| ✅ Reactive Projections              | Platform        | -         | completed |
+| ✅ Repo Level Docs Generation        | DeliveryProcess | -         | completed |
+| ✅ Reservation Pattern               | Platform        | -         | completed |
+| ✅ Saga Orchestration                | Platform        | -         | completed |
+| ✅ Workpool Partitioning Strategy    | Platform        | -         | completed |
+| 🚧 Confirmed Order Cancellation      | Platform        | -         | active    |
+| 🚧 Process Enhancements              | DeliveryProcess | -         | active    |
+| 📋 Admin Tooling Consolidation       | Platform        | -         | planned   |
+| 📋 Agent Admin Frontend              | ExampleApp      | -         | planned   |
+| 📋 Agent BC Component Isolation      | Platform        | -         | planned   |
+| 📋 Agent Churn Risk Completion       | ExampleApp      | -         | planned   |
+| 📋 Agent Command Infrastructure      | Platform        | -         | planned   |
+| 📋 Agent LLM Integration             | Platform        | -         | planned   |
+| 📋 Circuit Breaker Pattern           | Platform        | -         | planned   |
+| 📋 Codec Driven Reference Generation | DeliveryProcess | -         | planned   |
+| 📋 Deterministic Id Hashing          | Platform        | -         | planned   |
+| 📋 Health Observability              | Platform        | -         | planned   |
+| 📋 Integration Patterns21a           | Platform        | -         | planned   |
+| 📋 Integration Patterns21b           | Platform        | -         | planned   |
+| 📋 Production Hardening              | Platform        | -         | planned   |
+| 📋 Test Content Blocks               | DeliveryProcess | -         | planned   |
 
 ---

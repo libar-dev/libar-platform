@@ -1,3 +1,4 @@
+@libar-docs
 @libar-docs-adr:004
 @libar-docs-adr-status:accepted
 @libar-docs-adr-category:process

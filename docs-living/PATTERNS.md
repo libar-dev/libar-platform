@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [████████████████░░░░] 55/69 (80% complete)
+**Overall:** [███████████████░░░░░] 57/75 (76% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 55    |
-| 🚧 Active    | 2     |
-| 📋 Planned   | 12    |
-| **Total**    | 69    |
+| ✅ Completed | 57    |
+| 🚧 Active    | 3     |
+| 📋 Planned   | 15    |
+| **Total**    | 75    |
 
 ---
 
@@ -25,12 +25,14 @@
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (2)
 - [CQRS](#cqrs) (1)
-- [DDD](#ddd) (32)
+- [DDD](#ddd) (33)
 - [Decider](#decider) (1)
 - [Event Sourcing](#event-sourcing) (12)
 - [Implements](#implements) (2)
 - [Infra](#infra) (1)
+- [Opportunity 1](#opportunity-1) (1)
 - [Pattern](#pattern) (3)
+- [Process Enhancements](#process-enhancements) (4)
 - [Projection](#projection) (6)
 
 ---
@@ -82,12 +84,14 @@
 | ✅ Poison Event Handling                                 | Event Sourcing                    | completed | Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...   |
 | ✅ Process Manager                                       | DDD                               | completed | Process Manager module for event-reactive coordination.                                                                  |
 | ✅ Process Manager Lifecycle                             | Pattern                           | completed | FSM for managing PM state transitions (idle/processing/completed/failed) with validation.                                |
+| ✅ Process Metadata Expansion                            | Process Enhancements              | completed | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.          |
 | ✅ Progress calculation utilities for replay operations. | Implements                        | completed | Progress calculation utilities for replay operations.                                                                    |
 | ✅ Projection Complexity Classifier                      | Projection                        | completed | Analyzes projection characteristics and recommends appropriate partition strategies using a decision tree approach.      |
 | ✅ Projection Categories                                 | DDD                               | completed | Problem: Projections exist but categories are implicit.                                                                  |
 | ✅ Projection Checkpointing                              | Projection                        | completed | Projection checkpoint helper for idempotent event processing.                                                            |
 | ✅ Query Abstraction                                     | CQRS                              | completed | Query factory functions for creating type-safe read model queries.                                                       |
 | ✅ Reactive Projections                                  | DDD                               | completed | Problem: Workpool-based projections have 100-500ms latency.                                                              |
+| ✅ Repo Level Docs Generation                            | Process Enhancements              | completed | As a monorepo maintainer, I want unified documentation generation from multiple sources.                                 |
 | ✅ Reservation Pattern                                   | DDD                               | completed | Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...   |
 | ✅ Saga Orchestration                                    | Completed Before Delivery Process | completed | Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...    |
 | ✅ Types for event replay and projection rebuilding.     | Implements                        | completed | Types for event replay and projection rebuilding.                                                                        |
@@ -96,6 +100,7 @@
 | ✅ Workpool Partitioning Strategy                        | DDD                               | completed | Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event... |
 | 🚧 Command Config Partition Key Validation               | Command                           | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
+| 🚧 Process Enhancements                                  | Process Enhancements              | active    | Vision: Transform the delivery process from a documentation tool into a delivery operating system.                       |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
 | 📋 Agent Admin Frontend                                  | DDD                               | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                          |
 | 📋 Agent BC Component Isolation                          | DDD                               | planned   | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...                |
@@ -103,11 +108,14 @@
 | 📋 Agent Command Infrastructure                          | DDD                               | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                   |
 | 📋 Agent LLM Integration                                 | DDD                               | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.           |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
+| 📋 Codec Driven Reference Generation                     | Process Enhancements              | planned   | Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.                      |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
 | 📋 Health Observability                                  | DDD                               | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
 | 📋 Integration Patterns21a                               | DDD                               | planned   | Problem: Cross-context communication is ad-hoc.                                                                          |
 | 📋 Integration Patterns21b                               | DDD                               | planned   | Problem: Schema evolution breaks consumers.                                                                              |
 | 📋 Production Hardening                                  | DDD                               | planned   | Problem: Structured logging (Phase 13) exists but no metrics collection, distributed tracing, or admin tooling for...    |
+| 📋 Test Content Blocks                                   | DDD                               | planned   | This feature demonstrates what content blocks are captured and rendered by the PRD generator.                            |
+| 📋 Themed Decision Architecture                          | Opportunity 1                     | planned   | Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.                                           |
 
 ---
 
@@ -160,7 +168,7 @@
 
 ### DDD
 
-19/32 complete (59%)
+19/33 complete (58%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
@@ -194,6 +202,7 @@
 - [📋 Integration Patterns21a](patterns/integration-patterns-21a.md)
 - [📋 Integration Patterns21b](patterns/integration-patterns-21b.md)
 - [📋 Production Hardening](patterns/production-hardening.md)
+- [📋 Test Content Blocks](patterns/test-content-blocks.md)
 
 ---
 
@@ -241,6 +250,14 @@
 
 ---
 
+### Opportunity 1
+
+0/1 complete (0%)
+
+- [📋 Themed Decision Architecture](patterns/themed-decision-architecture.md)
+
+---
+
 ### Pattern
 
 3/3 complete (100%)
@@ -248,6 +265,17 @@
 - [✅ CMS Repository](patterns/cms-repository.md)
 - [✅ Correlation Chain System](patterns/correlation-chain-system.md)
 - [✅ Process Manager Lifecycle](patterns/process-manager-lifecycle.md)
+
+---
+
+### Process Enhancements
+
+2/4 complete (50%)
+
+- [✅ Process Metadata Expansion](patterns/process-metadata-expansion.md)
+- [✅ Repo Level Docs Generation](patterns/repo-level-docs-generation.md)
+- [🚧 Process Enhancements](patterns/process-enhancements.md)
+- [📋 Codec Driven Reference Generation](patterns/codec-driven-reference-generation.md)
 
 ---
 
@@ -273,16 +301,16 @@ graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
     ProjectionCheckpointing --> EventStoreFoundation
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
-    MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
+    MiddlewarePipeline --> CommandBusFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
     Event_Store_Durability_Types --> Workpool
@@ -323,6 +351,8 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
+    RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
+    CodecDrivenReferenceGeneration -.-> ThemedDecisionArchitecture
     ExampleAppModernization -.-> DynamicConsistencyBoundaries
     ExampleAppModernization -.-> ReactiveProjections
     ExampleAppModernization -.-> EcstFatEvents

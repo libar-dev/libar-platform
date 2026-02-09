@@ -2,7 +2,6 @@
  * Admin mutations for projection replay and rebuilding.
  *
  * @libar-docs
- * @libar-docs-pattern EventReplayInfrastructure
  * @libar-docs-implements EventReplayInfrastructure
  * @libar-docs-status active
  * @libar-docs-event-sourcing

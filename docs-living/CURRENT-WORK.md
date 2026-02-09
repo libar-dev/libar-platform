@@ -7,15 +7,15 @@
 
 ## Summary
 
-**Overall Progress:** [████████████████░░░░] 55/69 (80%)
+**Overall Progress:** [███████████████░░░░░] 57/75 (76%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 69    |
-| Completed      | 55    |
-| Active         | 2     |
-| Planned        | 12    |
-| Active Phases  | 1     |
+| Total Patterns | 75    |
+| Completed      | 57    |
+| Active         | 3     |
+| Planned        | 15    |
+| Active Phases  | 2     |
 
 ---
 
@@ -44,11 +44,24 @@
 
 ---
 
+### 🚧 ThemedDecisionArchitecture
+
+[█████░░░░░░░░░░] 2/6 33% complete (2 done, 1 active, 3 planned)
+
+| Pattern                 | Description                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| 🚧 Process Enhancements | Vision: Transform the delivery process from a documentation tool into a delivery operating system. |
+
+[View ThemedDecisionArchitecture details →](current/phase-100-themed-decision-architecture.md)
+
+---
+
 ## All Active Patterns
 
-| Pattern                                    | Phase    | Effort | Description                                                                                            |
-| ------------------------------------------ | -------- | ------ | ------------------------------------------------------------------------------------------------------ |
-| 🚧 Confirmed Order Cancellation            | Phase 22 | 2d     | Problem: The Order FSM treats `confirmed` as terminal.                                                 |
-| 🚧 Command Config Partition Key Validation | -        | -      | Validates that all projection configurations in a command config have explicit partition keys defined. |
+| Pattern                                    | Phase     | Effort | Description                                                                                            |
+| ------------------------------------------ | --------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| 🚧 Confirmed Order Cancellation            | Phase 22  | 2d     | Problem: The Order FSM treats `confirmed` as terminal.                                                 |
+| 🚧 Process Enhancements                    | Phase 100 | 4w     | Vision: Transform the delivery process from a documentation tool into a delivery operating system.     |
+| 🚧 Command Config Partition Key Validation | -         | -      | Validates that all projection configurations in a command config have explicit partition keys defined. |
 
 ---

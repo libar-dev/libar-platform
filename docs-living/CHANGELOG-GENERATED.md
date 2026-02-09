@@ -16,7 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Command Config Partition Key Validation**: Validates that all projection configurations in a command config have explicit partition keys defined.
 - **Release V 020**: Converts the aggregate-less pivot roadmap into executable specs for Phases 14-22.
+- **Process Enhancements**: Vision: Transform the delivery process from a documentation tool into a delivery operating system.
 - **Confirmed Order Cancellation**: Problem: The Order FSM treats `confirmed` as terminal.
+- **Themed Decision Architecture**: Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.
+- **Test Content Blocks**: This feature demonstrates what content blocks are captured and rendered by the PRD generator.
+- **Repo Level Docs Generation**: As a monorepo maintainer, I want unified documentation generation from multiple sources.
+- **Process Metadata Expansion**: The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
+- **Codec Driven Reference Generation**: Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.
 
 ---
 
@@ -25,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Release V 030**: Completes the migration from JSON to TypeScript as the source of truth for the delivery process taxonomy.
+- **PDR 006 TypeScript Taxonomy**
 
 ---
 
@@ -58,6 +65,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.1.0]
+
+### Added
+
+- **Unified Tag Prefix Architecture**
+- **PDR 003 Behavior Feature File Structure**
+- **Release Management Architecture**
+- **PDR 001 Process Decisions Folder**
+
+---
+
 ## [Earlier]
 
 ### Added
@@ -70,11 +88,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Process Manager**: Process Manager module for event-reactive coordination.
 - **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
+- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
-- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
-- **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
+- **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
 - **Durable Cross-Context Event Publication**: Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.
 - **Poison Event Handling**: Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...
@@ -83,13 +101,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Event Store Durability**: Guaranteed event persistence patterns for Convex-native event sourcing.
 - **Idempotent Event Append**: Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...
 - **Durable Append via Workpool Actions**: Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...
-- **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
-- **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
 - **DCB Types**: Types for scope-based multi-entity coordination within bounded contexts.
 - **DCB Scope Key Utilities**: Functions for creating, parsing, and validating scope keys.
-- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
+- **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
+- **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
 - **Bounded Context Identity**: BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...
 - **Dual Write Contract**: BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...
+- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Workpool Partition Key Types**: Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.
 - **Workpool Partitioning Strategy**: Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.
 - **Partition Key Helper Functions**: Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.

@@ -1,7 +1,7 @@
 /**
  * @libar-docs
  * @libar-docs-ddd @libar-docs-core
- * @libar-docs-pattern AgentAsBoundedContext
+ * @libar-docs-implements AgentAsBoundedContext
  * @libar-docs-status active
  * @libar-docs-phase 22
  * @libar-docs-depends-on IntegrationPatterns,ReactiveProjections

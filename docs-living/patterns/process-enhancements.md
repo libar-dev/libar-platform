@@ -1,31 +1,19 @@
-# ThemedDecisionArchitecture
+# 🚧 Process Enhancements
 
-**Purpose:** Active work details for ThemedDecisionArchitecture
-
----
-
-## Progress
-
-**Progress:** [███████░░░░░░░░░░░░░] 2/6 (33%)
-
-| Status       | Count |
-| ------------ | ----- |
-| ✅ Completed | 2     |
-| 🚧 Active    | 1     |
-| 📋 Planned   | 3     |
-| **Total**    | 6     |
+**Purpose:** Detailed documentation for the Process Enhancements pattern
 
 ---
 
-## 🚧 Active Work
+## Overview
 
-### 🚧 Process Enhancements
+| Property | Value                |
+| -------- | -------------------- |
+| Status   | active               |
+| Category | Process Enhancements |
+| Phase    | 100                  |
+| Quarter  | Q1-2026              |
 
-| Property       | Value                                   |
-| -------------- | --------------------------------------- |
-| Effort         | 4w                                      |
-| Quarter        | Q1-2026                                 |
-| Business Value | unify process enhancement opportunities |
+## Description
 
 **Vision:** Transform the delivery process from a documentation tool into a delivery operating system.
 
@@ -54,7 +42,7 @@ affecting release association.
 
 See: deps/libar-dev-packages/packages/tooling/delivery-process/docs/ideation-convergence/
 
-#### Acceptance Criteria
+## Acceptance Criteria
 
 **Specs can evolve independently of phases**
 
@@ -72,26 +60,4 @@ See: deps/libar-dev-packages/packages/tooling/delivery-process/docs/ideation-con
 
 ---
 
-## ✅ Recently Completed
-
-| Pattern                       | Description                                                                                                     |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| ✅ Process Metadata Expansion | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
-| ✅ Repo Level Docs Generation | As a monorepo maintainer, I want unified documentation generation from multiple sources.                        |
-
----
-
-<details>
-<summary>📋 Upcoming (3)</summary>
-
-| Pattern                              | Effort |
-| ------------------------------------ | ------ |
-| 📋 Codec Driven Reference Generation | -      |
-| 📋 Test Content Blocks               | -      |
-| 📋 Themed Decision Architecture      | -      |
-
-</details>
-
----
-
-[← Back to Current Work](../CURRENT-WORK.md)
+[← Back to Pattern Registry](../PATTERNS.md)

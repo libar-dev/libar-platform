@@ -1,3 +1,4 @@
+@libar-docs
 @libar-docs-adr:002
 @libar-docs-adr-status:accepted
 @libar-docs-adr-category:process
@@ -11,13 +12,13 @@ Feature: PDR-002 - Release Management Architecture
   Background: Implementation Details
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | Add release tag to tag-registry.json | Done | No | delivery-process/tag-registry.json |
-      | Update gherkin-ast-parser.ts for @release: | Done | Yes | packages/.../scanner/gherkin-ast-parser.ts |
-      | Add release to ExtractedPatternSchema | Done | No | packages/.../validation-schemas/extracted-pattern.ts |
-      | Create releases folder structure | Done | No | delivery-process/releases/ |
-      | Create v0.1.0.feature | Done | No | delivery-process/releases/v0.1.0.feature |
-      | Create vNEXT.feature | Done | No | delivery-process/releases/vNEXT.feature |
-      | Tag PDRs 001-004 with release | Done | No | delivery-process/decisions/ |
+      | Add release tag to tag-registry.json | complete | No | delivery-process/tag-registry.json |
+      | Update gherkin-ast-parser.ts for @release: | complete | Yes | packages/.../scanner/gherkin-ast-parser.ts |
+      | Add release to ExtractedPatternSchema | complete | No | packages/.../validation-schemas/extracted-pattern.ts |
+      | Create releases folder structure | complete | No | delivery-process/releases/ |
+      | Create v0.1.0.feature | complete | No | delivery-process/releases/v0.1.0.feature |
+      | Create vNEXT.feature | complete | No | delivery-process/releases/vNEXT.feature |
+      | Tag PDRs 001-004 with release | complete | No | delivery-process/decisions/ |
 
   Rule: Context - Previous release management approaches created friction
 

@@ -8,7 +8,7 @@
  * - Enables atomic cross-entity invariant validation via executeWithDCB
  *
  * @libar-docs
- * @libar-docs-pattern ExampleAppModernization
+ * @libar-docs-implements ExampleAppModernization
  * @libar-docs-status roadmap
  * @libar-docs-uses DynamicConsistencyBoundaries, ReservationPattern
  *

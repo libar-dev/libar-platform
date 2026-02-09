@@ -1,3 +1,4 @@
+@libar-docs
 @libar-docs-release:vNEXT
 @libar-docs-pattern:ThemedDecisionArchitecture
 @libar-docs-status:roadmap

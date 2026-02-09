@@ -56,7 +56,7 @@
  * ```
  *
  * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @libar-docs-implements EcstFatEvents
  */
 
 // Type exports

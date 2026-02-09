@@ -2,7 +2,7 @@
  * Crypto-Shredding Markers - GDPR compliance for fat events
  *
  * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @libar-docs-implements EcstFatEvents
  * @libar-docs-status completed
  * @libar-docs-event-sourcing
  *

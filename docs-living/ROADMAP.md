@@ -7,16 +7,16 @@
 
 ## Overall Progress
 
-**Patterns:** [████████████████░░░░] 55/69 (80%)
+**Patterns:** [███████████████░░░░░] 57/75 (76%)
 
-**Phases:** 16/20 complete
+**Phases:** 16/21 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 69    |
-| Completed      | 55    |
-| Active         | 2     |
-| Planned        | 12    |
+| Total Patterns | 75    |
+| Completed      | 57    |
+| Active         | 3     |
+| Planned        | 15    |
 
 ---
 
@@ -29,7 +29,7 @@
 | ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                 | 1/1      | 100%     |
 | ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)            | 1/1      | 100%     |
 | ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                        | 1/1      | 100%     |
-| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                   | 3/3      | 100%     |
+| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                              | 3/3      | 100%     |
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                      | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                          | 1/1      | 100%     |
@@ -44,6 +44,7 @@
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
 | 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 1/7      | 14%      |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
+| 🚧 [ThemedDecisionArchitecture](phases/phase-100-themed-decision-architecture.md)    | 2/6      | 33%      |
 
 ---
 
@@ -100,7 +101,7 @@
 
 ---
 
-### ✅ EventBusAbstraction
+### ✅ EventUpcasting
 
 [███████████████] 3/3 100% complete
 
@@ -276,10 +277,25 @@
 
 ---
 
+### 🚧 ThemedDecisionArchitecture
+
+[█████░░░░░░░░░░] 2/6 33% complete
+
+| Pattern                              | Status    | Description                                                                                                     |
+| ------------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------- |
+| 📋 Codec Driven Reference Generation | planned   | Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.             |
+| 🚧 Process Enhancements              | active    | Vision: Transform the delivery process from a documentation tool into a delivery operating system.              |
+| ✅ Process Metadata Expansion        | completed | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
+| ✅ Repo Level Docs Generation        | completed | As a monorepo maintainer, I want unified documentation generation from multiple sources.                        |
+| 📋 Test Content Blocks               | planned   | This feature demonstrates what content blocks are captured and rendered by the PRD generator.                   |
+| 📋 Themed Decision Architecture      | planned   | Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.                                  |
+
+---
+
 ## Quarterly Timeline
 
 | Quarter           | Total | Completed |
 | ----------------- | ----- | --------- |
-| Q1-2026 ← Current | 1     | 1         |
+| Q1-2026 ← Current | 5     | 3         |
 
 ---

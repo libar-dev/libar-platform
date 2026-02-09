@@ -1,3 +1,4 @@
+@libar-docs
 @libar-docs-release:vNEXT
 @libar-docs-pattern:TestContentBlocks
 @libar-docs-status:roadmap

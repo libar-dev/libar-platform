@@ -1,17 +1,17 @@
 # ✅ Process Metadata Expansion
 
-**Purpose:** Detailed requirements for the Process Metadata Expansion feature
+**Purpose:** Detailed documentation for the Process Metadata Expansion pattern
 
 ---
 
 ## Overview
 
-| Property       | Value                                   |
-| -------------- | --------------------------------------- |
-| Status         | completed                               |
-| Product Area   | DeliveryProcess                         |
-| Business Value | enable variance and governance tracking |
-| Phase          | 100                                     |
+| Property | Value                |
+| -------- | -------------------- |
+| Status   | completed            |
+| Category | Process Enhancements |
+| Phase    | 100                  |
+| Quarter  | Q1-2026              |
 
 ## Description
 
@@ -64,16 +64,6 @@ This work is foundation for Setup A (Framework Roadmap OS) from convergence docs
 - Then patterns can be filtered by risk, priority, workflow
 - And hierarchy relationships are rendered
 
-## Deliverables
-
-- Risk tag in registry (complete)
-- Effort-actual tag in registry (complete)
-- Workflow tag in registry (complete)
-- Priority tag in registry (complete)
-- Level tag in registry (complete)
-- Parent tag in registry (complete)
-- PDR-003 tag conventions update (complete)
-
 ---
 
-[← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)
+[← Back to Pattern Registry](../PATTERNS.md)

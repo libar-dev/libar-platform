@@ -9,9 +9,9 @@
 
 | Metric             | Value |
 | ------------------ | ----- |
-| Completed Patterns | 55    |
+| Completed Patterns | 57    |
 | Completed Phases   | 16    |
-| Total Phases       | 20    |
+| Total Phases       | 21    |
 
 ---
 
@@ -19,7 +19,7 @@
 
 | Quarter                          | Completed |
 | -------------------------------- | --------- |
-| [Q1-2026](milestones/Q1-2026.md) | 1         |
+| [Q1-2026](milestones/Q1-2026.md) | 3         |
 
 ---
 
@@ -183,7 +183,6 @@
 
 ## Recent Completions
 
-- ✅ Example App Modernization (Phase 23)
 - ✅ Agent As Bounded Context (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
@@ -193,7 +192,8 @@
 - ✅ Durable Function Adapters (Phase 18)
 - ✅ Dynamic Consistency Boundaries (Phase 16)
 - ✅ Ecst Fat Events (Phase 20)
+- ✅ Event Replay Infrastructure (Phase 18)
 
-Showing 10 of 55 completed patterns. See quarterly files for full history.
+Showing 10 of 57 completed patterns. See quarterly files for full history.
 
 ---
