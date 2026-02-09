@@ -21,7 +21,7 @@
  * Since: DS (design session)
  */
 
-import type { MasterDataset } from '../../generators/pipeline/types.js';
+import type { MasterDataset } from "../../generators/pipeline/types.js";
 
 // ============================================================================
 // Convention Content Types
@@ -100,7 +100,7 @@ export interface ConventionBundle {
  */
 export function extractConventions(
   _dataset: MasterDataset,
-  _conventionTags: readonly string[],
+  _conventionTags: readonly string[]
 ): ConventionBundle[] {
   // 1. Filter dataset.patterns for decision records (source === 'gherkin', has @adr tag)
   // 2. Filter by @libar-docs-convention tag matching requested values
@@ -108,7 +108,5 @@ export function extractConventions(
   // 4. Parse structured elements (Invariant, Rationale, Verified-by, tables)
   // 5. Group by convention tag value
 
-  throw new Error(
-    'ConventionExtractor not yet implemented - roadmap pattern',
-  );
+  throw new Error("ConventionExtractor not yet implemented - roadmap pattern");
 }

@@ -82,17 +82,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Handler Factories**: The Decider pattern separates pure business logic from infrastructure concerns, enabling unit testing without...
 - **Event Store**: Central event storage component for Event Sourcing.
+- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **CMS Repository**: Factory for typed data access with automatic schema upcasting in dual-write handlers.
 - **Query Abstraction**: Query factory functions for creating type-safe read model queries.
+- **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Process Manager Lifecycle**: FSM for managing PM state transitions (idle/processing/completed/failed) with validation.
 - **Process Manager**: Process Manager module for event-reactive coordination.
-- **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
-- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
+- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
-- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
 - **Event Upcasting**: Transforms events from older schema versions to current version at read time.
+- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
 - **Durable Cross-Context Event Publication**: Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.
 - **Poison Event Handling**: Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...
@@ -101,13 +102,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Event Store Durability**: Guaranteed event persistence patterns for Convex-native event sourcing.
 - **Idempotent Event Append**: Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...
 - **Durable Append via Workpool Actions**: Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...
+- **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
 - **DCB Types**: Types for scope-based multi-entity coordination within bounded contexts.
 - **DCB Scope Key Utilities**: Functions for creating, parsing, and validating scope keys.
-- **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
 - **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
 - **Bounded Context Identity**: BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...
 - **Dual Write Contract**: BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...
-- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Workpool Partition Key Types**: Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.
 - **Workpool Partitioning Strategy**: Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.
 - **Partition Key Helper Functions**: Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.

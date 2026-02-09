@@ -299,18 +299,18 @@ Pattern relationships and dependencies:
 ```mermaid
 graph TD
     HandlerFactories --> DeciderPattern
-    CMSRepository --> CMSDualWrite
-    ProjectionCheckpointing --> EventStoreFoundation
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
+    ProjectionCheckpointing --> EventStoreFoundation
+    CMSRepository --> CMSDualWrite
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    InvariantFramework --> BoundedContextFoundation
     MiddlewarePipeline --> CommandBusFoundation
+    InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
     Event_Store_Durability_Types --> Workpool

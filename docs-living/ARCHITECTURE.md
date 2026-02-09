@@ -61,12 +61,12 @@ graph TB
         SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
         ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
         ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
-        DurableAppendAction["DurableAppendAction[infrastructure]"]
-        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
+        DurableAppendAction["DurableAppendAction[infrastructure]"]
+        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
@@ -90,13 +90,13 @@ graph TB
     CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
     InventoryCommandHandlers --> InventoryDeciders
     ChurnRiskEventHandler --> CustomerCancellationsProjection

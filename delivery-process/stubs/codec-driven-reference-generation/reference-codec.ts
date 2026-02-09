@@ -22,14 +22,14 @@
  * Since: DS (design session)
  */
 
-import { z } from 'zod/v4';
-import type { MasterDataset } from '../../generators/pipeline/types.js';
-import type { RenderableDocument } from '../types.js';
-import type { BaseCodecOptions, DetailLevel } from './types/base.js';
-import { MasterDatasetSchema } from '../../validation-schemas/master-dataset.js';
-import { RenderableDocumentOutputSchema } from './shared-schema.js';
-import { mergeOptions } from './types/base.js';
-import { extractConventions } from './convention-extractor.js';
+import { z } from "zod/v4";
+import type { MasterDataset } from "../../generators/pipeline/types.js";
+import type { RenderableDocument } from "../types.js";
+import type { BaseCodecOptions, DetailLevel } from "./types/base.js";
+import { MasterDatasetSchema } from "../../validation-schemas/master-dataset.js";
+import { RenderableDocumentOutputSchema } from "./shared-schema.js";
+import { mergeOptions } from "./types/base.js";
+import { extractConventions } from "./convention-extractor.js";
 
 // ============================================================================
 // Configuration Types
@@ -89,7 +89,7 @@ export interface ReferenceCodecOptions extends BaseCodecOptions {
 }
 
 const DEFAULT_REFERENCE_OPTIONS: ReferenceCodecOptions = {
-  detailLevel: 'standard',
+  detailLevel: "standard",
   generateDetailFiles: false,
 };
 
@@ -108,19 +108,13 @@ const DEFAULT_REFERENCE_OPTIONS: ReferenceCodecOptions = {
  * @param config - Reference document configuration (replaces recipe file)
  * @param options - Codec options including DetailLevel
  */
-export function createReferenceCodec(
-  config: ReferenceDocConfig,
-  options?: ReferenceCodecOptions,
-) {
+export function createReferenceCodec(config: ReferenceDocConfig, options?: ReferenceCodecOptions) {
   const _opts = mergeOptions(DEFAULT_REFERENCE_OPTIONS, options);
 
   return z.codec(MasterDatasetSchema, RenderableDocumentOutputSchema, {
     decode: (_dataset: MasterDataset): RenderableDocument => {
       // 1. Extract convention content from tagged decision records
-      const _conventions = extractConventions(
-        _dataset,
-        config.conventionTags,
-      );
+      const _conventions = extractConventions(_dataset, config.conventionTags);
 
       // 2. Filter shape extractions by source patterns
       // Uses dataset.extractedShapes filtered by config.shapeSources globs
@@ -133,12 +127,10 @@ export function createReferenceCodec(
       // standard: tables + descriptions + code examples
       // detailed: everything including full JSDoc
 
-      throw new Error(
-        'CodecDrivenReferenceGeneration not yet implemented - roadmap pattern',
-      );
+      throw new Error("CodecDrivenReferenceGeneration not yet implemented - roadmap pattern");
     },
     encode: (): never => {
-      throw new Error('ReferenceDocumentCodec is decode-only');
+      throw new Error("ReferenceDocumentCodec is decode-only");
     },
   });
 }

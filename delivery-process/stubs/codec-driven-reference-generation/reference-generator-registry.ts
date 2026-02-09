@@ -22,7 +22,7 @@
  * Since: DS (design session)
  */
 
-import type { ReferenceDocConfig } from './reference-codec.js';
+import type { ReferenceDocConfig } from "./reference-codec.js";
 
 // ============================================================================
 // Reference Document Configurations
@@ -37,103 +37,103 @@ import type { ReferenceDocConfig } from './reference-codec.js';
  */
 export const REFERENCE_CONFIGS: readonly ReferenceDocConfig[] = [
   {
-    title: 'Process Guard Reference',
-    conventionTags: ['fsm-rules'],
-    shapeSources: ['src/lint/*.ts', 'src/validation/*.ts'],
-    behaviorTags: ['process-guard'],
-    claudeMdSection: 'validation',
-    docsFilename: 'PROCESS-GUARD-REFERENCE.md',
-    claudeMdFilename: 'process-guard.md',
+    title: "Process Guard Reference",
+    conventionTags: ["fsm-rules"],
+    shapeSources: ["src/lint/*.ts", "src/validation/*.ts"],
+    behaviorTags: ["process-guard"],
+    claudeMdSection: "validation",
+    docsFilename: "PROCESS-GUARD-REFERENCE.md",
+    claudeMdFilename: "process-guard.md",
   },
   {
-    title: 'Session Guides Reference',
-    conventionTags: ['session-workflow', 'fsm-rules'],
+    title: "Session Guides Reference",
+    conventionTags: ["session-workflow", "fsm-rules"],
     shapeSources: [],
-    behaviorTags: ['session-guides'],
-    claudeMdSection: 'sessions',
-    docsFilename: 'SESSION-GUIDES-REFERENCE.md',
-    claudeMdFilename: 'session-guides.md',
+    behaviorTags: ["session-guides"],
+    claudeMdSection: "sessions",
+    docsFilename: "SESSION-GUIDES-REFERENCE.md",
+    claudeMdFilename: "session-guides.md",
   },
   {
-    title: 'Architecture Reference',
-    conventionTags: ['pipeline-architecture', 'output-format'],
-    shapeSources: ['src/generators/types.ts', 'src/generators/pipeline/*.ts'],
-    behaviorTags: ['architecture'],
-    claudeMdSection: 'architecture',
-    docsFilename: 'ARCHITECTURE-REFERENCE.md',
-    claudeMdFilename: 'architecture.md',
+    title: "Architecture Reference",
+    conventionTags: ["pipeline-architecture", "output-format"],
+    shapeSources: ["src/generators/types.ts", "src/generators/pipeline/*.ts"],
+    behaviorTags: ["architecture"],
+    claudeMdSection: "architecture",
+    docsFilename: "ARCHITECTURE-REFERENCE.md",
+    claudeMdFilename: "architecture.md",
   },
   {
-    title: 'Configuration Reference',
-    conventionTags: ['config-presets'],
-    shapeSources: ['src/config/*.ts'],
-    behaviorTags: ['configuration'],
-    claudeMdSection: 'config',
-    docsFilename: 'CONFIGURATION-REFERENCE.md',
-    claudeMdFilename: 'configuration.md',
+    title: "Configuration Reference",
+    conventionTags: ["config-presets"],
+    shapeSources: ["src/config/*.ts"],
+    behaviorTags: ["configuration"],
+    claudeMdSection: "config",
+    docsFilename: "CONFIGURATION-REFERENCE.md",
+    claudeMdFilename: "configuration.md",
   },
   {
-    title: 'Instructions Reference',
-    conventionTags: ['annotation-system', 'pattern-naming'],
-    shapeSources: ['src/taxonomy/*.ts', 'src/cli/*.ts'],
-    behaviorTags: ['instructions'],
-    claudeMdSection: 'reference',
-    docsFilename: 'INSTRUCTIONS-REFERENCE.md',
-    claudeMdFilename: 'instructions.md',
+    title: "Instructions Reference",
+    conventionTags: ["annotation-system", "pattern-naming"],
+    shapeSources: ["src/taxonomy/*.ts", "src/cli/*.ts"],
+    behaviorTags: ["instructions"],
+    claudeMdSection: "reference",
+    docsFilename: "INSTRUCTIONS-REFERENCE.md",
+    claudeMdFilename: "instructions.md",
   },
   {
-    title: 'Methodology Reference',
-    conventionTags: ['session-workflow', 'annotation-system'],
+    title: "Methodology Reference",
+    conventionTags: ["session-workflow", "annotation-system"],
     shapeSources: [],
-    behaviorTags: ['methodology'],
-    claudeMdSection: 'methodology',
-    docsFilename: 'METHODOLOGY-REFERENCE.md',
-    claudeMdFilename: 'methodology.md',
+    behaviorTags: ["methodology"],
+    claudeMdSection: "methodology",
+    docsFilename: "METHODOLOGY-REFERENCE.md",
+    claudeMdFilename: "methodology.md",
   },
   {
-    title: 'Gherkin Patterns Reference',
-    conventionTags: ['testing-policy'],
+    title: "Gherkin Patterns Reference",
+    conventionTags: ["testing-policy"],
     shapeSources: [],
-    behaviorTags: ['gherkin-patterns'],
-    claudeMdSection: 'gherkin',
-    docsFilename: 'GHERKIN-PATTERNS-REFERENCE.md',
-    claudeMdFilename: 'gherkin-patterns.md',
+    behaviorTags: ["gherkin-patterns"],
+    claudeMdSection: "gherkin",
+    docsFilename: "GHERKIN-PATTERNS-REFERENCE.md",
+    claudeMdFilename: "gherkin-patterns.md",
   },
   {
-    title: 'Taxonomy Reference',
-    conventionTags: ['annotation-system'],
-    shapeSources: ['src/taxonomy/*.ts'],
-    behaviorTags: ['taxonomy'],
-    claudeMdSection: 'taxonomy',
-    docsFilename: 'TAXONOMY-REFERENCE.md',
-    claudeMdFilename: 'taxonomy.md',
+    title: "Taxonomy Reference",
+    conventionTags: ["annotation-system"],
+    shapeSources: ["src/taxonomy/*.ts"],
+    behaviorTags: ["taxonomy"],
+    claudeMdSection: "taxonomy",
+    docsFilename: "TAXONOMY-REFERENCE.md",
+    claudeMdFilename: "taxonomy.md",
   },
   {
-    title: 'Validation Reference',
-    conventionTags: ['fsm-rules', 'testing-policy'],
-    shapeSources: ['src/validation/*.ts'],
-    behaviorTags: ['validation'],
-    claudeMdSection: 'validation',
-    docsFilename: 'VALIDATION-REFERENCE.md',
-    claudeMdFilename: 'validation.md',
+    title: "Validation Reference",
+    conventionTags: ["fsm-rules", "testing-policy"],
+    shapeSources: ["src/validation/*.ts"],
+    behaviorTags: ["validation"],
+    claudeMdSection: "validation",
+    docsFilename: "VALIDATION-REFERENCE.md",
+    claudeMdFilename: "validation.md",
   },
   {
-    title: 'Publishing Reference',
-    conventionTags: ['publishing'],
+    title: "Publishing Reference",
+    conventionTags: ["publishing"],
     shapeSources: [],
-    behaviorTags: ['publishing'],
-    claudeMdSection: 'publishing',
-    docsFilename: 'PUBLISHING-REFERENCE.md',
-    claudeMdFilename: 'publishing.md',
+    behaviorTags: ["publishing"],
+    claudeMdSection: "publishing",
+    docsFilename: "PUBLISHING-REFERENCE.md",
+    claudeMdFilename: "publishing.md",
   },
   {
-    title: 'Index Reference',
-    conventionTags: ['doc-generation'],
+    title: "Index Reference",
+    conventionTags: ["doc-generation"],
     shapeSources: [],
-    behaviorTags: ['index'],
-    claudeMdSection: 'index',
-    docsFilename: 'INDEX-REFERENCE.md',
-    claudeMdFilename: 'index.md',
+    behaviorTags: ["index"],
+    claudeMdSection: "index",
+    docsFilename: "INDEX-REFERENCE.md",
+    claudeMdFilename: "index.md",
   },
 ] as const;
 
@@ -163,7 +163,7 @@ export const REFERENCE_CONFIGS: readonly ReferenceDocConfig[] = [
  * ```
  */
 export function registerReferenceGenerators(
-  _registry: unknown, // GeneratorRegistry
+  _registry: unknown // GeneratorRegistry
 ): void {
   // For each config in REFERENCE_CONFIGS:
   // 1. Create codec with createReferenceCodec(config, { detailLevel: 'detailed' })
@@ -174,7 +174,5 @@ export function registerReferenceGenerators(
   // 5. Wrap in CodecBasedGenerator with output path _claude-md/{section}/{filename}
   // 6. Register as "{kebab-name}-reference-claude"
 
-  throw new Error(
-    'registerReferenceGenerators not yet implemented - roadmap pattern',
-  );
+  throw new Error("registerReferenceGenerators not yet implemented - roadmap pattern");
 }
