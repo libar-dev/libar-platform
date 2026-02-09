@@ -267,18 +267,18 @@ _Verified by: Approve action shows success toast, Reject action shows success to
 
 ## Deliverables
 
-- Dead letter management panel (planned)
-- Dead letter detail with replay/ignore (planned)
-- useDeadLetters hook (planned)
-- useDeadLetterActions hook (planned)
-- Decision history tab (planned)
-- useDecisionHistory hook with filters (planned)
-- Toast notification integration (Sonner) (planned)
-- Action feedback toasts (planned)
-- Auth integration documentation (planned)
-- E2E step definitions for agent scenarios (planned)
-- AgentDeadLettersPage page object (planned)
-- AgentHistoryPage page object (planned)
+- Dead letter management panel (pending)
+- Dead letter detail with replay/ignore (pending)
+- useDeadLetters hook (pending)
+- useDeadLetterActions hook (pending)
+- Decision history tab (pending)
+- useDecisionHistory hook with filters (pending)
+- Toast notification integration (Sonner) (pending)
+- Action feedback toasts (pending)
+- Auth integration documentation (pending)
+- E2E step definitions for agent scenarios (pending)
+- AgentDeadLettersPage page object (pending)
+- AgentHistoryPage page object (pending)
 
 ---
 

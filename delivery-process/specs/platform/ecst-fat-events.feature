@@ -36,7 +36,7 @@ Feature: ECST / Fat Events - Event-Carried State Transfer
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Event category type (fat/thin) | exists | @libar-dev/platform-core/src/events/category.ts | Yes | unit |
+      | Event category type (fat/thin) | complete | @libar-dev/platform-core/src/events/category.ts | Yes | unit |
       | FatEvent interface | complete | @libar-dev/platform-core/src/ecst/types.ts | Yes | unit |
       | createFatEvent() builder | complete | @libar-dev/platform-core/src/ecst/builder.ts | Yes | unit |
       | embedEntity() helper | complete | @libar-dev/platform-core/src/ecst/embed.ts | Yes | unit |

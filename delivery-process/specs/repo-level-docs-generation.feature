@@ -34,20 +34,20 @@ Feature: Repo-Level Documentation Generation
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | docs:prd script | Complete | No | package.json |
-      | docs:prd:roadmap script | Complete | No | package.json |
-      | docs:prd:remaining script | Complete | No | package.json |
-      | docs:prd:current script | Complete | No | package.json |
-      | docs:prd:milestones script | Complete | No | package.json |
-      | docs:prd:session script | Complete | No | package.json |
-      | docs:prd:plan script | Complete | No | package.json |
-      | docs:prd:checklist script | Complete | No | package.json |
-      | docs:prd:all script | Complete | No | package.json |
-      | PRD tags added to all specs | Complete | No | delivery-process/specs/*.feature |
-      | Platform-core behavior tests annotated | Complete | No | deps/libar-dev-packages/packages/platform/core/tests/features/behavior/testing/*.feature |
-      | Multi-source generation validated | Complete | No | package.json docs:prd script |
-      | Session learnings documented | Complete | No | This file |
-      | Full scope spec for repo docs | Complete | No | This file |
+      | docs:prd script | complete | No | package.json |
+      | docs:prd:roadmap script | complete | No | package.json |
+      | docs:prd:remaining script | complete | No | package.json |
+      | docs:prd:current script | complete | No | package.json |
+      | docs:prd:milestones script | complete | No | package.json |
+      | docs:prd:session script | complete | No | package.json |
+      | docs:prd:plan script | complete | No | package.json |
+      | docs:prd:checklist script | complete | No | package.json |
+      | docs:prd:all script | complete | No | package.json |
+      | PRD tags added to all specs | complete | No | delivery-process/specs/*.feature |
+      | Platform-core behavior tests annotated | complete | No | deps/libar-dev-packages/packages/platform/core/tests/features/behavior/testing/*.feature |
+      | Multi-source generation validated | complete | No | package.json docs:prd script |
+      | Session learnings documented | complete | No | This file |
+      | Full scope spec for repo docs | complete | No | This file |
 
   @acceptance-criteria
   Scenario: Generate PRD from specs

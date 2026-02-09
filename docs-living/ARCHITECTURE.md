@@ -41,9 +41,9 @@ graph TB
         OrderPublicAPI["OrderPublicAPI[infrastructure]"]
         ReservationReleasePM["ReservationReleasePM[process-manager]"]
         OrderNotificationPM["OrderNotificationPM[process-manager]"]
-        CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderSummaryProjection["OrderSummaryProjection[projection]"]
         OrderItemsProjection["OrderItemsProjection[projection]"]
+        CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderCommandConfigs["OrderCommandConfigs[infrastructure]"]
         OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
         OrderDomainEvents["OrderDomainEvents[bounded-context]"]
@@ -59,9 +59,9 @@ graph TB
         SagaRegistry["SagaRegistry[infrastructure]"]
         OrderFulfillmentSaga["OrderFulfillmentSaga[saga]"]
         SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
-        DurableAppendAction["DurableAppendAction[infrastructure]"]
         ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
         ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
+        DurableAppendAction["DurableAppendAction[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
@@ -84,10 +84,10 @@ graph TB
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
     CustomerCancellationsProjection --> OrderCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
     InventoryCommandConfigs --> ActiveReservationsProjection
@@ -98,8 +98,8 @@ graph TB
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
     OrderCommandHandlers --> OrderDeciders
-    ChurnRiskEventHandler --> CustomerCancellationsProjection
     InventoryCommandHandlers --> InventoryDeciders
+    ChurnRiskEventHandler --> CustomerCancellationsProjection
 ```
 
 ---

@@ -1062,19 +1062,19 @@ _Verified by: Full durable command flow, Command retry produces same result, Pro
 
 ## Deliverables
 
-- Idempotent append integration (completed)
-- Command intents schema (completed)
-- Intent recording in orchestrator (completed)
-- Intent completion tracking (completed)
-- Orphan intent detection cron (completed)
-- Orphan intent admin queries (completed)
-- Durable append pool (completed)
-- Durable append action (completed)
-- Payment outbox handler (completed)
-- Poison event wrapper in orderSummary (completed)
-- Poison event admin mutations (completed)
-- Rebuild demonstration mutations (completed)
-- Integration test scenarios (completed)
+- Idempotent append integration (complete)
+- Command intents schema (complete)
+- Intent recording in orchestrator (complete)
+- Intent completion tracking (complete)
+- Orphan intent detection cron (complete)
+- Orphan intent admin queries (complete)
+- Durable append pool (complete)
+- Durable append action (complete)
+- Payment outbox handler (complete)
+- Poison event wrapper in orderSummary (complete)
+- Poison event admin mutations (complete)
+- Rebuild demonstration mutations (complete)
+- Integration test scenarios (complete)
 
 ---
 

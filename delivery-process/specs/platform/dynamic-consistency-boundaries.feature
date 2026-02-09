@@ -37,13 +37,13 @@ Feature: Dynamic Consistency Boundaries (DCB) - Multi-Entity Invariants
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | dcbScopes table in Event Store | implemented | @libar-dev/platform-store/src/component/schema.ts | No | integration |
-      | Scope operations (create, check, commit) | implemented | @libar-dev/platform-store/src/component/lib.ts | No | integration |
-      | Scope key utilities | implemented | @libar-dev/platform-core/src/dcb/scopeKey.ts | Yes | unit |
-      | DCB types (DCBScopeKey, DCBScope, ExecuteWithDCBConfig, ScopeOperations) | implemented | @libar-dev/platform-core/src/dcb/types.ts | No | unit |
-      | executeWithDCB() helper with OCC | implemented | @libar-dev/platform-core/src/dcb/execute.ts | Yes | unit |
-      | Virtual stream queries | implemented | @libar-dev/platform-store/src/component/lib.ts | No | integration |
-      | DCB documentation | implemented | docs/architecture/DCB-ARCHITECTURE.md | No | - |
+      | dcbScopes table in Event Store | complete | @libar-dev/platform-store/src/component/schema.ts | No | integration |
+      | Scope operations (create, check, commit) | complete | @libar-dev/platform-store/src/component/lib.ts | No | integration |
+      | Scope key utilities | complete | @libar-dev/platform-core/src/dcb/scopeKey.ts | Yes | unit |
+      | DCB types (DCBScopeKey, DCBScope, ExecuteWithDCBConfig, ScopeOperations) | complete | @libar-dev/platform-core/src/dcb/types.ts | No | unit |
+      | executeWithDCB() helper with OCC | complete | @libar-dev/platform-core/src/dcb/execute.ts | Yes | unit |
+      | Virtual stream queries | complete | @libar-dev/platform-store/src/component/lib.ts | No | integration |
+      | DCB documentation | complete | docs/architecture/DCB-ARCHITECTURE.md | No | - |
 
   # ===========================================================================
   # RULE 1: Key Concepts

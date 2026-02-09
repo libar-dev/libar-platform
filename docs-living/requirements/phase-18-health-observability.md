@@ -418,15 +418,15 @@ _Verified by: All components healthy yields healthy system, Single unhealthy com
 
 ## Deliverables
 
-- Health check types (planned)
-- checkReadiness query (planned)
-- checkLiveness query (planned)
-- HTTP router with /health/\* routes (planned)
-- Metrics types (planned)
-- MetricsCollector (planned)
-- Projection lag calculator (planned)
-- Workpool depth query (planned)
-- System health aggregator (planned)
+- Health check types (pending)
+- checkReadiness query (pending)
+- checkLiveness query (pending)
+- HTTP router with /health/\* routes (pending)
+- Metrics types (pending)
+- MetricsCollector (pending)
+- Projection lag calculator (pending)
+- Workpool depth query (pending)
+- System health aggregator (pending)
 
 ---
 

@@ -223,11 +223,11 @@ _Verified by: README has Reference Implementation designation, All demonstrated 
 
 ## Deliverables
 
-- DCB multi-product reservation (completed)
-- ReactiveProjection OrderDetailView (completed)
-- Fat Events OrderSubmitted enrichment (completed)
-- README Reference Implementation section (completed)
-- Patterns Demonstrated catalog (completed)
+- DCB multi-product reservation (complete)
+- ReactiveProjection OrderDetailView (complete)
+- Fat Events OrderSubmitted enrichment (complete)
+- README Reference Implementation section (complete)
+- Patterns Demonstrated catalog (complete)
 
 ---
 

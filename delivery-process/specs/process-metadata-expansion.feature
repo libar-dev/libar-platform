@@ -41,13 +41,13 @@ Feature: Process Metadata Expansion
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | Risk tag in registry | Complete | No | delivery-process/tag-registry.json |
-      | Effort-actual tag in registry | Complete | No | delivery-process/tag-registry.json |
-      | Workflow tag in registry | Complete | No | delivery-process/tag-registry.json |
-      | Priority tag in registry | Complete | No | delivery-process/tag-registry.json |
-      | Level tag in registry | Complete | No | delivery-process/tag-registry.json |
-      | Parent tag in registry | Complete | No | delivery-process/tag-registry.json |
-      | PDR-003 tag conventions update | Complete | No | delivery-process/decisions/pdr-003-*.feature |
+      | Risk tag in registry | complete | No | delivery-process/tag-registry.json |
+      | Effort-actual tag in registry | complete | No | delivery-process/tag-registry.json |
+      | Workflow tag in registry | complete | No | delivery-process/tag-registry.json |
+      | Priority tag in registry | complete | No | delivery-process/tag-registry.json |
+      | Level tag in registry | complete | No | delivery-process/tag-registry.json |
+      | Parent tag in registry | complete | No | delivery-process/tag-registry.json |
+      | PDR-003 tag conventions update | complete | No | delivery-process/decisions/pdr-003-*.feature |
 
   @acceptance-criteria
   Scenario: New tags are defined in tag registry

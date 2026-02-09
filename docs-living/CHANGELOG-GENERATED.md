@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **PDR 009 Design Session Methodology**
 - **PDR 008 Example App Purpose**
 - **PDR 007 Two Tier Spec Architecture**
+- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
 - **Workpool Partitioning Strategy**: Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event...
 - **Saga Orchestration**: Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...
 - **Reservation Pattern**: Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...
@@ -54,7 +55,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Bounded Context Foundation**: Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity...
 - **Bdd Testing Infrastructure**: Problem: Domain logic tests require infrastructure (Docker, database).
 - **Agent As Bounded Context**: Problem: AI agents are invoked manually without integration into the event-driven architecture.
-- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
 
 ---
 
@@ -70,11 +70,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Process Manager**: Process Manager module for event-reactive coordination.
 - **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
-- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
-- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
+- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Event Upcasting**: Transforms events from older schema versions to current version at read time.
+- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
 - **Durable Cross-Context Event Publication**: Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.
 - **Poison Event Handling**: Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...
@@ -83,10 +83,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Event Store Durability**: Guaranteed event persistence patterns for Convex-native event sourcing.
 - **Idempotent Event Append**: Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...
 - **Durable Append via Workpool Actions**: Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...
-- **DCB Types**: Types for scope-based multi-entity coordination within bounded contexts.
-- **DCB Scope Key Utilities**: Functions for creating, parsing, and validating scope keys.
 - **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
 - **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
+- **DCB Types**: Types for scope-based multi-entity coordination within bounded contexts.
+- **DCB Scope Key Utilities**: Functions for creating, parsing, and validating scope keys.
 - **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Bounded Context Identity**: BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...
 - **Dual Write Contract**: BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...

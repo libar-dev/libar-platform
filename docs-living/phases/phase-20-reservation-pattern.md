@@ -350,14 +350,14 @@ patterns with race condition risk, or post-creation unique indexes.
 
 - Given the following deliverables:
 
-| Deliverable               | Status      | Location                                             | Tests | Test Type   |
-| ------------------------- | ----------- | ---------------------------------------------------- | ----- | ----------- |
-| Reservation table schema  | implemented | @libar-dev/platform-core/src/reservations/schema.ts  | Yes   | unit        |
-| reserve() function        | implemented | @libar-dev/platform-core/src/reservations/reserve.ts | Yes   | unit        |
-| confirm() function        | implemented | @libar-dev/platform-core/src/reservations/confirm.ts | Yes   | unit        |
-| release() function        | implemented | @libar-dev/platform-core/src/reservations/release.ts | Yes   | unit        |
-| TTL expiration cron       | implemented | @libar-dev/platform-core/src/reservations/expire.ts  | Yes   | integration |
-| Reservation documentation | implemented | docs/architecture/RESERVATION-PATTERN.md             | No    | -           |
+| Deliverable               | Status   | Location                                             | Tests | Test Type   |
+| ------------------------- | -------- | ---------------------------------------------------- | ----- | ----------- |
+| Reservation table schema  | complete | @libar-dev/platform-core/src/reservations/schema.ts  | Yes   | unit        |
+| reserve() function        | complete | @libar-dev/platform-core/src/reservations/reserve.ts | Yes   | unit        |
+| confirm() function        | complete | @libar-dev/platform-core/src/reservations/confirm.ts | Yes   | unit        |
+| release() function        | complete | @libar-dev/platform-core/src/reservations/release.ts | Yes   | unit        |
+| TTL expiration cron       | complete | @libar-dev/platform-core/src/reservations/expire.ts  | Yes   | integration |
+| Reservation documentation | complete | docs/architecture/RESERVATION-PATTERN.md             | No    | -           |
 
 **Concurrent reservations for same value**
 

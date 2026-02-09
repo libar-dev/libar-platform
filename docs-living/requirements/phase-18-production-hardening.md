@@ -623,21 +623,21 @@ _Verified by: Circuit breaker uses action retrier for half-open probe, Failed ha
 
 ## Deliverables
 
-- Metrics collection types (planned)
-- Metrics collector (planned)
-- Health check queries (planned)
-- Health HTTP router (planned)
-- Circuit breaker implementation (planned)
-- Admin projection endpoints (planned)
-- Admin DLQ endpoints (planned)
-- Admin diagnostics (planned)
-- Durable function run diagnostics (planned)
-- Contract violation types (planned)
-- Grafana dashboard templates (planned)
-- Runbook documentation (planned)
-- Circuit breaker retrier integration (planned)
-- DLQ action retrier pattern (planned)
-- Durable function decision guide (planned)
+- Metrics collection types (pending)
+- Metrics collector (pending)
+- Health check queries (pending)
+- Health HTTP router (pending)
+- Circuit breaker implementation (pending)
+- Admin projection endpoints (pending)
+- Admin DLQ endpoints (pending)
+- Admin diagnostics (pending)
+- Durable function run diagnostics (pending)
+- Contract violation types (pending)
+- Grafana dashboard templates (pending)
+- Runbook documentation (pending)
+- Circuit breaker retrier integration (pending)
+- DLQ action retrier pattern (pending)
+- Durable function decision guide (pending)
 
 ---
 

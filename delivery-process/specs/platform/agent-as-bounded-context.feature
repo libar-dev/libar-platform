@@ -380,18 +380,18 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Agent BC example | completed | examples/order-management/contexts/agent/ | Yes | integration |
-      | EventBus subscription for agents | completed | @libar-dev/platform-bus/src/agent-subscription.ts | Yes | unit |
-      | Pattern detection framework | completed | @libar-dev/platform-core/src/agent/patterns.ts | Yes | unit |
-      | Command emission from agents | completed | @libar-dev/platform-core/src/agent/commands.ts | Yes | unit |
-      | Agent audit trail | completed | @libar-dev/platform-core/src/agent/audit.ts | Yes | unit |
-      | Human-in-loop configuration | completed | @libar-dev/platform-core/src/agent/approval.ts | Yes | unit |
-      | Agent checkpoint types | completed | @libar-dev/platform-core/src/agent/checkpoint.ts | Yes | unit |
-      | Agent types and validators | completed | @libar-dev/platform-core/src/agent/types.ts | Yes | unit |
-      | Agent initialization | completed | @libar-dev/platform-core/src/agent/init.ts | Yes | unit |
-      | Rate limiting config | stub complete | @libar-dev/platform-core/src/agent/rate-limit.ts | Yes | unit |
-      | Dead letter handler | completed | @libar-dev/platform-core/src/agent/dead-letter.ts | Yes | unit |
-      | Agent as BC documentation | completed | docs/architecture/AGENT-AS-BC.md | No | - |
+      | Agent BC example | complete | examples/order-management/contexts/agent/ | Yes | integration |
+      | EventBus subscription for agents | complete | @libar-dev/platform-bus/src/agent-subscription.ts | Yes | unit |
+      | Pattern detection framework | complete | @libar-dev/platform-core/src/agent/patterns.ts | Yes | unit |
+      | Command emission from agents | complete | @libar-dev/platform-core/src/agent/commands.ts | Yes | unit |
+      | Agent audit trail | complete | @libar-dev/platform-core/src/agent/audit.ts | Yes | unit |
+      | Human-in-loop configuration | complete | @libar-dev/platform-core/src/agent/approval.ts | Yes | unit |
+      | Agent checkpoint types | complete | @libar-dev/platform-core/src/agent/checkpoint.ts | Yes | unit |
+      | Agent types and validators | complete | @libar-dev/platform-core/src/agent/types.ts | Yes | unit |
+      | Agent initialization | complete | @libar-dev/platform-core/src/agent/init.ts | Yes | unit |
+      | Rate limiting config | complete | @libar-dev/platform-core/src/agent/rate-limit.ts | Yes | unit |
+      | Dead letter handler | complete | @libar-dev/platform-core/src/agent/dead-letter.ts | Yes | unit |
+      | Agent as BC documentation | complete | docs/architecture/AGENT-AS-BC.md | No | - |
 
   Rule: Agent subscribes to relevant event streams
 

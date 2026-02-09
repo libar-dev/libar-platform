@@ -101,14 +101,14 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Agent action handler factory | planned | @libar-dev/platform-core/src/agent/action-handler.ts | Yes | unit |
-      | LLM-integrated onComplete handler | planned | @libar-dev/platform-core/src/agent/oncomplete-handler.ts | Yes | unit |
-      | Rate limiter integration | planned | @libar-dev/platform-core/src/agent/rate-limiter.ts | Yes | unit |
-      | Cost budget tracking | planned | @libar-dev/platform-core/src/agent/cost-budget.ts | Yes | unit |
-      | @convex-dev/agent thread adapter | planned | @libar-dev/platform-core/src/agent/thread-adapter.ts | Yes | unit |
-      | onComplete in CreateAgentSubscriptionOptions | planned | @libar-dev/platform-bus/src/agent-subscription.ts | Yes | unit |
-      | Circuit breaker for LLM | planned | @libar-dev/platform-core/src/agent/circuit-breaker.ts | Yes | unit |
-      | Action/mutation integration test | planned | platform-core/tests/integration/agent/action-split.test.ts | Yes | integration |
+      | Agent action handler factory | pending | @libar-dev/platform-core/src/agent/action-handler.ts | Yes | unit |
+      | LLM-integrated onComplete handler | pending | @libar-dev/platform-core/src/agent/oncomplete-handler.ts | Yes | unit |
+      | Rate limiter integration | pending | @libar-dev/platform-core/src/agent/rate-limiter.ts | Yes | unit |
+      | Cost budget tracking | pending | @libar-dev/platform-core/src/agent/cost-budget.ts | Yes | unit |
+      | @convex-dev/agent thread adapter | pending | @libar-dev/platform-core/src/agent/thread-adapter.ts | Yes | unit |
+      | onComplete in CreateAgentSubscriptionOptions | pending | @libar-dev/platform-bus/src/agent-subscription.ts | Yes | unit |
+      | Circuit breaker for LLM | pending | @libar-dev/platform-core/src/agent/circuit-breaker.ts | Yes | unit |
+      | Action/mutation integration test | pending | platform-core/tests/integration/agent/action-split.test.ts | Yes | integration |
 
   # ============================================================================
   # RULE 1: Agent Event Handlers Are Actions for LLM Integration

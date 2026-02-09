@@ -283,12 +283,12 @@ _Verified by: ACL translates external system response, ACL handles bidirectional
 
 ## Deliverables
 
-- Context Map registry (planned)
-- Context Map documentation (planned)
-- Published Language registry (planned)
-- toPublishedLanguage() converter (planned)
-- ACL builder enhancement (planned)
-- IntegrationEventMetadata extension (planned)
+- Context Map registry (pending)
+- Context Map documentation (pending)
+- Published Language registry (pending)
+- toPublishedLanguage() converter (pending)
+- ACL builder enhancement (pending)
+- IntegrationEventMetadata extension (pending)
 
 ---
 

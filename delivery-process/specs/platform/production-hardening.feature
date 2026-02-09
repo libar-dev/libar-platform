@@ -40,21 +40,21 @@ Feature: Production Hardening - Observability and Operational Tooling
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Metrics collection types | planned | @libar-dev/platform-core/src/monitoring/metrics.ts | Yes | unit |
-      | Metrics collector | planned | @libar-dev/platform-core/src/monitoring/collector.ts | Yes | unit |
-      | Health check queries | planned | examples/order-management/convex/health.ts | Yes | integration |
-      | Health HTTP router | planned | examples/order-management/convex/http.ts | Yes | integration |
-      | Circuit breaker implementation | planned | @libar-dev/platform-core/src/monitoring/circuit-breaker.ts | Yes | unit |
-      | Admin projection endpoints | planned | examples/order-management/convex/admin/projections.ts | Yes | integration |
-      | Admin DLQ endpoints | planned | examples/order-management/convex/admin/deadLetters.ts | Yes | integration |
-      | Admin diagnostics | planned | examples/order-management/convex/admin/diagnostics.ts | Yes | integration |
-      | Durable function run diagnostics | planned | examples/order-management/convex/admin/durableFunctions.ts | Yes | integration |
-      | Contract violation types | planned | @libar-dev/platform-core/src/monitoring/contracts.ts | Yes | unit |
-      | Grafana dashboard templates | planned | infrastructure/grafana/ | No | - |
-      | Runbook documentation | planned | docs/operations/RUNBOOK.md | No | - |
-      | Circuit breaker retrier integration | planned | @libar-dev/platform-core/src/monitoring/withCircuitBreaker.ts | Yes | unit |
-      | DLQ action retrier pattern | planned | examples/order-management/convex/admin/dlqRetrier.ts | Yes | integration |
-      | Durable function decision guide | planned | docs/architecture/DURABLE-FUNCTION-SELECTION.md | No | - |
+      | Metrics collection types | pending | @libar-dev/platform-core/src/monitoring/metrics.ts | Yes | unit |
+      | Metrics collector | pending | @libar-dev/platform-core/src/monitoring/collector.ts | Yes | unit |
+      | Health check queries | pending | examples/order-management/convex/health.ts | Yes | integration |
+      | Health HTTP router | pending | examples/order-management/convex/http.ts | Yes | integration |
+      | Circuit breaker implementation | pending | @libar-dev/platform-core/src/monitoring/circuit-breaker.ts | Yes | unit |
+      | Admin projection endpoints | pending | examples/order-management/convex/admin/projections.ts | Yes | integration |
+      | Admin DLQ endpoints | pending | examples/order-management/convex/admin/deadLetters.ts | Yes | integration |
+      | Admin diagnostics | pending | examples/order-management/convex/admin/diagnostics.ts | Yes | integration |
+      | Durable function run diagnostics | pending | examples/order-management/convex/admin/durableFunctions.ts | Yes | integration |
+      | Contract violation types | pending | @libar-dev/platform-core/src/monitoring/contracts.ts | Yes | unit |
+      | Grafana dashboard templates | pending | infrastructure/grafana/ | No | - |
+      | Runbook documentation | pending | docs/operations/RUNBOOK.md | No | - |
+      | Circuit breaker retrier integration | pending | @libar-dev/platform-core/src/monitoring/withCircuitBreaker.ts | Yes | unit |
+      | DLQ action retrier pattern | pending | examples/order-management/convex/admin/dlqRetrier.ts | Yes | integration |
+      | Durable function decision guide | pending | docs/architecture/DURABLE-FUNCTION-SELECTION.md | No | - |
 
   # ===========================================================================
   # RULE 1: Metrics Collection

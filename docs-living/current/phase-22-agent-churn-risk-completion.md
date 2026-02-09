@@ -60,14 +60,14 @@ reservations when confirmed orders are cancelled.
 
 #### Deliverables
 
-- 📋 Order FSM confirmed->cancelled transition (Implemented)
-- 📋 CancelOrder decider remove confirmed rejection (Implemented)
-- 📋 ReservationReleaseOnOrderCancel PM (Implemented)
-- 📋 PM subscription registration (Implemented)
-- 📋 order-evolve.feature update (Implemented)
-- 📋 cancel-order.decider.feature update (Implemented)
-- 📋 cancel-order.feature (behavior) update (Implemented)
-- 📋 cancel-order.feature (integration) update (Implemented)
+- ✅ Order FSM confirmed->cancelled transition (complete)
+- ✅ CancelOrder decider remove confirmed rejection (complete)
+- ✅ ReservationReleaseOnOrderCancel PM (complete)
+- ✅ PM subscription registration (complete)
+- ✅ order-evolve.feature update (complete)
+- ✅ cancel-order.decider.feature update (complete)
+- ✅ cancel-order.feature (behavior) update (complete)
+- ✅ cancel-order.feature (integration) update (complete)
 
 #### Dependencies
 

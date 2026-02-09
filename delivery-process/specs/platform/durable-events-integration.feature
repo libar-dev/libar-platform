@@ -82,19 +82,19 @@ Feature: Durable Events Integration - Production-Ready Event Persistence
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Idempotent append integration | completed | examples/order-management/convex/commands/durableOrchestrator.ts | Yes | integration |
-      | Command intents schema | completed | examples/order-management/convex/schema.ts | Yes | unit |
-      | Intent recording in orchestrator | completed | examples/order-management/convex/commands/durableOrchestrator.ts | Yes | integration |
-      | Intent completion tracking | completed | examples/order-management/convex/commands/durableOrchestrator.ts | Yes | integration |
-      | Orphan intent detection cron | completed | examples/order-management/convex/crons.ts | Yes | integration |
-      | Orphan intent admin queries | completed | examples/order-management/convex/admin/intents.ts | Yes | unit |
-      | Durable append pool | completed | examples/order-management/convex/infrastructure.ts | Yes | integration |
-      | Durable append action | completed | examples/order-management/convex/eventStore/durableAppend.ts | Yes | integration |
-      | Payment outbox handler | completed | examples/order-management/convex/sagas/payments/outbox.ts | Yes | integration |
-      | Poison event wrapper in orderSummary | completed | examples/order-management/convex/projections/orders/orderSummary.ts | Yes | integration |
-      | Poison event admin mutations | completed | examples/order-management/convex/admin/poison.ts | Yes | unit |
-      | Rebuild demonstration mutations | completed | examples/order-management/convex/admin/rebuildDemo.ts | Yes | integration |
-      | Integration test scenarios | completed | order-management/tests/integration-features/durability/ | Yes | integration |
+      | Idempotent append integration | complete | examples/order-management/convex/commands/durableOrchestrator.ts | Yes | integration |
+      | Command intents schema | complete | examples/order-management/convex/schema.ts | Yes | unit |
+      | Intent recording in orchestrator | complete | examples/order-management/convex/commands/durableOrchestrator.ts | Yes | integration |
+      | Intent completion tracking | complete | examples/order-management/convex/commands/durableOrchestrator.ts | Yes | integration |
+      | Orphan intent detection cron | complete | examples/order-management/convex/crons.ts | Yes | integration |
+      | Orphan intent admin queries | complete | examples/order-management/convex/admin/intents.ts | Yes | unit |
+      | Durable append pool | complete | examples/order-management/convex/infrastructure.ts | Yes | integration |
+      | Durable append action | complete | examples/order-management/convex/eventStore/durableAppend.ts | Yes | integration |
+      | Payment outbox handler | complete | examples/order-management/convex/sagas/payments/outbox.ts | Yes | integration |
+      | Poison event wrapper in orderSummary | complete | examples/order-management/convex/projections/orders/orderSummary.ts | Yes | integration |
+      | Poison event admin mutations | complete | examples/order-management/convex/admin/poison.ts | Yes | unit |
+      | Rebuild demonstration mutations | complete | examples/order-management/convex/admin/rebuildDemo.ts | Yes | integration |
+      | Integration test scenarios | complete | order-management/tests/integration-features/durability/ | Yes | integration |
 
   # ===========================================================================
   # RULE 1: Idempotent Event Append

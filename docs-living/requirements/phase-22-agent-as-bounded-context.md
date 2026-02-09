@@ -728,18 +728,18 @@ _Verified by: Agent decision creates audit event, Audit includes LLM metadata, Q
 
 ## Deliverables
 
-- Agent BC example (completed)
-- EventBus subscription for agents (completed)
-- Pattern detection framework (completed)
-- Command emission from agents (completed)
-- Agent audit trail (completed)
-- Human-in-loop configuration (completed)
-- Agent checkpoint types (completed)
-- Agent types and validators (completed)
-- Agent initialization (completed)
-- Rate limiting config (stub complete)
-- Dead letter handler (completed)
-- Agent as BC documentation (completed)
+- Agent BC example (complete)
+- EventBus subscription for agents (complete)
+- Pattern detection framework (complete)
+- Command emission from agents (complete)
+- Agent audit trail (complete)
+- Human-in-loop configuration (complete)
+- Agent checkpoint types (complete)
+- Agent types and validators (complete)
+- Agent initialization (complete)
+- Rate limiting config (complete)
+- Dead letter handler (complete)
+- Agent as BC documentation (complete)
 
 ---
 

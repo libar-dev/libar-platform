@@ -128,17 +128,17 @@ Feature: Agent Command Infrastructure - Routing, Lifecycle, and Pattern Unificat
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Agent command router | planned | @libar-dev/platform-core/src/agent/command-router.ts | Yes | unit |
-      | CommandOrchestrator integration for agent commands | planned | @libar-dev/platform-core/src/agent/orchestrator-integration.ts | Yes | integration |
-      | Agent lifecycle FSM | planned | @libar-dev/platform-core/src/agent/lifecycle-fsm.ts | Yes | unit |
-      | StartAgent command handler | planned | @libar-dev/platform-core/src/agent/commands/start.ts | Yes | unit |
-      | PauseAgent command handler | planned | @libar-dev/platform-core/src/agent/commands/pause.ts | Yes | unit |
-      | ResumeAgent command handler | planned | @libar-dev/platform-core/src/agent/commands/resume.ts | Yes | unit |
-      | StopAgent command handler | planned | @libar-dev/platform-core/src/agent/commands/stop.ts | Yes | unit |
-      | ReconfigureAgent command handler | planned | @libar-dev/platform-core/src/agent/commands/reconfigure.ts | Yes | unit |
-      | Unified pattern executor | planned | @libar-dev/platform-core/src/agent/pattern-executor.ts | Yes | unit |
-      | Pattern registry | planned | @libar-dev/platform-core/src/agent/pattern-registry.ts | Yes | unit |
-      | AgentBCConfig patterns field | planned | @libar-dev/platform-core/src/agent/types.ts | Yes | unit |
+      | Agent command router | pending | @libar-dev/platform-core/src/agent/command-router.ts | Yes | unit |
+      | CommandOrchestrator integration for agent commands | pending | @libar-dev/platform-core/src/agent/orchestrator-integration.ts | Yes | integration |
+      | Agent lifecycle FSM | pending | @libar-dev/platform-core/src/agent/lifecycle-fsm.ts | Yes | unit |
+      | StartAgent command handler | pending | @libar-dev/platform-core/src/agent/commands/start.ts | Yes | unit |
+      | PauseAgent command handler | pending | @libar-dev/platform-core/src/agent/commands/pause.ts | Yes | unit |
+      | ResumeAgent command handler | pending | @libar-dev/platform-core/src/agent/commands/resume.ts | Yes | unit |
+      | StopAgent command handler | pending | @libar-dev/platform-core/src/agent/commands/stop.ts | Yes | unit |
+      | ReconfigureAgent command handler | pending | @libar-dev/platform-core/src/agent/commands/reconfigure.ts | Yes | unit |
+      | Unified pattern executor | pending | @libar-dev/platform-core/src/agent/pattern-executor.ts | Yes | unit |
+      | Pattern registry | pending | @libar-dev/platform-core/src/agent/pattern-registry.ts | Yes | unit |
+      | AgentBCConfig patterns field | pending | @libar-dev/platform-core/src/agent/types.ts | Yes | unit |
 
   # ============================================================================
   # RULE 1: Emitted Commands Are Routed to Handlers

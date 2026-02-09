@@ -102,18 +102,18 @@ Feature: Agent Admin Frontend - Complete Management UI
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Dead letter management panel | planned | apps/frontend/app/admin/agents/dead-letters/index.tsx | Yes | e2e |
-      | Dead letter detail with replay/ignore | planned | apps/frontend/app/admin/agents/dead-letters/[id].tsx | Yes | e2e |
-      | useDeadLetters hook | planned | apps/frontend/hooks/use-dead-letters.ts | Yes | unit |
-      | useDeadLetterActions hook | planned | apps/frontend/hooks/use-dead-letter-actions.ts | Yes | unit |
-      | Decision history tab | planned | apps/frontend/app/admin/agents/history/index.tsx | Yes | e2e |
-      | useDecisionHistory hook with filters | planned | apps/frontend/hooks/use-decision-history.ts | Yes | unit |
-      | Toast notification integration (Sonner) | planned | apps/frontend/components/toast-provider.tsx | Yes | unit |
-      | Action feedback toasts | planned | apps/frontend/hooks/use-agent-actions.ts | Yes | e2e |
-      | Auth integration documentation | planned | apps/frontend/docs/AUTH-INTEGRATION.md | No | - |
-      | E2E step definitions for agent scenarios | planned | apps/frontend/tests/e2e/steps/agent.steps.ts | Yes | e2e |
-      | AgentDeadLettersPage page object | planned | apps/frontend/tests/e2e/support/pages/AgentDeadLettersPage.ts | Yes | e2e |
-      | AgentHistoryPage page object | planned | apps/frontend/tests/e2e/support/pages/AgentHistoryPage.ts | Yes | e2e |
+      | Dead letter management panel | pending | apps/frontend/app/admin/agents/dead-letters/index.tsx | Yes | e2e |
+      | Dead letter detail with replay/ignore | pending | apps/frontend/app/admin/agents/dead-letters/[id].tsx | Yes | e2e |
+      | useDeadLetters hook | pending | apps/frontend/hooks/use-dead-letters.ts | Yes | unit |
+      | useDeadLetterActions hook | pending | apps/frontend/hooks/use-dead-letter-actions.ts | Yes | unit |
+      | Decision history tab | pending | apps/frontend/app/admin/agents/history/index.tsx | Yes | e2e |
+      | useDecisionHistory hook with filters | pending | apps/frontend/hooks/use-decision-history.ts | Yes | unit |
+      | Toast notification integration (Sonner) | pending | apps/frontend/components/toast-provider.tsx | Yes | unit |
+      | Action feedback toasts | pending | apps/frontend/hooks/use-agent-actions.ts | Yes | e2e |
+      | Auth integration documentation | pending | apps/frontend/docs/AUTH-INTEGRATION.md | No | - |
+      | E2E step definitions for agent scenarios | pending | apps/frontend/tests/e2e/steps/agent.steps.ts | Yes | e2e |
+      | AgentDeadLettersPage page object | pending | apps/frontend/tests/e2e/support/pages/AgentDeadLettersPage.ts | Yes | e2e |
+      | AgentHistoryPage page object | pending | apps/frontend/tests/e2e/support/pages/AgentHistoryPage.ts | Yes | e2e |
 
   # ============================================================================
   # RULE 1: Dead Letters Are Visible and Actionable

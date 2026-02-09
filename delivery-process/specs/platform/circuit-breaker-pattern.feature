@@ -42,16 +42,16 @@ Feature: Circuit Breaker Pattern - External Service Resilience
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Circuit breaker state machine (pure) | planned | @libar-dev/platform-core/src/monitoring/circuit-breaker/stateMachine.ts | Yes | unit |
-      | Circuit breaker types | planned | @libar-dev/platform-core/src/monitoring/circuit-breaker/types.ts | Yes | unit |
-      | circuitBreakers table schema | planned | examples/order-management/convex/schema.ts | No | - |
-      | withCircuitBreaker wrapper | planned | @libar-dev/platform-core/src/monitoring/circuit-breaker/withCircuitBreaker.ts | Yes | unit |
-      | loadCircuitState query | planned | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
-      | recordSuccess mutation | planned | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
-      | recordFailure mutation | planned | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
-      | checkHalfOpen scheduled mutation | planned | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
-      | onCircuitProbeComplete handler | planned | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
-      | Circuit breaker metrics | planned | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
+      | Circuit breaker state machine (pure) | pending | @libar-dev/platform-core/src/monitoring/circuit-breaker/stateMachine.ts | Yes | unit |
+      | Circuit breaker types | pending | @libar-dev/platform-core/src/monitoring/circuit-breaker/types.ts | Yes | unit |
+      | circuitBreakers table schema | pending | examples/order-management/convex/schema.ts | No | - |
+      | withCircuitBreaker wrapper | pending | @libar-dev/platform-core/src/monitoring/circuit-breaker/withCircuitBreaker.ts | Yes | unit |
+      | loadCircuitState query | pending | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
+      | recordSuccess mutation | pending | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
+      | recordFailure mutation | pending | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
+      | checkHalfOpen scheduled mutation | pending | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
+      | onCircuitProbeComplete handler | pending | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
+      | Circuit breaker metrics | pending | examples/order-management/convex/monitoring/circuitBreakers.ts | Yes | integration |
 
   # ===========================================================================
   # RULE 1: State Machine Definition

@@ -190,10 +190,10 @@ _Verified by: Pattern selection by use case_
 
 ## Deliverables
 
-- deterministicStreamId() function (planned)
-- Hash algorithm selection (planned)
-- Conflict error handling (planned)
-- Pattern documentation (planned)
+- deterministicStreamId() function (pending)
+- Hash algorithm selection (pending)
+- Conflict error handling (pending)
+- Pattern documentation (pending)
 
 ---
 

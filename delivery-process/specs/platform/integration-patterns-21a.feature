@@ -39,12 +39,12 @@ Feature: Integration Patterns (21a) - Registry & Core Patterns
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Context Map registry | planned | @libar-dev/platform-core/src/integration/context-map.ts | Yes | unit |
-      | Context Map documentation | planned | docs/architecture/CONTEXT-MAP.md | No | - |
-      | Published Language registry | planned | @libar-dev/platform-core/src/integration/published-language.ts | Yes | unit |
-      | toPublishedLanguage() converter | planned | @libar-dev/platform-core/src/integration/converter.ts | Yes | unit |
-      | ACL builder enhancement | planned | @libar-dev/platform-core/src/integration/acl.ts | Yes | unit |
-      | IntegrationEventMetadata extension | planned | @libar-dev/platform-core/src/integration/types.ts | Yes | unit |
+      | Context Map registry | pending | @libar-dev/platform-core/src/integration/context-map.ts | Yes | unit |
+      | Context Map documentation | pending | docs/architecture/CONTEXT-MAP.md | No | - |
+      | Published Language registry | pending | @libar-dev/platform-core/src/integration/published-language.ts | Yes | unit |
+      | toPublishedLanguage() converter | pending | @libar-dev/platform-core/src/integration/converter.ts | Yes | unit |
+      | ACL builder enhancement | pending | @libar-dev/platform-core/src/integration/acl.ts | Yes | unit |
+      | IntegrationEventMetadata extension | pending | @libar-dev/platform-core/src/integration/types.ts | Yes | unit |
 
   # ============================================================================
   # RULE 1: Context Map Documents BC Relationships

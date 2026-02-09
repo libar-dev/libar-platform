@@ -119,7 +119,7 @@ _Verified by: Event type selection by use case_
 
 ## Deliverables
 
-- Event category type (fat/thin) (exists)
+- Event category type (fat/thin) (complete)
 - FatEvent interface (complete)
 - createFatEvent() builder (complete)
 - embedEntity() helper (complete)

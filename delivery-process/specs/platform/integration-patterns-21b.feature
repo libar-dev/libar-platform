@@ -40,14 +40,14 @@ Feature: Integration Patterns (21b) - Schema Evolution & Contract Testing
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Upcaster implementation | planned | @libar-dev/platform-core/src/integration/versioning.ts | Yes | unit |
-      | Downcaster implementation | planned | @libar-dev/platform-core/src/integration/versioning.ts | Yes | unit |
-      | Migration path validation | planned | @libar-dev/platform-core/src/integration/versioning.ts | Yes | unit |
-      | Contract sample generation | planned | @libar-dev/platform-core/src/integration/testing/samples.ts | Yes | unit |
-      | Producer contract tests | planned | @libar-dev/platform-core/src/integration/testing/producer.ts | Yes | unit |
-      | Consumer contract tests | planned | @libar-dev/platform-core/src/integration/testing/consumer.ts | Yes | unit |
-      | Compatibility verification | planned | @libar-dev/platform-core/src/integration/testing/compatibility.ts | Yes | unit |
-      | Contract violation detection | planned | @libar-dev/platform-core/src/integration/testing/violations.ts | Yes | unit |
+      | Upcaster implementation | pending | @libar-dev/platform-core/src/integration/versioning.ts | Yes | unit |
+      | Downcaster implementation | pending | @libar-dev/platform-core/src/integration/versioning.ts | Yes | unit |
+      | Migration path validation | pending | @libar-dev/platform-core/src/integration/versioning.ts | Yes | unit |
+      | Contract sample generation | pending | @libar-dev/platform-core/src/integration/testing/samples.ts | Yes | unit |
+      | Producer contract tests | pending | @libar-dev/platform-core/src/integration/testing/producer.ts | Yes | unit |
+      | Consumer contract tests | pending | @libar-dev/platform-core/src/integration/testing/consumer.ts | Yes | unit |
+      | Compatibility verification | pending | @libar-dev/platform-core/src/integration/testing/compatibility.ts | Yes | unit |
+      | Contract violation detection | pending | @libar-dev/platform-core/src/integration/testing/violations.ts | Yes | unit |
 
   # ============================================================================
   # RULE 4: Schema Versioning Enables Evolution

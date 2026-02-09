@@ -31,14 +31,14 @@
 
 #### Deliverables
 
-- 📋 Order FSM confirmed->cancelled transition
-- 📋 CancelOrder decider remove confirmed rejection
-- 📋 ReservationReleaseOnOrderCancel PM
-- 📋 PM subscription registration
-- 📋 order-evolve.feature update
-- 📋 cancel-order.decider.feature update
-- 📋 cancel-order.feature (behavior) update
-- 📋 cancel-order.feature (integration) update
+- ✅ Order FSM confirmed->cancelled transition
+- ✅ CancelOrder decider remove confirmed rejection
+- ✅ ReservationReleaseOnOrderCancel PM
+- ✅ PM subscription registration
+- ✅ order-evolve.feature update
+- ✅ cancel-order.decider.feature update
+- ✅ cancel-order.feature (behavior) update
+- ✅ cancel-order.feature (integration) update
 
 [View AgentChurnRiskCompletion details →](current/phase-22-agent-churn-risk-completion.md)
 

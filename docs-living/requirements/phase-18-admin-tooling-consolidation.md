@@ -505,14 +505,14 @@ _Verified by: Unauthenticated request is rejected, Non-admin user is rejected, A
 
 ## Deliverables
 
-- Create admin/ directory (planned)
-- Projection admin endpoints (planned)
-- Refactored DLQ endpoints (planned)
-- Event flow trace query (planned)
-- System state snapshot query (planned)
-- Durable function run queries (planned)
-- Admin authorization wrapper (planned)
-- Admin API documentation (planned)
+- Create admin/ directory (pending)
+- Projection admin endpoints (pending)
+- Refactored DLQ endpoints (pending)
+- Event flow trace query (pending)
+- System state snapshot query (pending)
+- Durable function run queries (pending)
+- Admin authorization wrapper (pending)
+- Admin API documentation (pending)
 
 ---
 

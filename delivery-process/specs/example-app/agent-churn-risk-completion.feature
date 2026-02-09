@@ -98,14 +98,14 @@ Feature: Agent Churn Risk Completion - Full LLM Integration in Example App
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Churn-risk action handler | planned | order-management/convex/contexts/agent/handlers/eventAction.ts | Yes | integration |
-      | Churn-risk onComplete handler update | planned | order-management/convex/contexts/agent/handlers/onComplete.ts | Yes | integration |
-      | LLM analysis wiring | planned | order-management/convex/contexts/agent/_patterns/churnRisk.ts | Yes | unit |
-      | Agent component migration | planned | order-management/convex/contexts/agent/component/ | Yes | integration |
-      | SuggestCustomerOutreach command handler | planned | order-management/convex/commands/customerOutreach.ts | Yes | integration |
-      | Approval expiration cron enhancement | planned | order-management/convex/crons.ts | Yes | integration |
-      | Full flow integration test | planned | order-management/tests/integration/agent/churn-risk-flow.test.ts | Yes | integration |
-      | Churn-risk BDD feature file | planned | order-management/tests/integration-features/agent/churn-risk.feature | Yes | integration |
+      | Churn-risk action handler | pending | order-management/convex/contexts/agent/handlers/eventAction.ts | Yes | integration |
+      | Churn-risk onComplete handler update | pending | order-management/convex/contexts/agent/handlers/onComplete.ts | Yes | integration |
+      | LLM analysis wiring | pending | order-management/convex/contexts/agent/_patterns/churnRisk.ts | Yes | unit |
+      | Agent component migration | pending | order-management/convex/contexts/agent/component/ | Yes | integration |
+      | SuggestCustomerOutreach command handler | pending | order-management/convex/commands/customerOutreach.ts | Yes | integration |
+      | Approval expiration cron enhancement | pending | order-management/convex/crons.ts | Yes | integration |
+      | Full flow integration test | pending | order-management/tests/integration/agent/churn-risk-flow.test.ts | Yes | integration |
+      | Churn-risk BDD feature file | pending | order-management/tests/integration-features/agent/churn-risk.feature | Yes | integration |
 
   # ============================================================================
   # RULE 1: Churn-Risk Agent Uses Hybrid LLM Flow

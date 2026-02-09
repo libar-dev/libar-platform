@@ -50,10 +50,10 @@ Feature: Deterministic ID Hashing - OCC-Based Uniqueness Without TTL
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | deterministicStreamId() function | planned | @libar-dev/platform-core/src/uniqueness/deterministic-id.ts | Yes | unit |
-      | Hash algorithm selection | planned | @libar-dev/platform-core/src/uniqueness/hash.ts | Yes | unit |
-      | Conflict error handling | planned | @libar-dev/platform-core/src/uniqueness/errors.ts | Yes | unit |
-      | Pattern documentation | planned | docs/architecture/UNIQUENESS-PATTERNS.md | No | - |
+      | deterministicStreamId() function | pending | @libar-dev/platform-core/src/uniqueness/deterministic-id.ts | Yes | unit |
+      | Hash algorithm selection | pending | @libar-dev/platform-core/src/uniqueness/hash.ts | Yes | unit |
+      | Conflict error handling | pending | @libar-dev/platform-core/src/uniqueness/errors.ts | Yes | unit |
+      | Pattern documentation | pending | docs/architecture/UNIQUENESS-PATTERNS.md | No | - |
 
   # ============================================================================
   # RULE 1: Stream ID is Deterministic from Business Key

@@ -32,11 +32,11 @@ Feature: Example App Modernization - Reference Implementation Freeze
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | DCB multi-product reservation | completed | examples/order-management/convex/inventory.ts | Yes | unit |
-      | ReactiveProjection OrderDetailView | completed | examples/order-management/tests/steps/modernization/reactive-projection.steps.ts | Yes | unit |
-      | Fat Events OrderSubmitted enrichment | completed | examples/order-management/convex/contexts/orders/domain/events.ts | Yes | unit |
-      | README Reference Implementation section | completed | examples/order-management/README.md | Yes | unit |
-      | Patterns Demonstrated catalog | completed | examples/order-management/README.md | Yes | unit |
+      | DCB multi-product reservation | complete | examples/order-management/convex/inventory.ts | Yes | unit |
+      | ReactiveProjection OrderDetailView | complete | examples/order-management/tests/steps/modernization/reactive-projection.steps.ts | Yes | unit |
+      | Fat Events OrderSubmitted enrichment | complete | examples/order-management/convex/contexts/orders/domain/events.ts | Yes | unit |
+      | README Reference Implementation section | complete | examples/order-management/README.md | Yes | unit |
+      | Patterns Demonstrated catalog | complete | examples/order-management/README.md | Yes | unit |
 
   # ===========================================================================
   # RULE 1: DCB Demo - Multi-Product Reservation

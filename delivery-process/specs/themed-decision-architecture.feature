@@ -30,11 +30,11 @@ Feature: Themed Decision Architecture
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | Add `adr-theme` tag to registry | Pending | No | tag-registry.json |
-      | Theme-grouped decision generator | Pending | No | generators/ |
-      | Dependency graph generator | Pending | No | generators/ |
-      | ADR migration scripts | Pending | No | scripts/ |
-      | Review and port 33 active ADRs | Pending | No | decisions/ |
+      | Add `adr-theme` tag to registry | pending | No | tag-registry.json |
+      | Theme-grouped decision generator | pending | No | generators/ |
+      | Dependency graph generator | pending | No | generators/ |
+      | ADR migration scripts | pending | No | scripts/ |
+      | Review and port 33 active ADRs | pending | No | decisions/ |
 
   # ===========================================================================
   # Theme Structure (from synthesis)

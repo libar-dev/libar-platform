@@ -300,17 +300,17 @@ _Verified by: Agent config references patterns from registry, Handler uses patte
 
 ## Deliverables
 
-- Agent command router (planned)
-- CommandOrchestrator integration for agent commands (planned)
-- Agent lifecycle FSM (planned)
-- StartAgent command handler (planned)
-- PauseAgent command handler (planned)
-- ResumeAgent command handler (planned)
-- StopAgent command handler (planned)
-- ReconfigureAgent command handler (planned)
-- Unified pattern executor (planned)
-- Pattern registry (planned)
-- AgentBCConfig patterns field (planned)
+- Agent command router (pending)
+- CommandOrchestrator integration for agent commands (pending)
+- Agent lifecycle FSM (pending)
+- StartAgent command handler (pending)
+- PauseAgent command handler (pending)
+- ResumeAgent command handler (pending)
+- StopAgent command handler (pending)
+- ReconfigureAgent command handler (pending)
+- Unified pattern executor (pending)
+- Pattern registry (pending)
+- AgentBCConfig patterns field (pending)
 
 ---
 

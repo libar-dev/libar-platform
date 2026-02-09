@@ -42,15 +42,15 @@ Feature: Health Endpoints and Metrics Collection
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Health check types | planned | @libar-dev/platform-core/src/monitoring/health/types.ts | Yes | unit |
-      | checkReadiness query | planned | examples/order-management/convex/health.ts | Yes | integration |
-      | checkLiveness query | planned | examples/order-management/convex/health.ts | Yes | unit |
-      | HTTP router with /health/* routes | planned | examples/order-management/convex/http.ts | Yes | integration |
-      | Metrics types | planned | @libar-dev/platform-core/src/monitoring/metrics/types.ts | Yes | unit |
-      | MetricsCollector | planned | @libar-dev/platform-core/src/monitoring/metrics/collector.ts | Yes | unit |
-      | Projection lag calculator | planned | @libar-dev/platform-core/src/monitoring/metrics/projectionLag.ts | Yes | unit |
-      | Workpool depth query | planned | examples/order-management/convex/health.ts | Yes | integration |
-      | System health aggregator | planned | @libar-dev/platform-core/src/monitoring/health/aggregator.ts | Yes | unit |
+      | Health check types | pending | @libar-dev/platform-core/src/monitoring/health/types.ts | Yes | unit |
+      | checkReadiness query | pending | examples/order-management/convex/health.ts | Yes | integration |
+      | checkLiveness query | pending | examples/order-management/convex/health.ts | Yes | unit |
+      | HTTP router with /health/* routes | pending | examples/order-management/convex/http.ts | Yes | integration |
+      | Metrics types | pending | @libar-dev/platform-core/src/monitoring/metrics/types.ts | Yes | unit |
+      | MetricsCollector | pending | @libar-dev/platform-core/src/monitoring/metrics/collector.ts | Yes | unit |
+      | Projection lag calculator | pending | @libar-dev/platform-core/src/monitoring/metrics/projectionLag.ts | Yes | unit |
+      | Workpool depth query | pending | examples/order-management/convex/health.ts | Yes | integration |
+      | System health aggregator | pending | @libar-dev/platform-core/src/monitoring/health/aggregator.ts | Yes | unit |
 
   # ===========================================================================
   # RULE 1: Health Endpoints for K8s

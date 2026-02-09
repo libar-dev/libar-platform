@@ -250,14 +250,14 @@ _Verified by: Contract test validates schema compatibility, Contract sample gene
 
 ## Deliverables
 
-- Upcaster implementation (planned)
-- Downcaster implementation (planned)
-- Migration path validation (planned)
-- Contract sample generation (planned)
-- Producer contract tests (planned)
-- Consumer contract tests (planned)
-- Compatibility verification (planned)
-- Contract violation detection (planned)
+- Upcaster implementation (pending)
+- Downcaster implementation (pending)
+- Migration path validation (pending)
+- Contract sample generation (pending)
+- Producer contract tests (pending)
+- Consumer contract tests (pending)
+- Compatibility verification (pending)
+- Contract violation detection (pending)
 
 ---
 

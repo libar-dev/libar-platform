@@ -43,12 +43,12 @@ Feature: Reservation Pattern - TTL-Based Pre-Creation Uniqueness
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Reservation table schema | implemented | @libar-dev/platform-core/src/reservations/schema.ts | Yes | unit |
-      | reserve() function | implemented | @libar-dev/platform-core/src/reservations/reserve.ts | Yes | unit |
-      | confirm() function | implemented | @libar-dev/platform-core/src/reservations/confirm.ts | Yes | unit |
-      | release() function | implemented | @libar-dev/platform-core/src/reservations/release.ts | Yes | unit |
-      | TTL expiration cron | implemented | @libar-dev/platform-core/src/reservations/expire.ts | Yes | integration |
-      | Reservation documentation | implemented | docs/architecture/RESERVATION-PATTERN.md | No | - |
+      | Reservation table schema | complete | @libar-dev/platform-core/src/reservations/schema.ts | Yes | unit |
+      | reserve() function | complete | @libar-dev/platform-core/src/reservations/reserve.ts | Yes | unit |
+      | confirm() function | complete | @libar-dev/platform-core/src/reservations/confirm.ts | Yes | unit |
+      | release() function | complete | @libar-dev/platform-core/src/reservations/release.ts | Yes | unit |
+      | TTL expiration cron | complete | @libar-dev/platform-core/src/reservations/expire.ts | Yes | integration |
+      | Reservation documentation | complete | docs/architecture/RESERVATION-PATTERN.md | No | - |
 
   Rule: Reservations prevent race conditions
 

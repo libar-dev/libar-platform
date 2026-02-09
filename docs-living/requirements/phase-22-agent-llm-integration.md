@@ -300,14 +300,14 @@ _Verified by: Agent subscription with onComplete receives completion callbacks, 
 
 ## Deliverables
 
-- Agent action handler factory (planned)
-- LLM-integrated onComplete handler (planned)
-- Rate limiter integration (planned)
-- Cost budget tracking (planned)
-- @convex-dev/agent thread adapter (planned)
-- onComplete in CreateAgentSubscriptionOptions (planned)
-- Circuit breaker for LLM (planned)
-- Action/mutation integration test (planned)
+- Agent action handler factory (pending)
+- LLM-integrated onComplete handler (pending)
+- Rate limiter integration (pending)
+- Cost budget tracking (pending)
+- @convex-dev/agent thread adapter (pending)
+- onComplete in CreateAgentSubscriptionOptions (pending)
+- Circuit breaker for LLM (pending)
+- Action/mutation integration test (pending)
 
 ---
 

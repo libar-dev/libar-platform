@@ -244,14 +244,14 @@ _Verified by: SuggestCustomerOutreach routes to outreach handler, Full end-to-en
 
 ## Deliverables
 
-- Churn-risk action handler (planned)
-- Churn-risk onComplete handler update (planned)
-- LLM analysis wiring (planned)
-- Agent component migration (planned)
-- SuggestCustomerOutreach command handler (planned)
-- Approval expiration cron enhancement (planned)
-- Full flow integration test (planned)
-- Churn-risk BDD feature file (planned)
+- Churn-risk action handler (pending)
+- Churn-risk onComplete handler update (pending)
+- LLM analysis wiring (pending)
+- Agent component migration (pending)
+- SuggestCustomerOutreach command handler (pending)
+- Approval expiration cron enhancement (pending)
+- Full flow integration test (pending)
+- Churn-risk BDD feature file (pending)
 
 ---
 

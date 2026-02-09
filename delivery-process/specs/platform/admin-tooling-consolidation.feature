@@ -42,14 +42,14 @@ Feature: Admin Tooling Consolidation - Unified Operations Interface
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Create admin/ directory | planned | examples/order-management/convex/admin/ | No | - |
-      | Projection admin endpoints | planned | examples/order-management/convex/admin/projections.ts | Yes | integration |
-      | Refactored DLQ endpoints | planned | examples/order-management/convex/admin/deadLetters.ts | Yes | integration |
-      | Event flow trace query | planned | examples/order-management/convex/admin/diagnostics.ts | Yes | integration |
-      | System state snapshot query | planned | examples/order-management/convex/admin/diagnostics.ts | Yes | integration |
-      | Durable function run queries | planned | examples/order-management/convex/admin/durableFunctions.ts | Yes | integration |
-      | Admin authorization wrapper | planned | examples/order-management/convex/admin/_auth.ts | Yes | unit |
-      | Admin API documentation | planned | docs/operations/ADMIN-API.md | No | - |
+      | Create admin/ directory | pending | examples/order-management/convex/admin/ | No | - |
+      | Projection admin endpoints | pending | examples/order-management/convex/admin/projections.ts | Yes | integration |
+      | Refactored DLQ endpoints | pending | examples/order-management/convex/admin/deadLetters.ts | Yes | integration |
+      | Event flow trace query | pending | examples/order-management/convex/admin/diagnostics.ts | Yes | integration |
+      | System state snapshot query | pending | examples/order-management/convex/admin/diagnostics.ts | Yes | integration |
+      | Durable function run queries | pending | examples/order-management/convex/admin/durableFunctions.ts | Yes | integration |
+      | Admin authorization wrapper | pending | examples/order-management/convex/admin/_auth.ts | Yes | unit |
+      | Admin API documentation | pending | docs/operations/ADMIN-API.md | No | - |
 
   # ===========================================================================
   # RULE 1: Directory Structure

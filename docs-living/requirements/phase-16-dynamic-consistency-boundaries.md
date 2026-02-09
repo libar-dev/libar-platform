@@ -234,13 +234,13 @@ _Verified by: DCB execution requires decider, Decider result determines operatio
 
 ## Deliverables
 
-- dcbScopes table in Event Store (implemented)
-- Scope operations (create, check, commit) (implemented)
-- Scope key utilities (implemented)
-- DCB types (DCBScopeKey, DCBScope, ExecuteWithDCBConfig, ScopeOperations) (implemented)
-- executeWithDCB() helper with OCC (implemented)
-- Virtual stream queries (implemented)
-- DCB documentation (implemented)
+- dcbScopes table in Event Store (complete)
+- Scope operations (create, check, commit) (complete)
+- Scope key utilities (complete)
+- DCB types (DCBScopeKey, DCBScope, ExecuteWithDCBConfig, ScopeOperations) (complete)
+- executeWithDCB() helper with OCC (complete)
+- Virtual stream queries (complete)
+- DCB documentation (complete)
 
 ---
 

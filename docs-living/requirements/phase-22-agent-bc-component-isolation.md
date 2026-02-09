@@ -187,14 +187,14 @@ _Verified by: Agent handler receives projection data as argument, Missing projec
 
 ## Deliverables
 
-- Agent component definition (stub complete)
-- Agent component schema (stub complete)
-- Checkpoint public API (stub complete)
-- Audit public API (stub complete)
-- Dead letter public API (stub complete)
-- Command public API (stub complete)
-- Approval public API (stub complete)
-- Cross-component query pattern (stub complete)
+- Agent component definition (complete)
+- Agent component schema (complete)
+- Checkpoint public API (complete)
+- Audit public API (complete)
+- Dead letter public API (complete)
+- Command public API (complete)
+- Approval public API (complete)
+- Cross-component query pattern (complete)
 - Design session methodology (complete)
 - Argument injection pattern (complete)
 

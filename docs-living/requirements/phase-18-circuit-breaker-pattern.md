@@ -521,16 +521,16 @@ _Verified by: Payment circuit opens after 3 failures, Email circuit tolerates mo
 
 ## Deliverables
 
-- Circuit breaker state machine (pure) (planned)
-- Circuit breaker types (planned)
-- circuitBreakers table schema (planned)
-- withCircuitBreaker wrapper (planned)
-- loadCircuitState query (planned)
-- recordSuccess mutation (planned)
-- recordFailure mutation (planned)
-- checkHalfOpen scheduled mutation (planned)
-- onCircuitProbeComplete handler (planned)
-- Circuit breaker metrics (planned)
+- Circuit breaker state machine (pure) (pending)
+- Circuit breaker types (pending)
+- circuitBreakers table schema (pending)
+- withCircuitBreaker wrapper (pending)
+- loadCircuitState query (pending)
+- recordSuccess mutation (pending)
+- recordFailure mutation (pending)
+- checkHalfOpen scheduled mutation (pending)
+- onCircuitProbeComplete handler (pending)
+- Circuit breaker metrics (pending)
 
 ---
 
