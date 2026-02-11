@@ -7,14 +7,14 @@
 
 ## Summary
 
-**Overall:** [███████████░░░░░░░░░] 21/37 (57%)
+**Overall:** [████████████░░░░░░░░] 22/37 (59%)
 
 | Metric         | Value |
 | -------------- | ----- |
 | Total Features | 37    |
-| Completed      | 21    |
+| Completed      | 22    |
 | Active         | 2     |
-| Planned        | 14    |
+| Planned        | 13    |
 | Product Areas  | 3     |
 | User Roles     | 0     |
 
@@ -24,12 +24,12 @@
 
 ### DeliveryProcess
 
-2/5 complete (40%)
+3/5 complete (60%)
 
+- [✅ Codec Driven Reference Generation - eliminate recipe files via codec composition](requirements/phase-100-codec-driven-reference-generation.md)
 - [✅ Process Metadata Expansion - enable variance and governance tracking](requirements/phase-100-process-metadata-expansion.md)
 - [✅ Repo Level Docs Generation - enable multi source documentation generation](requirements/phase-100-repo-level-docs-generation.md)
 - [🚧 Process Enhancements - unify process enhancement opportunities](requirements/phase-100-process-enhancements.md)
-- [📋 Codec Driven Reference Generation - eliminate recipe files via codec composition](requirements/phase-100-codec-driven-reference-generation.md)
 - [📋 Test Content Blocks - test what generators capture](requirements/phase-100-test-content-blocks.md)
 
 ### ExampleApp
@@ -83,6 +83,7 @@
 | ✅ Agent As Bounded Context          | Platform        | -         | completed |
 | ✅ Bdd Testing Infrastructure        | Platform        | -         | completed |
 | ✅ Bounded Context Foundation        | Platform        | -         | completed |
+| ✅ Codec Driven Reference Generation | DeliveryProcess | -         | completed |
 | ✅ Command Bus Foundation            | Platform        | -         | completed |
 | ✅ Decider Pattern                   | Platform        | -         | completed |
 | ✅ Durable Events Integration        | Platform        | -         | completed |
@@ -110,7 +111,6 @@
 | 📋 Agent Command Infrastructure      | Platform        | -         | planned   |
 | 📋 Agent LLM Integration             | Platform        | -         | planned   |
 | 📋 Circuit Breaker Pattern           | Platform        | -         | planned   |
-| 📋 Codec Driven Reference Generation | DeliveryProcess | -         | planned   |
 | 📋 Deterministic Id Hashing          | Platform        | -         | planned   |
 | 📋 Health Observability              | Platform        | -         | planned   |
 | 📋 Integration Patterns21a           | Platform        | -         | planned   |

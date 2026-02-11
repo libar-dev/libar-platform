@@ -7,21 +7,21 @@
 
 ## Summary
 
-**Overall Progress:** [███████████████░░░░░] 57/75 (76%)
+**Overall Progress:** [███████████████░░░░░] 58/75 (77%)
 
 | Metric         | Value |
 | -------------- | ----- |
 | Total Patterns | 75    |
-| Completed      | 57    |
+| Completed      | 58    |
 | Active         | 3     |
-| Planned        | 15    |
+| Planned        | 14    |
 | Active Phases  | 2     |
 
 ---
 
 ## Active Phases
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
 [██░░░░░░░░░░░░░] 1/7 14% complete (1 done, 1 active, 5 planned)
 
@@ -40,13 +40,13 @@
 - ✅ cancel-order.feature (behavior) update
 - ✅ cancel-order.feature (integration) update
 
-[View ConfirmedOrderCancellation details →](current/phase-22-confirmed-order-cancellation.md)
+[View AgentChurnRiskCompletion details →](current/phase-22-agent-churn-risk-completion.md)
 
 ---
 
 ### 🚧 ThemedDecisionArchitecture
 
-[█████░░░░░░░░░░] 2/6 33% complete (2 done, 1 active, 3 planned)
+[████████░░░░░░░] 3/6 50% complete (3 done, 1 active, 2 planned)
 
 | Pattern                 | Description                                                                                        |
 | ----------------------- | -------------------------------------------------------------------------------------------------- |

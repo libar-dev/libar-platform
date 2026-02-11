@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 158 rules from 35 features across 3 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 160 rules from 35 features across 3 product areas.**
 
 ---
 
@@ -27,17 +27,23 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 
 - **Rationale:** Recipe Rule blocks contain durable knowledge (tables, context, rationale) that belongs in decision records — permanent, queryable, tagged. Decision records are already extracted as patterns in MasterDataset.
 
-#### Each reference codec produces dual output via DetailLevel
+#### Reference codec handles missing or empty sources gracefully
 
-- **Invariant:** A single ReferenceDocConfig drives both the detailed human reference (docs/) and the compact AI context (\_claude-md/). The codec factory is invoked twice with different DetailLevel values.
+- **Invariant:** When convention tags, shape sources, or behavior tags match zero items in the MasterDataset, the codec produces a valid but sparse document rather than failing.
 
-- **Rationale:** The recipe system declared dual targets in its Target Documents table. The codec approach achieves the same by running the same codec with different options. No separate configuration needed.
+- **Rationale:** Not all reference configs will have all three source types populated. Some references have no shapes (Session Guides), others have no conventions yet (before migration). Graceful degradation is required.
+
+#### Each reference generator produces dual output via DetailLevel
+
+- **Invariant:** A single ReferenceDocConfig drives both the detailed human reference (docs/) and the compact AI context (\_claude-md/). The ReferenceDocGenerator invokes the codec factory twice with different DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
+
+- **Rationale:** The recipe system declared dual targets in its Target Documents table. The generator approach achieves the same by running the same codec with different options. No separate configuration needed.
 
 #### Reference generators are discovered via the existing registry
 
-- **Invariant:** Reference generators register themselves in the GeneratorRegistry using the existing CodecBasedGenerator adapter. No new generator infrastructure is needed.
+- **Invariant:** Reference generators register themselves in the GeneratorRegistry by implementing DocumentGenerator directly, following the DecisionDocGeneratorImpl precedent. DOCUMENT_TYPES is `as const` and not dynamically extensible, so the CodecBasedGenerator adapter is not used.
 
-- **Rationale:** The existing 19 registered generators use the same pattern. Reference generators are just additional registrations.
+- **Rationale:** DecisionDocGeneratorImpl already demonstrates this pattern: direct DocumentGenerator implementation, dual output, factory function registration. No changes needed to generate.ts, codec-based.ts, or registry.ts.
 
 #### Convention tag values classify decision records by topic
 
@@ -58,6 +64,12 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 | pipeline-architecture | Four-stage pipeline, codecs, MasterDataset | ArchitectureReference                         |
 | publishing            | Publishing strategy, versioning            | PublishingReference                           |
 | doc-generation        | Recipes, generators, dual output           | IndexReference                                |
+
+#### Recipe Rule blocks are migrated to convention-tagged decision records
+
+- **Invariant:** Every Rule block from the 11 recipe .feature files is preserved as a Rule block in a decision record tagged with the appropriate `@libar-docs-convention` value. No durable content is lost during migration.
+
+- **Rationale:** Recipe Rule blocks contain tables, rationale, and context that are the authoritative reference for the delivery process. Migration must be lossless.
 
 _[codec-driven-reference-generation.feature](libar-platform/delivery-process/specs/codec-driven-reference-generation.feature)_
 

@@ -7,13 +7,13 @@
 
 ## Progress
 
-**Overall:** [███████████████░░░░░] 57/75 (76% complete)
+**Overall:** [███████████████░░░░░] 58/75 (77% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 57    |
+| ✅ Completed | 58    |
 | 🚧 Active    | 3     |
-| 📋 Planned   | 15    |
+| 📋 Planned   | 14    |
 | **Total**    | 75    |
 
 ---
@@ -47,6 +47,7 @@
 | ✅ Bounded Context Identity                              | DDD                               | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
 | ✅ CMS Dual Write                                        | Core                              | completed | Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...      |
 | ✅ CMS Repository                                        | Pattern                           | completed | Factory for typed data access with automatic schema upcasting in dual-write handlers.                                    |
+| ✅ Codec Driven Reference Generation                     | Process Enhancements              | completed | Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.                      |
 | ✅ Command Bus                                           | Command                           | completed | Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.                        |
 | ✅ Command Bus Foundation                                | Completed Before Delivery Process | completed | Problem: Command execution requires idempotency (same command = same result), status tracking, and a standardized...     |
 | ✅ Command Orchestrator                                  | Command                           | completed | The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...     |
@@ -108,7 +109,6 @@
 | 📋 Agent Command Infrastructure                          | DDD                               | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                   |
 | 📋 Agent LLM Integration                                 | DDD                               | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.           |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
-| 📋 Codec Driven Reference Generation                     | Process Enhancements              | planned   | Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.                      |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
 | 📋 Health Observability                                  | DDD                               | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
 | 📋 Integration Patterns21a                               | DDD                               | planned   | Problem: Cross-context communication is ad-hoc.                                                                          |
@@ -270,12 +270,12 @@
 
 ### Process Enhancements
 
-2/4 complete (50%)
+3/4 complete (75%)
 
+- [✅ Codec Driven Reference Generation](patterns/codec-driven-reference-generation.md)
 - [✅ Process Metadata Expansion](patterns/process-metadata-expansion.md)
 - [✅ Repo Level Docs Generation](patterns/repo-level-docs-generation.md)
 - [🚧 Process Enhancements](patterns/process-enhancements.md)
-- [📋 Codec Driven Reference Generation](patterns/codec-driven-reference-generation.md)
 
 ---
 
@@ -307,11 +307,10 @@ graph TD
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    MiddlewarePipeline --> CommandBusFoundation
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
-    MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
-    CorrelationChainSystem --> EventStoreFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
     Event_Store_Durability_Types --> Workpool
@@ -341,6 +340,7 @@ graph TD
     Durable_Append_via_Workpool_Actions --> Workpool
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
+    CorrelationChainSystem --> EventStoreFoundation
     DualWriteContract --> BoundedContextIdentity
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
@@ -352,7 +352,6 @@ graph TD
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
-    CodecDrivenReferenceGeneration -.-> ThemedDecisionArchitecture
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation

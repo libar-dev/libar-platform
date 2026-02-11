@@ -6,13 +6,13 @@
 
 ## Progress
 
-**Progress:** [███████░░░░░░░░░░░░░] 2/6 (33%)
+**Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 2     |
+| ✅ Completed | 3     |
 | 🚧 Active    | 1     |
-| 📋 Planned   | 3     |
+| 📋 Planned   | 2     |
 | **Total**    | 6     |
 
 ---
@@ -74,21 +74,21 @@ See: deps/libar-dev-packages/packages/tooling/delivery-process/docs/ideation-con
 
 ## ✅ Recently Completed
 
-| Pattern                       | Description                                                                                                     |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| ✅ Process Metadata Expansion | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
-| ✅ Repo Level Docs Generation | As a monorepo maintainer, I want unified documentation generation from multiple sources.                        |
+| Pattern                              | Description                                                                                                     |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| ✅ Codec Driven Reference Generation | Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.             |
+| ✅ Process Metadata Expansion        | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
+| ✅ Repo Level Docs Generation        | As a monorepo maintainer, I want unified documentation generation from multiple sources.                        |
 
 ---
 
 <details>
-<summary>📋 Upcoming (3)</summary>
+<summary>📋 Upcoming (2)</summary>
 
-| Pattern                              | Effort |
-| ------------------------------------ | ------ |
-| 📋 Codec Driven Reference Generation | -      |
-| 📋 Test Content Blocks               | -      |
-| 📋 Themed Decision Architecture      | -      |
+| Pattern                         | Effort |
+| ------------------------------- | ------ |
+| 📋 Test Content Blocks          | -      |
+| 📋 Themed Decision Architecture | -      |
 
 </details>
 

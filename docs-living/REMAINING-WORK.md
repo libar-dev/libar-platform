@@ -7,13 +7,13 @@
 
 ## Summary
 
-**Overall Progress:** [███████████████░░░░░] 57/75 (76%)
+**Overall Progress:** [███████████████░░░░░] 58/75 (77%)
 
 | Status              | Count |
 | ------------------- | ----- |
 | 🚧 Active           | 3     |
-| 📋 Planned          | 15    |
-| **Total Remaining** | 18    |
+| 📋 Planned          | 14    |
+| **Total Remaining** | 17    |
 
 ---
 
@@ -24,8 +24,8 @@
 | 📋 [WorkpoolPartitioningStrategy](remaining/phase-18-workpool-partitioning-strategy.md) | 4         | 0      | 56%      |
 | 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                      | 1         | 0      | 67%      |
 | 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)             | 2         | 0      | 0%       |
-| 🚧 [AgentChurnRiskCompletion](remaining/phase-22-agent-churn-risk-completion.md)        | 6         | 1      | 14%      |
-| 🚧 [ThemedDecisionArchitecture](remaining/phase-100-themed-decision-architecture.md)    | 4         | 1      | 33%      |
+| 🚧 [ConfirmedOrderCancellation](remaining/phase-22-confirmed-order-cancellation.md)     | 6         | 1      | 14%      |
+| 🚧 [ThemedDecisionArchitecture](remaining/phase-100-themed-decision-architecture.md)    | 3         | 1      | 50%      |
 | 🚧 Backlog (No Phase)                                                                   | 1         | 1      | 0%       |
 
 ---
@@ -36,7 +36,7 @@
 | ----------------- | ----- |
 | 🚧 In Progress    | 3     |
 | ✅ Ready to Start | 8     |
-| ⚠️ Blocked        | 7     |
+| ⚠️ Blocked        | 6     |
 
 ### Top Ready to Start
 

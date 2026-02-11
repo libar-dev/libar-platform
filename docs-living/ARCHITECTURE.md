@@ -87,19 +87,19 @@ graph TB
     OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
+    InventoryCommandHandlers --> InventoryDeciders
     OrderCommandHandlers --> OrderDeciders
     ChurnRiskEventHandler --> CustomerCancellationsProjection
-    InventoryCommandHandlers --> InventoryDeciders
 ```
 
 ---

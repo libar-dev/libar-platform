@@ -213,9 +213,10 @@ Otherwise, leave as-is.
 **Impact:** Stub metadata (implementations, target paths, design decisions) does not appear in
 generated documentation. The Process API surfaces this data, but the doc generators don't.
 
-**Resolution:** This gap will close naturally when the `CodecDrivenReferenceGeneration` spec is
-implemented — its deliverables include CLI integration and generator registrations. For now,
-the Process API is the primary way to access stub and decision data.
+**Resolution:** The codec-driven reference generation system is now implemented downstream
+(delivery-process PR #19). The `docs:reference` generator produces all 22 reference documents
+from convention-tagged decision records. The monorepo-level `docs:*` scripts still have the
+asymmetry noted above, but the downstream package handles reference document generation directly.
 
 ### D-7: CLAUDE.md Category Count [FIXED]
 
@@ -304,15 +305,16 @@ only scan `.ts` and `.feature` files, or add `delivery-process/docs/` to `isGene
 
 All 26 monorepo stubs now have `targetPath` populated:
 
-| Stub Group                           | Pattern                        | Count | Target Prefix                                                                  | `targetExists` |
-| ------------------------------------ | ------------------------------ | ----- | ------------------------------------------------------------------------------ | -------------- |
-| `agent-component-isolation/`         | AgentBCComponentIsolation      | 8     | `platform-core/src/agent/component/`                                           | false          |
-| `agent-action-handler/`              | AgentLLMIntegration            | 5     | `platform-core/src/agent/`, `platform-bus/src/`, `platform-core/src/eventbus/` | false          |
-| `agent-command-routing/`             | AgentCommandInfrastructure     | 5     | `platform-core/src/agent/`                                                     | false          |
-| `agent-lifecycle-fsm/`               | AgentCommandInfrastructure     | 5     | `platform-core/src/agent/`                                                     | false          |
-| `codec-driven-reference-generation/` | CodecDrivenReferenceGeneration | 3     | `src/renderable/codecs/`, `src/generators/`                                    | false          |
+| Stub Group                   | Pattern                    | Count | Target Prefix                                                                  | `targetExists` |
+| ---------------------------- | -------------------------- | ----- | ------------------------------------------------------------------------------ | -------------- |
+| `agent-component-isolation/` | AgentBCComponentIsolation  | 8     | `platform-core/src/agent/component/`                                           | false          |
+| `agent-action-handler/`      | AgentLLMIntegration        | 5     | `platform-core/src/agent/`, `platform-bus/src/`, `platform-core/src/eventbus/` | false          |
+| `agent-command-routing/`     | AgentCommandInfrastructure | 5     | `platform-core/src/agent/`                                                     | false          |
+| `agent-lifecycle-fsm/`       | AgentCommandInfrastructure | 5     | `platform-core/src/agent/`                                                     | false          |
 
-**Total: 26 stubs, 0 resolved (all roadmap), 26 with populated `targetPath`.**
+**Total: 23 stubs, 0 resolved (all roadmap), 23 with populated `targetPath`.**
+
+> **Note:** 3 codec-driven-reference-generation stubs were removed — implemented downstream in delivery-process PR #19.
 
 The 10 package-level stubs in `deps-packages/delivery-process/` already used the correct
 `@libar-docs-target` format and were not affected.
@@ -341,13 +343,13 @@ The 10 package-level stubs in `deps-packages/delivery-process/` already used the
 | ~~R-3~~ | ~~Run `pnpm claude:build` to fix "19 categories" -> "21 categories"~~       | —      | **DONE** — fixed in validation session                  |
 | R-4     | Decide on PDRs 011-013: add the `completed` lifecycle status or leave as-is | 10 min | `decisions/pdr-011*.feature` through `pdr-013*.feature` |
 
-### Priority 3 (Future — Addressed by CodecDrivenReferenceGeneration)
+### Priority 3 (Future — Partially addressed by CodecDrivenReferenceGeneration, now completed downstream)
 
-| #   | Action                                                        | Effort | Where               |
-| --- | ------------------------------------------------------------- | ------ | ------------------- |
-| R-5 | Add stubs to `docs:*` generator input globs                   | Medium | `package.json` root |
-| R-6 | Add decisions/releases to more `docs:*` scripts               | Medium | `package.json` root |
-| R-7 | Ensure `docs:remaining-work` includes all platform TS sources | Small  | `package.json` root |
+| #   | Action                                                        | Effort | Where               | Status                                                                                               |
+| --- | ------------------------------------------------------------- | ------ | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| R-5 | Add stubs to `docs:*` generator input globs                   | Medium | `package.json` root | Open — downstream `docs:reference` handles reference docs but monorepo `docs:*` still excludes stubs |
+| R-6 | Add decisions/releases to more `docs:*` scripts               | Medium | `package.json` root | Open — same asymmetry remains                                                                        |
+| R-7 | Ensure `docs:remaining-work` includes all platform TS sources | Small  | `package.json` root | Open                                                                                                 |
 
 ---
 
