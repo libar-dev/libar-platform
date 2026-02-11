@@ -2,7 +2,7 @@
 @libar-docs-release:vNEXT
 @process-enhancements
 @libar-docs-pattern:CodecDrivenReferenceGeneration
-@libar-docs-status:active
+@libar-docs-status:completed
 @libar-docs-phase:100
 @libar-docs-quarter:Q1-2026
 @libar-docs-product-area:DeliveryProcess
