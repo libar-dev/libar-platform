@@ -3,13 +3,12 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentLLMIntegration
+ * @libar-docs-target platform-bus/src/agent-subscription.ts
  *
  * Agent Subscription Factory — DS-2 Stub
  *
  * Extends the existing `createAgentSubscription` factory to produce
  * `ActionSubscription` variants when an action handler is provided.
- *
- * Target: platform-bus/src/agent-subscription.ts (merge with existing)
  *
  * ## Design Decisions
  *

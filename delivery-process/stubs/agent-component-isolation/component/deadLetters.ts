@@ -5,14 +5,13 @@
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-uses AgentDeadLetter
  * @libar-docs-used-by EventHandler, AdminUI, OnCompleteHandler
+ * @libar-docs-target platform-core/src/agent/component/deadLetters.ts
  *
  * Agent Component - Dead Letter Public API — DS-1 Stub
  *
  * Provides dead letter recording, status management, and querying for
  * agent events that failed processing. Dead letters enable investigation,
  * manual replay, and monitoring of agent health.
- *
- * Target: platform-core/src/agent/component/deadLetters.ts
  *
  * ## Dead Letter API - Failed Event Management
  *

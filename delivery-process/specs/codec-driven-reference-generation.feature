@@ -8,7 +8,7 @@
 @libar-docs-product-area:DeliveryProcess
 @libar-docs-business-value:eliminate-recipe-files-via-codec-composition
 @libar-docs-priority:high
-@libar-docs-depends-on:ThemedDecisionArchitecture
+@libar-docs-executable-specs:deps-packages/delivery-process/tests/features/behavior/reference-generation
 Feature: Codec-Driven Reference Generation
 
   **Problem:**
@@ -31,9 +31,9 @@ Feature: Codec-Driven Reference Generation
   | Benefit | Impact |
   | --- | --- |
   | Eliminate 11 recipe files | Less surface area, no parallel config format |
-  | Reuse existing codec infrastructure | z.codec(), DetailLevel, CodecBasedGenerator |
+  | Reuse existing codec infrastructure | z.codec(), DetailLevel, DocumentGenerator |
   | Convention content in decision records | Durable, queryable, tagged — not trapped in recipes |
-  | Dual output from single codec | DetailLevel controls docs/ vs _claude-md/ output |
+  | Dual output from single config | DetailLevel controls docs/ vs _claude-md/ output |
   | Codec IS the config | No external configuration files to maintain |
 
   **Architecture:**
@@ -43,7 +43,7 @@ Feature: Codec-Driven Reference Generation
   | ReferenceDocConfig | TypeScript config per document type | New |
   | ReferenceDocumentCodec | Parameterized codec composing from conventions + shapes + behaviors | New |
   | ConventionExtractor | Filters MasterDataset for convention-tagged decision records | New |
-  | reference-generators registration | Registers each reference doc in GeneratorRegistry | New |
+  | ReferenceDocGenerator | Implements DocumentGenerator directly, registers in GeneratorRegistry | New |
   | @libar-docs-convention tag | CSV tag on decision records | New taxonomy entry |
   | Decision record migration | Recipe Rule blocks → decision records | Migration |
 
@@ -61,17 +61,16 @@ Feature: Codec-Driven Reference Generation
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | ReferenceDocConfig type definition | pending | No | src/renderable/codecs/types/reference.ts |
+      | ReferenceDocConfig type definition | pending | Yes | src/renderable/codecs/types/reference.ts |
       | ConventionExtractor utility | pending | Yes | src/renderable/codecs/convention-extractor.ts |
       | ReferenceDocumentCodec factory | pending | Yes | src/renderable/codecs/reference.ts |
-      | Reference generator registrations | pending | No | src/generators/built-in/reference-generators.ts |
-      | @libar-docs-convention tag in registry | pending | No | src/taxonomy/registry-builder.ts |
+      | ReferenceDocGenerator (DocumentGenerator impl) | pending | Yes | src/generators/built-in/reference-generators.ts |
+      | @libar-docs-convention tag in registry | pending | No | upstream: deps-packages/delivery-process/src/taxonomy/ |
       | Convention values in taxonomy | pending | No | src/taxonomy/conventions.ts |
       | Decision record migration (existing ADRs) | pending | No | delivery-process/decisions/ |
       | Decision record creation (new from recipe Rules) | pending | No | delivery-process/decisions/ |
       | Recipe directory removal | pending | No | delivery-process/recipes/ (delete) |
       | CLI integration (generate-docs --generators reference-*) | pending | No | src/cli/generate-docs.ts |
-      | Dual output path support in generator | pending | No | src/generators/codec-based.ts |
 
   # ===========================================================================
   # Core Design: Parameterized Reference Codec
@@ -133,18 +132,55 @@ Feature: Codec-Driven Reference Generation
       And Invariant/Rationale/Verified-by metadata is preserved
 
   # ===========================================================================
+  # Edge Cases and Graceful Degradation
+  # ===========================================================================
+
+  @acceptance-criteria
+  Rule: Reference codec handles missing or empty sources gracefully
+
+    **Invariant:** When convention tags, shape sources, or behavior tags match
+    zero items in the MasterDataset, the codec produces a valid but sparse
+    document rather than failing.
+
+    **Rationale:** Not all reference configs will have all three source types
+    populated. Some references have no shapes (Session Guides), others have
+    no conventions yet (before migration). Graceful degradation is required.
+
+    @validation
+    Scenario: No conventions found for requested tag values
+      Given a MasterDataset with no decision records tagged "fsm-rules"
+      When the reference codec decodes for "Process Guard"
+      Then the output omits the conventions section
+      And the document is still valid with shape and behavior content
+
+    @validation
+    Scenario: No shape sources match any pattern file paths
+      Given a ReferenceDocConfig with shapeSources "src/nonexistent/*.ts"
+      When the reference codec decodes the MasterDataset
+      Then the output omits the type definitions section
+      And no error is raised
+
+    @edge-case
+    Scenario: Convention tag matches multiple decision records
+      Given ADR-006 and ADR-012 are both tagged "fsm-rules"
+      When extracting conventions for "fsm-rules"
+      Then both decision records contribute Rule block content
+      And content is ordered by source decision record
+
+  # ===========================================================================
   # Dual Output: docs/ and _claude-md/
   # ===========================================================================
 
   @acceptance-criteria
-  Rule: Each reference codec produces dual output via DetailLevel
+  Rule: Each reference generator produces dual output via DetailLevel
 
     **Invariant:** A single ReferenceDocConfig drives both the detailed human
-    reference (docs/) and the compact AI context (_claude-md/). The codec
-    factory is invoked twice with different DetailLevel values.
+    reference (docs/) and the compact AI context (_claude-md/). The
+    ReferenceDocGenerator invokes the codec factory twice with different
+    DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
 
     **Rationale:** The recipe system declared dual targets in its Target Documents
-    table. The codec approach achieves the same by running the same codec with
+    table. The generator approach achieves the same by running the same codec with
     different options. No separate configuration needed.
 
     **Verified by:** Dual output generation, Summary compaction quality
@@ -171,11 +207,13 @@ Feature: Codec-Driven Reference Generation
   Rule: Reference generators are discovered via the existing registry
 
     **Invariant:** Reference generators register themselves in the GeneratorRegistry
-    using the existing CodecBasedGenerator adapter. No new generator infrastructure
-    is needed.
+    by implementing DocumentGenerator directly, following the DecisionDocGeneratorImpl
+    precedent. DOCUMENT_TYPES is `as const` and not dynamically extensible, so the
+    CodecBasedGenerator adapter is not used.
 
-    **Rationale:** The existing 19 registered generators use the same pattern.
-    Reference generators are just additional registrations.
+    **Rationale:** DecisionDocGeneratorImpl already demonstrates this pattern:
+    direct DocumentGenerator implementation, dual output, factory function registration.
+    No changes needed to generate.ts, codec-based.ts, or registry.ts.
 
     Scenario: Reference generators appear in available generators list
       Given reference generators are registered
@@ -221,3 +259,25 @@ Feature: Codec-Driven Reference Generation
       When checking for "@libar-docs-convention"
       Then it exists with format "csv"
       And it accepts the defined convention values
+
+  # ===========================================================================
+  # Migration Validation
+  # ===========================================================================
+
+  @acceptance-criteria
+  Rule: Recipe Rule blocks are migrated to convention-tagged decision records
+
+    **Invariant:** Every Rule block from the 11 recipe .feature files is
+    preserved as a Rule block in a decision record tagged with the appropriate
+    `@libar-docs-convention` value. No durable content is lost during migration.
+
+    **Rationale:** Recipe Rule blocks contain tables, rationale, and context
+    that are the authoritative reference for the delivery process. Migration
+    must be lossless.
+
+    Scenario: Recipe Rule block content preserved in decision record
+      Given recipe "process-guard-reference.feature" has Rule "Escape Hatches"
+      And the Rule contains a table with "Situation", "Solution", "Example" columns
+      When the Rule is migrated to a decision record tagged "fsm-rules"
+      Then the decision record Rule block contains the same table
+      And Invariant/Rationale metadata is preserved

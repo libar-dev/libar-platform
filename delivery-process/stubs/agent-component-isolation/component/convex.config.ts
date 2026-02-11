@@ -4,14 +4,13 @@
  * @libar-docs-infra
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-uses AgentBCConfig
+ * @libar-docs-target platform-core/src/agent/component/convex.config.ts
  *
  * Agent Component Definition — DS-1 Stub
  *
  * Defines the agent bounded context as a Convex component with isolated database.
  * All agent-specific state (checkpoints, audit events, dead letters, commands,
  * pending approvals) resides in this component's isolated tables.
- *
- * Target: platform-core/src/agent/component/convex.config.ts
  *
  * ## Agent Component - Isolated BC State
  *

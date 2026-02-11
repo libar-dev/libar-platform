@@ -3,14 +3,13 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentLLMIntegration
+ * @libar-docs-target platform-core/src/agent/action-handler.ts
  *
  * Agent Action Handler Factory — DS-2 Stub
  *
  * Replaces `createAgentEventHandler` (init.ts) with an action-based handler
  * that can call external APIs (LLM). All persistence happens in the onComplete
  * mutation, not in the action.
- *
- * Target: platform-core/src/agent/action-handler.ts
  *
  * ## Design Decisions
  *

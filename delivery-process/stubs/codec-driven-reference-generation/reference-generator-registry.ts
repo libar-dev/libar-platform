@@ -2,21 +2,31 @@
  * @libar-docs
  * @libar-docs-status roadmap
  * @libar-docs-implements CodecDrivenReferenceGeneration
- * @libar-docs-uses GeneratorRegistry, CodecBasedGenerator
+ * @libar-docs-uses GeneratorRegistry, DocumentGenerator
  * @libar-docs-target src/generators/built-in/reference-generators.ts
  *
  * ## Reference Generator Registrations
  *
  * Registers all 11 reference document generators in the existing
- * GeneratorRegistry. Each registration is a ReferenceDocConfig object
- * that replaces one recipe .feature file.
+ * GeneratorRegistry. A single ReferenceDocGenerator class implements
+ * DocumentGenerator directly, iterating REFERENCE_CONFIGS to produce
+ * dual output (docs/ + _claude-md/) for each reference type.
  *
  * ## Design Decisions
  *
  * - AD-1: Configs live in one file — the registry IS the manifest
- * - AD-2: Each config registers TWO generators: detailed + summary
- * - AD-3: Generator names follow pattern: "{name}-reference" and "{name}-reference-claude"
+ * - AD-2: Single ReferenceDocGenerator handles all configs, producing dual output per config
+ * - AD-3: Generator name: "reference-docs" (single registration, all 11 types)
  * - AD-4: Output paths derived from config (docsFilename, claudeMdSection/claudeMdFilename)
+ * - AD-5: Follows DecisionDocGeneratorImpl pattern — implements DocumentGenerator
+ *         directly, bypasses CodecBasedGenerator/DOCUMENT_TYPES/CodecRegistry.
+ *         See decision-doc-generator.ts for the exact precedent.
+ * - AD-6: CodecBasedGenerator/DOCUMENT_TYPES path does NOT work because:
+ *         (a) DOCUMENT_TYPES is `as const` — not dynamically extensible at runtime
+ *         (b) CodecRegistry.register() requires a DocumentType key from the enum
+ *         (c) Adding new types requires changes to generate.ts, CodecOptions interface,
+ *             codec imports, and factory imports — all in the upstream read-only subtree
+ *         (d) DecisionDocGeneratorImpl already proves the direct path is sanctioned
  *
  * See: CodecDrivenReferenceGeneration spec
  * Since: DS (design session)
@@ -65,7 +75,7 @@ export const REFERENCE_CONFIGS: readonly ReferenceDocConfig[] = [
   },
   {
     title: "Configuration Reference",
-    conventionTags: ["config-presets"],
+    conventionTags: ["config-presets", "cli-patterns"],
     shapeSources: ["src/config/*.ts"],
     behaviorTags: ["configuration"],
     claudeMdSection: "config",
@@ -74,7 +84,7 @@ export const REFERENCE_CONFIGS: readonly ReferenceDocConfig[] = [
   },
   {
     title: "Instructions Reference",
-    conventionTags: ["annotation-system", "pattern-naming"],
+    conventionTags: ["annotation-system", "pattern-naming", "cli-patterns"],
     shapeSources: ["src/taxonomy/*.ts", "src/cli/*.ts"],
     behaviorTags: ["instructions"],
     claudeMdSection: "reference",
@@ -142,37 +152,55 @@ export const REFERENCE_CONFIGS: readonly ReferenceDocConfig[] = [
 // ============================================================================
 
 /**
- * Registers all reference generators in the GeneratorRegistry.
+ * ReferenceDocGenerator — implements DocumentGenerator directly (AD-5).
  *
- * Each config produces TWO generator registrations:
- * 1. "{name}-reference" → detailed output → docs/{docsFilename}
- * 2. "{name}-reference-claude" → summary output → _claude-md/{section}/{filename}
+ * Follows DecisionDocGeneratorImpl pattern:
+ * - Single class handles ALL 11 reference types
+ * - Dual output (docs/ + _claude-md/) is internal to generate()
+ * - Registration via createReferenceDocGenerator() factory function
  *
- * Uses existing CodecBasedGenerator adapter — no new generator infrastructure.
+ * NOT using CodecBasedGenerator because DOCUMENT_TYPES is `as const` (AD-6).
  *
  * @example
  * ```typescript
- * import { registerReferenceGenerators } from './reference-generators.js';
- * import { registry } from '../registry.js';
+ * import { createReferenceDocGenerator } from './reference-generators.js';
+ * import { generatorRegistry } from '../registry.js';
  *
- * registerReferenceGenerators(registry);
+ * generatorRegistry.register(createReferenceDocGenerator());
  *
  * // Now available:
- * registry.get('process-guard-reference');       // detailed docs
- * registry.get('process-guard-reference-claude'); // summary _claude-md
+ * generatorRegistry.get('reference-docs');
+ * // Produces 22 files: 11 detailed (docs/) + 11 summary (_claude-md/)
  * ```
  */
-export function registerReferenceGenerators(
-  _registry: unknown // GeneratorRegistry
-): void {
-  // For each config in REFERENCE_CONFIGS:
-  // 1. Create codec with createReferenceCodec(config, { detailLevel: 'detailed' })
-  // 2. Wrap in CodecBasedGenerator with output path docs/{docsFilename}
-  // 3. Register as "{kebab-name}-reference"
-  //
-  // 4. Create codec with createReferenceCodec(config, { detailLevel: 'summary' })
-  // 5. Wrap in CodecBasedGenerator with output path _claude-md/{section}/{filename}
-  // 6. Register as "{kebab-name}-reference-claude"
 
-  throw new Error("registerReferenceGenerators not yet implemented - roadmap pattern");
+// class ReferenceDocGenerator implements DocumentGenerator {
+//   readonly name = 'reference-docs';
+//   readonly description = 'Generate reference documentation from codec configs';
+//
+//   async generate(
+//     _patterns: readonly ExtractedPattern[],
+//     context: GeneratorContext
+//   ): Promise<GeneratorOutput> {
+//     const files: OutputFile[] = [];
+//
+//     for (const config of REFERENCE_CONFIGS) {
+//       // 1. Detailed output → docs/{docsFilename}
+//       const detailedCodec = createReferenceCodec(config, { detailLevel: 'detailed' });
+//       const detailedDoc = detailedCodec.decode(context.masterDataset);
+//       files.push(...renderDocumentWithFiles(detailedDoc, `docs/${config.docsFilename}`));
+//
+//       // 2. Summary output → _claude-md/{section}/{filename}
+//       const summaryCodec = createReferenceCodec(config, { detailLevel: 'summary' });
+//       const summaryDoc = summaryCodec.decode(context.masterDataset);
+//       files.push(...renderDocumentWithFiles(summaryDoc, `_claude-md/${config.claudeMdSection}/${config.claudeMdFilename}`));
+//     }
+//
+//     return { files };
+//   }
+// }
+
+export function createReferenceDocGenerator(): unknown /* DocumentGenerator */ {
+  // return new ReferenceDocGenerator();
+  throw new Error("ReferenceDocGenerator not yet implemented - roadmap pattern");
 }

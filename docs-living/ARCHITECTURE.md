@@ -98,8 +98,8 @@ graph TB
     InventoryCommandConfigs --> ProductCatalogProjection
     InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
-    InventoryCommandHandlers --> InventoryDeciders
     ChurnRiskEventHandler --> CustomerCancellationsProjection
+    InventoryCommandHandlers --> InventoryDeciders
 ```
 
 ---

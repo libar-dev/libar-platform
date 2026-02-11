@@ -3,14 +3,13 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/pattern-registry.ts
  *
  * Pattern Registry — DS-4 Stub
  *
  * Validates pattern definitions passed directly on AgentBCConfig.patterns.
  * Patterns are PatternDefinition[] on the config object, not looked up by
  * name from a global singleton.
- *
- * Target: platform-core/src/agent/pattern-registry.ts
  *
  * ## Design Decisions
  *

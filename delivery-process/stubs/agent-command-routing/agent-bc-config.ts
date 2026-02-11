@@ -3,6 +3,7 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/types.ts
  *
  * AgentBCConfig Evolution — DS-4 Stub
  *
@@ -12,8 +13,6 @@
  *
  * Also adds patternId to AgentActionResult to flow pattern identity from
  * PatternExecutor through onComplete to commands.record.
- *
- * Target: platform-core/src/agent/types.ts (evolution of existing)
  *
  * ## Design Decisions
  *

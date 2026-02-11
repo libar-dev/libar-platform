@@ -3,6 +3,7 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/lifecycle-handlers.ts
  *
  * Lifecycle Command Handlers — DS-5 Stub
  *
@@ -11,8 +12,6 @@
  *
  * These are infrastructure mutations (PDR-013 AD-3) — they bypass CommandOrchestrator
  * and call the agent component API directly.
- *
- * Target: platform-core/src/agent/lifecycle-handlers.ts
  *
  * DS-5 Design Session: Agent Lifecycle FSM
  * PDR: pdr-013-agent-lifecycle-fsm (AD-3)

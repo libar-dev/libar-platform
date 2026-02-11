@@ -3,13 +3,12 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentLLMIntegration
+ * @libar-docs-target platform-core/src/eventbus/types.ts
  *
  * EventSubscription Discriminated Union — DS-2 Stub
  *
  * Extends EventSubscription from a single-interface (mutation-only) to a
  * discriminated union supporting both mutation and action handlers.
- *
- * Target: platform-core/src/eventbus/types.ts (replace EventSubscription definition)
  *
  * ## Design Decision
  *

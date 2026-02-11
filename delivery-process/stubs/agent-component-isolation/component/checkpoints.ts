@@ -5,14 +5,13 @@
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-uses AgentCheckpoint
  * @libar-docs-used-by EventHandler, AdminUI
+ * @libar-docs-target platform-core/src/agent/component/checkpoints.ts
  *
  * Agent Component - Checkpoint Public API — DS-1 Stub
  *
  * Provides checkpoint operations for exactly-once event processing semantics.
  * Each agent+subscription pair maintains a checkpoint tracking the last
  * processed global position.
- *
- * Target: platform-core/src/agent/component/checkpoints.ts
  *
  * ## Checkpoint API - Position Tracking
  *

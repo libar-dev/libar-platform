@@ -17,6 +17,11 @@
  * - AD-3: Convention content extracted from MasterDataset (not from files)
  * - AD-4: DetailLevel controls output density (summary for _claude-md/)
  * - AD-5: Composition order: conventions → shapes → behaviors
+ * - AD-6: shapeSources resolved via in-memory glob matching against pattern.source.file
+ *         (SourceInfo.file field on ExtractedPattern). No filesystem access needed —
+ *         MasterDataset patterns already carry source.file and extractedShapes.
+ *         Use picomatch for glob matching or simple path prefix matching as a
+ *         dependency-free alternative (e.g., source.file.startsWith("src/lint/")).
  *
  * See: CodecDrivenReferenceGeneration spec
  * Since: DS (design session)
@@ -116,8 +121,10 @@ export function createReferenceCodec(config: ReferenceDocConfig, options?: Refer
       // 1. Extract convention content from tagged decision records
       const _conventions = extractConventions(_dataset, config.conventionTags);
 
-      // 2. Filter shape extractions by source patterns
-      // Uses dataset.extractedShapes filtered by config.shapeSources globs
+      // 2. Filter patterns with extractedShapes by source file path (AD-6)
+      // For each config.shapeSources glob, iterate _dataset.patterns where
+      // pattern.source.file matches the glob. Collect pattern.extractedShapes.
+      // Uses in-memory glob matching — no filesystem access needed.
 
       // 3. Filter behavior patterns by tags
       // Uses dataset.patterns filtered by config.behaviorTags

@@ -3,14 +3,13 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/lifecycle-commands.ts
  *
  * Lifecycle Command Type Definitions — DS-5 Stub
  *
  * Five lifecycle commands with their argument types, result types, and Convex validators.
  * These commands are infrastructure mutations (PDR-013 AD-3) — they do NOT route through
  * CommandOrchestrator.
- *
- * Target: platform-core/src/agent/lifecycle-commands.ts
  *
  * DS-5 Design Session: Agent Lifecycle FSM
  * PDR: pdr-013-agent-lifecycle-fsm (AD-3)

@@ -16,6 +16,11 @@
  * - AD-2: Rule block structure (Invariant/Rationale/Verified-by) is preserved
  * - AD-3: Tables in Rule blocks are extracted as structured data, not raw text
  * - AD-4: Multiple convention tags per decision record are supported (CSV)
+ * - AD-5: Reuses parseBusinessRuleAnnotations() from renderable/codecs/helpers.ts
+ *         for structured content extraction (Invariant, Rationale, Verified-by,
+ *         tables, code examples). Returns BusinessRuleAnnotations with invariant,
+ *         rationale, verifiedBy, codeExamples, and remainingContent fields.
+ *         No custom parsing needed — the existing helper handles all annotation formats.
  *
  * See: CodecDrivenReferenceGeneration spec
  * Since: DS (design session)
@@ -29,6 +34,14 @@ import type { MasterDataset } from "../../generators/pipeline/types.js";
 
 /**
  * Structured content extracted from a decision record Rule block.
+ *
+ * Maps from BusinessRuleAnnotations (helpers.ts:684):
+ *   annotations.invariant   → invariant
+ *   annotations.rationale   → rationale
+ *   annotations.verifiedBy  → verifiedBy
+ *   annotations.codeExamples → (rendered into narrative)
+ *   annotations.remainingContent → narrative
+ *   extractTables(rule.description) → tables
  */
 export interface ConventionRuleContent {
   /** Rule name from the Gherkin Rule: block */
@@ -104,9 +117,11 @@ export function extractConventions(
 ): ConventionBundle[] {
   // 1. Filter dataset.patterns for decision records (source === 'gherkin', has @adr tag)
   // 2. Filter by @libar-docs-convention tag matching requested values
-  // 3. Extract Rule block content using existing partitionAdrRules() from adr.ts
-  // 4. Parse structured elements (Invariant, Rationale, Verified-by, tables)
-  // 5. Group by convention tag value
+  // 3. For each matching pattern's rules[], call parseBusinessRuleAnnotations(rule.description)
+  //    from renderable/codecs/helpers.ts — returns { invariant, rationale, verifiedBy, codeExamples }
+  // 4. Map BusinessRuleAnnotations → ConventionRuleContent (already parsed in step 3)
+  //    Also call extractTables(rule.description) for structured table data
+  // 5. Group by convention tag value into ConventionBundles
 
   throw new Error("ConventionExtractor not yet implemented - roadmap pattern");
 }

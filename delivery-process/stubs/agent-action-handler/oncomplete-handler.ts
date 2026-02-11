@@ -3,14 +3,13 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentLLMIntegration
+ * @libar-docs-target platform-core/src/agent/oncomplete-handler.ts
  *
  * Agent onComplete Handler Factory — DS-2 Stub
  *
  * Creates a Workpool onComplete mutation that persists all agent state
  * after the action handler completes. This is the persistence phase of
  * the action/mutation split.
- *
- * Target: platform-core/src/agent/oncomplete-handler.ts
  *
  * ## Design Decisions
  *

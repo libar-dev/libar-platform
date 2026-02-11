@@ -3,6 +3,7 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/command-router.ts
  *
  * Agent Command Router — DS-4 Stub
  *
@@ -10,8 +11,6 @@
  * a command (e.g., SuggestCustomerOutreach), the router determines which
  * CommandConfig to use and how to transform agent command payload to
  * orchestrator args format.
- *
- * Target: platform-core/src/agent/command-router.ts
  *
  * ## Design Decisions
  *

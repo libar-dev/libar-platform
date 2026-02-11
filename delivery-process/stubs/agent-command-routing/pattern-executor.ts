@@ -3,14 +3,13 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/pattern-executor.ts
  *
  * Pattern Executor — DS-4 Stub
  *
  * Iterates an agent's pattern array, calling trigger() then analyze() for
  * each pattern. Short-circuits on the first detected match to avoid
  * unnecessary LLM calls. Returns a simplified execution summary for audit.
- *
- * Target: platform-core/src/agent/pattern-executor.ts
  *
  * ## Design Decisions
  *

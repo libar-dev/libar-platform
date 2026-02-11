@@ -5,14 +5,13 @@
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-uses AgentAuditEvent
  * @libar-docs-used-by EventHandler, AdminUI
+ * @libar-docs-target platform-core/src/agent/component/audit.ts
  *
  * Agent Component - Audit Public API — DS-1 Stub
  *
  * Provides audit event recording and querying for agent decision explainability.
  * Every agent decision, approval, rejection, and analysis result is recorded
  * as an audit event for compliance and debugging.
- *
- * Target: platform-core/src/agent/component/audit.ts
  *
  * ## Audit API - Decision Tracking
  *

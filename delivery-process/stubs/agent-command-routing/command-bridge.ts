@@ -3,14 +3,13 @@
  * @libar-docs-status roadmap
  * @libar-docs-infra
  * @libar-docs-implements AgentCommandInfrastructure
+ * @libar-docs-target platform-core/src/agent/command-bridge.ts
  *
  * Command Bridge — DS-4 Stub
  *
  * Bridges agent command recording (onComplete step 2) with command routing
  * through CommandOrchestrator. Uses Workpool to keep persistence and routing
  * in separate transactions with built-in retry and failure handling.
- *
- * Target: platform-core/src/agent/command-bridge.ts
  *
  * ## Design Decisions
  *

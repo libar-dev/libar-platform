@@ -5,14 +5,13 @@
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-uses PendingApproval, HumanInLoopConfig
  * @libar-docs-used-by EventHandler, ApprovalWorkflow, AdminUI
+ * @libar-docs-target platform-core/src/agent/component/approvals.ts
  *
  * Agent Component - Approval Public API — DS-1 Stub
  *
  * Provides human-in-loop approval workflow for agent actions.
  * Low-confidence agent decisions are flagged for human review before
  * commands are emitted.
- *
- * Target: platform-core/src/agent/component/approvals.ts
  *
  * ## Approval API - Human-in-Loop Workflow
  *

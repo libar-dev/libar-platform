@@ -4,6 +4,7 @@
  * @libar-docs-infra
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-used-by AgentCheckpoint, AgentAuditEvent, AgentDeadLetter, AgentCommand, PendingApproval
+ * @libar-docs-target platform-core/src/agent/component/schema.ts
  *
  * Agent Component Schema — DS-1 Stub
  *
@@ -14,7 +15,6 @@
  * During implementation, agent tables move from the shared app schema
  * to this isolated component schema.
  *
- * Target: platform-core/src/agent/component/schema.ts
  * See: DESIGN-2026-005 AD-5 (Schema Strategy, historical)
  */
 import { defineSchema, defineTable } from "convex/server";

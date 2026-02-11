@@ -72,12 +72,12 @@
 </details>
 
 <details>
-<summary>✅ EventBusAbstraction (3 patterns)</summary>
+<summary>✅ EventUpcasting (3 patterns)</summary>
 
 | Pattern                  | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
-| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
+| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Correlation Chain System | Correlation types for tracking causal relationships in command-event flows.              |
 
 </details>
@@ -183,6 +183,7 @@
 
 ## Recent Completions
 
+- ✅ Example App Modernization (Phase 23)
 - ✅ Agent As Bounded Context (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
@@ -192,7 +193,6 @@
 - ✅ Durable Function Adapters (Phase 18)
 - ✅ Dynamic Consistency Boundaries (Phase 16)
 - ✅ Ecst Fat Events (Phase 20)
-- ✅ Event Replay Infrastructure (Phase 18)
 
 Showing 10 of 57 completed patterns. See quarterly files for full history.
 

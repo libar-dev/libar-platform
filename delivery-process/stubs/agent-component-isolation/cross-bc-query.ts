@@ -4,14 +4,13 @@
  * @libar-docs-infra
  * @libar-docs-implements AgentBCComponentIsolation
  * @libar-docs-uses AgentBCConfig
+ * @libar-docs-target platform-core/src/agent/cross-bc-query.ts
  *
  * Cross-Component Query Types for Agent BC — DS-1 Stub
  *
  * Defines the data shapes for argument injection pattern. The app-level
  * caller pre-loads projection data and passes it as handler arguments,
  * keeping the agent component truly isolated.
- *
- * Target: platform-core/src/agent/cross-bc-query.ts
  *
  * ## Cross-BC Query Pattern - Argument Injection
  *
