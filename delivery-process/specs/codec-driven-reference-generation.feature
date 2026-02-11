@@ -9,6 +9,7 @@
 @libar-docs-business-value:eliminate-recipe-files-via-codec-composition
 @libar-docs-priority:high
 @libar-docs-executable-specs:deps-packages/delivery-process/tests/features/behavior/reference-generation
+@libar-docs-unlock-reason:Fix-deliverable-status-Done-to-canonical-complete
 Feature: Codec-Driven Reference Generation
 
   **Problem:**
@@ -61,16 +62,16 @@ Feature: Codec-Driven Reference Generation
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | ReferenceDocConfig type definition | Done | Yes | src/renderable/codecs/types/reference.ts |
-      | ConventionExtractor utility | Done | Yes | src/renderable/codecs/convention-extractor.ts |
-      | ReferenceDocumentCodec factory | Done | Yes | src/renderable/codecs/reference.ts |
-      | ReferenceDocGenerator (DocumentGenerator impl) | Done | Yes | src/generators/built-in/reference-generators.ts |
-      | @libar-docs-convention tag in registry | Done | No | upstream: deps-packages/delivery-process/src/taxonomy/ |
-      | Convention values in taxonomy | Done | No | src/taxonomy/conventions.ts |
-      | Decision record migration (existing ADRs) | Done | No | delivery-process/decisions/ |
-      | Decision record creation (new from recipe Rules) | Done | No | delivery-process/decisions/ |
-      | Recipe directory removal | Done | No | delivery-process/recipes/ (delete) |
-      | CLI integration (generate-docs --generators reference-*) | Done | No | src/cli/generate-docs.ts |
+      | ReferenceDocConfig type definition | complete | Yes | src/renderable/codecs/types/reference.ts |
+      | ConventionExtractor utility | complete | Yes | src/renderable/codecs/convention-extractor.ts |
+      | ReferenceDocumentCodec factory | complete | Yes | src/renderable/codecs/reference.ts |
+      | ReferenceDocGenerator (DocumentGenerator impl) | complete | Yes | src/generators/built-in/reference-generators.ts |
+      | @libar-docs-convention tag in registry | complete | No | upstream: deps-packages/delivery-process/src/taxonomy/ |
+      | Convention values in taxonomy | complete | No | src/taxonomy/conventions.ts |
+      | Decision record migration (existing ADRs) | complete | No | delivery-process/decisions/ |
+      | Decision record creation (new from recipe Rules) | complete | No | delivery-process/decisions/ |
+      | Recipe directory removal | complete | No | delivery-process/recipes/ (delete) |
+      | CLI integration (generate-docs --generators reference-*) | complete | No | src/cli/generate-docs.ts |
 
   # ===========================================================================
   # Core Design: Parameterized Reference Codec
