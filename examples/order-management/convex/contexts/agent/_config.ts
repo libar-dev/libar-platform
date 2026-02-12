@@ -1,7 +1,7 @@
 /**
  * @libar-docs
  * @libar-docs-uses AgentAsBoundedContext
- * @libar-docs-arch-role configuration
+ * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-context agent
  * @libar-docs-arch-layer application
  *

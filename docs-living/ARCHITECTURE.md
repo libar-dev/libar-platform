@@ -13,7 +13,7 @@ This diagram was auto-generated from 51 annotated source files across 3 bounded 
 | ---------------- | ----- |
 | Total Components | 51    |
 | Bounded Contexts | 3     |
-| Component Roles  | 8     |
+| Component Roles  | 9     |
 
 ---
 
@@ -24,15 +24,15 @@ Component architecture with bounded context isolation:
 ```mermaid
 graph TB
     subgraph agent["Agent BC"]
-        Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration"]
-        Agent_Command_Emission_Tool["Agent Command Emission Tool"]
-        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools"]
+        Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
+        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
+        Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
+        Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
+        Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
         AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
         ChurnRiskEventHandler["ChurnRiskEventHandler[command-handler]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition"]
-        Agent_BC_Utility_Functions["Agent BC Utility Functions"]
-        Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC"]
-        Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
@@ -43,17 +43,17 @@ graph TB
         ProductCatalogProjection["ProductCatalogProjection[projection]"]
         ActiveReservationsProjection["ActiveReservationsProjection[projection]"]
         InventoryCommandConfigs["InventoryCommandConfigs[infrastructure]"]
-        InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
         InventoryCommandHandlers["InventoryCommandHandlers[command-handler]"]
+        InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
         InventoryDeciders["InventoryDeciders[decider]"]
     end
     subgraph orders["Orders BC"]
         OrderPublicAPI["OrderPublicAPI[infrastructure]"]
         ReservationReleasePM["ReservationReleasePM[process-manager]"]
         OrderNotificationPM["OrderNotificationPM[process-manager]"]
+        CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderSummaryProjection["OrderSummaryProjection[projection]"]
         OrderItemsProjection["OrderItemsProjection[projection]"]
-        CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderCommandConfigs["OrderCommandConfigs[infrastructure]"]
         OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
         OrderDomainEvents["OrderDomainEvents[bounded-context]"]
@@ -65,51 +65,51 @@ graph TB
         EventSubscriptionRegistry["EventSubscriptionRegistry[infrastructure]"]
         CrossContextReadModel["CrossContextReadModel[read-model]"]
         AppCompositionRoot["AppCompositionRoot[infrastructure]"]
+        ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
+        ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
         SagaRouter["SagaRouter[infrastructure]"]
         SagaRegistry["SagaRegistry[infrastructure]"]
         OrderFulfillmentSaga["OrderFulfillmentSaga[saga]"]
         SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
-        ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
-        ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
+        DurableAppendAction["DurableAppendAction[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
-        DurableAppendAction["DurableAppendAction[infrastructure]"]
         DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
+        OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
-        OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
     end
     EventSubscriptionRegistry --> OrderNotificationPM
     EventSubscriptionRegistry --> ReservationReleasePM
+    ReservationReleasePM --> InventoryCommandHandlers
+    ReservationReleasePM --> OrderWithInventoryProjection
+    OrderNotificationPM --> OrderCommandHandlers
     SagaRouter --> OrderFulfillmentSaga
     OrderFulfillmentSaga --> OrderCommandHandlers
     OrderFulfillmentSaga --> InventoryCommandHandlers
     SagaCompletionHandler --> SagaRegistry
-    ReservationReleasePM --> InventoryCommandHandlers
-    ReservationReleasePM --> OrderWithInventoryProjection
-    OrderNotificationPM --> OrderCommandHandlers
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
     OrderItemsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
-    ChurnRiskEventHandler --> CustomerCancellationsProjection
-    OrderCommandHandlers --> OrderDeciders
     InventoryCommandHandlers --> InventoryDeciders
+    OrderCommandHandlers --> OrderDeciders
+    ChurnRiskEventHandler --> CustomerCancellationsProjection
 ```
 
 ---
@@ -131,18 +131,18 @@ All components with architecture annotations:
 
 | Component                                     | Context   | Role            | Layer          | Source File                                                                                    |
 | --------------------------------------------- | --------- | --------------- | -------------- | ---------------------------------------------------------------------------------------------- |
-| Agent Approval Workflow Tools                 | agent     | -               | application    | libar-platform/examples/order-management/convex/contexts/agent/tools/approval.ts               |
-| Agent BC Utility Functions                    | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/index.ts                |
-| Agent Command Emission Tool                   | agent     | -               | application    | libar-platform/examples/order-management/convex/contexts/agent/tools/emitCommand.ts            |
-| Churn Risk Agent Configuration                | agent     | -               | application    | libar-platform/examples/order-management/convex/contexts/agent/\_config.ts                     |
-| Churn Risk Pattern Definition                 | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_patterns/churnRisk.ts         |
-| Confidence Calculation Utilities for Agent BC | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/confidence.ts           |
-| Customer Utility Functions for Agent BC       | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/customer.ts             |
 | ✅ Churn Risk Event Handler                   | agent     | command-handler | application    | libar-platform/examples/order-management/convex/contexts/agent/handlers/eventHandler.ts        |
+| Churn Risk Pattern Definition                 | agent     | decider         | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_patterns/churnRisk.ts         |
 | ✅ Agent On Complete Handler                  | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/handlers/onComplete.ts          |
+| Churn Risk Agent Configuration                | agent     | infrastructure  | application    | libar-platform/examples/order-management/convex/contexts/agent/\_config.ts                     |
 | LLM Configuration and Runtime Exports         | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/\_llm/index.ts                  |
 | LLM Provider Configuration                    | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/\_llm/config.ts                 |
 | OpenRouter Agent Runtime                      | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/\_llm/runtime.ts                |
+| Agent Approval Workflow Tools                 | agent     | service         | application    | libar-platform/examples/order-management/convex/contexts/agent/tools/approval.ts               |
+| Agent BC Utility Functions                    | agent     | service         | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/index.ts                |
+| Agent Command Emission Tool                   | agent     | service         | application    | libar-platform/examples/order-management/convex/contexts/agent/tools/emitCommand.ts            |
+| Confidence Calculation Utilities for Agent BC | agent     | service         | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/confidence.ts           |
+| Customer Utility Functions for Agent BC       | agent     | service         | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/customer.ts             |
 | ✅ Inventory Domain Events                    | inventory | bounded-context | domain         | libar-platform/examples/order-management/convex/contexts/inventory/domain/events.ts            |
 | ✅ Inventory Command Handlers                 | inventory | command-handler | application    | libar-platform/examples/order-management/convex/contexts/inventory/handlers/commands.ts        |
 | ✅ Inventory Deciders                         | inventory | decider         | domain         | libar-platform/examples/order-management/convex/contexts/inventory/domain/deciders/index.ts    |

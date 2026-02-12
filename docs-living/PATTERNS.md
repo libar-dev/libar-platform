@@ -299,8 +299,7 @@ Pattern relationships and dependencies:
 ```mermaid
 graph TD
     HandlerFactories --> DeciderPattern
-    CMSRepository --> CMSDualWrite
-    ProjectionCheckpointing --> EventStoreFoundation
+    DualWriteContract --> BoundedContextIdentity
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBus
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
@@ -310,7 +309,9 @@ graph TD
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
     MiddlewarePipeline --> CommandBusFoundation
+    CMSRepository --> CMSDualWrite
     InvariantFramework --> BoundedContextFoundation
+    ProjectionCheckpointing --> EventStoreFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
     Event_Store_Durability_Types --> Workpool
@@ -341,7 +342,6 @@ graph TD
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
-    DualWriteContract --> BoundedContextIdentity
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -352,12 +352,6 @@ graph TD
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
@@ -399,6 +393,12 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---
