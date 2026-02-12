@@ -88,14 +88,14 @@ Feature: Agent BC Component Isolation - Physical Bounded Context Enforcement
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | Agent component definition | complete | @libar-dev/platform-core/src/agent/component/convex.config.ts | Yes | integration |
-      | Agent component schema | complete | @libar-dev/platform-core/src/agent/component/schema.ts | Yes | integration |
-      | Checkpoint public API | complete | @libar-dev/platform-core/src/agent/component/checkpoints.ts | Yes | integration |
-      | Audit public API | complete | @libar-dev/platform-core/src/agent/component/audit.ts | Yes | integration |
-      | Dead letter public API | complete | @libar-dev/platform-core/src/agent/component/deadLetters.ts | Yes | integration |
-      | Command public API | complete | @libar-dev/platform-core/src/agent/component/commands.ts | Yes | integration |
-      | Approval public API | complete | @libar-dev/platform-core/src/agent/component/approvals.ts | Yes | integration |
-      | Cross-component query pattern | complete | @libar-dev/platform-core/src/agent/cross-bc-query.ts | Yes | integration |
+      | Agent component definition | pending | @libar-dev/platform-core/src/agent/component/convex.config.ts | Yes | integration |
+      | Agent component schema | pending | @libar-dev/platform-core/src/agent/component/schema.ts | Yes | integration |
+      | Checkpoint public API | pending | @libar-dev/platform-core/src/agent/component/checkpoints.ts | Yes | integration |
+      | Audit public API | pending | @libar-dev/platform-core/src/agent/component/audit.ts | Yes | integration |
+      | Dead letter public API | pending | @libar-dev/platform-core/src/agent/component/deadLetters.ts | Yes | integration |
+      | Command public API | pending | @libar-dev/platform-core/src/agent/component/commands.ts | Yes | integration |
+      | Approval public API | pending | @libar-dev/platform-core/src/agent/component/approvals.ts | Yes | integration |
+      | Cross-component query pattern | pending | @libar-dev/platform-core/src/agent/cross-bc-query.ts | Yes | integration |
       | Design session methodology | complete | delivery-process/decisions/pdr-009-design-session-methodology.feature | No | - |
       | Argument injection pattern | complete | delivery-process/decisions/pdr-010-cross-component-argument-injection.feature | No | - |
 

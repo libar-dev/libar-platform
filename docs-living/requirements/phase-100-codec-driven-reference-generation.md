@@ -264,6 +264,19 @@ preserved as a Rule block in a decision record tagged with the appropriate
 
 _Verified by: Recipe Rule block content preserved in decision record_
 
+## Deliverables
+
+- ReferenceDocConfig type definition (complete)
+- ConventionExtractor utility (complete)
+- ReferenceDocumentCodec factory (complete)
+- ReferenceDocGenerator (DocumentGenerator impl) (complete)
+- @libar-docs-convention tag in registry (complete)
+- Convention values in taxonomy (complete)
+- Decision record migration (existing ADRs) (complete)
+- Decision record creation (new from recipe Rules) (complete)
+- Recipe directory removal (complete)
+- CLI integration (generate-docs --generators reference-\*) (complete)
+
 ---
 
 [← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)

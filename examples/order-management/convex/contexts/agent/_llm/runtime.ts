@@ -1,4 +1,10 @@
 /**
+ * @libar-docs
+ * @libar-docs-uses AgentAsBoundedContext
+ * @libar-docs-arch-role infrastructure
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer infrastructure
+ *
  * OpenRouter Agent Runtime
  *
  * Implements AgentRuntimeConfig using the Vercel AI SDK with OpenRouter.

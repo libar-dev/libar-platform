@@ -1,4 +1,10 @@
 /**
+ * @libar-docs
+ * @libar-docs-uses AgentAsBoundedContext
+ * @libar-docs-arch-role configuration
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer application
+ *
  * Churn Risk Agent Configuration
  *
  * Defines the configuration for the churn risk detection agent.

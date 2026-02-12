@@ -1,4 +1,10 @@
 /**
+ * @libar-docs
+ * @libar-docs-uses AgentAsBoundedContext
+ * @libar-docs-arch-role application-service
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer application
+ *
  * Agent Command Emission Tool
  *
  * Provides utilities for emitting commands from the agent.

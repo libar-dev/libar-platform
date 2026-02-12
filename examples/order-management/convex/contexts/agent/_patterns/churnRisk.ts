@@ -1,4 +1,10 @@
 /**
+ * @libar-docs
+ * @libar-docs-uses AgentAsBoundedContext
+ * @libar-docs-arch-role domain-logic
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer domain
+ *
  * Churn Risk Pattern Definition
  *
  * Defines the pattern detection rules for identifying customers at risk of churning.

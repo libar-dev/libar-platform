@@ -7,11 +7,11 @@
 
 ## Overview
 
-This diagram was auto-generated from 41 annotated source files across 3 bounded contexts.
+This diagram was auto-generated from 51 annotated source files across 3 bounded contexts.
 
 | Metric           | Count |
 | ---------------- | ----- |
-| Total Components | 41    |
+| Total Components | 51    |
 | Bounded Contexts | 3     |
 | Component Roles  | 8     |
 
@@ -24,8 +24,18 @@ Component architecture with bounded context isolation:
 ```mermaid
 graph TB
     subgraph agent["Agent BC"]
+        Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool"]
+        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools"]
         AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
         ChurnRiskEventHandler["ChurnRiskEventHandler[command-handler]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition"]
+        Agent_BC_Utility_Functions["Agent BC Utility Functions"]
+        Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC"]
+        Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC"]
+        OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
+        LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
+        LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
     end
     subgraph inventory["Inventory BC"]
         InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
@@ -33,8 +43,8 @@ graph TB
         ProductCatalogProjection["ProductCatalogProjection[projection]"]
         ActiveReservationsProjection["ActiveReservationsProjection[projection]"]
         InventoryCommandConfigs["InventoryCommandConfigs[infrastructure]"]
-        InventoryCommandHandlers["InventoryCommandHandlers[command-handler]"]
         InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
+        InventoryCommandHandlers["InventoryCommandHandlers[command-handler]"]
         InventoryDeciders["InventoryDeciders[decider]"]
     end
     subgraph orders["Orders BC"]
@@ -84,22 +94,22 @@ graph TB
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
     CustomerCancellationsProjection --> OrderCommandHandlers
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandHandlers --> InventoryDeciders
-    OrderCommandHandlers --> OrderDeciders
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     ChurnRiskEventHandler --> CustomerCancellationsProjection
+    OrderCommandHandlers --> OrderDeciders
+    InventoryCommandHandlers --> InventoryDeciders
 ```
 
 ---
@@ -119,46 +129,56 @@ graph TB
 
 All components with architecture annotations:
 
-| Component                            | Context   | Role            | Layer          | Source File                                                                                    |
-| ------------------------------------ | --------- | --------------- | -------------- | ---------------------------------------------------------------------------------------------- |
-| ✅ Churn Risk Event Handler          | agent     | command-handler | application    | libar-platform/examples/order-management/convex/contexts/agent/handlers/eventHandler.ts        |
-| ✅ Agent On Complete Handler         | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/handlers/onComplete.ts          |
-| ✅ Inventory Domain Events           | inventory | bounded-context | domain         | libar-platform/examples/order-management/convex/contexts/inventory/domain/events.ts            |
-| ✅ Inventory Command Handlers        | inventory | command-handler | application    | libar-platform/examples/order-management/convex/contexts/inventory/handlers/commands.ts        |
-| ✅ Inventory Deciders                | inventory | decider         | domain         | libar-platform/examples/order-management/convex/contexts/inventory/domain/deciders/index.ts    |
-| ✅ Inventory Command Configs         | inventory | infrastructure  | application    | libar-platform/examples/order-management/convex/commands/inventory/configs.ts                  |
-| ✅ Inventory Internal Mutations      | inventory | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/inventoryInternal.ts                           |
-| ✅ Inventory Public API              | inventory | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/inventory.ts                                   |
-| ✅ Active Reservations Projection    | inventory | projection      | application    | libar-platform/examples/order-management/convex/projections/inventory/activeReservations.ts    |
-| ✅ Product Catalog Projection        | inventory | projection      | application    | libar-platform/examples/order-management/convex/projections/inventory/productCatalog.ts        |
-| ✅ Order Domain Events               | orders    | bounded-context | domain         | libar-platform/examples/order-management/convex/contexts/orders/domain/events.ts               |
-| ✅ Order Command Handlers            | orders    | command-handler | application    | libar-platform/examples/order-management/convex/contexts/orders/handlers/commands.ts           |
-| ✅ Order Deciders                    | orders    | decider         | domain         | libar-platform/examples/order-management/convex/contexts/orders/domain/deciders/index.ts       |
-| ✅ Order Command Configs             | orders    | infrastructure  | application    | libar-platform/examples/order-management/convex/commands/orders/configs.ts                     |
-| ✅ Order Public API                  | orders    | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/orders.ts                                      |
-| ✅ Order Notification PM             | orders    | process-manager | application    | libar-platform/examples/order-management/convex/processManagers/orderNotification.ts           |
-| ✅ Reservation Release PM            | orders    | process-manager | application    | libar-platform/examples/order-management/convex/processManagers/reservationRelease.ts          |
-| ✅ Customer Cancellations Projection | orders    | projection      | application    | libar-platform/examples/order-management/convex/projections/customers/customerCancellations.ts |
-| ✅ Order Items Projection            | orders    | projection      | application    | libar-platform/examples/order-management/convex/projections/orders/orderItems.ts               |
-| ✅ Order Summary Projection          | orders    | projection      | application    | libar-platform/examples/order-management/convex/projections/orders/orderSummary.ts             |
-| ✅ App Composition Root              | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/convex.config.ts                               |
-| ✅ Command Registry                  | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/commands/registry.ts                           |
-| 🚧 DCB Retry Execution               | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/dcb/retryExecution.ts                          |
-| ✅ Durable Append Action             | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/eventStore/durableAppend.ts                    |
-| ✅ Event Subscription Registry       | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/eventSubscriptions.ts                          |
-| ✅ Integration Dead Letters          | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/deadLetters.ts                     |
-| ✅ Integration Event Handlers        | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/handlers.ts                        |
-| ✅ Integration Event Schemas         | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/events.ts                          |
-| ✅ Integration Routes                | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/routes.ts                          |
-| ✅ Mock Payment Actions              | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/payments/actions.ts                      |
-| ✅ Order Management Infrastructure   | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/infrastructure.ts                              |
-| ✅ Payment Outbox Handler            | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/payments/outbox.ts                       |
-| ✅ Projection Dead Letters           | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/projections/deadLetters.ts                     |
-| ✅ Projection Definitions            | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/projections/definitions.ts                     |
-| ✅ Rate Limit Definitions            | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/rateLimits.ts                                  |
-| ✅ Saga Completion Handler           | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/completion.ts                            |
-| ✅ Saga Registry                     | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/registry.ts                              |
-| ✅ Saga Router                       | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/router.ts                                |
-| ✅ Order With Inventory Projection   | -         | projection      | application    | libar-platform/examples/order-management/convex/projections/crossContext/orderWithInventory.ts |
-| ✅ Cross Context Read Model          | -         | read-model      | application    | libar-platform/examples/order-management/convex/crossContextQueries.ts                         |
-| ✅ Order Fulfillment Saga            | -         | saga            | application    | libar-platform/examples/order-management/convex/sagas/orderFulfillment.ts                      |
+| Component                                     | Context   | Role            | Layer          | Source File                                                                                    |
+| --------------------------------------------- | --------- | --------------- | -------------- | ---------------------------------------------------------------------------------------------- |
+| Agent Approval Workflow Tools                 | agent     | -               | application    | libar-platform/examples/order-management/convex/contexts/agent/tools/approval.ts               |
+| Agent BC Utility Functions                    | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/index.ts                |
+| Agent Command Emission Tool                   | agent     | -               | application    | libar-platform/examples/order-management/convex/contexts/agent/tools/emitCommand.ts            |
+| Churn Risk Agent Configuration                | agent     | -               | application    | libar-platform/examples/order-management/convex/contexts/agent/\_config.ts                     |
+| Churn Risk Pattern Definition                 | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_patterns/churnRisk.ts         |
+| Confidence Calculation Utilities for Agent BC | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/confidence.ts           |
+| Customer Utility Functions for Agent BC       | agent     | -               | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_utils/customer.ts             |
+| ✅ Churn Risk Event Handler                   | agent     | command-handler | application    | libar-platform/examples/order-management/convex/contexts/agent/handlers/eventHandler.ts        |
+| ✅ Agent On Complete Handler                  | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/handlers/onComplete.ts          |
+| LLM Configuration and Runtime Exports         | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/\_llm/index.ts                  |
+| LLM Provider Configuration                    | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/\_llm/config.ts                 |
+| OpenRouter Agent Runtime                      | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/\_llm/runtime.ts                |
+| ✅ Inventory Domain Events                    | inventory | bounded-context | domain         | libar-platform/examples/order-management/convex/contexts/inventory/domain/events.ts            |
+| ✅ Inventory Command Handlers                 | inventory | command-handler | application    | libar-platform/examples/order-management/convex/contexts/inventory/handlers/commands.ts        |
+| ✅ Inventory Deciders                         | inventory | decider         | domain         | libar-platform/examples/order-management/convex/contexts/inventory/domain/deciders/index.ts    |
+| ✅ Inventory Command Configs                  | inventory | infrastructure  | application    | libar-platform/examples/order-management/convex/commands/inventory/configs.ts                  |
+| ✅ Inventory Internal Mutations               | inventory | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/inventoryInternal.ts                           |
+| ✅ Inventory Public API                       | inventory | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/inventory.ts                                   |
+| ✅ Active Reservations Projection             | inventory | projection      | application    | libar-platform/examples/order-management/convex/projections/inventory/activeReservations.ts    |
+| ✅ Product Catalog Projection                 | inventory | projection      | application    | libar-platform/examples/order-management/convex/projections/inventory/productCatalog.ts        |
+| ✅ Order Domain Events                        | orders    | bounded-context | domain         | libar-platform/examples/order-management/convex/contexts/orders/domain/events.ts               |
+| ✅ Order Command Handlers                     | orders    | command-handler | application    | libar-platform/examples/order-management/convex/contexts/orders/handlers/commands.ts           |
+| ✅ Order Deciders                             | orders    | decider         | domain         | libar-platform/examples/order-management/convex/contexts/orders/domain/deciders/index.ts       |
+| ✅ Order Command Configs                      | orders    | infrastructure  | application    | libar-platform/examples/order-management/convex/commands/orders/configs.ts                     |
+| ✅ Order Public API                           | orders    | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/orders.ts                                      |
+| ✅ Order Notification PM                      | orders    | process-manager | application    | libar-platform/examples/order-management/convex/processManagers/orderNotification.ts           |
+| ✅ Reservation Release PM                     | orders    | process-manager | application    | libar-platform/examples/order-management/convex/processManagers/reservationRelease.ts          |
+| ✅ Customer Cancellations Projection          | orders    | projection      | application    | libar-platform/examples/order-management/convex/projections/customers/customerCancellations.ts |
+| ✅ Order Items Projection                     | orders    | projection      | application    | libar-platform/examples/order-management/convex/projections/orders/orderItems.ts               |
+| ✅ Order Summary Projection                   | orders    | projection      | application    | libar-platform/examples/order-management/convex/projections/orders/orderSummary.ts             |
+| ✅ App Composition Root                       | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/convex.config.ts                               |
+| ✅ Command Registry                           | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/commands/registry.ts                           |
+| 🚧 DCB Retry Execution                        | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/dcb/retryExecution.ts                          |
+| ✅ Durable Append Action                      | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/eventStore/durableAppend.ts                    |
+| ✅ Event Subscription Registry                | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/eventSubscriptions.ts                          |
+| ✅ Integration Dead Letters                   | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/deadLetters.ts                     |
+| ✅ Integration Event Handlers                 | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/handlers.ts                        |
+| ✅ Integration Event Schemas                  | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/events.ts                          |
+| ✅ Integration Routes                         | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/integration/routes.ts                          |
+| ✅ Mock Payment Actions                       | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/payments/actions.ts                      |
+| ✅ Order Management Infrastructure            | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/infrastructure.ts                              |
+| ✅ Payment Outbox Handler                     | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/payments/outbox.ts                       |
+| ✅ Projection Dead Letters                    | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/projections/deadLetters.ts                     |
+| ✅ Projection Definitions                     | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/projections/definitions.ts                     |
+| ✅ Rate Limit Definitions                     | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/rateLimits.ts                                  |
+| ✅ Saga Completion Handler                    | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/completion.ts                            |
+| ✅ Saga Registry                              | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/registry.ts                              |
+| ✅ Saga Router                                | -         | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/sagas/router.ts                                |
+| ✅ Order With Inventory Projection            | -         | projection      | application    | libar-platform/examples/order-management/convex/projections/crossContext/orderWithInventory.ts |
+| ✅ Cross Context Read Model                   | -         | read-model      | application    | libar-platform/examples/order-management/convex/crossContextQueries.ts                         |
+| ✅ Order Fulfillment Saga                     | -         | saga            | application    | libar-platform/examples/order-management/convex/sagas/orderFulfillment.ts                      |

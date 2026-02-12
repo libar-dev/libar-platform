@@ -1,4 +1,10 @@
 /**
+ * @libar-docs
+ * @libar-docs-uses AgentAsBoundedContext
+ * @libar-docs-arch-role application-service
+ * @libar-docs-arch-context agent
+ * @libar-docs-arch-layer application
+ *
  * Agent Approval Workflow Tools
  *
  * Provides utilities for managing human-in-loop approval workflow for
