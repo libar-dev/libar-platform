@@ -184,7 +184,7 @@ export {
   createPendingApproval,
 
   // Audit Helpers
-  createAgentDecisionAudit,
+  createPatternDetectedAudit,
 
   // Init Helpers
   createMockAgentRuntime,

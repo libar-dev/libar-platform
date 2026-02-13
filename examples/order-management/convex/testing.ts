@@ -834,7 +834,8 @@ export const updateTestOrderInventoryStatus = mutation({
 });
 
 /**
- * Get all agent dead letters for testing.
+ * Get agent dead letters for testing via component.
+ * Note: requires agentId for component query. Without agentId, returns empty.
  */
 export const getTestAgentDeadLetters = query({
   args: {
@@ -845,29 +846,16 @@ export const getTestAgentDeadLetters = query({
   handler: async (ctx, args) => {
     ensureTestEnvironment();
 
-    if (args.agentId && args.status) {
-      return await ctx.db
-        .query("agentDeadLetters")
-        .withIndex("by_agentId_status", (q) =>
-          q.eq("agentId", args.agentId!).eq("status", args.status!)
-        )
-        .take(args.limit ?? 100);
-    }
-
     if (args.agentId) {
-      return await ctx.db
-        .query("agentDeadLetters")
-        .withIndex("by_agentId_status", (q) => q.eq("agentId", args.agentId!))
-        .take(args.limit ?? 100);
+      return await ctx.runQuery(components.agentBC.deadLetters.queryByAgent, {
+        agentId: args.agentId,
+        ...(args.status !== undefined && { status: args.status }),
+        limit: args.limit ?? 100,
+      });
     }
 
-    if (args.status) {
-      return await ctx.db
-        .query("agentDeadLetters")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .take(args.limit ?? 100);
-    }
-
-    return await ctx.db.query("agentDeadLetters").take(args.limit ?? 100);
+    // No agentId filter - component does not have a "query all" method.
+    // Tests should specify agentId for targeted queries.
+    return [];
   },
 });

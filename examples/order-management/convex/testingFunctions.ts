@@ -547,11 +547,10 @@ export const testApproveAgentActionWithAuth = mutation({
   handler: async (ctx, args) => {
     ensureTestEnvironment();
 
-    // Load the approval first to check authorization
-    const approval = await ctx.db
-      .query("pendingApprovals")
-      .withIndex("by_approvalId", (q) => q.eq("approvalId", args.approvalId))
-      .first();
+    // Load the approval first to check authorization via component
+    const approval = await ctx.runQuery(components.agentBC.approvals.getById, {
+      approvalId: args.approvalId,
+    });
 
     if (!approval) {
       return { success: false, error: "APPROVAL_NOT_FOUND" };
@@ -596,7 +595,7 @@ export const testCreateAgentDeadLetter = mutation({
     correlationId: v.optional(v.string()),
   },
   returns: v.object({
-    deadLetterId: v.id("agentDeadLetters"),
+    eventId: v.string(),
     created: v.boolean(),
   }),
   handler: async (ctx, args) => {
@@ -612,20 +611,18 @@ export const testCreateAgentDeadLetter = mutation({
       contextObj.correlationId = args.correlationId;
     }
 
-    // Create dead letter entry
-    const deadLetterId = await ctx.db.insert("agentDeadLetters", {
+    // Create dead letter entry via component
+    const result = await ctx.runMutation(components.agentBC.deadLetters.record, {
       agentId: args.agentId,
       subscriptionId: args.subscriptionId,
       eventId: args.eventId,
       globalPosition: args.globalPosition,
       error: args.error,
       attemptCount: args.attemptCount ?? 1,
-      status: "pending" as const,
-      failedAt: Date.now(),
       workId: args.workId ?? `test_work_${Date.now()}`,
-      context: contextObj,
+      ...(Object.keys(contextObj).length > 0 && { context: contextObj }),
     });
 
-    return { deadLetterId, created: true };
+    return { eventId: args.eventId, created: result.created };
   },
 });

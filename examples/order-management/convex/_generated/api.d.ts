@@ -1723,6 +1723,422 @@ export declare const components: {
       };
     };
   };
+  agentBC: {
+    checkpoints: {
+      loadOrCreate: FunctionReference<
+        "mutation",
+        "internal",
+        { agentId: string; subscriptionId: string },
+        {
+          checkpoint: {
+            agentId: string;
+            subscriptionId: string;
+            lastProcessedPosition: number;
+            lastEventId: string;
+            status: "active" | "paused" | "stopped" | "error_recovery";
+            eventsProcessed: number;
+            updatedAt: number;
+            configOverrides?: any;
+          };
+          isNew: boolean;
+        }
+      >;
+      update: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          agentId: string;
+          subscriptionId: string;
+          lastProcessedPosition: number;
+          lastEventId: string;
+          incrementEventsProcessed?: boolean;
+        },
+        any
+      >;
+      updateStatus: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          agentId: string;
+          status: "active" | "paused" | "stopped" | "error_recovery";
+        },
+        { updatedCount: number }
+      >;
+      patchConfigOverrides: FunctionReference<
+        "mutation",
+        "internal",
+        { agentId: string; configOverrides: any },
+        { patchedCount: number }
+      >;
+      transitionLifecycle: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          commandId: string;
+          agentId: string;
+          status: "active" | "paused" | "stopped" | "error_recovery";
+          auditEvent: {
+            eventType: string;
+            decisionId: string;
+            timestamp: number;
+            payload: any;
+          };
+        },
+        { updatedCount: number }
+      >;
+      getByAgentAndSubscription: FunctionReference<
+        "query",
+        "internal",
+        { agentId: string; subscriptionId: string },
+        {
+          agentId: string;
+          subscriptionId: string;
+          lastProcessedPosition: number;
+          lastEventId: string;
+          status: "active" | "paused" | "stopped" | "error_recovery";
+          eventsProcessed: number;
+          updatedAt: number;
+          configOverrides?: any;
+        } | null
+      >;
+      getByAgentId: FunctionReference<
+        "query",
+        "internal",
+        { agentId: string },
+        {
+          agentId: string;
+          subscriptionId: string;
+          lastProcessedPosition: number;
+          lastEventId: string;
+          status: "active" | "paused" | "stopped" | "error_recovery";
+          eventsProcessed: number;
+          updatedAt: number;
+          configOverrides?: any;
+        } | null
+      >;
+      listActive: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number },
+        Array<{
+          agentId: string;
+          subscriptionId: string;
+          lastProcessedPosition: number;
+          lastEventId: string;
+          status: "active" | "paused" | "stopped" | "error_recovery";
+          eventsProcessed: number;
+          updatedAt: number;
+          configOverrides?: any;
+        }>
+      >;
+    };
+    audit: {
+      record: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          eventType: string;
+          agentId: string;
+          decisionId: string;
+          timestamp: number;
+          payload: any;
+        },
+        {
+          eventType: string;
+          agentId: string;
+          decisionId: string;
+          timestamp: number;
+          payload: any;
+        } | null
+      >;
+      queryByAgent: FunctionReference<
+        "query",
+        "internal",
+        {
+          agentId: string;
+          eventType?: string;
+          limit?: number;
+        },
+        Array<{
+          eventType: string;
+          agentId: string;
+          decisionId: string;
+          timestamp: number;
+          payload: any;
+        }>
+      >;
+      getByDecisionId: FunctionReference<
+        "query",
+        "internal",
+        { decisionId: string },
+        {
+          eventType: string;
+          agentId: string;
+          decisionId: string;
+          timestamp: number;
+          payload: any;
+        } | null
+      >;
+    };
+    deadLetters: {
+      record: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          agentId: string;
+          subscriptionId: string;
+          eventId: string;
+          globalPosition: number;
+          error: string;
+          attemptCount: number;
+          workId?: string;
+          context?: {
+            correlationId?: string;
+            errorCode?: string;
+            ignoreReason?: string;
+          };
+        },
+        { created: boolean }
+      >;
+      updateStatus: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          eventId: string;
+          newStatus: "pending" | "replayed" | "ignored";
+          ignoreReason?: string;
+        },
+        | { status: "success" }
+        | { status: "error"; message: string }
+      >;
+      queryByAgent: FunctionReference<
+        "query",
+        "internal",
+        {
+          agentId: string;
+          status?: "pending" | "replayed" | "ignored";
+          limit?: number;
+        },
+        Array<{
+          agentId: string;
+          subscriptionId: string;
+          eventId: string;
+          globalPosition: number;
+          error: string;
+          attemptCount: number;
+          status: "pending" | "replayed" | "ignored";
+          failedAt: number;
+          workId?: string;
+          context?: {
+            correlationId?: string;
+            errorCode?: string;
+            ignoreReason?: string;
+          };
+        }>
+      >;
+      getStats: FunctionReference<
+        "query",
+        "internal",
+        {},
+        Array<{ agentId: string; pendingCount: number }>
+      >;
+    };
+    commands: {
+      record: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          agentId: string;
+          type: string;
+          payload: any;
+          confidence: number;
+          reason: string;
+          triggeringEventIds: Array<string>;
+          decisionId: string;
+          patternId?: string;
+          correlationId?: string;
+          routingAttempts?: number;
+        },
+        any
+      >;
+      updateStatus: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          decisionId: string;
+          status: "pending" | "processing" | "completed" | "failed";
+          error?: string;
+          incrementRoutingAttempts?: boolean;
+        },
+        any
+      >;
+      queryByAgent: FunctionReference<
+        "query",
+        "internal",
+        {
+          agentId: string;
+          status?: "pending" | "processing" | "completed" | "failed";
+          limit?: number;
+        },
+        Array<{
+          agentId: string;
+          type: string;
+          payload: any;
+          status: "pending" | "processing" | "completed" | "failed";
+          confidence: number;
+          reason: string;
+          triggeringEventIds: Array<string>;
+          decisionId: string;
+          createdAt: number;
+          patternId?: string;
+          correlationId?: string;
+          routingAttempts?: number;
+          processedAt?: number;
+          error?: string;
+        }>
+      >;
+      getByDecisionId: FunctionReference<
+        "query",
+        "internal",
+        { decisionId: string },
+        {
+          agentId: string;
+          type: string;
+          payload: any;
+          status: "pending" | "processing" | "completed" | "failed";
+          confidence: number;
+          reason: string;
+          triggeringEventIds: Array<string>;
+          decisionId: string;
+          createdAt: number;
+          patternId?: string;
+          correlationId?: string;
+          routingAttempts?: number;
+          processedAt?: number;
+          error?: string;
+        } | null
+      >;
+      getPending: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number },
+        Array<{
+          agentId: string;
+          type: string;
+          payload: any;
+          status: "pending" | "processing" | "completed" | "failed";
+          confidence: number;
+          reason: string;
+          triggeringEventIds: Array<string>;
+          decisionId: string;
+          createdAt: number;
+          patternId?: string;
+          correlationId?: string;
+          routingAttempts?: number;
+          processedAt?: number;
+          error?: string;
+        }>
+      >;
+    };
+    approvals: {
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          approvalId: string;
+          agentId: string;
+          decisionId: string;
+          action: { type: string; payload: any };
+          confidence: number;
+          reason: string;
+          triggeringEventIds: Array<string>;
+          expiresAt: number;
+        },
+        | { status: "created" }
+        | { status: "already_exists" }
+      >;
+      approve: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          approvalId: string;
+          reviewerId: string;
+          reviewNote?: string;
+        },
+        | {
+            status: "approved";
+            action: { type: string; payload: any };
+            agentId: string;
+            triggeringEventIds: Array<string>;
+            confidence: number;
+            reason: string;
+            decisionId: string;
+          }
+        | { status: "error"; message: string }
+      >;
+      reject: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          approvalId: string;
+          reviewerId: string;
+          reviewNote?: string;
+        },
+        | { status: "rejected" }
+        | { status: "error"; message: string }
+      >;
+      expirePending: FunctionReference<
+        "mutation",
+        "internal",
+        {},
+        { expiredCount: number }
+      >;
+      queryApprovals: FunctionReference<
+        "query",
+        "internal",
+        {
+          agentId?: string;
+          status?: "pending" | "approved" | "rejected" | "expired";
+          limit?: number;
+        },
+        Array<{
+          approvalId: string;
+          agentId: string;
+          decisionId: string;
+          action: { type: string; payload: any };
+          confidence: number;
+          reason: string;
+          status: "pending" | "approved" | "rejected" | "expired";
+          triggeringEventIds: Array<string>;
+          expiresAt: number;
+          createdAt: number;
+          reviewerId?: string;
+          reviewedAt?: number;
+          reviewNote?: string;
+        }>
+      >;
+      getById: FunctionReference<
+        "query",
+        "internal",
+        { approvalId: string },
+        {
+          approvalId: string;
+          agentId: string;
+          decisionId: string;
+          action: { type: string; payload: any };
+          confidence: number;
+          reason: string;
+          status: "pending" | "approved" | "rejected" | "expired";
+          triggeringEventIds: Array<string>;
+          expiresAt: number;
+          createdAt: number;
+          reviewerId?: string;
+          reviewedAt?: number;
+          reviewNote?: string;
+        } | null
+      >;
+    };
+  };
   inventory: {
     handlers: {
       commands: {

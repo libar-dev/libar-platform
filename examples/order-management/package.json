@@ -19,6 +19,7 @@
     "@convex-dev/action-retrier": "^0.2.1",
     "@convex-dev/rate-limiter": "^0.2.1",
     "@convex-dev/workflow": "^0.3.3",
+    "@convex-dev/agent": "^0.3.0",
     "@convex-dev/workpool": "^0.2.18",
     "@libar-dev/platform-bc": "workspace:*",
     "@libar-dev/platform-core": "workspace:*",

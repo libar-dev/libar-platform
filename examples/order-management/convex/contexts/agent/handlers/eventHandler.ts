@@ -19,10 +19,9 @@ import { internalMutation } from "../../../_generated/server.js";
 import type { MutationCtx } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
-import type { Id } from "../../../_generated/dataModel.js";
+import { components } from "../../../_generated/api.js";
 import {
   createAgentEventHandler,
-  createInitialAgentCheckpoint,
   parseDuration,
   type AgentEventHandlerResult,
   type AgentCheckpoint,
@@ -104,31 +103,22 @@ export const handleChurnRiskEvent = internalMutation({
       },
     };
 
-    // 1. Load or create checkpoint from DB
-    const existingCheckpoint = await ctx.db
-      .query("agentCheckpoints")
-      .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
-      .first();
+    // 1. Load or create checkpoint via component
+    const subscriptionId = `sub_${args.agentId}`;
+    const { checkpoint: loadedCheckpoint } = await ctx.runMutation(
+      components.agentBC.checkpoints.loadOrCreate,
+      { agentId: args.agentId, subscriptionId }
+    );
 
-    let checkpoint: AgentCheckpoint;
-    let checkpointId: Id<"agentCheckpoints">;
-
-    if (existingCheckpoint) {
-      checkpoint = {
-        agentId: existingCheckpoint.agentId,
-        subscriptionId: existingCheckpoint.subscriptionId,
-        lastProcessedPosition: existingCheckpoint.lastProcessedPosition,
-        lastEventId: existingCheckpoint.lastEventId,
-        status: existingCheckpoint.status,
-        eventsProcessed: existingCheckpoint.eventsProcessed,
-        updatedAt: existingCheckpoint.updatedAt,
-      };
-      checkpointId = existingCheckpoint._id;
-    } else {
-      // Create new checkpoint
-      checkpoint = createInitialAgentCheckpoint(args.agentId, `sub_${args.agentId}_${Date.now()}`);
-      checkpointId = await ctx.db.insert("agentCheckpoints", checkpoint);
-    }
+    const checkpoint: AgentCheckpoint = {
+      agentId: loadedCheckpoint.agentId,
+      subscriptionId: loadedCheckpoint.subscriptionId,
+      lastProcessedPosition: loadedCheckpoint.lastProcessedPosition,
+      lastEventId: loadedCheckpoint.lastEventId,
+      status: loadedCheckpoint.status,
+      eventsProcessed: loadedCheckpoint.eventsProcessed,
+      updatedAt: loadedCheckpoint.updatedAt,
+    };
 
     // 2. Check idempotency - skip if already processed
     if (event.globalPosition <= checkpoint.lastProcessedPosition) {
@@ -169,13 +159,14 @@ export const handleChurnRiskEvent = internalMutation({
       // Load checkpoint (already loaded above)
       loadCheckpoint: async () => checkpoint,
 
-      // Update checkpoint after processing
+      // Update checkpoint after processing via component
       updateCheckpoint: async (_agentId: string, eventId: string, globalPosition: number) => {
-        await ctx.db.patch(checkpointId, {
+        await ctx.runMutation(components.agentBC.checkpoints.update, {
+          agentId: args.agentId,
+          subscriptionId: checkpoint.subscriptionId,
           lastProcessedPosition: globalPosition,
           lastEventId: eventId,
-          eventsProcessed: checkpoint.eventsProcessed + 1,
-          updatedAt: Date.now(),
+          incrementEventsProcessed: true,
         });
         // Note: checkpoint is read-only, so we don't update local state
         // The persisted state is the source of truth
@@ -208,8 +199,8 @@ export const handleChurnRiskEvent = internalMutation({
     if (result.decision) {
       const decisionId = `dec_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
-      await ctx.db.insert("agentAuditEvents", {
-        eventType: "AgentDecisionMade",
+      await ctx.runMutation(components.agentBC.audit.record, {
+        eventType: "PatternDetected",
         agentId: args.agentId,
         decisionId,
         timestamp: Date.now(),
@@ -266,46 +257,28 @@ export const handleChurnRiskEvent = internalMutation({
         error: result.deadLetter.error,
       });
 
-      // Build dead letter record for persistence
-      // For exactOptionalPropertyTypes compatibility, only include context if it has values
-      const deadLetterRecord: {
-        agentId: string;
-        subscriptionId: string;
-        eventId: string;
-        globalPosition: number;
-        error: string;
-        attemptCount: number;
-        status: "pending" | "replayed" | "ignored";
-        failedAt: number;
-        context?: { correlationId?: string; errorCode?: string; ignoreReason?: string };
-      } = {
+      // Build context for dead letter
+      const deadLetterContext: {
+        correlationId?: string;
+        errorCode?: string;
+      } = {};
+      if (result.deadLetter.context?.correlationId !== undefined) {
+        deadLetterContext.correlationId = result.deadLetter.context.correlationId;
+      }
+      if (result.deadLetter.context?.errorCode !== undefined) {
+        deadLetterContext.errorCode = result.deadLetter.context.errorCode;
+      }
+
+      // Persist dead letter via component (UPSERT semantics)
+      await ctx.runMutation(components.agentBC.deadLetters.record, {
         agentId: result.deadLetter.agentId,
         subscriptionId: result.deadLetter.subscriptionId,
         eventId: result.deadLetter.eventId,
         globalPosition: result.deadLetter.globalPosition,
         error: result.deadLetter.error,
         attemptCount: result.deadLetter.attemptCount,
-        status: result.deadLetter.status,
-        failedAt: result.deadLetter.failedAt,
-      };
-
-      // Add context only if it exists and has at least one field
-      if (result.deadLetter.context) {
-        const ctx: { correlationId?: string; errorCode?: string } = {};
-        if (result.deadLetter.context.correlationId !== undefined) {
-          ctx.correlationId = result.deadLetter.context.correlationId;
-        }
-        if (result.deadLetter.context.errorCode !== undefined) {
-          ctx.errorCode = result.deadLetter.context.errorCode;
-        }
-        // Only add context if it has at least one defined property
-        if (Object.keys(ctx).length > 0) {
-          deadLetterRecord.context = ctx;
-        }
-      }
-
-      // Persist dead letter for replay/investigation
-      await ctx.db.insert("agentDeadLetters", deadLetterRecord);
+        ...(Object.keys(deadLetterContext).length > 0 && { context: deadLetterContext }),
+      });
     }
 
     return result;

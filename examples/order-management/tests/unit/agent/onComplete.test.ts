@@ -7,10 +7,13 @@
  * Uses convex-test for isolated testing with mocked DB.
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { internal } from "../../../convex/_generated/api";
+import { api, internal } from "../../../convex/_generated/api";
 import { createUnitTestContext } from "../../support/setup";
 
 type TestContext = ReturnType<typeof createUnitTestContext>;
+
+// Agent ID used by the onComplete handler
+const AGENT_ID = "churn-risk-agent";
 
 describe("Agent onComplete handler", () => {
   let t: TestContext;
@@ -28,20 +31,26 @@ describe("Agent onComplete handler", () => {
     causationId: "cause_1",
   };
 
+  /**
+   * Count dead letters via the app-level query that delegates to the agentBC component.
+   */
   async function countDeadLetters(t: TestContext): Promise<number> {
-    return await t.run(async (ctx) => {
-      const all = await ctx.db.query("agentDeadLetters").collect();
-      return all.length;
+    const results = await t.query(api.queries.agent.getDeadLetters, {
+      agentId: AGENT_ID,
+      limit: 1000,
     });
+    return results.length;
   }
 
+  /**
+   * Get dead letter by eventId via the component query.
+   */
   async function getDeadLetterByEventId(t: TestContext, eventId: string) {
-    return await t.run(async (ctx) => {
-      return await ctx.db
-        .query("agentDeadLetters")
-        .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
-        .first();
+    const results = await t.query(api.queries.agent.getDeadLetters, {
+      agentId: AGENT_ID,
+      limit: 1000,
     });
+    return results.find((dl: { eventId: string }) => dl.eventId === eventId) ?? null;
   }
 
   it("does not create dead letter on success", async () => {
@@ -103,18 +112,20 @@ describe("Agent onComplete handler", () => {
   });
 
   it("does not update dead letter in terminal state", async () => {
-    // Create and mark as ignored
+    // Create dead letter via failure
     await t.mutation(internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete, {
       workId: "work_5a",
       context: baseContext,
       result: { kind: "failed", error: "Original error" },
     });
-    const dl = await getDeadLetterByEventId(t, "evt_test_1");
-    await t.run(async (ctx) => {
-      await ctx.db.patch(dl!._id, { status: "ignored" as const });
+
+    // Mark as ignored via the component API (through app-level mutation)
+    await t.mutation(internal.contexts.agent.handlers.onComplete.ignoreDeadLetter, {
+      eventId: "evt_test_1",
+      reason: "Test ignore",
     });
 
-    // Another failure for same eventId — should NOT update
+    // Another failure for same eventId — should NOT update (terminal state)
     await t.mutation(internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete, {
       workId: "work_5b",
       context: baseContext,

@@ -26,10 +26,10 @@ Feature: Agent Audit Trail
     Every decision is recorded in the event store.
 
     @acceptance-criteria @happy-path
-    Scenario: Record AgentDecisionMade event
+    Scenario: Record PatternDetected event
       Given agent detects ChurnRisk pattern
       When agent decides to emit SuggestCustomerOutreach
-      Then AgentDecisionMade event is recorded
+      Then PatternDetected event is recorded
       And event includes:
         | field | description |
         | decisionId | Unique decision identifier |
@@ -41,14 +41,14 @@ Feature: Agent Audit Trail
     @acceptance-criteria @happy-path
     Scenario: Audit includes triggering events
       Given pattern triggered by events E1, E2, E3
-      When AgentDecisionMade is recorded
+      When PatternDetected is recorded
       Then event.triggeringEvents equals ["E1", "E2", "E3"]
 
     @acceptance-criteria @happy-path
     Scenario: Audit includes execution mode
       Given agent decision with confidence 0.85
       And threshold is 0.8
-      When AgentDecisionMade is recorded
+      When PatternDetected is recorded
       Then event.executionMode equals "auto-execute"
 
   # ============================================================================
@@ -62,7 +62,7 @@ Feature: Agent Audit Trail
     @acceptance-criteria @happy-path
     Scenario: Audit includes LLM metadata
       Given agent used LLM for pattern analysis
-      When AgentDecisionMade is recorded
+      When PatternDetected is recorded
       Then event.llmContext includes:
         | field | description |
         | model | LLM model used |
@@ -90,27 +90,27 @@ Feature: Agent Audit Trail
       Given an auto-execute decision
       When command is executed
       Then AgentActionExecuted event is recorded
-      And event links to original AgentDecisionMade
+      And event links to original PatternDetected
 
     @acceptance-criteria @happy-path
     Scenario: Record approved action
       Given an action approved by reviewer
       When command is executed
-      Then AgentActionApproved event is recorded
+      Then ApprovalGranted event is recorded
       And event includes reviewerId and approvalTime
 
     @acceptance-criteria @happy-path
     Scenario: Record rejected action
       Given an action rejected by reviewer
       When rejection is processed
-      Then AgentActionRejected event is recorded
+      Then ApprovalRejected event is recorded
       And event includes reviewerId and rejectionReason
 
     @acceptance-criteria @happy-path
     Scenario: Record expired action
       Given an action that timed out
       When expiration is processed
-      Then AgentActionExpired event is recorded
+      Then ApprovalExpired event is recorded
       And event includes expirationTime
 
   # ============================================================================
@@ -124,7 +124,7 @@ Feature: Agent Audit Trail
     @acceptance-criteria @happy-path
     Scenario: Query all decisions for an agent
       Given agent "churn-detector" made 100 decisions
-      When I query AgentDecisionMade for agent "churn-detector"
+      When I query PatternDetected for agent "churn-detector"
       Then I receive 100 decision records
 
     @acceptance-criteria @happy-path
@@ -145,6 +145,6 @@ Feature: Agent Audit Trail
       When I query with expandTrace: true
       Then result includes related events:
         | eventType |
-        | AgentDecisionMade |
+        | PatternDetected |
         | AgentActionExecuted |
         | Command execution result |

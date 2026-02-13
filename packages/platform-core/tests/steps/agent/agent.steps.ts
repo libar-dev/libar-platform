@@ -51,12 +51,12 @@ import {
   type ApprovalAuthContext,
 
   // Audit
-  createAgentDecisionAudit,
-  createAgentActionApprovedAudit,
-  createAgentActionRejectedAudit,
-  createAgentActionExpiredAudit,
-  isDecisionAuditEvent,
-  isApprovalAuditEvent,
+  createPatternDetectedAudit,
+  createApprovalGrantedAudit,
+  createApprovalRejectedAudit,
+  createApprovalExpiredAudit,
+  isPatternDetectedEvent,
+  isApprovalGrantedEvent,
   type AgentAuditEvent,
   type AuditAction,
 
@@ -2038,7 +2038,7 @@ describeFeature(
           );
         });
 
-        Then("AgentActionApproved event is recorded", () => {
+        Then("ApprovalGranted event is recorded", () => {
           expect(isApprovalApproved(state.pendingApproval!)).toBe(true);
         });
 
@@ -2069,7 +2069,7 @@ describeFeature(
           );
         });
 
-        Then("AgentActionRejected event is recorded", () => {
+        Then("ApprovalRejected event is recorded", () => {
           expect(isApprovalRejected(state.pendingApproval!)).toBe(true);
         });
 
@@ -2112,7 +2112,7 @@ describeFeature(
           expect(isApprovalExpired(state.pendingApproval!, futureTime)).toBe(true);
         });
 
-        Then("AgentActionExpired event is recorded", () => {
+        Then("ApprovalExpired event is recorded", () => {
           state.pendingApproval = expireAction(state.pendingApproval!);
           expect(state.pendingApproval.status).toBe("expired");
         });
@@ -2227,15 +2227,15 @@ describeFeature(
 
     Background(({ Given, And }) => {
       Given("the agent module is imported from platform-core", () => {
-        expect(createAgentDecisionAudit).toBeDefined();
-        expect(createAgentActionApprovedAudit).toBeDefined();
-        expect(createAgentActionRejectedAudit).toBeDefined();
-        expect(createAgentActionExpiredAudit).toBeDefined();
+        expect(createPatternDetectedAudit).toBeDefined();
+        expect(createApprovalGrantedAudit).toBeDefined();
+        expect(createApprovalRejectedAudit).toBeDefined();
+        expect(createApprovalExpiredAudit).toBeDefined();
       });
 
       And("the audit trail utilities are available", () => {
-        expect(isDecisionAuditEvent).toBeDefined();
-        expect(isApprovalAuditEvent).toBeDefined();
+        expect(isPatternDetectedEvent).toBeDefined();
+        expect(isApprovalGrantedEvent).toBeDefined();
       });
     });
 
@@ -2244,7 +2244,7 @@ describeFeature(
     // ===========================================================================
 
     Rule("All agent decisions create audit events", ({ RuleScenario }) => {
-      RuleScenario("Record AgentDecisionMade event", ({ Given, When, Then, And }) => {
+      RuleScenario("Record PatternDetected event", ({ Given, When, Then, And }) => {
         Given("agent detects ChurnRisk pattern", () => {
           state.patternTriggered = true;
         });
@@ -2254,7 +2254,7 @@ describeFeature(
             type: "SuggestCustomerOutreach",
             executionMode: "flag-for-review",
           };
-          const auditEvent = createAgentDecisionAudit(state.agentBCId, {
+          const auditEvent = createPatternDetectedAudit(state.agentBCId, {
             patternDetected: "ChurnRisk",
             confidence: 0.85,
             reasoning: "Customer cancelled 3 orders in 30 days",
@@ -2264,16 +2264,16 @@ describeFeature(
           state.auditEvents.push(auditEvent);
         });
 
-        Then("AgentDecisionMade event is recorded", () => {
+        Then("PatternDetected event is recorded", () => {
           expect(state.auditEvents).toHaveLength(1);
-          expect(state.auditEvents[0].eventType).toBe("AgentDecisionMade");
+          expect(state.auditEvents[0].eventType).toBe("PatternDetected");
         });
 
         And("event includes:", (dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; description: string }>(dataTable);
           const event = state.auditEvents[0];
-          expect(isDecisionAuditEvent(event)).toBe(true);
-          if (isDecisionAuditEvent(event)) {
+          expect(isPatternDetectedEvent(event)).toBe(true);
+          if (isPatternDetectedEvent(event)) {
             for (const row of rows) {
               switch (row.field) {
                 case "decisionId":
@@ -2302,8 +2302,8 @@ describeFeature(
           state.patternTriggered = true;
         });
 
-        When("AgentDecisionMade is recorded", () => {
-          const auditEvent = createAgentDecisionAudit(state.agentBCId, {
+        When("PatternDetected is recorded", () => {
+          const auditEvent = createPatternDetectedAudit(state.agentBCId, {
             patternDetected: "ChurnRisk",
             confidence: 0.85,
             reasoning: "Pattern detected",
@@ -2315,7 +2315,7 @@ describeFeature(
 
         Then('event.triggeringEvents equals ["E1", "E2", "E3"]', () => {
           const event = state.auditEvents[0];
-          if (isDecisionAuditEvent(event)) {
+          if (isPatternDetectedEvent(event)) {
             expect(event.payload.triggeringEvents).toEqual(["E1", "E2", "E3"]);
           }
         });
@@ -2330,7 +2330,7 @@ describeFeature(
           state.hitlConfig = { confidenceThreshold: 0.8 };
         });
 
-        When("AgentDecisionMade is recorded", () => {
+        When("PatternDetected is recorded", () => {
           // Confidence 0.85 >= 0.8 threshold -> auto-execute (using >= for threshold)
           // Note: shouldRequireApproval uses <= so 0.85 > 0.8 means auto-execute
           const requiresApproval = shouldRequireApproval(state.hitlConfig, "TestAction", 0.85);
@@ -2341,7 +2341,7 @@ describeFeature(
             executionMode,
           };
 
-          const auditEvent = createAgentDecisionAudit(state.agentBCId, {
+          const auditEvent = createPatternDetectedAudit(state.agentBCId, {
             patternDetected: "TestPattern",
             confidence: 0.85,
             reasoning: "Test",
@@ -2353,7 +2353,7 @@ describeFeature(
 
         Then('event.executionMode equals "auto-execute"', () => {
           const event = state.auditEvents[0];
-          if (isDecisionAuditEvent(event)) {
+          if (isPatternDetectedEvent(event)) {
             expect(event.payload.action?.executionMode).toBe("auto-execute");
           }
         });
@@ -2370,8 +2370,8 @@ describeFeature(
           // Setup
         });
 
-        When("AgentDecisionMade is recorded", () => {
-          const auditEvent = createAgentDecisionAudit(
+        When("PatternDetected is recorded", () => {
+          const auditEvent = createPatternDetectedAudit(
             state.agentBCId,
             {
               patternDetected: "ChurnRisk",
@@ -2392,7 +2392,7 @@ describeFeature(
         Then("event.llmContext includes:", (dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; description: string }>(dataTable);
           const event = state.auditEvents[0];
-          if (isDecisionAuditEvent(event)) {
+          if (isPatternDetectedEvent(event)) {
             const llmContext = event.payload.llmContext;
             expect(llmContext).toBeDefined();
             for (const row of rows) {
@@ -2424,7 +2424,7 @@ describeFeature(
         When("AgentLLMError event is recorded", () => {
           // Use the analysis failed audit for LLM errors
           const auditEvent = {
-            eventType: "AgentAnalysisFailed" as const,
+            eventType: "DeadLetterRecorded" as const,
             agentId: state.agentBCId,
             decisionId: "dec_error",
             timestamp: Date.now(),
@@ -2443,7 +2443,7 @@ describeFeature(
 
         And("event includes fallback action taken", () => {
           // Fallback action would be recorded in a subsequent decision event
-          expect(state.auditEvents[0].eventType).toBe("AgentAnalysisFailed");
+          expect(state.auditEvents[0].eventType).toBe("DeadLetterRecorded");
         });
       });
     });
@@ -2464,7 +2464,7 @@ describeFeature(
             type: "AutoAction",
             executionMode: "auto-execute",
           };
-          const auditEvent = createAgentDecisionAudit(state.agentBCId, {
+          const auditEvent = createPatternDetectedAudit(state.agentBCId, {
             patternDetected: "TestPattern",
             confidence: 0.95,
             reasoning: "High confidence auto-execute",
@@ -2477,10 +2477,10 @@ describeFeature(
         Then("AgentActionExecuted event is recorded", () => {
           // Decision audit with auto-execute mode represents executed action
           expect(state.auditEvents).toHaveLength(1);
-          expect(isDecisionAuditEvent(state.auditEvents[0])).toBe(true);
+          expect(isPatternDetectedEvent(state.auditEvents[0])).toBe(true);
         });
 
-        And("event links to original AgentDecisionMade", () => {
+        And("event links to original PatternDetected", () => {
           expect(state.auditEvents[0].decisionId).toBeDefined();
         });
       });
@@ -2500,7 +2500,7 @@ describeFeature(
         });
 
         When("command is executed", () => {
-          const auditEvent = createAgentActionApprovedAudit(
+          const auditEvent = createApprovalGrantedAudit(
             state.agentBCId,
             state.pendingApproval!.approvalId,
             "reviewer_123",
@@ -2509,13 +2509,13 @@ describeFeature(
           state.auditEvents.push(auditEvent);
         });
 
-        Then("AgentActionApproved event is recorded", () => {
-          expect(state.auditEvents[0].eventType).toBe("AgentActionApproved");
+        Then("ApprovalGranted event is recorded", () => {
+          expect(state.auditEvents[0].eventType).toBe("ApprovalGranted");
         });
 
         And("event includes reviewerId and approvalTime", () => {
-          expect(isApprovalAuditEvent(state.auditEvents[0])).toBe(true);
-          if (isApprovalAuditEvent(state.auditEvents[0])) {
+          expect(isApprovalGrantedEvent(state.auditEvents[0])).toBe(true);
+          if (isApprovalGrantedEvent(state.auditEvents[0])) {
             expect(state.auditEvents[0].payload.reviewerId).toBe("reviewer_123");
             expect(state.auditEvents[0].payload.reviewedAt).toBeDefined();
           }
@@ -2536,7 +2536,7 @@ describeFeature(
         });
 
         When("rejection is processed", () => {
-          const auditEvent = createAgentActionRejectedAudit(
+          const auditEvent = createApprovalRejectedAudit(
             state.agentBCId,
             state.pendingApproval!.approvalId,
             "reviewer_123",
@@ -2545,13 +2545,13 @@ describeFeature(
           state.auditEvents.push(auditEvent);
         });
 
-        Then("AgentActionRejected event is recorded", () => {
-          expect(state.auditEvents[0].eventType).toBe("AgentActionRejected");
+        Then("ApprovalRejected event is recorded", () => {
+          expect(state.auditEvents[0].eventType).toBe("ApprovalRejected");
         });
 
         And("event includes reviewerId and rejectionReason", () => {
           const event = state.auditEvents[0];
-          if (event.eventType === "AgentActionRejected") {
+          if (event.eventType === "ApprovalRejected") {
             expect(event.payload.reviewerId).toBe("reviewer_123");
             expect(event.payload.rejectionReason).toContain("False positive");
           }
@@ -2572,7 +2572,7 @@ describeFeature(
         });
 
         When("expiration is processed", () => {
-          const auditEvent = createAgentActionExpiredAudit(
+          const auditEvent = createApprovalExpiredAudit(
             state.agentBCId,
             state.pendingApproval!.approvalId,
             state.pendingApproval!.requestedAt
@@ -2580,13 +2580,13 @@ describeFeature(
           state.auditEvents.push(auditEvent);
         });
 
-        Then("AgentActionExpired event is recorded", () => {
-          expect(state.auditEvents[0].eventType).toBe("AgentActionExpired");
+        Then("ApprovalExpired event is recorded", () => {
+          expect(state.auditEvents[0].eventType).toBe("ApprovalExpired");
         });
 
         And("event includes expirationTime", () => {
           const event = state.auditEvents[0];
-          if (event.eventType === "AgentActionExpired") {
+          if (event.eventType === "ApprovalExpired") {
             expect(event.payload.expiredAt).toBeDefined();
             expect(event.payload.requestedAt).toBe(state.pendingApproval!.requestedAt);
           }
@@ -2603,7 +2603,7 @@ describeFeature(
         Given('agent "churn-detector" made 100 decisions', () => {
           // Simulate 100 decisions
           for (let i = 0; i < 100; i++) {
-            const auditEvent = createAgentDecisionAudit("churn-detector", {
+            const auditEvent = createPatternDetectedAudit("churn-detector", {
               patternDetected: "ChurnRisk",
               confidence: 0.85,
               reasoning: `Decision ${i}`,
@@ -2614,10 +2614,10 @@ describeFeature(
           }
         });
 
-        When('I query AgentDecisionMade for agent "churn-detector"', () => {
+        When('I query PatternDetected for agent "churn-detector"', () => {
           // Filter by agent and event type
           const filtered = state.auditEvents.filter(
-            (e) => e.agentId === "churn-detector" && e.eventType === "AgentDecisionMade"
+            (e) => e.agentId === "churn-detector" && e.eventType === "PatternDetected"
           );
           state.auditEvents = filtered;
         });
@@ -2631,7 +2631,7 @@ describeFeature(
         Given("decisions for patterns: ChurnRisk (50), FraudRisk (30)", () => {
           for (let i = 0; i < 50; i++) {
             state.auditEvents.push(
-              createAgentDecisionAudit(state.agentBCId, {
+              createPatternDetectedAudit(state.agentBCId, {
                 patternDetected: "ChurnRisk",
                 confidence: 0.85,
                 reasoning: "Test",
@@ -2642,7 +2642,7 @@ describeFeature(
           }
           for (let i = 0; i < 30; i++) {
             state.auditEvents.push(
-              createAgentDecisionAudit(state.agentBCId, {
+              createPatternDetectedAudit(state.agentBCId, {
                 patternDetected: "FraudRisk",
                 confidence: 0.9,
                 reasoning: "Test",
@@ -2655,7 +2655,7 @@ describeFeature(
 
         When('I query decisions where patternDetected = "ChurnRisk"', () => {
           state.auditEvents = state.auditEvents.filter((e) => {
-            if (isDecisionAuditEvent(e)) {
+            if (isPatternDetectedEvent(e)) {
               return e.payload.patternDetected === "ChurnRisk";
             }
             return false;
@@ -2674,7 +2674,7 @@ describeFeature(
 
           // Create January decisions
           for (let i = 0; i < 30; i++) {
-            const event = createAgentDecisionAudit(state.agentBCId, {
+            const event = createPatternDetectedAudit(state.agentBCId, {
               patternDetected: "TestPattern",
               confidence: 0.85,
               reasoning: "January decision",
@@ -2687,7 +2687,7 @@ describeFeature(
 
           // Create February decisions
           for (let i = 0; i < 20; i++) {
-            const event = createAgentDecisionAudit(state.agentBCId, {
+            const event = createPatternDetectedAudit(state.agentBCId, {
               patternDetected: "TestPattern",
               confidence: 0.85,
               reasoning: "February decision",
@@ -2709,7 +2709,7 @@ describeFeature(
         Then("I receive only January decisions", () => {
           expect(state.auditEvents).toHaveLength(30);
           for (const event of state.auditEvents) {
-            if (isDecisionAuditEvent(event)) {
+            if (isPatternDetectedEvent(event)) {
               expect(event.payload.reasoning).toContain("January");
             }
           }
@@ -2719,7 +2719,7 @@ describeFeature(
       RuleScenario("Query decision with full trace", ({ Given, When, Then }) => {
         Given("a decision that led to executed command", () => {
           // Create decision event
-          const decisionEvent = createAgentDecisionAudit(state.agentBCId, {
+          const decisionEvent = createPatternDetectedAudit(state.agentBCId, {
             patternDetected: "ChurnRisk",
             confidence: 0.95,
             reasoning: "High confidence",
@@ -2729,7 +2729,7 @@ describeFeature(
           state.auditEvents.push(decisionEvent);
 
           // Create approval event (linking to decision)
-          const approvalEvent = createAgentActionApprovedAudit(
+          const approvalEvent = createApprovalGrantedAudit(
             state.agentBCId,
             "action_123",
             "auto",
@@ -2748,14 +2748,14 @@ describeFeature(
           const expectedTypes = rows.map((row) => row.eventType);
           const actualTypes = state.auditEvents.map((e) => e.eventType);
 
-          // AgentDecisionMade should be present
-          if (expectedTypes.includes("AgentDecisionMade")) {
-            expect(actualTypes).toContain("AgentDecisionMade");
+          // PatternDetected should be present
+          if (expectedTypes.includes("PatternDetected")) {
+            expect(actualTypes).toContain("PatternDetected");
           }
 
-          // AgentActionExecuted maps to AgentActionApproved for auto-execute
+          // AgentActionExecuted maps to ApprovalGranted for auto-execute
           if (expectedTypes.includes("AgentActionExecuted")) {
-            expect(actualTypes).toContain("AgentActionApproved");
+            expect(actualTypes).toContain("ApprovalGranted");
           }
         });
       });

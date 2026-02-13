@@ -1,7 +1,7 @@
 @libar-docs
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:AgentBCComponentIsolation
-@libar-docs-status:roadmap
+@libar-docs-status:active
 @libar-docs-phase:22a
 @libar-docs-effort:1w
 @libar-docs-product-area:Platform

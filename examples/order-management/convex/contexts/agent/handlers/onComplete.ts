@@ -14,6 +14,7 @@
 
 import { internalMutation } from "../../../_generated/server.js";
 import { v } from "convex/values";
+import { components } from "../../../_generated/api.js";
 import { vOnCompleteValidator } from "@convex-dev/workpool";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
 import { createAgentDeadLetter } from "@libar-dev/platform-core/agent";
@@ -101,41 +102,26 @@ export const handleChurnRiskOnComplete = internalMutation({
       contextObj.correlationId = correlationId;
     }
 
-    // Check if this event already has a dead letter entry (handles EventBus redelivery)
-    const existing = await ctx.db
-      .query("agentDeadLetters")
-      .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
-      .first();
+    // Record dead letter via component (UPSERT semantics: auto-increments attemptCount on retry)
+    const dlResult = await ctx.runMutation(components.agentBC.deadLetters.record, {
+      agentId: deadLetter.agentId,
+      subscriptionId: `sub_${agentId}`,
+      eventId,
+      globalPosition: globalPosition ?? 0,
+      error: deadLetter.error,
+      attemptCount: 1,
+      workId,
+      ...(Object.keys(contextObj).length > 0 && { context: contextObj }),
+    });
 
-    if (existing) {
-      if (existing.status === "pending") {
-        await ctx.db.patch(existing._id, {
-          attemptCount: existing.attemptCount + 1,
-          error: deadLetter.error,
-          failedAt: Date.now(),
-        });
-        logger.warn("Agent dead letter retry", {
-          agentId: deadLetter.agentId,
-          eventId: deadLetter.eventId,
-          attemptCount: existing.attemptCount + 1,
-          error: deadLetter.error,
-        });
-      }
-      // Don't update terminal states (replayed, ignored)
-    } else {
-      await ctx.db.insert("agentDeadLetters", {
-        agentId: deadLetter.agentId,
-        subscriptionId: deadLetter.subscriptionId,
-        eventId: deadLetter.eventId,
-        globalPosition: deadLetter.globalPosition,
-        error: deadLetter.error,
-        attemptCount: 1,
-        status: "pending" as const,
-        failedAt: Date.now(),
-        workId,
-        context: contextObj,
-      });
+    if (dlResult.created) {
       logger.info("Created dead letter entry", {
+        agentId: deadLetter.agentId,
+        eventId: deadLetter.eventId,
+        error: deadLetter.error,
+      });
+    } else {
+      logger.warn("Agent dead letter retry (upserted)", {
         agentId: deadLetter.agentId,
         eventId: deadLetter.eventId,
         error: deadLetter.error,
@@ -166,44 +152,29 @@ export const handleChurnRiskOnComplete = internalMutation({
  */
 export const replayDeadLetter = internalMutation({
   args: {
-    deadLetterId: v.id("agentDeadLetters"),
+    eventId: v.string(),
   },
-  handler: async (ctx, { deadLetterId }) => {
+  handler: async (ctx, { eventId }) => {
     const logger = createPlatformNoOpLogger();
 
-    // Load dead letter - PRODUCTION IMPLEMENTATION
-    const deadLetter = await ctx.db.get(deadLetterId);
+    logger.info("Replaying dead letter", { eventId });
 
-    if (!deadLetter) {
-      throw new Error(`Dead letter not found: ${deadLetterId}`);
-    }
-
-    if (deadLetter.status !== "pending") {
-      throw new Error(`Dead letter already processed: ${deadLetter.status}`);
-    }
-
-    logger.info("Replaying dead letter", {
-      deadLetterId,
-      eventId: deadLetter.eventId,
-      agentId: deadLetter.agentId,
-    });
-
-    // Mark as replayed - the actual replay would be handled by
+    // Mark as replayed via component - the actual replay would be handled by
     // re-publishing the event through EventBus, which is beyond
     // the scope of this handler. The caller should:
     // 1. Load the original event from the event store
     // 2. Re-publish through EventBus
     // 3. This handler marks the dead letter as replayed
-    await ctx.db.patch(deadLetterId, {
-      status: "replayed" as const,
+    const result = await ctx.runMutation(components.agentBC.deadLetters.updateStatus, {
+      eventId,
+      newStatus: "replayed",
     });
 
-    return {
-      success: true,
-      deadLetterId,
-      eventId: deadLetter.eventId,
-      agentId: deadLetter.agentId,
-    };
+    if (result.status === "error") {
+      throw new Error(result.message);
+    }
+
+    return { success: true, eventId };
   },
 });
 
@@ -224,43 +195,25 @@ export const replayDeadLetter = internalMutation({
  */
 export const ignoreDeadLetter = internalMutation({
   args: {
-    deadLetterId: v.id("agentDeadLetters"),
+    eventId: v.string(),
     reason: v.string(),
   },
-  handler: async (ctx, { deadLetterId, reason }) => {
+  handler: async (ctx, { eventId, reason }) => {
     const logger = createPlatformNoOpLogger();
 
-    // Load dead letter - PRODUCTION IMPLEMENTATION
-    const deadLetter = await ctx.db.get(deadLetterId);
+    logger.info("Ignoring dead letter", { eventId, reason });
 
-    if (!deadLetter) {
-      throw new Error(`Dead letter not found: ${deadLetterId}`);
-    }
-
-    if (deadLetter.status !== "pending") {
-      throw new Error(`Dead letter already processed: ${deadLetter.status}`);
-    }
-
-    logger.info("Ignoring dead letter", {
-      deadLetterId,
-      eventId: deadLetter.eventId,
-      reason,
+    // Mark as ignored with reason via component
+    const result = await ctx.runMutation(components.agentBC.deadLetters.updateStatus, {
+      eventId,
+      newStatus: "ignored",
+      ignoreReason: reason,
     });
 
-    // Mark as ignored with reason - PRODUCTION IMPLEMENTATION
-    await ctx.db.patch(deadLetterId, {
-      status: "ignored" as const,
-      context: {
-        ...deadLetter.context,
-        ignoreReason: reason,
-      },
-    });
+    if (result.status === "error") {
+      throw new Error(result.message);
+    }
 
-    return {
-      success: true,
-      deadLetterId,
-      eventId: deadLetter.eventId,
-      reason,
-    };
+    return { success: true, eventId, reason };
   },
 });

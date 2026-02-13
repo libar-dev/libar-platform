@@ -21,14 +21,31 @@ import type { LLMContext } from "./types.js";
 
 /**
  * All possible agent audit event types.
+ *
+ * DS-1 base (8): Core pattern detection and approval workflow events.
+ * DS-4 command routing (2): Command routing lifecycle events.
+ * DS-5 lifecycle (6): Agent lifecycle management events.
  */
 export const AGENT_AUDIT_EVENT_TYPES = [
-  "AgentDecisionMade",
-  "AgentActionApproved",
-  "AgentActionRejected",
-  "AgentActionExpired",
-  "AgentAnalysisCompleted",
-  "AgentAnalysisFailed",
+  // DS-1 base (8)
+  "PatternDetected",
+  "CommandEmitted",
+  "ApprovalRequested",
+  "ApprovalGranted",
+  "ApprovalRejected",
+  "ApprovalExpired",
+  "DeadLetterRecorded",
+  "CheckpointUpdated",
+  // DS-4 command routing (2)
+  "AgentCommandRouted",
+  "AgentCommandRoutingFailed",
+  // DS-5 lifecycle (6)
+  "AgentStarted",
+  "AgentPaused",
+  "AgentResumed",
+  "AgentStopped",
+  "AgentReconfigured",
+  "AgentErrorRecoveryStarted",
 ] as const;
 
 /**
@@ -57,12 +74,25 @@ export function isAgentAuditEventType(value: unknown): value is AgentAuditEventT
  * Schema for audit event type.
  */
 export const AgentAuditEventTypeSchema = z.enum([
-  "AgentDecisionMade",
-  "AgentActionApproved",
-  "AgentActionRejected",
-  "AgentActionExpired",
-  "AgentAnalysisCompleted",
-  "AgentAnalysisFailed",
+  // DS-1 base (8)
+  "PatternDetected",
+  "CommandEmitted",
+  "ApprovalRequested",
+  "ApprovalGranted",
+  "ApprovalRejected",
+  "ApprovalExpired",
+  "DeadLetterRecorded",
+  "CheckpointUpdated",
+  // DS-4 command routing (2)
+  "AgentCommandRouted",
+  "AgentCommandRoutingFailed",
+  // DS-5 lifecycle (6)
+  "AgentStarted",
+  "AgentPaused",
+  "AgentResumed",
+  "AgentStopped",
+  "AgentReconfigured",
+  "AgentErrorRecoveryStarted",
 ]);
 
 /**
@@ -90,9 +120,9 @@ export const AuditActionSchema = z
   .strict();
 
 /**
- * Schema for AgentDecisionMade payload.
+ * Schema for PatternDetected payload.
  */
-export const AgentDecisionMadePayloadSchema = z.object({
+export const PatternDetectedPayloadSchema = z.object({
   /** Pattern detected (null if no pattern) */
   patternDetected: z.string().nullable(),
   /** Confidence score (0-1) */
@@ -108,9 +138,9 @@ export const AgentDecisionMadePayloadSchema = z.object({
 });
 
 /**
- * Schema for AgentActionApproved payload.
+ * Schema for ApprovalGranted payload.
  */
-export const AgentActionApprovedPayloadSchema = z.object({
+export const ApprovalGrantedPayloadSchema = z.object({
   /** ID of the action being approved */
   actionId: z.string().min(1),
   /** ID of the human reviewer */
@@ -122,9 +152,9 @@ export const AgentActionApprovedPayloadSchema = z.object({
 });
 
 /**
- * Schema for AgentActionRejected payload.
+ * Schema for ApprovalRejected payload.
  */
-export const AgentActionRejectedPayloadSchema = z.object({
+export const ApprovalRejectedPayloadSchema = z.object({
   /** ID of the action being rejected */
   actionId: z.string().min(1),
   /** ID of the human reviewer */
@@ -134,41 +164,15 @@ export const AgentActionRejectedPayloadSchema = z.object({
 });
 
 /**
- * Schema for AgentActionExpired payload.
+ * Schema for ApprovalExpired payload.
  */
-export const AgentActionExpiredPayloadSchema = z.object({
+export const ApprovalExpiredPayloadSchema = z.object({
   /** ID of the expired action */
   actionId: z.string().min(1),
   /** When the action was originally requested */
   requestedAt: z.number(),
   /** When the action expired */
   expiredAt: z.number(),
-});
-
-/**
- * Schema for AgentAnalysisCompleted payload.
- */
-export const AgentAnalysisCompletedPayloadSchema = z.object({
-  /** Number of events analyzed */
-  eventsAnalyzed: z.number().int().nonnegative(),
-  /** Number of patterns detected */
-  patternsDetected: z.number().int().nonnegative(),
-  /** Analysis duration in milliseconds */
-  durationMs: z.number().int().nonnegative(),
-  /** LLM call metadata */
-  llmContext: AuditLLMContextSchema.optional(),
-});
-
-/**
- * Schema for AgentAnalysisFailed payload.
- */
-export const AgentAnalysisFailedPayloadSchema = z.object({
-  /** Error message */
-  error: z.string(),
-  /** Error code if available */
-  errorCode: z.string().optional(),
-  /** Number of events that were being analyzed */
-  eventsCount: z.number().int().nonnegative(),
 });
 
 /**
@@ -214,9 +218,9 @@ export interface AuditAction {
 }
 
 /**
- * Payload for AgentDecisionMade audit event.
+ * Payload for PatternDetected audit event.
  */
-export interface AgentDecisionMadePayload {
+export interface PatternDetectedPayload {
   /** Pattern detected (null if no pattern) */
   readonly patternDetected: string | null;
   /** Confidence score (0-1) */
@@ -232,9 +236,9 @@ export interface AgentDecisionMadePayload {
 }
 
 /**
- * Payload for AgentActionApproved audit event.
+ * Payload for ApprovalGranted audit event.
  */
-export interface AgentActionApprovedPayload {
+export interface ApprovalGrantedPayload {
   /** ID of the action being approved */
   readonly actionId: string;
   /** ID of the human reviewer */
@@ -246,9 +250,9 @@ export interface AgentActionApprovedPayload {
 }
 
 /**
- * Payload for AgentActionRejected audit event.
+ * Payload for ApprovalRejected audit event.
  */
-export interface AgentActionRejectedPayload {
+export interface ApprovalRejectedPayload {
   /** ID of the action being rejected */
   readonly actionId: string;
   /** ID of the human reviewer */
@@ -258,41 +262,15 @@ export interface AgentActionRejectedPayload {
 }
 
 /**
- * Payload for AgentActionExpired audit event.
+ * Payload for ApprovalExpired audit event.
  */
-export interface AgentActionExpiredPayload {
+export interface ApprovalExpiredPayload {
   /** ID of the expired action */
   readonly actionId: string;
   /** When the action was originally requested */
   readonly requestedAt: number;
   /** When the action expired */
   readonly expiredAt: number;
-}
-
-/**
- * Payload for AgentAnalysisCompleted audit event.
- */
-export interface AgentAnalysisCompletedPayload {
-  /** Number of events analyzed */
-  readonly eventsAnalyzed: number;
-  /** Number of patterns detected */
-  readonly patternsDetected: number;
-  /** Analysis duration in milliseconds */
-  readonly durationMs: number;
-  /** LLM call metadata */
-  readonly llmContext?: AuditLLMContext;
-}
-
-/**
- * Payload for AgentAnalysisFailed audit event.
- */
-export interface AgentAnalysisFailedPayload {
-  /** Error message */
-  readonly error: string;
-  /** Error code if available */
-  readonly errorCode?: string;
-  /** Number of events that were being analyzed */
-  readonly eventsCount: number;
 }
 
 /**
@@ -311,31 +289,33 @@ export interface AgentAuditEventBase {
 
 /**
  * Agent audit event with typed payload.
+ *
+ * Only events with structured payloads have typed variants.
+ * Remaining audit event types use the generic payload (z.unknown).
  */
 export type AgentAuditEvent =
   | (AgentAuditEventBase & {
-      readonly eventType: "AgentDecisionMade";
-      readonly payload: AgentDecisionMadePayload;
+      readonly eventType: "PatternDetected";
+      readonly payload: PatternDetectedPayload;
     })
   | (AgentAuditEventBase & {
-      readonly eventType: "AgentActionApproved";
-      readonly payload: AgentActionApprovedPayload;
+      readonly eventType: "ApprovalGranted";
+      readonly payload: ApprovalGrantedPayload;
     })
   | (AgentAuditEventBase & {
-      readonly eventType: "AgentActionRejected";
-      readonly payload: AgentActionRejectedPayload;
+      readonly eventType: "ApprovalRejected";
+      readonly payload: ApprovalRejectedPayload;
     })
   | (AgentAuditEventBase & {
-      readonly eventType: "AgentActionExpired";
-      readonly payload: AgentActionExpiredPayload;
+      readonly eventType: "ApprovalExpired";
+      readonly payload: ApprovalExpiredPayload;
     })
   | (AgentAuditEventBase & {
-      readonly eventType: "AgentAnalysisCompleted";
-      readonly payload: AgentAnalysisCompletedPayload;
-    })
-  | (AgentAuditEventBase & {
-      readonly eventType: "AgentAnalysisFailed";
-      readonly payload: AgentAnalysisFailedPayload;
+      readonly eventType: Exclude<
+        AgentAuditEventType,
+        "PatternDetected" | "ApprovalGranted" | "ApprovalRejected" | "ApprovalExpired"
+      >;
+      readonly payload: unknown;
     });
 
 // ============================================================================
@@ -367,19 +347,19 @@ export function generateDecisionId(): string {
 // ============================================================================
 
 /**
- * Create an AgentDecisionMade audit event.
+ * Create a PatternDetected audit event.
  *
- * Records a decision made by the agent, including the pattern detected,
+ * Records a pattern detected by the agent, including the pattern name,
  * confidence, reasoning, and action to take.
  *
  * @param agentId - Agent BC identifier
  * @param decision - Decision details
  * @param llmContext - Optional LLM call metadata
- * @returns AgentDecisionMade audit event
+ * @returns PatternDetected audit event
  *
  * @example
  * ```typescript
- * const audit = createAgentDecisionAudit(
+ * const audit = createPatternDetectedAudit(
  *   "churn-risk-agent",
  *   {
  *     patternDetected: "churn-risk",
@@ -392,7 +372,7 @@ export function generateDecisionId(): string {
  * );
  * ```
  */
-export function createAgentDecisionAudit(
+export function createPatternDetectedAudit(
   agentId: string,
   decision: {
     patternDetected: string | null;
@@ -403,7 +383,7 @@ export function createAgentDecisionAudit(
   },
   llmContext?: LLMContext
 ): AgentAuditEvent {
-  const payload: AgentDecisionMadePayload = {
+  const payload: PatternDetectedPayload = {
     patternDetected: decision.patternDetected,
     confidence: decision.confidence,
     reasoning: decision.reasoning,
@@ -414,7 +394,7 @@ export function createAgentDecisionAudit(
   // Only add llmContext if provided
   if (llmContext !== undefined) {
     return {
-      eventType: "AgentDecisionMade",
+      eventType: "PatternDetected",
       agentId,
       decisionId: generateDecisionId(),
       timestamp: Date.now(),
@@ -430,7 +410,7 @@ export function createAgentDecisionAudit(
   }
 
   return {
-    eventType: "AgentDecisionMade",
+    eventType: "PatternDetected",
     agentId,
     decisionId: generateDecisionId(),
     timestamp: Date.now(),
@@ -439,7 +419,7 @@ export function createAgentDecisionAudit(
 }
 
 /**
- * Create an AgentActionApproved audit event.
+ * Create an ApprovalGranted audit event.
  *
  * Records when a human reviewer approves an agent action.
  *
@@ -447,11 +427,11 @@ export function createAgentDecisionAudit(
  * @param actionId - ID of the approved action
  * @param reviewerId - ID of the human reviewer
  * @param reviewNote - Optional note from reviewer
- * @returns AgentActionApproved audit event
+ * @returns ApprovalGranted audit event
  *
  * @example
  * ```typescript
- * const audit = createAgentActionApprovedAudit(
+ * const audit = createApprovalGrantedAudit(
  *   "churn-risk-agent",
  *   "action-123",
  *   "user-456",
@@ -459,14 +439,14 @@ export function createAgentDecisionAudit(
  * );
  * ```
  */
-export function createAgentActionApprovedAudit(
+export function createApprovalGrantedAudit(
   agentId: string,
   actionId: string,
   reviewerId: string,
   reviewNote?: string
 ): AgentAuditEvent {
   const now = Date.now();
-  const payload: AgentActionApprovedPayload = {
+  const payload: ApprovalGrantedPayload = {
     actionId,
     reviewerId,
     reviewedAt: now,
@@ -474,7 +454,7 @@ export function createAgentActionApprovedAudit(
 
   if (reviewNote !== undefined) {
     return {
-      eventType: "AgentActionApproved",
+      eventType: "ApprovalGranted",
       agentId,
       decisionId: generateDecisionId(),
       timestamp: now,
@@ -483,7 +463,7 @@ export function createAgentActionApprovedAudit(
   }
 
   return {
-    eventType: "AgentActionApproved",
+    eventType: "ApprovalGranted",
     agentId,
     decisionId: generateDecisionId(),
     timestamp: now,
@@ -492,7 +472,7 @@ export function createAgentActionApprovedAudit(
 }
 
 /**
- * Create an AgentActionRejected audit event.
+ * Create an ApprovalRejected audit event.
  *
  * Records when a human reviewer rejects an agent action.
  *
@@ -500,11 +480,11 @@ export function createAgentActionApprovedAudit(
  * @param actionId - ID of the rejected action
  * @param reviewerId - ID of the human reviewer
  * @param rejectionReason - Reason for rejection
- * @returns AgentActionRejected audit event
+ * @returns ApprovalRejected audit event
  *
  * @example
  * ```typescript
- * const audit = createAgentActionRejectedAudit(
+ * const audit = createApprovalRejectedAudit(
  *   "churn-risk-agent",
  *   "action-123",
  *   "user-456",
@@ -512,14 +492,14 @@ export function createAgentActionApprovedAudit(
  * );
  * ```
  */
-export function createAgentActionRejectedAudit(
+export function createApprovalRejectedAudit(
   agentId: string,
   actionId: string,
   reviewerId: string,
   rejectionReason: string
 ): AgentAuditEvent {
   return {
-    eventType: "AgentActionRejected",
+    eventType: "ApprovalRejected",
     agentId,
     decisionId: generateDecisionId(),
     timestamp: Date.now(),
@@ -532,31 +512,31 @@ export function createAgentActionRejectedAudit(
 }
 
 /**
- * Create an AgentActionExpired audit event.
+ * Create an ApprovalExpired audit event.
  *
  * Records when an agent action expires without approval/rejection.
  *
  * @param agentId - Agent BC identifier
  * @param actionId - ID of the expired action
  * @param requestedAt - When the action was originally requested
- * @returns AgentActionExpired audit event
+ * @returns ApprovalExpired audit event
  *
  * @example
  * ```typescript
- * const audit = createAgentActionExpiredAudit(
+ * const audit = createApprovalExpiredAudit(
  *   "churn-risk-agent",
  *   "action-123",
  *   Date.now() - 86400000 // 24 hours ago
  * );
  * ```
  */
-export function createAgentActionExpiredAudit(
+export function createApprovalExpiredAudit(
   agentId: string,
   actionId: string,
   requestedAt: number
 ): AgentAuditEvent {
   return {
-    eventType: "AgentActionExpired",
+    eventType: "ApprovalExpired",
     agentId,
     decisionId: generateDecisionId(),
     timestamp: Date.now(),
@@ -569,90 +549,26 @@ export function createAgentActionExpiredAudit(
 }
 
 /**
- * Create an AgentAnalysisCompleted audit event.
+ * Create a generic agent audit event.
  *
- * Records successful completion of event analysis.
- *
- * @param agentId - Agent BC identifier
- * @param analysis - Analysis details
- * @param llmContext - Optional LLM call metadata
- * @returns AgentAnalysisCompleted audit event
- */
-export function createAgentAnalysisCompletedAudit(
-  agentId: string,
-  analysis: {
-    eventsAnalyzed: number;
-    patternsDetected: number;
-    durationMs: number;
-  },
-  llmContext?: LLMContext
-): AgentAuditEvent {
-  const payload: AgentAnalysisCompletedPayload = {
-    eventsAnalyzed: analysis.eventsAnalyzed,
-    patternsDetected: analysis.patternsDetected,
-    durationMs: analysis.durationMs,
-  };
-
-  if (llmContext !== undefined) {
-    return {
-      eventType: "AgentAnalysisCompleted",
-      agentId,
-      decisionId: generateDecisionId(),
-      timestamp: Date.now(),
-      payload: {
-        ...payload,
-        llmContext: {
-          model: llmContext.model,
-          tokens: llmContext.tokens,
-          duration: llmContext.durationMs,
-        },
-      },
-    };
-  }
-
-  return {
-    eventType: "AgentAnalysisCompleted",
-    agentId,
-    decisionId: generateDecisionId(),
-    timestamp: Date.now(),
-    payload,
-  };
-}
-
-/**
- * Create an AgentAnalysisFailed audit event.
- *
- * Records when event analysis fails.
+ * Used for audit event types that do not have a structured payload schema
+ * (e.g., CommandEmitted, DeadLetterRecorded, CheckpointUpdated, lifecycle events).
  *
  * @param agentId - Agent BC identifier
- * @param error - Error message
- * @param eventsCount - Number of events that were being analyzed
- * @param errorCode - Optional error code
- * @returns AgentAnalysisFailed audit event
+ * @param eventType - The audit event type
+ * @param payload - Event-specific payload (untyped)
+ * @returns Agent audit event
  */
-export function createAgentAnalysisFailedAudit(
+export function createGenericAuditEvent(
   agentId: string,
-  error: string,
-  eventsCount: number,
-  errorCode?: string
+  eventType: Exclude<
+    AgentAuditEventType,
+    "PatternDetected" | "ApprovalGranted" | "ApprovalRejected" | "ApprovalExpired"
+  >,
+  payload: unknown = {}
 ): AgentAuditEvent {
-  const payload: AgentAnalysisFailedPayload = {
-    error,
-    eventsCount,
-  };
-
-  if (errorCode !== undefined) {
-    return {
-      eventType: "AgentAnalysisFailed",
-      agentId,
-      decisionId: generateDecisionId(),
-      timestamp: Date.now(),
-      payload: { ...payload, errorCode },
-    };
-  }
-
   return {
-    eventType: "AgentAnalysisFailed",
+    eventType,
     agentId,
     decisionId: generateDecisionId(),
     timestamp: Date.now(),
@@ -665,39 +581,39 @@ export function createAgentAnalysisFailedAudit(
 // ============================================================================
 
 /**
- * Check if an audit event is a decision event.
+ * Check if an audit event is a pattern detected event.
  *
  * @param event - Audit event to check
- * @returns true if event is AgentDecisionMade
+ * @returns true if event is PatternDetected
  */
-export function isDecisionAuditEvent(
+export function isPatternDetectedEvent(
   event: AgentAuditEvent
-): event is AgentAuditEvent & { eventType: "AgentDecisionMade" } {
-  return event.eventType === "AgentDecisionMade";
+): event is AgentAuditEvent & { eventType: "PatternDetected" } {
+  return event.eventType === "PatternDetected";
 }
 
 /**
- * Check if an audit event is an approval event.
+ * Check if an audit event is an approval granted event.
  *
  * @param event - Audit event to check
- * @returns true if event is AgentActionApproved
+ * @returns true if event is ApprovalGranted
  */
-export function isApprovalAuditEvent(
+export function isApprovalGrantedEvent(
   event: AgentAuditEvent
-): event is AgentAuditEvent & { eventType: "AgentActionApproved" } {
-  return event.eventType === "AgentActionApproved";
+): event is AgentAuditEvent & { eventType: "ApprovalGranted" } {
+  return event.eventType === "ApprovalGranted";
 }
 
 /**
- * Check if an audit event is a rejection event.
+ * Check if an audit event is an approval rejected event.
  *
  * @param event - Audit event to check
- * @returns true if event is AgentActionRejected
+ * @returns true if event is ApprovalRejected
  */
-export function isRejectionAuditEvent(
+export function isApprovalRejectedEvent(
   event: AgentAuditEvent
-): event is AgentAuditEvent & { eventType: "AgentActionRejected" } {
-  return event.eventType === "AgentActionRejected";
+): event is AgentAuditEvent & { eventType: "ApprovalRejected" } {
+  return event.eventType === "ApprovalRejected";
 }
 
 // ============================================================================
@@ -725,24 +641,24 @@ export function validateAgentAuditEvent(event: unknown): boolean {
 export type AgentAuditEventTypeSchemaType = z.infer<typeof AgentAuditEventTypeSchema>;
 
 /**
- * Type inferred from AgentDecisionMadePayloadSchema.
+ * Type inferred from PatternDetectedPayloadSchema.
  */
-export type AgentDecisionMadePayloadSchemaType = z.infer<typeof AgentDecisionMadePayloadSchema>;
+export type PatternDetectedPayloadSchemaType = z.infer<typeof PatternDetectedPayloadSchema>;
 
 /**
- * Type inferred from AgentActionApprovedPayloadSchema.
+ * Type inferred from ApprovalGrantedPayloadSchema.
  */
-export type AgentActionApprovedPayloadSchemaType = z.infer<typeof AgentActionApprovedPayloadSchema>;
+export type ApprovalGrantedPayloadSchemaType = z.infer<typeof ApprovalGrantedPayloadSchema>;
 
 /**
- * Type inferred from AgentActionRejectedPayloadSchema.
+ * Type inferred from ApprovalRejectedPayloadSchema.
  */
-export type AgentActionRejectedPayloadSchemaType = z.infer<typeof AgentActionRejectedPayloadSchema>;
+export type ApprovalRejectedPayloadSchemaType = z.infer<typeof ApprovalRejectedPayloadSchema>;
 
 /**
- * Type inferred from AgentActionExpiredPayloadSchema.
+ * Type inferred from ApprovalExpiredPayloadSchema.
  */
-export type AgentActionExpiredPayloadSchemaType = z.infer<typeof AgentActionExpiredPayloadSchema>;
+export type ApprovalExpiredPayloadSchemaType = z.infer<typeof ApprovalExpiredPayloadSchema>;
 
 /**
  * Type inferred from AuditLLMContextSchema.

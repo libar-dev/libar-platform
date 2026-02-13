@@ -25,6 +25,7 @@ import inventorySchema from "../../convex/contexts/inventory/schema";
 // Use relative paths for workspace packages since they don't export schema
 import commandBusSchema from "../../../../packages/platform-bus/src/component/schema";
 import eventStoreSchema from "../../../../packages/platform-store/src/component/schema";
+import agentBCSchema from "../../../../packages/platform-core/src/agent/component/schema";
 
 // Import test helpers from @convex-dev packages
 // Note: We use workpoolTest.schema but NOT workpoolTest.register() to avoid
@@ -44,6 +45,9 @@ const commandBusModules = import.meta.glob(
 const eventStoreModules = import.meta.glob(
   "../../../../packages/platform-store/src/component/**/*.ts"
 );
+const agentBCModules = import.meta.glob(
+  "../../../../packages/platform-core/src/agent/component/**/*.ts"
+);
 
 /**
  * Creates a fresh convex-test instance for unit tests with all components registered.
@@ -59,6 +63,7 @@ export function createUnitTestContext() {
   // Register infrastructure components from @convex-es packages
   t.registerComponent("commandBus", commandBusSchema, commandBusModules);
   t.registerComponent("eventStore", eventStoreSchema, eventStoreModules);
+  t.registerComponent("agentBC", agentBCSchema, agentBCModules);
 
   // Register @convex-dev components.
   // Note: infrastructure.ts uses no-op workpool when __CONVEX_TEST_MODE__ is set,

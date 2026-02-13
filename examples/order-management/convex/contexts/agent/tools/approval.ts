@@ -25,6 +25,7 @@
 import { internalMutation } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
+import { components } from "../../../_generated/api.js";
 import { createPlatformNoOpLogger, type SafeMutationRef } from "@libar-dev/platform-core";
 
 // TS2589 Prevention: Declare function references at module level
@@ -75,41 +76,32 @@ export const recordPendingApproval = internalMutation({
   },
   handler: async (ctx, args) => {
     const logger = createPlatformNoOpLogger();
-    const now = Date.now();
 
-    // Check for duplicate approval (idempotency via approvalId)
-    const existing = await ctx.db
-      .query("pendingApprovals")
-      .withIndex("by_approvalId", (q) => q.eq("approvalId", args.approvalId))
-      .first();
-
-    if (existing) {
-      logger.debug("Pending approval already exists, skipping", {
-        approvalId: args.approvalId,
-      });
-      return { approvalId: args.approvalId, created: false };
-    }
-
-    // Insert pending approval
-    await ctx.db.insert("pendingApprovals", {
+    // Create approval via component (idempotent by approvalId)
+    const result = await ctx.runMutation(components.agentBC.approvals.create, {
       approvalId: args.approvalId,
       agentId: args.agentId,
       decisionId: args.decisionId,
       action: args.action,
       confidence: args.confidence,
       reason: args.reason,
-      status: "pending",
       triggeringEventIds: args.triggeringEventIds,
       expiresAt: args.expiresAt,
-      createdAt: now,
     });
 
-    // Record audit event
-    await ctx.db.insert("agentAuditEvents", {
-      eventType: "AgentDecisionMade",
+    if (result.status === "already_exists") {
+      logger.debug("Pending approval already exists, skipping", {
+        approvalId: args.approvalId,
+      });
+      return { approvalId: args.approvalId, created: false };
+    }
+
+    // Record audit event via component
+    await ctx.runMutation(components.agentBC.audit.record, {
+      eventType: "ApprovalRequested",
       agentId: args.agentId,
       decisionId: args.decisionId,
-      timestamp: now,
+      timestamp: Date.now(),
       payload: {
         approvalId: args.approvalId,
         actionType: args.action.type,
@@ -161,73 +153,61 @@ export const approveAgentAction = internalMutation({
   },
   handler: async (ctx, args) => {
     const logger = createPlatformNoOpLogger();
-    const now = Date.now();
 
-    // Load the approval
-    const approval = await ctx.db
-      .query("pendingApprovals")
-      .withIndex("by_approvalId", (q) => q.eq("approvalId", args.approvalId))
-      .first();
-
-    if (!approval) {
-      logger.warn("Approval not found", { approvalId: args.approvalId });
-      return { success: false, error: "APPROVAL_NOT_FOUND" };
-    }
-
-    // Check status
-    if (approval.status !== "pending") {
-      logger.warn("Cannot approve: invalid status", {
-        approvalId: args.approvalId,
-        currentStatus: approval.status,
-      });
-      return { success: false, error: "INVALID_STATUS_TRANSITION" };
-    }
-
-    // Check expiration
-    if (now >= approval.expiresAt) {
-      logger.warn("Cannot approve: approval expired", {
-        approvalId: args.approvalId,
-        expiresAt: approval.expiresAt,
-      });
-      return { success: false, error: "APPROVAL_EXPIRED" };
-    }
-
-    // Update approval status
-    await ctx.db.patch(approval._id, {
-      status: "approved",
+    // Approve via component - returns action details or error
+    const result = await ctx.runMutation(components.agentBC.approvals.approve, {
+      approvalId: args.approvalId,
       reviewerId: args.reviewerId,
-      reviewedAt: now,
-      reviewNote: args.reviewNote,
+      ...(args.reviewNote !== undefined && { reviewNote: args.reviewNote }),
     });
+
+    if (result.status === "error") {
+      logger.warn("Cannot approve", {
+        approvalId: args.approvalId,
+        error: result.message,
+      });
+      return { success: false, error: result.message };
+    }
+
+    // Component returned action details with status "approved"
+    const approved = result as {
+      status: "approved";
+      action: { type: string; payload: unknown };
+      agentId: string;
+      triggeringEventIds: string[];
+      confidence: number;
+      reason: string;
+      decisionId: string;
+    };
 
     // Emit the command
     await ctx.runMutation(emitAgentCommandRef, {
-      commandType: approval.action.type,
-      payload: approval.action.payload,
-      confidence: approval.confidence,
-      reason: approval.reason,
-      triggeringEventIds: approval.triggeringEventIds,
-      agentId: approval.agentId,
+      commandType: approved.action.type,
+      payload: approved.action.payload,
+      confidence: approved.confidence,
+      reason: approved.reason,
+      triggeringEventIds: approved.triggeringEventIds,
+      agentId: approved.agentId,
     });
 
-    // Record audit event
-    await ctx.db.insert("agentAuditEvents", {
-      eventType: "AgentActionApproved",
-      agentId: approval.agentId,
-      decisionId: approval.decisionId,
-      timestamp: now,
+    // Record audit event via component
+    await ctx.runMutation(components.agentBC.audit.record, {
+      eventType: "ApprovalGranted",
+      agentId: approved.agentId,
+      decisionId: approved.decisionId,
+      timestamp: Date.now(),
       payload: {
         approvalId: args.approvalId,
         reviewerId: args.reviewerId,
         reviewNote: args.reviewNote,
-        actionType: approval.action.type,
+        actionType: approved.action.type,
       },
     });
 
     logger.info("Approved agent action", {
       approvalId: args.approvalId,
-      agentId: approval.agentId,
-      actionType: approval.action.type,
+      agentId: approved.agentId,
+      actionType: approved.action.type,
       reviewerId: args.reviewerId,
     });
 
@@ -265,65 +245,49 @@ export const rejectAgentAction = internalMutation({
   },
   handler: async (ctx, args) => {
     const logger = createPlatformNoOpLogger();
-    const now = Date.now();
 
-    // Load the approval
-    const approval = await ctx.db
-      .query("pendingApprovals")
-      .withIndex("by_approvalId", (q) => q.eq("approvalId", args.approvalId))
-      .first();
-
-    if (!approval) {
-      logger.warn("Approval not found", { approvalId: args.approvalId });
-      return { success: false, error: "APPROVAL_NOT_FOUND" };
-    }
-
-    // Check status
-    if (approval.status !== "pending") {
-      logger.warn("Cannot reject: invalid status", {
-        approvalId: args.approvalId,
-        currentStatus: approval.status,
-      });
-      return { success: false, error: "INVALID_STATUS_TRANSITION" };
-    }
-
-    // Check expiration
-    if (now >= approval.expiresAt) {
-      logger.warn("Cannot reject: approval expired", {
-        approvalId: args.approvalId,
-        expiresAt: approval.expiresAt,
-      });
-      return { success: false, error: "APPROVAL_EXPIRED" };
-    }
-
-    // Update approval status
-    await ctx.db.patch(approval._id, {
-      status: "rejected",
-      reviewerId: args.reviewerId,
-      reviewedAt: now,
-      reviewNote: args.reviewNote,
-    });
-
-    // Record audit event
-    await ctx.db.insert("agentAuditEvents", {
-      eventType: "AgentActionRejected",
-      agentId: approval.agentId,
-      decisionId: approval.decisionId,
-      timestamp: now,
-      payload: {
-        approvalId: args.approvalId,
-        reviewerId: args.reviewerId,
-        reviewNote: args.reviewNote,
-        actionType: approval.action.type,
-      },
-    });
-
-    logger.info("Rejected agent action", {
+    // Reject via component
+    const result = await ctx.runMutation(components.agentBC.approvals.reject, {
       approvalId: args.approvalId,
-      agentId: approval.agentId,
-      actionType: approval.action.type,
       reviewerId: args.reviewerId,
+      ...(args.reviewNote !== undefined && { reviewNote: args.reviewNote }),
     });
+
+    if (result.status === "error") {
+      logger.warn("Cannot reject", {
+        approvalId: args.approvalId,
+        error: result.message,
+      });
+      return { success: false, error: result.message };
+    }
+
+    // Query approval details for audit event
+    const approval = await ctx.runQuery(components.agentBC.approvals.getById, {
+      approvalId: args.approvalId,
+    });
+
+    if (approval) {
+      // Record audit event via component
+      await ctx.runMutation(components.agentBC.audit.record, {
+        eventType: "ApprovalRejected",
+        agentId: approval.agentId,
+        decisionId: approval.decisionId,
+        timestamp: Date.now(),
+        payload: {
+          approvalId: args.approvalId,
+          reviewerId: args.reviewerId,
+          reviewNote: args.reviewNote,
+          actionType: approval.action.type,
+        },
+      });
+
+      logger.info("Rejected agent action", {
+        approvalId: args.approvalId,
+        agentId: approval.agentId,
+        actionType: approval.action.type,
+        reviewerId: args.reviewerId,
+      });
+    }
 
     return { success: true, approvalId: args.approvalId };
   },
@@ -349,52 +313,18 @@ export const expirePendingApprovals = internalMutation({
   args: {},
   handler: async (ctx) => {
     const logger = createPlatformNoOpLogger();
-    const now = Date.now();
 
-    // Find all pending approvals that have expired
-    // Use the index on status and expiresAt for efficient lookup
-    const expiredApprovals = await ctx.db
-      .query("pendingApprovals")
-      .withIndex("by_status_expiresAt", (q) => q.eq("status", "pending").lt("expiresAt", now))
-      .collect();
+    // Component handles iteration and patching internally
+    const result = await ctx.runMutation(components.agentBC.approvals.expirePending, {});
 
-    if (expiredApprovals.length === 0) {
+    if (result.expiredCount > 0) {
+      logger.info("Expired pending approvals", {
+        count: result.expiredCount,
+      });
+    } else {
       logger.debug("No expired approvals to process");
-      return { expiredCount: 0 };
     }
 
-    logger.info("Processing expired approvals", {
-      count: expiredApprovals.length,
-    });
-
-    // Expire each approval
-    for (const approval of expiredApprovals) {
-      // Update status to expired
-      await ctx.db.patch(approval._id, {
-        status: "expired",
-      });
-
-      // Record audit event
-      await ctx.db.insert("agentAuditEvents", {
-        eventType: "AgentActionExpired",
-        agentId: approval.agentId,
-        decisionId: approval.decisionId,
-        timestamp: now,
-        payload: {
-          approvalId: approval.approvalId,
-          actionType: approval.action.type,
-          expiresAt: approval.expiresAt,
-          confidence: approval.confidence,
-        },
-      });
-
-      logger.info("Expired approval", {
-        approvalId: approval.approvalId,
-        agentId: approval.agentId,
-        actionType: approval.action.type,
-      });
-    }
-
-    return { expiredCount: expiredApprovals.length };
+    return { expiredCount: result.expiredCount };
   },
 });

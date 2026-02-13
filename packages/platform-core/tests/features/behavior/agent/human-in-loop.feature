@@ -99,14 +99,14 @@ Feature: Human-in-Loop Configuration
     Scenario: Approve pending action
       Given a pending action with id "action_123"
       When reviewer approves the action
-      Then AgentActionApproved event is recorded
+      Then ApprovalGranted event is recorded
       And original command is executed
 
     @acceptance-criteria @happy-path
     Scenario: Reject pending action
       Given a pending action with id "action_123"
       When reviewer rejects with reason "False positive"
-      Then AgentActionRejected event is recorded
+      Then ApprovalRejected event is recorded
       And command is NOT executed
       And rejection reason is recorded
 
@@ -123,7 +123,7 @@ Feature: Human-in-Loop Configuration
       Given approval timeout is 24 hours
       And an action flagged for review
       When 24 hours pass without review
-      Then AgentActionExpired event is recorded
+      Then ApprovalExpired event is recorded
       And action status becomes "expired"
 
     @acceptance-criteria @happy-path

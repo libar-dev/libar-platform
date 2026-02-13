@@ -94,6 +94,11 @@
     "./agent": {
       "types": "./dist/agent/index.d.ts",
       "default": "./dist/agent/index.js"
+    },
+    "./agent/convex.config": {
+      "@convex-dev/component-source": "./src/agent/component/convex.config.ts",
+      "types": "./dist/agent/component/convex.config.d.ts",
+      "default": "./dist/agent/component/convex.config.js"
     }
   },
   "files": [

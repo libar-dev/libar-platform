@@ -17,30 +17,27 @@ import {
   AgentAuditEventTypeSchema,
   AuditLLMContextSchema,
   AuditActionSchema,
-  AgentDecisionMadePayloadSchema,
-  AgentActionApprovedPayloadSchema,
-  AgentActionRejectedPayloadSchema,
-  AgentActionExpiredPayloadSchema,
-  AgentAnalysisCompletedPayloadSchema,
-  AgentAnalysisFailedPayloadSchema,
+  PatternDetectedPayloadSchema,
+  ApprovalGrantedPayloadSchema,
+  ApprovalRejectedPayloadSchema,
+  ApprovalExpiredPayloadSchema,
   AgentAuditEventSchema,
   // ID generation
   generateDecisionId,
   // Factory functions
-  createAgentDecisionAudit,
-  createAgentActionApprovedAudit,
-  createAgentActionRejectedAudit,
-  createAgentActionExpiredAudit,
-  createAgentAnalysisCompletedAudit,
-  createAgentAnalysisFailedAudit,
+  createPatternDetectedAudit,
+  createApprovalGrantedAudit,
+  createApprovalRejectedAudit,
+  createApprovalExpiredAudit,
+  createGenericAuditEvent,
   // Type guards
-  isDecisionAuditEvent,
-  isApprovalAuditEvent,
-  isRejectionAuditEvent,
+  isPatternDetectedEvent,
+  isApprovalGrantedEvent,
+  isApprovalRejectedEvent,
   // Validation
   validateAgentAuditEvent,
   // Types
-  type AgentDecisionMadePayload,
+  type PatternDetectedPayload,
   type AuditAction,
   type AuditLLMContext,
 } from "../../../src/agent/audit.js";
@@ -68,8 +65,8 @@ function createTestAuditAction(overrides: Partial<AuditAction> = {}): AuditActio
 }
 
 function createTestDecisionPayload(
-  overrides: Partial<AgentDecisionMadePayload> = {}
-): AgentDecisionMadePayload {
+  overrides: Partial<PatternDetectedPayload> = {}
+): PatternDetectedPayload {
   return {
     patternDetected: "churn-risk",
     confidence: 0.85,
@@ -85,31 +82,57 @@ function createTestDecisionPayload(
 // ============================================================================
 
 describe("AGENT_AUDIT_EVENT_TYPES", () => {
-  it("contains all expected event types", () => {
-    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentDecisionMade");
-    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentActionApproved");
-    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentActionRejected");
-    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentActionExpired");
-    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentAnalysisCompleted");
-    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentAnalysisFailed");
+  it("contains all expected DS-1 base event types", () => {
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("PatternDetected");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("CommandEmitted");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("ApprovalRequested");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("ApprovalGranted");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("ApprovalRejected");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("ApprovalExpired");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("DeadLetterRecorded");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("CheckpointUpdated");
   });
 
-  it("has 6 event types", () => {
-    expect(AGENT_AUDIT_EVENT_TYPES.length).toBe(6);
+  it("contains all expected DS-4 command routing event types", () => {
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentCommandRouted");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentCommandRoutingFailed");
+  });
+
+  it("contains all expected DS-5 lifecycle event types", () => {
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentStarted");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentPaused");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentResumed");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentStopped");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentReconfigured");
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentErrorRecoveryStarted");
+  });
+
+  it("has 16 event types", () => {
+    expect(AGENT_AUDIT_EVENT_TYPES.length).toBe(16);
   });
 });
 
 describe("isAgentAuditEventType type guard", () => {
   it.each([
-    ["AgentDecisionMade", true],
-    ["AgentActionApproved", true],
-    ["AgentActionRejected", true],
-    ["AgentActionExpired", true],
-    ["AgentAnalysisCompleted", true],
-    ["AgentAnalysisFailed", true],
+    ["PatternDetected", true],
+    ["CommandEmitted", true],
+    ["ApprovalRequested", true],
+    ["ApprovalGranted", true],
+    ["ApprovalRejected", true],
+    ["ApprovalExpired", true],
+    ["DeadLetterRecorded", true],
+    ["CheckpointUpdated", true],
+    ["AgentCommandRouted", true],
+    ["AgentCommandRoutingFailed", true],
+    ["AgentStarted", true],
+    ["AgentPaused", true],
+    ["AgentResumed", true],
+    ["AgentStopped", true],
+    ["AgentReconfigured", true],
+    ["AgentErrorRecoveryStarted", true],
+    ["AgentDecisionMade", false], // Old name, no longer valid
     ["InvalidType", false],
-    ["agentDecisionMade", false], // Case sensitive
-    ["AGENT_DECISION_MADE", false],
+    ["patternDetected", false], // Case sensitive
     ["", false],
     [123, false],
     [null, false],
@@ -123,7 +146,7 @@ describe("isAgentAuditEventType type guard", () => {
   });
 
   it("returns false for arrays", () => {
-    expect(isAgentAuditEventType(["AgentDecisionMade"])).toBe(false);
+    expect(isAgentAuditEventType(["PatternDetected"])).toBe(false);
   });
 });
 
@@ -212,22 +235,22 @@ describe("AuditActionSchema", () => {
   });
 });
 
-describe("AgentDecisionMadePayloadSchema", () => {
+describe("PatternDetectedPayloadSchema", () => {
   it("accepts valid payload with action", () => {
     const payload = createTestDecisionPayload();
-    const result = AgentDecisionMadePayloadSchema.safeParse(payload);
+    const result = PatternDetectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
   it("accepts payload with null patternDetected", () => {
     const payload = createTestDecisionPayload({ patternDetected: null });
-    const result = AgentDecisionMadePayloadSchema.safeParse(payload);
+    const result = PatternDetectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
   it("accepts payload with null action", () => {
     const payload = createTestDecisionPayload({ action: null });
-    const result = AgentDecisionMadePayloadSchema.safeParse(payload);
+    const result = PatternDetectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
@@ -236,31 +259,31 @@ describe("AgentDecisionMadePayloadSchema", () => {
       ...createTestDecisionPayload(),
       llmContext: { model: "gpt-4", tokens: 1500, duration: 2500 },
     };
-    const result = AgentDecisionMadePayloadSchema.safeParse(payload);
+    const result = PatternDetectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
   it("rejects payload with confidence below 0", () => {
     const payload = createTestDecisionPayload({ confidence: -0.1 });
-    const result = AgentDecisionMadePayloadSchema.safeParse(payload);
+    const result = PatternDetectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(false);
   });
 
   it("rejects payload with confidence above 1", () => {
     const payload = createTestDecisionPayload({ confidence: 1.5 });
-    const result = AgentDecisionMadePayloadSchema.safeParse(payload);
+    const result = PatternDetectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(false);
   });
 });
 
-describe("AgentActionApprovedPayloadSchema", () => {
+describe("ApprovalGrantedPayloadSchema", () => {
   it("accepts valid payload", () => {
     const payload = {
       actionId: "action-123",
       reviewerId: "user-456",
       reviewedAt: Date.now(),
     };
-    const result = AgentActionApprovedPayloadSchema.safeParse(payload);
+    const result = ApprovalGrantedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
@@ -271,7 +294,7 @@ describe("AgentActionApprovedPayloadSchema", () => {
       reviewedAt: Date.now(),
       reviewNote: "Looks good!",
     };
-    const result = AgentActionApprovedPayloadSchema.safeParse(payload);
+    const result = ApprovalGrantedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
@@ -281,19 +304,19 @@ describe("AgentActionApprovedPayloadSchema", () => {
       reviewerId: "user-456",
       reviewedAt: Date.now(),
     };
-    const result = AgentActionApprovedPayloadSchema.safeParse(payload);
+    const result = ApprovalGrantedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(false);
   });
 });
 
-describe("AgentActionRejectedPayloadSchema", () => {
+describe("ApprovalRejectedPayloadSchema", () => {
   it("accepts valid payload", () => {
     const payload = {
       actionId: "action-123",
       reviewerId: "user-456",
       rejectionReason: "Customer already contacted",
     };
-    const result = AgentActionRejectedPayloadSchema.safeParse(payload);
+    const result = ApprovalRejectedPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
@@ -305,20 +328,20 @@ describe("AgentActionRejectedPayloadSchema", () => {
     };
     // Note: Zod string() doesn't enforce non-empty by default, depends on implementation
     // If it should be non-empty, the test would be:
-    const result = AgentActionRejectedPayloadSchema.safeParse(payload);
+    const result = ApprovalRejectedPayloadSchema.safeParse(payload);
     // Adjust based on actual schema validation rules
     expect(result.success).toBe(true); // Empty string is allowed unless .min(1)
   });
 });
 
-describe("AgentActionExpiredPayloadSchema", () => {
+describe("ApprovalExpiredPayloadSchema", () => {
   it("accepts valid payload", () => {
     const payload = {
       actionId: "action-123",
       requestedAt: Date.now() - 86400000,
       expiredAt: Date.now(),
     };
-    const result = AgentActionExpiredPayloadSchema.safeParse(payload);
+    const result = ApprovalExpiredPayloadSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
 
@@ -328,69 +351,18 @@ describe("AgentActionExpiredPayloadSchema", () => {
       requestedAt: Date.now(),
       expiredAt: Date.now(),
     };
-    const result = AgentActionExpiredPayloadSchema.safeParse(payload);
+    const result = ApprovalExpiredPayloadSchema.safeParse(payload);
     expect(result.success).toBe(false);
   });
 });
 
-describe("AgentAnalysisCompletedPayloadSchema", () => {
-  it("accepts valid payload", () => {
-    const payload = {
-      eventsAnalyzed: 10,
-      patternsDetected: 2,
-      durationMs: 1500,
-    };
-    const result = AgentAnalysisCompletedPayloadSchema.safeParse(payload);
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts payload with llmContext", () => {
-    const payload = {
-      eventsAnalyzed: 10,
-      patternsDetected: 2,
-      durationMs: 1500,
-      llmContext: { model: "gpt-4", tokens: 1500, duration: 2500 },
-    };
-    const result = AgentAnalysisCompletedPayloadSchema.safeParse(payload);
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects payload with negative eventsAnalyzed", () => {
-    const payload = {
-      eventsAnalyzed: -1,
-      patternsDetected: 2,
-      durationMs: 1500,
-    };
-    const result = AgentAnalysisCompletedPayloadSchema.safeParse(payload);
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("AgentAnalysisFailedPayloadSchema", () => {
-  it("accepts valid payload", () => {
-    const payload = {
-      error: "LLM timeout",
-      eventsCount: 10,
-    };
-    const result = AgentAnalysisFailedPayloadSchema.safeParse(payload);
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts payload with errorCode", () => {
-    const payload = {
-      error: "LLM timeout",
-      errorCode: "LLM_TIMEOUT",
-      eventsCount: 10,
-    };
-    const result = AgentAnalysisFailedPayloadSchema.safeParse(payload);
-    expect(result.success).toBe(true);
-  });
-});
+// Note: AgentAnalysisCompleted and AgentAnalysisFailed payload schemas were removed
+// in the clean break to 16 event types. Those event types no longer exist.
 
 describe("AgentAuditEventSchema", () => {
   it("accepts valid audit event", () => {
     const event = {
-      eventType: "AgentDecisionMade",
+      eventType: "PatternDetected",
       agentId: "test-agent",
       decisionId: "dec_123_abcd",
       timestamp: Date.now(),
@@ -402,7 +374,7 @@ describe("AgentAuditEventSchema", () => {
 
   it("rejects event with empty agentId", () => {
     const event = {
-      eventType: "AgentDecisionMade",
+      eventType: "PatternDetected",
       agentId: "",
       decisionId: "dec_123",
       timestamp: Date.now(),
@@ -414,7 +386,7 @@ describe("AgentAuditEventSchema", () => {
 
   it("rejects event with empty decisionId", () => {
     const event = {
-      eventType: "AgentDecisionMade",
+      eventType: "PatternDetected",
       agentId: "agent",
       decisionId: "",
       timestamp: Date.now(),
@@ -473,7 +445,7 @@ describe("generateDecisionId", () => {
 // Factory Functions Tests
 // ============================================================================
 
-describe("createAgentDecisionAudit", () => {
+describe("createPatternDetectedAudit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -483,19 +455,19 @@ describe("createAgentDecisionAudit", () => {
     vi.useRealTimers();
   });
 
-  it("creates event with AgentDecisionMade type", () => {
-    const event = createAgentDecisionAudit("test-agent", {
+  it("creates event with PatternDetected type", () => {
+    const event = createPatternDetectedAudit("test-agent", {
       patternDetected: "churn-risk",
       confidence: 0.85,
       reasoning: "Customer at risk",
       action: createTestAuditAction(),
       triggeringEvents: ["evt-1"],
     });
-    expect(event.eventType).toBe("AgentDecisionMade");
+    expect(event.eventType).toBe("PatternDetected");
   });
 
   it("includes all required fields", () => {
-    const event = createAgentDecisionAudit("test-agent", {
+    const event = createPatternDetectedAudit("test-agent", {
       patternDetected: "churn-risk",
       confidence: 0.85,
       reasoning: "Customer at risk",
@@ -515,7 +487,7 @@ describe("createAgentDecisionAudit", () => {
 
   it("includes LLM context when provided", () => {
     const llmContext = createTestLLMContext();
-    const event = createAgentDecisionAudit(
+    const event = createPatternDetectedAudit(
       "agent",
       {
         patternDetected: null,
@@ -534,7 +506,7 @@ describe("createAgentDecisionAudit", () => {
   });
 
   it("does not include LLM context when not provided", () => {
-    const event = createAgentDecisionAudit("agent", {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: null,
       confidence: 0.5,
       reasoning: "test",
@@ -546,7 +518,7 @@ describe("createAgentDecisionAudit", () => {
   });
 
   it("handles null patternDetected", () => {
-    const event = createAgentDecisionAudit("agent", {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: null,
       confidence: 0.5,
       reasoning: "No pattern found",
@@ -558,7 +530,7 @@ describe("createAgentDecisionAudit", () => {
   });
 
   it("handles null action", () => {
-    const event = createAgentDecisionAudit("agent", {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: "some-pattern",
       confidence: 0.5,
       reasoning: "No action needed",
@@ -570,7 +542,7 @@ describe("createAgentDecisionAudit", () => {
   });
 });
 
-describe("createAgentActionApprovedAudit", () => {
+describe("createApprovalGrantedAudit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -580,13 +552,13 @@ describe("createAgentActionApprovedAudit", () => {
     vi.useRealTimers();
   });
 
-  it("creates event with AgentActionApproved type", () => {
-    const event = createAgentActionApprovedAudit("agent", "action-123", "user-456");
-    expect(event.eventType).toBe("AgentActionApproved");
+  it("creates event with ApprovalGranted type", () => {
+    const event = createApprovalGrantedAudit("agent", "action-123", "user-456");
+    expect(event.eventType).toBe("ApprovalGranted");
   });
 
   it("includes all required fields", () => {
-    const event = createAgentActionApprovedAudit("test-agent", "action-123", "user-456");
+    const event = createApprovalGrantedAudit("test-agent", "action-123", "user-456");
 
     expect(event.agentId).toBe("test-agent");
     expect(event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
@@ -597,7 +569,7 @@ describe("createAgentActionApprovedAudit", () => {
   });
 
   it("includes reviewNote when provided", () => {
-    const event = createAgentActionApprovedAudit(
+    const event = createApprovalGrantedAudit(
       "agent",
       "action-123",
       "user-456",
@@ -608,13 +580,13 @@ describe("createAgentActionApprovedAudit", () => {
   });
 
   it("does not include reviewNote when not provided", () => {
-    const event = createAgentActionApprovedAudit("agent", "action-123", "user-456");
+    const event = createApprovalGrantedAudit("agent", "action-123", "user-456");
 
     expect(event.payload.reviewNote).toBeUndefined();
   });
 });
 
-describe("createAgentActionRejectedAudit", () => {
+describe("createApprovalRejectedAudit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -624,18 +596,18 @@ describe("createAgentActionRejectedAudit", () => {
     vi.useRealTimers();
   });
 
-  it("creates event with AgentActionRejected type", () => {
-    const event = createAgentActionRejectedAudit(
+  it("creates event with ApprovalRejected type", () => {
+    const event = createApprovalRejectedAudit(
       "agent",
       "action-123",
       "user-456",
       "Customer already contacted"
     );
-    expect(event.eventType).toBe("AgentActionRejected");
+    expect(event.eventType).toBe("ApprovalRejected");
   });
 
   it("includes all required fields", () => {
-    const event = createAgentActionRejectedAudit(
+    const event = createApprovalRejectedAudit(
       "test-agent",
       "action-123",
       "user-456",
@@ -651,7 +623,7 @@ describe("createAgentActionRejectedAudit", () => {
   });
 });
 
-describe("createAgentActionExpiredAudit", () => {
+describe("createApprovalExpiredAudit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -661,15 +633,15 @@ describe("createAgentActionExpiredAudit", () => {
     vi.useRealTimers();
   });
 
-  it("creates event with AgentActionExpired type", () => {
+  it("creates event with ApprovalExpired type", () => {
     const requestedAt = Date.now() - 86400000; // 24 hours ago
-    const event = createAgentActionExpiredAudit("agent", "action-123", requestedAt);
-    expect(event.eventType).toBe("AgentActionExpired");
+    const event = createApprovalExpiredAudit("agent", "action-123", requestedAt);
+    expect(event.eventType).toBe("ApprovalExpired");
   });
 
   it("includes all required fields", () => {
     const requestedAt = Date.now() - 86400000;
-    const event = createAgentActionExpiredAudit("test-agent", "action-123", requestedAt);
+    const event = createApprovalExpiredAudit("test-agent", "action-123", requestedAt);
 
     expect(event.agentId).toBe("test-agent");
     expect(event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
@@ -680,7 +652,7 @@ describe("createAgentActionExpiredAudit", () => {
   });
 });
 
-describe("createAgentAnalysisCompletedAudit", () => {
+describe("createGenericAuditEvent", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -690,78 +662,36 @@ describe("createAgentAnalysisCompletedAudit", () => {
     vi.useRealTimers();
   });
 
-  it("creates event with AgentAnalysisCompleted type", () => {
-    const event = createAgentAnalysisCompletedAudit("agent", {
-      eventsAnalyzed: 10,
-      patternsDetected: 2,
-      durationMs: 1500,
-    });
-    expect(event.eventType).toBe("AgentAnalysisCompleted");
+  it("creates event with specified type", () => {
+    const event = createGenericAuditEvent("agent", "CommandEmitted", { commandType: "test" });
+    expect(event.eventType).toBe("CommandEmitted");
   });
 
   it("includes all required fields", () => {
-    const event = createAgentAnalysisCompletedAudit("test-agent", {
-      eventsAnalyzed: 10,
-      patternsDetected: 2,
-      durationMs: 1500,
+    const event = createGenericAuditEvent("test-agent", "AgentStarted", { reason: "init" });
+
+    expect(event.agentId).toBe("test-agent");
+    expect(event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+    expect(event.timestamp).toBe(Date.now());
+  });
+
+  it("defaults payload to empty object when not provided", () => {
+    const event = createGenericAuditEvent("agent", "CheckpointUpdated");
+    expect(event.payload).toEqual({});
+  });
+
+  it("works with DS-4 command routing types", () => {
+    const event = createGenericAuditEvent("agent", "AgentCommandRouted", {
+      routeTarget: "order-bc",
     });
-
-    expect(event.agentId).toBe("test-agent");
-    expect(event.payload.eventsAnalyzed).toBe(10);
-    expect(event.payload.patternsDetected).toBe(2);
-    expect(event.payload.durationMs).toBe(1500);
+    expect(event.eventType).toBe("AgentCommandRouted");
   });
 
-  it("includes LLM context when provided", () => {
-    const llmContext = createTestLLMContext();
-    const event = createAgentAnalysisCompletedAudit(
-      "agent",
-      {
-        eventsAnalyzed: 10,
-        patternsDetected: 2,
-        durationMs: 1500,
-      },
-      llmContext
-    );
-
-    expect(event.payload.llmContext).toBeDefined();
-    expect(event.payload.llmContext?.model).toBe("gpt-4");
-  });
-});
-
-describe("createAgentAnalysisFailedAudit", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("creates event with AgentAnalysisFailed type", () => {
-    const event = createAgentAnalysisFailedAudit("agent", "LLM timeout", 10);
-    expect(event.eventType).toBe("AgentAnalysisFailed");
-  });
-
-  it("includes all required fields", () => {
-    const event = createAgentAnalysisFailedAudit("test-agent", "LLM timeout", 10);
-
-    expect(event.agentId).toBe("test-agent");
-    expect(event.payload.error).toBe("LLM timeout");
-    expect(event.payload.eventsCount).toBe(10);
-  });
-
-  it("includes errorCode when provided", () => {
-    const event = createAgentAnalysisFailedAudit("agent", "LLM timeout", 10, "LLM_TIMEOUT");
-
-    expect(event.payload.errorCode).toBe("LLM_TIMEOUT");
-  });
-
-  it("does not include errorCode when not provided", () => {
-    const event = createAgentAnalysisFailedAudit("agent", "Unknown error", 5);
-
-    expect(event.payload.errorCode).toBeUndefined();
+  it("works with DS-5 lifecycle types", () => {
+    const event = createGenericAuditEvent("agent", "AgentErrorRecoveryStarted", {
+      error: "timeout",
+    });
+    expect(event.eventType).toBe("AgentErrorRecoveryStarted");
   });
 });
 
@@ -769,7 +699,7 @@ describe("createAgentAnalysisFailedAudit", () => {
 // Type Guards Tests
 // ============================================================================
 
-describe("isDecisionAuditEvent", () => {
+describe("isPatternDetectedEvent", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -779,29 +709,29 @@ describe("isDecisionAuditEvent", () => {
     vi.useRealTimers();
   });
 
-  it("returns true for AgentDecisionMade event", () => {
-    const event = createAgentDecisionAudit("agent", {
+  it("returns true for PatternDetected event", () => {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: null,
       confidence: 0.5,
       reasoning: "test",
       action: null,
       triggeringEvents: ["evt-1"],
     });
-    expect(isDecisionAuditEvent(event)).toBe(true);
+    expect(isPatternDetectedEvent(event)).toBe(true);
   });
 
-  it("returns false for AgentActionApproved event", () => {
-    const event = createAgentActionApprovedAudit("agent", "action", "user");
-    expect(isDecisionAuditEvent(event)).toBe(false);
+  it("returns false for ApprovalGranted event", () => {
+    const event = createApprovalGrantedAudit("agent", "action", "user");
+    expect(isPatternDetectedEvent(event)).toBe(false);
   });
 
-  it("returns false for AgentActionRejected event", () => {
-    const event = createAgentActionRejectedAudit("agent", "action", "user", "reason");
-    expect(isDecisionAuditEvent(event)).toBe(false);
+  it("returns false for ApprovalRejected event", () => {
+    const event = createApprovalRejectedAudit("agent", "action", "user", "reason");
+    expect(isPatternDetectedEvent(event)).toBe(false);
   });
 });
 
-describe("isApprovalAuditEvent", () => {
+describe("isApprovalGrantedEvent", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -811,29 +741,29 @@ describe("isApprovalAuditEvent", () => {
     vi.useRealTimers();
   });
 
-  it("returns true for AgentActionApproved event", () => {
-    const event = createAgentActionApprovedAudit("agent", "action", "user");
-    expect(isApprovalAuditEvent(event)).toBe(true);
+  it("returns true for ApprovalGranted event", () => {
+    const event = createApprovalGrantedAudit("agent", "action", "user");
+    expect(isApprovalGrantedEvent(event)).toBe(true);
   });
 
-  it("returns false for AgentDecisionMade event", () => {
-    const event = createAgentDecisionAudit("agent", {
+  it("returns false for PatternDetected event", () => {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: null,
       confidence: 0.5,
       reasoning: "test",
       action: null,
       triggeringEvents: ["evt-1"],
     });
-    expect(isApprovalAuditEvent(event)).toBe(false);
+    expect(isApprovalGrantedEvent(event)).toBe(false);
   });
 
-  it("returns false for AgentActionRejected event", () => {
-    const event = createAgentActionRejectedAudit("agent", "action", "user", "reason");
-    expect(isApprovalAuditEvent(event)).toBe(false);
+  it("returns false for ApprovalRejected event", () => {
+    const event = createApprovalRejectedAudit("agent", "action", "user", "reason");
+    expect(isApprovalGrantedEvent(event)).toBe(false);
   });
 });
 
-describe("isRejectionAuditEvent", () => {
+describe("isApprovalRejectedEvent", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -843,25 +773,25 @@ describe("isRejectionAuditEvent", () => {
     vi.useRealTimers();
   });
 
-  it("returns true for AgentActionRejected event", () => {
-    const event = createAgentActionRejectedAudit("agent", "action", "user", "reason");
-    expect(isRejectionAuditEvent(event)).toBe(true);
+  it("returns true for ApprovalRejected event", () => {
+    const event = createApprovalRejectedAudit("agent", "action", "user", "reason");
+    expect(isApprovalRejectedEvent(event)).toBe(true);
   });
 
-  it("returns false for AgentActionApproved event", () => {
-    const event = createAgentActionApprovedAudit("agent", "action", "user");
-    expect(isRejectionAuditEvent(event)).toBe(false);
+  it("returns false for ApprovalGranted event", () => {
+    const event = createApprovalGrantedAudit("agent", "action", "user");
+    expect(isApprovalRejectedEvent(event)).toBe(false);
   });
 
-  it("returns false for AgentDecisionMade event", () => {
-    const event = createAgentDecisionAudit("agent", {
+  it("returns false for PatternDetected event", () => {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: null,
       confidence: 0.5,
       reasoning: "test",
       action: null,
       triggeringEvents: ["evt-1"],
     });
-    expect(isRejectionAuditEvent(event)).toBe(false);
+    expect(isApprovalRejectedEvent(event)).toBe(false);
   });
 });
 
@@ -879,8 +809,8 @@ describe("validateAgentAuditEvent", () => {
     vi.useRealTimers();
   });
 
-  it("returns true for valid decision audit event", () => {
-    const event = createAgentDecisionAudit("agent", {
+  it("returns true for valid pattern detected audit event", () => {
+    const event = createPatternDetectedAudit("agent", {
       patternDetected: "test",
       confidence: 0.5,
       reasoning: "reason",
@@ -890,18 +820,18 @@ describe("validateAgentAuditEvent", () => {
     expect(validateAgentAuditEvent(event)).toBe(true);
   });
 
-  it("returns true for valid approval audit event", () => {
-    const event = createAgentActionApprovedAudit("agent", "action", "user");
+  it("returns true for valid approval granted audit event", () => {
+    const event = createApprovalGrantedAudit("agent", "action", "user");
     expect(validateAgentAuditEvent(event)).toBe(true);
   });
 
-  it("returns true for valid rejection audit event", () => {
-    const event = createAgentActionRejectedAudit("agent", "action", "user", "reason");
+  it("returns true for valid approval rejected audit event", () => {
+    const event = createApprovalRejectedAudit("agent", "action", "user", "reason");
     expect(validateAgentAuditEvent(event)).toBe(true);
   });
 
-  it("returns true for valid expired audit event", () => {
-    const event = createAgentActionExpiredAudit("agent", "action", Date.now() - 1000);
+  it("returns true for valid approval expired audit event", () => {
+    const event = createApprovalExpiredAudit("agent", "action", Date.now() - 1000);
     expect(validateAgentAuditEvent(event)).toBe(true);
   });
 
@@ -930,7 +860,7 @@ describe("validateAgentAuditEvent", () => {
 
   it("returns false for missing required fields", () => {
     const event = {
-      eventType: "AgentDecisionMade",
+      eventType: "PatternDetected",
       // Missing agentId, decisionId, etc.
     };
     expect(validateAgentAuditEvent(event)).toBe(false);
@@ -954,8 +884,8 @@ describe("audit trail flow", () => {
   it("creates complete audit trail for approved action", () => {
     const agentId = "churn-risk-agent";
 
-    // Step 1: Agent makes decision
-    const decision = createAgentDecisionAudit(
+    // Step 1: Agent detects pattern
+    const detection = createPatternDetectedAudit(
       agentId,
       {
         patternDetected: "churn-risk",
@@ -967,30 +897,30 @@ describe("audit trail flow", () => {
       createTestLLMContext()
     );
 
-    expect(isDecisionAuditEvent(decision)).toBe(true);
-    expect(validateAgentAuditEvent(decision)).toBe(true);
+    expect(isPatternDetectedEvent(detection)).toBe(true);
+    expect(validateAgentAuditEvent(detection)).toBe(true);
 
     // Step 2: Human reviews and approves
     vi.advanceTimersByTime(3600000); // 1 hour later
-    const approval = createAgentActionApprovedAudit(
+    const approval = createApprovalGrantedAudit(
       agentId,
       "action-from-decision",
       "reviewer-123",
       "Verified customer is at risk"
     );
 
-    expect(isApprovalAuditEvent(approval)).toBe(true);
+    expect(isApprovalGrantedEvent(approval)).toBe(true);
     expect(validateAgentAuditEvent(approval)).toBe(true);
 
     // Verify audit trail has proper timestamps
-    expect(approval.timestamp).toBeGreaterThan(decision.timestamp);
+    expect(approval.timestamp).toBeGreaterThan(detection.timestamp);
   });
 
   it("creates complete audit trail for rejected action", () => {
     const agentId = "inventory-agent";
 
-    // Step 1: Agent makes decision (not directly tested, but part of the flow)
-    const _decision = createAgentDecisionAudit(agentId, {
+    // Step 1: Agent detects pattern (not directly tested, but part of the flow)
+    const _detection = createPatternDetectedAudit(agentId, {
       patternDetected: "low-stock",
       confidence: 0.7,
       reasoning: "Stock levels below threshold",
@@ -1000,14 +930,14 @@ describe("audit trail flow", () => {
 
     // Step 2: Human reviews and rejects
     vi.advanceTimersByTime(1800000); // 30 minutes later
-    const rejection = createAgentActionRejectedAudit(
+    const rejection = createApprovalRejectedAudit(
       agentId,
       "action-from-decision",
       "reviewer-456",
       "Order already placed by manager"
     );
 
-    expect(isRejectionAuditEvent(rejection)).toBe(true);
+    expect(isApprovalRejectedEvent(rejection)).toBe(true);
     expect(validateAgentAuditEvent(rejection)).toBe(true);
     expect(rejection.payload.rejectionReason).toBe("Order already placed by manager");
   });
@@ -1016,8 +946,8 @@ describe("audit trail flow", () => {
     const agentId = "notification-agent";
     const requestedAt = Date.now();
 
-    // Step 1: Agent makes decision
-    createAgentDecisionAudit(agentId, {
+    // Step 1: Agent detects pattern
+    createPatternDetectedAudit(agentId, {
       patternDetected: "user-inactive",
       confidence: 0.9,
       reasoning: "User has not logged in for 7 days",
@@ -1027,9 +957,9 @@ describe("audit trail flow", () => {
 
     // Step 2: Action expires after 24 hours
     vi.advanceTimersByTime(86400000); // 24 hours later
-    const expiration = createAgentActionExpiredAudit(agentId, "action-123", requestedAt);
+    const expiration = createApprovalExpiredAudit(agentId, "action-123", requestedAt);
 
-    expect(expiration.eventType).toBe("AgentActionExpired");
+    expect(expiration.eventType).toBe("ApprovalExpired");
     expect(expiration.payload.requestedAt).toBe(requestedAt);
     expect(expiration.payload.expiredAt).toBeGreaterThan(requestedAt);
     expect(validateAgentAuditEvent(expiration)).toBe(true);

@@ -292,30 +292,27 @@ export {
   AgentAuditEventTypeSchema,
   AuditLLMContextSchema,
   AuditActionSchema,
-  AgentDecisionMadePayloadSchema,
-  AgentActionApprovedPayloadSchema,
-  AgentActionRejectedPayloadSchema,
-  AgentActionExpiredPayloadSchema,
-  AgentAnalysisCompletedPayloadSchema,
-  AgentAnalysisFailedPayloadSchema,
+  PatternDetectedPayloadSchema,
+  ApprovalGrantedPayloadSchema,
+  ApprovalRejectedPayloadSchema,
+  ApprovalExpiredPayloadSchema,
   AgentAuditEventSchema,
 
   // ID Generation
   generateDecisionId,
 
   // Factory Functions
-  createAgentDecisionAudit,
-  createAgentActionApprovedAudit,
-  createAgentActionRejectedAudit,
-  createAgentActionExpiredAudit,
-  createAgentAnalysisCompletedAudit,
-  createAgentAnalysisFailedAudit,
+  createPatternDetectedAudit,
+  createApprovalGrantedAudit,
+  createApprovalRejectedAudit,
+  createApprovalExpiredAudit,
+  createGenericAuditEvent,
 
   // Type Guards
   isAgentAuditEventType,
-  isDecisionAuditEvent,
-  isApprovalAuditEvent,
-  isRejectionAuditEvent,
+  isPatternDetectedEvent,
+  isApprovalGrantedEvent,
+  isApprovalRejectedEvent,
 
   // Validation
   validateAgentAuditEvent,
@@ -326,21 +323,19 @@ export type {
   AgentAuditEventType,
   AuditLLMContext,
   AuditAction,
-  AgentDecisionMadePayload,
-  AgentActionApprovedPayload,
-  AgentActionRejectedPayload,
-  AgentActionExpiredPayload,
-  AgentAnalysisCompletedPayload,
-  AgentAnalysisFailedPayload,
+  PatternDetectedPayload,
+  ApprovalGrantedPayload,
+  ApprovalRejectedPayload,
+  ApprovalExpiredPayload,
   AgentAuditEventBase,
   AgentAuditEvent,
 
   // Schema Types
   AgentAuditEventTypeSchemaType,
-  AgentDecisionMadePayloadSchemaType,
-  AgentActionApprovedPayloadSchemaType,
-  AgentActionRejectedPayloadSchemaType,
-  AgentActionExpiredPayloadSchemaType,
+  PatternDetectedPayloadSchemaType,
+  ApprovalGrantedPayloadSchemaType,
+  ApprovalRejectedPayloadSchemaType,
+  ApprovalExpiredPayloadSchemaType,
   AuditLLMContextSchemaType,
   AuditActionSchemaType,
 } from "./audit.js";
@@ -512,3 +507,13 @@ export type {
 } from "./init.js";
 
 // NOTE: CreateAgentSubscriptionOptions is available from @libar-dev/platform-bus/agent-subscription
+
+// ============================================================================
+// Cross-BC Query Types
+// ============================================================================
+
+export type {
+  CancellationRecord,
+  CustomerCancellationHistory,
+  AgentEventHandlerInjectedData,
+} from "./cross-bc-query.js";

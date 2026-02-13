@@ -51,13 +51,13 @@ function createTestCheckpoint(overrides: Partial<AgentCheckpoint> = {}): AgentCh
 // ============================================================================
 
 describe("AGENT_CHECKPOINT_STATUSES", () => {
-  it("contains all three statuses", () => {
-    expect(AGENT_CHECKPOINT_STATUSES).toEqual(["active", "paused", "stopped"]);
+  it("contains all four statuses", () => {
+    expect(AGENT_CHECKPOINT_STATUSES).toEqual(["active", "paused", "stopped", "error_recovery"]);
   });
 
-  it("is a readonly tuple with 3 elements", () => {
+  it("is a readonly tuple with 4 elements", () => {
     expect(Array.isArray(AGENT_CHECKPOINT_STATUSES)).toBe(true);
-    expect(AGENT_CHECKPOINT_STATUSES.length).toBe(3);
+    expect(AGENT_CHECKPOINT_STATUSES.length).toBe(4);
   });
 });
 

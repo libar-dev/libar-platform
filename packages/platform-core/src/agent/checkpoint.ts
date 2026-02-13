@@ -18,7 +18,7 @@ import { z } from "zod";
 /**
  * Agent checkpoint status values.
  */
-export const AGENT_CHECKPOINT_STATUSES = ["active", "paused", "stopped"] as const;
+export const AGENT_CHECKPOINT_STATUSES = ["active", "paused", "stopped", "error_recovery"] as const;
 
 /**
  * Status of an agent checkpoint.
@@ -26,6 +26,7 @@ export const AGENT_CHECKPOINT_STATUSES = ["active", "paused", "stopped"] as cons
  * - `active`: Agent is actively processing events
  * - `paused`: Agent is temporarily paused (can resume)
  * - `stopped`: Agent has been permanently stopped
+ * - `error_recovery`: Agent is recovering from an error (DS-5 lifecycle)
  */
 export type AgentCheckpointStatus = (typeof AGENT_CHECKPOINT_STATUSES)[number];
 
@@ -36,7 +37,12 @@ export type AgentCheckpointStatus = (typeof AGENT_CHECKPOINT_STATUSES)[number];
 /**
  * Schema for agent checkpoint status.
  */
-export const AgentCheckpointStatusSchema = z.enum(["active", "paused", "stopped"]);
+export const AgentCheckpointStatusSchema = z.enum([
+  "active",
+  "paused",
+  "stopped",
+  "error_recovery",
+]);
 
 /**
  * Schema for agent checkpoint.
@@ -65,6 +71,9 @@ export const AgentCheckpointSchema = z.object({
 
   /** Timestamp of last checkpoint update */
   updatedAt: z.number(),
+
+  /** Forward-declared config overrides for DS-5 lifecycle reconfiguration */
+  configOverrides: z.unknown().optional(),
 });
 
 // ============================================================================
@@ -101,6 +110,9 @@ export interface AgentCheckpoint {
 
   /** Timestamp of last checkpoint update */
   readonly updatedAt: number;
+
+  /** Forward-declared config overrides for DS-5 lifecycle reconfiguration */
+  readonly configOverrides?: unknown;
 }
 
 /**

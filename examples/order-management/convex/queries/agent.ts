@@ -11,11 +11,14 @@
  * - Admin interfaces to monitor agent health
  * - Debugging to trace agent decisions
  *
+ * All queries delegate to the agentBC component API.
+ *
  * @since Phase 22 (AgentAsBoundedContext)
  */
 
 import { query } from "../_generated/server";
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 
 /**
  * Get agent checkpoint by agent ID.
@@ -38,10 +41,9 @@ export const getCheckpoint = query({
     agentId: v.string(),
   },
   handler: async (ctx, { agentId }) => {
-    return await ctx.db
-      .query("agentCheckpoints")
-      .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
-      .first();
+    return await ctx.runQuery(components.agentBC.checkpoints.getByAgentId, {
+      agentId,
+    });
   },
 });
 
@@ -55,7 +57,7 @@ export const getCheckpoint = query({
  * ```typescript
  * const audits = await ctx.runQuery(api.queries.agent.getAuditEvents, {
  *   agentId: "churn-risk-agent",
- *   eventType: "AgentDecisionMade",
+ *   eventType: "PatternDetected",
  *   limit: 10,
  * });
  * ```
@@ -65,32 +67,17 @@ export const getAuditEvents = query({
     /** Agent BC identifier */
     agentId: v.string(),
     /** Optional: filter by event type */
-    eventType: v.optional(
-      v.union(
-        v.literal("AgentDecisionMade"),
-        v.literal("AgentActionApproved"),
-        v.literal("AgentActionRejected"),
-        v.literal("AgentActionExpired"),
-        v.literal("AgentAnalysisCompleted"),
-        v.literal("AgentAnalysisFailed")
-      )
-    ),
+    eventType: v.optional(v.string()),
     /** Maximum events to return (default: 100) */
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { agentId, eventType, limit = 100 }) => {
-    const query = ctx.db
-      .query("agentAuditEvents")
-      .withIndex("by_agentId_timestamp", (q) => q.eq("agentId", agentId));
-
-    const results = await query.order("desc").take(limit);
-
-    // Filter by event type if specified
-    if (eventType) {
-      return results.filter((e) => e.eventType === eventType);
-    }
-
-    return results;
+  handler: async (ctx, { agentId, eventType, limit }) => {
+    return await ctx.runQuery(components.agentBC.audit.queryByAgent, {
+      agentId,
+      // Component validates the union internally; pass as-is
+      ...(eventType !== undefined && { eventType: eventType as any }),
+      limit: limit ?? 100,
+    });
   },
 });
 
@@ -118,23 +105,12 @@ export const getDeadLetters = query({
     /** Maximum entries to return (default: 100) */
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { agentId, status, limit = 100 }) => {
-    if (status) {
-      return await ctx.db
-        .query("agentDeadLetters")
-        .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId).eq("status", status))
-        .order("desc")
-        .take(limit);
-    }
-
-    // No status filter - get all for this agent
-    const results = await ctx.db
-      .query("agentDeadLetters")
-      .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId))
-      .order("desc")
-      .take(limit);
-
-    return results;
+  handler: async (ctx, { agentId, status, limit }) => {
+    return await ctx.runQuery(components.agentBC.deadLetters.queryByAgent, {
+      agentId,
+      ...(status !== undefined && { status }),
+      limit: limit ?? 100,
+    });
   },
 });
 
@@ -151,10 +127,7 @@ export const getDeadLetters = query({
 export const getActiveAgents = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
-      .query("agentCheckpoints")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
-      .collect();
+    return await ctx.runQuery(components.agentBC.checkpoints.listActive, {});
   },
 });
 
@@ -171,21 +144,7 @@ export const getActiveAgents = query({
 export const getDeadLetterStats = query({
   args: {},
   handler: async (ctx) => {
-    const pending = await ctx.db
-      .query("agentDeadLetters")
-      .withIndex("by_status", (q) => q.eq("status", "pending"))
-      .collect();
-
-    // Group by agent
-    const byAgent = new Map<string, number>();
-    for (const dl of pending) {
-      byAgent.set(dl.agentId, (byAgent.get(dl.agentId) ?? 0) + 1);
-    }
-
-    return Array.from(byAgent.entries()).map(([agentId, count]) => ({
-      agentId,
-      pendingCount: count,
-    }));
+    return await ctx.runQuery(components.agentBC.deadLetters.getStats, {});
   },
 });
 
@@ -229,36 +188,12 @@ export const getPendingApprovals = query({
     /** Maximum entries to return (default: 100) */
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { agentId, status, limit = 100 }) => {
-    // If both agentId and status are specified, use the compound index
-    if (agentId && status) {
-      return await ctx.db
-        .query("pendingApprovals")
-        .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId).eq("status", status))
-        .order("desc")
-        .take(limit);
-    }
-
-    // If only agentId is specified
-    if (agentId) {
-      return await ctx.db
-        .query("pendingApprovals")
-        .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId))
-        .order("desc")
-        .take(limit);
-    }
-
-    // If only status is specified
-    if (status) {
-      return await ctx.db
-        .query("pendingApprovals")
-        .withIndex("by_status_expiresAt", (q) => q.eq("status", status))
-        .order("desc")
-        .take(limit);
-    }
-
-    // No filter - get all
-    return await ctx.db.query("pendingApprovals").order("desc").take(limit);
+  handler: async (ctx, { agentId, status, limit }) => {
+    return await ctx.runQuery(components.agentBC.approvals.queryApprovals, {
+      ...(agentId !== undefined && { agentId }),
+      ...(status !== undefined && { status }),
+      limit: limit ?? 100,
+    });
   },
 });
 
@@ -280,9 +215,8 @@ export const getApprovalById = query({
     approvalId: v.string(),
   },
   handler: async (ctx, { approvalId }) => {
-    return await ctx.db
-      .query("pendingApprovals")
-      .withIndex("by_approvalId", (q) => q.eq("approvalId", approvalId))
-      .first();
+    return await ctx.runQuery(components.agentBC.approvals.getById, {
+      approvalId,
+    });
   },
 });

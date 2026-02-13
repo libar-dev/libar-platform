@@ -15,6 +15,7 @@
 
 import { internalMutation, internalQuery } from "../../../_generated/server.js";
 import { v } from "convex/values";
+import { components } from "../../../_generated/api.js";
 import {
   createEmittedAgentCommand,
   type EmittedAgentCommand,
@@ -132,44 +133,21 @@ export const emitAgentCommand = internalMutation({
     // Generate command ID for external reference
     const commandId = `cmd_${now}_${Math.random().toString(36).substring(2, 8)}`;
 
-    // Store the command in the database
-    // Note: Only include optional fields if they have values
-    const commandRecord: {
-      agentId: string;
-      type: string;
-      payload: unknown;
-      status: "pending";
-      confidence: number;
-      reason: string;
-      triggeringEventIds: string[];
-      decisionId: string;
-      patternId?: string;
-      correlationId?: string;
-      createdAt: number;
-    } = {
+    // Store the command via component
+    await ctx.runMutation(components.agentBC.commands.record, {
       agentId,
       type: command.type,
       payload: command.payload,
-      status: "pending",
       confidence: command.metadata.confidence,
       reason: command.metadata.reason,
       triggeringEventIds: [...command.metadata.eventIds],
       decisionId: command.metadata.decisionId,
-      createdAt: now,
-    };
+      ...(command.metadata.patternId && { patternId: command.metadata.patternId }),
+      ...(args.correlationId && { correlationId: args.correlationId }),
+    });
 
-    // Only add optional fields if they have values
-    if (command.metadata.patternId) {
-      commandRecord.patternId = command.metadata.patternId;
-    }
-    if (args.correlationId) {
-      commandRecord.correlationId = args.correlationId;
-    }
-
-    await ctx.db.insert("agentCommands", commandRecord);
-
-    // Record in audit trail
-    await ctx.db.insert("agentAuditEvents", {
+    // Record in audit trail via component
+    await ctx.runMutation(components.agentBC.audit.record, {
       eventType: "CommandEmitted",
       agentId,
       decisionId: command.metadata.decisionId,
@@ -208,14 +186,11 @@ export const getPendingCommands = internalQuery({
   },
   handler: async (ctx, args) => {
     const agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
-    const limit = args.limit ?? 10;
-
-    const commands = await ctx.db
-      .query("agentCommands")
-      .withIndex("by_agentId_status", (q) => q.eq("agentId", agentId).eq("status", "pending"))
-      .take(limit);
-
-    return commands;
+    return await ctx.runQuery(components.agentBC.commands.queryByAgent, {
+      agentId,
+      status: "pending",
+      limit: args.limit ?? 10,
+    });
   },
 });
 
@@ -239,19 +214,15 @@ export const getCommandHistory = internalQuery({
   handler: async (ctx, args) => {
     const agentId = args.agentId ?? CHURN_RISK_AGENT_ID;
     const days = args.days ?? 7;
-    const limit = args.limit ?? 100;
-
     const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000;
 
-    const commands = await ctx.db
-      .query("agentCommands")
-      .withIndex("by_agentId_createdAt", (q) =>
-        q.eq("agentId", agentId).gte("createdAt", cutoffTime)
-      )
-      .order("desc")
-      .take(limit);
+    // Component returns in desc order by createdAt; apply days filter post-fetch
+    const results = await ctx.runQuery(components.agentBC.commands.queryByAgent, {
+      agentId,
+      limit: args.limit ?? 100,
+    });
 
-    return commands;
+    return results.filter((c: { createdAt: number }) => c.createdAt >= cutoffTime);
   },
 });
 
@@ -280,34 +251,20 @@ export const processCommand = internalMutation({
 
     logger.info("Processing agent command", { commandId });
 
-    // Load the command by decisionId (commandId contains the decision ID pattern)
-    // Commands are keyed by decisionId for correlation
-    let command = await ctx.db
-      .query("agentCommands")
-      .withIndex("by_decisionId", (q) => q.eq("decisionId", commandId))
-      .first();
+    // Load the command by decisionId via component
+    const command = await ctx.runQuery(components.agentBC.commands.getByDecisionId, {
+      decisionId: commandId,
+    });
 
     if (!command) {
-      // If not found by decisionId, try filtering by the commandId pattern
-      // This supports both lookup methods
-      const allPending = await ctx.db
-        .query("agentCommands")
-        .withIndex("by_status", (q) => q.eq("status", "pending"))
-        .take(100);
-
-      const matchingCommand = allPending.find(
-        (c) => c.decisionId === commandId || c.decisionId.includes(commandId.split("_")[1] ?? "")
-      );
-
-      if (!matchingCommand) {
-        throw new Error(`Command not found: ${commandId}`);
-      }
-
-      command = matchingCommand;
+      throw new Error(`Command not found: ${commandId}`);
     }
 
-    // Update status to processing
-    await ctx.db.patch(command._id, { status: "processing" as const });
+    // Update status to processing via component
+    await ctx.runMutation(components.agentBC.commands.updateStatus, {
+      decisionId: command.decisionId,
+      status: "processing",
+    });
 
     try {
       // Route to appropriate handler based on command type
@@ -317,15 +274,16 @@ export const processCommand = internalMutation({
         decisionId: command.decisionId,
       });
 
-      // Update status to completed
-      await ctx.db.patch(command._id, {
-        status: "completed" as const,
-        processedAt: now,
+      // Update status to completed via component
+      await ctx.runMutation(components.agentBC.commands.updateStatus, {
+        decisionId: command.decisionId,
+        status: "completed",
       });
 
-      // Record audit event
-      await ctx.db.insert("agentAuditEvents", {
-        eventType: "CommandProcessed",
+      // Record audit event via component
+      // Note: "CommandProcessed" is not in the 16 audit types; use "CommandEmitted" with outcome in payload
+      await ctx.runMutation(components.agentBC.audit.record, {
+        eventType: "CommandEmitted",
         agentId: command.agentId,
         decisionId: command.decisionId,
         timestamp: now,
@@ -338,11 +296,11 @@ export const processCommand = internalMutation({
 
       return { success: true, commandId };
     } catch (error) {
-      // Update status to failed
-      await ctx.db.patch(command._id, {
-        status: "failed" as const,
+      // Update status to failed via component
+      await ctx.runMutation(components.agentBC.commands.updateStatus, {
+        decisionId: command.decisionId,
+        status: "failed",
         error: error instanceof Error ? error.message : String(error),
-        processedAt: now,
       });
 
       throw error;

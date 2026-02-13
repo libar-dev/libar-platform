@@ -719,7 +719,7 @@ describeFeature(
         throw new Error("Not implemented: approve action");
       });
 
-      Then("AgentActionApproved event is recorded", () => {
+      Then("ApprovalGranted event is recorded", () => {
         throw new Error("Not implemented: approved event");
       });
 
@@ -742,7 +742,7 @@ describeFeature(
         throw new Error("Not implemented: simulate time");
       });
 
-      Then("AgentActionExpired event is recorded", () => {
+      Then("ApprovalExpired event is recorded", () => {
         throw new Error("Not implemented: expired event");
       });
 
@@ -778,7 +778,7 @@ describeFeature(
     });
 
     // Decision Audit
-    Scenario("Record AgentDecisionMade event", ({ Given, When, Then, And }) => {
+    Scenario("Record PatternDetected event", ({ Given, When, Then, And }) => {
       Given("agent detects ChurnRisk pattern", () => {
         state.detectedPatterns = [
           { name: "ChurnRisk", confidence: 0.85, reasoning: "Multiple cancellations" },
@@ -789,7 +789,7 @@ describeFeature(
         throw new Error("Not implemented: make decision");
       });
 
-      Then("AgentDecisionMade event is recorded", () => {
+      Then("PatternDetected event is recorded", () => {
         throw new Error("Not implemented: decision event");
       });
 
@@ -804,7 +804,7 @@ describeFeature(
         throw new Error("Not implemented: LLM usage");
       });
 
-      When("AgentDecisionMade is recorded", () => {
+      When("PatternDetected is recorded", () => {
         throw new Error("Not implemented: record event");
       });
 
@@ -827,7 +827,7 @@ describeFeature(
         throw new Error("Not implemented: executed event");
       });
 
-      And("event links to original AgentDecisionMade", () => {
+      And("event links to original PatternDetected", () => {
         throw new Error("Not implemented: link assertion");
       });
     });
@@ -838,7 +838,7 @@ describeFeature(
         throw new Error("Not implemented: 100 decisions");
       });
 
-      When('I query AgentDecisionMade for agent "churn-detector"', () => {
+      When('I query PatternDetected for agent "churn-detector"', () => {
         throw new Error("Not implemented: query decisions");
       });
 

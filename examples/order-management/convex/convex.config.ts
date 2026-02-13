@@ -7,7 +7,7 @@
  * @libar-docs-arch-layer infrastructure
  *
  * Application composition root. Mounts all Convex components (workpool, workflow,
- * event store, command bus, rate limiter) and bounded contexts (orders, inventory).
+ * event store, command bus, rate limiter, agent BC) and bounded contexts (orders, inventory).
  */
 import { defineApp } from "convex/server";
 
@@ -20,6 +20,10 @@ import rateLimiter from "@convex-dev/rate-limiter/convex.config";
 // Infrastructure components from our packages
 import eventStore from "@libar-dev/platform-store/convex.config";
 import commandBus from "@libar-dev/platform-bus/convex.config";
+import agentBC from "@libar-dev/platform-core/agent/convex.config";
+
+// LLM agent component (peer to agentBC per AD-6)
+import agent from "@convex-dev/agent/convex.config";
 
 // Local components (bounded contexts)
 import orders from "./contexts/orders/convex.config";
@@ -59,6 +63,12 @@ app.use(actionRetrier);
 
 // Mount rate limiter for production-grade rate limiting
 app.use(rateLimiter);
+
+// Mount agent BC component (Phase 22a — physical BC isolation)
+// AD-6: agentBC, llmAgent, agentPool are all app-level peers (not nested)
+app.use(agentBC);
+app.use(agent, { name: "llmAgent" });
+app.use(workpool, { name: "agentPool" });
 
 // Mount bounded context components
 app.use(orders);
