@@ -29,6 +29,7 @@ import {
   handleOrderCancelledRef,
 } from "./processManagers";
 import { churnRiskAgentConfig } from "./contexts/agent/_config.js";
+import { agentPool } from "./pools.js";
 
 // Using makeFunctionReference to bypass FilterApi recursive type resolution (TS2589 prevention)
 const handleOrderConfirmedRef = makeFunctionReference<"mutation">(
@@ -87,6 +88,7 @@ export const eventSubscriptions = defineSubscriptions((registry) => {
       onComplete: handleChurnRiskOnCompleteRef,
       retry: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
       priority: 250,
+      pool: agentPool,
     })
   );
 

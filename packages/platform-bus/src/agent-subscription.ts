@@ -39,6 +39,7 @@ import type {
   CorrelationChain,
   UnknownRecord,
   WorkpoolOnCompleteArgs,
+  WorkpoolClient,
 } from "@libar-dev/platform-core";
 import { getAgentSubscriptionId } from "@libar-dev/platform-core";
 
@@ -216,6 +217,15 @@ export interface CreateAgentActionSubscriptionOptions<
    * Optional logger.
    */
   readonly logger?: Logger;
+
+  /**
+   * Optional Workpool to use for action dispatch.
+   * Falls back to EventBus's default pool if not provided.
+   *
+   * Use a dedicated pool for slow handlers (e.g., LLM calls) to avoid
+   * head-of-line blocking on the projection pool.
+   */
+  readonly pool?: WorkpoolClient;
 }
 
 // ============================================================================
@@ -370,6 +380,7 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
       handler: actionOpts.actionHandler,
       onComplete: actionOpts.onComplete,
       ...(actionOpts.retry !== undefined ? { retry: actionOpts.retry } : {}),
+      ...(actionOpts.pool ? { pool: actionOpts.pool } : {}),
       toHandlerArgs: resolvedToHandlerArgs,
       getPartitionKey: resolvedGetPartitionKey,
       toWorkpoolContext: (event: PublishedEvent, chain: CorrelationChain, _subName: string) => ({

@@ -48,6 +48,7 @@ import type * as integration_routes from "../integration/routes.js";
 import type * as inventory from "../inventory.js";
 import type * as inventoryInternal from "../inventoryInternal.js";
 import type * as orders from "../orders.js";
+import type * as pools from "../pools.js";
 import type * as processManagers_index from "../processManagers/index.js";
 import type * as processManagers_orderNotification from "../processManagers/orderNotification.js";
 import type * as processManagers_reservationRelease from "../processManagers/reservationRelease.js";
@@ -134,6 +135,7 @@ declare const fullApi: ApiFromModules<{
   inventory: typeof inventory;
   inventoryInternal: typeof inventoryInternal;
   orders: typeof orders;
+  pools: typeof pools;
   "processManagers/index": typeof processManagers_index;
   "processManagers/orderNotification": typeof processManagers_orderNotification;
   "processManagers/reservationRelease": typeof processManagers_reservationRelease;

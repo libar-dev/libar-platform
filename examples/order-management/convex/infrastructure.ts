@@ -203,34 +203,8 @@ export const projectionPool: WorkpoolClient = isConvexTestMode
       logLevel: "INFO",
     });
 
-/**
- * Agent pool - dedicated for agent LLM action handlers.
- *
- * Configured with:
- * - maxParallelism: 10 (LLM calls are slow ~1-5s, limit concurrency for cost control)
- * - retryActionsByDefault: true (LLM APIs have transient failures)
- * - 3 retries with exponential backoff (1s initial, base 2)
- * - INFO logging for observability
- *
- * Separated from projectionPool to prevent slow LLM actions from
- * blocking time-critical projection updates (head-of-line blocking).
- *
- * In test environment, uses no-op workpool to avoid scheduling errors.
- *
- * @since Phase 22b (AgentLLMIntegration)
- */
-export const agentPool: WorkpoolClient = isConvexTestMode
-  ? noOpWorkpool
-  : new Workpool(components.agentPool, {
-      maxParallelism: 10,
-      retryActionsByDefault: true,
-      defaultRetryBehavior: {
-        maxAttempts: 3,
-        initialBackoffMs: 1000,
-        base: 2,
-      },
-      logLevel: "INFO",
-    });
+// Re-export agentPool from pools.ts (leaf module, breaks circular dep).
+export { agentPool } from "./pools.js";
 
 /**
  * DCB Retry Pool - for scheduling DCB conflict retries (Phase 18a).
