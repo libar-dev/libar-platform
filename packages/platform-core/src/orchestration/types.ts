@@ -549,11 +549,9 @@ export interface WorkpoolClient {
    * The action can make external HTTP calls (e.g., LLM APIs).
    * The result flows to the onComplete handler via Workpool.
    *
-   * Optional - when not provided, the EventBus can only dispatch mutations.
-   *
    * @since Phase 22b (AgentLLMIntegration)
    */
-  enqueueAction?: <TArgs extends UnknownRecord>(
+  enqueueAction: <TArgs extends UnknownRecord>(
     ctx: MutationCtx,
     actionRef: FunctionReference<"action", FunctionVisibility, TArgs, unknown>,
     args: TArgs,

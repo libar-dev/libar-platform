@@ -160,7 +160,6 @@ export const churnRiskPattern: PatternDefinition = definePattern({
         matchingEventIds: cancellations.map((e) => e.eventId),
         data: {
           patternsFound: result.patterns,
-          suggestedAction: result.suggestedAction,
         },
         // Command suggestion for routing via command bridge
         ...(result.confidence >= CHURN_RISK_DETECTION_THRESHOLD && customerId !== null
@@ -313,9 +312,6 @@ function extractCustomerIdFromEvents(events: readonly PublishedEvent[]): string 
 // ============================================================================
 // Exports
 // ============================================================================
-
-// Re-export shared utilities for backwards compatibility in tests
-export { extractCustomerId } from "../_utils/customer.js";
 
 export const __testing = {
   buildAnalysisPrompt,

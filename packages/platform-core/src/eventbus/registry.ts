@@ -121,6 +121,7 @@ export class SubscriptionBuilder<THandlerArgs extends UnknownRecord> {
    */
   build(): EventSubscription<THandlerArgs> {
     const subscription: EventSubscription<THandlerArgs> = {
+      handlerType: "mutation" as const,
       name: this._name,
       filter: this._filter,
       handler: this._handler,

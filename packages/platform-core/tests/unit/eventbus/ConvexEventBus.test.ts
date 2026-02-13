@@ -26,6 +26,9 @@ function createMockWorkpool(): WorkpoolClient & { calls: unknown[][] } {
       calls.push([ctx, handler, args, options]);
       return null;
     },
+    async enqueueAction() {
+      return null;
+    },
   };
 }
 
@@ -432,6 +435,9 @@ describe("ConvexEventBus", () => {
         async enqueueMutation() {
           throw new Error("Workpool unavailable");
         },
+        async enqueueAction() {
+          throw new Error("Workpool unavailable");
+        },
       };
 
       const subscriptions = defineSubscriptions((registry) => {
@@ -453,6 +459,9 @@ describe("ConvexEventBus", () => {
           if (callCount === 2) {
             throw new Error("Second enqueue failed");
           }
+          return null;
+        },
+        async enqueueAction() {
           return null;
         },
       };

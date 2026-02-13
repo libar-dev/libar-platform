@@ -19,7 +19,7 @@ import {
   isReportingProjection,
   isIntegrationProjection,
   isClientExposed,
-} from "../../../src/projections/index.js";
+} from "@libar-dev/platform-bc";
 
 import {
   validateProjectionCategory,

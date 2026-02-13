@@ -132,9 +132,9 @@ export const PLATFORM_LOG_LEVEL: LogLevel = getPlatformLogLevel();
  * No-op workpool client for convex-test unit tests.
  * Projections are verified in integration tests with real Docker backend.
  *
- * Includes both enqueueMutation and enqueueMutationBatch for interface
- * compatibility, though batch isn't currently used (see CommandOrchestrator
- * notes about per-item context limitations).
+ * Includes enqueueMutation, enqueueMutationBatch, and enqueueAction for
+ * interface compatibility, though batch isn't currently used (see
+ * CommandOrchestrator notes about per-item context limitations).
  */
 const noOpWorkpool: WorkpoolClient = {
   async enqueueMutation() {
@@ -143,6 +143,9 @@ const noOpWorkpool: WorkpoolClient = {
   async enqueueMutationBatch(_ctx, _handler, argsArray) {
     // Return array of nulls matching input length
     return argsArray.map(() => null);
+  },
+  async enqueueAction() {
+    return null;
   },
 };
 

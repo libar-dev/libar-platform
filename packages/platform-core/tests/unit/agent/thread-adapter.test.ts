@@ -3,7 +3,7 @@
  *
  * Tests for createThreadAdapter() including:
  * - analyze: JSON response parsing with patterns, confidence, reasoning
- * - analyze: Handling suggestedAction in response
+ * - analyze: Handling various response shapes
  * - analyze: Graceful handling of non-JSON responses
  * - analyze: Graceful handling of JSON parse failures
  * - analyze: Error re-throwing from generateText
@@ -104,30 +104,6 @@ describe("createThreadAdapter - analyze", () => {
     expect(result.llmContext).toBeDefined();
     expect(result.llmContext!.model).toBe("anthropic/claude-sonnet-4-5-20250929");
     expect(result.llmContext!.tokens).toBe(100);
-  });
-
-  it("handles valid JSON response with suggestedAction", async () => {
-    const generateText = vi.fn().mockResolvedValue({
-      text: JSON.stringify({
-        patterns: [],
-        confidence: 0.9,
-        reasoning: "High risk detected",
-        suggestedAction: {
-          type: "SuggestOutreach",
-          payload: { urgency: "high" },
-        },
-      }),
-      usage: { totalTokens: 75 },
-    } satisfies GenerateTextResult);
-
-    const config = createTestConfig({ generateText });
-    const adapter = createThreadAdapter(config);
-
-    const result = await adapter.analyze("Analyze risk", [createTestEvent()]);
-
-    expect(result.suggestedAction).toBeDefined();
-    expect(result.suggestedAction!.type).toBe("SuggestOutreach");
-    expect(result.suggestedAction!.payload).toEqual({ urgency: "high" });
   });
 
   it("handles non-JSON response gracefully with defaults", async () => {

@@ -20,7 +20,6 @@
  * - Returns AgentActionResult (no persistence -- that is onComplete's job)
  *
  * @see onComplete.ts for the mutation half (persistence)
- * @see eventHandler.ts for the legacy mutation handler (rule-only agents)
  * @since Phase 22b (AgentLLMIntegration)
  */
 

@@ -115,7 +115,6 @@ function buildAnalysisPrompt(prompt: string, events: readonly PublishedEvent[]):
     '- "patterns": array of { "name": string, "confidence": number (0-1), "matchingEventIds": string[], "data": any }',
     '- "confidence": number (0-1) — overall confidence in the analysis',
     '- "reasoning": string — explanation of what you found',
-    '- "suggestedAction": optional { "type": string, "payload": any }',
     "",
     "Respond ONLY with the JSON object, no markdown fences or extra text.",
   ].join("\n");
@@ -162,7 +161,7 @@ function buildReasoningPrompt(event: PublishedEvent): string {
  *
  * Strategy:
  * 1. Attempt JSON parsing of the raw response
- * 2. Extract known fields (patterns, confidence, reasoning, suggestedAction)
+ * 2. Extract known fields (patterns, confidence, reasoning)
  * 3. If JSON parsing fails, return defaults with the raw text as reasoning
  *
  * @param text - Raw LLM response text
@@ -222,21 +221,12 @@ function parseAnalysisResponse(
     // Extract reasoning
     const reasoning = typeof obj["reasoning"] === "string" ? obj["reasoning"] : text;
 
-    // Extract suggestedAction
-    const suggestedAction = extractSuggestedAction(obj["suggestedAction"]);
-
-    const base: LLMAnalysisResult = {
+    return {
       patterns,
       confidence,
       reasoning,
       llmContext,
     };
-
-    if (suggestedAction !== undefined) {
-      return { ...base, suggestedAction };
-    }
-
-    return base;
   } catch {
     // JSON parse failed — return defaults with raw text as reasoning
     return {
@@ -246,28 +236,6 @@ function parseAnalysisResponse(
       llmContext,
     };
   }
-}
-
-/**
- * Extract a suggested action from the parsed response.
- *
- * @param value - The raw suggestedAction value from the parsed JSON
- * @returns A typed suggested action, or undefined if invalid
- */
-function extractSuggestedAction(
-  value: unknown
-): { readonly type: string; readonly payload: unknown } | undefined {
-  if (typeof value !== "object" || value === null) {
-    return undefined;
-  }
-  const action = value as Record<string, unknown>;
-  if (typeof action["type"] !== "string") {
-    return undefined;
-  }
-  return {
-    type: action["type"],
-    payload: action["payload"],
-  };
 }
 
 // ============================================================================

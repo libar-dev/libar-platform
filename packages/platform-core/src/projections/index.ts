@@ -68,20 +68,6 @@ export {
   assertValidTransition,
 } from "./lifecycle.js";
 
-// Roadmap Patterns (Phase 15, 17)
-// Re-export from @libar-dev/platform-bc to maintain backwards compatibility
-export type { ProjectionCategory } from "@libar-dev/platform-bc";
-export {
-  PROJECTION_CATEGORIES,
-  ProjectionCategorySchema,
-  isProjectionCategory,
-  isLogicProjection,
-  isViewProjection,
-  isReportingProjection,
-  isIntegrationProjection,
-  isClientExposed,
-} from "@libar-dev/platform-bc";
-
 // Reactive Projections (Phase 17)
 export type {
   ReactiveDomainEvent,

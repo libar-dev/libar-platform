@@ -129,8 +129,8 @@ interface BaseSubscription<THandlerArgs extends UnknownRecord = UnknownRecord> {
 export interface MutationSubscription<
   THandlerArgs extends UnknownRecord = UnknownRecord,
 > extends BaseSubscription<THandlerArgs> {
-  /** Discriminant. Optional for backward compatibility — missing means "mutation". */
-  readonly handlerType?: "mutation";
+  /** Discriminant: this is a mutation-based subscription */
+  readonly handlerType: "mutation";
 
   /** Reference to the handler mutation */
   handler: FunctionReference<"mutation", FunctionVisibility, THandlerArgs, unknown>;
@@ -184,8 +184,8 @@ export interface ActionSubscription<
 /**
  * An event subscription — discriminated union with handlerType.
  *
- * - "mutation" (or absent): Handler is a Convex mutation (existing behavior)
- * - "action": Handler is a Convex action (new for agents/LLM)
+ * - "mutation": Handler is a Convex mutation (projections, PMs, sagas)
+ * - "action": Handler is a Convex action (agents/LLM)
  *
  * @template THandlerArgs - The handler function argument type
  */
@@ -199,7 +199,7 @@ export type EventSubscription<THandlerArgs extends UnknownRecord = UnknownRecord
 export function isActionSubscription<T extends UnknownRecord>(
   sub: EventSubscription<T>
 ): sub is ActionSubscription<T> {
-  return "handlerType" in sub && sub.handlerType === "action";
+  return sub.handlerType === "action";
 }
 
 /**
@@ -208,7 +208,7 @@ export function isActionSubscription<T extends UnknownRecord>(
 export function isMutationSubscription<T extends UnknownRecord>(
   sub: EventSubscription<T>
 ): sub is MutationSubscription<T> {
-  return !("handlerType" in sub) || sub.handlerType === "mutation" || sub.handlerType === undefined;
+  return sub.handlerType === "mutation";
 }
 
 /**

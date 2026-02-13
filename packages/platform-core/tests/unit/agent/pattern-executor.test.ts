@@ -407,21 +407,7 @@ describe("buildDecisionFromAnalysis — command extraction", () => {
     expect(decision.triggeringEvents).toEqual(["evt_1"]);
   });
 
-  it("falls back to deprecated suggestedAction in data", () => {
-    const result: PatternAnalysisResult = {
-      detected: true,
-      confidence: 0.85,
-      reasoning: "Legacy detection",
-      matchingEventIds: ["evt_2"],
-      data: { suggestedAction: { type: "LegacyCommand", payload: { old: true } } },
-    };
-
-    const decision = buildDecisionFromAnalysis(result, "legacy-pattern", makeConfig());
-
-    expect(decision.command).toBe("LegacyCommand");
-  });
-
-  it("returns null command when neither command nor suggestedAction present", () => {
+  it("returns null command when no command present", () => {
     const result: PatternAnalysisResult = {
       detected: true,
       confidence: 0.7,
@@ -432,21 +418,6 @@ describe("buildDecisionFromAnalysis — command extraction", () => {
     const decision = buildDecisionFromAnalysis(result, "no-command", makeConfig());
 
     expect(decision.command).toBeNull();
-  });
-
-  it("prefers result.command over data.suggestedAction", () => {
-    const result: PatternAnalysisResult = {
-      detected: true,
-      confidence: 0.9,
-      reasoning: "Both paths present",
-      matchingEventIds: ["evt_4"],
-      command: { type: "Primary", payload: {} },
-      data: { suggestedAction: { type: "Deprecated", payload: {} } },
-    };
-
-    const decision = buildDecisionFromAnalysis(result, "priority-test", makeConfig());
-
-    expect(decision.command).toBe("Primary");
   });
 
   it("uses result.command.payload when command is present", () => {

@@ -5,12 +5,10 @@
  * - Idempotency (skipping already-processed events)
  * - Skipping inactive agents
  * - Normal processing (first event, null checkpoint)
- * - Execution context shape passed to onEvent
  * - Rule-based analysis when no runtime configured
- * - LLM enrichment success path
- * - LLM enrichment failure (fallback to rule-based)
- * - Error propagation when onEvent throws
+ * - Error propagation when pattern executor throws
  * - Deterministic decisionId format
+ * - Patterns mode integration (rule-based, LLM analyze, no match)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -18,15 +16,20 @@ import {
   createAgentActionHandler,
   type AgentActionState,
 } from "../../../src/agent/action-handler.js";
-import type { AgentBCConfig, AgentDecision, LLMAnalysisResult } from "../../../src/agent/types.js";
+import type { AgentBCConfig } from "../../../src/agent/types.js";
 import type { PatternDefinition } from "../../../src/agent/patterns.js";
-import type { AgentCheckpoint } from "../../../src/agent/checkpoint.js";
-import type { AgentEventHandlerArgs, AgentRuntimeConfig } from "../../../src/agent/init.js";
-import { createMockLogger } from "./_test-utils.js";
+import type { AgentEventHandlerArgs } from "../../../src/agent/init.js";
 
 // ============================================================================
 // Test Fixtures
 // ============================================================================
+
+/** Default test pattern — always triggers, rule-based (no analyze). */
+const defaultTestPattern: PatternDefinition = {
+  name: "test-pattern",
+  window: { duration: "7d" },
+  trigger: () => true,
+};
 
 function createTestHandlerArgs(
   overrides: Partial<AgentEventHandlerArgs> = {}
@@ -66,7 +69,7 @@ function createTestAgentConfig(overrides: Partial<AgentBCConfig> = {}): AgentBCC
     subscriptions: ["OrderCancelled", "OrderCreated"],
     patternWindow: { duration: "7d", minEvents: 1, eventLimit: 100 },
     confidenceThreshold: 0.9,
-    onEvent: vi.fn().mockResolvedValue(null),
+    patterns: [defaultTestPattern],
     ...overrides,
   };
 }
@@ -76,18 +79,6 @@ function createTestState(overrides: Partial<AgentActionState> = {}): AgentAction
     checkpoint: createTestCheckpoint(),
     eventHistory: [],
     injectedData: {},
-    ...overrides,
-  };
-}
-
-function createTestDecision(overrides: Partial<AgentDecision> = {}): AgentDecision {
-  return {
-    command: "SuggestCustomerOutreach",
-    payload: { customerId: "cust-123" },
-    confidence: 0.95,
-    reason: "Detected churn risk pattern",
-    requiresApproval: false,
-    triggeringEvents: ["evt_1", "evt_2"],
     ...overrides,
   };
 }
@@ -107,8 +98,7 @@ describe("createAgentActionHandler - idempotency", () => {
   });
 
   it("returns null when event already processed (checkpoint position >= event position)", async () => {
-    const onEvent = vi.fn();
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(
       createTestState({
         checkpoint: createTestCheckpoint({ lastProcessedPosition: 100 }),
@@ -124,12 +114,10 @@ describe("createAgentActionHandler - idempotency", () => {
     const result = await handler({}, args);
 
     expect(result).toBeNull();
-    expect(onEvent).not.toHaveBeenCalled();
   });
 
   it("returns null when checkpoint position exceeds event position", async () => {
-    const onEvent = vi.fn();
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(
       createTestState({
         checkpoint: createTestCheckpoint({ lastProcessedPosition: 200 }),
@@ -145,7 +133,6 @@ describe("createAgentActionHandler - idempotency", () => {
     const result = await handler({}, args);
 
     expect(result).toBeNull();
-    expect(onEvent).not.toHaveBeenCalled();
   });
 });
 
@@ -164,8 +151,7 @@ describe("createAgentActionHandler - inactive agent handling", () => {
   });
 
   it("returns null when agent status is paused", async () => {
-    const onEvent = vi.fn();
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(
       createTestState({
         checkpoint: createTestCheckpoint({ status: "paused", lastProcessedPosition: 50 }),
@@ -181,12 +167,10 @@ describe("createAgentActionHandler - inactive agent handling", () => {
     const result = await handler({}, args);
 
     expect(result).toBeNull();
-    expect(onEvent).not.toHaveBeenCalled();
   });
 
   it("returns null when agent status is stopped", async () => {
-    const onEvent = vi.fn();
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(
       createTestState({
         checkpoint: createTestCheckpoint({ status: "stopped", lastProcessedPosition: 50 }),
@@ -202,12 +186,10 @@ describe("createAgentActionHandler - inactive agent handling", () => {
     const result = await handler({}, args);
 
     expect(result).toBeNull();
-    expect(onEvent).not.toHaveBeenCalled();
   });
 
   it("returns null when agent status is error_recovery", async () => {
-    const onEvent = vi.fn();
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(
       createTestState({
         checkpoint: createTestCheckpoint({ status: "error_recovery", lastProcessedPosition: 50 }),
@@ -223,7 +205,6 @@ describe("createAgentActionHandler - inactive agent handling", () => {
     const result = await handler({}, args);
 
     expect(result).toBeNull();
-    expect(onEvent).not.toHaveBeenCalled();
   });
 });
 
@@ -242,9 +223,7 @@ describe("createAgentActionHandler - normal processing", () => {
   });
 
   it("processes normally when checkpoint is null (first event)", async () => {
-    const decision = createTestDecision();
-    const onEvent = vi.fn().mockResolvedValue(decision);
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -256,84 +235,13 @@ describe("createAgentActionHandler - normal processing", () => {
     const result = await handler({}, args);
 
     expect(result).not.toBeNull();
-    expect(result!.decision).toEqual(decision);
+    expect(result!.decision).not.toBeNull();
     expect(result!.analysisMethod).toBe("rule-based");
     expect(result!.decisionId).toBe("dec_test-agent_1");
   });
 
-  it("calls onEvent with correct execution context shape", async () => {
-    const onEvent = vi.fn().mockResolvedValue(null);
-    const agentConfig = createTestAgentConfig({ id: "my-agent", onEvent });
-    const historyEvents = [
-      {
-        eventId: "hist_1",
-        eventType: "OrderCancelled",
-        globalPosition: 40,
-        streamType: "Order",
-        streamId: "order-001",
-        payload: {},
-        timestamp: Date.now() - 1000,
-        category: "domain" as const,
-        boundedContext: "orders",
-        schemaVersion: 1,
-      },
-    ];
-    const loadState = vi.fn().mockResolvedValue(
-      createTestState({
-        checkpoint: createTestCheckpoint({
-          lastProcessedPosition: 50,
-          lastEventId: "evt_prev",
-          eventsProcessed: 50,
-        }),
-        eventHistory: historyEvents,
-        injectedData: { customerData: { risk: 0.8 } },
-      })
-    );
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs({ globalPosition: 100 });
-    await handler({}, args);
-
-    expect(onEvent).toHaveBeenCalledTimes(1);
-
-    const [receivedEvent, executionContext] = onEvent.mock.calls[0];
-
-    // Verify reconstructed event
-    expect(receivedEvent.eventId).toBe("evt_test_123");
-    expect(receivedEvent.eventType).toBe("OrderCancelled");
-    expect(receivedEvent.globalPosition).toBe(100);
-
-    // Verify execution context structure
-    expect(executionContext).toMatchObject({
-      agent: expect.objectContaining({
-        analyze: expect.any(Function),
-        reason: expect.any(Function),
-      }),
-      history: expect.any(Array),
-      checkpoint: {
-        lastProcessedPosition: 50,
-        lastEventId: "evt_prev",
-        eventsProcessed: 50,
-      },
-      config: expect.objectContaining({
-        id: "my-agent",
-      }),
-      injectedData: { customerData: { risk: 0.8 } },
-    });
-
-    // Verify history is a copy (not the same reference)
-    expect(executionContext.history).toHaveLength(1);
-    expect(executionContext.history[0].eventId).toBe("hist_1");
-  });
-
   it("returns rule-based analysis when no runtime configured", async () => {
-    const decision = createTestDecision();
-    const onEvent = vi.fn().mockResolvedValue(decision);
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -352,135 +260,6 @@ describe("createAgentActionHandler - normal processing", () => {
 });
 
 // ============================================================================
-// LLM Enrichment Tests
-// ============================================================================
-
-describe("createAgentActionHandler - LLM enrichment", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("returns llm analysis method when LLM enrichment succeeds", async () => {
-    const decision = createTestDecision({ command: "SuggestOutreach" });
-    const onEvent = vi.fn().mockResolvedValue(decision);
-    const agentConfig = createTestAgentConfig({ onEvent });
-
-    const llmResult: LLMAnalysisResult = {
-      patterns: [{ name: "churn-risk", confidence: 0.92, matchingEventIds: ["evt_1"] }],
-      confidence: 0.92,
-      reasoning: "LLM detected churn risk pattern",
-      llmContext: {
-        model: "anthropic/claude-sonnet-4-5-20250929",
-        tokens: 150,
-        durationMs: 500,
-        threadId: "thread_abc",
-      },
-    };
-
-    const runtime: AgentRuntimeConfig = {
-      analyze: vi.fn().mockResolvedValue(llmResult),
-      reason: vi.fn().mockResolvedValue({}),
-    };
-
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      runtime,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs();
-    const result = await handler({}, args);
-
-    expect(result).not.toBeNull();
-    expect(result!.analysisMethod).toBe("llm");
-    expect(result!.llmMetrics).toBeDefined();
-    expect(result!.llmMetrics!.model).toBe("anthropic/claude-sonnet-4-5-20250929");
-    expect(result!.llmMetrics!.tokens).toBe(150);
-    expect(result!.llmMetrics!.durationMs).toBeGreaterThanOrEqual(0);
-    expect(result!.llmMetrics!.threadId).toBe("thread_abc");
-    // Decision should be enriched with LLM confidence and reasoning
-    expect(result!.decision!.confidence).toBe(0.92);
-    expect(result!.decision!.reason).toBe("LLM detected churn risk pattern");
-  });
-
-  it("falls back to rule-based when LLM enrichment fails", async () => {
-    const decision = createTestDecision({
-      command: "SuggestOutreach",
-      confidence: 0.85,
-      reason: "Rule-based detection",
-    });
-    const onEvent = vi.fn().mockResolvedValue(decision);
-    const agentConfig = createTestAgentConfig({ onEvent });
-
-    const runtime: AgentRuntimeConfig = {
-      analyze: vi.fn().mockRejectedValue(new Error("LLM API timeout")),
-      reason: vi.fn().mockResolvedValue({}),
-    };
-
-    const logger = createMockLogger();
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      runtime,
-      loadState,
-      logger,
-    });
-
-    const args = createTestHandlerArgs();
-    const result = await handler({}, args);
-
-    expect(result).not.toBeNull();
-    expect(result!.analysisMethod).toBe("rule-based-fallback");
-    expect(result!.error).toBe("LLM API timeout");
-    expect(result!.llmMetrics).toBeUndefined();
-    // Decision should retain original rule-based values
-    expect(result!.decision!.confidence).toBe(0.85);
-    expect(result!.decision!.reason).toBe("Rule-based detection");
-    expect(logger.warn).toHaveBeenCalledWith(
-      "LLM analysis failed, using rule-based fallback",
-      expect.objectContaining({
-        agentId: "test-agent",
-        error: "LLM API timeout",
-      })
-    );
-  });
-
-  it("does not call LLM when onEvent returns null decision", async () => {
-    const onEvent = vi.fn().mockResolvedValue(null);
-    const agentConfig = createTestAgentConfig({ onEvent });
-
-    const runtime: AgentRuntimeConfig = {
-      analyze: vi.fn(),
-      reason: vi.fn(),
-    };
-
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      runtime,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs();
-    const result = await handler({}, args);
-
-    expect(result).not.toBeNull();
-    expect(result!.decision).toBeNull();
-    expect(result!.analysisMethod).toBe("rule-based");
-    expect(runtime.analyze).not.toHaveBeenCalled();
-  });
-});
-
-// ============================================================================
 // Error Propagation Tests
 // ============================================================================
 
@@ -494,10 +273,16 @@ describe("createAgentActionHandler - error propagation", () => {
     vi.useRealTimers();
   });
 
-  it("re-throws when onEvent handler throws", async () => {
-    const error = new Error("Handler crashed");
-    const onEvent = vi.fn().mockRejectedValue(error);
-    const agentConfig = createTestAgentConfig({ onEvent });
+  it("re-throws when pattern trigger throws", async () => {
+    const throwingPattern: PatternDefinition = {
+      name: "throws-pattern",
+      window: { duration: "7d" },
+      trigger: () => {
+        throw new Error("Handler crashed");
+      },
+    };
+
+    const agentConfig = createTestAgentConfig({ patterns: [throwingPattern] });
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -510,24 +295,8 @@ describe("createAgentActionHandler - error propagation", () => {
     await expect(handler({}, args)).rejects.toThrow("Handler crashed");
   });
 
-  it("re-throws non-Error objects from onEvent", async () => {
-    const onEvent = vi.fn().mockRejectedValue("string error");
-    const agentConfig = createTestAgentConfig({ onEvent });
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs();
-
-    await expect(handler({}, args)).rejects.toBe("string error");
-  });
-
   it("propagates loadState errors for Workpool retry", async () => {
-    const onEvent = vi.fn();
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockRejectedValue(new Error("DB connection lost"));
 
     const handler = createAgentActionHandler({
@@ -538,7 +307,6 @@ describe("createAgentActionHandler - error propagation", () => {
     const args = createTestHandlerArgs();
 
     await expect(handler({}, args)).rejects.toThrow("DB connection lost");
-    expect(onEvent).not.toHaveBeenCalled();
   });
 });
 
@@ -557,8 +325,7 @@ describe("createAgentActionHandler - decisionId format", () => {
   });
 
   it("generates deterministic decisionId from agentId and globalPosition", async () => {
-    const onEvent = vi.fn().mockResolvedValue(createTestDecision());
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -577,8 +344,7 @@ describe("createAgentActionHandler - decisionId format", () => {
   });
 
   it("generates same decisionId for same inputs (deterministic)", async () => {
-    const onEvent = vi.fn().mockResolvedValue(createTestDecision());
-    const agentConfig = createTestAgentConfig({ onEvent });
+    const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -611,19 +377,14 @@ describe("createAgentActionHandler - patterns mode", () => {
     vi.useRealTimers();
   });
 
-  it("invokes pattern executor and returns patternId when patterns mode is used", async () => {
+  it("invokes pattern executor and returns patternId when pattern triggers", async () => {
     const pattern: PatternDefinition = {
       name: "churn-risk",
       window: { duration: "7d" },
       trigger: () => true,
-      // No analyze -- rule-based
     };
 
-    const agentConfig = createTestAgentConfig({
-      patterns: [pattern],
-      onEvent: undefined,
-    });
-
+    const agentConfig = createTestAgentConfig({ patterns: [pattern] });
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -655,11 +416,7 @@ describe("createAgentActionHandler - patterns mode", () => {
       }),
     };
 
-    const agentConfig = createTestAgentConfig({
-      patterns: [pattern],
-      onEvent: undefined,
-    });
-
+    const agentConfig = createTestAgentConfig({ patterns: [pattern] });
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -681,14 +438,10 @@ describe("createAgentActionHandler - patterns mode", () => {
     const pattern: PatternDefinition = {
       name: "no-trigger",
       window: { duration: "7d" },
-      trigger: () => false, // Never triggers
+      trigger: () => false,
     };
 
-    const agentConfig = createTestAgentConfig({
-      patterns: [pattern],
-      onEvent: undefined,
-    });
-
+    const agentConfig = createTestAgentConfig({ patterns: [pattern] });
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -704,98 +457,7 @@ describe("createAgentActionHandler - patterns mode", () => {
     expect(result!.decision).toBeNull();
   });
 
-  it("does not call onEvent when patterns mode is used", async () => {
-    const onEvent = vi.fn();
-    const pattern: PatternDefinition = {
-      name: "test-pattern",
-      window: { duration: "7d" },
-      trigger: () => true,
-    };
-
-    // Even if onEvent is set, patterns takes precedence
-    // (in practice validation prevents both, but test runtime behavior)
-    const agentConfig: AgentBCConfig = {
-      id: "test-agent",
-      subscriptions: ["OrderCancelled"],
-      patternWindow: { duration: "7d", minEvents: 1, eventLimit: 100 },
-      confidenceThreshold: 0.9,
-      patterns: [pattern],
-    };
-
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs();
-    await handler({}, args);
-
-    expect(onEvent).not.toHaveBeenCalled();
-  });
-
-  it("re-throws when pattern executor fails", async () => {
-    const pattern: PatternDefinition = {
-      name: "throws-pattern",
-      window: { duration: "7d" },
-      trigger: () => {
-        throw new Error("Trigger exploded");
-      },
-    };
-
-    const agentConfig = createTestAgentConfig({
-      patterns: [pattern],
-      onEvent: undefined,
-    });
-
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs();
-
-    await expect(handler({}, args)).rejects.toThrow("Trigger exploded");
-  });
-});
-
-// ============================================================================
-// onEvent Mode Unchanged
-// ============================================================================
-
-describe("createAgentActionHandler - onEvent mode does not produce patternId", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("returns no patternId when using onEvent mode", async () => {
-    const decision = createTestDecision();
-    const onEvent = vi.fn().mockResolvedValue(decision);
-    const agentConfig = createTestAgentConfig({ onEvent });
-    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
-
-    const handler = createAgentActionHandler({
-      agentConfig,
-      loadState,
-    });
-
-    const args = createTestHandlerArgs();
-    const result = await handler({}, args);
-
-    expect(result).not.toBeNull();
-    expect(result!.patternId).toBeUndefined();
-    expect(result!.decision).toEqual(decision);
-  });
-
-  it("does not invoke LLM enrichment when patterns mode is used", async () => {
+  it("does not invoke LLM enrichment via runtime (patterns handle LLM internally)", async () => {
     const pattern: PatternDefinition = {
       name: "rule-only",
       window: { duration: "7d" },
@@ -811,11 +473,7 @@ describe("createAgentActionHandler - onEvent mode does not produce patternId", (
       reason: vi.fn(),
     };
 
-    const agentConfig = createTestAgentConfig({
-      patterns: [pattern],
-      onEvent: undefined,
-    });
-
+    const agentConfig = createTestAgentConfig({ patterns: [pattern] });
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
@@ -828,8 +486,29 @@ describe("createAgentActionHandler - onEvent mode does not produce patternId", (
     const result = await handler({}, args);
 
     expect(result).not.toBeNull();
-    // LLM enrichment is skipped in patterns mode (patterns handle LLM internally)
     expect(runtime.analyze).not.toHaveBeenCalled();
     expect(result!.llmMetrics).toBeUndefined();
+  });
+
+  it("re-throws when pattern executor fails", async () => {
+    const pattern: PatternDefinition = {
+      name: "throws-pattern",
+      window: { duration: "7d" },
+      trigger: () => {
+        throw new Error("Trigger exploded");
+      },
+    };
+
+    const agentConfig = createTestAgentConfig({ patterns: [pattern] });
+    const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
+
+    const handler = createAgentActionHandler({
+      agentConfig,
+      loadState,
+    });
+
+    const args = createTestHandlerArgs();
+
+    await expect(handler({}, args)).rejects.toThrow("Trigger exploded");
   });
 });

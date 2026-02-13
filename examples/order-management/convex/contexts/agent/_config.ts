@@ -46,7 +46,7 @@ export const CHURN_RISK_SUBSCRIPTIONS = [
  * ```typescript
  * // Use in subscription registration
  * const subscription = createAgentSubscription(churnRiskAgentConfig, {
- *   handler: internal.contexts.agent.handlers.eventHandler.handleChurnRiskEvent,
+ *   actionHandler: internal.contexts.agent.handlers.analyzeEvent.analyzeChurnRiskEvent,
  * });
  * ```
  */
@@ -83,11 +83,3 @@ export const churnRiskAgentConfig: AgentBCConfig = {
 
   patterns: [churnRiskPattern, highValueChurnPattern],
 };
-
-// ============================================================================
-// Re-export utilities for testing
-// ============================================================================
-
-// Helper functions are now in ./utils/
-// Re-export for backwards compatibility in tests
-export { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./_utils/index.js";

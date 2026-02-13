@@ -399,9 +399,10 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
     };
   }
 
-  // MUTATION path — existing behavior, produce MutationSubscription
+  // MUTATION path — produce MutationSubscription
   const mutationOpts = options as CreateAgentSubscriptionOptions<THandlerArgs>;
   return {
+    handlerType: "mutation" as const,
     name: subscriptionName,
     filter: {
       eventTypes: [...definition.subscriptions],

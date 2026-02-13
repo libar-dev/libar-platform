@@ -28,10 +28,8 @@ export const AGENT_CONFIG_ERROR_CODES = {
   CONFLICTING_APPROVAL_RULES: "CONFLICTING_APPROVAL_RULES",
   /** Agent must have a unique identifier */
   AGENT_ID_REQUIRED: "AGENT_ID_REQUIRED",
-  /** Agent must have either onEvent or patterns (not both, not neither) */
-  NO_EVENT_HANDLER: "NO_EVENT_HANDLER",
-  /** Agent cannot have both onEvent and patterns */
-  CONFLICTING_HANDLERS: "CONFLICTING_HANDLERS",
+  /** Agent must have a patterns array with at least one pattern */
+  NO_PATTERNS: "NO_PATTERNS",
 } as const;
 
 export type AgentConfigErrorCode =
@@ -222,14 +220,6 @@ export interface LLMAnalysisResult {
   readonly reasoning: string;
 
   /**
-   * Suggested action based on analysis.
-   */
-  readonly suggestedAction?: {
-    readonly type: string;
-    readonly payload: unknown;
-  };
-
-  /**
    * LLM context metadata for audit.
    */
   readonly llmContext?: LLMContext;
@@ -268,7 +258,7 @@ export interface LLMContext {
 // ============================================================================
 
 /**
- * Context provided to the agent's onEvent handler.
+ * Context provided to the agent's pattern trigger/analyze functions.
  *
  * Provides access to LLM reasoning capabilities, event history,
  * and agent configuration.
@@ -341,17 +331,6 @@ export interface AgentCheckpointState {
 // ============================================================================
 
 /**
- * Agent event handler function type.
- *
- * Called for each event the agent receives. Returns a decision
- * about what action to take (if any).
- */
-export type AgentEventHandler = (
-  event: PublishedEvent,
-  ctx: AgentExecutionContext
-) => Promise<AgentDecision | null>;
-
-/**
  * Full configuration for an Agent Bounded Context.
  *
  * Defines the agent's identity, subscriptions, pattern detection
@@ -396,19 +375,10 @@ export interface AgentBCConfig {
   readonly rateLimits?: AgentRateLimitConfig;
 
   /**
-   * Event handler invoked for each subscribed event.
-   * Returns a decision about what action to take.
-   *
-   * Exactly one of onEvent or patterns must be set (XOR).
+   * Pattern definitions for event analysis.
+   * The handler uses the pattern executor to analyze events.
    */
-  readonly onEvent?: AgentEventHandler;
-
-  /**
-   * Pattern definitions for event analysis (alternative to onEvent).
-   * When set, the handler uses the pattern executor instead of onEvent.
-   * Exactly one of onEvent or patterns must be set (XOR).
-   */
-  readonly patterns?: readonly PatternDefinition[];
+  readonly patterns: readonly PatternDefinition[];
 }
 
 // ============================================================================
@@ -496,23 +466,12 @@ export function validateAgentBCConfig(config: Partial<AgentBCConfig>): AgentConf
     }
   }
 
-  // XOR: exactly one of onEvent or patterns must be set
-  const hasOnEvent = typeof config.onEvent === "function";
-  const hasPatterns = Array.isArray(config.patterns) && config.patterns.length > 0;
-
-  if (!hasOnEvent && !hasPatterns) {
+  // Patterns array must be present and non-empty
+  if (!Array.isArray(config.patterns) || config.patterns.length === 0) {
     return {
       valid: false,
-      code: AGENT_CONFIG_ERROR_CODES.NO_EVENT_HANDLER,
-      message: "Agent must have either onEvent handler or patterns array",
-    };
-  }
-
-  if (hasOnEvent && hasPatterns) {
-    return {
-      valid: false,
-      code: AGENT_CONFIG_ERROR_CODES.CONFLICTING_HANDLERS,
-      message: "Agent cannot have both onEvent and patterns — use one or the other",
+      code: AGENT_CONFIG_ERROR_CODES.NO_PATTERNS,
+      message: "Agent must have a patterns array with at least one pattern",
     };
   }
 

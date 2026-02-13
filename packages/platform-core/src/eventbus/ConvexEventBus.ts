@@ -186,11 +186,6 @@ export class ConvexEventBus implements EventBus {
         if (isActionSubscription(subscription)) {
           // ACTION path — agent LLM handlers (Phase 22b)
           const pool = subscription.pool ?? this.workpool;
-          if (!pool.enqueueAction) {
-            throw new Error(
-              `Action subscription "${subscription.name}" requires a Workpool with enqueueAction support`
-            );
-          }
           const actionContext = subscription.toWorkpoolContext(event, chain, subscription.name);
           await pool.enqueueAction(ctx, subscription.handler, handlerArgs, {
             onComplete: subscription.onComplete,

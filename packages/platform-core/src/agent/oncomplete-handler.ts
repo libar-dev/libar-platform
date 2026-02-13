@@ -121,9 +121,6 @@ export interface AgentOnCompleteArgs {
     | { readonly kind: "canceled" };
 }
 
-// Re-export AgentComponentAPI so existing imports from this module still work
-export type { AgentComponentAPI } from "./handler-types.js";
-
 // ============================================================================
 // Factory Configuration
 // ============================================================================

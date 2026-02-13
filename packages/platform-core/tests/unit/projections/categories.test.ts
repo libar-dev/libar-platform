@@ -16,7 +16,7 @@ import {
   isIntegrationProjection,
   isClientExposed,
   type ProjectionCategory,
-} from "../../../src/projections/index.js";
+} from "@libar-dev/platform-bc";
 import {
   PROJECTION_VALIDATION_ERRORS,
   validateProjectionCategory,

@@ -127,8 +127,7 @@ export async function executePatterns(
 /**
  * Build an AgentDecision from an LLM analysis result.
  *
- * Uses the structured `result.command` field if present, falling back to
- * the deprecated `result.data.suggestedAction` path for backward compatibility.
+ * Uses the structured `result.command` field to extract the command type and payload.
  *
  * @param result - Pattern analysis result from the LLM
  * @param patternName - Name of the pattern that produced this result
@@ -140,14 +139,7 @@ export function buildDecisionFromAnalysis(
   patternName: string,
   config: AgentBCConfig
 ): AgentDecision {
-  // Primary: structured command from result
-  // Fallback: deprecated suggestedAction in data (backward compat)
-  const resultData = result.data as Record<string, unknown> | undefined;
-  const suggestedAction = resultData?.["suggestedAction"] as
-    | { type: string; payload?: unknown }
-    | undefined;
-
-  const command: string | null = result.command?.type ?? suggestedAction?.type ?? null;
+  const command: string | null = result.command?.type ?? null;
 
   const payload: unknown = result.command?.payload ?? result.data ?? {};
 

@@ -17,8 +17,8 @@
  *
  * // Pass the API key from Convex environment
  * const apiKey = process.env.OPENROUTER_API_KEY;
- * const handler = createAgentEventHandler({
- *   config: myAgentConfig,
+ * const handler = createAgentActionHandler({
+ *   agentConfig: myAgentConfig,
  *   runtime: createOpenRouterAgentRuntime(apiKey),
  *   // ...
  * });
@@ -60,13 +60,6 @@ const PatternAnalysisSchema = z.object({
   ),
   confidence: z.number().min(0).max(1).describe("Overall confidence in the analysis"),
   reasoning: z.string().describe("Explanation of the analysis and findings"),
-  suggestedAction: z
-    .object({
-      type: z.string().describe("Command type to emit (e.g., 'SuggestCustomerOutreach')"),
-      payload: z.any().describe("Command payload data"),
-    })
-    .optional()
-    .describe("Recommended action based on the analysis"),
 });
 
 /**
@@ -86,15 +79,15 @@ const EventReasoningSchema = z.object({
  * This allows the agent to run without LLM integration for testing.
  *
  * @param apiKey - OpenRouter API key from Convex environment (process.env.OPENROUTER_API_KEY)
- * @returns AgentRuntimeConfig for use with createAgentEventHandler
+ * @returns AgentRuntimeConfig for use with createAgentActionHandler
  *
  * @example
  * ```typescript
  * // In Convex handler:
  * const apiKey = process.env.OPENROUTER_API_KEY;
  * const runtime = createOpenRouterAgentRuntime(apiKey);
- * const handler = createAgentEventHandler({
- *   config: churnRiskAgentConfig,
+ * const handler = createAgentActionHandler({
+ *   agentConfig: churnRiskAgentConfig,
  *   runtime,
  *   // ...
  * });
@@ -143,7 +136,6 @@ Analyze these events for patterns and provide your assessment.`;
         // Type assertion: generateObject with schema returns typed object
         const analysisResult = result.object as PatternAnalysisResponse;
 
-        // Build result, only including suggestedAction if it exists
         const llmResult: LLMAnalysisResult = {
           patterns: analysisResult.patterns.map((p) => ({
             name: p.name,
@@ -159,12 +151,6 @@ Analyze these events for patterns and provide your assessment.`;
             durationMs,
           },
         };
-
-        // Only add suggestedAction if present (exactOptionalPropertyTypes compatibility)
-        if (analysisResult.suggestedAction) {
-          (llmResult as { suggestedAction?: { type: string; payload: unknown } }).suggestedAction =
-            analysisResult.suggestedAction;
-        }
 
         return llmResult;
       } catch (error) {

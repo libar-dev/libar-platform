@@ -71,7 +71,7 @@
  *
  * // Create EventBus subscription for the agent
  * const subscription = createAgentSubscription(churnRiskAgentConfig, {
- *   handler: internal.contexts.agent.handlers.eventHandler.handleChurnRiskEvent,
+ *   actionHandler: internal.contexts.agent.handlers.analyzeEvent.analyzeChurnRiskEvent,
  *   onComplete: internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
  *   priority: 250, // Run after projections (100) and PMs (200)
  * });
@@ -89,15 +89,10 @@
 // Configuration
 // ============================================================================
 
-export {
-  CHURN_RISK_AGENT_ID,
-  CHURN_RISK_SUBSCRIPTIONS,
-  churnRiskAgentConfig,
-  // Re-exported utilities (formerly __testing)
-  extractCustomerId,
-  calculateChurnConfidence,
-  buildChurnReason,
-} from "./_config.js";
+export { CHURN_RISK_AGENT_ID, CHURN_RISK_SUBSCRIPTIONS, churnRiskAgentConfig } from "./_config.js";
+
+// Agent utilities — import from _utils/ directly
+export { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./_utils/index.js";
 
 // ============================================================================
 // Patterns
@@ -188,7 +183,6 @@ export {
 
   // Init Helpers
   createMockAgentRuntime,
-  createAgentEventHandler,
   initializeAgentBC,
 } from "@libar-dev/platform-core/agent";
 

@@ -32,24 +32,17 @@
  *   subscriptions: ["OrderCancelled", "OrderRefunded"],
  *   patternWindow: { duration: "30d", minEvents: 3 },
  *   confidenceThreshold: 0.8,
- *   onEvent: async (event, ctx) => {
- *     const analysis = await ctx.agent.analyze(
- *       "Detect customer churn risk based on cancellation patterns",
- *       ctx.history
- *     );
- *
- *     if (analysis.confidence > ctx.config.confidenceThreshold) {
- *       return {
- *         command: "SuggestCustomerOutreach",
- *         payload: { customerId: event.streamId, risk: analysis.confidence },
- *         confidence: analysis.confidence,
- *         reason: analysis.reasoning,
- *         requiresApproval: analysis.confidence < 0.9,
- *         triggeringEvents: analysis.patterns[0]?.matchingEventIds ?? [event.eventId],
- *       };
- *     }
- *     return null;
- *   },
+ *   patterns: [
+ *     definePattern({
+ *       id: "churn-risk",
+ *       trigger: (events) => events.length >= 3,
+ *       analyze: async (events, ctx) => ({
+ *         command: { type: "SuggestCustomerOutreach", payload: { risk: 0.85 } },
+ *         confidence: 0.85,
+ *         reason: "Multiple cancellations detected",
+ *       }),
+ *     }),
+ *   ],
  * };
  * ```
  *
@@ -89,7 +82,6 @@ export type {
   AgentCheckpointState,
 
   // Configuration
-  AgentEventHandler,
   AgentBCConfig,
 
   // Validation
@@ -514,9 +506,6 @@ export {
   // Handler Transform
   toAgentHandlerArgs,
 
-  // Event Handler Factory
-  createAgentEventHandler,
-
   // Lifecycle Functions
   generateSubscriptionId,
   initializeAgentBC,
@@ -544,8 +533,6 @@ export type {
 
   // Handler Types
   AgentEventHandlerArgs,
-  CreateAgentEventHandlerContext,
-  AgentEventHandlerResult,
 } from "./init.js";
 
 // NOTE: CreateAgentSubscriptionOptions is available from @libar-dev/platform-bus/agent-subscription

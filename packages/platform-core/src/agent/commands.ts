@@ -345,7 +345,7 @@ export interface CreateCommandFromDecisionOptions {
 /**
  * Convert an AgentDecision to an EmittedAgentCommand.
  *
- * Useful when the agent's onEvent handler returns a decision that
+ * Useful when the agent's pattern execution returns a decision that
  * should be emitted as a command.
  *
  * @param agentId - Agent BC identifier
@@ -356,9 +356,9 @@ export interface CreateCommandFromDecisionOptions {
  *
  * @example
  * ```typescript
- * const decision = await config.onEvent(event, ctx);
- * if (decision?.command) {
- *   const command = createCommandFromDecision("churn-risk-agent", decision);
+ * const result = await executePatterns(config.patterns, events, ctx);
+ * if (result.decision?.command) {
+ *   const command = createCommandFromDecision("churn-risk-agent", result.decision);
  *   // ... emit command through command bus
  * }
  * ```

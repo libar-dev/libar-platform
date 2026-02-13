@@ -265,6 +265,7 @@ export function createPMSubscription<THandlerArgs extends UnknownRecord = PMEven
   };
 
   return {
+    handlerType: "mutation" as const,
     name: subscriptionName,
     filter: {
       eventTypes: [...definition.eventSubscriptions],

@@ -34,6 +34,9 @@ function createMockWorkpool(): WorkpoolClient & { calls: unknown[][] } {
       calls.push([ctx, handler, args, options]);
       return null;
     },
+    async enqueueAction() {
+      return null;
+    },
   };
 }
 

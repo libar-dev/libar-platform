@@ -22,20 +22,13 @@ import type {
 } from "../eventbus/types.js";
 import type { CorrelationChain } from "../correlation/types.js";
 import type { UnknownRecord } from "../types.js";
-import type {
-  AgentBCConfig,
-  AgentDecision,
-  AgentExecutionContext,
-  AgentInterface,
-  LLMAnalysisResult,
-} from "./types.js";
+import type { AgentBCConfig, AgentInterface, LLMAnalysisResult } from "./types.js";
 import { validateAgentBCConfig } from "./types.js";
 import type { AgentCheckpoint } from "./checkpoint.js";
-import { createInitialAgentCheckpoint, isAgentActive } from "./checkpoint.js";
-import { createEmittedAgentCommand, type EmittedAgentCommand } from "./commands.js";
-import { createPendingApproval, shouldRequireApproval, type PendingApproval } from "./approval.js";
-import { createAgentDeadLetter, type AgentDeadLetter } from "./dead-letter.js";
-import { filterEventsInWindow, hasMinimumEvents } from "./patterns.js";
+import { createInitialAgentCheckpoint } from "./checkpoint.js";
+import { type EmittedAgentCommand } from "./commands.js";
+import { type PendingApproval } from "./approval.js";
+import { type AgentDeadLetter } from "./dead-letter.js";
 
 // ============================================================================
 // Error Codes
@@ -346,239 +339,6 @@ export function toAgentHandlerArgs(
 // Agent Event Handler Factory
 // ============================================================================
 
-/**
- * Context for creating agent event handlers.
- */
-export interface CreateAgentEventHandlerContext {
-  /** Agent BC configuration */
-  readonly config: AgentBCConfig;
-
-  /** Agent runtime for LLM integration */
-  readonly runtime: AgentRuntimeConfig;
-
-  /** Logger for operations */
-  readonly logger: Logger;
-
-  /**
-   * Load event history within the pattern window.
-   * Implementation depends on infrastructure.
-   */
-  readonly loadHistory: (streamId: string, config: AgentBCConfig) => Promise<PublishedEvent[]>;
-
-  /**
-   * Load current checkpoint state.
-   * Implementation depends on infrastructure.
-   */
-  readonly loadCheckpoint: (agentId: string) => Promise<AgentCheckpoint | null>;
-
-  /**
-   * Update checkpoint after processing.
-   * Implementation depends on infrastructure.
-   */
-  readonly updateCheckpoint: (
-    agentId: string,
-    eventId: string,
-    globalPosition: number
-  ) => Promise<void>;
-}
-
-/**
- * Result from agent event handler processing.
- */
-export interface AgentEventHandlerResult {
-  /** Whether processing was successful */
-  readonly success: boolean;
-
-  /** Decision made by the agent (if any) */
-  readonly decision: AgentDecision | null;
-
-  /** Command emitted (if decision resulted in command) */
-  readonly emittedCommand?: EmittedAgentCommand;
-
-  /** Approval created (if command requires approval) */
-  readonly pendingApproval?: PendingApproval;
-
-  /** Dead letter created (if processing failed) */
-  readonly deadLetter?: AgentDeadLetter;
-
-  /** Error message if processing failed */
-  readonly error?: string;
-}
-
-/**
- * Create the agent event handler function.
- *
- * This handler:
- * 1. Loads event history within the pattern window
- * 2. Creates the AgentExecutionContext
- * 3. Calls the config.onEvent handler
- * 4. Handles the decision (emit command, queue approval, etc.)
- *
- * @param ctx - Handler context with dependencies
- * @returns Event handler function
- */
-export function createAgentEventHandler(
-  ctx: CreateAgentEventHandlerContext
-): (event: PublishedEvent, checkpoint: AgentCheckpoint) => Promise<AgentEventHandlerResult> {
-  const { config, runtime, logger, loadHistory, updateCheckpoint } = ctx;
-
-  const agentInterface = createAgentInterface(runtime);
-
-  return async (
-    event: PublishedEvent,
-    checkpoint: AgentCheckpoint
-  ): Promise<AgentEventHandlerResult> => {
-    try {
-      // Check if agent is active
-      if (!isAgentActive(checkpoint)) {
-        logger.debug("Agent is not active, skipping event", {
-          agentId: config.id,
-          eventId: event.eventId,
-          status: checkpoint.status,
-        });
-        return { success: true, decision: null };
-      }
-
-      // Load event history within the pattern window
-      const history = await loadHistory(event.streamId, config);
-      const filteredHistory = filterEventsInWindow(history, config.patternWindow);
-
-      // Check minimum events requirement
-      if (!hasMinimumEvents(filteredHistory, config.patternWindow)) {
-        logger.debug("Insufficient events for pattern detection", {
-          agentId: config.id,
-          eventId: event.eventId,
-          historyCount: filteredHistory.length,
-          minEvents: config.patternWindow.minEvents ?? 1,
-        });
-        // Still update checkpoint to mark event as processed
-        await updateCheckpoint(config.id, event.eventId, event.globalPosition);
-        return { success: true, decision: null };
-      }
-
-      // Create execution context
-      const executionContext: AgentExecutionContext = {
-        agent: agentInterface,
-        history: filteredHistory,
-        checkpoint: {
-          lastProcessedPosition: checkpoint.lastProcessedPosition,
-          lastEventId: checkpoint.lastEventId,
-          eventsProcessed: checkpoint.eventsProcessed,
-        },
-        config,
-      };
-
-      // Call the agent's event handler (only in onEvent mode)
-      if (!config.onEvent) {
-        throw new Error(
-          `Agent '${config.id}' has no onEvent handler. Use patterns mode with createAgentActionHandler instead.`
-        );
-      }
-      const decision = await config.onEvent(event, executionContext);
-
-      // Update checkpoint
-      await updateCheckpoint(config.id, event.eventId, event.globalPosition);
-
-      // If no decision, we're done
-      if (decision === null) {
-        logger.debug("Agent made no decision for event", {
-          agentId: config.id,
-          eventId: event.eventId,
-        });
-        return { success: true, decision: null };
-      }
-
-      // If decision has no command, we're done
-      if (decision.command === null) {
-        logger.debug("Agent decision has no command", {
-          agentId: config.id,
-          eventId: event.eventId,
-          reason: decision.reason,
-        });
-        return { success: true, decision };
-      }
-
-      // Determine if approval is required
-      const requiresApproval =
-        decision.requiresApproval ||
-        (config.humanInLoop !== undefined &&
-          shouldRequireApproval(config.humanInLoop, decision.command, decision.confidence));
-
-      if (requiresApproval) {
-        // Create pending approval
-        const approval = createPendingApproval(
-          config.id,
-          `dec_${Date.now()}_${uuidv7().slice(0, 8)}`,
-          { type: decision.command, payload: decision.payload },
-          decision.confidence,
-          decision.reason,
-          config.humanInLoop ?? { confidenceThreshold: config.confidenceThreshold }
-        );
-
-        logger.info("Created pending approval for agent decision", {
-          agentId: config.id,
-          approvalId: approval.approvalId,
-          command: decision.command,
-          confidence: decision.confidence,
-        });
-
-        return {
-          success: true,
-          decision,
-          pendingApproval: approval,
-        };
-      }
-
-      // Create and emit command
-      const emittedCommand = createEmittedAgentCommand(
-        config.id,
-        decision.command,
-        decision.payload,
-        decision.confidence,
-        decision.reason,
-        decision.triggeringEvents
-      );
-
-      logger.info("Agent emitting command", {
-        agentId: config.id,
-        commandType: emittedCommand.type,
-        decisionId: emittedCommand.metadata.decisionId,
-        confidence: decision.confidence,
-      });
-
-      return {
-        success: true,
-        decision,
-        emittedCommand,
-      };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-
-      logger.error("Agent event processing failed", {
-        agentId: config.id,
-        eventId: event.eventId,
-        error: errorMessage,
-      });
-
-      // Create dead letter
-      const deadLetter = createAgentDeadLetter(
-        config.id,
-        checkpoint.subscriptionId,
-        event.eventId,
-        event.globalPosition,
-        errorMessage
-      );
-
-      return {
-        success: false,
-        decision: null,
-        deadLetter,
-        error: errorMessage,
-      };
-    }
-  };
-}
-
 // ============================================================================
 // Subscription Factory
 // ============================================================================
@@ -665,6 +425,7 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
   const subscriptionName = `agent:${config.id}`;
 
   return {
+    handlerType: "mutation" as const,
     name: subscriptionName,
     filter: {
       eventTypes: [...config.subscriptions],

@@ -5,8 +5,7 @@
  * The action handler:
  * - Loads state via ctx.runQuery (cannot write to DB)
  * - Checks idempotency via checkpoint position (best-effort)
- * - Calls the agent's onEvent handler for rule-based decisions
- * - Optionally enriches with LLM analysis
+ * - Runs the pattern executor for event analysis and command routing
  * - Returns AgentActionResult (NO persistence)
  *
  * All persistence happens in the onComplete mutation (see oncomplete-handler.ts).
@@ -15,7 +14,6 @@
  * - AD-1: Unified action model — all agents use actions, even rule-only ones
  * - AD-4: Explicit injectedData separates projection data from event history
  * - AD-8: Separate factory from onComplete handler
- * - AD-9: AgentBCConfig.onEvent callback stays unchanged
  *
  * @module agent/action-handler
  */
@@ -103,7 +101,7 @@ export interface AgentActionState {
    *
    * @example
    * ```typescript
-   * // In churn-risk agent's onEvent handler:
+   * // In churn-risk agent's pattern trigger:
    * const data = ctx.injectedData as ChurnRiskInjectedData;
    * const cancellations = data.customerCancellationHistory;
    * ```
@@ -154,8 +152,6 @@ export interface AgentActionResult {
 
   /**
    * Which pattern produced this result (DS-4, PDR-012 AD-6).
-   * Only present when agent uses PatternExecutor (patterns mode).
-   * Absent when agent uses legacy onEvent callback.
    */
   readonly patternId?: string;
 
@@ -192,17 +188,15 @@ export interface AgentActionResult {
  * 1. Calls loadState to get checkpoint + history + injectedData
  * 2. Checks idempotency (best-effort, not atomic)
  * 3. Creates AgentExecutionContext
- * 4. Calls config.onEvent(event, context) -- the user's handler
- * 5. If LLM runtime provided, calls LLM analysis
- * 6. Returns AgentActionResult (no persistence)
+ * 4. Runs pattern executor for event analysis
+ * 5. Returns AgentActionResult (no persistence)
  *
  * @typeParam TCtx - The action context type (e.g., Convex ActionCtx)
  */
 export interface AgentActionHandlerConfig<TCtx = unknown> {
   /**
    * Agent BC configuration.
-   * Contains onEvent handler, subscriptions, patternWindow, etc.
-   * The onEvent signature is unchanged from the mutation era.
+   * Contains patterns, subscriptions, patternWindow, etc.
    */
   readonly agentConfig: AgentBCConfig;
 
@@ -244,9 +238,8 @@ export interface AgentActionHandlerConfig<TCtx = unknown> {
  * 3. Check agent active status
  * 4. Reconstruct PublishedEvent from args
  * 5. Build AgentExecutionContext with injectedData
- * 6. Call config.agentConfig.onEvent(event, executionContext)
- * 7. If decision + LLM runtime: enrich with LLM analysis
- * 8. Return AgentActionResult (no persistence!)
+ * 6. Execute patterns via executePatterns(config.agentConfig.patterns, ...)
+ * 7. Return AgentActionResult (no persistence!)
  *
  * @typeParam TCtx - The action context type (e.g., Convex ActionCtx)
  * @param config - Action handler configuration
@@ -363,79 +356,27 @@ export function createAgentActionHandler<TCtx = unknown>(
     let llmMetrics: AgentActionResult["llmMetrics"];
     let errorMsg: string | undefined;
 
-    if (config.agentConfig.patterns && config.agentConfig.patterns.length > 0) {
-      // Patterns mode — use PatternExecutor
-      try {
-        const summary = await executePatterns(
-          config.agentConfig.patterns,
-          [...state.eventHistory, event],
-          executionContext.agent,
-          config.agentConfig
-        );
-        decision = summary.decision;
-        patternId = summary.matchedPattern ?? undefined;
+    try {
+      const summary = await executePatterns(
+        config.agentConfig.patterns,
+        [...state.eventHistory, event],
+        executionContext.agent,
+        config.agentConfig
+      );
+      decision = summary.decision;
+      patternId = summary.matchedPattern ?? undefined;
 
-        // PatternExecutionSummary and AgentActionResult share the same
-        // analysisMethod union ("llm" | "rule-based" | "rule-based-fallback")
-        analysisMethod = summary.analysisMethod;
-      } catch (err) {
-        logger.error("Pattern executor failed", {
-          agentId: args.agentId,
-          eventId: args.eventId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-        // Let Workpool retry handle this
-        throw err;
-      }
-    } else if (config.agentConfig.onEvent) {
-      // Legacy onEvent mode
-      try {
-        const result = await config.agentConfig.onEvent(event, executionContext);
-        decision = result ?? null;
-      } catch (err) {
-        logger.error("Agent onEvent handler failed", {
-          agentId: args.agentId,
-          eventId: args.eventId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-        // Let Workpool retry handle this
-        throw err;
-      }
-    }
-
-    // 7. LLM enrichment (only for onEvent mode — patterns mode handles LLM in executor)
-    if (decision && config.runtime && !config.agentConfig.patterns) {
-      try {
-        const startMs = Date.now();
-        const llmResult: LLMAnalysisResult = await config.runtime.analyze(
-          `Analyze pattern for event ${args.eventType} with confidence ${decision.confidence}`,
-          [...state.eventHistory, event]
-        );
-
-        // Enrich decision with LLM analysis
-        decision = {
-          ...decision,
-          confidence: llmResult.confidence ?? decision.confidence,
-          reason: llmResult.reasoning ?? decision.reason,
-        };
-        analysisMethod = "llm";
-        const threadId = llmResult.llmContext?.threadId;
-        llmMetrics = {
-          model: llmResult.llmContext?.model ?? "unknown",
-          tokens: llmResult.llmContext?.tokens ?? 0,
-          durationMs: Date.now() - startMs,
-          ...(threadId !== undefined ? { threadId } : {}),
-        };
-      } catch (llmError) {
-        // LLM failed -- fall back to rule-based decision
-        logger.warn("LLM analysis failed, using rule-based fallback", {
-          agentId: args.agentId,
-          eventId: args.eventId,
-          error: llmError instanceof Error ? llmError.message : String(llmError),
-        });
-        analysisMethod = "rule-based-fallback";
-        errorMsg = llmError instanceof Error ? llmError.message : String(llmError);
-      }
+      // PatternExecutionSummary and AgentActionResult share the same
+      // analysisMethod union ("llm" | "rule-based" | "rule-based-fallback")
+      analysisMethod = summary.analysisMethod;
+    } catch (err) {
+      logger.error("Pattern executor failed", {
+        agentId: args.agentId,
+        eventId: args.eventId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Let Workpool retry handle this
+      throw err;
     }
 
     // 8. Build and return result (NO persistence -- that's onComplete's job)
