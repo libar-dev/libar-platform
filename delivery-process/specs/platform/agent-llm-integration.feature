@@ -98,6 +98,101 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
 
   This ensures the agent continues providing value even without LLM access.
 
+  **Dedicated Agent Workpool:**
+
+  Currently no `agentPool` exists in `convex.config.ts`. The agent shares whatever
+  pool the EventBus uses (likely `projectionPool`), creating resource contention.
+
+  | Config | Value | Rationale |
+  | Name | agentPool | Dedicated pool, separate from projectionPool |
+  | maxParallelism | 10 | LLM calls are slow (~1-5s) — limit concurrency to control costs |
+  | retryActionsByDefault | true | LLM APIs have transient failures |
+  | defaultRetryBehavior | 3 attempts, 1s initial, base 2 | Exponential backoff for rate limits |
+  | Partition key | event.streamId | Per-customer ordering (matches PM pattern) |
+
+  """typescript
+  // convex.config.ts — dedicated agent pool
+  app.use(workpool, { name: "agentPool" });
+
+  // Agent pool configuration
+  const agentPool = new Workpool(components.agentPool, {
+    maxParallelism: 10,
+    retryActionsByDefault: true,
+    defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
+  });
+  """
+
+  Separation of concerns: agent LLM calls don't compete with projection processing
+  in `projectionPool` (which handles high-throughput, low-latency CMS updates).
+
+  **createAgentActionHandler — Relationship to Existing Factory:**
+
+  The current `createAgentEventHandler` in `platform-core/src/agent/init.ts` returns
+  an `onEvent` callback designed for use inside mutations. The new `createAgentActionHandler`
+  returns an `internalAction` that can call external APIs.
+
+  | Factory | Returns | Can Call LLM | Used For |
+  | createAgentEventHandler (existing) | onEvent callback | No (mutation context) | Rule-only agents, no LLM needed |
+  | createAgentActionHandler (new) | internalAction | Yes (action context) | LLM-integrated agents |
+
+  `createAgentEventHandler` is NOT removed — it continues to serve rule-only agents.
+  The action handler reuses existing pure logic from the mutation handler:
+  - Pattern window filtering (`filterEventsInWindow`)
+  - Minimum event check (`hasMinimumEvents`)
+  - Approval determination (`shouldRequireApproval`)
+
+  The new capability is the LLM call between trigger evaluation and decision creation:
+  """typescript
+  // Simplified action handler flow
+  // Steps 1-4: Same as mutation handler (reused pure functions)
+  // Step 5: NEW — LLM analysis (only possible in action context)
+  const analysis = await runtime.analyze(prompt, filteredEvents);
+  // Step 6: Build AgentDecision from analysis (reused pure function)
+  """
+
+  **Thread Adapter Design — @convex-dev/agent Integration:**
+
+  One thread per (agentId, customerId) pair enables conversation context across events:
+
+  | Concern | Mechanism |
+  | Thread identity | Key: `agent:{agentId}:customer:{customerId}` |
+  | First event | Creates new thread, seeds with customer context |
+  | Subsequent events | Resumes existing thread, appends new event context |
+  | History window | Thread retains LLM conversation history for richer analysis |
+  | Thread cleanup | Threads expire naturally via @convex-dev/agent TTL |
+
+  The adapter translates between platform's `AgentInterface` (analyze/reason methods)
+  and `@convex-dev/agent`'s `Agent.generateText()`:
+  """typescript
+  // Thread adapter bridges platform interface to @convex-dev/agent
+  class ThreadAdapter implements AgentInterface {
+    async analyze(prompt: string, events: FatEvent[]): Promise<LLMAnalysisResult> {
+      const threadId = await this.getOrCreateThread(agentId, customerId);
+      const result = await this.agent.generateText(ctx, { threadId }, {
+        prompt: buildAnalysisPrompt(prompt, events),
+      });
+      return parseAnalysisResult(result);
+    }
+  }
+  """
+
+  **Circuit Breaker Integration — Phase 18 Relationship:**
+
+  Phase 18's circuit breaker (`platform-core/src/infrastructure/circuit-breaker.ts`)
+  provides the failure isolation pattern. Agent LLM calls use a named instance:
+
+  | Config | Value |
+  | Circuit name | "llm-provider" (or per-provider: "openrouter", "openai") |
+  | Failure threshold | 5 consecutive failures |
+  | Reset timeout | 60 seconds |
+  | Fallback | Rule-based analysis via existing `createMockAgentRuntime()` pattern |
+
+  When circuit is open:
+  1. LLM call is skipped (no HTTP request made)
+  2. Handler falls back to rule-based confidence scoring
+  3. Decision audit records `analysisMethod: "rule-based-fallback"` and `circuitState: "open"`
+  4. Circuit half-opens after timeout, allowing one probe request
+
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
@@ -108,6 +203,7 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
       | @convex-dev/agent thread adapter | pending | @libar-dev/platform-core/src/agent/thread-adapter.ts | Yes | unit |
       | onComplete in CreateAgentSubscriptionOptions | pending | @libar-dev/platform-bus/src/agent-subscription.ts | Yes | unit |
       | Circuit breaker for LLM | pending | @libar-dev/platform-core/src/agent/circuit-breaker.ts | Yes | unit |
+      | Agent workpool configuration | pending | examples/order-management/convex/convex.config.ts | Yes | integration |
       | Action/mutation integration test | pending | platform-core/tests/integration/agent/action-split.test.ts | Yes | integration |
 
   # ============================================================================
@@ -155,6 +251,14 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
       And the command is emitted to agent component commands table
       And the checkpoint is updated with new position
       And all writes happen in a single atomic mutation
+
+    @acceptance-criteria @validation
+    Scenario: Action handler rejects invalid agent configuration
+      Given an agent action handler with missing LLM runtime config
+      And no fallback to rule-based analysis is configured
+      When the handler is initialized
+      Then it fails with AGENT_RUNTIME_REQUIRED error
+      And the error message indicates LLM runtime or fallback must be configured
 
     @acceptance-criteria @edge-case
     Scenario: LLM unavailable falls back to rule-based analysis

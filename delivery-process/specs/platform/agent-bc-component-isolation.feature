@@ -78,6 +78,58 @@ Feature: Agent BC Component Isolation - Physical Bounded Context Enforcement
   3. Migrate existing data (one-time migration script)
   4. Remove old tables from app schema
 
+  **Design Decision: Peer Mounting Architecture (AD-6)**
+
+  `agentBC`, `@convex-dev/agent` (as `llmAgent`), and `agentPool` workpool are all PEER
+  components at the app level — NOT nested (agentBC does NOT `component.use(agent)`).
+
+  | Component | Purpose | Why Peer |
+  | agentBC | BC state: checkpoints, audit, commands, approvals | Owns domain data |
+  | llmAgent (@convex-dev/agent) | LLM: threads, messages, embeddings | Needs process.env for API keys |
+  | agentPool (workpool) | Dedicated pool for agent actions | Separate parallelism from projections |
+
+  Components cannot access `process.env` — the app-level action handler coordinates
+  between both components, passing API keys as arguments.
+
+  """typescript
+  // convex.config.ts — all three are app-level peers
+  import agentBC from "@libar-dev/platform-core/agent/convex.config";
+  import { agent } from "@convex-dev/agent/convex.config";
+  import { workpool } from "@convex-dev/workpool/convex.config";
+
+  app.use(agentBC);                         // BC: checkpoints, audit, commands, approvals
+  app.use(agent, { name: "llmAgent" });     // LLM: threads, messages, embeddings
+  app.use(workpool, { name: "agentPool" }); // Dedicated pool for agent actions
+  """
+
+  **Data Flow with Peer Components:**
+  """
+  EventBus → agentPool.enqueueAction() → app-level action handler
+    action: ctx.runQuery(agentBC.checkpoints.*) + llmAgent.generateText()
+    onComplete: ctx.runMutation(agentBC.audit.*) + ctx.runMutation(agentBC.checkpoints.*)
+  """
+
+  **Schema Evolution Notes (from design stubs):**
+
+  The component schema expands beyond the current app-level definitions:
+
+  | Aspect | Current (app schema) | Target (component schema) |
+  | Checkpoint statuses | 3: active, paused, stopped | 4: adds error_recovery (DS-5 lifecycle) |
+  | Audit event types | 6: Decision, Approved, Rejected, Expired, Completed, Failed | 16: adds DS-4 routing + DS-5 lifecycle types |
+  | Checkpoint indexes | by_agentId only | Adds by_agentId_subscriptionId for O(1) lookup |
+  | Forward declarations | None | configOverrides: v.optional(v.any()) for ReconfigureAgent (DS-5) |
+
+  All 16 audit event types declared from day one to avoid schema migration:
+  - DS-1 base (8): PatternDetected, CommandEmitted, ApprovalRequested/Granted/Rejected/Expired, DeadLetterRecorded, CheckpointUpdated
+  - DS-4 routing (2): AgentCommandRouted, AgentCommandRoutingFailed
+  - DS-5 lifecycle (6): AgentStarted, AgentPaused, AgentResumed, AgentStopped, AgentReconfigured, AgentErrorRecoveryStarted
+
+  **Cron Migration Note:**
+
+  The existing `expirePendingApprovals` cron runs as an `internalMutation` with direct
+  `ctx.db` access. After component isolation, crons cannot call component internals
+  directly — an app-level wrapper mutation must delegate to `components.agent.approvals.expirePending`.
+
   **Component Isolation Constraints (per platform architecture):**
   | Constraint | Impact on Agent Component |
   | No ctx.auth inside component | Pass userId as argument to all handlers |
@@ -184,6 +236,13 @@ Feature: Agent BC Component Isolation - Physical Bounded Context Enforcement
       Then the cancellation history argument is an empty array
       And the handler proceeds with rule-based analysis
       And no error is thrown
+
+    @acceptance-criteria @validation
+    Scenario: Agent handler cannot directly access app-level projection tables
+      Given the agent component is processing an event
+      When the handler attempts to query customerCancellations directly
+      Then the query is not available inside the component context
+      And the handler must use the injected data argument instead
 
     @acceptance-criteria @happy-path
     Scenario: App-level queries can access agent data via component API
