@@ -84,6 +84,9 @@ Sorted by priority (lower number = higher priority):
 | `@libar-docs-arch-role`         | enum         | Architectural role for diagram generation (component type)                 | No       | `@libar-docs-arch-role projection`                                            |
 | `@libar-docs-arch-context`      | value        | Bounded context this component belongs to (for subgraph grouping)          | No       | `@libar-docs-arch-context orders`                                             |
 | `@libar-docs-arch-layer`        | enum         | Architectural layer for layered diagrams                                   | No       | `@libar-docs-arch-layer application`                                          |
+| `@libar-docs-target`            | value        | Target implementation path for stub files                                  | No       | `@libar-docs-target src/api/stub-resolver.ts`                                 |
+| `@libar-docs-since`             | value        | Design session that created this pattern                                   | No       | `@libar-docs-since DS-A`                                                      |
+| `@libar-docs-convention`        | csv          | Convention domains for reference document generation from decision records | No       | `@libar-docs-convention fsm-rules, testing-policy`                            |
 
 ## Aggregation Tags
 

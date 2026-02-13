@@ -29,10 +29,10 @@ graph TB
         Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
         AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
         AgentActionHandler["AgentActionHandler[command-handler]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
@@ -71,12 +71,12 @@ graph TB
         SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
         ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
         ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
+        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
         DurableAppendAction["DurableAppendAction[infrastructure]"]
-        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
@@ -84,29 +84,29 @@ graph TB
     end
     EventSubscriptionRegistry --> OrderNotificationPM
     EventSubscriptionRegistry --> ReservationReleasePM
+    ReservationReleasePM --> InventoryCommandHandlers
+    ReservationReleasePM --> OrderWithInventoryProjection
+    OrderNotificationPM --> OrderCommandHandlers
     SagaRouter --> OrderFulfillmentSaga
     OrderFulfillmentSaga --> OrderCommandHandlers
     OrderFulfillmentSaga --> InventoryCommandHandlers
     SagaCompletionHandler --> SagaRegistry
     IntegrationRoutes --> OrderCommandHandlers
-    ReservationReleasePM --> InventoryCommandHandlers
-    ReservationReleasePM --> OrderWithInventoryProjection
-    OrderNotificationPM --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
     InventoryCommandHandlers --> InventoryDeciders
 ```
