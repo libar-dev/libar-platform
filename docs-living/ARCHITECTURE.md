@@ -32,10 +32,10 @@ graph TB
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
     end
     subgraph inventory["Inventory BC"]
         InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
@@ -94,12 +94,12 @@ graph TB
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection

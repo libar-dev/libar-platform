@@ -1,7 +1,7 @@
 @libar-docs
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:AgentChurnRiskCompletion
-@libar-docs-status:active
+@libar-docs-status:completed
 @libar-docs-phase:22d
 @libar-docs-effort:1w
 @libar-docs-product-area:ExampleApp

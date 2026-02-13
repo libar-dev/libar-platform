@@ -6,14 +6,14 @@
 
 ## Progress
 
-**Progress:** [██████░░░░░░░░░░░░░░] 2/7 (29%)
+**Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 2     |
+| ✅ Completed | 3     |
 | 🚧 Active    | 3     |
-| 📋 Planned   | 2     |
-| **Total**    | 7     |
+| 📋 Planned   | 0     |
+| **Total**    | 6     |
 
 ---
 
@@ -879,22 +879,11 @@ _Verified by: Three cancellations trigger churn risk agent_
 
 ## ✅ Recently Completed
 
-| Pattern                         | Description                                                                                     |
-| ------------------------------- | ----------------------------------------------------------------------------------------------- |
-| ✅ Agent As Bounded Context     | Problem: AI agents are invoked manually without integration into the event-driven architecture. |
-| ✅ Agent Command Infrastructure | Problem: Three interconnected gaps in agent command infrastructure: 1.                          |
-
----
-
-<details>
-<summary>📋 Upcoming (2)</summary>
-
-| Pattern                        | Effort |
-| ------------------------------ | ------ |
-| 📋 Agent Admin Frontend        | 1w     |
-| 📋 Agent Churn Risk Completion | 1w     |
-
-</details>
+| Pattern                         | Description                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| ✅ Agent As Bounded Context     | Problem: AI agents are invoked manually without integration into the event-driven architecture.                     |
+| ✅ Agent Churn Risk Completion  | Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c... |
+| ✅ Agent Command Infrastructure | Problem: Three interconnected gaps in agent command infrastructure: 1.                                              |
 
 ---
 

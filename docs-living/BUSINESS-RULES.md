@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 160 rules from 35 features across 3 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 157 rules from 34 features across 3 product areas.**
 
 ---
 
@@ -91,79 +91,53 @@ _[test-content-blocks.feature](libar-platform/delivery-process/specs/test-conten
 
 ## Example App / Phase 22
 
-### AgentAdminFrontend
-
-_The admin UI at `/admin/agents` has several gaps identified in the_
-
-#### Dead letters are visible and actionable
-
-- **Invariant:** Admin UI must display dead letter entries with replay/ignore actions. Each action must provide feedback via toast notification. Dead letters are operational concerns that require visibility for system health monitoring.
-
-- **Rationale:** Without dead letter UI, operators cannot manage failed agent event processing. The backend has full API support (`queryDeadLetters`, `replayDeadLetter`, `ignoreDeadLetter`) but this data is invisible to users.
-
-| Column     | Source               | Purpose                  |
-| ---------- | -------------------- | ------------------------ |
-| Agent      | deadLetter.agentId   | Which agent failed       |
-| Event Type | deadLetter.eventType | What event failed        |
-| Error      | deadLetter.error     | Why it failed            |
-| Status     | deadLetter.status    | pending/replayed/ignored |
-| Timestamp  | deadLetter.createdAt | When it failed           |
-| Actions    | buttons              | Replay / Ignore          |
-
-#### Decision history supports filtering
-
-- **Invariant:** Decision history must be filterable by agent ID, action type, and time range. Filters persist in URL query parameters for shareability and browser back/forward navigation.
-
-- **Rationale:** High-volume agents produce many audit events. Without filtering, the decision history is unusable for analysis. URL-persisted filters enable sharing specific views with team members and support browser navigation.
-
-| Filter      | URL Param                       | Default     | Description              |
-| ----------- | ------------------------------- | ----------- | ------------------------ |
-| Agent ID    | ?agent=churn-risk               | All agents  | Filter by specific agent |
-| Action Type | ?action=SuggestCustomerOutreach | All actions | Filter by command type   |
-| Time Range  | ?from=2026-01-01&to=2026-02-01  | Last 7 days | Date range filter        |
-
-#### Actions provide feedback via toast
-
-- **Invariant:** All mutating actions (approve, reject, replay, ignore) must show toast notifications for success and error states. Toasts use accessible ARIA attributes and auto-dismiss after a reasonable timeout.
-
-- **Rationale:** Users need immediate feedback that their action was processed. The current implementation performs mutations silently — the user clicks "Approve" and has no visual confirmation that it worked or failed.
-
-| Action             | Success Message                     | Error Behavior         |
-| ------------------ | ----------------------------------- | ---------------------- |
-| Approve            | "Approval recorded for {agentId}"   | Show error with reason |
-| Reject             | "Action rejected"                   | Show error with reason |
-| Replay dead letter | "Dead letter replayed successfully" | Show error with reason |
-| Ignore dead letter | "Dead letter ignored"               | Show error with reason |
-
-_[agent-admin-frontend.feature](libar-platform/delivery-process/specs/example-app/agent-admin-frontend.feature)_
-
 ### AgentChurnRiskCompletion
 
 _The churn-risk agent in the order-management example app has working_
 
-#### Churn-risk agent uses hybrid LLM flow
+#### LLM analysis is essential, not optional
 
-- **Invariant:** Pattern trigger is evaluated first (rule-based, no LLM cost). If trigger fires (3+ cancellations in 30 days), LLM analysis provides confidence score and reasoning. Trigger failure skips LLM call entirely.
+- **Invariant:** When the pattern trigger fires (3+ cancellations in 30 days for the same customer), the LLM MUST be called. There is no rule-based fallback that produces the same outcome. If the LLM is unavailable, the event is retried by Workpool (3 attempts with exponential backoff). If all retries fail, a dead letter is created for operator triage.
 
-- **Rationale:** Rule-based triggers are cheap and deterministic. LLM analysis adds value only when patterns warrant deeper investigation. This hybrid approach minimizes API costs while providing rich analysis when needed.
+- **Rationale:** An AI agent's value comes from LLM analysis — confidence scoring, pattern reasoning, contextual recommendations. A rule-based formula that produces `SuggestCustomerOutreach` regardless of LLM availability makes the AI irrelevant. Failure should be visible (dead letter), not invisible (silent fallback).
 
-| Step                | Cost                   | Frequency                           |
-| ------------------- | ---------------------- | ----------------------------------- |
-| Rule trigger check  | ~0 (local computation) | Every OrderCancelled event          |
-| LLM analysis        | ~$0.001-0.01 per call  | Only when 3+ cancellations detected |
-| Total per detection | ~$0.01                 | Rare (subset of customers)          |
+| Step                    | What Happens                                             |
+| ----------------------- | -------------------------------------------------------- |
+| LLM call fails          | Error propagates from `analyze()` to pattern executor    |
+| Pattern executor throws | Error propagates to action handler                       |
+| Action handler throws   | Workpool catches, retries (attempt 1/3)                  |
+| All 3 retries fail      | Workpool onComplete receives `kind: "failed"`            |
+| onComplete failure path | Creates dead letter, records `AgentAnalysisFailed` audit |
+| Dead letter visible     | Admin UI shows failed event for operator replay/ignore   |
 
 #### Approvals expire after configured timeout
 
-- **Invariant:** Pending approvals must transition to "expired" status after `approvalTimeout` elapses (default 24 hours). A cron job runs periodically to expire stale approvals.
+- **Invariant:** Pending approvals must transition to "expired" status after `approvalTimeout` elapses (default 24 hours). A cron job runs hourly to expire stale approvals.
 
-- **Rationale:** Pending approvals cannot linger indefinitely. Without expiration, the system accumulates stale decisions that may no longer be relevant. The cron approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
+- **Rationale:** Pending approvals cannot linger indefinitely. Without expiration, the system accumulates stale decisions that may no longer be relevant. The hourly cron approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
 
-#### Emitted commands route to domain handlers
+#### Emitted commands create real domain records
 
-- **Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes through CommandOrchestrator to a handler that creates the actual outreach task and emits a domain event.
+- **Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes through the command bridge to a handler that creates an outreach task record and emits an `OutreachCreated` domain event. The current no-op stub that returns `{ success: true }` must be replaced with a real domain handler.
 
-- **Rationale:** Currently commands are stored in `agentCommands` but never processed. Completing the routing makes the agent actionable — its analysis leads to real business outcomes rather than entries in a table.
+- **Rationale:** A command that produces no domain effect is not a command — it is a log entry. Completing the routing makes the agent actionable: analysis leads to real business outcomes (outreach records) rather than entries in a table.
+
+| Step                           | Action                                        |
+| ------------------------------ | --------------------------------------------- |
+| 1. Validate payload            | Ensure customerId, riskLevel, agentId present |
+| 2. Create outreach record      | Write to outreach CMS/projection table        |
+| 3. Emit OutreachCreated event  | Via event store append in same mutation       |
+| 4. Update agent command status | Mark as "completed" via agent component       |
+
+| Field             | Source                                   |
+| ----------------- | ---------------------------------------- |
+| outreachId        | Generated UUID                           |
+| customerId        | From command payload                     |
+| agentId           | From command context                     |
+| riskLevel         | From command payload ("high" / "medium") |
+| cancellationCount | From command payload                     |
+| correlationId     | From command context                     |
+| createdAt         | Current timestamp                        |
 
 _[agent-churn-risk-completion.feature](libar-platform/delivery-process/specs/example-app/agent-churn-risk-completion.feature)_
 

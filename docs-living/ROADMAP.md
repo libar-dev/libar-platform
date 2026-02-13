@@ -7,16 +7,16 @@
 
 ## Overall Progress
 
-**Patterns:** [████████████████░░░░] 59/75 (79%)
+**Patterns:** [████████████████░░░░] 60/74 (81%)
 
 **Phases:** 16/21 complete
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 75    |
-| Completed      | 59    |
+| Total Patterns | 74    |
+| Completed      | 60    |
 | Active         | 5     |
-| Planned        | 11    |
+| Planned        | 9     |
 
 ---
 
@@ -42,7 +42,7 @@
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
-| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 2/7      | 29%      |
+| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 3/6      | 50%      |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
 | 🚧 [ThemedDecisionArchitecture](phases/phase-100-themed-decision-architecture.md)    | 3/6      | 50%      |
 
@@ -253,17 +253,16 @@
 
 ### 🚧 AgentChurnRiskCompletion
 
-[████░░░░░░░░░░░] 2/7 29% complete
+[████████░░░░░░░] 3/6 50% complete
 
-| Pattern                         | Status    | Description                                                                                                             |
-| ------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 📋 Agent Admin Frontend         | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                         |
-| ✅ Agent As Bounded Context     | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                         |
-| 🚧 Agent BC Component Isolation | active    | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...               |
-| 📋 Agent Churn Risk Completion  | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps... |
-| ✅ Agent Command Infrastructure | completed | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                  |
-| 🚧 Agent LLM Integration        | active    | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.          |
-| 🚧 Confirmed Order Cancellation | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                  |
+| Pattern                         | Status    | Description                                                                                                         |
+| ------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| ✅ Agent As Bounded Context     | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                     |
+| 🚧 Agent BC Component Isolation | active    | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...           |
+| ✅ Agent Churn Risk Completion  | completed | Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c... |
+| ✅ Agent Command Infrastructure | completed | Problem: Three interconnected gaps in agent command infrastructure: 1.                                              |
+| 🚧 Agent LLM Integration        | active    | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.      |
+| 🚧 Confirmed Order Cancellation | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                              |
 
 ---
 

@@ -6,14 +6,14 @@
 
 ## Summary
 
-**Progress:** [██████░░░░░░░░░░░░░░] 2/7 (29%)
+**Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 2     |
+| ✅ Completed | 3     |
 | 🚧 Active    | 3     |
-| 📋 Planned   | 2     |
-| **Total**    | 7     |
+| 📋 Planned   | 0     |
+| **Total**    | 6     |
 
 ---
 
@@ -844,513 +844,6 @@ _Verified by: Three cancellations trigger churn risk agent_
 
 ---
 
-## 📋 Planned Patterns
-
-### 📋 Agent Admin Frontend
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** The admin UI at `/admin/agents` has several gaps identified in the
-E2E feature file (`agent-approvals.feature`) and investigation:
-
-1. **Dead letter management missing** — Backend has full API (`queryDeadLetters`,
-   `replayDeadLetter`, `ignoreDeadLetter`) but no frontend UI
-2. **Decision history incomplete** — E2E spec describes decision history tab with
-   filtering, but component is not built
-3. **Authentication placeholder** — `useReviewerId()` returns `"reviewer-placeholder"`
-   with a TODO comment
-4. **No action feedback** — Approve/reject has no success/error toast notifications
-5. **No loading states** — No skeleton UI during Suspense boundaries
-6. **E2E steps missing** — `agent-approvals.feature` has 56 scenarios with no step
-   definitions, causing CI failures
-
-**Solution:** Complete the agent admin frontend:
-
-1. **Dead letter management panel** — List, replay, ignore with feedback
-2. **Decision history with filtering** — By agent ID, action type, time range
-3. **Auth integration pattern** — Document integration point, implement mock for tests
-4. **Toast notifications** — Success/error feedback for all mutating actions
-5. **E2E step definitions** — Implement steps for existing feature scenarios
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Operational visibility | Dead letters visible and actionable by operators |
-| Agent observability | Decision history filterable for analysis and debugging |
-| User feedback | Toast notifications confirm approve/reject/replay/ignore actions |
-| Test coverage | E2E tests validate full UI-to-backend agent workflow |
-| Production readiness | Auth integration pattern ready for Convex Auth/Clerk |
-
-**Current Admin UI Structure:**
-| Tab | Status | Component |
-| Dashboard | Implemented | AgentDashboard |
-| Pending Approvals | Implemented | PendingApprovalsList, ApprovalDetail |
-| Monitoring | Implemented | AgentMonitoring |
-| Decision History | Not built | (planned) |
-| Dead Letters | Not built | (planned) |
-
-**Existing Hooks (implemented):**
-| Hook | Purpose | Status |
-| usePendingApprovals() | List pending approvals | Working |
-| useApprovalDetail(id) | Single approval with events | Working |
-| useActiveAgents() | Active agent list | Working |
-| useApprovalActions() | Approve/reject mutations | Working (no feedback) |
-
-**Missing Hooks (planned):**
-| Hook | Purpose |
-| useDeadLetters(agentId?) | Dead letter list with optional agent filter |
-| useDeadLetterActions() | Replay/ignore mutations with feedback |
-| useDecisionHistory(filters) | Filtered audit events for decision history |
-| useReviewerId() | Real auth integration (replace placeholder) |
-
-**Design Decision: Authentication Pattern**
-
-| Option | Trade-off |
-| A: Convex Auth | Full auth stack, but adds complexity to example app |
-| B: Clerk integration | Proven pattern, but external dependency |
-| C: Mock with pattern (Recommended) | Document integration point, use mock for now |
-
-**Decision:** Option C. The example app is a reference implementation, not a production
-app. We document the exact integration point where `useReviewerId()` should connect
-to real auth (Convex Auth or Clerk), and provide a mock implementation that works
-for development and E2E tests. Real auth is a separate concern outside this spec's scope.
-
-**Design Decision: Toast Notification Library**
-
-Use Sonner for toast notifications:
-
-- Lightweight and accessible (ARIA live regions)
-- Works with React 19 and TanStack Start
-- No additional peer dependencies
-- Commonly used in Convex example apps
-
-**Design Decision: E2E Test Strategy**
-
-The `agent-approvals.feature` file exists at `apps/frontend/tests/e2e/features/admin/`
-with 56 scenarios. Strategy:
-
-1. Add `@skip` tag to scenarios NOT covered by this spec (future work)
-2. Implement step definitions for scenarios that ARE covered
-3. Remove `@skip` tags as implementations are completed
-4. Use Playwright page object pattern (consistent with existing E2E structure)
-
-**Existing E2E Feature Scenarios (from agent-approvals.feature):**
-| Category | Scenario Count | This Spec Covers |
-| Dashboard overview | 8 | Yes (already partially working) |
-| Pending approvals list | 10 | Yes (approve/reject + toast) |
-| Approval detail | 8 | Yes (detail view + actions) |
-| Monitoring | 6 | Yes (already partially working) |
-| Decision history | 8 | Yes (new tab + filters) |
-| Dead letter management | 8 | Yes (new panel) |
-| Customer risk preview | 4 | No (future work, @skip) |
-| Cross-agent filtering | 4 | Partial (basic filters) |
-
-#### Dependencies
-
-- Depends on: AgentChurnRiskCompletion
-
-#### Acceptance Criteria
-
-**Dead letter list displays failed events**
-
-- Given 3 dead letter entries exist for the churn-risk agent
-- When I navigate to the dead letters panel
-- Then I see 3 entries with agent, event type, error, and timestamp
-- And each entry has "Replay" and "Ignore" action buttons
-
-**Replay action triggers backend mutation with feedback**
-
-- Given a dead letter entry for event "evt_123"
-- When I click the "Replay" button
-- Then the replayDeadLetter mutation is called
-- And a success toast shows "Dead letter replayed successfully"
-- And the entry status updates to "replayed"
-
-**Ignore action with reason provides confirmation**
-
-- Given a dead letter entry for event "evt_456"
-- When I click "Ignore" and enter reason "Duplicate event, already processed"
-- Then the ignoreDeadLetter mutation is called with the reason
-- And a success toast shows "Dead letter ignored"
-- And the entry status updates to "ignored"
-
-**Replay failure shows error toast**
-
-- Given a dead letter entry whose original event no longer exists
-- When I click the "Replay" button
-- Then the mutation fails with an error
-- And an error toast shows a descriptive message
-- And the entry remains in "pending" status
-
-**Filter by agent shows only that agent's decisions**
-
-- Given decisions exist for "churn-risk" and "low-stock" agents
-- When I select "churn-risk" in the agent filter
-- Then only churn-risk agent decisions are displayed
-- And the URL updates to include ?agent=churn-risk
-
-**Filter by action type shows matching decisions**
-
-- Given decisions with actions "SuggestCustomerOutreach" and "LogChurnRisk"
-- When I select "SuggestCustomerOutreach" in the action filter
-- Then only SuggestCustomerOutreach decisions are displayed
-
-**Clear filters shows all decisions**
-
-- Given filters are active for agent and action type
-- When I click "Clear Filters"
-- Then all decisions are displayed
-- And the URL query parameters are removed
-
-**Loading decision history from shared URL**
-
-- Given the URL contains ?agent=churn-risk&action=SuggestCustomerOutreach
-- When the page loads
-- Then filters are pre-populated from URL parameters
-- And only matching decisions are displayed
-
-**Approve action shows success toast**
-
-- Given a pending approval for the churn-risk agent
-- When I click "Approve"
-- Then a success toast appears with "Approval recorded"
-- And the toast auto-dismisses after 5 seconds
-- And the approval list refreshes
-
-**Reject action shows success toast**
-
-- Given a pending approval for the churn-risk agent
-- When I click "Reject" and confirm
-- Then a success toast appears with "Action rejected"
-- And the approval is removed from the pending list
-
-**Error action shows descriptive error toast**
-
-- Given a pending approval that has already been expired
-- When I attempt to approve it
-- Then an error toast appears with "Approval has expired"
-- And the toast has role="alert" for accessibility
-- And the approval status shows "expired"
-
-**Multiple rapid actions show stacked toasts**
-
-- Given 3 pending approvals
-- When I quickly approve all 3
-- Then 3 success toasts appear in sequence
-- And each toast is individually dismissable
-- And they auto-dismiss in order
-
-#### Business Rules
-
-**Dead letters are visible and actionable**
-
-**Invariant:** Admin UI must display dead letter entries with replay/ignore actions.
-Each action must provide feedback via toast notification. Dead letters are operational
-concerns that require visibility for system health monitoring.
-
-    **Rationale:** Without dead letter UI, operators cannot manage failed agent event
-    processing. The backend has full API support (`queryDeadLetters`, `replayDeadLetter`,
-    `ignoreDeadLetter`) but this data is invisible to users.
-
-    **Dead Letter Panel Structure:**
-    | Column | Source | Purpose |
-    | Agent | deadLetter.agentId | Which agent failed |
-    | Event Type | deadLetter.eventType | What event failed |
-    | Error | deadLetter.error | Why it failed |
-    | Status | deadLetter.status | pending/replayed/ignored |
-    | Timestamp | deadLetter.createdAt | When it failed |
-    | Actions | buttons | Replay / Ignore |
-
-    **Verified by:** List displays correctly, replay works, ignore works, toast shows
-
-_Verified by: Dead letter list displays failed events, Replay action triggers backend mutation with feedback, Ignore action with reason provides confirmation, Replay failure shows error toast_
-
-**Decision history supports filtering**
-
-**Invariant:** Decision history must be filterable by agent ID, action type, and
-time range. Filters persist in URL query parameters for shareability and browser
-back/forward navigation.
-
-    **Rationale:** High-volume agents produce many audit events. Without filtering,
-    the decision history is unusable for analysis. URL-persisted filters enable sharing
-    specific views with team members and support browser navigation.
-
-    **Filter Parameters:**
-    | Filter | URL Param | Default | Description |
-    | Agent ID | ?agent=churn-risk | All agents | Filter by specific agent |
-    | Action Type | ?action=SuggestCustomerOutreach | All actions | Filter by command type |
-    | Time Range | ?from=2026-01-01&to=2026-02-01 | Last 7 days | Date range filter |
-
-    **Verified by:** Filters work, URL persists, clear restores all
-
-_Verified by: Filter by agent shows only that agent's decisions, Filter by action type shows matching decisions, Clear filters shows all decisions, Loading decision history from shared URL_
-
-**Actions provide feedback via toast**
-
-**Invariant:** All mutating actions (approve, reject, replay, ignore) must show
-toast notifications for success and error states. Toasts use accessible ARIA
-attributes and auto-dismiss after a reasonable timeout.
-
-    **Rationale:** Users need immediate feedback that their action was processed.
-    The current implementation performs mutations silently — the user clicks
-    "Approve" and has no visual confirmation that it worked or failed.
-
-    **Toast Behavior:**
-    | Action | Success Message | Error Behavior |
-    | Approve | "Approval recorded for {agentId}" | Show error with reason |
-    | Reject | "Action rejected" | Show error with reason |
-    | Replay dead letter | "Dead letter replayed successfully" | Show error with reason |
-    | Ignore dead letter | "Dead letter ignored" | Show error with reason |
-
-    **Verified by:** Success toast appears, error toast appears, auto-dismiss works
-
-_Verified by: Approve action shows success toast, Reject action shows success toast, Error action shows descriptive error toast, Multiple rapid actions show stacked toasts_
-
----
-
-### 📋 Agent Churn Risk Completion
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** The churn-risk agent in the order-management example app has working
-rule-based detection but critical gaps prevent it from being a complete reference
-implementation:
-
-1. **LLM never called** — `onEvent` in `_config.ts` is pure rule-based; the LLM
-   runtime at `_llm/runtime.ts` exists but is never invoked
-2. **Commands go nowhere** — `SuggestCustomerOutreach` is written to `agentCommands`
-   table but no handler processes it
-3. **Pattern system disconnect** — `_patterns/churnRisk.ts` (with LLM `analyze()`)
-   and `_config.ts` (with inline rules) are parallel implementations
-4. **Approval expiration incomplete** — `expirePendingApprovals` mutation exists
-   but scheduling mechanism needs enhancement
-
-**Solution:** Complete the churn-risk agent using new platform infrastructure from
-Phases 22a-22c:
-
-1. **Hybrid LLM flow** — rule trigger first (cheap), LLM analysis when triggered
-2. **Command routing** — SuggestCustomerOutreach routes to a real handler
-3. **Pattern unification** — Use formal PatternDefinition from `_patterns/`
-4. **Approval cron enhancement** — Complete the expiration mechanism
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Production-ready example | Full agent pattern demonstrated end-to-end |
-| LLM integration proof | Validates action/mutation split from Phase 22b |
-| Complete command flow | Agent decisions trigger real domain actions |
-| Reference implementation | Other agents can follow this exact pattern |
-| E2E testable | Integration tests cover full cancellation-to-outreach flow |
-
-**End-to-End Flow (target state):**
-"""
-
-1. Customer cancels order (OrderCancelled event)
-   |
-2. EventBus delivers to churn-risk agent (Workpool action)
-   |
-3. Agent loads checkpoint, checks idempotency
-   |
-4. Agent loads customerCancellations projection (cross-BC query)
-   |
-5. Pattern trigger: 3+ cancellations in 30 days?
-   |
-   +--- No --> Skip, update checkpoint
-   +--- Yes --> Continue to step 6
-   |
-6. LLM analysis: confidence score + reasoning + suggested action
-   |
-7. Confidence >= threshold?
-   |
-   +--- Yes --> Emit SuggestCustomerOutreach command
-   +--- No --> Queue for human approval
-   |
-8. onComplete: persist decision, update checkpoint, record audit
-   |
-9. CommandOrchestrator routes SuggestCustomerOutreach
-   |
-10. OutreachHandler creates outreach task, emits OutreachCreated event
-    """
-
-**Design Decision: LLM Model Configuration**
-
-Keep existing OpenRouter + Gemini Flash configuration from `_llm/config.ts`:
-
-- Cost-effective for analysis tasks (lower cost than GPT-4/Claude)
-- Model configurable via `OPENROUTER_API_KEY` environment variable
-- Mock runtime in tests (no API key required)
-- Future: allow model override in AgentBCConfig
-
-**Design Decision: Approval Expiration Mechanism**
-
-| Option | Trade-off |
-| A: Cron job (Recommended) | Simple, already partially implemented. Single cron handles all expirations |
-| B: @convex-dev/workflow sleepUntil | More precise timing but creates one workflow per approval (expensive) |
-| C: @convex-dev/crons dynamic | Flexible but adds component dependency |
-
-**Decision:** Option A — The `expirePendingApprovals` mutation already exists. Enhance
-the existing hourly cron in `crons.ts` to check for expired approvals. This is pragmatically
-better than workflow-per-approval: lower overhead, single polling point, acceptable latency
-(up to 1 hour late vs exact millisecond timing that isn't needed for 24h timeouts).
-
-**Design Decision: SuggestCustomerOutreach Handler**
-
-Create a simple domain handler that:
-
-1. Records the outreach suggestion with customer context
-2. Emits `OutreachCreated` event for downstream consumers
-3. Future phases could add actual notification delivery (email, SMS)
-
-This follows the "start simple, enhance later" principle — the handler exists and is
-routed through CommandOrchestrator, but the actual outreach mechanism is a separate concern.
-
-#### Dependencies
-
-- Depends on: AgentCommandInfrastructure
-
-#### Acceptance Criteria
-
-**Three cancellations trigger LLM analysis**
-
-- Given customer "cust_123" has cancelled 3 orders in the last 30 days
-- When an OrderCancelled event is published for "cust_123"
-- Then the pattern trigger fires (3+ cancellations detected)
-- And LLM analysis is called with event history
-- And the analysis returns confidence score and reasoning
-- And the decision includes suggestedAction "SuggestCustomerOutreach"
-
-**Two cancellations do not trigger LLM**
-
-- Given customer "cust_456" has cancelled 2 orders in the last 30 days
-- When an OrderCancelled event is published for "cust_456"
-- Then the pattern trigger does not fire
-- And no LLM call is made
-- And the checkpoint advances without emitting a command
-
-**LLM unavailable falls back to rule-based confidence**
-
-- Given customer "cust_789" has cancelled 5 orders in the last 30 days
-- And the LLM API is unreachable
-- When an OrderCancelled event triggers analysis
-- Then the agent falls back to rule-based confidence calculation
-- And the confidence is derived from cancellation count and frequency
-- And the audit records analysisMethod as "rule-based-fallback"
-
-**LLM analysis with low confidence queues for approval**
-
-- Given customer "cust_101" has cancelled 3 orders in the last 30 days
-- And the LLM returns confidence 0.65 (below threshold 0.8)
-- When the agent processes the analysis result
-- Then a pending approval is created with the LLM reasoning
-- And no command is emitted immediately
-- And an AgentDecisionPending audit event is recorded
-
-**Cron expires approval after timeout**
-
-- Given a pending approval created 25 hours ago
-- And the approval timeout is 24 hours
-- When the expiration cron runs
-- Then the approval status transitions to "expired"
-- And an AgentApprovalExpired audit event is recorded
-
-**Expired approval cannot be approved or rejected**
-
-- Given an approval that has been expired by the cron
-- When a reviewer attempts to approve the expired item
-- Then the action is rejected with APPROVAL_EXPIRED error
-- And the approval remains in "expired" status
-
-**Approved before timeout succeeds normally**
-
-- Given a pending approval created 12 hours ago
-- When a reviewer approves the action
-- Then the approval status transitions to "approved"
-- And the associated command is submitted for execution
-
-**SuggestCustomerOutreach routes to outreach handler**
-
-- Given the agent has emitted a SuggestCustomerOutreach command
-- And the command includes customerId, reason, and confidence
-- When the CommandOrchestrator processes the command
-- Then the customerOutreach handler creates an outreach task
-- And an OutreachCreated event is emitted
-- And the agent command status updates to "completed"
-
-**Full end-to-end flow from cancellation to outreach**
-
-- Given a customer who has cancelled 2 orders previously
-- When the customer cancels a third order
-- Then the churn-risk agent detects the pattern
-- And LLM analysis returns high confidence
-- And SuggestCustomerOutreach command is emitted
-- And the command is routed to the outreach handler
-- And an OutreachCreated event confirms the action
-
-**Command failure records error and creates dead letter**
-
-- Given the agent has emitted a SuggestCustomerOutreach command
-- And the outreach handler throws an error
-- When the CommandOrchestrator reports the failure
-- Then the agent command status updates to "failed"
-- And an AgentCommandFailed audit event is recorded
-- And the failure is available for retry via dead letter management
-
-#### Business Rules
-
-**Churn-risk agent uses hybrid LLM flow**
-
-**Invariant:** Pattern trigger is evaluated first (rule-based, no LLM cost). If
-trigger fires (3+ cancellations in 30 days), LLM analysis provides confidence score
-and reasoning. Trigger failure skips LLM call entirely.
-
-    **Rationale:** Rule-based triggers are cheap and deterministic. LLM analysis adds
-    value only when patterns warrant deeper investigation. This hybrid approach minimizes
-    API costs while providing rich analysis when needed.
-
-    **Cost Model:**
-    | Step | Cost | Frequency |
-    | Rule trigger check | ~0 (local computation) | Every OrderCancelled event |
-    | LLM analysis | ~$0.001-0.01 per call | Only when 3+ cancellations detected |
-    | Total per detection | ~$0.01 | Rare (subset of customers) |
-
-    **Verified by:** Trigger gates LLM, LLM enriches decision, fallback works
-
-_Verified by: Three cancellations trigger LLM analysis, Two cancellations do not trigger LLM, LLM unavailable falls back to rule-based confidence, LLM analysis with low confidence queues for approval_
-
-**Approvals expire after configured timeout**
-
-**Invariant:** Pending approvals must transition to "expired" status after
-`approvalTimeout` elapses (default 24 hours). A cron job runs periodically
-to expire stale approvals.
-
-    **Rationale:** Pending approvals cannot linger indefinitely. Without expiration,
-    the system accumulates stale decisions that may no longer be relevant. The cron
-    approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
-
-    **Verified by:** Expiration transitions correctly, expired cannot be acted on
-
-_Verified by: Cron expires approval after timeout, Expired approval cannot be approved or rejected, Approved before timeout succeeds normally_
-
-**Emitted commands route to domain handlers**
-
-**Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes through
-CommandOrchestrator to a handler that creates the actual outreach task and emits
-a domain event.
-
-    **Rationale:** Currently commands are stored in `agentCommands` but never processed.
-    Completing the routing makes the agent actionable — its analysis leads to real
-    business outcomes rather than entries in a table.
-
-    **Verified by:** Command routes to handler, handler creates outreach, event emitted
-
-_Verified by: SuggestCustomerOutreach routes to outreach handler, Full end-to-end flow from cancellation to outreach, Command failure records error and creates dead letter_
-
----
-
 ## ✅ Completed Patterns
 
 ### ✅ Agent As Bounded Context
@@ -2076,6 +1569,332 @@ Audit trail captures pattern detection, reasoning, and outcomes.
 ```
 
 _Verified by: Agent decision creates audit event, Audit includes LLM metadata, Query agent decision history, Audit captures rejected actions_
+
+---
+
+### ✅ Agent Churn Risk Completion
+
+| Property | Value     |
+| -------- | --------- |
+| Status   | completed |
+| Effort   | 1w        |
+
+**Problem:** The churn-risk agent in the order-management example app has working
+infrastructure from Phases 22a-22c (action handler, onComplete handler, pattern
+definition, component migration, approval cron) but critical gaps prevent it from
+being a genuine AI agent reference implementation:
+
+1. **Rule-based fallback defeats AI purpose** — `churnRisk.ts` catches LLM errors
+   and falls back to `createRuleBasedAnalysis()` which produces the same
+   `SuggestCustomerOutreach` command with formula-derived confidence. The AI agent
+   is functionally indistinguishable from a rule engine.
+2. **Command routing is a stub** — `routeCommand.ts` has a no-op orchestrator that
+   returns `{ success: true }` without creating a domain record or emitting an
+   `OutreachCreated` event. Commands go nowhere.
+3. **No end-to-end integration test with real LLM** — Coverage exists across 3 test
+   files but no single test exercises the full pipeline (cancellation → agent →
+   LLM → command → outreach) with an actual OpenRouter API call.
+4. **No BDD feature file** for the churn-risk flow in order-management.
+5. **`highValueChurnPattern` is rule-only** — A second pattern with no `analyze()`
+   function serves no purpose in an AI agent feature.
+
+**Solution:** Complete the churn-risk agent as a genuine AI agent reference:
+
+1. **Remove rule-based fallback** — LLM failure → Workpool retry → dead letter
+2. **Real outreach handler** — Create outreach record + emit `OutreachCreated` event
+3. **Full pipeline integration test** — Real LLM via OpenRouter (~$0.01/run)
+4. **BDD feature file** — Executable spec for churn-risk flow
+5. **Remove `highValueChurnPattern`** — Rule-only pattern contradicts AI purpose
+
+**Why It Matters for Convex-Native ES:**
+| Benefit | How |
+| Production-ready example | Full AI agent pattern demonstrated end-to-end |
+| LLM integration proof | Validates action/mutation split with real API calls |
+| Complete command flow | Agent decisions trigger real domain actions |
+| Reference implementation | Other agents follow this exact pattern |
+| Operational visibility | LLM failures are visible via dead letters, not silently degraded |
+
+**End-to-End Flow (target state):**
+"""
+
+1. Customer cancels order (OrderCancelled event)
+   |
+2. EventBus delivers to churn-risk agent (agentPool action, priority 250)
+   |
+3. Action handler loads checkpoint, checks idempotency
+   |
+4. Action handler loads customerCancellations projection (cross-BC query)
+   |
+5. Pattern trigger: 3+ cancellations in 30 days?
+   |
+   +--- No --> Skip, return null (onComplete advances checkpoint only)
+   +--- Yes --> Continue to step 6
+   |
+6. LLM analysis via OpenRouter: confidence score + reasoning + command
+   |
+   +--- LLM error --> Error propagates → Workpool retries (3x) → dead letter
+   |
+7. Confidence >= 0.8 (auto-execute threshold)?
+   |
+   +--- Yes --> Return AgentActionResult with SuggestCustomerOutreach command
+   +--- No --> Return AgentActionResult with pending approval
+   |
+8. onComplete (mutation): persist audit → command → approval → checkpoint
+   |
+9. routeCommand (scheduled mutation): routes SuggestCustomerOutreach
+   |
+10. Outreach handler creates outreach task record, emits OutreachCreated event
+    """
+
+**Design Decision: LLM Testing Strategy**
+
+| Aspect | Decision |
+| API calls | Real OpenRouter calls in integration tests, NOT mocked |
+| API key | `OPENROUTER_INTEGRATION_TEST_API_KEY` env var (dedicated CI key) |
+| Model | Gemini Flash via OpenRouter (~$0.001-0.01 per call) |
+| Skip when unavailable | Tests skip (not fail) when API key is not set |
+| Existing pattern | `agent-llm.integration.test.ts` already uses this approach |
+
+**Design Decision: No Rule-Based Fallback**
+
+| Current (wrong) | Target (correct) |
+| LLM fails → same command emitted with formula confidence | LLM fails → error propagates → Workpool retries → dead letter |
+| Agent indistinguishable from rule engine | LLM is essential — failure is an operational event |
+| Silent degradation hides API issues | Dead letter visible in admin UI for operator triage |
+
+**Rationale:** An AI agent that silently produces the same outcome without AI
+is not an AI agent — it is a rule engine with extra steps. The LLM analysis is
+the differentiating value. Its absence should be surfaced as an operational concern
+(dead letter), not hidden behind a formula that mimics the same result.
+
+**Changes:** Remove `createRuleBasedAnalysis()` and the `catch` block in
+`churnRisk.ts:179-182`. Remove `highValueChurnPattern` (rule-only variant).
+Workpool retry config (3 attempts, 1000ms backoff, base 2) handles transient
+LLM failures. Persistent failures create dead letters visible in the admin UI.
+
+**Design Decision: SuggestCustomerOutreach Handler**
+
+Replace the no-op minimal orchestrator in `routeCommand.ts` with a handler that:
+
+1. Creates an outreach task record (new `outreachTasks` projection or CMS table)
+2. Emits `OutreachCreated` domain event via the event store
+3. Validates customerId and riskLevel from command payload
+4. Records the outreach in a queryable projection for the admin UI
+
+This completes the loop: cancellation → agent → LLM → command → outreach record.
+Future phases can add actual notification delivery (email, SMS) as outreach
+consumers — the handler itself is simple domain record creation.
+
+**Design Decision: Approval Expiration Mechanism**
+
+| Aspect | Decision |
+| Approach | Hourly cron job (already implemented) |
+| Location | `crons.ts` → `expirePendingApprovals` mutation |
+| Timeout | 24h default from `AgentBCConfig.humanInLoop.approvalTimeout` |
+| Status | **Complete** — cron, mutation, and integration tests all working |
+
+**Infrastructure Completed by Phases 22a-22c:**
+| Component | Status | Location |
+| Action handler factory | Complete | `platform-core/src/agent/action-handler.ts` |
+| onComplete handler factory | Complete | `platform-core/src/agent/oncomplete-handler.ts` |
+| Pattern executor | Complete | `platform-core/src/agent/pattern-executor.ts` |
+| Agent component (5 tables) | Complete | `platform-core/src/agent/component/` |
+| Command bridge | Complete | `platform-core/src/agent/commands.ts` |
+| Dead letter handler | Complete | `platform-core/src/agent/dead-letter.ts` |
+| Agent rate limiter | Complete | `platform-core/src/agent/agent-rate-limiter.ts` |
+| Thread adapter | Complete | `platform-core/src/agent/thread-adapter.ts` |
+| Lifecycle FSM | Complete | `platform-core/src/agent/lifecycle-handlers.ts` |
+| EventBus action subscription | Complete | `platform-bus/agent-subscription.ts` |
+
+#### Dependencies
+
+- Depends on: AgentCommandInfrastructure
+
+#### Acceptance Criteria
+
+**Three cancellations trigger LLM analysis via OpenRouter**
+
+- Given customer "cust_123" has cancelled 3 orders in the last 30 days
+- When an OrderCancelled event is published for "cust_123"
+- Then the pattern trigger fires (3+ cancellations detected)
+- And the LLM is called via OpenRouter with event history
+- And the analysis returns a confidence score and reasoning
+- And the analysisMethod is "llm"
+
+**Two cancellations do not trigger LLM**
+
+- Given customer "cust_456" has cancelled 2 orders in the last 30 days
+- When an OrderCancelled event is published for "cust_456"
+- Then the pattern trigger does not fire
+- And no LLM call is made
+- And the checkpoint advances without emitting a command
+
+**High confidence triggers auto-execution of SuggestCustomerOutreach**
+
+- Given customer "cust_789" has cancelled 4 orders in the last 30 days
+- And the LLM returns confidence 0.92 (above threshold 0.8)
+- When the agent processes the OrderCancelled event
+- Then a SuggestCustomerOutreach command is included in the AgentActionResult
+- And the onComplete handler persists the command and audit event
+- And the command is scheduled for routing via routeAgentCommand
+
+**Low confidence queues for human approval**
+
+- Given customer "cust_101" has cancelled 3 orders in the last 30 days
+- And the LLM returns confidence 0.65 (below threshold 0.8)
+- When the agent processes the analysis result
+- Then a pending approval is created with the LLM reasoning
+- And no command is emitted immediately
+- And an ApprovalRequested audit event is recorded
+- And the approval expires after 24 hours if not acted on
+
+**LLM failure exhausts retries and creates dead letter**
+
+- Given customer "cust_err" has cancelled 3 orders in the last 30 days
+- And the LLM API is unreachable (network error)
+- When an OrderCancelled event triggers analysis
+- Then the Workpool retries the action 3 times with exponential backoff
+- And after all retries fail, onComplete receives kind "failed"
+- And a dead letter is created with the error details
+- And an AgentAnalysisFailed audit event is recorded
+- And no SuggestCustomerOutreach command is emitted
+- And the dead letter is visible in the admin UI for operator triage
+
+**Cron expires approval after timeout**
+
+- Given a pending approval created 25 hours ago
+- And the approval timeout is 24 hours
+- When the expiration cron runs
+- Then the approval status transitions to "expired"
+- And an ApprovalExpired audit event is recorded
+
+**Expired approval cannot be approved or rejected**
+
+- Given an approval that has been expired by the cron
+- When a reviewer attempts to approve the expired item
+- Then the action is rejected with APPROVAL_EXPIRED error
+- And the approval remains in "expired" status
+
+**Approved before timeout succeeds normally**
+
+- Given a pending approval created 12 hours ago
+- When a reviewer approves the action
+- Then the approval status transitions to "approved"
+- And the associated command is submitted for execution
+
+**SuggestCustomerOutreach creates outreach record and emits event**
+
+- Given the agent has emitted a SuggestCustomerOutreach command
+- And the command includes customerId "cust_123", riskLevel "high", cancellationCount 4
+- When the command bridge routes to the outreach handler
+- Then an outreach task record is created with the customer context
+- And an OutreachCreated domain event is emitted with the outreach details
+- And the agent command status updates to "completed"
+
+**Full end-to-end flow from cancellation to outreach record**
+
+- Given a customer who has cancelled 2 orders previously
+- When the customer cancels a third order
+- Then the churn-risk agent detects the pattern (3+ cancellations)
+- And the LLM is called via OpenRouter and returns high confidence
+- And a SuggestCustomerOutreach command is emitted
+- And the command is routed to the outreach handler
+- And an outreach task record is created
+- And an OutreachCreated event confirms the action end-to-end
+
+**Command with missing customerId fails validation**
+
+- Given the agent emitted a SuggestCustomerOutreach command
+- And the command payload has no customerId
+- When the command bridge attempts to route the command
+- Then the routing fails with a validation error
+- And an AgentCommandRoutingFailed audit event is recorded
+
+**Command handler failure creates dead letter for operator triage**
+
+- Given the agent has emitted a SuggestCustomerOutreach command
+- And the outreach handler throws an error during record creation
+- When the command bridge reports the failure
+- Then the agent command status updates to "failed"
+- And an AgentCommandRoutingFailed audit event is recorded
+- And the failure is visible in the dead letter management panel
+
+#### Business Rules
+
+**LLM analysis is essential, not optional**
+
+**Invariant:** When the pattern trigger fires (3+ cancellations in 30 days for
+the same customer), the LLM MUST be called. There is no rule-based fallback that
+produces the same outcome. If the LLM is unavailable, the event is retried by
+Workpool (3 attempts with exponential backoff). If all retries fail, a dead letter
+is created for operator triage.
+
+    **Rationale:** An AI agent's value comes from LLM analysis — confidence scoring,
+    pattern reasoning, contextual recommendations. A rule-based formula that produces
+    `SuggestCustomerOutreach` regardless of LLM availability makes the AI irrelevant.
+    Failure should be visible (dead letter), not invisible (silent fallback).
+
+    **Error Handling Chain:**
+    | Step | What Happens |
+    | LLM call fails | Error propagates from `analyze()` to pattern executor |
+    | Pattern executor throws | Error propagates to action handler |
+    | Action handler throws | Workpool catches, retries (attempt 1/3) |
+    | All 3 retries fail | Workpool onComplete receives `kind: "failed"` |
+    | onComplete failure path | Creates dead letter, records `AgentAnalysisFailed` audit |
+    | Dead letter visible | Admin UI shows failed event for operator replay/ignore |
+
+    **Verified by:** LLM called on trigger, failure creates dead letter, no silent fallback
+
+_Verified by: Three cancellations trigger LLM analysis via OpenRouter, Two cancellations do not trigger LLM, High confidence triggers auto-execution of SuggestCustomerOutreach, Low confidence queues for human approval, LLM failure exhausts retries and creates dead letter_
+
+**Approvals expire after configured timeout**
+
+**Invariant:** Pending approvals must transition to "expired" status after
+`approvalTimeout` elapses (default 24 hours). A cron job runs hourly to expire
+stale approvals.
+
+    **Rationale:** Pending approvals cannot linger indefinitely. Without expiration,
+    the system accumulates stale decisions that may no longer be relevant. The hourly
+    cron approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
+
+    **Status:** The approval expiration mechanism is **complete** (cron, mutation,
+    integration tests). These scenarios document the expected behavior for reference.
+
+    **Verified by:** Expiration transitions correctly, expired cannot be acted on
+
+_Verified by: Cron expires approval after timeout, Expired approval cannot be approved or rejected, Approved before timeout succeeds normally_
+
+**Emitted commands create real domain records**
+
+**Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes
+through the command bridge to a handler that creates an outreach task record
+and emits an `OutreachCreated` domain event. The current no-op stub that returns
+`{ success: true }` must be replaced with a real domain handler.
+
+    **Rationale:** A command that produces no domain effect is not a command — it is
+    a log entry. Completing the routing makes the agent actionable: analysis leads to
+    real business outcomes (outreach records) rather than entries in a table.
+
+    **Outreach Handler Design:**
+    | Step | Action |
+    | 1. Validate payload | Ensure customerId, riskLevel, agentId present |
+    | 2. Create outreach record | Write to outreach CMS/projection table |
+    | 3. Emit OutreachCreated event | Via event store append in same mutation |
+    | 4. Update agent command status | Mark as "completed" via agent component |
+
+    **OutreachCreated Event Payload:**
+    | Field | Source |
+    | outreachId | Generated UUID |
+    | customerId | From command payload |
+    | agentId | From command context |
+    | riskLevel | From command payload ("high" / "medium") |
+    | cancellationCount | From command payload |
+    | correlationId | From command context |
+    | createdAt | Current timestamp |
+
+    **Verified by:** Command routes to handler, handler creates record, event emitted
+
+_Verified by: SuggestCustomerOutreach creates outreach record and emits event, Full end-to-end flow from cancellation to outreach record, Command with missing customerId fails validation, Command handler failure creates dead letter for operator triage_
 
 ---
 

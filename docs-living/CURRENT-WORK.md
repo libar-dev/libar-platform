@@ -7,23 +7,23 @@
 
 ## Summary
 
-**Overall Progress:** [████████████████░░░░] 59/75 (79%)
+**Overall Progress:** [████████████████░░░░] 60/74 (81%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 75    |
-| Completed      | 59    |
+| Total Patterns | 74    |
+| Completed      | 60    |
 | Active         | 5     |
-| Planned        | 11    |
+| Planned        | 9     |
 | Active Phases  | 2     |
 
 ---
 
 ## Active Phases
 
-### 🚧 AgentChurnRiskCompletion
+### 🚧 ConfirmedOrderCancellation
 
-[████░░░░░░░░░░░] 2/7 29% complete (2 done, 3 active, 2 planned)
+[████████░░░░░░░] 3/6 50% complete (3 done, 3 active)
 
 | Pattern                         | Description                                                                                                    |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -61,7 +61,7 @@
 - ✅ Design session methodology
 - ✅ Argument injection pattern
 
-[View AgentChurnRiskCompletion details →](current/phase-22-agent-churn-risk-completion.md)
+[View ConfirmedOrderCancellation details →](current/phase-22-confirmed-order-cancellation.md)
 
 ---
 

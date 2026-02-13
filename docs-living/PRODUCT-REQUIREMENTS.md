@@ -7,14 +7,14 @@
 
 ## Summary
 
-**Overall:** [████████████░░░░░░░░] 23/37 (62%)
+**Overall:** [█████████████░░░░░░░] 24/36 (67%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 37    |
-| Completed      | 23    |
+| Total Features | 36    |
+| Completed      | 24    |
 | Active         | 4     |
-| Planned        | 10    |
+| Planned        | 8     |
 | Product Areas  | 3     |
 | User Roles     | 0     |
 
@@ -34,11 +34,10 @@
 
 ### ExampleApp
 
-1/3 complete (33%)
+2/2 complete (100%)
 
+- [✅ Agent Churn Risk Completion](requirements/phase-22-agent-churn-risk-completion.md)
 - [✅ Example App Modernization](requirements/phase-23-example-app-modernization.md)
-- [📋 Agent Admin Frontend](requirements/phase-22-agent-admin-frontend.md)
-- [📋 Agent Churn Risk Completion](requirements/phase-22-agent-churn-risk-completion.md)
 
 ### Platform
 
@@ -81,6 +80,7 @@
 | Feature                              | Product Area    | User Role | Status    |
 | ------------------------------------ | --------------- | --------- | --------- |
 | ✅ Agent As Bounded Context          | Platform        | -         | completed |
+| ✅ Agent Churn Risk Completion       | ExampleApp      | -         | completed |
 | ✅ Agent Command Infrastructure      | Platform        | -         | completed |
 | ✅ Bdd Testing Infrastructure        | Platform        | -         | completed |
 | ✅ Bounded Context Foundation        | Platform        | -         | completed |
@@ -108,8 +108,6 @@
 | 🚧 Confirmed Order Cancellation      | Platform        | -         | active    |
 | 🚧 Process Enhancements              | DeliveryProcess | -         | active    |
 | 📋 Admin Tooling Consolidation       | Platform        | -         | planned   |
-| 📋 Agent Admin Frontend              | ExampleApp      | -         | planned   |
-| 📋 Agent Churn Risk Completion       | ExampleApp      | -         | planned   |
 | 📋 Circuit Breaker Pattern           | Platform        | -         | planned   |
 | 📋 Deterministic Id Hashing          | Platform        | -         | planned   |
 | 📋 Health Observability              | Platform        | -         | planned   |

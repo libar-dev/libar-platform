@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [████████████████░░░░] 59/75 (79% complete)
+**Overall:** [████████████████░░░░] 60/74 (81% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 59    |
+| ✅ Completed | 60    |
 | 🚧 Active    | 5     |
-| 📋 Planned   | 11    |
-| **Total**    | 75    |
+| 📋 Planned   | 9     |
+| **Total**    | 74    |
 
 ---
 
@@ -25,7 +25,7 @@
 - [Completed Before Delivery Process](#completed-before-delivery-process) (4)
 - [Core](#core) (2)
 - [CQRS](#cqrs) (1)
-- [DDD](#ddd) (33)
+- [DDD](#ddd) (32)
 - [Decider](#decider) (1)
 - [Event Sourcing](#event-sourcing) (12)
 - [Implements](#implements) (2)
@@ -42,6 +42,7 @@
 | Pattern                                                  | Category                          | Status    | Description                                                                                                              |
 | -------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
 | ✅ Agent As Bounded Context                              | DDD                               | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
+| ✅ Agent Churn Risk Completion                           | DDD                               | completed | Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...      |
 | ✅ Agent Command Infrastructure                          | DDD                               | completed | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                   |
 | ✅ Bdd Testing Infrastructure                            | DDD                               | completed | Problem: Domain logic tests require infrastructure (Docker, database).                                                   |
 | ✅ Bounded Context Foundation                            | Completed Before Delivery Process | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
@@ -106,8 +107,6 @@
 | 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
 | 🚧 Process Enhancements                                  | Process Enhancements              | active    | Vision: Transform the delivery process from a documentation tool into a delivery operating system.                       |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
-| 📋 Agent Admin Frontend                                  | DDD                               | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                          |
-| 📋 Agent Churn Risk Completion                           | DDD                               | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps...  |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
 | 📋 Health Observability                                  | DDD                               | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
@@ -168,9 +167,10 @@
 
 ### DDD
 
-20/33 complete (61%)
+21/32 complete (66%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
+- [✅ Agent Churn Risk Completion](patterns/agent-churn-risk-completion.md)
 - [✅ Agent Command Infrastructure](patterns/agent-command-infrastructure.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
 - [✅ Bounded Context Identity](patterns/bounded-context-identity.md)
@@ -194,8 +194,6 @@
 - [🚧 Agent LLM Integration](patterns/agent-llm-integration.md)
 - [🚧 Confirmed Order Cancellation](patterns/confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
-- [📋 Agent Admin Frontend](patterns/agent-admin-frontend.md)
-- [📋 Agent Churn Risk Completion](patterns/agent-churn-risk-completion.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
 - [📋 Health Observability](patterns/health-observability.md)
@@ -398,7 +396,6 @@ graph TD
     ExampleAppModernization -.-> EcstFatEvents
     ExampleAppModernization -.-> ReservationPattern
     AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---

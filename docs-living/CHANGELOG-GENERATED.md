@@ -46,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **PDR 008 Example App Purpose**
 - **PDR 007 Two Tier Spec Architecture**
 - **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
+- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 - **Workpool Partitioning Strategy**: Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event...
 - **Saga Orchestration**: Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...
 - **Reservation Pattern**: Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...
@@ -85,14 +86,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Handler Factories**: The Decider pattern separates pure business logic from infrastructure concerns, enabling unit testing without...
 - **Event Store**: Central event storage component for Event Sourcing.
-- **Query Abstraction**: Query factory functions for creating type-safe read model queries.
 - **CMS Repository**: Factory for typed data access with automatic schema upcasting in dual-write handlers.
+- **Query Abstraction**: Query factory functions for creating type-safe read model queries.
 - **Process Manager Lifecycle**: FSM for managing PM state transitions (idle/processing/completed/failed) with validation.
 - **Process Manager**: Process Manager module for event-reactive coordination.
 - **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
-- **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
+- **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
 - **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
@@ -108,9 +109,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **DCB Scope Key Utilities**: Functions for creating, parsing, and validating scope keys.
 - **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
 - **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
+- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Bounded Context Identity**: BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...
 - **Dual Write Contract**: BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...
-- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Workpool Partition Key Types**: Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.
 - **Workpool Partitioning Strategy**: Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.
 - **Partition Key Helper Functions**: Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.
