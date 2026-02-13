@@ -24,7 +24,6 @@ import type { AgentInterface, PublishedEvent } from "@libar-dev/platform-core";
 
 // Import shared utilities
 import { groupEventsByCustomer } from "../_utils/customer.js";
-import { countRecentEvents } from "../_utils/confidence.js";
 
 // ============================================================================
 // Pattern Constants
@@ -148,38 +147,32 @@ export const churnRiskPattern: PatternDefinition = definePattern({
     // Build analysis prompt
     const prompt = buildAnalysisPrompt(cancellations);
 
-    try {
-      // Use agent's LLM analysis capability
-      const result = await agent.analyze(prompt, cancellations);
-      const customerId = extractCustomerIdFromEvents(cancellations);
+    const result = await agent.analyze(prompt, cancellations);
+    const customerId = extractCustomerIdFromEvents(cancellations);
 
-      return {
-        detected: result.confidence >= CHURN_RISK_DETECTION_THRESHOLD,
-        confidence: result.confidence,
-        reasoning: result.reasoning,
-        matchingEventIds: cancellations.map((e) => e.eventId),
-        data: {
-          patternsFound: result.patterns,
-        },
-        // Command suggestion for routing via command bridge
-        ...(result.confidence >= CHURN_RISK_DETECTION_THRESHOLD && customerId !== null
-          ? {
-              command: {
-                type: "SuggestCustomerOutreach",
-                payload: {
-                  customerId,
-                  riskLevel: result.confidence >= 0.9 ? "high" : "medium",
-                  cancellationCount: cancellations.length,
-                  windowDays: 30,
-                },
+    return {
+      detected: result.confidence >= CHURN_RISK_DETECTION_THRESHOLD,
+      confidence: result.confidence,
+      reasoning: result.reasoning,
+      matchingEventIds: cancellations.map((e) => e.eventId),
+      data: {
+        patternsFound: result.patterns,
+      },
+      // Command suggestion for routing via command bridge
+      ...(result.confidence >= CHURN_RISK_DETECTION_THRESHOLD && customerId !== null
+        ? {
+            command: {
+              type: "SuggestCustomerOutreach",
+              payload: {
+                customerId,
+                riskLevel: result.confidence >= 0.9 ? "high" : "medium",
+                cancellationCount: cancellations.length,
+                windowDays: 30,
               },
-            }
-          : {}),
-      };
-    } catch {
-      // Fallback to rule-based analysis if LLM fails
-      return createRuleBasedAnalysis(cancellations);
-    }
+            },
+          }
+        : {}),
+    };
   },
 });
 
@@ -216,80 +209,6 @@ Consider:
 Provide a confidence score (0-1) and brief reasoning.`;
 }
 
-/**
- * Create a rule-based analysis result when LLM is unavailable.
- *
- * Uses shared confidence calculation from ../utils/confidence.js
- *
- * @param cancellations - Cancellation events
- * @returns Pattern analysis result
- */
-function createRuleBasedAnalysis(cancellations: readonly PublishedEvent[]): PatternAnalysisResult {
-  const count = cancellations.length;
-  const confidence = Math.min(0.85, 0.5 + count * 0.1);
-
-  // Use shared utility for recent count
-  const recentCount = countRecentEvents(cancellations);
-
-  const adjustedConfidence = recentCount >= 2 ? Math.min(1, confidence + 0.1) : confidence;
-  const customerId = extractCustomerIdFromEvents(cancellations);
-
-  return {
-    detected: true,
-    confidence: Math.round(adjustedConfidence * 100) / 100,
-    reasoning: `Rule-based analysis: ${count} cancellations detected (${recentCount} recent). Using fallback confidence calculation.`,
-    matchingEventIds: cancellations.map((e) => e.eventId),
-    data: {
-      analysisType: "rule-based",
-      cancellationCount: count,
-      recentCount,
-    },
-    // Command suggestion for routing via command bridge (only when customerId is known)
-    ...(customerId !== null
-      ? {
-          command: {
-            type: "SuggestCustomerOutreach",
-            payload: {
-              customerId,
-              riskLevel: adjustedConfidence >= 0.9 ? "high" : "medium",
-              cancellationCount: count,
-              windowDays: 30,
-            },
-          },
-        }
-      : {}),
-  };
-}
-
-// ============================================================================
-// Additional Pattern Definitions
-// ============================================================================
-
-/**
- * High-value customer churn pattern.
- *
- * Variant that specifically targets high-value customers with lower thresholds.
- * Requires only 2 cancellations but filters for customers with high order values.
- */
-export const highValueChurnPattern: PatternDefinition = definePattern({
-  name: "high-value-churn-risk",
-
-  description: "Detect high-value customers at risk based on cancellation patterns",
-
-  window: {
-    duration: "14d", // Shorter window for faster detection
-    minEvents: 2, // Lower threshold for high-value customers
-    eventLimit: 50,
-  },
-
-  trigger: PatternTriggers.all(
-    PatternTriggers.eventTypePresent(["OrderCancelled"], 2),
-    createCustomerCancellationTrigger(2)
-  ),
-
-  // No LLM analysis for this variant - rule-only
-});
-
 // ============================================================================
 // Internal Helpers
 // ============================================================================
@@ -319,5 +238,4 @@ function extractCustomerIdFromEvents(events: readonly PublishedEvent[]): string 
 
 export const __testing = {
   buildAnalysisPrompt,
-  createRuleBasedAnalysis,
 };

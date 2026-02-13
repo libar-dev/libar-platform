@@ -25,6 +25,7 @@ export default defineConfig({
     include: [
       "tests/**/*.integration.test.ts",
       "tests/integration-steps/durable-adapters.integration.steps.ts",
+      "tests/integration-steps/agent.integration.steps.ts",
     ],
     environment: "node",
     testTimeout: 60000, // 1 minute per test

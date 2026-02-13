@@ -32,9 +32,8 @@ export interface PatternExecutionSummary {
    *
    * - "llm": Pattern's analyze() function produced the result
    * - "rule-based": Pattern triggered without an analyze function
-   * - "rule-based-fallback": Pattern's analyze() threw, fell back to trigger-only
    */
-  readonly analysisMethod: "llm" | "rule-based" | "rule-based-fallback";
+  readonly analysisMethod: "llm" | "rule-based";
 }
 
 // ============================================================================
@@ -81,27 +80,18 @@ export async function executePatterns(
 
     // 4. If triggered AND analyze exists: run LLM analysis
     if (pattern.analyze) {
-      try {
-        const result = await pattern.analyze(filteredEvents, agent);
+      const result = await pattern.analyze(filteredEvents, agent);
 
-        if (result.detected) {
-          // LLM confirmed the pattern
-          return {
-            matchedPattern: pattern.name,
-            decision: buildDecisionFromAnalysis(result, pattern.name, config),
-            analysisMethod: "llm",
-          };
-        }
-        // LLM said not detected -- continue to next pattern
-        continue;
-      } catch {
-        // Analyze threw -- fall back to trigger-only decision
+      if (result.detected) {
+        // LLM confirmed the pattern
         return {
           matchedPattern: pattern.name,
-          decision: buildDecisionFromTrigger(filteredEvents, pattern, config),
-          analysisMethod: "rule-based-fallback",
+          decision: buildDecisionFromAnalysis(result, pattern.name, config),
+          analysisMethod: "llm",
         };
       }
+      // LLM said not detected -- continue to next pattern
+      continue;
     }
 
     // 5. Triggered with NO analyze: rule-based decision

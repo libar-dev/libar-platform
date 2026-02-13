@@ -129,6 +129,35 @@ export default defineSchema({
     .index("by_cancellationCount", ["cancellationCount", "updatedAt"]),
 
   /**
+   * Outreach Tasks - CMS for agent-initiated customer outreach.
+   * Created by the SuggestCustomerOutreach command handler (dual-write with OutreachCreated event).
+   * Tracks outreach lifecycle from creation through resolution.
+   *
+   * @since Phase 22c (AgentCommandInfrastructure)
+   */
+  outreachTasks: defineTable({
+    outreachId: v.string(),
+    customerId: v.string(),
+    agentId: v.string(),
+    riskLevel: v.union(v.literal("high"), v.literal("medium"), v.literal("low")),
+    cancellationCount: v.number(),
+    correlationId: v.string(),
+    triggeringPatternId: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("contacted"),
+      v.literal("resolved"),
+      v.literal("closed")
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_outreachId", ["outreachId"])
+    .index("by_customerId", ["customerId", "createdAt"])
+    .index("by_status", ["status", "createdAt"])
+    .index("by_agentId", ["agentId", "status"]),
+
+  /**
    * Order Items - read model for order line item details.
    * Updated by OrderItemAdded/OrderItemRemoved events.
    * Enables Order Detail page to display individual items.

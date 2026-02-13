@@ -146,9 +146,8 @@ export interface AgentActionResult {
    *
    * - "llm": LLM was called and produced the analysis
    * - "rule-based": Pure rule-based analysis (no LLM configured or needed)
-   * - "rule-based-fallback": LLM was configured but unavailable, fell back to rules
    */
-  readonly analysisMethod: "llm" | "rule-based" | "rule-based-fallback";
+  readonly analysisMethod: "llm" | "rule-based";
 
   /**
    * Which pattern produced this result (DS-4, PDR-012 AD-6).
@@ -171,8 +170,7 @@ export interface AgentActionResult {
   };
 
   /**
-   * Error message if analysis partially failed.
-   * Present when analysisMethod is "rule-based-fallback" to record the LLM error.
+   * Error message. Reserved for future use.
    */
   readonly error?: string;
 }
@@ -367,7 +365,7 @@ export function createAgentActionHandler<TCtx = unknown>(
       patternId = summary.matchedPattern ?? undefined;
 
       // PatternExecutionSummary and AgentActionResult share the same
-      // analysisMethod union ("llm" | "rule-based" | "rule-based-fallback")
+      // analysisMethod union ("llm" | "rule-based")
       analysisMethod = summary.analysisMethod;
     } catch (err) {
       logger.error("Pattern executor failed", {

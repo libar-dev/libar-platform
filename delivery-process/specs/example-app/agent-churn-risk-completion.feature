@@ -1,12 +1,12 @@
 @libar-docs
 @libar-docs-release:v0.2.0
 @libar-docs-pattern:AgentChurnRiskCompletion
-@libar-docs-status:roadmap
+@libar-docs-status:active
 @libar-docs-phase:22d
 @libar-docs-effort:1w
 @libar-docs-product-area:ExampleApp
 @libar-docs-depends-on:AgentCommandInfrastructure
-@libar-docs-executable-specs:order-management/tests/features/agent
+@libar-docs-executable-specs:order-management/tests/integration-features/agent
 Feature: Agent Churn Risk Completion - Full LLM Integration in Example App
 
   **Problem:** The churn-risk agent in the order-management example app has working
@@ -141,11 +141,11 @@ Feature: Agent Churn Risk Completion - Full LLM Integration in Example App
       | LLM analysis wiring (pattern definition) | complete | order-management/convex/contexts/agent/_patterns/churnRisk.ts | Yes | unit |
       | Agent component migration | complete | order-management/convex/contexts/agent/_component.ts | Yes | integration |
       | Approval expiration cron | complete | order-management/convex/crons.ts | Yes | integration |
-      | Remove rule-based fallback from churnRisk.ts | pending | order-management/convex/contexts/agent/_patterns/churnRisk.ts | Yes | unit |
-      | Remove highValueChurnPattern | pending | order-management/convex/contexts/agent/_patterns/churnRisk.ts, _config.ts | Yes | unit |
-      | SuggestCustomerOutreach outreach handler | pending | order-management/convex/contexts/agent/handlers/routeCommand.ts | Yes | integration |
-      | Full pipeline integration test (real LLM) | pending | order-management/tests/integration/agent/churn-risk-flow.test.ts | Yes | integration |
-      | Churn-risk BDD feature file | pending | order-management/tests/integration-features/agent/churn-risk.feature | Yes | integration |
+      | Remove rule-based fallback from churnRisk.ts | complete | order-management/convex/contexts/agent/_patterns/churnRisk.ts | Yes | unit |
+      | Remove highValueChurnPattern | complete | order-management/convex/contexts/agent/_patterns/churnRisk.ts, _config.ts | Yes | unit |
+      | SuggestCustomerOutreach outreach handler | complete | order-management/convex/contexts/agent/handlers/routeCommand.ts | Yes | integration |
+      | Full pipeline integration test (real LLM) | complete | order-management/tests/integration/agent/churn-risk-flow.integration.test.ts | Yes | integration |
+      | Churn-risk BDD feature file | complete | order-management/tests/integration-features/agent/churn-risk.feature | Yes | integration |
 
   # ============================================================================
   # RULE 1: LLM Analysis Is Essential, Not Optional

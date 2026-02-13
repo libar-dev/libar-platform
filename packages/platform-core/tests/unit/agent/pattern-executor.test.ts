@@ -2,7 +2,7 @@
  * Pattern Executor Unit Tests
  *
  * Tests for the pattern execution pipeline including:
- * - executePatterns: no match, single match, multi-pattern, analyze, fallback
+ * - executePatterns: no match, single match, multi-pattern, analyze, error propagation
  * - buildDecisionFromAnalysis: command extraction, approval logic
  * - buildDecisionFromTrigger: heuristic confidence, always requires approval
  */
@@ -190,10 +190,10 @@ describe("executePatterns — single pattern with analyze", () => {
 });
 
 // ============================================================================
-// executePatterns — Analyze Throws (Fallback)
+// executePatterns — Analyze Throws (Error Propagation)
 // ============================================================================
 
-describe("executePatterns — analyze throws (fallback)", () => {
+describe("executePatterns — analyze throws (error propagation)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
@@ -203,20 +203,16 @@ describe("executePatterns — analyze throws (fallback)", () => {
     vi.useRealTimers();
   });
 
-  it("falls back to rule-based-fallback when analyze throws", async () => {
+  it("propagates error when analyze throws (for Workpool retry)", async () => {
     const events = [makeEvent()];
     const pattern = makePattern("risky", {
       trigger: () => true,
       analyze: vi.fn().mockRejectedValue(new Error("LLM API timeout")),
     });
 
-    const result = await executePatterns([pattern], events, stubAgent, makeConfig());
-
-    expect(result.matchedPattern).toBe("risky");
-    expect(result.analysisMethod).toBe("rule-based-fallback");
-    expect(result.decision).not.toBeNull();
-    expect(result.decision!.command).toBeNull();
-    expect(result.decision!.requiresApproval).toBe(true);
+    await expect(executePatterns([pattern], events, stubAgent, makeConfig())).rejects.toThrow(
+      "LLM API timeout"
+    );
   });
 });
 

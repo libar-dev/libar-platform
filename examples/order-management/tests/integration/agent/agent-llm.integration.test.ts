@@ -104,8 +104,9 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
 
       // Wait for the agent to process events and produce a PatternDetected audit event.
       // With the real LLM key, churnRiskPattern.analyze() calls OpenRouter. If the LLM
-      // returns confidence >= 0.7, we get analysisMethod === "llm". Otherwise we fall
-      // through to highValueChurnPattern (rule-based).
+      // returns confidence >= 0.7, we get analysisMethod === "llm". There is no
+      // rule-based fallback — if the LLM fails, the Workpool retries and ultimately
+      // creates a dead letter.
       await waitUntil(
         async () => {
           const events = await testQuery(t, api.queries.agent.getAuditEvents, {

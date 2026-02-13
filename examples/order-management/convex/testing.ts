@@ -834,6 +834,39 @@ export const updateTestOrderInventoryStatus = mutation({
 });
 
 /**
+ * Get outreach tasks for a customer.
+ * Used for testing the full agent pipeline: detection -> command -> outreach record.
+ */
+export const getTestOutreachTasks = query({
+  args: {
+    customerId: v.string(),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("contacted"),
+        v.literal("resolved"),
+        v.literal("closed")
+      )
+    ),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    const results = await ctx.db
+      .query("outreachTasks")
+      .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+      .collect();
+
+    // Apply optional status filter in-memory (index is by_customerId + createdAt)
+    const filtered = args.status ? results.filter((r) => r.status === args.status) : results;
+
+    // Apply limit
+    const limited = args.limit ? filtered.slice(0, args.limit) : filtered;
+    return limited;
+  },
+});
+
+/**
  * Get agent dead letters for testing via component.
  * Note: requires agentId for component query. Without agentId, returns empty.
  */

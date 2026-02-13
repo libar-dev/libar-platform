@@ -103,7 +103,6 @@ export {
   MIN_CANCELLATIONS,
   CHURN_RISK_WINDOW_DURATION,
   churnRiskPattern,
-  highValueChurnPattern,
   createCustomerCancellationTrigger,
   __testing as patternsTesting,
 } from "./_patterns/churnRisk.js";

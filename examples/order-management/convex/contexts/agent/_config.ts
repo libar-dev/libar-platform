@@ -15,7 +15,7 @@
  */
 
 import type { AgentBCConfig } from "@libar-dev/platform-core/agent";
-import { churnRiskPattern, highValueChurnPattern } from "./_patterns/churnRisk.js";
+import { churnRiskPattern } from "./_patterns/churnRisk.js";
 
 // ============================================================================
 // Agent Configuration
@@ -81,5 +81,5 @@ export const churnRiskAgentConfig: AgentBCConfig = {
     },
   },
 
-  patterns: [churnRiskPattern, highValueChurnPattern],
+  patterns: [churnRiskPattern],
 };

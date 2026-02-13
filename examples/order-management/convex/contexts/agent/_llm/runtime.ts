@@ -156,9 +156,9 @@ Analyze these events for patterns and provide your assessment.`;
 
         return llmResult;
       } catch (error) {
-        // Re-throw — runtimes MUST throw on failure so the action handler
-        // at action-handler.ts:400 can distinguish "LLM returned low confidence"
-        // from "LLM call failed" and trigger the rule-based-fallback path.
+        // Re-throw — runtimes MUST throw on failure so the error propagates
+        // through the pattern executor and action handler to the Workpool
+        // for retry/dead-letter handling.
         throw error;
       }
     },

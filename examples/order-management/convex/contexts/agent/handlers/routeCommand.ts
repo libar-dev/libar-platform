@@ -4,14 +4,15 @@
  * Routes agent-emitted commands to their target handlers.
  * Scheduled by the onComplete handler via ctx.scheduler.runAfter(0, ...).
  *
- * For this example app, SuggestCustomerOutreach is a simple notification
- * command. Full CommandOrchestrator integration is demonstrated by the
- * platform-core command-bridge module.
+ * SuggestCustomerOutreach is handled via the dual-write pattern:
+ * CMS record (outreachTasks) + OutreachCreated domain event in a single
+ * atomic mutation. The bridge handles audit recording and error routing.
  *
  * @since Phase 22c (AgentCommandInfrastructure)
  */
 
 import { internalMutation } from "../../../_generated/server.js";
+import type { MutationCtx } from "../../../_generated/server.js";
 import { v } from "convex/values";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@libar-dev/platform-core/agent";
 import type { AgentCommandRouteMap } from "@libar-dev/platform-core/agent";
 import { agentComponent } from "../_component.js";
+import { eventStore } from "../../../infrastructure.js";
 
 // ============================================================================
 // Command Route Map
@@ -46,6 +48,8 @@ const agentCommandRoutes: AgentCommandRouteMap = {
         agentId: context.agentId,
         correlationId: context.correlationId,
         riskLevel: typeof payload?.["riskLevel"] === "string" ? payload["riskLevel"] : "medium",
+        cancellationCount:
+          typeof payload?.["cancellationCount"] === "number" ? payload["cancellationCount"] : 0,
         triggeringPatternId: command.patternId ?? "unknown",
       };
     },
@@ -53,31 +57,83 @@ const agentCommandRoutes: AgentCommandRouteMap = {
 };
 
 // ============================================================================
-// Minimal Registry & Orchestrator (for example app)
+// Outreach Registry & Handler
 // ============================================================================
 
 /**
- * Minimal command registry that recognizes SuggestCustomerOutreach.
- * In a production app, this would be the actual commandRegistry singleton.
+ * Command registry for agent-emitted commands.
+ * Recognizes SuggestCustomerOutreach for routing through the bridge.
  */
-const minimalRegistry = {
+const outreachRegistry = {
   has: (type: string) => type === "SuggestCustomerOutreach",
   getConfig: (type: string) => (type === "SuggestCustomerOutreach" ? { type } : undefined),
 };
 
 /**
- * Minimal orchestrator that logs the command execution.
- * In a production app, this would use the full CommandOrchestrator.
+ * Outreach command handler implementing the dual-write pattern.
+ *
+ * 1. CMS write: inserts an outreachTasks record (pending status)
+ * 2. Event store write: appends OutreachCreated domain event
+ *
+ * Both writes occur in the same parent mutation transaction, so they
+ * are atomic (see CLAUDE.md "Convex Transactions Span Component Boundaries").
  */
-const minimalOrchestrator = {
-  execute: async (_ctx: unknown, _config: unknown, args: Record<string, unknown>) => {
-    // In a real implementation, this would:
-    // 1. Create a notification/task for the customer success team
-    // 2. Update a CRM system
-    // 3. Trigger an integration event
-    // For now, the command is just routed through the bridge
-    // and audit-recorded -- the routing itself is the deliverable.
-    return { success: true, commandType: "SuggestCustomerOutreach", args };
+const outreachOrchestrator = {
+  execute: async (ctx: unknown, _config: unknown, args: Record<string, unknown>) => {
+    const mutCtx = ctx as MutationCtx;
+
+    const customerId = args["customerId"] as string | undefined;
+    if (!customerId) {
+      throw new Error("SuggestCustomerOutreach requires customerId");
+    }
+
+    const agentId = (args["agentId"] as string) ?? "unknown";
+    const correlationId = (args["correlationId"] as string) ?? `corr_${Date.now()}`;
+    const riskLevel = (args["riskLevel"] as "high" | "medium" | "low") ?? "medium";
+    const cancellationCount = (args["cancellationCount"] as number) ?? 0;
+    const triggeringPatternId = (args["triggeringPatternId"] as string) ?? "unknown";
+
+    const now = Date.now();
+    const outreachId = `outreach_${customerId}_${now}`;
+
+    // ---- 1. CMS write: create outreach task record ----
+    await mutCtx.db.insert("outreachTasks", {
+      outreachId,
+      customerId,
+      agentId,
+      riskLevel,
+      cancellationCount,
+      correlationId,
+      triggeringPatternId,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // ---- 2. Event store write: append OutreachCreated event ----
+    await eventStore.appendToStream(mutCtx, {
+      streamType: "Outreach",
+      streamId: outreachId,
+      expectedVersion: 0,
+      boundedContext: "agent",
+      events: [
+        {
+          eventId: `evt_${outreachId}`,
+          eventType: "OutreachCreated",
+          payload: {
+            outreachId,
+            customerId,
+            agentId,
+            riskLevel,
+            cancellationCount,
+            correlationId,
+          },
+          metadata: { correlationId },
+        },
+      ],
+    });
+
+    return { success: true, outreachId, commandType: "SuggestCustomerOutreach" };
   },
 };
 
@@ -88,8 +144,8 @@ const minimalOrchestrator = {
 const bridgeConfig: CommandBridgeConfig = {
   agentComponent,
   commandRoutes: agentCommandRoutes,
-  commandRegistry: minimalRegistry,
-  commandOrchestrator: minimalOrchestrator,
+  commandRegistry: outreachRegistry,
+  commandOrchestrator: outreachOrchestrator,
   logger: createPlatformNoOpLogger(),
 };
 
