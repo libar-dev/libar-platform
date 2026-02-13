@@ -18,7 +18,7 @@ import {
   createCommandBridgeHandler,
   type RouteAgentCommandArgs,
 } from "../../../src/agent/command-bridge.js";
-import type { AgentComponentAPI } from "../../../src/agent/oncomplete-handler.js";
+import type { AgentComponentAPI } from "../../../src/agent/handler-types.js";
 import type { AgentCommandRouteMap } from "../../../src/agent/command-router.js";
 import { COMMAND_ROUTING_ERROR_CODES } from "../../../src/agent/command-router.js";
 import { createMockLogger } from "./_test-utils.js";

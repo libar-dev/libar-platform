@@ -589,6 +589,14 @@ export type {
 } from "./action-handler.js";
 
 // ============================================================================
+// Shared Handler Types
+// ============================================================================
+
+export { getAgentSubscriptionId } from "./handler-types.js";
+
+export type { AgentComponentAPI, RunMutationCtx } from "./handler-types.js";
+
+// ============================================================================
 // onComplete Handler (Action/Mutation Split Pattern)
 // ============================================================================
 
@@ -603,9 +611,6 @@ export type {
 
   // onComplete Args Type
   AgentOnCompleteArgs,
-
-  // Agent Component API Interface
-  AgentComponentAPI,
 
   // Factory Configuration
   AgentOnCompleteConfig,

@@ -40,6 +40,7 @@ import type {
   UnknownRecord,
   WorkpoolOnCompleteArgs,
 } from "@libar-dev/platform-core";
+import { getAgentSubscriptionId } from "@libar-dev/platform-core";
 
 // ============================================================================
 // Constants
@@ -373,7 +374,7 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
       getPartitionKey: resolvedGetPartitionKey,
       toWorkpoolContext: (event: PublishedEvent, chain: CorrelationChain, _subName: string) => ({
         agentId: definition.id,
-        subscriptionId: `sub_${definition.id}`,
+        subscriptionId: getAgentSubscriptionId(definition.id),
         eventId: event.eventId,
         eventType: event.eventType,
         globalPosition: event.globalPosition,

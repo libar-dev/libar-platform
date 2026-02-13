@@ -17,8 +17,8 @@ import {
   createAgentOnCompleteHandler,
   type AgentOnCompleteArgs,
   type AgentWorkpoolContext,
-  type AgentComponentAPI,
 } from "../../../src/agent/oncomplete-handler.js";
+import type { AgentComponentAPI } from "../../../src/agent/handler-types.js";
 import type { AgentActionResult } from "../../../src/agent/action-handler.js";
 import { createMockLogger } from "./_test-utils.js";
 

@@ -17,10 +17,9 @@
  * @module agent/command-bridge
  */
 
-import type { FunctionReference } from "convex/server";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
-import type { AgentComponentAPI } from "./oncomplete-handler.js";
+import type { AgentComponentAPI, RunMutationCtx } from "./handler-types.js";
 import type {
   AgentCommandRouteMap,
   RoutingContext,
@@ -378,19 +377,4 @@ async function recordRoutingFailure(
       // NO-THROW
     }
   }
-}
-
-// ============================================================================
-// Internal Helper Type
-// ============================================================================
-
-/**
- * Minimal interface for ctx.runMutation used via type assertion.
- *
- * The factory is platform-agnostic (TCtx = unknown), so we cast to this
- * interface when calling component mutations. At the app level, the actual
- * Convex MutationCtx satisfies this interface.
- */
-interface RunMutationCtx {
-  runMutation<T>(ref: FunctionReference<"mutation">, args: Record<string, unknown>): Promise<T>;
 }

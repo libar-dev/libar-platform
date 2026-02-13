@@ -18,30 +18,15 @@
  * @module agent/lifecycle-handlers
  */
 
-import type { FunctionReference } from "convex/server";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
-import type { AgentComponentAPI } from "./oncomplete-handler.js";
+import type { AgentComponentAPI, RunMutationCtx } from "./handler-types.js";
+import { getAgentSubscriptionId } from "./handler-types.js";
 import type { AgentLifecycleState } from "./lifecycle-fsm.js";
 import { transitionAgentState, commandToEvent } from "./lifecycle-fsm.js";
 import type { AgentLifecycleResult, AgentConfigOverrides } from "./lifecycle-commands.js";
 import { AGENT_LIFECYCLE_ERROR_CODES } from "./lifecycle-commands.js";
 import { createLifecycleDecisionId } from "./audit.js";
-
-// ============================================================================
-// Internal Helper Type
-// ============================================================================
-
-/**
- * Minimal interface for ctx.runMutation used via type assertion.
- *
- * The factory is platform-agnostic (TCtx = unknown), so we cast to this
- * interface when calling component mutations. At the app level, the actual
- * Convex MutationCtx satisfies this interface.
- */
-interface RunMutationCtx {
-  runMutation<T>(ref: FunctionReference<"mutation">, args: Record<string, unknown>): Promise<T>;
-}
 
 /**
  * Shape of the checkpoint object returned by loadOrCreate.
@@ -151,7 +136,7 @@ export function handleStartAgent<TCtx = unknown>(
     // 1. Load checkpoint
     const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
       agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
+      subscriptionId: getAgentSubscriptionId(args.agentId),
     });
     const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
 
@@ -238,7 +223,7 @@ export function handlePauseAgent<TCtx = unknown>(
     // 1. Load checkpoint
     const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
       agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
+      subscriptionId: getAgentSubscriptionId(args.agentId),
     });
     const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
 
@@ -327,7 +312,7 @@ export function handleResumeAgent<TCtx = unknown>(
     // 1. Load checkpoint
     const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
       agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
+      subscriptionId: getAgentSubscriptionId(args.agentId),
     });
     const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
 
@@ -414,7 +399,7 @@ export function handleStopAgent<TCtx = unknown>(
     // 1. Load checkpoint
     const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
       agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
+      subscriptionId: getAgentSubscriptionId(args.agentId),
     });
     const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
 
@@ -504,7 +489,7 @@ export function handleReconfigureAgent<TCtx = unknown>(
     // 1. Load checkpoint
     const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
       agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
+      subscriptionId: getAgentSubscriptionId(args.agentId),
     });
     const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
 

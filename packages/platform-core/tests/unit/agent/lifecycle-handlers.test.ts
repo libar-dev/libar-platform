@@ -41,7 +41,7 @@ import {
   createLifecycleHandlers,
   type LifecycleHandlerConfig,
 } from "../../../src/agent/lifecycle-handlers.js";
-import type { AgentComponentAPI } from "../../../src/agent/oncomplete-handler.js";
+import type { AgentComponentAPI } from "../../../src/agent/handler-types.js";
 import { AGENT_LIFECYCLE_ERROR_CODES } from "../../../src/agent/lifecycle-commands.js";
 import { createMockLogger } from "./_test-utils.js";
 

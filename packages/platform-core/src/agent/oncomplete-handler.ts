@@ -23,6 +23,7 @@ import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 import type { AgentActionResult } from "./action-handler.js";
 import { DEFAULT_APPROVAL_TIMEOUT_MS } from "./approval.js";
+import type { AgentComponentAPI, RunMutationCtx } from "./handler-types.js";
 
 // ============================================================================
 // Workpool Context Type
@@ -120,61 +121,8 @@ export interface AgentOnCompleteArgs {
     | { readonly kind: "canceled" };
 }
 
-// ============================================================================
-// Agent Component API Interface
-// ============================================================================
-
-/**
- * Unified API interface for the agent Convex component.
- *
- * All consumers (onComplete handler, lifecycle handlers, command bridge)
- * use this single interface. Each consumer accesses only the subset it needs.
- * TypeScript structural typing ensures type safety without requiring separate
- * interfaces.
- *
- * The FunctionReference types are `unknown` to avoid TS2589 deep type
- * instantiation errors. At the app level, the actual typed references are
- * passed in and Convex validates args at runtime.
- */
-export interface AgentComponentAPI {
-  /** Checkpoint API -- ctx.runMutation(components.agentBC.checkpoints.*) */
-  readonly checkpoints: {
-    /** Idempotent load-or-create for first-event handling */
-    readonly loadOrCreate: FunctionReference<"mutation">;
-    /** Advance checkpoint position after successful processing */
-    readonly update: FunctionReference<"mutation">;
-    /** Atomic lifecycle transition: update status + record audit in single mutation */
-    readonly transitionLifecycle: FunctionReference<"mutation">;
-    /** Patch config overrides for all agent checkpoints */
-    readonly patchConfigOverrides?: FunctionReference<"mutation">;
-  };
-
-  /** Audit API -- ctx.runMutation(components.agentBC.audit.*) */
-  readonly audit: {
-    /** Record an audit event (idempotent by decisionId) */
-    readonly record: FunctionReference<"mutation">;
-  };
-
-  /** Commands API -- ctx.runMutation(components.agentBC.commands.*) */
-  readonly commands: {
-    /** Record a command emitted by an agent */
-    readonly record: FunctionReference<"mutation">;
-    /** Update command status (optional -- used by command bridge) */
-    readonly updateStatus?: FunctionReference<"mutation">;
-  };
-
-  /** Approvals API -- ctx.runMutation(components.agentBC.approvals.*) */
-  readonly approvals: {
-    /** Create a pending approval request */
-    readonly create: FunctionReference<"mutation">;
-  };
-
-  /** Dead Letters API -- ctx.runMutation(components.agentBC.deadLetters.*) */
-  readonly deadLetters: {
-    /** Record a dead letter for failed event processing */
-    readonly record: FunctionReference<"mutation">;
-  };
-}
+// Re-export AgentComponentAPI so existing imports from this module still work
+export type { AgentComponentAPI } from "./handler-types.js";
 
 // ============================================================================
 // Factory Configuration
@@ -441,7 +389,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
           // 2b. Enqueue command routing (if bridge configured and not pending approval)
           if (config.routeCommandRef && !decision.requiresApproval) {
             try {
-              await mutCtx.scheduler.runAfter(0, config.routeCommandRef, {
+              await mutCtx.scheduler!.runAfter(0, config.routeCommandRef, {
                 decisionId,
                 commandType: decision.command,
                 agentId,
@@ -517,27 +465,5 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
         logger.error("Failed to record dead letter in catch-all", { agentId, eventId });
       }
     }
-  };
-}
-
-// ============================================================================
-// Internal Helper Type
-// ============================================================================
-
-/**
- * Minimal interface for ctx.runMutation used via type assertion.
- *
- * The factory is platform-agnostic (TCtx = unknown), so we cast to this
- * interface when calling component mutations. At the app level, the actual
- * Convex MutationCtx satisfies this interface.
- */
-interface RunMutationCtx {
-  runMutation<T>(ref: FunctionReference<"mutation">, args: Record<string, unknown>): Promise<T>;
-  scheduler: {
-    runAfter(
-      delayMs: number,
-      ref: FunctionReference<"mutation">,
-      args: Record<string, unknown>
-    ): Promise<void>;
   };
 }
