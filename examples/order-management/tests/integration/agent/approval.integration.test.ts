@@ -175,12 +175,12 @@ describe("Agent Approval Workflow Integration Tests", () => {
         async () => {
           const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
             agentId: CHURN_RISK_AGENT_ID,
-            eventType: "AgentActionApproved",
+            eventType: "ApprovalGranted",
             limit: 10,
           });
           return auditEvents.some((e) => e.payload.approvalId === approvalId);
         },
-        { message: "AgentActionApproved audit event created", timeout: APPROVAL_TEST_TIMEOUT }
+        { message: "ApprovalGranted audit event created", timeout: APPROVAL_TEST_TIMEOUT }
       );
 
       // Verify command was emitted (check agentCommands table via audit)
@@ -190,7 +190,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       const approvalAudit = auditEvents.find(
-        (e) => e.eventType === "AgentActionApproved" && e.payload.approvalId === approvalId
+        (e) => e.eventType === "ApprovalGranted" && e.payload.approvalId === approvalId
       );
       expect(approvalAudit).toBeDefined();
       expect(approvalAudit?.payload.reviewerId).toBe(reviewerId);
@@ -277,12 +277,12 @@ describe("Agent Approval Workflow Integration Tests", () => {
         async () => {
           const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
             agentId: CHURN_RISK_AGENT_ID,
-            eventType: "AgentActionRejected",
+            eventType: "ApprovalRejected",
             limit: 10,
           });
           return auditEvents.some((e) => e.payload.approvalId === approvalId);
         },
-        { message: "AgentActionRejected audit event created", timeout: APPROVAL_TEST_TIMEOUT }
+        { message: "ApprovalRejected audit event created", timeout: APPROVAL_TEST_TIMEOUT }
       );
     });
 
@@ -371,12 +371,12 @@ describe("Agent Approval Workflow Integration Tests", () => {
         async () => {
           const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
             agentId: CHURN_RISK_AGENT_ID,
-            eventType: "AgentActionExpired",
+            eventType: "ApprovalExpired",
             limit: 10,
           });
           return auditEvents.some((e) => e.payload.approvalId === approvalId);
         },
-        { message: "AgentActionExpired audit event created", timeout: APPROVAL_TEST_TIMEOUT }
+        { message: "ApprovalExpired audit event created", timeout: APPROVAL_TEST_TIMEOUT }
       );
     });
 

@@ -26,6 +26,8 @@ export const AGENT_AUDIT_EVENT_TYPES = [
   "AgentStopped",
   "AgentReconfigured",
   "AgentErrorRecoveryStarted",
+  // Failure tracking types
+  "AgentAnalysisFailed",
 ] as const;
 
 export default defineSchema({

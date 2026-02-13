@@ -1715,7 +1715,8 @@ export declare const components: {
             | "AgentResumed"
             | "AgentStopped"
             | "AgentReconfigured"
-            | "AgentErrorRecoveryStarted";
+            | "AgentErrorRecoveryStarted"
+            | "AgentAnalysisFailed";
           limit?: number;
         },
         any
@@ -1742,7 +1743,8 @@ export declare const components: {
             | "AgentResumed"
             | "AgentStopped"
             | "AgentReconfigured"
-            | "AgentErrorRecoveryStarted";
+            | "AgentErrorRecoveryStarted"
+            | "AgentAnalysisFailed";
           payload: any;
           timestamp: number;
         },
@@ -1803,7 +1805,8 @@ export declare const components: {
               | "AgentResumed"
               | "AgentStopped"
               | "AgentReconfigured"
-              | "AgentErrorRecoveryStarted";
+              | "AgentErrorRecoveryStarted"
+              | "AgentAnalysisFailed";
             payload: any;
             timestamp: number;
           };

@@ -27,6 +27,21 @@ import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
 import { createPlatformNoOpLogger, type SafeMutationRef } from "@libar-dev/platform-core";
+import { APPROVAL_ERROR_CODES } from "@libar-dev/platform-core/agent";
+
+/**
+ * Map component human-readable error messages to structured error codes.
+ * The component layer returns descriptive messages; the app layer translates
+ * them to codes for programmatic consumers.
+ */
+function toApprovalErrorCode(message: string): string {
+  if (message === "Approval not found") return APPROVAL_ERROR_CODES.APPROVAL_NOT_FOUND;
+  if (message === "Approval has expired") return APPROVAL_ERROR_CODES.APPROVAL_EXPIRED;
+  if (message.startsWith("Cannot approve") || message.startsWith("Cannot reject")) {
+    return APPROVAL_ERROR_CODES.INVALID_STATUS_TRANSITION;
+  }
+  return message; // fallback: return raw message for unknown errors
+}
 
 // TS2589 Prevention: Declare function references at module level
 const emitAgentCommandRef = makeFunctionReference<"mutation">(
@@ -162,11 +177,12 @@ export const approveAgentAction = internalMutation({
     });
 
     if (result.status === "error") {
+      const errorCode = toApprovalErrorCode(result.message);
       logger.warn("Cannot approve", {
         approvalId: args.approvalId,
-        error: result.message,
+        error: errorCode,
       });
-      return { success: false, error: result.message };
+      return { success: false, error: errorCode };
     }
 
     // Component returned action details with status "approved"
@@ -254,11 +270,12 @@ export const rejectAgentAction = internalMutation({
     });
 
     if (result.status === "error") {
+      const errorCode = toApprovalErrorCode(result.message);
       logger.warn("Cannot reject", {
         approvalId: args.approvalId,
-        error: result.message,
+        error: errorCode,
       });
-      return { success: false, error: result.message };
+      return { success: false, error: errorCode };
     }
 
     // Query approval details for audit event
@@ -321,6 +338,23 @@ export const expirePendingApprovals = internalMutation({
       logger.info("Expired pending approvals", {
         count: result.expiredCount,
       });
+
+      // Record audit events for each expired approval
+      const expiredDetails =
+        (
+          result as {
+            expiredDetails?: Array<{ approvalId: string; agentId: string; decisionId: string }>;
+          }
+        ).expiredDetails ?? [];
+      for (const detail of expiredDetails) {
+        await ctx.runMutation(components.agentBC.audit.record, {
+          eventType: "ApprovalExpired",
+          agentId: detail.agentId,
+          decisionId: detail.decisionId,
+          timestamp: Date.now(),
+          payload: { approvalId: detail.approvalId },
+        });
+      }
     } else {
       logger.debug("No expired approvals to process");
     }

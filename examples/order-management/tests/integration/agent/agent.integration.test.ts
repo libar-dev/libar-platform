@@ -185,7 +185,7 @@ describe("Agent BC Integration Tests", () => {
       // Check for audit events - pattern detection should have triggered
       const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
         agentId: CHURN_RISK_AGENT_ID,
-        eventType: "AgentDecisionMade",
+        eventType: "PatternDetected",
         limit: 10,
       });
 
@@ -340,7 +340,7 @@ describe("Agent BC Integration Tests", () => {
         async () => {
           const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
             agentId: CHURN_RISK_AGENT_ID,
-            eventType: "AgentDecisionMade",
+            eventType: "PatternDetected",
             limit: 10,
           });
           return auditEvents.length > 0;
@@ -351,14 +351,14 @@ describe("Agent BC Integration Tests", () => {
       // Verify audit event structure
       const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
         agentId: CHURN_RISK_AGENT_ID,
-        eventType: "AgentDecisionMade",
+        eventType: "PatternDetected",
         limit: 10,
       });
 
       expect(auditEvents.length).toBeGreaterThan(0);
       expect(auditEvents[0]).toMatchObject({
         agentId: CHURN_RISK_AGENT_ID,
-        eventType: "AgentDecisionMade",
+        eventType: "PatternDetected",
       });
       expect(auditEvents[0].decisionId).toBeDefined();
       expect(auditEvents[0].timestamp).toBeDefined();
@@ -733,7 +733,7 @@ describe("Agent BC Integration Tests", () => {
         async () => {
           const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
             agentId: CHURN_RISK_AGENT_ID,
-            eventType: "AgentDecisionMade",
+            eventType: "PatternDetected",
             limit: 20,
           });
           // Look for audit events - agent should have made decisions
@@ -744,7 +744,7 @@ describe("Agent BC Integration Tests", () => {
 
       const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
         agentId: CHURN_RISK_AGENT_ID,
-        eventType: "AgentDecisionMade",
+        eventType: "PatternDetected",
         limit: 20,
       });
 
@@ -753,7 +753,7 @@ describe("Agent BC Integration Tests", () => {
       // Verify audit event has pattern detection info
       const latestAudit = auditEvents[0];
       expect(latestAudit.agentId).toBe(CHURN_RISK_AGENT_ID);
-      expect(latestAudit.eventType).toBe("AgentDecisionMade");
+      expect(latestAudit.eventType).toBe("PatternDetected");
       expect(latestAudit.payload).toBeDefined();
     });
   });

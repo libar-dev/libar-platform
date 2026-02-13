@@ -597,6 +597,7 @@ export const testCreateAgentDeadLetter = mutation({
   returns: v.object({
     eventId: v.string(),
     created: v.boolean(),
+    deadLetterId: v.optional(v.string()),
   }),
   handler: async (ctx, args) => {
     ensureTestEnvironment();
@@ -623,6 +624,10 @@ export const testCreateAgentDeadLetter = mutation({
       ...(Object.keys(contextObj).length > 0 && { context: contextObj }),
     });
 
-    return { eventId: args.eventId, created: result.created };
+    return {
+      eventId: args.eventId,
+      created: result.created,
+      ...(result.deadLetterId && { deadLetterId: result.deadLetterId }),
+    };
   },
 });

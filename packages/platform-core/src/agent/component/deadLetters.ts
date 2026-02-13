@@ -65,7 +65,7 @@ export const record = mutation({
     }
 
     // Insert new dead letter
-    await ctx.db.insert("agentDeadLetters", {
+    const id = await ctx.db.insert("agentDeadLetters", {
       agentId,
       subscriptionId,
       eventId,
@@ -78,7 +78,7 @@ export const record = mutation({
       ...(args.context !== undefined && { context: args.context }),
     });
 
-    return { created: true };
+    return { created: true, deadLetterId: id.toString() };
   },
 });
 

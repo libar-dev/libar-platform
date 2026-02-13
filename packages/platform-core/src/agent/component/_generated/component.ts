@@ -103,7 +103,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "AgentResumed"
             | "AgentStopped"
             | "AgentReconfigured"
-            | "AgentErrorRecoveryStarted";
+            | "AgentErrorRecoveryStarted"
+            | "AgentAnalysisFailed";
           limit?: number;
         },
         any,
@@ -131,7 +132,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "AgentResumed"
             | "AgentStopped"
             | "AgentReconfigured"
-            | "AgentErrorRecoveryStarted";
+            | "AgentErrorRecoveryStarted"
+            | "AgentAnalysisFailed";
           payload: any;
           timestamp: number;
         },
@@ -198,7 +200,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "AgentResumed"
               | "AgentStopped"
               | "AgentReconfigured"
-              | "AgentErrorRecoveryStarted";
+              | "AgentErrorRecoveryStarted"
+              | "AgentAnalysisFailed";
             payload: any;
             timestamp: number;
           };

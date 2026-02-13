@@ -202,11 +202,17 @@ export const expirePending = mutation({
       .withIndex("by_status_expiresAt", (q) => q.eq("status", "pending").lt("expiresAt", now))
       .collect();
 
+    const expiredDetails = [];
     for (const approval of expired) {
       await ctx.db.patch(approval._id, { status: "expired" });
+      expiredDetails.push({
+        approvalId: approval.approvalId,
+        agentId: approval.agentId,
+        decisionId: approval.decisionId,
+      });
     }
 
-    return { expiredCount: expired.length };
+    return { expiredCount: expired.length, expiredDetails };
   },
 });
 

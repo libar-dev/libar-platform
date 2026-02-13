@@ -372,13 +372,11 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
             await mutCtx.runMutation(comp.commands.record, {
               agentId,
               decisionId,
-              commandType: decision.command,
-              payload: {
-                confidence: decision.confidence,
-                reason: decision.reason,
-                triggeringEventIds: decision.triggeringEvents ?? [],
-              },
-              status: decision.requiresApproval ? "pending_approval" : "pending",
+              type: decision.command,
+              payload: {},
+              confidence: decision.confidence,
+              reason: decision.reason,
+              triggeringEventIds: decision.triggeringEvents ?? [],
             });
           } catch (cmdError) {
             logger.error("Failed to record command in onComplete", {
@@ -416,7 +414,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
               approvalId: `apr_${decisionId}`,
               agentId,
               decisionId,
-              action: { type: decision.command },
+              action: { type: decision.command, payload: {} },
               confidence: decision.confidence,
               reason: decision.reason,
               triggeringEventIds: decision.triggeringEvents ?? [],
