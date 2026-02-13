@@ -6,7 +6,7 @@
  * @libar-docs-usecase "Event-reactive coordination without orchestration"
  * @libar-docs-usecase "Fire-and-forget command emission from events"
  * @libar-docs-usecase "Time-triggered or hybrid event/time patterns"
- * @libar-docs-uses EventBus
+ * @libar-docs-uses EventBusAbstraction
  * @libar-docs-used-by BoundedContextHandlers
  *
  * ## ProcessManager - Event-Reactive Coordination

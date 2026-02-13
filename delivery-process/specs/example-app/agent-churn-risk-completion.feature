@@ -103,10 +103,10 @@ Feature: Agent Churn Risk Completion - Full LLM Integration in Example App
   **Design Decision: SuggestCustomerOutreach Handler**
 
   Replace the no-op minimal orchestrator in `routeCommand.ts` with a handler that:
-  1. Creates an outreach task record (new `outreachTasks` projection or CMS table)
-  2. Emits `OutreachCreated` domain event via the event store
-  3. Validates customerId and riskLevel from command payload
-  4. Records the outreach in a queryable projection for the admin UI
+  1. Validates customerId and riskLevel from command payload
+  2. Atomically creates outreach task + appends `OutreachCreated` event (same mutation, dual-write)
+  3. Records the outreach in a queryable projection for the admin UI
+  Idempotency enforced by command bus (commandId-based dedup prevents replay duplicates).
 
   This completes the loop: cancellation → agent → LLM → command → outreach record.
   Future phases can add actual notification delivery (email, SMS) as outreach

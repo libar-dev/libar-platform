@@ -4,7 +4,7 @@
  * @libar-docs-status completed
  * @libar-docs-event-sourcing
  *
- * @libar-docs-uses Workpool, idempotentAppend, WorkpoolPartitioningStrategy, EventBus
+ * @libar-docs-uses Workpool, idempotentAppend, WorkpoolPartitioningStrategy, EventBusAbstraction
  * @libar-docs-used-by IntegrationRoutes, CrossContextIntegration, SagaEngine
  * @libar-docs-usecase "When publishing events across bounded contexts durably"
  *

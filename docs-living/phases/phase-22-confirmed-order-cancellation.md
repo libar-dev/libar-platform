@@ -487,7 +487,7 @@ When circuit is open:
 - Then it fails with AGENT_RUNTIME_REQUIRED error
 - And the error message indicates LLM runtime or fallback must be configured
 
-**LLM unavailable falls back to rule-based analysis**
+**LLM unavailable propagates error through retries to dead letter**
 
 - Given an agent configured with LLM runtime
 - And the LLM API returns an error or times out
@@ -528,7 +528,7 @@ When circuit is open:
 - When a new LLM call would cost approximately 0.60 USD
 - Then the agent is paused automatically
 - And an AgentBudgetExceeded audit event is recorded
-- And the event falls back to rule-based analysis
+- And the event is dead-lettered with reason "budget_exceeded"
 
 **Queue overflow triggers dead letter**
 
@@ -587,7 +587,7 @@ export function createAgentActionHandler(config: {
 
 **Verified by:** Action calls LLM, onComplete persists, fallback works, timeout handled
 
-_Verified by: Agent action handler calls LLM and returns decision, onComplete mutation persists decision atomically, Action handler rejects invalid agent configuration, LLM unavailable falls back to rule-based analysis, Action failure triggers dead letter via onComplete_
+_Verified by: Agent action handler calls LLM and returns decision, onComplete mutation persists decision atomically, Action handler rejects invalid agent configuration, LLM unavailable propagates error through retries to dead letter, Action failure triggers dead letter via onComplete_
 
 **Rate limiting is enforced before LLM calls**
 
@@ -1676,10 +1676,10 @@ LLM failures. Persistent failures create dead letters visible in the admin UI.
 
 Replace the no-op minimal orchestrator in `routeCommand.ts` with a handler that:
 
-1. Creates an outreach task record (new `outreachTasks` projection or CMS table)
-2. Emits `OutreachCreated` domain event via the event store
-3. Validates customerId and riskLevel from command payload
-4. Records the outreach in a queryable projection for the admin UI
+1. Validates customerId and riskLevel from command payload
+2. Atomically creates outreach task + appends `OutreachCreated` event (same mutation, dual-write)
+3. Records the outreach in a queryable projection for the admin UI
+   Idempotency enforced by command bus (commandId-based dedup prevents replay duplicates).
 
 This completes the loop: cancellation → agent → LLM → command → outreach record.
 Future phases can add actual notification delivery (email, SMS) as outreach

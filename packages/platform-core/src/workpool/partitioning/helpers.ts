@@ -4,7 +4,7 @@
  * @libar-docs-status completed
  * @libar-docs-projection
  *
- * @libar-docs-uses EventBus
+ * @libar-docs-uses EventBusAbstraction
  * @libar-docs-used-by CommandOrchestrator, Projections, DCBRetry
  * @libar-docs-usecase "When creating partition keys for Workpool-based event processing"
  *

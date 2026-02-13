@@ -299,14 +299,14 @@ graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
     ProjectionCheckpointing --> EventStoreFoundation
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBusAbstraction
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -316,7 +316,7 @@ graph TD
     Durable_Cross_Context_Event_Publication --> Workpool
     Durable_Cross_Context_Event_Publication --> idempotentAppend
     Durable_Cross_Context_Event_Publication --> WorkpoolPartitioningStrategy
-    Durable_Cross_Context_Event_Publication --> EventBus
+    Durable_Cross_Context_Event_Publication --> EventBusAbstraction
     Durable_Cross_Context_Event_Publication ..-> EventStoreDurability
     Poison_Event_Handling --> EventStoreFoundation
     Poison_Event_Handling --> Workpool
@@ -340,10 +340,10 @@ graph TD
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
     DualWriteContract --> BoundedContextIdentity
-    Workpool_Partition_Key_Types --> EventBus
+    Workpool_Partition_Key_Types --> EventBusAbstraction
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
-    Partition_Key_Helper_Functions --> EventBus
+    Partition_Key_Helper_Functions --> EventBusAbstraction
     Partition_Key_Helper_Functions ..-> WorkpoolPartitioningStrategy
     Per_Projection_Partition_Configuration ..-> WorkpoolPartitioningStrategy
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy

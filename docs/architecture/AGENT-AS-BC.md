@@ -521,8 +521,8 @@ import { checkCircuit, recordSuccess, recordFailure } from "@libar-dev/platform-
 const state = checkCircuit("llm-provider"); // "closed" | "open" | "half-open"
 
 if (state === "open") {
-  // Skip LLM call — Workpool will retry when circuit closes
-  // If retries exhausted → dead letter with circuit state context
+  // Throw to trigger Workpool retry; exhausted retries → dead letter
+  throw new Error("LLM circuit open");
 }
 ```
 

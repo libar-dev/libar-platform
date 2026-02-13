@@ -269,6 +269,15 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
         if (checkpoint) {
           expect(checkpoint.eventsProcessed).toBeGreaterThanOrEqual(0);
         }
+
+        // Verify no PatternDetected audit events were created
+        // (2 cancellations is below the threshold of 3)
+        const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
+          agentId: CHURN_RISK_AGENT_ID,
+          eventType: "PatternDetected",
+          limit: 10,
+        });
+        expect(auditEvents).toHaveLength(0);
       });
     });
 
@@ -523,12 +532,12 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
         });
 
         expect(checkpointAfterWait).toBeDefined();
-        // The checkpoint position should be the same or higher (not regressed)
-        expect(checkpointAfterWait!.lastProcessedPosition).toBeGreaterThanOrEqual(firstPosition);
+        // The checkpoint position should be exactly the same (no duplicate processing)
+        expect(checkpointAfterWait!.lastProcessedPosition).toBe(firstPosition);
 
-        // Events processed should be stable or higher (no duplicates counted)
-        // If idempotency works, we shouldn't see the same event processed twice
-        expect(checkpointAfterWait!.eventsProcessed).toBeGreaterThanOrEqual(firstEventsProcessed);
+        // Events processed should be exactly stable (no duplicates counted)
+        // If idempotency works, the same event must not be processed twice
+        expect(checkpointAfterWait!.eventsProcessed).toBe(firstEventsProcessed);
       });
     });
 

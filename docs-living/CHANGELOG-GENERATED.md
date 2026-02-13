@@ -15,8 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Command Config Partition Key Validation**: Validates that all projection configurations in a command config have explicit partition keys defined.
-- **Process Enhancements**: Vision: Transform the delivery process from a documentation tool into a delivery operating system.
 - **Release V 020**: Converts the aggregate-less pivot roadmap into executable specs for Phases 14-22.
+- **Process Enhancements**: Vision: Transform the delivery process from a documentation tool into a delivery operating system.
 - **Confirmed Order Cancellation**: Problem: The Order FSM treats `confirmed` as terminal.
 - **Agent LLM Integration**: Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.
 - **Agent BC Component Isolation**: Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...
@@ -45,8 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **PDR 009 Design Session Methodology**
 - **PDR 008 Example App Purpose**
 - **PDR 007 Two Tier Spec Architecture**
-- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
-- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 - **Workpool Partitioning Strategy**: Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event...
 - **Saga Orchestration**: Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...
 - **Reservation Pattern**: Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...
@@ -66,6 +64,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Bdd Testing Infrastructure**: Problem: Domain logic tests require infrastructure (Docker, database).
 - **Agent Command Infrastructure**: Problem: Three interconnected gaps in agent command infrastructure: 1.
 - **Agent As Bounded Context**: Problem: AI agents are invoked manually without integration into the event-driven architecture.
+- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
+- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 
 ---
 
@@ -91,9 +91,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Process Manager Lifecycle**: FSM for managing PM state transitions (idle/processing/completed/failed) with validation.
 - **Process Manager**: Process Manager module for event-reactive coordination.
-- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
-- **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
+- **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
+- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
 - **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
@@ -104,14 +104,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Event Store Durability**: Guaranteed event persistence patterns for Convex-native event sourcing.
 - **Idempotent Event Append**: Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...
 - **Durable Append via Workpool Actions**: Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...
+- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
 - **DCB Types**: Types for scope-based multi-entity coordination within bounded contexts.
 - **DCB Scope Key Utilities**: Functions for creating, parsing, and validating scope keys.
 - **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
-- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
+- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
 - **Bounded Context Identity**: BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...
 - **Dual Write Contract**: BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...
-- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Workpool Partition Key Types**: Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.
 - **Workpool Partitioning Strategy**: Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.
 - **Partition Key Helper Functions**: Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.
