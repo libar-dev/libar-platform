@@ -29,7 +29,7 @@
 | ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                 | 1/1      | 100%     |
 | ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)            | 1/1      | 100%     |
 | ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                        | 1/1      | 100%     |
-| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                   | 3/3      | 100%     |
+| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                              | 3/3      | 100%     |
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                      | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                          | 1/1      | 100%     |
@@ -42,7 +42,7 @@
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
-| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 3/6      | 50%      |
+| 🚧 [ConfirmedOrderCancellation](phases/phase-22-confirmed-order-cancellation.md)     | 3/6      | 50%      |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
 | 🚧 [ThemedDecisionArchitecture](phases/phase-100-themed-decision-architecture.md)    | 3/6      | 50%      |
 
@@ -101,7 +101,7 @@
 
 ---
 
-### ✅ EventBusAbstraction
+### ✅ EventUpcasting
 
 [███████████████] 3/3 100% complete
 
@@ -251,7 +251,7 @@
 
 ---
 
-### 🚧 AgentChurnRiskCompletion
+### 🚧 ConfirmedOrderCancellation
 
 [████████░░░░░░░] 3/6 50% complete
 
