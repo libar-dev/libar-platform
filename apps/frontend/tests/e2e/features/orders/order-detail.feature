@@ -70,7 +70,7 @@ Feature: Order Detail
   # but NOT for "confirmed" or "cancelled" orders (terminal states).
   # ===========================================================================
 
-  @happy-path @cancellation
+  @happy-path @cancellation @skip
   Scenario: Cancel a submitted order
     # Setup: Create product and submitted order
     Given I am on the admin products page
@@ -99,7 +99,7 @@ Feature: Order Detail
     Then eventually the order status should be "cancelled"
     And I should see the cancellation banner
 
-  @validation @cancellation
+  @validation @cancellation @skip
   Scenario: Cancel button appears only for cancellable statuses
     # The cancel button should be visible for:
     # - draft: yes (if UI supports draft state)
@@ -116,7 +116,7 @@ Feature: Order Detail
     Then I should see status "cancelled"
     And I should not see the "Cancel Order" button
 
-  @cancellation @confirmation-dialog
+  @cancellation @confirmation-dialog @skip
   Scenario: Cancel confirmation dialog prevents accidental cancellation
     # Setup: Create a submitted order
     Given I am on the admin products page

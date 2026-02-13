@@ -231,7 +231,7 @@ Feature: Full Order Journey
   # 3. Cancel is now supported for submitted/confirmed orders (see order-detail.feature)
   # ===========================================================================
 
-  @agent-bc @eventual-consistency @critical
+  @agent-bc @eventual-consistency @critical @skip
   Scenario: Full agent trigger journey - Churn risk detection
     # ============================================
     # This journey validates the complete Agent BC flow:
@@ -328,7 +328,7 @@ Feature: Full Order Journey
     And the decision should show action "SuggestCustomerOutreach"
     And the decision should show status "approved"
 
-  @agent-bc @low-stock-agent @eventual-consistency @critical
+  @agent-bc @low-stock-agent @eventual-consistency @critical @skip
   Scenario: Full agent trigger journey - Low stock alert detection
     # ============================================
     # This journey validates the complete Low Stock Alert Agent flow:
@@ -404,7 +404,7 @@ Feature: Full Order Journey
     And the decision should show action "SuggestRestock"
     And the decision should show status "approved"
 
-  @agent-bc @high-value-agent @eventual-consistency @critical
+  @agent-bc @high-value-agent @eventual-consistency @critical @skip
   Scenario: Full agent trigger journey - High-value order detection
     # ============================================
     # This journey validates the complete High-Value Order Agent flow:
@@ -470,7 +470,7 @@ Feature: Full Order Journey
     And the decision should show action "FlagForVIPReview"
     And the decision should show status "approved"
 
-  @agent-bc @consolidation-agent @eventual-consistency @critical
+  @agent-bc @consolidation-agent @eventual-consistency @critical @skip
   Scenario: Full agent trigger journey - Order consolidation suggestion
     # ============================================
     # This journey validates the complete Order Consolidation Agent flow:

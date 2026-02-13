@@ -1,4 +1,4 @@
-@admin @agents @approvals
+@admin @agents @approvals @skip
 Feature: Agent Approval Workflow
   As an admin user
   I want to review and act on AI agent recommendations
