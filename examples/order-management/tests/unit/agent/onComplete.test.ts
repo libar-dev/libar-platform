@@ -23,12 +23,16 @@ describe("Agent onComplete handler", () => {
   });
 
   const baseContext = {
+    agentId: "churn-risk-agent",
+    subscriptionId: "sub_churn-risk",
     eventId: "evt_test_1",
-    subscriptionName: "churn-risk",
     eventType: "OrderCancelled",
     globalPosition: 100,
     correlationId: "corr_1",
     causationId: "cause_1",
+    streamId: "order_test_1",
+    streamType: "Order",
+    boundedContext: "orders",
   };
 
   /**
