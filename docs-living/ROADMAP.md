@@ -42,7 +42,7 @@
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](phases/phase-22-confirmed-order-cancellation.md)     | 3/6      | 50%      |
+| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 3/6      | 50%      |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
 | 🚧 [ThemedDecisionArchitecture](phases/phase-100-themed-decision-architecture.md)    | 3/6      | 50%      |
 
@@ -251,7 +251,7 @@
 
 ---
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
 [████████░░░░░░░] 3/6 50% complete
 

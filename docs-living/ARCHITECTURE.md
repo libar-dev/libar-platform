@@ -25,6 +25,8 @@ Component architecture with bounded context isolation:
 graph TB
     subgraph agent["Agent BC"]
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
+        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
         AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
         AgentActionHandler["AgentActionHandler[command-handler]"]
         Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
@@ -34,8 +36,6 @@ graph TB
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
-        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
-        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
     end
     subgraph inventory["Inventory BC"]
         InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
@@ -55,8 +55,8 @@ graph TB
         OrderItemsProjection["OrderItemsProjection[projection]"]
         CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderCommandConfigs["OrderCommandConfigs[infrastructure]"]
-        OrderDomainEvents["OrderDomainEvents[bounded-context]"]
         OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
+        OrderDomainEvents["OrderDomainEvents[bounded-context]"]
         OrderDeciders["OrderDeciders[decider]"]
     end
     subgraph shared["Shared Infrastructure"]
@@ -100,13 +100,13 @@ graph TB
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
     CustomerCancellationsProjection --> OrderCommandHandlers
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
     InventoryCommandHandlers --> InventoryDeciders
 ```

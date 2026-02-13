@@ -357,11 +357,11 @@ Use `@convex-dev/rate-limiter` component (already installed in example app):
 
 When LLM is unavailable (API key missing, rate limited, circuit breaker open):
 
-1. Fall back to rule-based confidence scoring (existing logic in \_config.ts)
-2. Record fallback decision with `analysisMethod: "rule-based-fallback"` in audit
-3. Apply lower confidence threshold for fallback decisions (configurable)
+1. Error propagates from pattern.analyze() through the action handler
+2. Workpool retries with exponential backoff (maxAttempts: 3)
+3. After retries exhausted, event goes to dead letter queue
 
-This ensures the agent continues providing value even without LLM access.
+This ensures failed events are tracked and can be replayed after the issue is resolved.
 
 **Dedicated Agent Workpool:**
 
@@ -450,8 +450,8 @@ provides the failure isolation pattern. Agent LLM calls use a named instance:
 When circuit is open:
 
 1. LLM call is skipped (no HTTP request made)
-2. Handler falls back to rule-based confidence scoring
-3. Decision audit records `analysisMethod: "rule-based-fallback"` and `circuitState: "open"`
+2. Error propagates to Workpool which retries after backoff
+3. Dead letter records circuit state context if retries exhausted
 4. Circuit half-opens after timeout, allowing one probe request
 
 #### Dependencies
@@ -492,9 +492,9 @@ When circuit is open:
 - Given an agent configured with LLM runtime
 - And the LLM API returns an error or times out
 - When the action handler processes the event
-- Then it falls back to rule-based confidence scoring
-- And the decision audit records analysisMethod as "rule-based-fallback"
-- And processing continues without failure
+- Then the error propagates to the Workpool for retry
+- And after retries exhausted the event is dead-lettered
+- And a DeadLetterRecorded audit event is created
 
 **Action failure triggers dead letter via onComplete**
 

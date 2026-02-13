@@ -350,11 +350,6 @@ graph TD
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
@@ -396,6 +391,11 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
 ```
 
 ---
