@@ -95,7 +95,7 @@ export const analyzeChurnRiskEvent = internalAction({
     // Use typed global access pattern (same as infrastructure.ts)
     const safeGlobal = globalThis as { process?: { env: Record<string, string | undefined> } };
     const apiKey = safeGlobal.process?.env?.["OPENROUTER_API_KEY"];
-    const runtime = createOpenRouterAgentRuntime(apiKey);
+    const runtime = await createOpenRouterAgentRuntime(apiKey);
     const logger = createPlatformNoOpLogger();
 
     // Create handler using the factory

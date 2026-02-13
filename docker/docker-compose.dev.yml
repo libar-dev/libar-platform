@@ -28,6 +28,8 @@ services:
     environment:
       - INSTANCE_SECRET=${CONVEX_INSTANCE_SECRET:-0135d8598650f8f5cb0f30c34ec2e2bb62793bc28717c8eb6fb577996d50be5f}
       - IS_TEST=false
+      - CONVEX_CLOUD_ORIGIN=http://127.0.0.1:3210
+      - CONVEX_SITE_ORIGIN=http://127.0.0.1:3211
       # Agent BC LLM Integration (optional - if not set, uses mock runtime)
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     volumes:

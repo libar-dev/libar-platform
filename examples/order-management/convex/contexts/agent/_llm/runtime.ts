@@ -28,7 +28,6 @@
  * @since Phase 22 (AgentAsBoundedContext)
  */
 
-import { generateObject } from "ai";
 import { z } from "zod";
 import {
   createMockAgentRuntime,
@@ -85,7 +84,7 @@ const EventReasoningSchema = z.object({
  * ```typescript
  * // In Convex handler:
  * const apiKey = process.env.OPENROUTER_API_KEY;
- * const runtime = createOpenRouterAgentRuntime(apiKey);
+ * const runtime = await createOpenRouterAgentRuntime(apiKey);
  * const handler = createAgentActionHandler({
  *   agentConfig: churnRiskAgentConfig,
  *   runtime,
@@ -93,8 +92,8 @@ const EventReasoningSchema = z.object({
  * });
  * ```
  */
-export function createOpenRouterAgentRuntime(apiKey?: string): AgentRuntimeConfig {
-  const model = createLanguageModel(apiKey);
+export async function createOpenRouterAgentRuntime(apiKey?: string): Promise<AgentRuntimeConfig> {
+  const model = await createLanguageModel(apiKey);
 
   if (!model) {
     return createMockAgentRuntime();
@@ -105,6 +104,9 @@ export function createOpenRouterAgentRuntime(apiKey?: string): AgentRuntimeConfi
       prompt: string,
       events: readonly PublishedEvent[]
     ): Promise<LLMAnalysisResult> => {
+      // Dynamic import: only loads 'ai' when this closure is actually called.
+      // The mock path (no API key) returns before reaching this code.
+      const { generateObject } = await import("ai");
       const startTime = Date.now();
 
       // Format events for LLM consumption
@@ -162,6 +164,7 @@ Analyze these events for patterns and provide your assessment.`;
     },
 
     reason: async (event: PublishedEvent): Promise<unknown> => {
+      const { generateObject } = await import("ai");
       const startTime = Date.now();
 
       const prompt = `Assess the following event and provide your analysis:

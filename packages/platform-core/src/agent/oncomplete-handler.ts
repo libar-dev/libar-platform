@@ -370,7 +370,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
               agentId,
               decisionId,
               type: decision.command,
-              payload: {},
+              payload: decision.payload ?? {},
               confidence: decision.confidence,
               reason: decision.reason,
               triggeringEventIds: decision.triggeringEvents ?? [],
@@ -392,6 +392,10 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
                 agentId,
                 correlationId: context.correlationId,
                 ...(actionResult.patternId ? { patternId: actionResult.patternId } : {}),
+                payload: decision.payload ?? {},
+                confidence: decision.confidence,
+                reason: decision.reason,
+                triggeringEventIds: decision.triggeringEvents ?? [],
               });
             } catch (routeErr) {
               // NO-THROW: routing failure does not block checkpoint advancement
@@ -411,7 +415,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
               approvalId: `apr_${decisionId}`,
               agentId,
               decisionId,
-              action: { type: decision.command, payload: {} },
+              action: { type: decision.command, payload: decision.payload ?? {} },
               confidence: decision.confidence,
               reason: decision.reason,
               triggeringEventIds: decision.triggeringEvents ?? [],
@@ -428,6 +432,11 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
       }
 
       // 4. Update checkpoint -- LAST (maximizes OCC conflict detection window, AD-7)
+      // NOTE: This is intentionally NOT wrapped in a try-catch. If the checkpoint
+      // update throws (e.g., OCC conflict from a concurrent onComplete for the same
+      // agent), we WANT the outer catch to fire — it records a dead letter and does
+      // NOT advance the checkpoint. On retry, the idempotent audit/command/approval
+      // operations above will safely skip duplicates via decisionId checks.
       await mutCtx.runMutation(comp.checkpoints.update, {
         agentId,
         subscriptionId,

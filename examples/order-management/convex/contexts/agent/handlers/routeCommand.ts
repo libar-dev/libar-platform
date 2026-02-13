@@ -100,6 +100,10 @@ export const routeAgentCommand = internalMutation({
     agentId: v.string(),
     correlationId: v.string(),
     patternId: v.optional(v.string()),
+    payload: v.optional(v.any()),
+    confidence: v.optional(v.number()),
+    reason: v.optional(v.string()),
+    triggeringEventIds: v.optional(v.array(v.string())),
   },
   returns: v.null(),
   handler: async (ctx, args) => {

@@ -28,6 +28,8 @@ services:
     environment:
       - INSTANCE_SECRET=${CONVEX_INSTANCE_SECRET:-0135d8598650f8f5cb0f30c34ec2e2bb62793bc28717c8eb6fb577996d50be5f}
       - IS_TEST=true
+      - CONVEX_CLOUD_ORIGIN=http://127.0.0.1:3210
+      - CONVEX_SITE_ORIGIN=http://127.0.0.1:3211
     shm_size: 256m
     # Ephemeral storage - data cleared on restart (same as integration tests)
     tmpfs:

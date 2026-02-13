@@ -21,7 +21,6 @@
  * @since Phase 22 (AgentAsBoundedContext)
  */
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModelV2 } from "@ai-sdk/provider";
 
 /**
@@ -57,12 +56,18 @@ export const OPENROUTER_SITE_NAME = "libar-platform";
  * // Use model for LLM calls
  * ```
  */
-export function createLanguageModel(apiKey: string | undefined): LanguageModelV2 | null {
+export async function createLanguageModel(
+  apiKey: string | undefined
+): Promise<LanguageModelV2 | null> {
   if (!apiKey) {
     // Note: Caller should log the warning as Convex doesn't have console in mutations
     return null;
   }
 
+  // Dynamic import: only loads @openrouter/ai-sdk-provider when an API key is present.
+  // This prevents module-level resolution failures when the package can't be bundled
+  // or loaded in the Convex self-hosted Docker backend's Node.js runtime.
+  const { createOpenRouter } = await import("@openrouter/ai-sdk-provider");
   const openrouter = createOpenRouter({
     apiKey,
   });

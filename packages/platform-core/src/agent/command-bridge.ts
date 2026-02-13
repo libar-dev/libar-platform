@@ -43,6 +43,14 @@ export interface RouteAgentCommandArgs {
   readonly agentId: string;
   readonly correlationId: string;
   readonly patternId?: string;
+  /** Command payload from the agent decision. Used by route.toOrchestratorArgs(). */
+  readonly payload?: unknown;
+  /** Decision confidence (0-1). */
+  readonly confidence?: number;
+  /** Human-readable decision reason. */
+  readonly reason?: string;
+  /** Event IDs that triggered the decision. */
+  readonly triggeringEventIds?: readonly string[];
 }
 
 // ============================================================================
@@ -201,17 +209,17 @@ export function createCommandBridgeHandler<TCtx = unknown>(
     // ----------------------------------------------------------------
     const routingContext: RoutingContext = { agentId, correlationId };
 
-    // Build a minimal RecordedAgentCommand from the scheduling args.
+    // Build a RecordedAgentCommand from the scheduling args.
     // The bridge receives all needed metadata in its args -- it does not
     // need to load the full command from the component DB.
     const recordedCommand: RecordedAgentCommand = {
       agentId,
       type: commandType,
-      payload: {},
+      payload: args.payload ?? {},
       status: "pending",
-      confidence: 0,
-      reason: "",
-      triggeringEventIds: [],
+      confidence: args.confidence ?? 0,
+      reason: args.reason ?? "",
+      triggeringEventIds: args.triggeringEventIds ?? [],
       decisionId,
       correlationId,
       ...(patternId ? { patternId } : {}),
