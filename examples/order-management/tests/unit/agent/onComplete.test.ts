@@ -23,7 +23,7 @@ describe("Agent onComplete handler", () => {
   });
 
   const baseContext = {
-    agentId: "churn-risk-agent",
+    agentId: AGENT_ID,
     subscriptionId: "sub_churn-risk",
     eventId: "evt_test_1",
     eventType: "OrderCancelled",

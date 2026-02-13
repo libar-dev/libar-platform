@@ -151,6 +151,7 @@ export const churnRiskPattern: PatternDefinition = definePattern({
     try {
       // Use agent's LLM analysis capability
       const result = await agent.analyze(prompt, cancellations);
+      const customerId = extractCustomerIdFromEvents(cancellations);
 
       return {
         detected: result.confidence >= CHURN_RISK_DETECTION_THRESHOLD,
@@ -162,14 +163,15 @@ export const churnRiskPattern: PatternDefinition = definePattern({
           suggestedAction: result.suggestedAction,
         },
         // Command suggestion for routing via command bridge
-        ...(result.confidence >= CHURN_RISK_DETECTION_THRESHOLD
+        ...(result.confidence >= CHURN_RISK_DETECTION_THRESHOLD && customerId !== null
           ? {
               command: {
                 type: "SuggestCustomerOutreach",
                 payload: {
-                  customerId: extractCustomerIdFromEvents(cancellations),
+                  customerId,
                   riskLevel: result.confidence >= 0.9 ? "high" : "medium",
                   cancellationCount: cancellations.length,
+                  windowDays: 30,
                 },
               },
             }
@@ -231,6 +233,7 @@ function createRuleBasedAnalysis(cancellations: readonly PublishedEvent[]): Patt
   const recentCount = countRecentEvents(cancellations);
 
   const adjustedConfidence = recentCount >= 2 ? Math.min(1, confidence + 0.1) : confidence;
+  const customerId = extractCustomerIdFromEvents(cancellations);
 
   return {
     detected: true,
@@ -242,15 +245,20 @@ function createRuleBasedAnalysis(cancellations: readonly PublishedEvent[]): Patt
       cancellationCount: count,
       recentCount,
     },
-    // Command suggestion for routing via command bridge
-    command: {
-      type: "SuggestCustomerOutreach",
-      payload: {
-        customerId: extractCustomerIdFromEvents(cancellations),
-        riskLevel: adjustedConfidence >= 0.9 ? "high" : "medium",
-        cancellationCount: count,
-      },
-    },
+    // Command suggestion for routing via command bridge (only when customerId is known)
+    ...(customerId !== null
+      ? {
+          command: {
+            type: "SuggestCustomerOutreach",
+            payload: {
+              customerId,
+              riskLevel: adjustedConfidence >= 0.9 ? "high" : "medium",
+              cancellationCount: count,
+              windowDays: 30,
+            },
+          },
+        }
+      : {}),
   };
 }
 
@@ -290,16 +298,16 @@ export const highValueChurnPattern: PatternDefinition = definePattern({
 /**
  * Extract a customerId from a list of events.
  *
- * Scans event payloads for a `customerId` field. Returns "unknown" if none found.
+ * Scans event payloads for a `customerId` field. Returns null if none found.
  */
-function extractCustomerIdFromEvents(events: readonly PublishedEvent[]): string {
+function extractCustomerIdFromEvents(events: readonly PublishedEvent[]): string | null {
   for (const event of events) {
     const payload = event.payload as Record<string, unknown>;
     if (typeof payload["customerId"] === "string") {
       return payload["customerId"];
     }
   }
-  return "unknown";
+  return null;
 }
 
 // ============================================================================

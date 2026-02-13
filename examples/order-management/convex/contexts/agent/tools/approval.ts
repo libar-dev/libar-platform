@@ -185,16 +185,15 @@ export const approveAgentAction = internalMutation({
       return { success: false, error: errorCode };
     }
 
-    // Component returned action details with status "approved"
-    const approved = result as {
-      status: "approved";
-      action: { type: string; payload: unknown };
-      agentId: string;
-      triggeringEventIds: string[];
-      confidence: number;
-      reason: string;
-      decisionId: string;
-    };
+    if (result.status !== "approved") {
+      logger.warn("Unexpected approval status", {
+        approvalId: args.approvalId,
+        status: result.status,
+      });
+      return { success: false, error: "unexpected-status" };
+    }
+
+    const approved = result;
 
     // Emit the command
     await ctx.runMutation(emitAgentCommandRef, {
@@ -278,33 +277,36 @@ export const rejectAgentAction = internalMutation({
       return { success: false, error: errorCode };
     }
 
-    // Query approval details for audit event
-    const approval = await ctx.runQuery(components.agentBC.approvals.getById, {
-      approvalId: args.approvalId,
+    if (result.status !== "rejected") {
+      logger.warn("Unexpected rejection status", {
+        approvalId: args.approvalId,
+        status: result.status,
+      });
+      return { success: false, error: "unexpected-status" };
+    }
+
+    const rejected = result;
+
+    // Record audit event via component
+    await ctx.runMutation(components.agentBC.audit.record, {
+      eventType: "ApprovalRejected",
+      agentId: rejected.agentId,
+      decisionId: rejected.decisionId,
+      timestamp: Date.now(),
+      payload: {
+        approvalId: args.approvalId,
+        reviewerId: args.reviewerId,
+        reviewNote: args.reviewNote,
+        actionType: rejected.action.type,
+      },
     });
 
-    if (approval) {
-      // Record audit event via component
-      await ctx.runMutation(components.agentBC.audit.record, {
-        eventType: "ApprovalRejected",
-        agentId: approval.agentId,
-        decisionId: approval.decisionId,
-        timestamp: Date.now(),
-        payload: {
-          approvalId: args.approvalId,
-          reviewerId: args.reviewerId,
-          reviewNote: args.reviewNote,
-          actionType: approval.action.type,
-        },
-      });
-
-      logger.info("Rejected agent action", {
-        approvalId: args.approvalId,
-        agentId: approval.agentId,
-        actionType: approval.action.type,
-        reviewerId: args.reviewerId,
-      });
-    }
+    logger.info("Rejected agent action", {
+      approvalId: args.approvalId,
+      agentId: rejected.agentId,
+      actionType: rejected.action.type,
+      reviewerId: args.reviewerId,
+    });
 
     return { success: true, approvalId: args.approvalId };
   },

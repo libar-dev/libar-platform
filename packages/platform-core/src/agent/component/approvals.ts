@@ -183,7 +183,15 @@ export const reject = mutation({
       ...(reviewNote !== undefined && { reviewNote }),
     });
 
-    return { status: "rejected" as const };
+    return {
+      status: "rejected" as const,
+      action: approval.action,
+      agentId: approval.agentId,
+      triggeringEventIds: approval.triggeringEventIds,
+      confidence: approval.confidence,
+      reason: approval.reason,
+      decisionId: approval.decisionId,
+    };
   },
 });
 
