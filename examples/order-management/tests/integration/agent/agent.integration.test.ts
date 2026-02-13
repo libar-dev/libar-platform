@@ -181,6 +181,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
         // because the checkpoint is shared across all tests in the suite (keyed by agentId,
         // not test run). A count-based wait can be satisfied before this test's events
         // are fully processed if prior tests already incremented the counter.
+        // Filter by customerId to avoid cross-test false positives
         await waitUntil(
           async () => {
             const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
@@ -188,20 +189,24 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
               eventType: "PatternDetected",
               limit: 10,
             });
-            return auditEvents.length > 0;
+            const customerAudits = (
+              (auditEvents ?? []) as Array<{ data?: Record<string, unknown> }>
+            ).filter((audit) => audit.data?.["customerId"] === customerId);
+            return customerAudits.length > 0;
           },
           { message: "Pattern detection audit event created", timeoutMs: AGENT_TEST_TIMEOUT }
         );
 
-        // Verify audit events exist - pattern detection should have triggered
+        // Verify audit events exist for THIS customer's pattern detection
         const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
           agentId: CHURN_RISK_AGENT_ID,
           eventType: "PatternDetected",
           limit: 10,
         });
-
-        expect(auditEvents).toBeDefined();
-        expect(auditEvents.length).toBeGreaterThan(0);
+        const customerAudits = (
+          (auditEvents ?? []) as Array<{ data?: Record<string, unknown> }>
+        ).filter((audit) => audit.data?.["customerId"] === customerId);
+        expect(customerAudits.length).toBeGreaterThan(0);
       });
 
       it("should not trigger pattern with fewer than 3 cancellations", async () => {
@@ -853,18 +858,30 @@ describe("Agent Dead Letter Handling", () => {
    * Tests that the agent dead letter infrastructure is working.
    */
   it("should support dead letter queries", async () => {
-    // Query dead letters for the agent - should return empty array if none exist
+    // Create a dead letter so we have data to query
+    const eventId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    await testMutation(t, api.testingFunctions.testCreateAgentDeadLetter, {
+      agentId: CHURN_RISK_AGENT_ID,
+      subscriptionId: `sub_${CHURN_RISK_AGENT_ID}`,
+      eventId,
+      globalPosition: 12346,
+      error: "Query test error",
+      attemptCount: 1,
+      correlationId: `corr_${Date.now()}`,
+    });
+
+    // Query dead letters - should include the one we just created
     const deadLetters = await testQuery(t, api.queries.agent.getDeadLetters, {
       agentId: CHURN_RISK_AGENT_ID,
       status: "pending",
       limit: 10,
     });
 
-    // The query should work even if no dead letters exist
-    expect(deadLetters).toBeDefined();
-    expect(Array.isArray(deadLetters)).toBe(true);
+    const created = deadLetters.find((dl: { eventId: string }) => dl.eventId === eventId);
+    expect(created).toBeDefined();
+    expect(created!.status).toBe("pending");
 
-    // Query dead letter stats
+    // Query dead letter stats - should reflect the agent's dead letters
     const stats = await testQuery(t, api.queries.agent.getDeadLetterStats, {});
 
     expect(stats).toBeDefined();
