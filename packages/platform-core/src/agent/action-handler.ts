@@ -375,14 +375,9 @@ export function createAgentActionHandler<TCtx = unknown>(
         decision = summary.decision;
         patternId = summary.matchedPattern ?? undefined;
 
-        // Map executor's analysisMethod to ActionResult's
-        if (summary.analysisMethod === "llm-analysis") {
-          analysisMethod = "llm";
-        } else if (summary.analysisMethod === "rule-based-fallback") {
-          analysisMethod = "rule-based-fallback";
-        } else {
-          analysisMethod = "rule-based";
-        }
+        // PatternExecutionSummary and AgentActionResult share the same
+        // analysisMethod union ("llm" | "rule-based" | "rule-based-fallback")
+        analysisMethod = summary.analysisMethod;
       } catch (err) {
         logger.error("Pattern executor failed", {
           agentId: args.agentId,

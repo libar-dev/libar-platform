@@ -30,11 +30,11 @@ export interface PatternExecutionSummary {
   /**
    * How the decision was reached.
    *
-   * - "llm-analysis": Pattern's analyze() function produced the result
+   * - "llm": Pattern's analyze() function produced the result
    * - "rule-based": Pattern triggered without an analyze function
    * - "rule-based-fallback": Pattern's analyze() threw, fell back to trigger-only
    */
-  readonly analysisMethod: "llm-analysis" | "rule-based" | "rule-based-fallback";
+  readonly analysisMethod: "llm" | "rule-based" | "rule-based-fallback";
 }
 
 // ============================================================================
@@ -89,7 +89,7 @@ export async function executePatterns(
           return {
             matchedPattern: pattern.name,
             decision: buildDecisionFromAnalysis(result, pattern.name, config),
-            analysisMethod: "llm-analysis",
+            analysisMethod: "llm",
           };
         }
         // LLM said not detected -- continue to next pattern

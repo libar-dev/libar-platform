@@ -138,7 +138,7 @@ describe("executePatterns — single pattern with analyze", () => {
     vi.useRealTimers();
   });
 
-  it("returns llm-analysis decision when analyze returns detected", async () => {
+  it("returns llm decision when analyze returns detected", async () => {
     const events = [makeEvent({ eventId: "evt_1" })];
     const analysisResult: PatternAnalysisResult = {
       detected: true,
@@ -156,7 +156,7 @@ describe("executePatterns — single pattern with analyze", () => {
     const result = await executePatterns([pattern], events, stubAgent, makeConfig());
 
     expect(result.matchedPattern).toBe("churn-risk");
-    expect(result.analysisMethod).toBe("llm-analysis");
+    expect(result.analysisMethod).toBe("llm");
     expect(result.decision).not.toBeNull();
     expect(result.decision!.command).toBe("SuggestOutreach");
     expect(result.decision!.confidence).toBe(0.92);

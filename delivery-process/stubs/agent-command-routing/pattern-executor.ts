@@ -68,7 +68,7 @@ export interface PatternExecutionSummary {
   /** The decision produced, or null if no pattern matched */
   readonly decision: AgentDecision | null;
   /** How the decision was produced */
-  readonly analysisMethod: "llm-analysis" | "rule-based" | "rule-based-fallback";
+  readonly analysisMethod: "llm" | "rule-based" | "rule-based-fallback";
 }
 
 // ============================================================================
@@ -141,7 +141,7 @@ export async function executePatterns(
           return {
             matchedPattern: pattern.name,
             decision,
-            analysisMethod: "llm-analysis",
+            analysisMethod: "llm",
           };
         }
 
