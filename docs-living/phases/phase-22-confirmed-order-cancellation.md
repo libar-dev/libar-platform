@@ -6,18 +6,658 @@
 
 ## Summary
 
-**Progress:** [███░░░░░░░░░░░░░░░░░] 1/7 (14%)
+**Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 1     |
-| 🚧 Active    | 1     |
-| 📋 Planned   | 5     |
-| **Total**    | 7     |
+| ✅ Completed | 3     |
+| 🚧 Active    | 3     |
+| 📋 Planned   | 0     |
+| **Total**    | 6     |
 
 ---
 
 ## 🚧 Active Patterns
+
+### 🚧 Agent BC Component Isolation
+
+| Property | Value  |
+| -------- | ------ |
+| Status   | active |
+| Effort   | 1w     |
+
+**Problem:** Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,
+`agentCommands`, `pendingApprovals`) reside in the shared app schema without physical
+BC isolation. Any app mutation can read/write agent tables directly, violating the core
+platform principle that bounded contexts should have isolated databases enforced by
+Convex component boundaries.
+
+**Solution:** Implement agent as a proper Convex component:
+
+1. **`defineComponent("agent")`** with isolated schema and private tables
+2. **Public API handlers** for checkpoint, audit, dead letter, and command operations
+3. **Cross-component query pattern** for app-level projections like `customerCancellations`
+
+**Why It Matters for Convex-Native ES:**
+| Benefit | How |
+| Physical BC isolation | Component tables are private, accessed only via API boundary |
+| Schema evolution safety | Component schema evolves independently of app schema |
+| Clear ownership | Agent component owns its domain data exclusively |
+| Consistent patterns | Aligns with orders/inventory component architecture |
+| OCC blast radius reduction | Agent writes isolated from app-level transaction conflicts |
+| Testing isolation | Component can be tested with `t.registerComponent()` |
+
+**Current State (app-level tables):**
+| Table | Current Location | Issue |
+| agentCheckpoints | Main schema.ts | No access control, OCC blast radius |
+| agentAuditEvents | Main schema.ts | Any mutation can modify audit trail |
+| agentDeadLetters | Main schema.ts | No encapsulation |
+| agentCommands | Main schema.ts | No API boundary |
+| pendingApprovals | Main schema.ts | Shared transaction scope |
+
+**Target State (component isolation):**
+| Table | Target Location | Access Pattern |
+| agentCheckpoints | Agent component schema | Via components.agent.checkpoints._ |
+| agentAuditEvents | Agent component schema | Via components.agent.audit._ |
+| agentDeadLetters | Agent component schema | Via components.agent.deadLetters._ |
+| agentCommands | Agent component schema | Via components.agent.commands._ |
+| pendingApprovals | Agent component schema | Via components.agent.approvals.\* |
+
+**Design Decision: Projection Ownership (customerCancellations)**
+
+The `customerCancellations` projection is updated by CommandOrchestrator (orders BC context)
+but consumed exclusively by the agent for O(1) pattern detection lookup.
+
+| Option | Trade-off |
+| A: Keep at app level (Recommended) | Agent queries via cross-component query; natural per CLAUDE.md "all projections at app level" |
+| B: Move into agent component | Faster queries but requires cross-BC event subscription for updates |
+| C: Duplicate to both locations | Redundant data, consistency challenges |
+
+**Decision:** Option A. Projections often combine data from multiple BCs and belong at
+the app level per platform architecture. The agent uses a cross-component query pattern
+to access `customerCancellations` — the same pattern any component uses to read app data.
+
+**Design Decision: Component API Surface**
+
+Expose minimal API that supports all current use cases without over-engineering:
+
+| API Group | Handlers | Purpose |
+| Checkpoints | loadCheckpoint, updateCheckpoint | Exactly-once processing |
+| Audit | recordAuditEvent, queryAuditEvents, getAuditEventsByAgent | Explainability |
+| Dead Letters | recordDeadLetter, replayDeadLetter, ignoreDeadLetter, queryDeadLetters | Error management |
+| Commands | recordCommand, updateCommandStatus, queryCommands | Command lifecycle |
+| Approvals | createApproval, approveAction, rejectAction, queryPendingApprovals | Human-in-loop |
+
+**Design Decision: Migration Strategy**
+
+Staged migration from app tables to component tables:
+
+1. Create component with new schema (parallel to existing tables)
+2. Update handlers to use component API
+3. Migrate existing data (one-time migration script)
+4. Remove old tables from app schema
+
+**Design Decision: Peer Mounting Architecture (AD-6)**
+
+`agentBC`, `@convex-dev/agent` (as `llmAgent`), and `agentPool` workpool are all PEER
+components at the app level — NOT nested (agentBC does NOT `component.use(agent)`).
+
+| Component | Purpose | Why Peer |
+| agentBC | BC state: checkpoints, audit, commands, approvals | Owns domain data |
+| llmAgent (@convex-dev/agent) | LLM: threads, messages, embeddings | Needs process.env for API keys |
+| agentPool (workpool) | Dedicated pool for agent actions | Separate parallelism from projections |
+
+Components cannot access `process.env` — the app-level action handler coordinates
+between both components, passing API keys as arguments.
+
+"""typescript
+// convex.config.ts — all three are app-level peers
+import agentBC from "@libar-dev/platform-core/agent/convex.config";
+import { agent } from "@convex-dev/agent/convex.config";
+import { workpool } from "@convex-dev/workpool/convex.config";
+
+app.use(agentBC); // BC: checkpoints, audit, commands, approvals
+app.use(agent, { name: "llmAgent" }); // LLM: threads, messages, embeddings
+app.use(workpool, { name: "agentPool" }); // Dedicated pool for agent actions
+"""
+
+**Data Flow with Peer Components:**
+"""
+EventBus → agentPool.enqueueAction() → app-level action handler
+action: ctx.runQuery(agentBC.checkpoints._) + llmAgent.generateText()
+onComplete: ctx.runMutation(agentBC.audit._) + ctx.runMutation(agentBC.checkpoints.\*)
+"""
+
+**Schema Evolution Notes (from design stubs):**
+
+The component schema expands beyond the current app-level definitions:
+
+| Aspect | Current (app schema) | Target (component schema) |
+| Checkpoint statuses | 3: active, paused, stopped | 4: adds error_recovery (DS-5 lifecycle) |
+| Audit event types | 6: Decision, Approved, Rejected, Expired, Completed, Failed | 16: adds DS-4 routing + DS-5 lifecycle types |
+| Checkpoint indexes | by_agentId only | Adds by_agentId_subscriptionId for O(1) lookup |
+| Forward declarations | None | configOverrides: v.optional(v.any()) for ReconfigureAgent (DS-5) |
+
+All 16 audit event types declared from day one to avoid schema migration:
+
+- DS-1 base (8): PatternDetected, CommandEmitted, ApprovalRequested/Granted/Rejected/Expired, DeadLetterRecorded, CheckpointUpdated
+- DS-4 routing (2): AgentCommandRouted, AgentCommandRoutingFailed
+- DS-5 lifecycle (6): AgentStarted, AgentPaused, AgentResumed, AgentStopped, AgentReconfigured, AgentErrorRecoveryStarted
+
+**Cron Migration Note:**
+
+The existing `expirePendingApprovals` cron runs as an `internalMutation` with direct
+`ctx.db` access. After component isolation, crons cannot call component internals
+directly — an app-level wrapper mutation must delegate to `components.agent.approvals.expirePending`.
+
+**Component Isolation Constraints (per platform architecture):**
+| Constraint | Impact on Agent Component |
+| No ctx.auth inside component | Pass userId as argument to all handlers |
+| IDs become strings at boundary | Use business IDs (agentId, eventId) not Convex doc IDs |
+| Sub-transactions | Agent writes commit independently from parent mutations |
+| No process.env | Pass configuration (API keys, model names) as arguments |
+
+#### Dependencies
+
+- Depends on: AgentAsBoundedContext
+
+#### Acceptance Criteria
+
+**Agent component registers with isolated schema**
+
+- Given the agent component is defined with defineComponent
+- When the app mounts the agent component via app.use
+- Then the agent's tables are isolated from the app schema
+- And the app cannot directly query agentCheckpoints
+- And all access goes through components.agent.\* handlers
+
+**Component API provides full CRUD for checkpoints**
+
+- Given the agent component is mounted
+- When a checkpoint is created via components.agent.checkpoints.load
+- Then the checkpoint is stored in the component's isolated database
+- And it can be updated via components.agent.checkpoints.update
+- And it can be queried via components.agent.checkpoints.load
+
+**Direct table access is not possible from parent**
+
+- Given the agent component is mounted
+- When the parent app attempts ctx.db.query("agentCheckpoints")
+- Then the query returns no results
+- And agent data is only accessible through component API handlers
+
+**Component sub-transactions provide isolation**
+
+- Given a parent mutation that calls agent component handlers
+- When the agent component handler throws an error
+- And the parent catches the exception
+- Then only the agent component write is rolled back
+- And the parent mutation's other writes succeed
+
+**Agent handler receives projection data as argument**
+
+- Given the agent event handler is triggered by an OrderCancelled event
+- When the handler needs customer cancellation history
+- Then it receives the history as a pre-loaded argument
+- And it does not directly query customerCancellations table
+
+**Missing projection data returns empty result**
+
+- Given a new customer with no cancellation history
+- When the agent handler receives an event for this customer
+- Then the cancellation history argument is an empty array
+- And the handler proceeds with rule-based analysis
+- And no error is thrown
+
+**Agent handler cannot directly access app-level projection tables**
+
+- Given the agent component is processing an event
+- When the handler attempts to query customerCancellations directly
+- Then the query is not available inside the component context
+- And the handler must use the injected data argument instead
+
+**App-level queries can access agent data via component API**
+
+- Given the admin UI needs to display agent audit events
+- When it queries via components.agent.audit.queryAuditEvents
+- Then it receives the audit events for the requested agent
+- And the query respects agent component boundaries
+
+#### Business Rules
+
+**Agent component provides isolated database**
+
+**Invariant:** All agent-specific state (checkpoints, audit events, dead letters,
+commands, pending approvals) must reside in the agent component's isolated database.
+No agent data in the shared app schema.
+
+    **Rationale:** Physical BC isolation prevents accidental coupling. Parent app mutations
+    cannot query agent tables directly — this is enforced by Convex's component architecture,
+    not just convention. This matches the orders/inventory pattern where each BC owns its
+    tables via `defineComponent()`.
+
+    **Verified by:** Component isolation test, API boundary test, schema separation test
+
+_Verified by: Agent component registers with isolated schema, Component API provides full CRUD for checkpoints, Direct table access is not possible from parent, Component sub-transactions provide isolation_
+
+**Cross-component queries use explicit API**
+
+**Invariant:** Agent BC must access external data (like `customerCancellations` projection)
+through explicit cross-component query patterns, never through direct table access.
+
+    **Rationale:** Maintains BC isolation while enabling necessary data access. The
+    `customerCancellations` projection lives at the app level (owned by CommandOrchestrator),
+    so the agent handler must receive this data as an argument or query it through
+    a well-defined interface.
+
+    **Cross-Component Data Flow:**
+    | Data Source | Owner | Consumer | Access Pattern |
+    | customerCancellations | App (projection) | Agent handler | Passed as argument to handler |
+    | Order events | EventBus | Agent subscription | Delivered via Workpool |
+    | Agent decisions | Agent component | Admin UI queries | Via component API |
+
+    **Verified by:** Cross-component query works, missing data handled gracefully,
+    no direct table coupling between agent and app
+
+_Verified by: Agent handler receives projection data as argument, Missing projection data returns empty result, Agent handler cannot directly access app-level projection tables, App-level queries can access agent data via component API_
+
+---
+
+### 🚧 Agent LLM Integration
+
+| Property | Value  |
+| -------- | ------ |
+| Status   | active |
+| Effort   | 1w     |
+
+**Problem:** The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that
+cannot call external APIs. The LLM runtime (`_llm/runtime.ts`) exists with OpenRouter
+integration but is never invoked because mutations cannot make HTTP calls. Additionally,
+rate limiting config exists as types only — no runtime enforcement protects against
+runaway LLM costs.
+
+**Solution:** Implement hybrid action/mutation handler pattern:
+
+1. **Action handler factory** — EventBus delivers to Workpool action (not mutation)
+2. **onComplete mutation** — Persists state atomically after LLM analysis
+3. **Rate limiting enforcement** — `@convex-dev/rate-limiter` token bucket per agent
+4. **Cost budget tracking** — Daily spend limits with automatic pause
+5. **LLM fallback** — Graceful degradation to rule-based when LLM unavailable
+
+**Why It Matters for Convex-Native ES:**
+| Benefit | How |
+| LLM integration works | Actions can make external HTTP calls (mutations cannot) |
+| Atomic persistence | Mutations in onComplete provide transactional guarantees |
+| Cost control | Rate limiting prevents runaway LLM API costs |
+| Graceful degradation | Fallback to rules when LLM unavailable or rate-limited |
+| Conversation context | Thread adapter retains analysis history across events |
+| Fault isolation | Circuit breaker prevents cascade failures from LLM outages |
+
+**The Fundamental Constraint:**
+
+| Function Type | Can Call External APIs | Database Writes | Workpool Retry |
+| Mutation | No | Yes (atomic) | No (OCC auto-retry) |
+| Action | Yes (fetch, LLM) | No (must use runMutation) | Yes (if enabled) |
+
+This means the current single-mutation handler architecture fundamentally blocks LLM
+integration. The solution requires splitting into action (LLM) + mutation (persist).
+
+**Action/Mutation Split Architecture:**
+"""
+EventBus
+|
+v
+Workpool.enqueueAction (agent event handler)
+|
++--- 1. Load checkpoint (via runQuery)
++--- 2. Check idempotency (skip if already processed)
++--- 3. Load event history (via cross-component query)
++--- 4. Evaluate rule trigger (cheap, no LLM)
++--- 5. If triggered: call LLM analysis (external API)
++--- 6. Return AgentDecision
+|
+v
+onComplete Mutation
+|
++--- 7. Validate decision
++--- 8. Record to agent component (audit, command)
++--- 9. Create pending approval (if needed)
++--- 10. Update checkpoint
++--- 11. Handle failure (dead letter)
+"""
+
+**Design Decision: @convex-dev/agent Integration**
+
+| Option | Trade-off |
+| A: Full @convex-dev/agent | Thread management, tool execution, but opinionated patterns that may conflict with event-reactive architecture |
+| B: Vercel AI SDK only (current) | More control, but must implement thread/tool patterns manually |
+| C: Hybrid (Recommended) | Use @convex-dev/agent for threads and tools, keep custom EventBus subscription and pattern detection |
+
+**Decision:** Option C — Hybrid approach.
+
+- **@convex-dev/agent provides:** Thread management (conversation context), tool execution (structured tool calls), model abstraction
+- **Platform provides:** EventBus subscription, pattern detection triggers, checkpoint/audit infrastructure, rate limiting
+- **Integration point:** Agent action handler creates/resumes thread per customer, uses @convex-dev/agent for LLM call, returns result to platform's onComplete handler
+
+**Design Decision: Rate Limiting Implementation**
+
+Use `@convex-dev/rate-limiter` component (already installed in example app):
+
+- **Token bucket per agent** — configurable maxRequestsPerMinute
+- **Cost budget** — daily USD limit with alertThreshold and hard pause
+- **Exceeded behavior** — queue event for later retry, or dead letter if queue full
+
+| Rate Limit Type | Mechanism | Action When Exceeded |
+| Requests/minute | Token bucket (@convex-dev/rate-limiter) | Queue for retry |
+| Concurrent calls | Workpool maxParallelism | Natural backpressure |
+| Daily cost budget | Custom tracker (agent component table) | Pause agent |
+| Queue overflow | Workpool queueDepth | Dead letter |
+
+**Design Decision: LLM Fallback Strategy**
+
+When LLM is unavailable (API key missing, rate limited, circuit breaker open):
+
+1. Error propagates from pattern.analyze() through the action handler
+2. Workpool retries with exponential backoff (maxAttempts: 3)
+3. After retries exhausted, event goes to dead letter queue
+
+This ensures failed events are tracked and can be replayed after the issue is resolved.
+
+**Dedicated Agent Workpool:**
+
+A dedicated `agentPool` peer mount exists in `convex.config.ts`, separating LLM
+work from `projectionPool` to avoid resource contention.
+
+| Config | Value | Rationale |
+| Name | agentPool | Dedicated pool, separate from projectionPool |
+| maxParallelism | 10 | LLM calls are slow (~1-5s) — limit concurrency to control costs |
+| retryActionsByDefault | true | LLM APIs have transient failures |
+| defaultRetryBehavior | 3 attempts, 1s initial, base 2 | Exponential backoff for rate limits |
+| Partition key | event.streamId | Per-customer ordering (matches PM pattern) |
+
+"""typescript
+// convex.config.ts — dedicated agent pool
+app.use(workpool, { name: "agentPool" });
+
+// Agent pool configuration
+const agentPool = new Workpool(components.agentPool, {
+maxParallelism: 10,
+retryActionsByDefault: true,
+defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
+});
+"""
+
+Separation of concerns: agent LLM calls don't compete with projection processing
+in `projectionPool` (which handles high-throughput, low-latency CMS updates).
+
+**createAgentActionHandler — Factory:**
+
+`createAgentActionHandler` returns an `internalAction` that can call external APIs
+(LLM). The legacy `createAgentEventHandler` (mutation-based `onEvent` callback) has
+been removed — all agent event handling now uses the action-based handler.
+The action handler reuses existing pure logic from the mutation handler:
+
+- Pattern window filtering (`filterEventsInWindow`)
+- Minimum event check (`hasMinimumEvents`)
+- Approval determination (`shouldRequireApproval`)
+
+The new capability is the LLM call between trigger evaluation and decision creation:
+"""typescript
+// Simplified action handler flow
+// Steps 1-4: Same as mutation handler (reused pure functions)
+// Step 5: NEW — LLM analysis (only possible in action context)
+const analysis = await runtime.analyze(prompt, filteredEvents);
+// Step 6: Build AgentDecision from analysis (reused pure function)
+"""
+
+**Thread Adapter Design — @convex-dev/agent Integration:**
+
+One thread per (agentId, customerId) pair enables conversation context across events:
+
+| Concern | Mechanism |
+| Thread identity | Key: `agent:{agentId}:customer:{customerId}` |
+| First event | Creates new thread, seeds with customer context |
+| Subsequent events | Resumes existing thread, appends new event context |
+| History window | Thread retains LLM conversation history for richer analysis |
+| Thread cleanup | Threads expire naturally via @convex-dev/agent TTL |
+
+The adapter translates between platform's `AgentInterface` (analyze/reason methods)
+and `@convex-dev/agent`'s `Agent.generateText()`:
+"""typescript
+// Thread adapter bridges platform interface to @convex-dev/agent
+class ThreadAdapter implements AgentInterface {
+async analyze(prompt: string, events: FatEvent[]): Promise<LLMAnalysisResult> {
+const threadId = await this.getOrCreateThread(agentId, customerId);
+const result = await this.agent.generateText(ctx, { threadId }, {
+prompt: buildAnalysisPrompt(prompt, events),
+});
+return parseAnalysisResult(result);
+}
+}
+"""
+
+**Circuit Breaker Integration — Phase 18 Relationship:**
+
+Phase 18's circuit breaker (`platform-core/src/infrastructure/circuit-breaker.ts`)
+provides the failure isolation pattern. Agent LLM calls use a named instance:
+
+| Config | Value |
+| Circuit name | "llm-provider" (or per-provider: "openrouter", "openai") |
+| Failure threshold | 5 consecutive failures |
+| Reset timeout | 60 seconds |
+| Fallback | Rule-based analysis via existing `createMockAgentRuntime()` pattern |
+
+When circuit is open:
+
+1. LLM call is skipped (no HTTP request made)
+2. Error propagates to Workpool which retries after backoff
+3. Dead letter records circuit state context if retries exhausted
+4. Circuit half-opens after timeout, allowing one probe request
+
+#### Dependencies
+
+- Depends on: AgentBCComponentIsolation
+
+#### Acceptance Criteria
+
+**Agent action handler calls LLM and returns decision**
+
+- Given an agent configured with LLM runtime
+- And an OrderCancelled event is delivered via EventBus
+- When the action handler processes the event
+- Then it loads the checkpoint via runQuery
+- And it loads event history via cross-component query
+- And it calls the LLM for pattern analysis
+- And it returns an AgentDecision with confidence and reasoning
+
+**onComplete mutation persists decision atomically**
+
+- Given an agent action returned a successful AgentDecision
+- When the onComplete handler fires with result.kind "success"
+- Then the decision is recorded as an audit event in agent component
+- And the command is emitted to agent component commands table
+- And the checkpoint is updated with new position
+- And all writes happen in a single atomic mutation
+
+**Action handler rejects invalid agent configuration**
+
+- Given an agent action handler with missing LLM runtime config
+- And no fallback to rule-based analysis is configured
+- When the handler is initialized
+- Then it fails with AGENT_RUNTIME_REQUIRED error
+- And the error message indicates LLM runtime or fallback must be configured
+
+**LLM unavailable falls back to rule-based analysis**
+
+- Given an agent configured with LLM runtime
+- And the LLM API returns an error or times out
+- When the action handler processes the event
+- Then the error propagates to the Workpool for retry
+- And after retries exhausted the event is dead-lettered
+- And a DeadLetterRecorded audit event is created
+
+**Action failure triggers dead letter via onComplete**
+
+- Given an agent action that throws an unrecoverable error
+- When the onComplete handler fires with result.kind "failed"
+- Then a dead letter entry is created in agent component
+- And the checkpoint is NOT advanced
+- And an AgentAnalysisFailed audit event is recorded
+
+**Rate limiter allows LLM call within limits**
+
+- Given an agent with rate limit of 60 requests per minute
+- And 30 requests have been made this minute
+- When a new event triggers LLM analysis
+- Then the rate limiter allows the call
+- And the LLM analysis proceeds normally
+
+**Rate limiter blocks LLM call when exceeded**
+
+- Given an agent with rate limit of 60 requests per minute
+- And 60 requests have already been made this minute
+- When a new event triggers LLM analysis
+- Then the rate limiter denies the call
+- And the event is requeued for later processing
+- And an AgentRateLimited audit event is recorded
+
+**Cost budget exceeded pauses agent**
+
+- Given an agent with daily cost budget of 10.00 USD
+- And 9.50 USD has been spent today
+- When a new LLM call would cost approximately 0.60 USD
+- Then the agent is paused automatically
+- And an AgentBudgetExceeded audit event is recorded
+- And the event falls back to rule-based analysis
+
+**Queue overflow triggers dead letter**
+
+- Given an agent with queue depth of 100
+- And 100 events are already queued
+- When another event is rate-limited
+- Then it is sent to dead letter with reason "queue_overflow"
+- And an AgentQueueOverflow audit event is recorded
+
+**Agent subscription with onComplete receives completion callbacks**
+
+- Given an agent subscription configured with custom onComplete handler
+- When the agent action completes successfully
+- Then the custom onComplete handler fires with result.kind "success"
+- And the handler can update the agent checkpoint
+- And the handler can record agent-specific audit events
+
+**Failed agent jobs create dead letters via onComplete**
+
+- Given an agent subscription configured with custom onComplete handler
+- When the agent action fails with an error
+- Then the custom onComplete handler fires with result.kind "failed"
+- And a dead letter entry is created in the agent component
+- And the checkpoint is not advanced past the failed event
+
+**Agent subscription without onComplete uses global default**
+
+- Given an agent subscription without a custom onComplete handler
+- When the agent action fails
+- Then the EventBus defaultOnComplete handler fires
+- And the global dead letter handler processes the failure
+
+#### Business Rules
+
+**Agent event handlers are actions for LLM integration**
+
+**Invariant:** Agent event handlers that require LLM analysis must be Convex actions,
+not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete
+mutation handler, never in the action.
+
+    **Rationale:** Convex mutations cannot make external HTTP calls. The action/mutation
+    split enables LLM integration while maintaining atomic state persistence. Actions are
+    retryable by Workpool (mutations are not — they rely on OCC auto-retry).
+
+    **Handler Factory Signature:**
+
+```typescript
+// createAgentActionHandler replaces createAgentEventHandler
+// Returns an internalAction (not internalMutation)
+export function createAgentActionHandler(config: {
+  agentConfig: AgentBCConfig;
+  runtime: AgentRuntimeConfig; // LLM runtime (or mock)
+  loadHistory: (ctx: ActionCtx, event: AgentEventHandlerArgs) => Promise<EventHistory>;
+}): RegisteredAction<"internal", AgentEventHandlerArgs, AgentDecision>;
+```
+
+**Verified by:** Action calls LLM, onComplete persists, fallback works, timeout handled
+
+_Verified by: Agent action handler calls LLM and returns decision, onComplete mutation persists decision atomically, Action handler rejects invalid agent configuration, LLM unavailable falls back to rule-based analysis, Action failure triggers dead letter via onComplete_
+
+**Rate limiting is enforced before LLM calls**
+
+**Invariant:** Every LLM call must check rate limits before execution. Exceeded
+limits queue the event for later retry or send to dead letter if queue is full.
+
+    **Rationale:** LLM API costs can spiral quickly under high event volume. Rate limiting
+    protects against runaway costs and external API throttling. The existing `rateLimits`
+    config in `AgentBCConfig` defines the limits — this rule enforces them at runtime.
+
+    **Rate Limit Check Flow:**
+
+```text
+Event arrives → Check token bucket → Allowed? → Proceed to LLM
+                                        → Denied?  → Check queue depth
+                                                    → Queue available? → Requeue
+                                                    → Queue full?      → Dead letter
+```
+
+**Verified by:** Rate limit blocks excess calls, cost budget pauses agent,
+queue overflow creates dead letter
+
+_Verified by: Rate limiter allows LLM call within limits, Rate limiter blocks LLM call when exceeded, Cost budget exceeded pauses agent, Queue overflow triggers dead letter_
+
+**Agent subscriptions support onComplete callbacks**
+
+**Invariant:** `CreateAgentSubscriptionOptions` must include an optional `onComplete`
+field that receives Workpool completion callbacks, enabling agent-specific dead letter
+handling and checkpoint updates.
+
+    **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete`
+    field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler),
+    agents need custom completion logic: checkpoint updates, agent-specific audit events,
+    and rate limit tracking. Without this field, the agent-specific `handleChurnRiskOnComplete`
+    handler is orphaned — defined but never wired.
+
+    **Current Gap:**
+
+```typescript
+// CreateAgentSubscriptionOptions (current - missing onComplete)
+    interface CreateAgentSubscriptionOptions {
+      handler: FunctionReference<...>;
+      priority?: number;
+      toHandlerArgs?: ...;
+      getPartitionKey?: ...;
+      logger?: Logger;
+      // No onComplete field!
+    }
+```
+
+**Target:**
+
+```typescript
+// CreateAgentSubscriptionOptions (target - with onComplete)
+    interface CreateAgentSubscriptionOptions {
+      handler: FunctionReference<...>;
+      onComplete?: FunctionReference<...>; // Agent-specific completion handler
+      priority?: number;
+      toHandlerArgs?: ...;
+      getPartitionKey?: ...;
+      logger?: Logger;
+    }
+```
+
+**Verified by:** onComplete receives callbacks, dead letters created on failure,
+checkpoint updated on success
+
+_Verified by: Agent subscription with onComplete receives completion callbacks, Failed agent jobs create dead letters via onComplete, Agent subscription without onComplete uses global default_
+
+---
 
 ### 🚧 Confirmed Order Cancellation
 
@@ -201,1291 +841,6 @@ _Verified by: Reservation is released after confirmed order cancellation, Cancel
 The primary use case is enabling the Agent BC churn risk detection demo.
 
 _Verified by: Three cancellations trigger churn risk agent_
-
----
-
-## 📋 Planned Patterns
-
-### 📋 Agent Admin Frontend
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** The admin UI at `/admin/agents` has several gaps identified in the
-E2E feature file (`agent-approvals.feature`) and investigation:
-
-1. **Dead letter management missing** — Backend has full API (`queryDeadLetters`,
-   `replayDeadLetter`, `ignoreDeadLetter`) but no frontend UI
-2. **Decision history incomplete** — E2E spec describes decision history tab with
-   filtering, but component is not built
-3. **Authentication placeholder** — `useReviewerId()` returns `"reviewer-placeholder"`
-   with a TODO comment
-4. **No action feedback** — Approve/reject has no success/error toast notifications
-5. **No loading states** — No skeleton UI during Suspense boundaries
-6. **E2E steps missing** — `agent-approvals.feature` has 56 scenarios with no step
-   definitions, causing CI failures
-
-**Solution:** Complete the agent admin frontend:
-
-1. **Dead letter management panel** — List, replay, ignore with feedback
-2. **Decision history with filtering** — By agent ID, action type, time range
-3. **Auth integration pattern** — Document integration point, implement mock for tests
-4. **Toast notifications** — Success/error feedback for all mutating actions
-5. **E2E step definitions** — Implement steps for existing feature scenarios
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Operational visibility | Dead letters visible and actionable by operators |
-| Agent observability | Decision history filterable for analysis and debugging |
-| User feedback | Toast notifications confirm approve/reject/replay/ignore actions |
-| Test coverage | E2E tests validate full UI-to-backend agent workflow |
-| Production readiness | Auth integration pattern ready for Convex Auth/Clerk |
-
-**Current Admin UI Structure:**
-| Tab | Status | Component |
-| Dashboard | Implemented | AgentDashboard |
-| Pending Approvals | Implemented | PendingApprovalsList, ApprovalDetail |
-| Monitoring | Implemented | AgentMonitoring |
-| Decision History | Not built | (planned) |
-| Dead Letters | Not built | (planned) |
-
-**Existing Hooks (implemented):**
-| Hook | Purpose | Status |
-| usePendingApprovals() | List pending approvals | Working |
-| useApprovalDetail(id) | Single approval with events | Working |
-| useActiveAgents() | Active agent list | Working |
-| useApprovalActions() | Approve/reject mutations | Working (no feedback) |
-
-**Missing Hooks (planned):**
-| Hook | Purpose |
-| useDeadLetters(agentId?) | Dead letter list with optional agent filter |
-| useDeadLetterActions() | Replay/ignore mutations with feedback |
-| useDecisionHistory(filters) | Filtered audit events for decision history |
-| useReviewerId() | Real auth integration (replace placeholder) |
-
-**Design Decision: Authentication Pattern**
-
-| Option | Trade-off |
-| A: Convex Auth | Full auth stack, but adds complexity to example app |
-| B: Clerk integration | Proven pattern, but external dependency |
-| C: Mock with pattern (Recommended) | Document integration point, use mock for now |
-
-**Decision:** Option C. The example app is a reference implementation, not a production
-app. We document the exact integration point where `useReviewerId()` should connect
-to real auth (Convex Auth or Clerk), and provide a mock implementation that works
-for development and E2E tests. Real auth is a separate concern outside this spec's scope.
-
-**Design Decision: Toast Notification Library**
-
-Use Sonner for toast notifications:
-
-- Lightweight and accessible (ARIA live regions)
-- Works with React 19 and TanStack Start
-- No additional peer dependencies
-- Commonly used in Convex example apps
-
-**Design Decision: E2E Test Strategy**
-
-The `agent-approvals.feature` file exists at `apps/frontend/tests/e2e/features/admin/`
-with 56 scenarios. Strategy:
-
-1. Add `@skip` tag to scenarios NOT covered by this spec (future work)
-2. Implement step definitions for scenarios that ARE covered
-3. Remove `@skip` tags as implementations are completed
-4. Use Playwright page object pattern (consistent with existing E2E structure)
-
-**Existing E2E Feature Scenarios (from agent-approvals.feature):**
-| Category | Scenario Count | This Spec Covers |
-| Dashboard overview | 8 | Yes (already partially working) |
-| Pending approvals list | 10 | Yes (approve/reject + toast) |
-| Approval detail | 8 | Yes (detail view + actions) |
-| Monitoring | 6 | Yes (already partially working) |
-| Decision history | 8 | Yes (new tab + filters) |
-| Dead letter management | 8 | Yes (new panel) |
-| Customer risk preview | 4 | No (future work, @skip) |
-| Cross-agent filtering | 4 | Partial (basic filters) |
-
-#### Dependencies
-
-- Depends on: AgentChurnRiskCompletion
-
-#### Acceptance Criteria
-
-**Dead letter list displays failed events**
-
-- Given 3 dead letter entries exist for the churn-risk agent
-- When I navigate to the dead letters panel
-- Then I see 3 entries with agent, event type, error, and timestamp
-- And each entry has "Replay" and "Ignore" action buttons
-
-**Replay action triggers backend mutation with feedback**
-
-- Given a dead letter entry for event "evt_123"
-- When I click the "Replay" button
-- Then the replayDeadLetter mutation is called
-- And a success toast shows "Dead letter replayed successfully"
-- And the entry status updates to "replayed"
-
-**Ignore action with reason provides confirmation**
-
-- Given a dead letter entry for event "evt_456"
-- When I click "Ignore" and enter reason "Duplicate event, already processed"
-- Then the ignoreDeadLetter mutation is called with the reason
-- And a success toast shows "Dead letter ignored"
-- And the entry status updates to "ignored"
-
-**Replay failure shows error toast**
-
-- Given a dead letter entry whose original event no longer exists
-- When I click the "Replay" button
-- Then the mutation fails with an error
-- And an error toast shows a descriptive message
-- And the entry remains in "pending" status
-
-**Filter by agent shows only that agent's decisions**
-
-- Given decisions exist for "churn-risk" and "low-stock" agents
-- When I select "churn-risk" in the agent filter
-- Then only churn-risk agent decisions are displayed
-- And the URL updates to include ?agent=churn-risk
-
-**Filter by action type shows matching decisions**
-
-- Given decisions with actions "SuggestCustomerOutreach" and "LogChurnRisk"
-- When I select "SuggestCustomerOutreach" in the action filter
-- Then only SuggestCustomerOutreach decisions are displayed
-
-**Clear filters shows all decisions**
-
-- Given filters are active for agent and action type
-- When I click "Clear Filters"
-- Then all decisions are displayed
-- And the URL query parameters are removed
-
-**Loading decision history from shared URL**
-
-- Given the URL contains ?agent=churn-risk&action=SuggestCustomerOutreach
-- When the page loads
-- Then filters are pre-populated from URL parameters
-- And only matching decisions are displayed
-
-**Approve action shows success toast**
-
-- Given a pending approval for the churn-risk agent
-- When I click "Approve"
-- Then a success toast appears with "Approval recorded"
-- And the toast auto-dismisses after 5 seconds
-- And the approval list refreshes
-
-**Reject action shows success toast**
-
-- Given a pending approval for the churn-risk agent
-- When I click "Reject" and confirm
-- Then a success toast appears with "Action rejected"
-- And the approval is removed from the pending list
-
-**Error action shows descriptive error toast**
-
-- Given a pending approval that has already been expired
-- When I attempt to approve it
-- Then an error toast appears with "Approval has expired"
-- And the toast has role="alert" for accessibility
-- And the approval status shows "expired"
-
-**Multiple rapid actions show stacked toasts**
-
-- Given 3 pending approvals
-- When I quickly approve all 3
-- Then 3 success toasts appear in sequence
-- And each toast is individually dismissable
-- And they auto-dismiss in order
-
-#### Business Rules
-
-**Dead letters are visible and actionable**
-
-**Invariant:** Admin UI must display dead letter entries with replay/ignore actions.
-Each action must provide feedback via toast notification. Dead letters are operational
-concerns that require visibility for system health monitoring.
-
-    **Rationale:** Without dead letter UI, operators cannot manage failed agent event
-    processing. The backend has full API support (`queryDeadLetters`, `replayDeadLetter`,
-    `ignoreDeadLetter`) but this data is invisible to users.
-
-    **Dead Letter Panel Structure:**
-    | Column | Source | Purpose |
-    | Agent | deadLetter.agentId | Which agent failed |
-    | Event Type | deadLetter.eventType | What event failed |
-    | Error | deadLetter.error | Why it failed |
-    | Status | deadLetter.status | pending/replayed/ignored |
-    | Timestamp | deadLetter.createdAt | When it failed |
-    | Actions | buttons | Replay / Ignore |
-
-    **Verified by:** List displays correctly, replay works, ignore works, toast shows
-
-_Verified by: Dead letter list displays failed events, Replay action triggers backend mutation with feedback, Ignore action with reason provides confirmation, Replay failure shows error toast_
-
-**Decision history supports filtering**
-
-**Invariant:** Decision history must be filterable by agent ID, action type, and
-time range. Filters persist in URL query parameters for shareability and browser
-back/forward navigation.
-
-    **Rationale:** High-volume agents produce many audit events. Without filtering,
-    the decision history is unusable for analysis. URL-persisted filters enable sharing
-    specific views with team members and support browser navigation.
-
-    **Filter Parameters:**
-    | Filter | URL Param | Default | Description |
-    | Agent ID | ?agent=churn-risk | All agents | Filter by specific agent |
-    | Action Type | ?action=SuggestCustomerOutreach | All actions | Filter by command type |
-    | Time Range | ?from=2026-01-01&to=2026-02-01 | Last 7 days | Date range filter |
-
-    **Verified by:** Filters work, URL persists, clear restores all
-
-_Verified by: Filter by agent shows only that agent's decisions, Filter by action type shows matching decisions, Clear filters shows all decisions, Loading decision history from shared URL_
-
-**Actions provide feedback via toast**
-
-**Invariant:** All mutating actions (approve, reject, replay, ignore) must show
-toast notifications for success and error states. Toasts use accessible ARIA
-attributes and auto-dismiss after a reasonable timeout.
-
-    **Rationale:** Users need immediate feedback that their action was processed.
-    The current implementation performs mutations silently — the user clicks
-    "Approve" and has no visual confirmation that it worked or failed.
-
-    **Toast Behavior:**
-    | Action | Success Message | Error Behavior |
-    | Approve | "Approval recorded for {agentId}" | Show error with reason |
-    | Reject | "Action rejected" | Show error with reason |
-    | Replay dead letter | "Dead letter replayed successfully" | Show error with reason |
-    | Ignore dead letter | "Dead letter ignored" | Show error with reason |
-
-    **Verified by:** Success toast appears, error toast appears, auto-dismiss works
-
-_Verified by: Approve action shows success toast, Reject action shows success toast, Error action shows descriptive error toast, Multiple rapid actions show stacked toasts_
-
----
-
-### 📋 Agent BC Component Isolation
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,
-`agentCommands`, `pendingApprovals`) reside in the shared app schema without physical
-BC isolation. Any app mutation can read/write agent tables directly, violating the core
-platform principle that bounded contexts should have isolated databases enforced by
-Convex component boundaries.
-
-**Solution:** Implement agent as a proper Convex component:
-
-1. **`defineComponent("agent")`** with isolated schema and private tables
-2. **Public API handlers** for checkpoint, audit, dead letter, and command operations
-3. **Cross-component query pattern** for app-level projections like `customerCancellations`
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Physical BC isolation | Component tables are private, accessed only via API boundary |
-| Schema evolution safety | Component schema evolves independently of app schema |
-| Clear ownership | Agent component owns its domain data exclusively |
-| Consistent patterns | Aligns with orders/inventory component architecture |
-| OCC blast radius reduction | Agent writes isolated from app-level transaction conflicts |
-| Testing isolation | Component can be tested with `t.registerComponent()` |
-
-**Current State (app-level tables):**
-| Table | Current Location | Issue |
-| agentCheckpoints | Main schema.ts | No access control, OCC blast radius |
-| agentAuditEvents | Main schema.ts | Any mutation can modify audit trail |
-| agentDeadLetters | Main schema.ts | No encapsulation |
-| agentCommands | Main schema.ts | No API boundary |
-| pendingApprovals | Main schema.ts | Shared transaction scope |
-
-**Target State (component isolation):**
-| Table | Target Location | Access Pattern |
-| agentCheckpoints | Agent component schema | Via components.agent.checkpoints._ |
-| agentAuditEvents | Agent component schema | Via components.agent.audit._ |
-| agentDeadLetters | Agent component schema | Via components.agent.deadLetters._ |
-| agentCommands | Agent component schema | Via components.agent.commands._ |
-| pendingApprovals | Agent component schema | Via components.agent.approvals.\* |
-
-**Design Decision: Projection Ownership (customerCancellations)**
-
-The `customerCancellations` projection is updated by CommandOrchestrator (orders BC context)
-but consumed exclusively by the agent for O(1) pattern detection lookup.
-
-| Option | Trade-off |
-| A: Keep at app level (Recommended) | Agent queries via cross-component query; natural per CLAUDE.md "all projections at app level" |
-| B: Move into agent component | Faster queries but requires cross-BC event subscription for updates |
-| C: Duplicate to both locations | Redundant data, consistency challenges |
-
-**Decision:** Option A. Projections often combine data from multiple BCs and belong at
-the app level per platform architecture. The agent uses a cross-component query pattern
-to access `customerCancellations` — the same pattern any component uses to read app data.
-
-**Design Decision: Component API Surface**
-
-Expose minimal API that supports all current use cases without over-engineering:
-
-| API Group | Handlers | Purpose |
-| Checkpoints | loadCheckpoint, updateCheckpoint | Exactly-once processing |
-| Audit | recordAuditEvent, queryAuditEvents, getAuditEventsByAgent | Explainability |
-| Dead Letters | recordDeadLetter, replayDeadLetter, ignoreDeadLetter, queryDeadLetters | Error management |
-| Commands | recordCommand, updateCommandStatus, queryCommands | Command lifecycle |
-| Approvals | createApproval, approveAction, rejectAction, queryPendingApprovals | Human-in-loop |
-
-**Design Decision: Migration Strategy**
-
-Staged migration from app tables to component tables:
-
-1. Create component with new schema (parallel to existing tables)
-2. Update handlers to use component API
-3. Migrate existing data (one-time migration script)
-4. Remove old tables from app schema
-
-**Component Isolation Constraints (per platform architecture):**
-| Constraint | Impact on Agent Component |
-| No ctx.auth inside component | Pass userId as argument to all handlers |
-| IDs become strings at boundary | Use business IDs (agentId, eventId) not Convex doc IDs |
-| Sub-transactions | Agent writes commit independently from parent mutations |
-| No process.env | Pass configuration (API keys, model names) as arguments |
-
-#### Dependencies
-
-- Depends on: AgentAsBoundedContext
-
-#### Acceptance Criteria
-
-**Agent component registers with isolated schema**
-
-- Given the agent component is defined with defineComponent
-- When the app mounts the agent component via app.use
-- Then the agent's tables are isolated from the app schema
-- And the app cannot directly query agentCheckpoints
-- And all access goes through components.agent.\* handlers
-
-**Component API provides full CRUD for checkpoints**
-
-- Given the agent component is mounted
-- When a checkpoint is created via components.agent.checkpoints.load
-- Then the checkpoint is stored in the component's isolated database
-- And it can be updated via components.agent.checkpoints.update
-- And it can be queried via components.agent.checkpoints.load
-
-**Direct table access is not possible from parent**
-
-- Given the agent component is mounted
-- When the parent app attempts ctx.db.query("agentCheckpoints")
-- Then the query returns no results
-- And agent data is only accessible through component API handlers
-
-**Component sub-transactions provide isolation**
-
-- Given a parent mutation that calls agent component handlers
-- When the agent component handler throws an error
-- And the parent catches the exception
-- Then only the agent component write is rolled back
-- And the parent mutation's other writes succeed
-
-**Agent handler receives projection data as argument**
-
-- Given the agent event handler is triggered by an OrderCancelled event
-- When the handler needs customer cancellation history
-- Then it receives the history as a pre-loaded argument
-- And it does not directly query customerCancellations table
-
-**Missing projection data returns empty result**
-
-- Given a new customer with no cancellation history
-- When the agent handler receives an event for this customer
-- Then the cancellation history argument is an empty array
-- And the handler proceeds with rule-based analysis
-- And no error is thrown
-
-**App-level queries can access agent data via component API**
-
-- Given the admin UI needs to display agent audit events
-- When it queries via components.agent.audit.queryAuditEvents
-- Then it receives the audit events for the requested agent
-- And the query respects agent component boundaries
-
-#### Business Rules
-
-**Agent component provides isolated database**
-
-**Invariant:** All agent-specific state (checkpoints, audit events, dead letters,
-commands, pending approvals) must reside in the agent component's isolated database.
-No agent data in the shared app schema.
-
-    **Rationale:** Physical BC isolation prevents accidental coupling. Parent app mutations
-    cannot query agent tables directly — this is enforced by Convex's component architecture,
-    not just convention. This matches the orders/inventory pattern where each BC owns its
-    tables via `defineComponent()`.
-
-    **Verified by:** Component isolation test, API boundary test, schema separation test
-
-_Verified by: Agent component registers with isolated schema, Component API provides full CRUD for checkpoints, Direct table access is not possible from parent, Component sub-transactions provide isolation_
-
-**Cross-component queries use explicit API**
-
-**Invariant:** Agent BC must access external data (like `customerCancellations` projection)
-through explicit cross-component query patterns, never through direct table access.
-
-    **Rationale:** Maintains BC isolation while enabling necessary data access. The
-    `customerCancellations` projection lives at the app level (owned by CommandOrchestrator),
-    so the agent handler must receive this data as an argument or query it through
-    a well-defined interface.
-
-    **Cross-Component Data Flow:**
-    | Data Source | Owner | Consumer | Access Pattern |
-    | customerCancellations | App (projection) | Agent handler | Passed as argument to handler |
-    | Order events | EventBus | Agent subscription | Delivered via Workpool |
-    | Agent decisions | Agent component | Admin UI queries | Via component API |
-
-    **Verified by:** Cross-component query works, missing data handled gracefully,
-    no direct table coupling between agent and app
-
-_Verified by: Agent handler receives projection data as argument, Missing projection data returns empty result, App-level queries can access agent data via component API_
-
----
-
-### 📋 Agent Churn Risk Completion
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** The churn-risk agent in the order-management example app has working
-rule-based detection but critical gaps prevent it from being a complete reference
-implementation:
-
-1. **LLM never called** — `onEvent` in `_config.ts` is pure rule-based; the LLM
-   runtime at `_llm/runtime.ts` exists but is never invoked
-2. **Commands go nowhere** — `SuggestCustomerOutreach` is written to `agentCommands`
-   table but no handler processes it
-3. **Pattern system disconnect** — `_patterns/churnRisk.ts` (with LLM `analyze()`)
-   and `_config.ts` (with inline rules) are parallel implementations
-4. **Approval expiration incomplete** — `expirePendingApprovals` mutation exists
-   but scheduling mechanism needs enhancement
-
-**Solution:** Complete the churn-risk agent using new platform infrastructure from
-Phases 22a-22c:
-
-1. **Hybrid LLM flow** — rule trigger first (cheap), LLM analysis when triggered
-2. **Command routing** — SuggestCustomerOutreach routes to a real handler
-3. **Pattern unification** — Use formal PatternDefinition from `_patterns/`
-4. **Approval cron enhancement** — Complete the expiration mechanism
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Production-ready example | Full agent pattern demonstrated end-to-end |
-| LLM integration proof | Validates action/mutation split from Phase 22b |
-| Complete command flow | Agent decisions trigger real domain actions |
-| Reference implementation | Other agents can follow this exact pattern |
-| E2E testable | Integration tests cover full cancellation-to-outreach flow |
-
-**End-to-End Flow (target state):**
-"""
-
-1. Customer cancels order (OrderCancelled event)
-   |
-2. EventBus delivers to churn-risk agent (Workpool action)
-   |
-3. Agent loads checkpoint, checks idempotency
-   |
-4. Agent loads customerCancellations projection (cross-BC query)
-   |
-5. Pattern trigger: 3+ cancellations in 30 days?
-   |
-   +--- No --> Skip, update checkpoint
-   +--- Yes --> Continue to step 6
-   |
-6. LLM analysis: confidence score + reasoning + suggested action
-   |
-7. Confidence >= threshold?
-   |
-   +--- Yes --> Emit SuggestCustomerOutreach command
-   +--- No --> Queue for human approval
-   |
-8. onComplete: persist decision, update checkpoint, record audit
-   |
-9. CommandOrchestrator routes SuggestCustomerOutreach
-   |
-10. OutreachHandler creates outreach task, emits OutreachCreated event
-    """
-
-**Design Decision: LLM Model Configuration**
-
-Keep existing OpenRouter + Gemini Flash configuration from `_llm/config.ts`:
-
-- Cost-effective for analysis tasks (lower cost than GPT-4/Claude)
-- Model configurable via `OPENROUTER_API_KEY` environment variable
-- Mock runtime in tests (no API key required)
-- Future: allow model override in AgentBCConfig
-
-**Design Decision: Approval Expiration Mechanism**
-
-| Option | Trade-off |
-| A: Cron job (Recommended) | Simple, already partially implemented. Single cron handles all expirations |
-| B: @convex-dev/workflow sleepUntil | More precise timing but creates one workflow per approval (expensive) |
-| C: @convex-dev/crons dynamic | Flexible but adds component dependency |
-
-**Decision:** Option A — The `expirePendingApprovals` mutation already exists. Enhance
-the existing hourly cron in `crons.ts` to check for expired approvals. This is pragmatically
-better than workflow-per-approval: lower overhead, single polling point, acceptable latency
-(up to 1 hour late vs exact millisecond timing that isn't needed for 24h timeouts).
-
-**Design Decision: SuggestCustomerOutreach Handler**
-
-Create a simple domain handler that:
-
-1. Records the outreach suggestion with customer context
-2. Emits `OutreachCreated` event for downstream consumers
-3. Future phases could add actual notification delivery (email, SMS)
-
-This follows the "start simple, enhance later" principle — the handler exists and is
-routed through CommandOrchestrator, but the actual outreach mechanism is a separate concern.
-
-#### Dependencies
-
-- Depends on: AgentCommandInfrastructure
-
-#### Acceptance Criteria
-
-**Three cancellations trigger LLM analysis**
-
-- Given customer "cust_123" has cancelled 3 orders in the last 30 days
-- When an OrderCancelled event is published for "cust_123"
-- Then the pattern trigger fires (3+ cancellations detected)
-- And LLM analysis is called with event history
-- And the analysis returns confidence score and reasoning
-- And the decision includes suggestedAction "SuggestCustomerOutreach"
-
-**Two cancellations do not trigger LLM**
-
-- Given customer "cust_456" has cancelled 2 orders in the last 30 days
-- When an OrderCancelled event is published for "cust_456"
-- Then the pattern trigger does not fire
-- And no LLM call is made
-- And the checkpoint advances without emitting a command
-
-**LLM unavailable falls back to rule-based confidence**
-
-- Given customer "cust_789" has cancelled 5 orders in the last 30 days
-- And the LLM API is unreachable
-- When an OrderCancelled event triggers analysis
-- Then the agent falls back to rule-based confidence calculation
-- And the confidence is derived from cancellation count and frequency
-- And the audit records analysisMethod as "rule-based-fallback"
-
-**LLM analysis with low confidence queues for approval**
-
-- Given customer "cust_101" has cancelled 3 orders in the last 30 days
-- And the LLM returns confidence 0.65 (below threshold 0.8)
-- When the agent processes the analysis result
-- Then a pending approval is created with the LLM reasoning
-- And no command is emitted immediately
-- And an AgentDecisionPending audit event is recorded
-
-**Cron expires approval after timeout**
-
-- Given a pending approval created 25 hours ago
-- And the approval timeout is 24 hours
-- When the expiration cron runs
-- Then the approval status transitions to "expired"
-- And an AgentApprovalExpired audit event is recorded
-
-**Expired approval cannot be approved or rejected**
-
-- Given an approval that has been expired by the cron
-- When a reviewer attempts to approve the expired item
-- Then the action is rejected with APPROVAL_EXPIRED error
-- And the approval remains in "expired" status
-
-**Approved before timeout succeeds normally**
-
-- Given a pending approval created 12 hours ago
-- When a reviewer approves the action
-- Then the approval status transitions to "approved"
-- And the associated command is submitted for execution
-
-**SuggestCustomerOutreach routes to outreach handler**
-
-- Given the agent has emitted a SuggestCustomerOutreach command
-- And the command includes customerId, reason, and confidence
-- When the CommandOrchestrator processes the command
-- Then the customerOutreach handler creates an outreach task
-- And an OutreachCreated event is emitted
-- And the agent command status updates to "completed"
-
-**Full end-to-end flow from cancellation to outreach**
-
-- Given a customer who has cancelled 2 orders previously
-- When the customer cancels a third order
-- Then the churn-risk agent detects the pattern
-- And LLM analysis returns high confidence
-- And SuggestCustomerOutreach command is emitted
-- And the command is routed to the outreach handler
-- And an OutreachCreated event confirms the action
-
-**Command failure records error and creates dead letter**
-
-- Given the agent has emitted a SuggestCustomerOutreach command
-- And the outreach handler throws an error
-- When the CommandOrchestrator reports the failure
-- Then the agent command status updates to "failed"
-- And an AgentCommandFailed audit event is recorded
-- And the failure is available for retry via dead letter management
-
-#### Business Rules
-
-**Churn-risk agent uses hybrid LLM flow**
-
-**Invariant:** Pattern trigger is evaluated first (rule-based, no LLM cost). If
-trigger fires (3+ cancellations in 30 days), LLM analysis provides confidence score
-and reasoning. Trigger failure skips LLM call entirely.
-
-    **Rationale:** Rule-based triggers are cheap and deterministic. LLM analysis adds
-    value only when patterns warrant deeper investigation. This hybrid approach minimizes
-    API costs while providing rich analysis when needed.
-
-    **Cost Model:**
-    | Step | Cost | Frequency |
-    | Rule trigger check | ~0 (local computation) | Every OrderCancelled event |
-    | LLM analysis | ~$0.001-0.01 per call | Only when 3+ cancellations detected |
-    | Total per detection | ~$0.01 | Rare (subset of customers) |
-
-    **Verified by:** Trigger gates LLM, LLM enriches decision, fallback works
-
-_Verified by: Three cancellations trigger LLM analysis, Two cancellations do not trigger LLM, LLM unavailable falls back to rule-based confidence, LLM analysis with low confidence queues for approval_
-
-**Approvals expire after configured timeout**
-
-**Invariant:** Pending approvals must transition to "expired" status after
-`approvalTimeout` elapses (default 24 hours). A cron job runs periodically
-to expire stale approvals.
-
-    **Rationale:** Pending approvals cannot linger indefinitely. Without expiration,
-    the system accumulates stale decisions that may no longer be relevant. The cron
-    approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
-
-    **Verified by:** Expiration transitions correctly, expired cannot be acted on
-
-_Verified by: Cron expires approval after timeout, Expired approval cannot be approved or rejected, Approved before timeout succeeds normally_
-
-**Emitted commands route to domain handlers**
-
-**Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes through
-CommandOrchestrator to a handler that creates the actual outreach task and emits
-a domain event.
-
-    **Rationale:** Currently commands are stored in `agentCommands` but never processed.
-    Completing the routing makes the agent actionable — its analysis leads to real
-    business outcomes rather than entries in a table.
-
-    **Verified by:** Command routes to handler, handler creates outreach, event emitted
-
-_Verified by: SuggestCustomerOutreach routes to outreach handler, Full end-to-end flow from cancellation to outreach, Command failure records error and creates dead letter_
-
----
-
-### 📋 Agent Command Infrastructure
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** Three interconnected gaps in agent command infrastructure:
-
-1. **Commands go nowhere** — Agent emits commands to `agentCommands` table but nothing
-   consumes or routes them to target BC handlers
-2. **No lifecycle control** — Agent cannot be paused, resumed, or reconfigured.
-   The `pause()`, `resume()` stubs in `init.ts` are TODO(Phase-23) placeholders
-3. **Parallel pattern systems** — `_patterns/churnRisk.ts` defines formal `PatternDefinition`
-   with `analyze()` that calls LLM, while `_config.ts` has inline `onEvent` that reimplements
-   trigger logic without LLM. These are disconnected implementations
-
-**Solution:** Complete agent command infrastructure:
-
-1. **Command routing** via CommandOrchestrator — agent commands flow through existing infrastructure
-2. **Agent lifecycle FSM** — formal state machine with commands for state transitions
-3. **Unified pattern registry** — single source of truth for pattern trigger + analysis
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Commands have effect | Emitted agent commands route to actual domain handlers |
-| Agent controllability | Operators can pause/resume/reconfigure agents via commands |
-| Single pattern source | One PatternDefinition powers both trigger and LLM analysis |
-| Audit completeness | Full command lifecycle tracked through Command Bus |
-| Consistent architecture | Agent commands use same infrastructure as domain commands |
-| Operational safety | Lifecycle FSM prevents invalid state transitions |
-
-**Current Gap: Command Emission Dead End**
-"""
-Agent detects pattern
-|
-v
-emitAgentCommand()
-|
-v
-INSERT into agentCommands table
-|
-v
-??? (nothing consumes the command)
-"""
-
-**Target: Full Command Routing**
-"""
-Agent detects pattern
-|
-v
-CommandOrchestrator.execute(agentCommandConfig)
-|
-+--> Command Bus (idempotency, audit)
-+--> Target BC handler (e.g., customerOutreach)
-+--> Event Store (CommandEmitted event)
-+--> Projection update
-"""
-
-**Design Decision: Command Routing Approach**
-
-| Option | Mechanism | Trade-off |
-| A: CommandOrchestrator (Recommended) | Agent commands flow through same orchestrator as domain commands | Consistent, audited, idempotent; adds standard indirection |
-| B: Direct handler calls | Agent calls target BC mutation directly via makeFunctionReference | Simpler but bypasses command infrastructure |
-| C: Integration events | Agent publishes integration event, consumer PM handles | Loosest coupling but most complex; better for cross-system |
-
-**Decision:** Option A — CommandOrchestrator provides:
-
-- Command idempotency via Command Bus
-- Full audit trail (command recorded, status tracked)
-- Middleware pipeline (validation, logging, authorization)
-- Consistent with how all other commands work in the platform
-
-**Design Decision: Agent Lifecycle FSM**
-
-"""
-stopped ──> active ──> paused ──> active
-| |
-v v
-stopped stopped
-|
-v
-error_recovery ──> active
-"""
-
-| State | Description | Allowed Transitions |
-| stopped | Not processing events | -> active (via StartAgent) |
-| active | Processing events normally | -> paused, stopped, error_recovery |
-| paused | Temporarily not processing, checkpoint preserved | -> active, stopped |
-| error_recovery | Automatic recovery after repeated failures | -> active (after cooldown) |
-
-**Lifecycle Commands:**
-| Command | Transition | Effect |
-| StartAgent | stopped -> active | Resume/start EventBus subscription from checkpoint |
-| PauseAgent | active -> paused | Stop processing, preserve checkpoint for resume |
-| ResumeAgent | paused -> active | Resume from last checkpoint position |
-| StopAgent | any -> stopped | Stop and clear subscription (checkpoint preserved) |
-| ReconfigureAgent | active/paused -> active | Update config without losing state |
-
-**Design Decision: Pattern System Unification**
-
-**Current disconnect:**
-| Implementation | Location | Uses LLM | Used in Production |
-| \_config.ts onEvent (inline) | contexts/agent/\_config.ts | No | Yes (EventBus handler) |
-| PatternDefinition.analyze() | contexts/agent/\_patterns/churnRisk.ts | Yes | No (never called) |
-
-**Target: Unified pattern flow**
-
-1. Remove inline `onEvent` from `AgentBCConfig`
-2. Add `patterns: PatternDefinition[]` field to `AgentBCConfig`
-3. Handler uses pattern's `trigger()` to check if analysis needed
-4. Handler uses pattern's `analyze()` for LLM analysis (in action)
-5. Single definition powers both cheap rule check and expensive LLM call
-
-"""typescript
-// Target AgentBCConfig (simplified)
-interface AgentBCConfig {
-id: string;
-subscriptions: string[];
-patterns: PatternDefinition[]; // Replaces onEvent
-confidenceThreshold: number;
-humanInLoop?: HumanInLoopConfig;
-rateLimits?: RateLimitConfig;
-// onEvent removed - patterns handle detection + analysis
-}
-"""
-
-#### Dependencies
-
-- Depends on: AgentLLMIntegration
-
-#### Acceptance Criteria
-
-**Agent command routes through CommandOrchestrator to handler**
-
-- Given an agent has emitted a SuggestCustomerOutreach command
-- When the command is routed via CommandOrchestrator
-- Then the registered handler for SuggestCustomerOutreach is called
-- And the command status transitions pending -> processing -> completed
-- And an audit event records the command execution
-
-**Unknown command type is rejected with validation error**
-
-- Given an agent emits a command with unregistered type "UnknownAction"
-- When the command routing attempts to find a handler
-- Then the routing fails with UNKNOWN_COMMAND_TYPE error
-- And the command status transitions to "failed"
-- And an audit event records the failure
-
-**Command idempotency prevents duplicate processing**
-
-- Given an agent emits a SuggestCustomerOutreach command with commandId "cmd_123"
-- And the command has already been processed successfully
-- When the same commandId is submitted again
-- Then the Command Bus rejects it as a duplicate
-- And no handler is called
-
-**PauseAgent transitions active agent to paused**
-
-- Given a churn-risk agent in "active" state
-- When a PauseAgent command is executed
-- Then the agent state transitions to "paused"
-- And the checkpoint is preserved at current position
-- And new events are not processed while paused
-- And an AgentPaused audit event is recorded
-
-**ResumeAgent resumes from checkpoint position**
-
-- Given a churn-risk agent in "paused" state
-- And the checkpoint is at position 42
-- When a ResumeAgent command is executed
-- Then the agent state transitions to "active"
-- And event processing resumes from position 43
-- And an AgentResumed audit event is recorded
-
-**Invalid lifecycle transition is rejected**
-
-- Given a churn-risk agent in "stopped" state
-- When a PauseAgent command is executed
-- Then the command is rejected with INVALID_LIFECYCLE_TRANSITION
-- And the agent remains in "stopped" state
-- And the rejection is recorded in audit trail
-
-**ReconfigureAgent updates configuration without losing state**
-
-- Given an active churn-risk agent with confidenceThreshold 0.8
-- When a ReconfigureAgent command changes threshold to 0.7
-- Then the agent continues from its current checkpoint
-- And future analysis uses the new threshold
-- And the config change is recorded in audit trail
-
-**Agent config references patterns from registry**
-
-- Given a pattern "churn-risk" registered in the pattern registry
-- When configuring a churn-risk agent
-- Then the agent config references patterns by name
-- And the handler loads pattern definitions from registry at startup
-
-**Handler uses pattern trigger for cheap detection**
-
-- Given an event delivered to the agent handler
-- When the handler evaluates patterns
-- Then it calls pattern.trigger(eventHistory) first
-- And only proceeds to pattern.analyze() if trigger returns true
-- And this avoids unnecessary LLM calls for non-matching events
-
-**Handler uses pattern analyze for LLM analysis**
-
-- Given a pattern trigger has fired for 3+ cancellations
-- When the handler calls pattern.analyze(eventHistory, agentContext)
-- Then the LLM analysis provides confidence, reasoning, and suggested action
-- And the result is wrapped in an AgentDecision
-- And the analysis method is recorded as "llm" in the audit trail
-
-**Unknown pattern name in config fails validation**
-
-- Given an agent config referencing pattern "nonexistent-pattern"
-- When the agent is initialized
-- Then initialization fails with PATTERN_NOT_FOUND error
-- And the error includes the pattern name for debugging
-
-#### Business Rules
-
-**Emitted commands are routed to handlers**
-
-**Invariant:** Commands emitted by agents must flow through CommandOrchestrator and
-be processed by registered handlers. Commands cannot remain unprocessed in a table.
-
-    **Rationale:** The current `agentCommands` table receives inserts from `emitAgentCommand()`
-    but nothing acts on them. The emitted `SuggestCustomerOutreach` command sits with status
-    "pending" forever. For the agent to have real impact, its commands must reach domain handlers.
-
-    **Command Routing Flow:**
-    | Step | Action | Component |
-    | 1 | Agent decides to emit command | Agent action handler |
-    | 2 | Command recorded in onComplete | Agent component |
-    | 3 | CommandOrchestrator.execute() | Platform orchestrator |
-    | 4 | Target BC handler processes command | Domain BC |
-    | 5 | Command status updated | Agent component |
-
-    **Verified by:** Command routes to handler, status lifecycle tracked,
-    unknown command rejected
-
-_Verified by: Agent command routes through CommandOrchestrator to handler, Unknown command type is rejected with validation error, Command idempotency prevents duplicate processing_
-
-**Agent lifecycle is controlled via commands**
-
-**Invariant:** Agent state changes (start, pause, resume, stop, reconfigure) must
-happen via commands, not direct database manipulation. Each transition is validated
-by the lifecycle FSM and recorded in the audit trail.
-
-    **Rationale:** Commands provide audit trail, FSM validation, and consistent state
-    transitions. Direct DB manipulation bypasses these safeguards. The lifecycle FSM
-    prevents invalid transitions (e.g., pausing an already-stopped agent).
-
-    **Verified by:** Valid transitions succeed, invalid transitions rejected,
-    paused agent stops processing
-
-_Verified by: PauseAgent transitions active agent to paused, ResumeAgent resumes from checkpoint position, Invalid lifecycle transition is rejected, ReconfigureAgent updates configuration without losing state_
-
-**Pattern definitions are the single source of truth**
-
-**Invariant:** Each agent references named patterns from a registry. The pattern's
-`trigger()` and `analyze()` functions are used by the event handler, eliminating
-parallel implementations.
-
-    **Rationale:** The current codebase has two disconnected pattern implementations:
-    `_config.ts` with inline rule-based detection and `_patterns/churnRisk.ts` with
-    formal `PatternDefinition` including LLM analysis. This creates confusion about
-    which code path runs in production and makes the LLM analysis unreachable.
-
-    **Unified Flow:**
-
-```text
-Event arrives at agent
-         |
-         v
-    For each pattern in agent.patterns:
-         |
-         +--- pattern.trigger(events) -> boolean
-         |         |
-         |    No?  +--- Skip to next pattern
-         |    Yes? |
-         |         v
-         +--- pattern.analyze(events, agent) -> AnalysisResult
-         |         |
-         |         v
-         +--- Build AgentDecision from analysis
-```
-
-**Verified by:** Config references patterns by name, handler uses pattern methods,
-inline onEvent removed
-
-_Verified by: Agent config references patterns from registry, Handler uses pattern trigger for cheap detection, Handler uses pattern analyze for LLM analysis, Unknown pattern name in config fails validation_
-
----
-
-### 📋 Agent LLM Integration
-
-| Property | Value   |
-| -------- | ------- |
-| Status   | planned |
-| Effort   | 1w      |
-
-**Problem:** The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that
-cannot call external APIs. The LLM runtime (`_llm/runtime.ts`) exists with OpenRouter
-integration but is never invoked because mutations cannot make HTTP calls. Additionally,
-rate limiting config exists as types only — no runtime enforcement protects against
-runaway LLM costs.
-
-**Solution:** Implement hybrid action/mutation handler pattern:
-
-1. **Action handler factory** — EventBus delivers to Workpool action (not mutation)
-2. **onComplete mutation** — Persists state atomically after LLM analysis
-3. **Rate limiting enforcement** — `@convex-dev/rate-limiter` token bucket per agent
-4. **Cost budget tracking** — Daily spend limits with automatic pause
-5. **LLM fallback** — Graceful degradation to rule-based when LLM unavailable
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| LLM integration works | Actions can make external HTTP calls (mutations cannot) |
-| Atomic persistence | Mutations in onComplete provide transactional guarantees |
-| Cost control | Rate limiting prevents runaway LLM API costs |
-| Graceful degradation | Fallback to rules when LLM unavailable or rate-limited |
-| Conversation context | Thread adapter retains analysis history across events |
-| Fault isolation | Circuit breaker prevents cascade failures from LLM outages |
-
-**The Fundamental Constraint:**
-
-| Function Type | Can Call External APIs | Database Writes | Workpool Retry |
-| Mutation | No | Yes (atomic) | No (OCC auto-retry) |
-| Action | Yes (fetch, LLM) | No (must use runMutation) | Yes (if enabled) |
-
-This means the current single-mutation handler architecture fundamentally blocks LLM
-integration. The solution requires splitting into action (LLM) + mutation (persist).
-
-**Action/Mutation Split Architecture:**
-"""
-EventBus
-|
-v
-Workpool.enqueueAction (agent event handler)
-|
-+--- 1. Load checkpoint (via runQuery)
-+--- 2. Check idempotency (skip if already processed)
-+--- 3. Load event history (via cross-component query)
-+--- 4. Evaluate rule trigger (cheap, no LLM)
-+--- 5. If triggered: call LLM analysis (external API)
-+--- 6. Return AgentDecision
-|
-v
-onComplete Mutation
-|
-+--- 7. Validate decision
-+--- 8. Record to agent component (audit, command)
-+--- 9. Create pending approval (if needed)
-+--- 10. Update checkpoint
-+--- 11. Handle failure (dead letter)
-"""
-
-**Design Decision: @convex-dev/agent Integration**
-
-| Option | Trade-off |
-| A: Full @convex-dev/agent | Thread management, tool execution, but opinionated patterns that may conflict with event-reactive architecture |
-| B: Vercel AI SDK only (current) | More control, but must implement thread/tool patterns manually |
-| C: Hybrid (Recommended) | Use @convex-dev/agent for threads and tools, keep custom EventBus subscription and pattern detection |
-
-**Decision:** Option C — Hybrid approach.
-
-- **@convex-dev/agent provides:** Thread management (conversation context), tool execution (structured tool calls), model abstraction
-- **Platform provides:** EventBus subscription, pattern detection triggers, checkpoint/audit infrastructure, rate limiting
-- **Integration point:** Agent action handler creates/resumes thread per customer, uses @convex-dev/agent for LLM call, returns result to platform's onComplete handler
-
-**Design Decision: Rate Limiting Implementation**
-
-Use `@convex-dev/rate-limiter` component (already installed in example app):
-
-- **Token bucket per agent** — configurable maxRequestsPerMinute
-- **Cost budget** — daily USD limit with alertThreshold and hard pause
-- **Exceeded behavior** — queue event for later retry, or dead letter if queue full
-
-| Rate Limit Type | Mechanism | Action When Exceeded |
-| Requests/minute | Token bucket (@convex-dev/rate-limiter) | Queue for retry |
-| Concurrent calls | Workpool maxParallelism | Natural backpressure |
-| Daily cost budget | Custom tracker (agent component table) | Pause agent |
-| Queue overflow | Workpool queueDepth | Dead letter |
-
-**Design Decision: LLM Fallback Strategy**
-
-When LLM is unavailable (API key missing, rate limited, circuit breaker open):
-
-1. Fall back to rule-based confidence scoring (existing logic in \_config.ts)
-2. Record fallback decision with `analysisMethod: "rule-based-fallback"` in audit
-3. Apply lower confidence threshold for fallback decisions (configurable)
-
-This ensures the agent continues providing value even without LLM access.
-
-#### Dependencies
-
-- Depends on: AgentBCComponentIsolation
-
-#### Acceptance Criteria
-
-**Agent action handler calls LLM and returns decision**
-
-- Given an agent configured with LLM runtime
-- And an OrderCancelled event is delivered via EventBus
-- When the action handler processes the event
-- Then it loads the checkpoint via runQuery
-- And it loads event history via cross-component query
-- And it calls the LLM for pattern analysis
-- And it returns an AgentDecision with confidence and reasoning
-
-**onComplete mutation persists decision atomically**
-
-- Given an agent action returned a successful AgentDecision
-- When the onComplete handler fires with result.kind "success"
-- Then the decision is recorded as an audit event in agent component
-- And the command is emitted to agent component commands table
-- And the checkpoint is updated with new position
-- And all writes happen in a single atomic mutation
-
-**LLM unavailable falls back to rule-based analysis**
-
-- Given an agent configured with LLM runtime
-- And the LLM API returns an error or times out
-- When the action handler processes the event
-- Then it falls back to rule-based confidence scoring
-- And the decision audit records analysisMethod as "rule-based-fallback"
-- And processing continues without failure
-
-**Action failure triggers dead letter via onComplete**
-
-- Given an agent action that throws an unrecoverable error
-- When the onComplete handler fires with result.kind "failed"
-- Then a dead letter entry is created in agent component
-- And the checkpoint is NOT advanced
-- And an AgentAnalysisFailed audit event is recorded
-
-**Rate limiter allows LLM call within limits**
-
-- Given an agent with rate limit of 60 requests per minute
-- And 30 requests have been made this minute
-- When a new event triggers LLM analysis
-- Then the rate limiter allows the call
-- And the LLM analysis proceeds normally
-
-**Rate limiter blocks LLM call when exceeded**
-
-- Given an agent with rate limit of 60 requests per minute
-- And 60 requests have already been made this minute
-- When a new event triggers LLM analysis
-- Then the rate limiter denies the call
-- And the event is requeued for later processing
-- And an AgentRateLimited audit event is recorded
-
-**Cost budget exceeded pauses agent**
-
-- Given an agent with daily cost budget of 10.00 USD
-- And 9.50 USD has been spent today
-- When a new LLM call would cost approximately 0.60 USD
-- Then the agent is paused automatically
-- And an AgentBudgetExceeded audit event is recorded
-- And the event falls back to rule-based analysis
-
-**Queue overflow triggers dead letter**
-
-- Given an agent with queue depth of 100
-- And 100 events are already queued
-- When another event is rate-limited
-- Then it is sent to dead letter with reason "queue_overflow"
-- And an AgentQueueOverflow audit event is recorded
-
-**Agent subscription with onComplete receives completion callbacks**
-
-- Given an agent subscription configured with custom onComplete handler
-- When the agent action completes successfully
-- Then the custom onComplete handler fires with result.kind "success"
-- And the handler can update the agent checkpoint
-- And the handler can record agent-specific audit events
-
-**Failed agent jobs create dead letters via onComplete**
-
-- Given an agent subscription configured with custom onComplete handler
-- When the agent action fails with an error
-- Then the custom onComplete handler fires with result.kind "failed"
-- And a dead letter entry is created in the agent component
-- And the checkpoint is not advanced past the failed event
-
-**Agent subscription without onComplete uses global default**
-
-- Given an agent subscription without a custom onComplete handler
-- When the agent action fails
-- Then the EventBus defaultOnComplete handler fires
-- And the global dead letter handler processes the failure
-
-#### Business Rules
-
-**Agent event handlers are actions for LLM integration**
-
-**Invariant:** Agent event handlers that require LLM analysis must be Convex actions,
-not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete
-mutation handler, never in the action.
-
-    **Rationale:** Convex mutations cannot make external HTTP calls. The action/mutation
-    split enables LLM integration while maintaining atomic state persistence. Actions are
-    retryable by Workpool (mutations are not — they rely on OCC auto-retry).
-
-    **Handler Factory Signature:**
-
-```typescript
-// createAgentActionHandler replaces createAgentEventHandler
-// Returns an internalAction (not internalMutation)
-export function createAgentActionHandler(config: {
-  agentConfig: AgentBCConfig;
-  runtime: AgentRuntimeConfig; // LLM runtime (or mock)
-  loadHistory: (ctx: ActionCtx, event: AgentEventHandlerArgs) => Promise<EventHistory>;
-}): RegisteredAction<"internal", AgentEventHandlerArgs, AgentDecision>;
-```
-
-**Verified by:** Action calls LLM, onComplete persists, fallback works, timeout handled
-
-_Verified by: Agent action handler calls LLM and returns decision, onComplete mutation persists decision atomically, LLM unavailable falls back to rule-based analysis, Action failure triggers dead letter via onComplete_
-
-**Rate limiting is enforced before LLM calls**
-
-**Invariant:** Every LLM call must check rate limits before execution. Exceeded
-limits queue the event for later retry or send to dead letter if queue is full.
-
-    **Rationale:** LLM API costs can spiral quickly under high event volume. Rate limiting
-    protects against runaway costs and external API throttling. The existing `rateLimits`
-    config in `AgentBCConfig` defines the limits — this rule enforces them at runtime.
-
-    **Rate Limit Check Flow:**
-
-```text
-Event arrives → Check token bucket → Allowed? → Proceed to LLM
-                                        → Denied?  → Check queue depth
-                                                    → Queue available? → Requeue
-                                                    → Queue full?      → Dead letter
-```
-
-**Verified by:** Rate limit blocks excess calls, cost budget pauses agent,
-queue overflow creates dead letter
-
-_Verified by: Rate limiter allows LLM call within limits, Rate limiter blocks LLM call when exceeded, Cost budget exceeded pauses agent, Queue overflow triggers dead letter_
-
-**Agent subscriptions support onComplete callbacks**
-
-**Invariant:** `CreateAgentSubscriptionOptions` must include an optional `onComplete`
-field that receives Workpool completion callbacks, enabling agent-specific dead letter
-handling and checkpoint updates.
-
-    **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete`
-    field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler),
-    agents need custom completion logic: checkpoint updates, agent-specific audit events,
-    and rate limit tracking. Without this field, the agent-specific `handleChurnRiskOnComplete`
-    handler is orphaned — defined but never wired.
-
-    **Current Gap:**
-
-```typescript
-// CreateAgentSubscriptionOptions (current - missing onComplete)
-    interface CreateAgentSubscriptionOptions {
-      handler: FunctionReference<...>;
-      priority?: number;
-      toHandlerArgs?: ...;
-      getPartitionKey?: ...;
-      logger?: Logger;
-      // No onComplete field!
-    }
-```
-
-**Target:**
-
-```typescript
-// CreateAgentSubscriptionOptions (target - with onComplete)
-    interface CreateAgentSubscriptionOptions {
-      handler: FunctionReference<...>;
-      onComplete?: FunctionReference<...>; // Agent-specific completion handler
-      priority?: number;
-      toHandlerArgs?: ...;
-      getPartitionKey?: ...;
-      logger?: Logger;
-    }
-```
-
-**Verified by:** onComplete receives callbacks, dead letters created on failure,
-checkpoint updated on success
-
-_Verified by: Agent subscription with onComplete receives completion callbacks, Failed agent jobs create dead letters via onComplete, Agent subscription without onComplete uses global default_
 
 ---
 
@@ -2214,6 +1569,724 @@ Audit trail captures pattern detection, reasoning, and outcomes.
 ```
 
 _Verified by: Agent decision creates audit event, Audit includes LLM metadata, Query agent decision history, Audit captures rejected actions_
+
+---
+
+### ✅ Agent Churn Risk Completion
+
+| Property | Value     |
+| -------- | --------- |
+| Status   | completed |
+| Effort   | 1w        |
+
+**Problem:** The churn-risk agent in the order-management example app has working
+infrastructure from Phases 22a-22c (action handler, onComplete handler, pattern
+definition, component migration, approval cron) but critical gaps prevent it from
+being a genuine AI agent reference implementation:
+
+1. **Rule-based fallback defeats AI purpose** — `churnRisk.ts` catches LLM errors
+   and falls back to `createRuleBasedAnalysis()` which produces the same
+   `SuggestCustomerOutreach` command with formula-derived confidence. The AI agent
+   is functionally indistinguishable from a rule engine.
+2. **Command routing is a stub** — `routeCommand.ts` has a no-op orchestrator that
+   returns `{ success: true }` without creating a domain record or emitting an
+   `OutreachCreated` event. Commands go nowhere.
+3. **No end-to-end integration test with real LLM** — Coverage exists across 3 test
+   files but no single test exercises the full pipeline (cancellation → agent →
+   LLM → command → outreach) with an actual OpenRouter API call.
+4. **No BDD feature file** for the churn-risk flow in order-management.
+5. **`highValueChurnPattern` is rule-only** — A second pattern with no `analyze()`
+   function serves no purpose in an AI agent feature.
+
+**Solution:** Complete the churn-risk agent as a genuine AI agent reference:
+
+1. **Remove rule-based fallback** — LLM failure → Workpool retry → dead letter
+2. **Real outreach handler** — Create outreach record + emit `OutreachCreated` event
+3. **Full pipeline integration test** — Real LLM via OpenRouter (~$0.01/run)
+4. **BDD feature file** — Executable spec for churn-risk flow
+5. **Remove `highValueChurnPattern`** — Rule-only pattern contradicts AI purpose
+
+**Why It Matters for Convex-Native ES:**
+| Benefit | How |
+| Production-ready example | Full AI agent pattern demonstrated end-to-end |
+| LLM integration proof | Validates action/mutation split with real API calls |
+| Complete command flow | Agent decisions trigger real domain actions |
+| Reference implementation | Other agents follow this exact pattern |
+| Operational visibility | LLM failures are visible via dead letters, not silently degraded |
+
+**End-to-End Flow (target state):**
+"""
+
+1. Customer cancels order (OrderCancelled event)
+   |
+2. EventBus delivers to churn-risk agent (agentPool action, priority 250)
+   |
+3. Action handler loads checkpoint, checks idempotency
+   |
+4. Action handler loads customerCancellations projection (cross-BC query)
+   |
+5. Pattern trigger: 3+ cancellations in 30 days?
+   |
+   +--- No --> Skip, return null (onComplete advances checkpoint only)
+   +--- Yes --> Continue to step 6
+   |
+6. LLM analysis via OpenRouter: confidence score + reasoning + command
+   |
+   +--- LLM error --> Error propagates → Workpool retries (3x) → dead letter
+   |
+7. Confidence >= 0.8 (auto-execute threshold)?
+   |
+   +--- Yes --> Return AgentActionResult with SuggestCustomerOutreach command
+   +--- No --> Return AgentActionResult with pending approval
+   |
+8. onComplete (mutation): persist audit → command → approval → checkpoint
+   |
+9. routeCommand (scheduled mutation): routes SuggestCustomerOutreach
+   |
+10. Outreach handler creates outreach task record, emits OutreachCreated event
+    """
+
+**Design Decision: LLM Testing Strategy**
+
+| Aspect | Decision |
+| API calls | Real OpenRouter calls in integration tests, NOT mocked |
+| API key | `OPENROUTER_INTEGRATION_TEST_API_KEY` env var (dedicated CI key) |
+| Model | Gemini Flash via OpenRouter (~$0.001-0.01 per call) |
+| Skip when unavailable | Tests skip (not fail) when API key is not set |
+| Existing pattern | `agent-llm.integration.test.ts` already uses this approach |
+
+**Design Decision: No Rule-Based Fallback**
+
+| Current (wrong) | Target (correct) |
+| LLM fails → same command emitted with formula confidence | LLM fails → error propagates → Workpool retries → dead letter |
+| Agent indistinguishable from rule engine | LLM is essential — failure is an operational event |
+| Silent degradation hides API issues | Dead letter visible in admin UI for operator triage |
+
+**Rationale:** An AI agent that silently produces the same outcome without AI
+is not an AI agent — it is a rule engine with extra steps. The LLM analysis is
+the differentiating value. Its absence should be surfaced as an operational concern
+(dead letter), not hidden behind a formula that mimics the same result.
+
+**Changes:** Remove `createRuleBasedAnalysis()` and the `catch` block in
+`churnRisk.ts:179-182`. Remove `highValueChurnPattern` (rule-only variant).
+Workpool retry config (3 attempts, 1000ms backoff, base 2) handles transient
+LLM failures. Persistent failures create dead letters visible in the admin UI.
+
+**Design Decision: SuggestCustomerOutreach Handler**
+
+Replace the no-op minimal orchestrator in `routeCommand.ts` with a handler that:
+
+1. Creates an outreach task record (new `outreachTasks` projection or CMS table)
+2. Emits `OutreachCreated` domain event via the event store
+3. Validates customerId and riskLevel from command payload
+4. Records the outreach in a queryable projection for the admin UI
+
+This completes the loop: cancellation → agent → LLM → command → outreach record.
+Future phases can add actual notification delivery (email, SMS) as outreach
+consumers — the handler itself is simple domain record creation.
+
+**Design Decision: Approval Expiration Mechanism**
+
+| Aspect | Decision |
+| Approach | Hourly cron job (already implemented) |
+| Location | `crons.ts` → `expirePendingApprovals` mutation |
+| Timeout | 24h default from `AgentBCConfig.humanInLoop.approvalTimeout` |
+| Status | **Complete** — cron, mutation, and integration tests all working |
+
+**Infrastructure Completed by Phases 22a-22c:**
+| Component | Status | Location |
+| Action handler factory | Complete | `platform-core/src/agent/action-handler.ts` |
+| onComplete handler factory | Complete | `platform-core/src/agent/oncomplete-handler.ts` |
+| Pattern executor | Complete | `platform-core/src/agent/pattern-executor.ts` |
+| Agent component (5 tables) | Complete | `platform-core/src/agent/component/` |
+| Command bridge | Complete | `platform-core/src/agent/commands.ts` |
+| Dead letter handler | Complete | `platform-core/src/agent/dead-letter.ts` |
+| Agent rate limiter | Complete | `platform-core/src/agent/agent-rate-limiter.ts` |
+| Thread adapter | Complete | `platform-core/src/agent/thread-adapter.ts` |
+| Lifecycle FSM | Complete | `platform-core/src/agent/lifecycle-handlers.ts` |
+| EventBus action subscription | Complete | `platform-bus/agent-subscription.ts` |
+
+#### Dependencies
+
+- Depends on: AgentCommandInfrastructure
+
+#### Acceptance Criteria
+
+**Three cancellations trigger LLM analysis via OpenRouter**
+
+- Given customer "cust_123" has cancelled 3 orders in the last 30 days
+- When an OrderCancelled event is published for "cust_123"
+- Then the pattern trigger fires (3+ cancellations detected)
+- And the LLM is called via OpenRouter with event history
+- And the analysis returns a confidence score and reasoning
+- And the analysisMethod is "llm"
+
+**Two cancellations do not trigger LLM**
+
+- Given customer "cust_456" has cancelled 2 orders in the last 30 days
+- When an OrderCancelled event is published for "cust_456"
+- Then the pattern trigger does not fire
+- And no LLM call is made
+- And the checkpoint advances without emitting a command
+
+**High confidence triggers auto-execution of SuggestCustomerOutreach**
+
+- Given customer "cust_789" has cancelled 4 orders in the last 30 days
+- And the LLM returns confidence 0.92 (above threshold 0.8)
+- When the agent processes the OrderCancelled event
+- Then a SuggestCustomerOutreach command is included in the AgentActionResult
+- And the onComplete handler persists the command and audit event
+- And the command is scheduled for routing via routeAgentCommand
+
+**Low confidence queues for human approval**
+
+- Given customer "cust_101" has cancelled 3 orders in the last 30 days
+- And the LLM returns confidence 0.65 (below threshold 0.8)
+- When the agent processes the analysis result
+- Then a pending approval is created with the LLM reasoning
+- And no command is emitted immediately
+- And an ApprovalRequested audit event is recorded
+- And the approval expires after 24 hours if not acted on
+
+**LLM failure exhausts retries and creates dead letter**
+
+- Given customer "cust_err" has cancelled 3 orders in the last 30 days
+- And the LLM API is unreachable (network error)
+- When an OrderCancelled event triggers analysis
+- Then the Workpool retries the action 3 times with exponential backoff
+- And after all retries fail, onComplete receives kind "failed"
+- And a dead letter is created with the error details
+- And an AgentAnalysisFailed audit event is recorded
+- And no SuggestCustomerOutreach command is emitted
+- And the dead letter is visible in the admin UI for operator triage
+
+**Cron expires approval after timeout**
+
+- Given a pending approval created 25 hours ago
+- And the approval timeout is 24 hours
+- When the expiration cron runs
+- Then the approval status transitions to "expired"
+- And an ApprovalExpired audit event is recorded
+
+**Expired approval cannot be approved or rejected**
+
+- Given an approval that has been expired by the cron
+- When a reviewer attempts to approve the expired item
+- Then the action is rejected with APPROVAL_EXPIRED error
+- And the approval remains in "expired" status
+
+**Approved before timeout succeeds normally**
+
+- Given a pending approval created 12 hours ago
+- When a reviewer approves the action
+- Then the approval status transitions to "approved"
+- And the associated command is submitted for execution
+
+**SuggestCustomerOutreach creates outreach record and emits event**
+
+- Given the agent has emitted a SuggestCustomerOutreach command
+- And the command includes customerId "cust_123", riskLevel "high", cancellationCount 4
+- When the command bridge routes to the outreach handler
+- Then an outreach task record is created with the customer context
+- And an OutreachCreated domain event is emitted with the outreach details
+- And the agent command status updates to "completed"
+
+**Full end-to-end flow from cancellation to outreach record**
+
+- Given a customer who has cancelled 2 orders previously
+- When the customer cancels a third order
+- Then the churn-risk agent detects the pattern (3+ cancellations)
+- And the LLM is called via OpenRouter and returns high confidence
+- And a SuggestCustomerOutreach command is emitted
+- And the command is routed to the outreach handler
+- And an outreach task record is created
+- And an OutreachCreated event confirms the action end-to-end
+
+**Command with missing customerId fails validation**
+
+- Given the agent emitted a SuggestCustomerOutreach command
+- And the command payload has no customerId
+- When the command bridge attempts to route the command
+- Then the routing fails with a validation error
+- And an AgentCommandRoutingFailed audit event is recorded
+
+**Command handler failure creates dead letter for operator triage**
+
+- Given the agent has emitted a SuggestCustomerOutreach command
+- And the outreach handler throws an error during record creation
+- When the command bridge reports the failure
+- Then the agent command status updates to "failed"
+- And an AgentCommandRoutingFailed audit event is recorded
+- And the failure is visible in the dead letter management panel
+
+#### Business Rules
+
+**LLM analysis is essential, not optional**
+
+**Invariant:** When the pattern trigger fires (3+ cancellations in 30 days for
+the same customer), the LLM MUST be called. There is no rule-based fallback that
+produces the same outcome. If the LLM is unavailable, the event is retried by
+Workpool (3 attempts with exponential backoff). If all retries fail, a dead letter
+is created for operator triage.
+
+    **Rationale:** An AI agent's value comes from LLM analysis — confidence scoring,
+    pattern reasoning, contextual recommendations. A rule-based formula that produces
+    `SuggestCustomerOutreach` regardless of LLM availability makes the AI irrelevant.
+    Failure should be visible (dead letter), not invisible (silent fallback).
+
+    **Error Handling Chain:**
+    | Step | What Happens |
+    | LLM call fails | Error propagates from `analyze()` to pattern executor |
+    | Pattern executor throws | Error propagates to action handler |
+    | Action handler throws | Workpool catches, retries (attempt 1/3) |
+    | All 3 retries fail | Workpool onComplete receives `kind: "failed"` |
+    | onComplete failure path | Creates dead letter, records `AgentAnalysisFailed` audit |
+    | Dead letter visible | Admin UI shows failed event for operator replay/ignore |
+
+    **Verified by:** LLM called on trigger, failure creates dead letter, no silent fallback
+
+_Verified by: Three cancellations trigger LLM analysis via OpenRouter, Two cancellations do not trigger LLM, High confidence triggers auto-execution of SuggestCustomerOutreach, Low confidence queues for human approval, LLM failure exhausts retries and creates dead letter_
+
+**Approvals expire after configured timeout**
+
+**Invariant:** Pending approvals must transition to "expired" status after
+`approvalTimeout` elapses (default 24 hours). A cron job runs hourly to expire
+stale approvals.
+
+    **Rationale:** Pending approvals cannot linger indefinitely. Without expiration,
+    the system accumulates stale decisions that may no longer be relevant. The hourly
+    cron approach is pragmatic for 24h timeouts where up-to-1-hour latency is acceptable.
+
+    **Status:** The approval expiration mechanism is **complete** (cron, mutation,
+    integration tests). These scenarios document the expected behavior for reference.
+
+    **Verified by:** Expiration transitions correctly, expired cannot be acted on
+
+_Verified by: Cron expires approval after timeout, Expired approval cannot be approved or rejected, Approved before timeout succeeds normally_
+
+**Emitted commands create real domain records**
+
+**Invariant:** `SuggestCustomerOutreach` command emitted by the agent routes
+through the command bridge to a handler that creates an outreach task record
+and emits an `OutreachCreated` domain event. The current no-op stub that returns
+`{ success: true }` must be replaced with a real domain handler.
+
+    **Rationale:** A command that produces no domain effect is not a command — it is
+    a log entry. Completing the routing makes the agent actionable: analysis leads to
+    real business outcomes (outreach records) rather than entries in a table.
+
+    **Outreach Handler Design:**
+    | Step | Action |
+    | 1. Validate payload | Ensure customerId, riskLevel, agentId present |
+    | 2. Create outreach record | Write to outreach CMS/projection table |
+    | 3. Emit OutreachCreated event | Via event store append in same mutation |
+    | 4. Update agent command status | Mark as "completed" via agent component |
+
+    **OutreachCreated Event Payload:**
+    | Field | Source |
+    | outreachId | Generated UUID |
+    | customerId | From command payload |
+    | agentId | From command context |
+    | riskLevel | From command payload ("high" / "medium") |
+    | cancellationCount | From command payload |
+    | correlationId | From command context |
+    | createdAt | Current timestamp |
+
+    **Verified by:** Command routes to handler, handler creates record, event emitted
+
+_Verified by: SuggestCustomerOutreach creates outreach record and emits event, Full end-to-end flow from cancellation to outreach record, Command with missing customerId fails validation, Command handler failure creates dead letter for operator triage_
+
+---
+
+### ✅ Agent Command Infrastructure
+
+| Property | Value     |
+| -------- | --------- |
+| Status   | completed |
+| Effort   | 1w        |
+
+**Problem:** Three interconnected gaps in agent command infrastructure:
+
+1. **Commands go nowhere** — Agent emits commands to `agentCommands` table but nothing
+   consumes or routes them to target BC handlers
+2. **No lifecycle control** — Agent cannot be paused, resumed, or reconfigured.
+   The `pause()`, `resume()` stubs in `init.ts` are TODO(Phase-23) placeholders
+3. **Parallel pattern systems** — `_patterns/churnRisk.ts` defines formal `PatternDefinition`
+   with `analyze()` that calls LLM, while `_config.ts` has inline `onEvent` that reimplements
+   trigger logic without LLM. These are disconnected implementations
+
+**Solution:** Complete agent command infrastructure:
+
+1. **Command routing** via CommandOrchestrator — agent commands flow through existing infrastructure
+2. **Agent lifecycle FSM** — formal state machine with commands for state transitions
+3. **Unified pattern registry** — single source of truth for pattern trigger + analysis
+
+**Why It Matters for Convex-Native ES:**
+| Benefit | How |
+| Commands have effect | Emitted agent commands route to actual domain handlers |
+| Agent controllability | Operators can pause/resume/reconfigure agents via commands |
+| Single pattern source | One PatternDefinition powers both trigger and LLM analysis |
+| Audit completeness | Full command lifecycle tracked through Command Bus |
+| Consistent architecture | Agent commands use same infrastructure as domain commands |
+| Operational safety | Lifecycle FSM prevents invalid state transitions |
+
+**Current Gap: Command Emission Dead End**
+"""
+Agent detects pattern
+|
+v
+emitAgentCommand()
+|
+v
+INSERT into agentCommands table
+|
+v
+??? (nothing consumes the command)
+"""
+
+**Target: Full Command Routing**
+"""
+Agent detects pattern
+|
+v
+CommandOrchestrator.execute(agentCommandConfig)
+|
++--> Command Bus (idempotency, audit)
++--> Target BC handler (e.g., customerOutreach)
++--> Event Store (CommandEmitted event)
++--> Projection update
+"""
+
+**Design Decision: Command Routing Approach**
+
+| Option | Mechanism | Trade-off |
+| A: CommandOrchestrator (Recommended) | Agent commands flow through same orchestrator as domain commands | Consistent, audited, idempotent; adds standard indirection |
+| B: Direct handler calls | Agent calls target BC mutation directly via makeFunctionReference | Simpler but bypasses command infrastructure |
+| C: Integration events | Agent publishes integration event, consumer PM handles | Loosest coupling but most complex; better for cross-system |
+
+**Decision:** Option A — CommandOrchestrator provides:
+
+- Command idempotency via Command Bus
+- Full audit trail (command recorded, status tracked)
+- Middleware pipeline (validation, logging, authorization)
+- Consistent with how all other commands work in the platform
+
+**Design Decision: Agent Lifecycle FSM**
+
+"""
+stopped ──> active ──> paused ──> active
+| |
+v v
+stopped stopped
+|
+v
+error_recovery ──> active
+"""
+
+| State | Description | Allowed Transitions |
+| stopped | Not processing events | -> active (via StartAgent) |
+| active | Processing events normally | -> paused, stopped, error_recovery |
+| paused | Temporarily not processing, checkpoint preserved | -> active, stopped |
+| error_recovery | Automatic recovery after repeated failures | -> active (after cooldown) |
+
+**Lifecycle Commands:**
+| Command | Transition | Effect |
+| StartAgent | stopped -> active | Resume/start EventBus subscription from checkpoint |
+| PauseAgent | active -> paused | Stop processing, preserve checkpoint for resume |
+| ResumeAgent | paused -> active | Resume from last checkpoint position |
+| StopAgent | any -> stopped | Stop and clear subscription (checkpoint preserved) |
+| ReconfigureAgent | active/paused -> active | Update config without losing state |
+
+**Design Decision: Pattern System Unification**
+
+**Current disconnect:**
+| Implementation | Location | Uses LLM | Used in Production |
+| \_config.ts onEvent (inline) | contexts/agent/\_config.ts | No | Yes (EventBus handler) |
+| PatternDefinition.analyze() | contexts/agent/\_patterns/churnRisk.ts | Yes | No (never called) |
+
+**Target: Unified pattern flow**
+
+1. Remove inline `onEvent` from `AgentBCConfig`
+2. Add `patterns: PatternDefinition[]` field to `AgentBCConfig`
+3. Handler uses pattern's `trigger()` to check if analysis needed
+4. Handler uses pattern's `analyze()` for LLM analysis (in action)
+5. Single definition powers both cheap rule check and expensive LLM call
+
+"""typescript
+// Target AgentBCConfig (simplified)
+interface AgentBCConfig {
+id: string;
+subscriptions: string[];
+patterns: PatternDefinition[]; // Replaces onEvent
+confidenceThreshold: number;
+humanInLoop?: HumanInLoopConfig;
+rateLimits?: RateLimitConfig;
+// onEvent removed - patterns handle detection + analysis
+}
+"""
+
+**SuggestCustomerOutreach Command Registration:**
+
+Agent commands are domain commands — they route to target BC handlers (e.g.,
+`customerOutreach`), not back to the agent. Registration follows the existing
+`commands/registry.ts` pattern used by order and inventory commands.
+
+"""typescript
+// commands/agent/configs.ts — agent command config
+import { z } from "zod";
+import { globalRegistry } from "@libar-dev/platform-core";
+
+const SuggestCustomerOutreachSchema = z.object({
+customerId: z.string(),
+suggestedAction: z.string(),
+riskLevel: z.enum(["low", "medium", "high"]),
+triggeringPatternId: z.string(),
+});
+
+globalRegistry.register("SuggestCustomerOutreach", {
+schema: SuggestCustomerOutreachSchema,
+description: "Agent-emitted suggestion for customer outreach based on detected pattern",
+category: "agent",
+version: 1,
+handler: internal.commands.agent.handleSuggestCustomerOutreach,
+projections: [], // No projections — handler creates follow-up task or notification
+});
+"""
+
+**Lifecycle FSM ↔ Checkpoint Status Mapping:**
+
+Lifecycle commands map directly to checkpoint statuses (from stubs `schema.ts:72-77`):
+
+| Command | From Status | To Status | EventBus Effect | Checkpoint Effect |
+| StartAgent | stopped | active | Subscription activated from checkpoint position | Status → active |
+| PauseAgent | active | paused | Subscription deactivated | Status → paused, position preserved |
+| ResumeAgent | paused | active | Subscription reactivated from lastProcessedPosition + 1 | Status → active |
+| StopAgent | any | stopped | Subscription removed | Status → stopped, position preserved |
+| (automatic) | active | error_recovery | Subscription paused after repeated failures | Status → error_recovery, cooldown starts |
+| (automatic) | error_recovery | active | Auto-resume after cooldown period | Status → active |
+
+The `error_recovery` state is NOT triggered by commands but by the agent framework
+detecting repeated failures (e.g., 5 consecutive dead letters). After a configurable
+cooldown period, the agent auto-resumes to `active`. This prevents tight retry loops
+that amplify transient failures.
+
+**ReconfigureAgent** applies runtime config overrides stored in checkpoint's
+`configOverrides: v.optional(v.any())` field (forward-declared in stubs). Overrides
+are merged with base `AgentBCConfig` at handler invocation time, allowing threshold
+changes without redeployment.
+
+**Pattern Registry Concrete API:**
+
+"""typescript
+// Agent pattern registry — maps pattern names to definitions
+const patternRegistry = new Map<string, PatternDefinition>();
+
+export function registerPattern(name: string, definition: PatternDefinition): void {
+if (patternRegistry.has(name)) throw new Error(`Pattern '${name}' already registered`);
+patternRegistry.set(name, definition);
+}
+
+export function getPattern(name: string): PatternDefinition | undefined {
+return patternRegistry.get(name);
+}
+
+// Registration at module init (existing patterns from \_patterns/)
+registerPattern("churn-risk", churnRiskPattern);
+registerPattern("high-value-churn", highValueChurnPattern);
+"""
+
+Agent config references patterns by name string, resolved at initialization:
+"""typescript
+const churnRiskAgentConfig: AgentBCConfig = {
+id: "churn-risk-agent",
+subscriptions: ["OrderCancelled", "OrderSubmitted", "PaymentFailed"],
+patterns: ["churn-risk", "high-value-churn"], // Resolved from registry
+confidenceThreshold: 0.8,
+};
+"""
+
+**Migration Notes — Inline onEvent to Pattern-Based Architecture:**
+
+Backward-compatible transition in 4 phases:
+
+| Phase | Change | Breaking |
+| 1 | Add optional `patterns` field to `AgentBCConfig` (alongside existing `onEvent`) | No |
+| 2 | Handler checks: if `patterns` present → use pattern registry; if `onEvent` → legacy path | No |
+| 3 | Migrate `churnRiskAgentConfig` from `onEvent` to `patterns` array | No (both paths work) |
+| 4 | Deprecate `onEvent` field (log warning when used) | No (soft deprecation) |
+
+The existing `_config.ts` inline `onEvent` handler and `_patterns/churnRisk.ts` formal
+`PatternDefinition` converge into a single code path: patterns handle both cheap trigger
+evaluation (formerly inline in `onEvent`) and expensive LLM analysis (formerly unreachable
+in `_patterns/churnRisk.ts`).
+
+#### Dependencies
+
+- Depends on: AgentLLMIntegration
+
+#### Acceptance Criteria
+
+**Agent command routes through CommandOrchestrator to handler**
+
+- Given an agent has emitted a SuggestCustomerOutreach command
+- When the command is routed via CommandOrchestrator
+- Then the registered handler for SuggestCustomerOutreach is called
+- And the command status transitions pending -> processing -> completed
+- And an audit event records the command execution
+
+**Unknown command type is rejected with validation error**
+
+- Given an agent emits a command with unregistered type "UnknownAction"
+- When the command routing attempts to find a handler
+- Then the routing fails with UNKNOWN_COMMAND_TYPE error
+- And the command status transitions to "failed"
+- And an audit event records the failure
+
+**Command idempotency prevents duplicate processing**
+
+- Given an agent emits a SuggestCustomerOutreach command with commandId "cmd_123"
+- And the command has already been processed successfully
+- When the same commandId is submitted again
+- Then the Command Bus rejects it as a duplicate
+- And no handler is called
+
+**PauseAgent transitions active agent to paused**
+
+- Given a churn-risk agent in "active" state
+- When a PauseAgent command is executed
+- Then the agent state transitions to "paused"
+- And the checkpoint is preserved at current position
+- And new events are not processed while paused
+- And an AgentPaused audit event is recorded
+
+**ResumeAgent resumes from checkpoint position**
+
+- Given a churn-risk agent in "paused" state
+- And the checkpoint is at position 42
+- When a ResumeAgent command is executed
+- Then the agent state transitions to "active"
+- And event processing resumes from position 43
+- And an AgentResumed audit event is recorded
+
+**Invalid lifecycle transition is rejected**
+
+- Given a churn-risk agent in "stopped" state
+- When a PauseAgent command is executed
+- Then the command is rejected with INVALID_LIFECYCLE_TRANSITION
+- And the agent remains in "stopped" state
+- And the rejection is recorded in audit trail
+
+**ReconfigureAgent updates configuration without losing state**
+
+- Given an active churn-risk agent with confidenceThreshold 0.8
+- When a ReconfigureAgent command changes threshold to 0.7
+- Then the agent continues from its current checkpoint
+- And future analysis uses the new threshold
+- And the config change is recorded in audit trail
+
+**Agent config references patterns from registry**
+
+- Given a pattern "churn-risk" registered in the pattern registry
+- When configuring a churn-risk agent
+- Then the agent config references patterns by name
+- And the handler loads pattern definitions from registry at startup
+
+**Handler uses pattern trigger for cheap detection**
+
+- Given an event delivered to the agent handler
+- When the handler evaluates patterns
+- Then it calls pattern.trigger(eventHistory) first
+- And only proceeds to pattern.analyze() if trigger returns true
+- And this avoids unnecessary LLM calls for non-matching events
+
+**Handler uses pattern analyze for LLM analysis**
+
+- Given a pattern trigger has fired for 3+ cancellations
+- When the handler calls pattern.analyze(eventHistory, agentContext)
+- Then the LLM analysis provides confidence, reasoning, and suggested action
+- And the result is wrapped in an AgentDecision
+- And the analysis method is recorded as "llm" in the audit trail
+
+**Unknown pattern name in config fails validation**
+
+- Given an agent config referencing pattern "nonexistent-pattern"
+- When the agent is initialized
+- Then initialization fails with PATTERN_NOT_FOUND error
+- And the error includes the pattern name for debugging
+
+#### Business Rules
+
+**Emitted commands are routed to handlers**
+
+**Invariant:** Commands emitted by agents must flow through CommandOrchestrator and
+be processed by registered handlers. Commands cannot remain unprocessed in a table.
+
+    **Rationale:** The current `agentCommands` table receives inserts from `emitAgentCommand()`
+    but nothing acts on them. The emitted `SuggestCustomerOutreach` command sits with status
+    "pending" forever. For the agent to have real impact, its commands must reach domain handlers.
+
+    **Command Routing Flow:**
+    | Step | Action | Component |
+    | 1 | Agent decides to emit command | Agent action handler |
+    | 2 | Command recorded in onComplete | Agent component |
+    | 3 | CommandOrchestrator.execute() | Platform orchestrator |
+    | 4 | Target BC handler processes command | Domain BC |
+    | 5 | Command status updated | Agent component |
+
+    **Verified by:** Command routes to handler, status lifecycle tracked,
+    unknown command rejected
+
+_Verified by: Agent command routes through CommandOrchestrator to handler, Unknown command type is rejected with validation error, Command idempotency prevents duplicate processing_
+
+**Agent lifecycle is controlled via commands**
+
+**Invariant:** Agent state changes (start, pause, resume, stop, reconfigure) must
+happen via commands, not direct database manipulation. Each transition is validated
+by the lifecycle FSM and recorded in the audit trail.
+
+    **Rationale:** Commands provide audit trail, FSM validation, and consistent state
+    transitions. Direct DB manipulation bypasses these safeguards. The lifecycle FSM
+    prevents invalid transitions (e.g., pausing an already-stopped agent).
+
+    **Verified by:** Valid transitions succeed, invalid transitions rejected,
+    paused agent stops processing
+
+_Verified by: PauseAgent transitions active agent to paused, ResumeAgent resumes from checkpoint position, Invalid lifecycle transition is rejected, ReconfigureAgent updates configuration without losing state_
+
+**Pattern definitions are the single source of truth**
+
+**Invariant:** Each agent references named patterns from a registry. The pattern's
+`trigger()` and `analyze()` functions are used by the event handler, eliminating
+parallel implementations.
+
+    **Rationale:** The current codebase has two disconnected pattern implementations:
+    `_config.ts` with inline rule-based detection and `_patterns/churnRisk.ts` with
+    formal `PatternDefinition` including LLM analysis. This creates confusion about
+    which code path runs in production and makes the LLM analysis unreachable.
+
+    **Unified Flow:**
+
+```text
+Event arrives at agent
+         |
+         v
+    For each pattern in agent.patterns:
+         |
+         +--- pattern.trigger(events) -> boolean
+         |         |
+         |    No?  +--- Skip to next pattern
+         |    Yes? |
+         |         v
+         +--- pattern.analyze(events, agent) -> AnalysisResult
+         |         |
+         |         v
+         +--- Build AgentDecision from analysis
+```
+
+**Verified by:** Config references patterns by name, handler uses pattern methods,
+inline onEvent removed
+
+_Verified by: Agent config references patterns from registry, Handler uses pattern trigger for cheap detection, Handler uses pattern analyze for LLM analysis, Unknown pattern name in config fails validation_
 
 ---
 

@@ -5,6 +5,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
+import { RouteErrorFallback } from "@/components/templates/route-error-fallback";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,15 @@ export const Route = createFileRoute("/orders/$orderId")({
     ]);
   },
   component: OrderDetailPage,
-  errorComponent: OrderDetailErrorFallback,
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback
+      title="Failed to Load Order"
+      activeNav="orders"
+      error={error}
+      reset={reset}
+      backLink={{ to: "/orders", label: "\u2190 Back to Orders" }}
+    />
+  ),
 });
 
 // =============================================================================
@@ -522,29 +531,6 @@ function OrderDetailPage() {
             </AlertDialog>
           </div>
         )}
-      </div>
-    </AppLayout>
-  );
-}
-
-function OrderDetailErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
-  return (
-    <AppLayout activeNav="orders">
-      <div className="space-y-6">
-        <Link to="/orders" className="text-sm text-muted-foreground hover:underline">
-          ← Back to Orders
-        </Link>
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-          <h2 className="text-lg font-semibold text-destructive">Failed to Load Order</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {error.message || "An unexpected error occurred while loading the order."}
-          </p>
-          {reset && (
-            <Button variant="outline" className="mt-4" onClick={reset}>
-              Try Again
-            </Button>
-          )}
-        </div>
       </div>
     </AppLayout>
   );

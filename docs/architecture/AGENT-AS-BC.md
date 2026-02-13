@@ -25,7 +25,7 @@ Traditional approaches to AI integration face several challenges:
 | Reliability       | Fire-and-forget           | Workpool-based durability          |
 | Approval workflow | Manual intervention       | Configurable human-in-loop         |
 | Cost control      | No guardrails             | Rate limiter + cost budget         |
-| Fault isolation   | Cascade failures          | Circuit breaker + fallback         |
+| Fault isolation   | Cascade failures          | Circuit breaker + dead letter      |
 
 ## Architecture
 
@@ -98,7 +98,7 @@ agentPool.enqueueAction(analyzeEvent, args, { onComplete })
 │  3. Load event history via cross-component query      │
 │  4. Evaluate pattern triggers (cheap, no LLM)         │
 │  5. If triggered → call LLM analysis (external API)   │
-│     If rate limited/circuit open → rule-based fallback │
+│     If analyze() throws → Workpool retries → dead letter │
 │  6. Return AgentActionResult (NO DB writes)           │
 └──────────────────────┬──────────────────────────────┘
                        │ Workpool delivers result
@@ -250,7 +250,7 @@ import { executePatterns } from "@libar-dev/platform-core/agent";
 const summary: PatternExecutionSummary = await executePatterns(patterns, events, agent);
 // summary.matchedPattern — name of first matching pattern (or null)
 // summary.decision — AgentDecision (or null if no match)
-// summary.analysisMethod — "llm" | "rule-based" | "rule-based-fallback"
+// summary.analysisMethod — "llm" | "rule-based"
 ```
 
 ## Command Routing
@@ -516,8 +516,8 @@ import { checkCircuit, recordSuccess, recordFailure } from "@libar-dev/platform-
 const state = checkCircuit("llm-provider"); // "closed" | "open" | "half-open"
 
 if (state === "open") {
-  // Skip LLM call, fall back to rule-based analysis
-  // Decision audit records analysisMethod: "rule-based-fallback"
+  // Skip LLM call — Workpool will retry when circuit closes
+  // If retries exhausted → dead letter with circuit state context
 }
 ```
 
@@ -538,7 +538,7 @@ All decisions are audited with 16 event types. Records live in the `agentBC` com
     patternDetected: "churn-risk",
     confidence: 0.85,
     reasoning: "Customer cancelled 3 orders in 30 days",
-    analysisMethod: "llm",         // "llm" | "rule-based" | "rule-based-fallback"
+    analysisMethod: "llm",         // "llm" | "rule-based"
     action: {
       type: "SuggestCustomerOutreach",
       executionMode: "auto-execute", // or "requires-approval"

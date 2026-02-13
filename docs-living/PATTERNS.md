@@ -299,6 +299,8 @@ graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
     ProjectionCheckpointing --> EventStoreFoundation
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
@@ -306,8 +308,6 @@ graph TD
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
     MiddlewarePipeline --> CommandBusFoundation
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters

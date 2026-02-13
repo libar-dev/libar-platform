@@ -5,6 +5,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
+import { RouteErrorFallback } from "@/components/templates/route-error-fallback";
 import { OrderList } from "@/components/organisms/order-list";
 import { Button } from "@/components/ui/button";
 import { useOrders, useMounted } from "@/hooks";
@@ -21,7 +22,14 @@ export const Route = createFileRoute("/orders/")({
     await context.queryClient.ensureQueryData(convexQuery(getAllOrdersQuery, {}));
   },
   component: OrdersPage,
-  errorComponent: OrdersErrorFallback,
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback
+      title="Failed to Load Orders"
+      activeNav="orders"
+      error={error}
+      reset={reset}
+    />
+  ),
 });
 
 /**
@@ -55,24 +63,6 @@ function OrdersPage() {
           isLoading={!mounted || isLoading}
           onOrderClick={(orderId) => navigate({ to: `/orders/${orderId}` })}
         />
-      </div>
-    </AppLayout>
-  );
-}
-
-function OrdersErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
-  return (
-    <AppLayout activeNav="orders">
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <h2 className="text-lg font-semibold text-destructive">Failed to Load Orders</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {error.message || "An unexpected error occurred while loading orders."}
-        </p>
-        {reset && (
-          <Button variant="outline" className="mt-4" onClick={reset}>
-            Try Again
-          </Button>
-        )}
       </div>
     </AppLayout>
   );

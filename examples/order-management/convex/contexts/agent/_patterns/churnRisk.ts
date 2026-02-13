@@ -87,7 +87,7 @@ export function createCustomerCancellationTrigger(minCancellations: number): Pat
  * Detects customers at risk of churning based on cancellation patterns:
  * - Trigger: 3+ cancellations from the same customer
  * - Window: 30 days
- * - Analysis: Optional LLM-based deep analysis
+ * - Analysis: LLM-based deep analysis (errors propagate to Workpool for retry)
  *
  * @example
  * ```typescript
@@ -119,14 +119,15 @@ export const churnRiskPattern: PatternDefinition = definePattern({
   ),
 
   /**
-   * Optional LLM-based analysis for deeper pattern detection.
+   * LLM-based analysis for deeper pattern detection.
    *
    * This analyzer uses the agent's LLM capabilities to:
    * 1. Analyze cancellation reasons for common themes
    * 2. Detect sentiment patterns in cancellation reasons
    * 3. Identify temporal patterns (e.g., weekend cancellations)
    *
-   * For rule-only agents, this analyzer can be omitted.
+   * If analyze() throws (LLM timeout, API error), the error propagates
+   * through the pattern executor to the Workpool for retry/dead-letter.
    */
   analyze: async (
     events: readonly PublishedEvent[],

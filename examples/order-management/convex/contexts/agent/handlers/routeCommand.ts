@@ -14,7 +14,12 @@
 import { internalMutation } from "../../../_generated/server.js";
 import type { MutationCtx } from "../../../_generated/server.js";
 import { v } from "convex/values";
-import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
+import {
+  createPlatformNoOpLogger,
+  generateId,
+  generateEventId,
+  generateCorrelationId,
+} from "@libar-dev/platform-core";
 import {
   createCommandBridgeHandler,
   type CommandBridgeConfig,
@@ -82,19 +87,26 @@ const outreachOrchestrator = {
   execute: async (ctx: unknown, _config: unknown, args: Record<string, unknown>) => {
     const mutCtx = ctx as MutationCtx;
 
-    const customerId = args["customerId"] as string | undefined;
+    const customerId = typeof args["customerId"] === "string" ? args["customerId"] : undefined;
     if (!customerId) {
       throw new Error("SuggestCustomerOutreach requires customerId");
     }
 
-    const agentId = (args["agentId"] as string) ?? "unknown";
-    const correlationId = (args["correlationId"] as string) ?? `corr_${Date.now()}`;
-    const riskLevel = (args["riskLevel"] as "high" | "medium" | "low") ?? "medium";
-    const cancellationCount = (args["cancellationCount"] as number) ?? 0;
-    const triggeringPatternId = (args["triggeringPatternId"] as string) ?? "unknown";
+    const agentId = typeof args["agentId"] === "string" ? args["agentId"] : "unknown";
+    const correlationId =
+      typeof args["correlationId"] === "string" ? args["correlationId"] : generateCorrelationId();
+    const rawRiskLevel = typeof args["riskLevel"] === "string" ? args["riskLevel"] : "medium";
+    const riskLevel =
+      rawRiskLevel === "high" || rawRiskLevel === "medium" || rawRiskLevel === "low"
+        ? rawRiskLevel
+        : "medium";
+    const cancellationCount =
+      typeof args["cancellationCount"] === "number" ? args["cancellationCount"] : 0;
+    const triggeringPatternId =
+      typeof args["triggeringPatternId"] === "string" ? args["triggeringPatternId"] : "unknown";
 
     const now = Date.now();
-    const outreachId = `outreach_${customerId}_${now}`;
+    const outreachId = generateId("agent", "outreach");
 
     // ---- 1. CMS write: create outreach task record ----
     await mutCtx.db.insert("outreachTasks", {
@@ -118,7 +130,7 @@ const outreachOrchestrator = {
       boundedContext: "agent",
       events: [
         {
-          eventId: `evt_${outreachId}`,
+          eventId: generateEventId("agent"),
           eventType: "OutreachCreated",
           payload: {
             outreachId,

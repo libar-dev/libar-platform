@@ -29,8 +29,8 @@
  *     pattern-specific result.data structures. See buildDecisionFromAnalysis.
  *
  * REMOVED (holistic review, item 3.2):
- * - onAnalyzeFailure: spec only describes a global fallback, not per-pattern control.
- *   Global fallback: if analyze() throws, falls back to rule-based scoring.
+ * - onAnalyzeFailure: analyze() errors now propagate to Workpool for retry.
+ *   No in-process fallback — errors are retried or dead-lettered.
  * - defaultCommand: no spec exercises trigger-only command emission.
  */
 
@@ -68,7 +68,7 @@ export interface PatternExecutionSummary {
   /** The decision produced, or null if no pattern matched */
   readonly decision: AgentDecision | null;
   /** How the decision was produced */
-  readonly analysisMethod: "llm" | "rule-based" | "rule-based-fallback";
+  readonly analysisMethod: "llm" | "rule-based";
 }
 
 // ============================================================================
@@ -132,35 +132,19 @@ export async function executePatterns(
 
     // 4. If pattern has analyze — call it (potentially expensive LLM call)
     if (pattern.analyze) {
-      try {
-        const analysisResult = await pattern.analyze(windowEvents, agent);
+      const analysisResult = await pattern.analyze(windowEvents, agent);
 
-        if (analysisResult.detected) {
-          // Build decision from analysis result — SHORT-CIRCUIT
-          const decision = buildDecisionFromAnalysis(analysisResult, pattern.name, config);
-          return {
-            matchedPattern: pattern.name,
-            decision,
-            analysisMethod: "llm",
-          };
-        }
-
-        // Triggered but analysis didn't detect — continue to next pattern
-      } catch (analyzeError) {
-        // Global fallback: if analyze() throws, falls back to rule-based scoring
-        // Log at WARN level so operators can monitor LLM health.
-        // logger?.warn("Pattern analyze() failed, falling back to rule-based", {
-        //   patternName: pattern.name,
-        //   error: String(analyzeError),
-        // });
-
-        const decision = buildDecisionFromTrigger(windowEvents, pattern, config);
+      if (analysisResult.detected) {
+        // Build decision from analysis result — SHORT-CIRCUIT
+        const decision = buildDecisionFromAnalysis(analysisResult, pattern.name, config);
         return {
           matchedPattern: pattern.name,
           decision,
-          analysisMethod: "rule-based-fallback",
+          analysisMethod: "llm",
         };
       }
+
+      // Triggered but analysis didn't detect — continue to next pattern
     } else {
       // 5. Pattern has trigger but NO analyze — trigger alone is the detection
       const decision = buildDecisionFromTrigger(windowEvents, pattern, config);

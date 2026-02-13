@@ -3,6 +3,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { AppLayout } from "@/components/templates/app-layout";
+import { RouteErrorFallback } from "@/components/templates/route-error-fallback";
 import { ApprovalDetail } from "@/components/organisms/approval-detail";
 import { Button } from "@/components/ui/button";
 import { useApprovalDetail, getApprovalByIdQuery } from "@/hooks/use-approval-detail";
@@ -20,40 +21,16 @@ export const Route = createFileRoute("/admin/agents/approvals/$approvalId")({
     );
   },
   component: ApprovalDetailPage,
-  errorComponent: ApprovalErrorFallback,
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback
+      title="Failed to Load Approval"
+      activeNav="agents"
+      error={error}
+      reset={reset}
+      backLink={{ to: "/admin/agents", label: "\u2190 Back to Agents" }}
+    />
+  ),
 });
-
-/**
- * Error fallback component for the approval detail page.
- */
-function ApprovalErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
-  return (
-    <AppLayout activeNav="agents">
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/admin/agents">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Agents
-            </Button>
-          </Link>
-        </div>
-
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-          <h2 className="text-lg font-semibold text-destructive">Failed to Load Approval</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {error.message || "An unexpected error occurred while loading the approval."}
-          </p>
-          {reset && (
-            <Button variant="outline" className="mt-4" onClick={reset}>
-              Try Again
-            </Button>
-          )}
-        </div>
-      </div>
-    </AppLayout>
-  );
-}
 
 /**
  * Get the current reviewer ID.

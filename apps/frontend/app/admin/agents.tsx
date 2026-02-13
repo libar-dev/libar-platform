@@ -5,13 +5,13 @@ import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
+import { RouteErrorFallback } from "@/components/templates/route-error-fallback";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ApprovalList } from "@/components/organisms/approval-list";
 import { usePendingApprovals, type PendingApproval } from "@/hooks/use-pending-approvals";
 import { useActiveAgents, type AgentCheckpoint } from "@/hooks/use-active-agents";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatRelativeTime } from "@/lib/formatters";
 import { useMounted } from "@/hooks";
 
@@ -35,29 +35,15 @@ export const Route = createFileRoute("/admin/agents")({
     ]);
   },
   component: AdminAgentsPage,
-  errorComponent: AgentsErrorFallback,
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback
+      title="Failed to Load Agents"
+      activeNav="agents"
+      error={error}
+      reset={reset}
+    />
+  ),
 });
-
-/**
- * Error fallback component for the agents page.
- */
-function AgentsErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
-  return (
-    <AppLayout activeNav="agents">
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <h2 className="text-lg font-semibold text-destructive">Failed to Load Agents</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {error.message || "An unexpected error occurred while loading the agents page."}
-        </p>
-        {reset && (
-          <Button variant="outline" className="mt-4" onClick={reset}>
-            Try Again
-          </Button>
-        )}
-      </div>
-    </AppLayout>
-  );
-}
 
 /**
  * Admin Agents page - manage agent approvals and monitor status.

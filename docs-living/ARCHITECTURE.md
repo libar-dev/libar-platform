@@ -25,17 +25,17 @@ Component architecture with bounded context isolation:
 graph TB
     subgraph agent["Agent BC"]
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
-        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
-        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
+        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
+        AgentActionHandler["AgentActionHandler[command-handler]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
-        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
-        AgentActionHandler["AgentActionHandler[command-handler]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
+        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
     end
     subgraph inventory["Inventory BC"]
         InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
@@ -55,8 +55,8 @@ graph TB
         OrderItemsProjection["OrderItemsProjection[projection]"]
         CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderCommandConfigs["OrderCommandConfigs[infrastructure]"]
-        OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
         OrderDomainEvents["OrderDomainEvents[bounded-context]"]
+        OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
         OrderDeciders["OrderDeciders[decider]"]
     end
     subgraph shared["Shared Infrastructure"]
@@ -75,8 +75,8 @@ graph TB
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
-        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         DurableAppendAction["DurableAppendAction[infrastructure]"]
+        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
@@ -94,21 +94,21 @@ graph TB
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
-    InventoryCommandHandlers --> InventoryDeciders
     OrderCommandHandlers --> OrderDeciders
+    InventoryCommandHandlers --> InventoryDeciders
 ```
 
 ---

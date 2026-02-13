@@ -5,6 +5,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
+import { RouteErrorFallback } from "@/components/templates/route-error-fallback";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProducts, useOrders } from "@/hooks";
@@ -30,7 +31,14 @@ export const Route = createFileRoute("/")({
     ]);
   },
   component: DashboardPage,
-  errorComponent: DashboardErrorFallback,
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback
+      title="Failed to Load Dashboard"
+      activeNav="dashboard"
+      error={error}
+      reset={reset}
+    />
+  ),
 });
 
 /**
@@ -173,27 +181,6 @@ function DashboardPage() {
             </Link>
           </CardContent>
         </Card>
-      </div>
-    </AppLayout>
-  );
-}
-
-function DashboardErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
-  return (
-    <AppLayout activeNav="dashboard">
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <h2 className="text-lg font-semibold text-destructive">Failed to Load Dashboard</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {error.message || "An unexpected error occurred while loading the dashboard."}
-        </p>
-        {reset && (
-          <button
-            onClick={reset}
-            className="mt-4 rounded-md border px-4 py-2 text-sm hover:bg-accent"
-          >
-            Try Again
-          </button>
-        )}
       </div>
     </AppLayout>
   );
