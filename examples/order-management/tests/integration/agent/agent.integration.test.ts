@@ -176,28 +176,30 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
           );
         }
 
-        // Wait for agent to process and potentially create audit event
+        // Wait for agent to detect pattern and create audit event.
+        // NOTE: We wait on audit events directly rather than checkpoint.eventsProcessed
+        // because the checkpoint is shared across all tests in the suite (keyed by agentId,
+        // not test run). A count-based wait can be satisfied before this test's events
+        // are fully processed if prior tests already incremented the counter.
         await waitUntil(
           async () => {
-            const checkpoint = await testQuery(t, api.queries.agent.getCheckpoint, {
+            const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
               agentId: CHURN_RISK_AGENT_ID,
+              eventType: "PatternDetected",
+              limit: 10,
             });
-            // Agent should have processed at least 3 events
-            return checkpoint !== null && checkpoint.eventsProcessed >= 3;
+            return auditEvents.length > 0;
           },
-          { message: "Agent processed 3 cancellations", timeoutMs: AGENT_TEST_TIMEOUT }
+          { message: "Pattern detection audit event created", timeoutMs: AGENT_TEST_TIMEOUT }
         );
 
-        // Check for audit events - pattern detection should have triggered
+        // Verify audit events exist - pattern detection should have triggered
         const auditEvents = await testQuery(t, api.queries.agent.getAuditEvents, {
           agentId: CHURN_RISK_AGENT_ID,
           eventType: "PatternDetected",
           limit: 10,
         });
 
-        // The pattern should have been detected (3+ cancellations in 30 days)
-        // Note: This depends on confidence threshold and pattern matching
-        // In production, this would create an audit event with churn-risk pattern
         expect(auditEvents).toBeDefined();
         expect(auditEvents.length).toBeGreaterThan(0);
       });
