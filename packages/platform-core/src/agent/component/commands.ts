@@ -1,3 +1,4 @@
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -11,6 +12,25 @@ const commandStatusValidator = v.union(
   v.literal("completed"),
   v.literal("failed")
 );
+
+function toCommandDTO(cmd: Doc<"agentCommands">) {
+  return {
+    agentId: cmd.agentId,
+    type: cmd.type,
+    payload: cmd.payload,
+    status: cmd.status,
+    confidence: cmd.confidence,
+    reason: cmd.reason,
+    triggeringEventIds: cmd.triggeringEventIds,
+    decisionId: cmd.decisionId,
+    createdAt: cmd.createdAt,
+    ...(cmd.patternId !== undefined && { patternId: cmd.patternId }),
+    ...(cmd.correlationId !== undefined && { correlationId: cmd.correlationId }),
+    ...(cmd.routingAttempts !== undefined && { routingAttempts: cmd.routingAttempts }),
+    ...(cmd.processedAt !== undefined && { processedAt: cmd.processedAt }),
+    ...(cmd.error !== undefined && { error: cmd.error }),
+  };
+}
 
 // ============================================================================
 // Mutations
@@ -34,6 +54,12 @@ export const record = mutation({
     routingAttempts: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("agentCommands")
+      .withIndex("by_decisionId", (q) => q.eq("decisionId", args.decisionId))
+      .first();
+    if (existing) return;
+
     const now = Date.now();
 
     await ctx.db.insert("agentCommands", {
@@ -121,22 +147,7 @@ export const queryByAgent = query({
         .take(limit);
     }
 
-    return results.map((cmd) => ({
-      agentId: cmd.agentId,
-      type: cmd.type,
-      payload: cmd.payload,
-      status: cmd.status,
-      confidence: cmd.confidence,
-      reason: cmd.reason,
-      triggeringEventIds: cmd.triggeringEventIds,
-      decisionId: cmd.decisionId,
-      createdAt: cmd.createdAt,
-      ...(cmd.patternId !== undefined && { patternId: cmd.patternId }),
-      ...(cmd.correlationId !== undefined && { correlationId: cmd.correlationId }),
-      ...(cmd.routingAttempts !== undefined && { routingAttempts: cmd.routingAttempts }),
-      ...(cmd.processedAt !== undefined && { processedAt: cmd.processedAt }),
-      ...(cmd.error !== undefined && { error: cmd.error }),
-    }));
+    return results.map(toCommandDTO);
   },
 });
 
@@ -158,22 +169,7 @@ export const getByDecisionId = query({
       return null;
     }
 
-    return {
-      agentId: command.agentId,
-      type: command.type,
-      payload: command.payload,
-      status: command.status,
-      confidence: command.confidence,
-      reason: command.reason,
-      triggeringEventIds: command.triggeringEventIds,
-      decisionId: command.decisionId,
-      createdAt: command.createdAt,
-      ...(command.patternId !== undefined && { patternId: command.patternId }),
-      ...(command.correlationId !== undefined && { correlationId: command.correlationId }),
-      ...(command.routingAttempts !== undefined && { routingAttempts: command.routingAttempts }),
-      ...(command.processedAt !== undefined && { processedAt: command.processedAt }),
-      ...(command.error !== undefined && { error: command.error }),
-    };
+    return toCommandDTO(command);
   },
 });
 
@@ -193,21 +189,6 @@ export const getPending = query({
       .withIndex("by_status", (q) => q.eq("status", "pending"))
       .take(limit);
 
-    return results.map((cmd) => ({
-      agentId: cmd.agentId,
-      type: cmd.type,
-      payload: cmd.payload,
-      status: cmd.status,
-      confidence: cmd.confidence,
-      reason: cmd.reason,
-      triggeringEventIds: cmd.triggeringEventIds,
-      decisionId: cmd.decisionId,
-      createdAt: cmd.createdAt,
-      ...(cmd.patternId !== undefined && { patternId: cmd.patternId }),
-      ...(cmd.correlationId !== undefined && { correlationId: cmd.correlationId }),
-      ...(cmd.routingAttempts !== undefined && { routingAttempts: cmd.routingAttempts }),
-      ...(cmd.processedAt !== undefined && { processedAt: cmd.processedAt }),
-      ...(cmd.error !== undefined && { error: cmd.error }),
-    }));
+    return results.map(toCommandDTO);
   },
 });

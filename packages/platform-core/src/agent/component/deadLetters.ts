@@ -24,9 +24,10 @@ const contextValidator = v.optional(
 // ============================================================================
 
 /**
- * Record a dead letter for failed event processing.
- * Uses UPSERT semantics (Finding F-11): updates existing pending records,
- * inserts new records, and is a no-op for terminal (replayed/ignored) records.
+ * Record a dead letter event with UPSERT semantics.
+ * - New: creates with provided attemptCount
+ * - Existing pending: auto-increments attemptCount (arg ignored), updates error/failedAt
+ * - Existing terminal (replayed/ignored): no-op, returns without modification
  */
 export const record = mutation({
   args: {
@@ -185,7 +186,7 @@ export const getStats = query({
     const pendingLetters = await ctx.db
       .query("agentDeadLetters")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
-      .collect();
+      .take(10000);
 
     // Group by agentId
     const countsByAgent = new Map<string, number>();

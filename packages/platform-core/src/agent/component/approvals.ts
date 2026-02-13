@@ -1,3 +1,4 @@
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -11,6 +12,24 @@ const approvalStatusValidator = v.union(
   v.literal("rejected"),
   v.literal("expired")
 );
+
+function toApprovalDTO(a: Doc<"pendingApprovals">) {
+  return {
+    approvalId: a.approvalId,
+    agentId: a.agentId,
+    decisionId: a.decisionId,
+    action: a.action,
+    confidence: a.confidence,
+    reason: a.reason,
+    status: a.status,
+    triggeringEventIds: a.triggeringEventIds,
+    expiresAt: a.expiresAt,
+    createdAt: a.createdAt,
+    ...(a.reviewerId !== undefined && { reviewerId: a.reviewerId }),
+    ...(a.reviewedAt !== undefined && { reviewedAt: a.reviewedAt }),
+    ...(a.reviewNote !== undefined && { reviewNote: a.reviewNote }),
+  };
+}
 
 // ============================================================================
 // Mutations
@@ -233,21 +252,7 @@ export const queryApprovals = query({
       results = await ctx.db.query("pendingApprovals").take(limit);
     }
 
-    return results.map((a) => ({
-      approvalId: a.approvalId,
-      agentId: a.agentId,
-      decisionId: a.decisionId,
-      action: a.action,
-      confidence: a.confidence,
-      reason: a.reason,
-      status: a.status,
-      triggeringEventIds: a.triggeringEventIds,
-      expiresAt: a.expiresAt,
-      createdAt: a.createdAt,
-      ...(a.reviewerId !== undefined && { reviewerId: a.reviewerId }),
-      ...(a.reviewedAt !== undefined && { reviewedAt: a.reviewedAt }),
-      ...(a.reviewNote !== undefined && { reviewNote: a.reviewNote }),
-    }));
+    return results.map(toApprovalDTO);
   },
 });
 
@@ -268,20 +273,6 @@ export const getById = query({
       return null;
     }
 
-    return {
-      approvalId: approval.approvalId,
-      agentId: approval.agentId,
-      decisionId: approval.decisionId,
-      action: approval.action,
-      confidence: approval.confidence,
-      reason: approval.reason,
-      status: approval.status,
-      triggeringEventIds: approval.triggeringEventIds,
-      expiresAt: approval.expiresAt,
-      createdAt: approval.createdAt,
-      ...(approval.reviewerId !== undefined && { reviewerId: approval.reviewerId }),
-      ...(approval.reviewedAt !== undefined && { reviewedAt: approval.reviewedAt }),
-      ...(approval.reviewNote !== undefined && { reviewNote: approval.reviewNote }),
-    };
+    return toApprovalDTO(approval);
   },
 });

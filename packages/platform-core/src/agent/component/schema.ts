@@ -46,6 +46,7 @@ export default defineSchema({
     ),
     eventsProcessed: v.number(),
     updatedAt: v.number(),
+    // Forward declaration for DS-5 ReconfigureAgent — typed validator deferred
     configOverrides: v.optional(v.any()),
   })
     .index("by_agentId", ["agentId"])

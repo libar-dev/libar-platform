@@ -1,3 +1,4 @@
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { AGENT_AUDIT_EVENT_TYPES } from "./schema.js";
@@ -16,6 +17,19 @@ const checkpointStatusValidator = v.union(
 const auditEventTypeValidator = v.union(
   ...AGENT_AUDIT_EVENT_TYPES.map((t) => v.literal(t))
 ) as ReturnType<typeof v.union>;
+
+function toCheckpointDTO(cp: Doc<"agentCheckpoints">) {
+  return {
+    agentId: cp.agentId,
+    subscriptionId: cp.subscriptionId,
+    lastProcessedPosition: cp.lastProcessedPosition,
+    lastEventId: cp.lastEventId,
+    status: cp.status,
+    eventsProcessed: cp.eventsProcessed,
+    updatedAt: cp.updatedAt,
+    ...(cp.configOverrides !== undefined && { configOverrides: cp.configOverrides }),
+  };
+}
 
 // ============================================================================
 // Mutations
@@ -42,18 +56,7 @@ export const loadOrCreate = mutation({
 
     if (existing) {
       return {
-        checkpoint: {
-          agentId: existing.agentId,
-          subscriptionId: existing.subscriptionId,
-          lastProcessedPosition: existing.lastProcessedPosition,
-          lastEventId: existing.lastEventId,
-          status: existing.status,
-          eventsProcessed: existing.eventsProcessed,
-          updatedAt: existing.updatedAt,
-          ...(existing.configOverrides !== undefined && {
-            configOverrides: existing.configOverrides,
-          }),
-        },
+        checkpoint: toCheckpointDTO(existing),
         isNew: false,
       };
     }
@@ -193,7 +196,6 @@ export const patchConfigOverrides = mutation({
  */
 export const transitionLifecycle = mutation({
   args: {
-    commandId: v.string(),
     agentId: v.string(),
     status: checkpointStatusValidator,
     auditEvent: v.object({
@@ -207,14 +209,12 @@ export const transitionLifecycle = mutation({
     const { agentId, status, auditEvent } = args;
     const now = Date.now();
 
-    // Idempotency check: if audit event already exists for this decisionId
-    // with the same event type, this transition was already applied
-    const existingAudit = await ctx.db
+    const existingAudits = await ctx.db
       .query("agentAuditEvents")
       .withIndex("by_decisionId", (q) => q.eq("decisionId", auditEvent.decisionId))
-      .first();
+      .collect();
 
-    if (existingAudit && existingAudit.eventType === auditEvent.eventType) {
+    if (existingAudits.some((a) => a.eventType === auditEvent.eventType)) {
       return { updatedCount: 0 };
     }
 
@@ -268,24 +268,14 @@ export const getByAgentAndSubscription = query({
       return null;
     }
 
-    return {
-      agentId: checkpoint.agentId,
-      subscriptionId: checkpoint.subscriptionId,
-      lastProcessedPosition: checkpoint.lastProcessedPosition,
-      lastEventId: checkpoint.lastEventId,
-      status: checkpoint.status,
-      eventsProcessed: checkpoint.eventsProcessed,
-      updatedAt: checkpoint.updatedAt,
-      ...(checkpoint.configOverrides !== undefined && {
-        configOverrides: checkpoint.configOverrides,
-      }),
-    };
+    return toCheckpointDTO(checkpoint);
   },
 });
 
 /**
- * Get checkpoint by agent ID.
- * For monitoring/debugging. Prefer getByAgentAndSubscription for onComplete.
+ * Get a single checkpoint by agentId.
+ * Returns the first checkpoint found — an agent may have multiple checkpoints
+ * (one per subscription). Use getByAgentAndSubscription for precise lookup.
  */
 export const getByAgentId = query({
   args: {
@@ -301,18 +291,7 @@ export const getByAgentId = query({
       return null;
     }
 
-    return {
-      agentId: checkpoint.agentId,
-      subscriptionId: checkpoint.subscriptionId,
-      lastProcessedPosition: checkpoint.lastProcessedPosition,
-      lastEventId: checkpoint.lastEventId,
-      status: checkpoint.status,
-      eventsProcessed: checkpoint.eventsProcessed,
-      updatedAt: checkpoint.updatedAt,
-      ...(checkpoint.configOverrides !== undefined && {
-        configOverrides: checkpoint.configOverrides,
-      }),
-    };
+    return toCheckpointDTO(checkpoint);
   },
 });
 
@@ -332,17 +311,6 @@ export const listActive = query({
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .take(limit);
 
-    return checkpoints.map((cp) => ({
-      agentId: cp.agentId,
-      subscriptionId: cp.subscriptionId,
-      lastProcessedPosition: cp.lastProcessedPosition,
-      lastEventId: cp.lastEventId,
-      status: cp.status,
-      eventsProcessed: cp.eventsProcessed,
-      updatedAt: cp.updatedAt,
-      ...(cp.configOverrides !== undefined && {
-        configOverrides: cp.configOverrides,
-      }),
-    }));
+    return checkpoints.map(toCheckpointDTO);
   },
 });

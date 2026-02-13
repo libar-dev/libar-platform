@@ -29,17 +29,16 @@ export const record = mutation({
   handler: async (ctx, args) => {
     const { eventType, agentId, decisionId, timestamp, payload } = args;
 
-    // Idempotency check: query by decisionId, verify same eventType
-    const existing = await ctx.db
+    const existingAudits = await ctx.db
       .query("agentAuditEvents")
       .withIndex("by_decisionId", (q) => q.eq("decisionId", decisionId))
-      .first();
+      .collect();
 
-    if (existing && existing.eventType === eventType) {
+    if (existingAudits.some((a) => a.eventType === eventType)) {
       return null;
     }
 
-    const id = await ctx.db.insert("agentAuditEvents", {
+    await ctx.db.insert("agentAuditEvents", {
       eventType,
       agentId,
       decisionId,
@@ -47,18 +46,7 @@ export const record = mutation({
       payload,
     });
 
-    const inserted = await ctx.db.get(id);
-    if (!inserted) {
-      return null;
-    }
-
-    return {
-      eventType: inserted.eventType,
-      agentId: inserted.agentId,
-      decisionId: inserted.decisionId,
-      timestamp: inserted.timestamp,
-      payload: inserted.payload,
-    };
+    return { eventType, agentId, decisionId, timestamp, payload };
   },
 });
 

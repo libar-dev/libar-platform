@@ -1799,7 +1799,6 @@ export declare const components: {
             payload: any;
             timestamp: number;
           };
-          commandId: string;
           status: "active" | "paused" | "stopped" | "error_recovery";
         },
         any

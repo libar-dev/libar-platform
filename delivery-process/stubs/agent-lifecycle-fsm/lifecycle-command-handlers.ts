@@ -147,7 +147,6 @@ export async function handleStartAgent(
   };
 
   await ctx.runMutation(agentComponent.checkpoints.transitionLifecycle, {
-    commandId: args.commandId,
     agentId: args.agentId,
     status: "active",
     auditEvent: {
@@ -228,7 +227,6 @@ export async function handlePauseAgent(
   };
 
   await ctx.runMutation(agentComponent.checkpoints.transitionLifecycle, {
-    commandId: args.commandId,
     agentId: args.agentId,
     status: "paused",
     auditEvent: {
@@ -306,7 +304,6 @@ export async function handleResumeAgent(
   };
 
   await ctx.runMutation(agentComponent.checkpoints.transitionLifecycle, {
-    commandId: args.commandId,
     agentId: args.agentId,
     status: "active",
     auditEvent: {
@@ -386,7 +383,6 @@ export async function handleStopAgent(
   };
 
   await ctx.runMutation(agentComponent.checkpoints.transitionLifecycle, {
-    commandId: args.commandId,
     agentId: args.agentId,
     status: "stopped",
     auditEvent: {
@@ -480,7 +476,6 @@ export async function handleReconfigureAgent(
   };
 
   await ctx.runMutation(agentComponent.checkpoints.transitionLifecycle, {
-    commandId: args.commandId,
     agentId: args.agentId,
     status: "active",
     auditEvent: {

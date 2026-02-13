@@ -174,15 +174,14 @@ export const patchConfigOverrides = mutation({
  * regardless of how many component calls it makes — this consolidation is a
  * performance optimization, not an atomicity fix.
  *
- * Idempotency: if a lifecycle transition with the given `commandId` has already
- * been applied (audit event exists for this commandId), returns early.
+ * Idempotency: if a lifecycle transition with the given decisionId has already
+ * been applied (audit event exists for this decisionId), returns early.
  *
  * Called by lifecycle command handlers (DS-5 review fix) instead of separate mutations.
  *
  * @example
  * ```typescript
  * await ctx.runMutation(components.agentBC.checkpoints.transitionLifecycle, {
- *   commandId: "cmd_lifecycle_001",
  *   agentId: "churn-risk-agent",
  *   status: "paused",
  *   auditEvent: {
@@ -196,7 +195,6 @@ export const patchConfigOverrides = mutation({
  */
 export const transitionLifecycle = mutation({
   args: {
-    commandId: v.string(),
     agentId: v.string(),
     status: checkpointStatusValidator,
     auditEvent: v.object({
@@ -209,8 +207,7 @@ export const transitionLifecycle = mutation({
   handler: async (ctx, args) => {
     // IMPLEMENTATION NOTE:
     // 1. Idempotency: query agentAuditEvents by decisionId. If an audit event
-    //    with this decisionId already exists, return early (OCC retry scenario).
-    //    The commandId is stored in the audit payload for caller-level dedup.
+    //    with this decisionId and eventType already exists, return early (OCC retry scenario).
     //
     // 2. Query all checkpoints by agentId (by_agentId index)
     //

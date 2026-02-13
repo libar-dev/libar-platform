@@ -202,7 +202,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             payload: any;
             timestamp: number;
           };
-          commandId: string;
           status: "active" | "paused" | "stopped" | "error_recovery";
         },
         any,

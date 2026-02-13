@@ -82,7 +82,7 @@ interface AgentTestState {
     subscriptionId: string;
     lastProcessedPosition: number;
     lastEventId: string;
-    status: "active" | "paused" | "stopped";
+    status: "active" | "paused" | "stopped" | "error_recovery";
     eventsProcessed: number;
     updatedAt: number;
   } | null;
