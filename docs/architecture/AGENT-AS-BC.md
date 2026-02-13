@@ -44,7 +44,7 @@ The agent BC is a physically isolated Convex component with its own database, mo
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │    │
 │  │  │   agentBC     │  │  llmAgent    │  │  agentPool   │             │    │
 │  │  │  (Component)  │  │ @convex-dev/ │  │  (Workpool)  │             │    │
-│  │  │  5 tables     │  │   agent      │  │  max‖: 10    │             │    │
+│  │  │  5 tables     │  │   agent      │  │  maxP: 10    │             │    │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘             │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
@@ -116,14 +116,13 @@ agentPool.enqueueAction(analyzeEvent, args, { onComplete })
 └─────────────────────────────────────────────────────┘
 ```
 
-### Two Handler Factories
+### Handler Factory
 
-| Factory                      | Returns            | Can Call LLM          | Used For                 |
-| ---------------------------- | ------------------ | --------------------- | ------------------------ |
-| `createAgentEventHandler()`  | `onEvent` callback | No (mutation context) | Rule-only agents, no LLM |
-| `createAgentActionHandler()` | Action handler     | Yes (action context)  | LLM-integrated agents    |
+| Factory                      | Returns        | Can Call LLM         | Used For                 |
+| ---------------------------- | -------------- | -------------------- | ------------------------ |
+| `createAgentActionHandler()` | Action handler | Yes (action context) | All agent event handling |
 
-`createAgentEventHandler` is **not removed** — it serves rule-only agents. The action handler reuses existing pure logic (pattern window filtering, minimum event check, approval determination).
+The legacy `createAgentEventHandler()` (`onEvent` mutation callback) has been removed. The action handler reuses existing pure logic (pattern window filtering, minimum event check, approval determination).
 
 ### EventBus Subscription Types
 
@@ -679,7 +678,6 @@ const subscription = createAgentActionSubscription(churnRiskAgentConfig, {
 | --------------------------------- | ------------------------------------- |
 | `createAgentSubscription()`       | Create mutation EventBus subscription |
 | `createAgentActionSubscription()` | Create action EventBus subscription   |
-| `createAgentEventHandler()`       | Create mutation event handler         |
 | `createAgentActionHandler()`      | Create action event handler (LLM)     |
 | `createOnCompleteHandler()`       | Create Workpool completion handler    |
 | `createCommandBridgeHandler()`    | Create command routing handler        |

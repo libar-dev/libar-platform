@@ -100,8 +100,8 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
 
   **Dedicated Agent Workpool:**
 
-  Currently no `agentPool` exists in `convex.config.ts`. The agent shares whatever
-  pool the EventBus uses (likely `projectionPool`), creating resource contention.
+  A dedicated `agentPool` peer mount exists in `convex.config.ts`, separating LLM
+  work from `projectionPool` to avoid resource contention.
 
   | Config | Value | Rationale |
   | Name | agentPool | Dedicated pool, separate from projectionPool |
@@ -125,17 +125,11 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
   Separation of concerns: agent LLM calls don't compete with projection processing
   in `projectionPool` (which handles high-throughput, low-latency CMS updates).
 
-  **createAgentActionHandler — Relationship to Existing Factory:**
+  **createAgentActionHandler — Factory:**
 
-  The current `createAgentEventHandler` in `platform-core/src/agent/init.ts` returns
-  an `onEvent` callback designed for use inside mutations. The new `createAgentActionHandler`
-  returns an `internalAction` that can call external APIs.
-
-  | Factory | Returns | Can Call LLM | Used For |
-  | createAgentEventHandler (existing) | onEvent callback | No (mutation context) | Rule-only agents, no LLM needed |
-  | createAgentActionHandler (new) | internalAction | Yes (action context) | LLM-integrated agents |
-
-  `createAgentEventHandler` is NOT removed — it continues to serve rule-only agents.
+  `createAgentActionHandler` returns an `internalAction` that can call external APIs
+  (LLM). The legacy `createAgentEventHandler` (mutation-based `onEvent` callback) has
+  been removed — all agent event handling now uses the action-based handler.
   The action handler reuses existing pure logic from the mutation handler:
   - Pattern window filtering (`filterEventsInWindow`)
   - Minimum event check (`hasMinimumEvents`)
