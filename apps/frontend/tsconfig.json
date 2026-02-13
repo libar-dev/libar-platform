@@ -22,5 +22,5 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.mts", "routeTree.gen.ts"],
-  "exclude": ["node_modules", "tests/e2e", ".output", "dist"]
+  "exclude": ["node_modules", "convex", "tests/e2e", ".output", "dist"]
 }

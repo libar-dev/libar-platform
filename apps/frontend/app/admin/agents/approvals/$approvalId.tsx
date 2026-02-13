@@ -2,21 +2,14 @@
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
-import { makeFunctionReference } from "convex/server";
-import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
 import { ApprovalDetail } from "@/components/organisms/approval-detail";
 import { Button } from "@/components/ui/button";
-import { useApprovalDetail } from "@/hooks/use-approval-detail";
-import type { PendingApproval } from "@/hooks/use-pending-approvals";
+import { useApprovalDetail, getApprovalByIdQuery } from "@/hooks/use-approval-detail";
 import { ArrowLeft } from "lucide-react";
 
-// Query reference for SSR preloading
-const getApprovalByIdQuery = makeFunctionReference<"query">(
-  "queries/agent:getApprovalById"
-) as FunctionReference<"query", "public", { approvalId: string }, PendingApproval | null>;
-
 export const Route = createFileRoute("/admin/agents/approvals/$approvalId")({
+  ssr: "data-only",
   loader: async ({ context, params }) => {
     // Guard against undefined params during SSR edge cases
     if (!params.approvalId) {

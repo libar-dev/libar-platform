@@ -21,10 +21,12 @@ const listProductsQuery = makeFunctionReference<"query">(
 ) as FunctionReference<"query", "public", { limit?: number }, Product[]>;
 
 export const Route = createFileRoute("/admin/products")({
+  ssr: "data-only",
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(convexQuery(listProductsQuery, {}));
   },
   component: AdminProductsPage,
+  errorComponent: AdminProductsErrorFallback,
 });
 
 // =============================================================================
@@ -260,6 +262,27 @@ function AdminProductsPage() {
             }}
           />
         </div>
+      </div>
+    </AppLayout>
+  );
+}
+
+function AdminProductsErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
+  return (
+    <AppLayout activeNav="products">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+        <h2 className="text-lg font-semibold text-destructive">Failed to Load Admin Products</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error.message || "An unexpected error occurred while loading products."}
+        </p>
+        {reset && (
+          <button
+            onClick={reset}
+            className="mt-4 rounded-md border px-4 py-2 text-sm hover:bg-accent"
+          >
+            Try Again
+          </button>
+        )}
       </div>
     </AppLayout>
   );

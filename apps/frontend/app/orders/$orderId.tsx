@@ -27,28 +27,18 @@ import {
   useReactiveOrderDetail,
   isOrchestratorResultSuccess,
 } from "@/hooks";
+import { getOrderWithInventoryQuery } from "@/hooks/use-order-detail";
+import { getOrderItemsQuery } from "@/hooks/use-order-items";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import type { OrderStatus, CommandOrchestratorResult } from "@/types";
-import type { ReservationStatus, OrderWithInventory } from "@/hooks/use-order-detail";
-import type { OrderItem } from "@/hooks/use-order-items";
-
-// Query references for SSR preloading (matching hooks)
-const getOrderWithInventoryQuery = makeFunctionReference<"query">(
-  "crossContextQueries:getOrderWithInventoryStatus"
-) as FunctionReference<"query", "public", { orderId: string }, OrderWithInventory | null>;
-
-const getOrderItemsQuery = makeFunctionReference<"query">(
-  "orders:getOrderItems"
-) as FunctionReference<"query", "public", { orderId: string }, OrderItem[]>;
+import type { ReservationStatus } from "@/hooks/use-order-detail";
 
 export const Route = createFileRoute("/orders/$orderId")({
+  ssr: "data-only",
   loader: async ({ context, params }) => {
-    // Defensive check - params.orderId should always exist for this route
-    // but guard against edge cases during SSR/hydration transitions
     if (!params.orderId) {
       return;
     }
-    // Prefetch order detail and items on the server
     await Promise.all([
       context.queryClient.ensureQueryData(
         convexQuery(getOrderWithInventoryQuery, { orderId: params.orderId })
@@ -59,6 +49,7 @@ export const Route = createFileRoute("/orders/$orderId")({
     ]);
   },
   component: OrderDetailPage,
+  errorComponent: OrderDetailErrorFallback,
 });
 
 // =============================================================================
@@ -531,6 +522,29 @@ function OrderDetailPage() {
             </AlertDialog>
           </div>
         )}
+      </div>
+    </AppLayout>
+  );
+}
+
+function OrderDetailErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
+  return (
+    <AppLayout activeNav="orders">
+      <div className="space-y-6">
+        <Link to="/orders" className="text-sm text-muted-foreground hover:underline">
+          ← Back to Orders
+        </Link>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <h2 className="text-lg font-semibold text-destructive">Failed to Load Order</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error.message || "An unexpected error occurred while loading the order."}
+          </p>
+          {reset && (
+            <Button variant="outline" className="mt-4" onClick={reset}>
+              Try Again
+            </Button>
+          )}
+        </div>
       </div>
     </AppLayout>
   );

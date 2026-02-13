@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import type { OrderStatus } from "@/types";
@@ -30,7 +31,7 @@ export interface OrderWithInventory {
 
 // Using makeFunctionReference to bypass FilterApi recursive type resolution (TS2589 prevention)
 // Type safety is maintained by Convex's runtime validation layer
-const getOrderWithInventoryQuery = makeFunctionReference<"query">(
+export const getOrderWithInventoryQuery = makeFunctionReference<"query">(
   "crossContextQueries:getOrderWithInventoryStatus"
 ) as FunctionReference<"query", "public", { orderId: string }, OrderWithInventory | null>;
 
@@ -67,11 +68,14 @@ export function useOrderDetail(orderId: string | undefined): {
   order: OrderWithInventory | null;
   isLoading: boolean;
 } {
-  // Use Convex "skip" pattern when orderId is undefined to avoid Rules of Hooks violations
-  const data = useQuery(getOrderWithInventoryQuery, orderId ? { orderId } : "skip");
+  // TanStack Query with convexQuery "skip" pattern — reads from the same cache
+  // that route loaders populate via ensureQueryData(convexQuery(...))
+  const { data, isLoading } = useQuery(
+    convexQuery(getOrderWithInventoryQuery, orderId ? { orderId } : "skip")
+  );
 
   return {
     order: (data ?? null) as OrderWithInventory | null,
-    isLoading: !!orderId && data === undefined,
+    isLoading,
   };
 }

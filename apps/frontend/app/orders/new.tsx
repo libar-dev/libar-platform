@@ -1,13 +1,26 @@
 "use client";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { convexQuery } from "@convex-dev/react-query";
+import { makeFunctionReference } from "convex/server";
+import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
 import { OrderCreateForm } from "@/components/organisms/order-create-form";
 import { useProducts, useOrderCreation } from "@/hooks";
+import type { Product } from "@/hooks/use-products";
 import { DEMO_CUSTOMER_ID } from "@/app/-constants";
 import type { CartItem } from "@/types";
 
+// Query reference for SSR preloading (TS2589 prevention)
+const listProductsQuery = makeFunctionReference<"query">(
+  "inventory:listProducts"
+) as FunctionReference<"query", "public", { limit?: number }, Product[]>;
+
 export const Route = createFileRoute("/orders/new")({
+  ssr: "data-only",
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(convexQuery(listProductsQuery, {}));
+  },
   component: NewOrderPage,
 });
 

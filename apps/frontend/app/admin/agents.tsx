@@ -25,6 +25,7 @@ const getActiveAgentsQuery = makeFunctionReference<"query">(
 ) as FunctionReference<"query", "public", Record<string, never>, AgentCheckpoint[]>;
 
 export const Route = createFileRoute("/admin/agents")({
+  ssr: "data-only",
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(

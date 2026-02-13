@@ -16,10 +16,12 @@ const getAllOrdersQuery = makeFunctionReference<"query">(
 ) as FunctionReference<"query", "public", { limit?: number }, OrderSummary[]>;
 
 export const Route = createFileRoute("/orders/")({
+  ssr: "data-only",
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(convexQuery(getAllOrdersQuery, {}));
   },
   component: OrdersPage,
+  errorComponent: OrdersErrorFallback,
 });
 
 /**
@@ -53,6 +55,24 @@ function OrdersPage() {
           isLoading={!mounted || isLoading}
           onOrderClick={(orderId) => navigate({ to: `/orders/${orderId}` })}
         />
+      </div>
+    </AppLayout>
+  );
+}
+
+function OrdersErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
+  return (
+    <AppLayout activeNav="orders">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+        <h2 className="text-lg font-semibold text-destructive">Failed to Load Orders</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error.message || "An unexpected error occurred while loading orders."}
+        </p>
+        {reset && (
+          <Button variant="outline" className="mt-4" onClick={reset}>
+            Try Again
+          </Button>
+        )}
       </div>
     </AppLayout>
   );

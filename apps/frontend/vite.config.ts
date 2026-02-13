@@ -6,6 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
+  ssr: {
+    noExternal: ["@convex-dev/react-query", "@tanstack/react-router-ssr-query"],
+  },
   server: {
     port: 3000,
     headers: {

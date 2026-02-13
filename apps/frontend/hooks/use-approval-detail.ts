@@ -1,10 +1,11 @@
-import { useQuery } from "convex/react";
+import { useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import type { PendingApproval } from "./use-pending-approvals";
 
 // Using makeFunctionReference to bypass FilterApi recursive type resolution (TS2589 prevention)
-const getApprovalByIdQuery = makeFunctionReference<"query">(
+export const getApprovalByIdQuery = makeFunctionReference<"query">(
   "queries/agent:getApprovalById"
 ) as FunctionReference<"query", "public", { approvalId: string }, PendingApproval | null>;
 
@@ -40,11 +41,14 @@ export function useApprovalDetail(approvalId: string | undefined): {
   approval: PendingApproval | null;
   isLoading: boolean;
 } {
-  // Use Convex "skip" pattern when approvalId is undefined to avoid calling query with empty args
-  const data = useQuery(getApprovalByIdQuery, approvalId ? { approvalId } : "skip");
+  // TanStack Query with convexQuery "skip" pattern — reads from the same cache
+  // that route loaders populate via ensureQueryData(convexQuery(...))
+  const { data, isLoading } = useQuery(
+    convexQuery(getApprovalByIdQuery, approvalId ? { approvalId } : "skip")
+  );
 
   return {
     approval: (data ?? null) as PendingApproval | null,
-    isLoading: !!approvalId && data === undefined,
+    isLoading,
   };
 }

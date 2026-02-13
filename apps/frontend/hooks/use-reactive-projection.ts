@@ -143,9 +143,14 @@ export function useReactiveProjection<TProjection, TEvent extends ReactiveDomain
   const result = useMemo<ReactiveProjectionResult<TProjection>>(() => {
     // Still loading - projection not yet available
     if (projection === undefined || projection === null) {
+      // If projection is null but events exist, the Workpool hasn't
+      // processed events into the projection table yet. Keep loading.
+      const projectionLagging =
+        projection === null && Array.isArray(recentEvents) && recentEvents.length > 0;
+
       return {
         state: null,
-        isLoading: projection === undefined,
+        isLoading: projection === undefined || projectionLagging,
         isOptimistic: false,
         durablePosition: 0,
         pendingEvents: 0,
