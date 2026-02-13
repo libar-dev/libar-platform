@@ -25,7 +25,9 @@ import {
 import type { AgentBCConfig, AgentDecision, PatternWindow } from "../../../src/agent/types.js";
 import { validateAgentBCConfig, AGENT_CONFIG_ERROR_CODES } from "../../../src/agent/types.js";
 import type { AgentCheckpoint } from "../../../src/agent/checkpoint.js";
-import type { PublishedEvent } from "../../../src/eventbus/types.js";
+import type { EventBus, PublishedEvent } from "../../../src/eventbus/types.js";
+import type { FunctionReference, FunctionVisibility } from "convex/server";
+import type { AgentEventHandlerArgs } from "../../../src/agent/init.js";
 import type { CorrelationChain } from "../../../src/correlation/types.js";
 import type { Logger } from "../../../src/logging/types.js";
 
@@ -1439,8 +1441,13 @@ describe("initializeAgentBC", () => {
 
   it("returns success with handle for a valid config", () => {
     const config = createValidAgentConfig();
-    const mockEventBus = {} as any;
-    const mockHandler = "mock_handler" as any;
+    const mockEventBus = {} as EventBus;
+    const mockHandler = {} as FunctionReference<
+      "mutation",
+      FunctionVisibility,
+      AgentEventHandlerArgs,
+      void
+    >;
 
     const result = initializeAgentBC(config, {
       eventBus: mockEventBus,
@@ -1461,8 +1468,13 @@ describe("initializeAgentBC", () => {
 
   it("returns error with INVALID_CONFIG code for invalid config", () => {
     const config = createValidAgentConfig({ id: "" });
-    const mockEventBus = {} as any;
-    const mockHandler = "mock_handler" as any;
+    const mockEventBus = {} as EventBus;
+    const mockHandler = {} as FunctionReference<
+      "mutation",
+      FunctionVisibility,
+      AgentEventHandlerArgs,
+      void
+    >;
 
     const result = initializeAgentBC(config, {
       eventBus: mockEventBus,
@@ -1477,8 +1489,13 @@ describe("initializeAgentBC", () => {
 
   it("uses existing checkpoint when provided", () => {
     const config = createValidAgentConfig();
-    const mockEventBus = {} as any;
-    const mockHandler = "mock_handler" as any;
+    const mockEventBus = {} as EventBus;
+    const mockHandler = {} as FunctionReference<
+      "mutation",
+      FunctionVisibility,
+      AgentEventHandlerArgs,
+      void
+    >;
     const existingCheckpoint = {
       agentId: "test-agent",
       subscriptionId: "sub_existing",
@@ -1505,8 +1522,13 @@ describe("initializeAgentBC", () => {
 
   it("creates a new checkpoint when no existing checkpoint provided", () => {
     const config = createValidAgentConfig({ id: "fresh-agent" });
-    const mockEventBus = {} as any;
-    const mockHandler = "mock_handler" as any;
+    const mockEventBus = {} as EventBus;
+    const mockHandler = {} as FunctionReference<
+      "mutation",
+      FunctionVisibility,
+      AgentEventHandlerArgs,
+      void
+    >;
 
     const result = initializeAgentBC(config, {
       eventBus: mockEventBus,

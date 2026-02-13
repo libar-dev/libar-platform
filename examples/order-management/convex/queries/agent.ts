@@ -19,6 +19,7 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
+import type { AgentAuditEventType } from "@libar-dev/platform-core/agent";
 
 /**
  * Get agent checkpoint by agent ID.
@@ -74,8 +75,7 @@ export const getAuditEvents = query({
   handler: async (ctx, { agentId, eventType, limit }) => {
     return await ctx.runQuery(components.agentBC.audit.queryByAgent, {
       agentId,
-      // Component validates the union internally; pass as-is
-      ...(eventType !== undefined && { eventType: eventType as any }),
+      ...(eventType !== undefined && { eventType: eventType as AgentAuditEventType }),
       limit: limit ?? 100,
     });
   },
