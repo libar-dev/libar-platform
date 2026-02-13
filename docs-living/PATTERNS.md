@@ -7,13 +7,13 @@
 
 ## Progress
 
-**Overall:** [███████████████░░░░░] 58/75 (77% complete)
+**Overall:** [████████████████░░░░] 59/75 (79% complete)
 
 | Status       | Count |
 | ------------ | ----- |
-| ✅ Completed | 58    |
-| 🚧 Active    | 3     |
-| 📋 Planned   | 14    |
+| ✅ Completed | 59    |
+| 🚧 Active    | 5     |
+| 📋 Planned   | 11    |
 | **Total**    | 75    |
 
 ---
@@ -42,6 +42,7 @@
 | Pattern                                                  | Category                          | Status    | Description                                                                                                              |
 | -------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
 | ✅ Agent As Bounded Context                              | DDD                               | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                          |
+| ✅ Agent Command Infrastructure                          | DDD                               | completed | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                   |
 | ✅ Bdd Testing Infrastructure                            | DDD                               | completed | Problem: Domain logic tests require infrastructure (Docker, database).                                                   |
 | ✅ Bounded Context Foundation                            | Completed Before Delivery Process | completed | Problem: DDD Bounded Contexts need clear boundaries with physical enforcement, type-safe contracts, and domain purity... |
 | ✅ Bounded Context Identity                              | DDD                               | completed | BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...        |
@@ -99,15 +100,14 @@
 | ✅ Workpool Partition Key Types                          | Projection                        | completed | Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.  |
 | ✅ Workpool Partitioning Strategy                        | Projection                        | completed | Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.       |
 | ✅ Workpool Partitioning Strategy                        | DDD                               | completed | Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event... |
+| 🚧 Agent BC Component Isolation                          | DDD                               | active    | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...                |
+| 🚧 Agent LLM Integration                                 | DDD                               | active    | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.           |
 | 🚧 Command Config Partition Key Validation               | Command                           | active    | Validates that all projection configurations in a command config have explicit partition keys defined.                   |
 | 🚧 Confirmed Order Cancellation                          | DDD                               | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                   |
 | 🚧 Process Enhancements                                  | Process Enhancements              | active    | Vision: Transform the delivery process from a documentation tool into a delivery operating system.                       |
 | 📋 Admin Tooling Consolidation                           | DDD                               | planned   | Problem: Admin functionality is scattered across the codebase: - Dead letter queue at...                                 |
 | 📋 Agent Admin Frontend                                  | DDD                               | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                          |
-| 📋 Agent BC Component Isolation                          | DDD                               | planned   | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...                |
 | 📋 Agent Churn Risk Completion                           | DDD                               | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps...  |
-| 📋 Agent Command Infrastructure                          | DDD                               | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                   |
-| 📋 Agent LLM Integration                                 | DDD                               | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.           |
 | 📋 Circuit Breaker Pattern                               | DDD                               | planned   | Problem: External API failures (Stripe, SendGrid, webhooks) cascade through the system.                                  |
 | 📋 Deterministic Id Hashing                              | DDD                               | planned   | Problem: TTL-based reservations work well for multi-step flows (registration wizards), but add overhead for simple...    |
 | 📋 Health Observability                                  | DDD                               | planned   | Problem: No Kubernetes integration (readiness/liveness probes), no metrics for projection lag, event throughput, or...   |
@@ -168,9 +168,10 @@
 
 ### DDD
 
-19/33 complete (58%)
+20/33 complete (61%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
+- [✅ Agent Command Infrastructure](patterns/agent-command-infrastructure.md)
 - [✅ Bdd Testing Infrastructure](patterns/bdd-testing-infrastructure.md)
 - [✅ Bounded Context Identity](patterns/bounded-context-identity.md)
 - [✅ DCB Scope Key Utilities](patterns/dcb-scope-key-utilities.md)
@@ -189,13 +190,12 @@
 - [✅ Reactive Projections](patterns/reactive-projections.md)
 - [✅ Reservation Pattern](patterns/reservation-pattern.md)
 - [✅ Workpool Partitioning Strategy](patterns/workpool-partitioning-strategy.md)
+- [🚧 Agent BC Component Isolation](patterns/agent-bc-component-isolation.md)
+- [🚧 Agent LLM Integration](patterns/agent-llm-integration.md)
 - [🚧 Confirmed Order Cancellation](patterns/confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
 - [📋 Agent Admin Frontend](patterns/agent-admin-frontend.md)
-- [📋 Agent BC Component Isolation](patterns/agent-bc-component-isolation.md)
 - [📋 Agent Churn Risk Completion](patterns/agent-churn-risk-completion.md)
-- [📋 Agent Command Infrastructure](patterns/agent-command-infrastructure.md)
-- [📋 Agent LLM Integration](patterns/agent-llm-integration.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
 - [📋 Health Observability](patterns/health-observability.md)
@@ -299,19 +299,18 @@ Pattern relationships and dependencies:
 ```mermaid
 graph TD
     HandlerFactories --> DeciderPattern
-    DualWriteContract --> BoundedContextIdentity
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
+    CMSRepository --> CMSDualWrite
+    ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    MiddlewarePipeline --> CommandBusFoundation
-    CMSRepository --> CMSDualWrite
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
     InvariantFramework --> BoundedContextFoundation
-    ProjectionCheckpointing --> EventStoreFoundation
+    MiddlewarePipeline --> CommandBusFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
     Event_Store_Durability_Types --> DurableFunctionAdapters
     Event_Store_Durability_Types --> Workpool
@@ -342,6 +341,7 @@ graph TD
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
+    DualWriteContract --> BoundedContextIdentity
     Workpool_Partition_Key_Types --> EventBus
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -352,6 +352,12 @@ graph TD
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
@@ -393,12 +399,6 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---

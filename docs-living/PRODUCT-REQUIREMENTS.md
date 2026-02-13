@@ -7,14 +7,14 @@
 
 ## Summary
 
-**Overall:** [████████████░░░░░░░░] 22/37 (59%)
+**Overall:** [████████████░░░░░░░░] 23/37 (62%)
 
 | Metric         | Value |
 | -------------- | ----- |
 | Total Features | 37    |
-| Completed      | 22    |
-| Active         | 2     |
-| Planned        | 13    |
+| Completed      | 23    |
+| Active         | 4     |
+| Planned        | 10    |
 | Product Areas  | 3     |
 | User Roles     | 0     |
 
@@ -42,9 +42,10 @@
 
 ### Platform
 
-18/29 complete (62%)
+19/29 complete (66%)
 
 - [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
+- [✅ Agent Command Infrastructure](requirements/phase-22-agent-command-infrastructure.md)
 - [✅ Bdd Testing Infrastructure](requirements/phase-19-bdd-testing-infrastructure.md)
 - [✅ Bounded Context Foundation](requirements/phase-11-bounded-context-foundation.md)
 - [✅ Command Bus Foundation](requirements/phase-03-command-bus-foundation.md)
@@ -62,11 +63,10 @@
 - [✅ Reservation Pattern](requirements/phase-20-reservation-pattern.md)
 - [✅ Saga Orchestration](requirements/phase-06-saga-orchestration.md)
 - [✅ Workpool Partitioning Strategy - projection ordering and occ prevention](requirements/phase-18-workpool-partitioning-strategy.md)
+- [🚧 Agent BC Component Isolation](requirements/phase-22-agent-bc-component-isolation.md)
+- [🚧 Agent LLM Integration](requirements/phase-22-agent-llm-integration.md)
 - [🚧 Confirmed Order Cancellation](requirements/phase-22-confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation - unified operations interface](requirements/phase-18-admin-tooling-consolidation.md)
-- [📋 Agent BC Component Isolation](requirements/phase-22-agent-bc-component-isolation.md)
-- [📋 Agent Command Infrastructure](requirements/phase-22-agent-command-infrastructure.md)
-- [📋 Agent LLM Integration](requirements/phase-22-agent-llm-integration.md)
 - [📋 Circuit Breaker Pattern - external service resilience and budget preservation](requirements/phase-18-circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](requirements/phase-20-deterministic-id-hashing.md)
 - [📋 Health Observability - production monitoring and k8s integration](requirements/phase-18-health-observability.md)
@@ -81,6 +81,7 @@
 | Feature                              | Product Area    | User Role | Status    |
 | ------------------------------------ | --------------- | --------- | --------- |
 | ✅ Agent As Bounded Context          | Platform        | -         | completed |
+| ✅ Agent Command Infrastructure      | Platform        | -         | completed |
 | ✅ Bdd Testing Infrastructure        | Platform        | -         | completed |
 | ✅ Bounded Context Foundation        | Platform        | -         | completed |
 | ✅ Codec Driven Reference Generation | DeliveryProcess | -         | completed |
@@ -102,14 +103,13 @@
 | ✅ Reservation Pattern               | Platform        | -         | completed |
 | ✅ Saga Orchestration                | Platform        | -         | completed |
 | ✅ Workpool Partitioning Strategy    | Platform        | -         | completed |
+| 🚧 Agent BC Component Isolation      | Platform        | -         | active    |
+| 🚧 Agent LLM Integration             | Platform        | -         | active    |
 | 🚧 Confirmed Order Cancellation      | Platform        | -         | active    |
 | 🚧 Process Enhancements              | DeliveryProcess | -         | active    |
 | 📋 Admin Tooling Consolidation       | Platform        | -         | planned   |
 | 📋 Agent Admin Frontend              | ExampleApp      | -         | planned   |
-| 📋 Agent BC Component Isolation      | Platform        | -         | planned   |
 | 📋 Agent Churn Risk Completion       | ExampleApp      | -         | planned   |
-| 📋 Agent Command Infrastructure      | Platform        | -         | planned   |
-| 📋 Agent LLM Integration             | Platform        | -         | planned   |
 | 📋 Circuit Breaker Pattern           | Platform        | -         | planned   |
 | 📋 Deterministic Id Hashing          | Platform        | -         | planned   |
 | 📋 Health Observability              | Platform        | -         | planned   |

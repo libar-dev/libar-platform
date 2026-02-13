@@ -7,13 +7,13 @@
 
 ## Summary
 
-**Overall Progress:** [███████████████░░░░░] 58/75 (77%)
+**Overall Progress:** [████████████████░░░░] 59/75 (79%)
 
 | Status              | Count |
 | ------------------- | ----- |
-| 🚧 Active           | 3     |
-| 📋 Planned          | 14    |
-| **Total Remaining** | 17    |
+| 🚧 Active           | 5     |
+| 📋 Planned          | 11    |
+| **Total Remaining** | 16    |
 
 ---
 
@@ -24,7 +24,7 @@
 | 📋 [WorkpoolPartitioningStrategy](remaining/phase-18-workpool-partitioning-strategy.md) | 4         | 0      | 56%      |
 | 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                      | 1         | 0      | 67%      |
 | 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)             | 2         | 0      | 0%       |
-| 🚧 [AgentChurnRiskCompletion](remaining/phase-22-agent-churn-risk-completion.md)        | 6         | 1      | 14%      |
+| 🚧 [AgentChurnRiskCompletion](remaining/phase-22-agent-churn-risk-completion.md)        | 5         | 3      | 29%      |
 | 🚧 [ThemedDecisionArchitecture](remaining/phase-100-themed-decision-architecture.md)    | 3         | 1      | 50%      |
 | 🚧 Backlog (No Phase)                                                                   | 1         | 1      | 0%       |
 
@@ -34,9 +34,9 @@
 
 | Priority          | Count |
 | ----------------- | ----- |
-| 🚧 In Progress    | 3     |
+| 🚧 In Progress    | 5     |
 | ✅ Ready to Start | 8     |
-| ⚠️ Blocked        | 6     |
+| ⚠️ Blocked        | 4     |
 
 ### Top Ready to Start
 
@@ -45,7 +45,7 @@
 - Production Hardening (Phase 18)
 - Deterministic Id Hashing (Phase 20)
 - Integration Patterns21a (Phase 21)
-- Agent BC Component Isolation (Phase 22)
+- Agent Churn Risk Completion (Phase 22)
 - Test Content Blocks (Phase 100)
 - Themed Decision Architecture (Phase 100)
 

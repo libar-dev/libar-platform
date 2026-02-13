@@ -7,16 +7,16 @@
 
 ## Overall Progress
 
-**Patterns:** [███████████████░░░░░] 58/75 (77%)
+**Patterns:** [████████████████░░░░] 59/75 (79%)
 
 **Phases:** 16/21 complete
 
 | Metric         | Value |
 | -------------- | ----- |
 | Total Patterns | 75    |
-| Completed      | 58    |
-| Active         | 3     |
-| Planned        | 14    |
+| Completed      | 59    |
+| Active         | 5     |
+| Planned        | 11    |
 
 ---
 
@@ -42,7 +42,7 @@
 | ✅ [BddTestingInfrastructure](phases/phase-19-bdd-testing-infrastructure.md)         | 1/1      | 100%     |
 | 📋 [ReservationPattern](phases/phase-20-reservation-pattern.md)                      | 2/3      | 67%      |
 | 📋 [IntegrationPatterns21b](phases/phase-21-integration-patterns-21b.md)             | 0/2      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](phases/phase-22-confirmed-order-cancellation.md)     | 1/7      | 14%      |
+| 🚧 [AgentChurnRiskCompletion](phases/phase-22-agent-churn-risk-completion.md)        | 2/7      | 29%      |
 | ✅ [ExampleAppModernization](phases/phase-23-example-app-modernization.md)           | 1/1      | 100%     |
 | 🚧 [ThemedDecisionArchitecture](phases/phase-100-themed-decision-architecture.md)    | 3/6      | 50%      |
 
@@ -251,18 +251,18 @@
 
 ---
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
-[██░░░░░░░░░░░░░] 1/7 14% complete
+[████░░░░░░░░░░░] 2/7 29% complete
 
 | Pattern                         | Status    | Description                                                                                                             |
 | ------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
 | 📋 Agent Admin Frontend         | planned   | Problem: The admin UI at `/admin/agents` has several gaps identified in the E2E feature file...                         |
 | ✅ Agent As Bounded Context     | completed | Problem: AI agents are invoked manually without integration into the event-driven architecture.                         |
-| 📋 Agent BC Component Isolation | planned   | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...               |
+| 🚧 Agent BC Component Isolation | active    | Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...               |
 | 📋 Agent Churn Risk Completion  | planned   | Problem: The churn-risk agent in the order-management example app has working rule-based detection but critical gaps... |
-| 📋 Agent Command Infrastructure | planned   | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                  |
-| 📋 Agent LLM Integration        | planned   | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.          |
+| ✅ Agent Command Infrastructure | completed | Problem: Three interconnected gaps in agent command infrastructure: 1.                                                  |
+| 🚧 Agent LLM Integration        | active    | Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.          |
 | 🚧 Confirmed Order Cancellation | active    | Problem: The Order FSM treats `confirmed` as terminal.                                                                  |
 
 ---

@@ -9,7 +9,7 @@
 
 | Metric             | Value |
 | ------------------ | ----- |
-| Completed Patterns | 58    |
+| Completed Patterns | 59    |
 | Completed Phases   | 16    |
 | Total Phases       | 21    |
 
@@ -72,12 +72,12 @@
 </details>
 
 <details>
-<summary>✅ EventBusAbstraction (3 patterns)</summary>
+<summary>✅ EventUpcasting (3 patterns)</summary>
 
 | Pattern                  | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
-| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
+| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Correlation Chain System | Correlation types for tracking causal relationships in command-event flows.              |
 
 </details>
@@ -184,6 +184,7 @@
 ## Recent Completions
 
 - ✅ Agent As Bounded Context (Phase 22)
+- ✅ Agent Command Infrastructure (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
 - ✅ Bounded Context Foundation (Phase 11)
 - ✅ Command Bus Foundation (Phase 3)
@@ -192,8 +193,7 @@
 - ✅ Durable Function Adapters (Phase 18)
 - ✅ Dynamic Consistency Boundaries (Phase 16)
 - ✅ Ecst Fat Events (Phase 20)
-- ✅ Event Replay Infrastructure (Phase 18)
 
-Showing 10 of 58 completed patterns. See quarterly files for full history.
+Showing 10 of 59 completed patterns. See quarterly files for full history.
 
 ---

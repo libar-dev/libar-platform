@@ -1,4 +1,4 @@
-# 📋 Agent Command Infrastructure
+# ✅ Agent Command Infrastructure
 
 **Purpose:** Detailed requirements for the Agent Command Infrastructure feature
 
@@ -6,11 +6,11 @@
 
 ## Overview
 
-| Property     | Value    |
-| ------------ | -------- |
-| Status       | planned  |
-| Product Area | Platform |
-| Phase        | 22       |
+| Property     | Value     |
+| ------------ | --------- |
+| Status       | completed |
+| Product Area | Platform  |
+| Phase        | 22        |
 
 ## Description
 
@@ -133,6 +133,101 @@ rateLimits?: RateLimitConfig;
 // onEvent removed - patterns handle detection + analysis
 }
 """
+
+**SuggestCustomerOutreach Command Registration:**
+
+Agent commands are domain commands — they route to target BC handlers (e.g.,
+`customerOutreach`), not back to the agent. Registration follows the existing
+`commands/registry.ts` pattern used by order and inventory commands.
+
+"""typescript
+// commands/agent/configs.ts — agent command config
+import { z } from "zod";
+import { globalRegistry } from "@libar-dev/platform-core";
+
+const SuggestCustomerOutreachSchema = z.object({
+customerId: z.string(),
+suggestedAction: z.string(),
+riskLevel: z.enum(["low", "medium", "high"]),
+triggeringPatternId: z.string(),
+});
+
+globalRegistry.register("SuggestCustomerOutreach", {
+schema: SuggestCustomerOutreachSchema,
+description: "Agent-emitted suggestion for customer outreach based on detected pattern",
+category: "agent",
+version: 1,
+handler: internal.commands.agent.handleSuggestCustomerOutreach,
+projections: [], // No projections — handler creates follow-up task or notification
+});
+"""
+
+**Lifecycle FSM ↔ Checkpoint Status Mapping:**
+
+Lifecycle commands map directly to checkpoint statuses (from stubs `schema.ts:72-77`):
+
+| Command | From Status | To Status | EventBus Effect | Checkpoint Effect |
+| StartAgent | stopped | active | Subscription activated from checkpoint position | Status → active |
+| PauseAgent | active | paused | Subscription deactivated | Status → paused, position preserved |
+| ResumeAgent | paused | active | Subscription reactivated from lastProcessedPosition + 1 | Status → active |
+| StopAgent | any | stopped | Subscription removed | Status → stopped, position preserved |
+| (automatic) | active | error_recovery | Subscription paused after repeated failures | Status → error_recovery, cooldown starts |
+| (automatic) | error_recovery | active | Auto-resume after cooldown period | Status → active |
+
+The `error_recovery` state is NOT triggered by commands but by the agent framework
+detecting repeated failures (e.g., 5 consecutive dead letters). After a configurable
+cooldown period, the agent auto-resumes to `active`. This prevents tight retry loops
+that amplify transient failures.
+
+**ReconfigureAgent** applies runtime config overrides stored in checkpoint's
+`configOverrides: v.optional(v.any())` field (forward-declared in stubs). Overrides
+are merged with base `AgentBCConfig` at handler invocation time, allowing threshold
+changes without redeployment.
+
+**Pattern Registry Concrete API:**
+
+"""typescript
+// Agent pattern registry — maps pattern names to definitions
+const patternRegistry = new Map<string, PatternDefinition>();
+
+export function registerPattern(name: string, definition: PatternDefinition): void {
+if (patternRegistry.has(name)) throw new Error(`Pattern '${name}' already registered`);
+patternRegistry.set(name, definition);
+}
+
+export function getPattern(name: string): PatternDefinition | undefined {
+return patternRegistry.get(name);
+}
+
+// Registration at module init (existing patterns from \_patterns/)
+registerPattern("churn-risk", churnRiskPattern);
+registerPattern("high-value-churn", highValueChurnPattern);
+"""
+
+Agent config references patterns by name string, resolved at initialization:
+"""typescript
+const churnRiskAgentConfig: AgentBCConfig = {
+id: "churn-risk-agent",
+subscriptions: ["OrderCancelled", "OrderSubmitted", "PaymentFailed"],
+patterns: ["churn-risk", "high-value-churn"], // Resolved from registry
+confidenceThreshold: 0.8,
+};
+"""
+
+**Migration Notes — Inline onEvent to Pattern-Based Architecture:**
+
+Backward-compatible transition in 4 phases:
+
+| Phase | Change | Breaking |
+| 1 | Add optional `patterns` field to `AgentBCConfig` (alongside existing `onEvent`) | No |
+| 2 | Handler checks: if `patterns` present → use pattern registry; if `onEvent` → legacy path | No |
+| 3 | Migrate `churnRiskAgentConfig` from `onEvent` to `patterns` array | No (both paths work) |
+| 4 | Deprecate `onEvent` field (log warning when used) | No (soft deprecation) |
+
+The existing `_config.ts` inline `onEvent` handler and `_patterns/churnRisk.ts` formal
+`PatternDefinition` converge into a single code path: patterns handle both cheap trigger
+evaluation (formerly inline in `onEvent`) and expensive LLM analysis (formerly unreachable
+in `_patterns/churnRisk.ts`).
 
 ## Acceptance Criteria
 
@@ -297,20 +392,6 @@ Event arrives at agent
 inline onEvent removed
 
 _Verified by: Agent config references patterns from registry, Handler uses pattern trigger for cheap detection, Handler uses pattern analyze for LLM analysis, Unknown pattern name in config fails validation_
-
-## Deliverables
-
-- Agent command router (pending)
-- CommandOrchestrator integration for agent commands (pending)
-- Agent lifecycle FSM (pending)
-- StartAgent command handler (pending)
-- PauseAgent command handler (pending)
-- ResumeAgent command handler (pending)
-- StopAgent command handler (pending)
-- ReconfigureAgent command handler (pending)
-- Unified pattern executor (pending)
-- Pattern registry (pending)
-- AgentBCConfig patterns field (pending)
 
 ---
 
