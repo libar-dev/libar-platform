@@ -26,7 +26,6 @@ import type {
   AgentDecision,
   AgentExecutionContext,
   AgentCheckpointState,
-  LLMAnalysisResult,
 } from "./types.js";
 import type { AgentCheckpoint } from "./checkpoint.js";
 import type { AgentEventHandlerArgs } from "./init.js";
@@ -200,10 +199,10 @@ export interface AgentActionHandlerConfig<TCtx = unknown> {
 
   /**
    * LLM runtime for analysis.
-   * Optional -- if not provided, agent uses pure rule-based analysis.
-   * If provided but unavailable at runtime, falls back to rules.
+   * Required — agents must have a configured runtime.
+   * Use createMockAgentRuntime() explicitly in unit tests.
    */
-  readonly runtime?: AgentRuntimeConfig;
+  readonly runtime: AgentRuntimeConfig;
 
   /**
    * State loading callback.
@@ -322,18 +321,11 @@ export function createAgentActionHandler<TCtx = unknown>(
           eventsProcessed: 0,
         };
 
-    // Build AgentInterface from runtime (or provide a no-op stub)
-    const agentInterface = config.runtime
-      ? { analyze: config.runtime.analyze, reason: config.runtime.reason }
-      : {
-          analyze: async () =>
-            ({
-              patterns: [],
-              confidence: 0,
-              reasoning: "No LLM runtime configured",
-            }) as LLMAnalysisResult,
-          reason: async () => ({}),
-        };
+    // Build AgentInterface from runtime (required)
+    const agentInterface = {
+      analyze: config.runtime.analyze,
+      reason: config.runtime.reason,
+    };
 
     // Build the execution context. The injectedData field is added beyond
     // the base AgentExecutionContext type for the action handler pattern.

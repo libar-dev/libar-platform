@@ -5,7 +5,7 @@
  * - Idempotency (skipping already-processed events)
  * - Skipping inactive agents
  * - Normal processing (first event, null checkpoint)
- * - Rule-based analysis when no runtime configured
+ * - Rule-based analysis when pattern has no analyze function
  * - Error propagation when pattern executor throws
  * - Deterministic decisionId format
  * - Patterns mode integration (rule-based, LLM analyze, no match)
@@ -19,6 +19,7 @@ import {
 import type { AgentBCConfig } from "../../../src/agent/types.js";
 import type { PatternDefinition } from "../../../src/agent/patterns.js";
 import type { AgentEventHandlerArgs } from "../../../src/agent/init.js";
+import { createMockAgentRuntime } from "../../../src/agent/init.js";
 
 // ============================================================================
 // Test Fixtures
@@ -107,6 +108,7 @@ describe("createAgentActionHandler - idempotency", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -126,6 +128,7 @@ describe("createAgentActionHandler - idempotency", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -160,6 +163,7 @@ describe("createAgentActionHandler - inactive agent handling", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -179,6 +183,7 @@ describe("createAgentActionHandler - inactive agent handling", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -198,6 +203,7 @@ describe("createAgentActionHandler - inactive agent handling", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -228,6 +234,7 @@ describe("createAgentActionHandler - normal processing", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -240,14 +247,14 @@ describe("createAgentActionHandler - normal processing", () => {
     expect(result!.decisionId).toBe("dec_test-agent_1");
   });
 
-  it("returns rule-based analysis when no runtime configured", async () => {
+  it("returns rule-based analysis when pattern has no analyze function", async () => {
     const agentConfig = createTestAgentConfig();
     const loadState = vi.fn().mockResolvedValue(createTestState({ checkpoint: null }));
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
-      // No runtime configured
     });
 
     const args = createTestHandlerArgs();
@@ -287,6 +294,7 @@ describe("createAgentActionHandler - error propagation", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -301,6 +309,7 @@ describe("createAgentActionHandler - error propagation", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -330,6 +339,7 @@ describe("createAgentActionHandler - decisionId format", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -349,6 +359,7 @@ describe("createAgentActionHandler - decisionId format", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -389,6 +400,7 @@ describe("createAgentActionHandler - patterns mode", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -421,6 +433,7 @@ describe("createAgentActionHandler - patterns mode", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -446,6 +459,7 @@ describe("createAgentActionHandler - patterns mode", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 
@@ -504,6 +518,7 @@ describe("createAgentActionHandler - patterns mode", () => {
 
     const handler = createAgentActionHandler({
       agentConfig,
+      runtime: createMockAgentRuntime(),
       loadState,
     });
 

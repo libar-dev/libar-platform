@@ -29,11 +29,7 @@
  */
 
 import { z } from "zod";
-import {
-  createMockAgentRuntime,
-  type AgentRuntimeConfig,
-  type LLMAnalysisResult,
-} from "@libar-dev/platform-core/agent";
+import { type AgentRuntimeConfig, type LLMAnalysisResult } from "@libar-dev/platform-core/agent";
 import type { PublishedEvent } from "@libar-dev/platform-core";
 import { createLanguageModel, OPENROUTER_MODEL } from "./config.js";
 
@@ -74,8 +70,8 @@ const EventReasoningSchema = z.object({
 /**
  * Create an agent runtime that uses OpenRouter for LLM calls.
  *
- * If apiKey is not provided, returns a mock runtime instead.
- * This allows the agent to run without LLM integration for testing.
+ * Throws if apiKey is not provided — LLM analysis is essential, not optional.
+ * Use createMockAgentRuntime() explicitly in unit tests if needed.
  *
  * @param apiKey - OpenRouter API key from Convex environment (process.env.OPENROUTER_API_KEY)
  * @returns AgentRuntimeConfig for use with createAgentActionHandler
@@ -93,10 +89,20 @@ const EventReasoningSchema = z.object({
  * ```
  */
 export async function createOpenRouterAgentRuntime(apiKey?: string): Promise<AgentRuntimeConfig> {
+  if (!apiKey) {
+    throw new Error(
+      "OPENROUTER_API_KEY is not configured. " +
+        "Agent requires LLM analysis — set via `npx convex env set OPENROUTER_API_KEY`."
+    );
+  }
+
   const model = await createLanguageModel(apiKey);
 
   if (!model) {
-    return createMockAgentRuntime();
+    throw new Error(
+      "Failed to create language model despite API key being configured. " +
+        "Check that @openrouter/ai-sdk-provider is installed."
+    );
   }
 
   return {

@@ -87,7 +87,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
             const order = await testQuery(t, api.orders.getOrderSummary, { orderId });
             return order?.status === "cancelled";
           },
-          { message: `Order ${i + 1} cancelled by saga`, timeout: LLM_TEST_TIMEOUT }
+          { message: `Order ${i + 1} cancelled by saga`, timeoutMs: LLM_TEST_TIMEOUT }
         );
 
         // Wait for cancellation projection
@@ -98,7 +98,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
             });
             return projection !== null && projection.cancellationCount >= i + 1;
           },
-          { message: `Customer cancellation ${i + 1} recorded`, timeout: LLM_TEST_TIMEOUT }
+          { message: `Customer cancellation ${i + 1} recorded`, timeoutMs: LLM_TEST_TIMEOUT }
         );
       }
 
@@ -116,7 +116,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
           });
           return events.length > 0;
         },
-        { message: "PatternDetected audit event created", timeout: LLM_TEST_TIMEOUT }
+        { message: "PatternDetected audit event created", timeoutMs: LLM_TEST_TIMEOUT }
       );
 
       // Capture all PatternDetected audit events

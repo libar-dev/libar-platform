@@ -39,8 +39,8 @@ export const OPENROUTER_SITE_NAME = "libar-platform";
 /**
  * Create a configured language model with the provided API key.
  *
- * Returns null if apiKey is not provided, allowing
- * the caller to fall back to mock runtime for testing.
+ * Returns null if apiKey is not provided.
+ * Callers must throw on null — LLM analysis is essential, not optional.
  *
  * @param apiKey - OpenRouter API key (from Convex environment)
  * @returns Language model instance or null if API key not provided
@@ -51,7 +51,7 @@ export const OPENROUTER_SITE_NAME = "libar-platform";
  * const apiKey = process.env.OPENROUTER_API_KEY;
  * const model = createLanguageModel(apiKey);
  * if (!model) {
- *   return createMockAgentRuntime();
+ *   throw new Error("API key required for LLM analysis");
  * }
  * // Use model for LLM calls
  * ```

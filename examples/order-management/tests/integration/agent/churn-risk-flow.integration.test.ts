@@ -47,6 +47,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
     let t: ConvexTestingHelper;
     let customerId: string;
     let orderIds: string[];
+    let testStartTimestamp: number;
 
     // Captured after setup -- all `it` blocks assert against these
     let patternAuditEvents: Array<{
@@ -78,6 +79,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
     }>;
 
     beforeAll(async () => {
+      testStartTimestamp = Date.now();
       t = new ConvexTestingHelper({
         backendUrl: process.env.CONVEX_URL || "http://127.0.0.1:3210",
       });
@@ -116,7 +118,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
             const order = await testQuery(t, api.orders.getOrderSummary, { orderId });
             return order?.status === "cancelled";
           },
-          { message: `Order ${i + 1} cancelled by saga`, timeout: PIPELINE_TIMEOUT }
+          { message: `Order ${i + 1} cancelled by saga`, timeoutMs: PIPELINE_TIMEOUT }
         );
 
         // Wait for cancellation projection
@@ -127,7 +129,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
             });
             return projection !== null && projection.cancellationCount >= i + 1;
           },
-          { message: `Customer cancellation ${i + 1} recorded`, timeout: PIPELINE_TIMEOUT }
+          { message: `Customer cancellation ${i + 1} recorded`, timeoutMs: PIPELINE_TIMEOUT }
         );
       }
 
@@ -141,7 +143,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
           });
           return events.length > 0;
         },
-        { message: "PatternDetected audit event created", timeout: PIPELINE_TIMEOUT }
+        { message: "PatternDetected audit event created", timeoutMs: PIPELINE_TIMEOUT }
       );
 
       // Capture PatternDetected audit events
@@ -166,7 +168,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
           });
           return events.length > 0;
         },
-        { message: "AgentCommandRouted audit event created", timeout: PIPELINE_TIMEOUT }
+        { message: "AgentCommandRouted audit event created", timeoutMs: PIPELINE_TIMEOUT }
       );
 
       // Capture AgentCommandRouted audit events
@@ -184,7 +186,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
           });
           return tasks.length > 0;
         },
-        { message: "Outreach task created for customer", timeout: PIPELINE_TIMEOUT }
+        { message: "Outreach task created for customer", timeoutMs: PIPELINE_TIMEOUT }
       );
 
       // Capture outreach tasks
@@ -261,10 +263,15 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
     it(
       "should not produce dead letters on the happy path",
       async () => {
-        const deadLetters = await testQuery(t, api.queries.agent.getDeadLetters, {
+        const allDeadLetters = await testQuery(t, api.queries.agent.getDeadLetters, {
           agentId: CHURN_RISK_AGENT_ID,
           status: "pending",
         });
+        // Filter to only dead letters created during THIS test run
+        // to avoid cross-test contamination from other concurrent test files
+        const deadLetters = allDeadLetters.filter(
+          (dl: { failedAt?: number }) => (dl.failedAt ?? 0) >= testStartTimestamp
+        );
         expect(deadLetters.length).toBe(0);
       },
       PIPELINE_TIMEOUT

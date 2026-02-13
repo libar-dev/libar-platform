@@ -167,19 +167,9 @@ describeFeature(churnRiskFeature, ({ Scenario, Background, AfterEachScenario }) 
             await testMutation(scenarioState!.t, api.orders.submitOrder, {
               orderId,
             });
-          }
-        }
-      );
 
-      And(
-        "all {int} orders are cancelled by saga compensation",
-        async (_ctx: unknown, orderCount: number) => {
-          const orderIds = scenarioState!.scenario.orderIds!;
-          expect(orderIds).toHaveLength(orderCount);
-
-          // Wait for each order to reach "cancelled" status via saga compensation.
-          // The saga tries to reserve stock -> fails (0 stock) -> compensates -> cancels.
-          for (const orderId of orderIds) {
+            // Wait for saga compensation to cancel before next order.
+            // This ensures the projection is up-to-date when the agent processes later events.
             await waitUntil(
               async () => {
                 const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, {
@@ -192,43 +182,61 @@ describeFeature(churnRiskFeature, ({ Scenario, Background, AfterEachScenario }) 
                 message: `Order ${orderId} to be cancelled by saga compensation`,
               }
             );
+
+            // Wait for customerCancellations projection to record this cancellation
+            await waitUntil(
+              async () => {
+                const cancellations = await testQuery(
+                  scenarioState!.t,
+                  api.testing.getTestCustomerCancellations,
+                  { customerId }
+                );
+                return cancellations?.cancellationCount >= i + 1 ? cancellations : null;
+              },
+              {
+                timeoutMs: AGENT_TIMEOUT_MS,
+                message: `Customer cancellation ${i + 1} recorded in projection`,
+              }
+            );
+          }
+        }
+      );
+
+      And(
+        "all {int} orders are cancelled by saga compensation",
+        async (_ctx: unknown, orderCount: number) => {
+          // Orders are already cancelled sequentially in the creation step.
+          // This step just verifies the final state.
+          const orderIds = scenarioState!.scenario.orderIds!;
+          expect(orderIds).toHaveLength(orderCount);
+
+          for (const orderId of orderIds) {
+            const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, {
+              orderId,
+            });
+            expect(order?.status).toBe("cancelled");
           }
         }
       );
 
       When("the churn-risk agent processes the cancellation events", async () => {
-        const customerId = scenarioState!.scenario.customerId!;
-
-        // Wait for the customerCancellations projection to reflect all cancellations
+        // Wait for the PatternDetected audit event directly — not the checkpoint.
+        // eventsProcessed >= 3 is NOT sufficient: the checkpoint advances even when
+        // no decision is produced (LLM confidence below threshold), and can be
+        // pre-satisfied from earlier test files sharing the same Convex backend.
         await waitUntil(
           async () => {
-            const cancellations = await testQuery(
-              scenarioState!.t,
-              api.testing.getTestCustomerCancellations,
-              { customerId }
-            );
-            return cancellations?.cancellationCount >= 3 ? cancellations : null;
-          },
-          {
-            timeoutMs: AGENT_TIMEOUT_MS,
-            message: `customerCancellations projection to have 3+ for ${customerId}`,
-          }
-        );
-
-        // Wait for the agent checkpoint to advance past our events.
-        // The agent processes events via EventBus subscription -> workpool action.
-        await waitUntil(
-          async () => {
-            const checkpoint = await testQuery(scenarioState!.t, api.queries.agent.getCheckpoint, {
+            const audits = await testQuery(scenarioState!.t, api.queries.agent.getAuditEvents, {
               agentId: CHURN_RISK_AGENT_ID,
+              eventType: "PatternDetected",
+              limit: 10,
             });
-            return checkpoint?.eventsProcessed && checkpoint.eventsProcessed >= 3
-              ? checkpoint
-              : null;
+            const auditList = (audits ?? []) as unknown[];
+            return auditList.length > 0 ? audits : null;
           },
           {
             timeoutMs: AGENT_TIMEOUT_MS,
-            message: `Agent checkpoint to process 3+ events`,
+            message: `PatternDetected audit event to be recorded for churn-risk agent`,
           }
         );
       });
@@ -327,17 +335,8 @@ describeFeature(churnRiskFeature, ({ Scenario, Background, AfterEachScenario }) 
           await testMutation(scenarioState!.t, api.orders.submitOrder, {
             orderId,
           });
-        }
-      }
-    );
 
-    And(
-      "all {int} orders are cancelled by saga compensation",
-      async (_ctx: unknown, orderCount: number) => {
-        const orderIds = scenarioState!.scenario.orderIds!;
-        expect(orderIds).toHaveLength(orderCount);
-
-        for (const orderId of orderIds) {
+          // Wait for saga compensation to cancel before next order
           await waitUntil(
             async () => {
               const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, {
@@ -350,31 +349,45 @@ describeFeature(churnRiskFeature, ({ Scenario, Background, AfterEachScenario }) 
               message: `Order ${orderId} to be cancelled by saga compensation`,
             }
           );
+
+          // Wait for projection to record this cancellation
+          await waitUntil(
+            async () => {
+              const cancellations = await testQuery(
+                scenarioState!.t,
+                api.testing.getTestCustomerCancellations,
+                { customerId }
+              );
+              return cancellations?.cancellationCount >= i + 1 ? cancellations : null;
+            },
+            {
+              timeoutMs: AGENT_TIMEOUT_MS,
+              message: `Customer cancellation ${i + 1} recorded in projection`,
+            }
+          );
+        }
+      }
+    );
+
+    And(
+      "all {int} orders are cancelled by saga compensation",
+      async (_ctx: unknown, orderCount: number) => {
+        // Orders are already cancelled sequentially in the creation step.
+        const orderIds = scenarioState!.scenario.orderIds!;
+        expect(orderIds).toHaveLength(orderCount);
+
+        for (const orderId of orderIds) {
+          const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, {
+            orderId,
+          });
+          expect(order?.status).toBe("cancelled");
         }
       }
     );
 
     When("the churn-risk agent checkpoint has advanced past the cancellation events", async () => {
-      const customerId = scenarioState!.scenario.customerId!;
-
-      // Wait for the customerCancellations projection to reflect both cancellations
-      await waitUntil(
-        async () => {
-          const cancellations = await testQuery(
-            scenarioState!.t,
-            api.testing.getTestCustomerCancellations,
-            { customerId }
-          );
-          return cancellations?.cancellationCount >= 2 ? cancellations : null;
-        },
-        {
-          timeoutMs: AGENT_TIMEOUT_MS,
-          message: `customerCancellations projection to have 2+ for ${customerId}`,
-        }
-      );
-
-      // Wait for the agent checkpoint to advance past these events.
-      // With only 2 cancellations, the agent should process them but NOT detect a pattern.
+      // Projection is already up-to-date from sequential creation step.
+      // Just wait for the agent checkpoint to advance.
       await waitUntil(
         async () => {
           const checkpoint = await testQuery(scenarioState!.t, api.queries.agent.getCheckpoint, {
@@ -500,17 +513,8 @@ describeFeature(churnRiskFeature, ({ Scenario, Background, AfterEachScenario }) 
             await testMutation(scenarioState!.t, api.orders.submitOrder, {
               orderId,
             });
-          }
-        }
-      );
 
-      And(
-        "all {int} orders are cancelled by saga compensation",
-        async (_ctx: unknown, orderCount: number) => {
-          const orderIds = scenarioState!.scenario.orderIds!;
-          expect(orderIds).toHaveLength(orderCount);
-
-          for (const orderId of orderIds) {
+            // Wait for saga compensation to cancel before next order
             await waitUntil(
               async () => {
                 const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, {
@@ -523,29 +527,44 @@ describeFeature(churnRiskFeature, ({ Scenario, Background, AfterEachScenario }) 
                 message: `Order ${orderId} to be cancelled by saga compensation`,
               }
             );
+
+            // Wait for projection to record this cancellation
+            await waitUntil(
+              async () => {
+                const cancellations = await testQuery(
+                  scenarioState!.t,
+                  api.testing.getTestCustomerCancellations,
+                  { customerId }
+                );
+                return cancellations?.cancellationCount >= i + 1 ? cancellations : null;
+              },
+              {
+                timeoutMs: AGENT_TIMEOUT_MS,
+                message: `Customer cancellation ${i + 1} recorded in projection`,
+              }
+            );
+          }
+        }
+      );
+
+      And(
+        "all {int} orders are cancelled by saga compensation",
+        async (_ctx: unknown, orderCount: number) => {
+          // Orders are already cancelled sequentially in the creation step.
+          const orderIds = scenarioState!.scenario.orderIds!;
+          expect(orderIds).toHaveLength(orderCount);
+
+          for (const orderId of orderIds) {
+            const order = await testQuery(scenarioState!.t, api.orders.getOrderSummary, {
+              orderId,
+            });
+            expect(order?.status).toBe("cancelled");
           }
         }
       );
 
       When("the churn-risk agent detects the pattern and emits a command", async () => {
-        const customerId = scenarioState!.scenario.customerId!;
-
-        // Wait for the customerCancellations projection to reflect all cancellations
-        await waitUntil(
-          async () => {
-            const cancellations = await testQuery(
-              scenarioState!.t,
-              api.testing.getTestCustomerCancellations,
-              { customerId }
-            );
-            return cancellations?.cancellationCount >= 3 ? cancellations : null;
-          },
-          {
-            timeoutMs: AGENT_TIMEOUT_MS,
-            message: `customerCancellations projection to have 3+ for ${customerId}`,
-          }
-        );
-
+        // Projection is already up-to-date from sequential creation step.
         // Wait for PatternDetected audit event to confirm pattern was detected
         await waitUntil(
           async () => {

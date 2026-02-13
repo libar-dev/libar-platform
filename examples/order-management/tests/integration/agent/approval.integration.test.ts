@@ -180,7 +180,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
           });
           return auditEvents.some((e) => e.payload.approvalId === approvalId);
         },
-        { message: "ApprovalGranted audit event created", timeout: APPROVAL_TEST_TIMEOUT }
+        { message: "ApprovalGranted audit event created", timeoutMs: APPROVAL_TEST_TIMEOUT }
       );
 
       // Verify command was emitted (check agentCommands table via audit)
@@ -282,7 +282,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
           });
           return auditEvents.some((e) => e.payload.approvalId === approvalId);
         },
-        { message: "ApprovalRejected audit event created", timeout: APPROVAL_TEST_TIMEOUT }
+        { message: "ApprovalRejected audit event created", timeoutMs: APPROVAL_TEST_TIMEOUT }
       );
     });
 
@@ -376,7 +376,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
           });
           return auditEvents.some((e) => e.payload.approvalId === approvalId);
         },
-        { message: "ApprovalExpired audit event created", timeout: APPROVAL_TEST_TIMEOUT }
+        { message: "ApprovalExpired audit event created", timeoutMs: APPROVAL_TEST_TIMEOUT }
       );
     });
 

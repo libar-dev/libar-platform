@@ -30,7 +30,9 @@ services:
       - IS_TEST=false
       - CONVEX_CLOUD_ORIGIN=http://127.0.0.1:3210
       - CONVEX_SITE_ORIGIN=http://127.0.0.1:3211
-      # Agent BC LLM Integration (optional - if not set, uses mock runtime)
+      # Note: Container env vars do NOT reach Convex "use node" actions.
+      # The dev-set-openrouter-key Justfile recipe sets this via `convex env set` instead.
+      # Kept for reference only.
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     volumes:
       - convex-es-dev-data:/convex_data
