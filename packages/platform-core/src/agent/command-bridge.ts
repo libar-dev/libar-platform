@@ -276,8 +276,14 @@ export function createCommandBridgeHandler<TCtx = unknown>(
             decisionId,
             status: "completed",
           });
-        } catch {
+        } catch (err) {
           // NO-THROW: status update failure is non-critical
+          logger.warn("Status update to completed failed (non-critical)", {
+            decisionId,
+            commandType,
+            agentId,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }
     } catch (execErr) {
@@ -303,8 +309,14 @@ export function createCommandBridgeHandler<TCtx = unknown>(
             error: errorMsg,
           },
         });
-      } catch {
+      } catch (err) {
         // NO-THROW
+        logger.warn("Failed to record execution failure audit", {
+          decisionId,
+          commandType: route.commandType,
+          agentId,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
 
       // Update command status to failed
@@ -315,8 +327,14 @@ export function createCommandBridgeHandler<TCtx = unknown>(
             status: "failed",
             error: errorMsg,
           });
-        } catch {
+        } catch (err) {
           // NO-THROW
+          logger.warn("Status update to failed failed (non-critical)", {
+            decisionId,
+            commandType: route.commandType,
+            agentId,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }
     }
@@ -373,8 +391,14 @@ async function recordRoutingFailure(
         status: "failed",
         error: details.error,
       });
-    } catch {
+    } catch (err) {
       // NO-THROW
+      logger.warn("Status update to failed failed in recordRoutingFailure (non-critical)", {
+        decisionId: details.decisionId,
+        commandType: details.commandType,
+        agentId: details.agentId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 }

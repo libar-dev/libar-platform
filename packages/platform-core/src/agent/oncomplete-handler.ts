@@ -318,8 +318,12 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
       });
 
       // Extract checkpoint from the component response
-      const checkpoint = (checkpointResult as { checkpoint: { lastProcessedPosition: number } })
-        .checkpoint;
+      const checkpoint = (checkpointResult as { checkpoint?: { lastProcessedPosition: number } })
+        ?.checkpoint;
+      if (!checkpoint) {
+        logger.error("Checkpoint unavailable in onComplete success path", { agentId, eventId });
+        return;
+      }
 
       if (checkpoint.lastProcessedPosition >= globalPosition) {
         logger.debug("Event already processed in onComplete, skipping", {
@@ -460,9 +464,14 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
           attemptCount: 1,
           workId,
         });
-      } catch {
+      } catch (dlFallbackError) {
         // Truly nothing more we can do
-        logger.error("Failed to record dead letter in catch-all", { agentId, eventId });
+        logger.error("Failed to record dead letter in catch-all", {
+          agentId,
+          eventId,
+          error:
+            dlFallbackError instanceof Error ? dlFallbackError.message : String(dlFallbackError),
+        });
       }
     }
   };

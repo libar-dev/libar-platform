@@ -138,7 +138,17 @@ export function handleStartAgent<TCtx = unknown>(
       agentId: args.agentId,
       subscriptionId: getAgentSubscriptionId(args.agentId),
     });
-    const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
+    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
+    if (!checkpoint) {
+      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
+      return {
+        success: false,
+        agentId: args.agentId,
+        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+        message: "Failed to load or create checkpoint",
+        currentState: "stopped" as AgentLifecycleState,
+      };
+    }
 
     // 2. Validate FSM transition
     const currentState = checkpoint.status as AgentLifecycleState;
@@ -225,7 +235,17 @@ export function handlePauseAgent<TCtx = unknown>(
       agentId: args.agentId,
       subscriptionId: getAgentSubscriptionId(args.agentId),
     });
-    const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
+    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
+    if (!checkpoint) {
+      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
+      return {
+        success: false,
+        agentId: args.agentId,
+        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+        message: "Failed to load or create checkpoint",
+        currentState: "stopped" as AgentLifecycleState,
+      };
+    }
 
     // 2. Validate FSM transition
     const currentState = checkpoint.status as AgentLifecycleState;
@@ -314,7 +334,17 @@ export function handleResumeAgent<TCtx = unknown>(
       agentId: args.agentId,
       subscriptionId: getAgentSubscriptionId(args.agentId),
     });
-    const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
+    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
+    if (!checkpoint) {
+      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
+      return {
+        success: false,
+        agentId: args.agentId,
+        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+        message: "Failed to load or create checkpoint",
+        currentState: "stopped" as AgentLifecycleState,
+      };
+    }
 
     // 2. Validate FSM transition
     const currentState = checkpoint.status as AgentLifecycleState;
@@ -401,7 +431,17 @@ export function handleStopAgent<TCtx = unknown>(
       agentId: args.agentId,
       subscriptionId: getAgentSubscriptionId(args.agentId),
     });
-    const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
+    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
+    if (!checkpoint) {
+      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
+      return {
+        success: false,
+        agentId: args.agentId,
+        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+        message: "Failed to load or create checkpoint",
+        currentState: "stopped" as AgentLifecycleState,
+      };
+    }
 
     // 2. Validate FSM transition
     const currentState = checkpoint.status as AgentLifecycleState;
@@ -491,7 +531,17 @@ export function handleReconfigureAgent<TCtx = unknown>(
       agentId: args.agentId,
       subscriptionId: getAgentSubscriptionId(args.agentId),
     });
-    const checkpoint = (result as { checkpoint: CheckpointShape }).checkpoint;
+    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
+    if (!checkpoint) {
+      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
+      return {
+        success: false,
+        agentId: args.agentId,
+        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+        message: "Failed to load or create checkpoint",
+        currentState: "stopped" as AgentLifecycleState,
+      };
+    }
 
     // 2. Validate FSM transition
     const currentState = checkpoint.status as AgentLifecycleState;
