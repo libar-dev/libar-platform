@@ -174,7 +174,7 @@ describe("Agent Subscription - Action Overload", () => {
 
       expect(context).toEqual({
         agentId: "llm-churn-risk",
-        subscriptionId: "agent:orders:llm-churn-risk",
+        subscriptionId: "sub_llm-churn-risk",
         eventId: "evt_42",
         eventType: "OrderCancelled",
         globalPosition: 42,

@@ -371,9 +371,9 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
       ...(actionOpts.retry !== undefined ? { retry: actionOpts.retry } : {}),
       toHandlerArgs: resolvedToHandlerArgs,
       getPartitionKey: resolvedGetPartitionKey,
-      toWorkpoolContext: (event: PublishedEvent, chain: CorrelationChain, subName: string) => ({
+      toWorkpoolContext: (event: PublishedEvent, chain: CorrelationChain, _subName: string) => ({
         agentId: definition.id,
-        subscriptionId: subName,
+        subscriptionId: `sub_${definition.id}`,
         eventId: event.eventId,
         eventType: event.eventType,
         globalPosition: event.globalPosition,

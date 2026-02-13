@@ -143,6 +143,10 @@ export interface AgentComponentAPI {
     readonly loadOrCreate: FunctionReference<"mutation">;
     /** Advance checkpoint position after successful processing */
     readonly update: FunctionReference<"mutation">;
+    /** Atomic lifecycle transition: update status + record audit in single mutation */
+    readonly transitionLifecycle: FunctionReference<"mutation">;
+    /** Patch config overrides for all agent checkpoints */
+    readonly patchConfigOverrides?: FunctionReference<"mutation">;
   };
 
   /** Audit API -- ctx.runMutation(components.agentBC.audit.*) */

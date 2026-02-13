@@ -184,24 +184,20 @@ export function handleStartAgent<TCtx = unknown>(
       };
     }
 
-    // 3. Update checkpoint status
-    await mutCtx.runMutation(comp.checkpoints.update, {
-      agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
-      status: nextState,
-    });
-
-    // 4. Record audit event
+    // 3. Atomic lifecycle transition: update status + record audit
     const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.audit.record, {
-      eventType: "AgentStarted",
+    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
       agentId: args.agentId,
-      decisionId,
-      timestamp: Date.now(),
-      payload: {
-        previousState: currentState,
-        correlationId: args.correlationId,
-        resumeFromPosition: checkpoint.lastProcessedPosition + 1,
+      status: nextState,
+      auditEvent: {
+        eventType: "AgentStarted",
+        decisionId,
+        timestamp: Date.now(),
+        payload: {
+          previousState: currentState,
+          correlationId: args.correlationId,
+          resumeFromPosition: checkpoint.lastProcessedPosition + 1,
+        },
       },
     });
 
@@ -211,7 +207,7 @@ export function handleStartAgent<TCtx = unknown>(
       newState: nextState,
     });
 
-    // 5. Return success
+    // 4. Return success
     return {
       success: true,
       agentId: args.agentId,
@@ -275,25 +271,21 @@ export function handlePauseAgent<TCtx = unknown>(
       };
     }
 
-    // 3. Update checkpoint status
-    await mutCtx.runMutation(comp.checkpoints.update, {
-      agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
-      status: nextState,
-    });
-
-    // 4. Record audit event
+    // 3. Atomic lifecycle transition: update status + record audit
     const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.audit.record, {
-      eventType: "AgentPaused",
+    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
       agentId: args.agentId,
-      decisionId,
-      timestamp: Date.now(),
-      payload: {
-        reason: args.reason,
-        correlationId: args.correlationId,
-        pausedAtPosition: checkpoint.lastProcessedPosition,
-        eventsProcessedAtPause: checkpoint.eventsProcessed,
+      status: nextState,
+      auditEvent: {
+        eventType: "AgentPaused",
+        decisionId,
+        timestamp: Date.now(),
+        payload: {
+          reason: args.reason,
+          correlationId: args.correlationId,
+          pausedAtPosition: checkpoint.lastProcessedPosition,
+          eventsProcessedAtPause: checkpoint.eventsProcessed,
+        },
       },
     });
 
@@ -304,7 +296,7 @@ export function handlePauseAgent<TCtx = unknown>(
       newState: nextState,
     });
 
-    // 5. Return success
+    // 4. Return success
     return {
       success: true,
       agentId: args.agentId,
@@ -368,23 +360,19 @@ export function handleResumeAgent<TCtx = unknown>(
       };
     }
 
-    // 3. Update checkpoint status
-    await mutCtx.runMutation(comp.checkpoints.update, {
-      agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
-      status: nextState,
-    });
-
-    // 4. Record audit event
+    // 3. Atomic lifecycle transition: update status + record audit
     const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.audit.record, {
-      eventType: "AgentResumed",
+    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
       agentId: args.agentId,
-      decisionId,
-      timestamp: Date.now(),
-      payload: {
-        resumeFromPosition: checkpoint.lastProcessedPosition + 1,
-        correlationId: args.correlationId,
+      status: nextState,
+      auditEvent: {
+        eventType: "AgentResumed",
+        decisionId,
+        timestamp: Date.now(),
+        payload: {
+          resumeFromPosition: checkpoint.lastProcessedPosition + 1,
+          correlationId: args.correlationId,
+        },
       },
     });
 
@@ -394,7 +382,7 @@ export function handleResumeAgent<TCtx = unknown>(
       newState: nextState,
     });
 
-    // 5. Return success
+    // 4. Return success
     return {
       success: true,
       agentId: args.agentId,
@@ -459,25 +447,21 @@ export function handleStopAgent<TCtx = unknown>(
       };
     }
 
-    // 3. Update checkpoint status
-    await mutCtx.runMutation(comp.checkpoints.update, {
-      agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
-      status: nextState,
-    });
-
-    // 4. Record audit event
+    // 3. Atomic lifecycle transition: update status + record audit
     const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.audit.record, {
-      eventType: "AgentStopped",
+    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
       agentId: args.agentId,
-      decisionId,
-      timestamp: Date.now(),
-      payload: {
-        previousState: currentState,
-        reason: args.reason,
-        correlationId: args.correlationId,
-        stoppedAtPosition: checkpoint.lastProcessedPosition,
+      status: nextState,
+      auditEvent: {
+        eventType: "AgentStopped",
+        decisionId,
+        timestamp: Date.now(),
+        payload: {
+          previousState: currentState,
+          reason: args.reason,
+          correlationId: args.correlationId,
+          stoppedAtPosition: checkpoint.lastProcessedPosition,
+        },
       },
     });
 
@@ -488,7 +472,7 @@ export function handleStopAgent<TCtx = unknown>(
       newState: nextState,
     });
 
-    // 5. Return success
+    // 4. Return success
     return {
       success: true,
       agentId: args.agentId,
@@ -560,26 +544,29 @@ export function handleReconfigureAgent<TCtx = unknown>(
       ...args.configOverrides,
     };
 
-    // 4. Update checkpoint status + config overrides
-    await mutCtx.runMutation(comp.checkpoints.update, {
-      agentId: args.agentId,
-      subscriptionId: `sub_${args.agentId}`,
-      status: nextState,
-      configOverrides: mergedOverrides,
-    });
+    // 4. Patch config overrides first (if mutation available)
+    if (comp.checkpoints.patchConfigOverrides) {
+      await mutCtx.runMutation(comp.checkpoints.patchConfigOverrides, {
+        agentId: args.agentId,
+        configOverrides: mergedOverrides,
+      });
+    }
 
-    // 5. Record audit event
+    // 5. Atomic lifecycle transition: update status + record audit
     const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.audit.record, {
-      eventType: "AgentReconfigured",
+    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
       agentId: args.agentId,
-      decisionId,
-      timestamp: Date.now(),
-      payload: {
-        previousState: currentState,
-        previousOverrides,
-        newOverrides: args.configOverrides,
-        correlationId: args.correlationId,
+      status: nextState,
+      auditEvent: {
+        eventType: "AgentReconfigured",
+        decisionId,
+        timestamp: Date.now(),
+        payload: {
+          previousState: currentState,
+          previousOverrides,
+          newOverrides: args.configOverrides,
+          correlationId: args.correlationId,
+        },
       },
     });
 

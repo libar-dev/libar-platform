@@ -55,6 +55,10 @@ function createMockComponent(): AgentComponentAPI {
       loadOrCreate:
         "mock_loadOrCreate" as unknown as AgentComponentAPI["checkpoints"]["loadOrCreate"],
       update: "mock_update" as unknown as AgentComponentAPI["checkpoints"]["update"],
+      transitionLifecycle:
+        "mock_transitionLifecycle" as unknown as AgentComponentAPI["checkpoints"]["transitionLifecycle"],
+      patchConfigOverrides:
+        "mock_patchConfigOverrides" as unknown as AgentComponentAPI["checkpoints"]["patchConfigOverrides"],
     },
     audit: {
       record: "mock_audit_record" as unknown as AgentComponentAPI["audit"]["record"],
@@ -135,29 +139,21 @@ describe("handleStartAgent", () => {
       expect(result.newState).toBe("active");
     }
 
-    // Checkpoint update called with active status
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // Atomic transitionLifecycle called with active status + AgentStarted audit
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(updateCall).toBeDefined();
-    expect(updateCall![1]).toMatchObject({
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
       agentId: "test-agent",
-      subscriptionId: "sub_test-agent",
       status: "active",
-    });
-
-    // Audit recorded with AgentStarted
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
-    );
-    expect(auditCall).toBeDefined();
-    expect(auditCall![1]).toMatchObject({
-      eventType: "AgentStarted",
-      agentId: "test-agent",
-      payload: {
-        previousState: "stopped",
-        correlationId: "corr_001",
-        resumeFromPosition: 26, // lastProcessedPosition + 1
+      auditEvent: {
+        eventType: "AgentStarted",
+        payload: {
+          previousState: "stopped",
+          correlationId: "corr_001",
+          resumeFromPosition: 26, // lastProcessedPosition + 1
+        },
       },
     });
 
@@ -190,16 +186,11 @@ describe("handleStartAgent", () => {
       expect(result.currentState).toBe("active");
     }
 
-    // No checkpoint update or audit should be recorded
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // No transitionLifecycle should be called
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(updateCall).toBeUndefined();
-
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
-    );
-    expect(auditCall).toBeUndefined();
+    expect(transitionCall).toBeUndefined();
   });
 
   it("rejects START from paused state", async () => {
@@ -256,26 +247,22 @@ describe("handlePauseAgent", () => {
       expect(result.newState).toBe("paused");
     }
 
-    // Checkpoint updated to paused
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // Atomic transitionLifecycle called with paused status + AgentPaused audit
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(updateCall![1]).toMatchObject({
-      status: "paused",
-    });
-
-    // Audit recorded with AgentPaused
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
-    );
-    expect(auditCall![1]).toMatchObject({
-      eventType: "AgentPaused",
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
       agentId: "test-agent",
-      payload: {
-        reason: "Maintenance window",
-        correlationId: "corr_010",
-        pausedAtPosition: 50,
-        eventsProcessedAtPause: 20,
+      status: "paused",
+      auditEvent: {
+        eventType: "AgentPaused",
+        payload: {
+          reason: "Maintenance window",
+          correlationId: "corr_010",
+          pausedAtPosition: 50,
+          eventsProcessedAtPause: 20,
+        },
       },
     });
   });
@@ -332,24 +319,20 @@ describe("handleResumeAgent", () => {
       expect(result.newState).toBe("active");
     }
 
-    // Checkpoint updated to active
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // Atomic transitionLifecycle called with active status + AgentResumed audit
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(updateCall![1]).toMatchObject({
-      status: "active",
-    });
-
-    // Audit recorded with AgentResumed
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
-    );
-    expect(auditCall![1]).toMatchObject({
-      eventType: "AgentResumed",
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
       agentId: "test-agent",
-      payload: {
-        resumeFromPosition: 76, // lastProcessedPosition + 1
-        correlationId: "corr_020",
+      status: "active",
+      auditEvent: {
+        eventType: "AgentResumed",
+        payload: {
+          resumeFromPosition: 76, // lastProcessedPosition + 1
+          correlationId: "corr_020",
+        },
       },
     });
   });
@@ -407,26 +390,22 @@ describe("handleStopAgent", () => {
       expect(result.newState).toBe("stopped");
     }
 
-    // Checkpoint updated to stopped
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // Atomic transitionLifecycle called with stopped status + AgentStopped audit
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(updateCall![1]).toMatchObject({
-      status: "stopped",
-    });
-
-    // Audit recorded with AgentStopped
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
-    );
-    expect(auditCall![1]).toMatchObject({
-      eventType: "AgentStopped",
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
       agentId: "test-agent",
-      payload: {
-        previousState: "active",
-        reason: "Decommissioning",
-        correlationId: "corr_030",
-        stoppedAtPosition: 100,
+      status: "stopped",
+      auditEvent: {
+        eventType: "AgentStopped",
+        payload: {
+          previousState: "active",
+          reason: "Decommissioning",
+          correlationId: "corr_030",
+          stoppedAtPosition: 100,
+        },
       },
     });
   });
@@ -447,14 +426,19 @@ describe("handleStopAgent", () => {
       expect(result.newState).toBe("stopped");
     }
 
-    // Audit captures paused -> stopped
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
+    // transitionLifecycle captures paused -> stopped
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(auditCall![1]).toMatchObject({
-      payload: {
-        previousState: "paused",
-        stoppedAtPosition: 60,
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
+      status: "stopped",
+      auditEvent: {
+        eventType: "AgentStopped",
+        payload: {
+          previousState: "paused",
+          stoppedAtPosition: 60,
+        },
       },
     });
   });
@@ -537,30 +521,35 @@ describe("handleReconfigureAgent", () => {
       expect(result.newState).toBe("active");
     }
 
-    // Checkpoint updated with merged config overrides
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // patchConfigOverrides called with merged overrides
+    const patchCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.patchConfigOverrides
     );
-    expect(updateCall![1]).toMatchObject({
-      status: "active",
+    expect(patchCall).toBeDefined();
+    expect(patchCall![1]).toMatchObject({
+      agentId: "test-agent",
       configOverrides: {
         confidenceThreshold: 0.9, // overridden
         patternWindowDuration: "30d", // preserved from existing
       },
     });
 
-    // Audit recorded with AgentReconfigured
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
+    // Atomic transitionLifecycle called with active status + AgentReconfigured audit
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(auditCall![1]).toMatchObject({
-      eventType: "AgentReconfigured",
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
       agentId: "test-agent",
-      payload: {
-        previousState: "active",
-        previousOverrides: existingOverrides,
-        newOverrides: { confidenceThreshold: 0.9 },
-        correlationId: "corr_040",
+      status: "active",
+      auditEvent: {
+        eventType: "AgentReconfigured",
+        payload: {
+          previousState: "active",
+          previousOverrides: existingOverrides,
+          newOverrides: { confidenceThreshold: 0.9 },
+          correlationId: "corr_040",
+        },
       },
     });
   });
@@ -585,16 +574,27 @@ describe("handleReconfigureAgent", () => {
       expect(result.newState).toBe("active");
     }
 
-    // Checkpoint updated to active with new overrides
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // patchConfigOverrides called with new overrides
+    const patchCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.patchConfigOverrides
     );
-    expect(updateCall![1]).toMatchObject({
-      status: "active",
+    expect(patchCall).toBeDefined();
+    expect(patchCall![1]).toMatchObject({
+      agentId: "test-agent",
       configOverrides: {
         patternWindowDuration: "7d",
         rateLimits: { maxRequestsPerMinute: 30 },
       },
+    });
+
+    // Atomic transitionLifecycle called with active status
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
+    );
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
+      agentId: "test-agent",
+      status: "active",
     });
   });
 
@@ -633,24 +633,28 @@ describe("handleReconfigureAgent", () => {
 
     expect(result.success).toBe(true);
 
-    // Checkpoint updated with new overrides (no prior overrides to merge)
-    const updateCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.checkpoints.update
+    // patchConfigOverrides called with new overrides (no prior overrides to merge)
+    const patchCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.patchConfigOverrides
     );
-    expect(updateCall![1]).toMatchObject({
+    expect(patchCall).toBeDefined();
+    expect(patchCall![1]).toMatchObject({
       configOverrides: {
         confidenceThreshold: 0.85,
       },
     });
 
-    // Audit captures undefined previousOverrides
-    const auditCall = ctx.runMutation.mock.calls.find(
-      (call: unknown[]) => call[0] === component.audit.record
+    // transitionLifecycle audit captures undefined previousOverrides
+    const transitionCall = ctx.runMutation.mock.calls.find(
+      (call: unknown[]) => call[0] === component.checkpoints.transitionLifecycle
     );
-    expect(auditCall![1]).toMatchObject({
-      payload: {
-        previousOverrides: undefined,
-        newOverrides: { confidenceThreshold: 0.85 },
+    expect(transitionCall).toBeDefined();
+    expect(transitionCall![1]).toMatchObject({
+      auditEvent: {
+        payload: {
+          previousOverrides: undefined,
+          newOverrides: { confidenceThreshold: 0.85 },
+        },
       },
     });
   });

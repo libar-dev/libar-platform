@@ -107,8 +107,12 @@ describe("AGENT_AUDIT_EVENT_TYPES", () => {
     expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentErrorRecoveryStarted");
   });
 
-  it("has 16 event types", () => {
-    expect(AGENT_AUDIT_EVENT_TYPES.length).toBe(16);
+  it("contains all expected DS-6 failure tracking event types", () => {
+    expect(AGENT_AUDIT_EVENT_TYPES).toContain("AgentAnalysisFailed");
+  });
+
+  it("has 17 event types", () => {
+    expect(AGENT_AUDIT_EVENT_TYPES.length).toBe(17);
   });
 });
 

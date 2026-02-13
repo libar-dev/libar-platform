@@ -65,6 +65,8 @@ const agentComponent = {
   checkpoints: {
     loadOrCreate: components.agentBC.checkpoints.loadOrCreate,
     update: components.agentBC.checkpoints.update,
+    transitionLifecycle: components.agentBC.checkpoints.transitionLifecycle,
+    patchConfigOverrides: components.agentBC.checkpoints.patchConfigOverrides,
   },
   audit: { record: components.agentBC.audit.record },
   commands: { record: components.agentBC.commands.record },

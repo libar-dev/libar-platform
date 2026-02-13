@@ -27,6 +27,7 @@ import type { AgentConfigOverrides } from "./lifecycle-commands.js";
  * DS-1 base (8): Core pattern detection and approval workflow events.
  * DS-4 command routing (2): Command routing lifecycle events.
  * DS-5 lifecycle (6): Agent lifecycle management events.
+ * DS-6 failure tracking (1): Analysis failure events.
  */
 export const AGENT_AUDIT_EVENT_TYPES = [
   // DS-1 base (8)
@@ -48,6 +49,8 @@ export const AGENT_AUDIT_EVENT_TYPES = [
   "AgentStopped",
   "AgentReconfigured",
   "AgentErrorRecoveryStarted",
+  // DS-6 failure tracking (1)
+  "AgentAnalysisFailed",
 ] as const;
 
 /**
@@ -95,6 +98,8 @@ export const AgentAuditEventTypeSchema = z.enum([
   "AgentStopped",
   "AgentReconfigured",
   "AgentErrorRecoveryStarted",
+  // DS-6 failure tracking (1)
+  "AgentAnalysisFailed",
 ]);
 
 /**
