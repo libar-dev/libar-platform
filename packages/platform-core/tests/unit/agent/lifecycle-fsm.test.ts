@@ -155,19 +155,54 @@ describe("transitionAgentState — invalid transitions", () => {
   });
 });
 
-describe("isValidAgentTransition — invalid transitions", () => {
-  const invalidPairs: [AgentLifecycleState, AgentLifecycleEvent][] = [
-    ["stopped", "PAUSE"],
-    ["stopped", "RESUME"],
-    ["paused", "PAUSE"],
-    ["error_recovery", "PAUSE"],
-    ["active", "START"],
-    ["active", "RECOVER"],
-  ];
+describe("isValidAgentTransition — exhaustive invalid transitions", () => {
+  // Compute all (state, event) pairs that are NOT valid
+  const allPairs: [AgentLifecycleState, AgentLifecycleEvent][] = [];
+  for (const state of AGENT_LIFECYCLE_STATES) {
+    for (const event of AGENT_LIFECYCLE_EVENTS) {
+      allPairs.push([state, event]);
+    }
+  }
+
+  const validPairs = getAllAgentTransitions().map((t) => `${t.from}:${t.event}`);
+
+  const invalidPairs = allPairs.filter(
+    ([state, event]) => !validPairs.includes(`${state}:${event}`)
+  );
+
+  it("should have exactly 18 invalid pairs", () => {
+    expect(invalidPairs).toHaveLength(18);
+  });
 
   for (const [from, event] of invalidPairs) {
     it(`returns false for ${from} + ${event}`, () => {
       expect(isValidAgentTransition(from, event)).toBe(false);
+    });
+  }
+});
+
+describe("transitionAgentState — exhaustive invalid transitions", () => {
+  // Compute all (state, event) pairs that are NOT valid
+  const allPairs: [AgentLifecycleState, AgentLifecycleEvent][] = [];
+  for (const state of AGENT_LIFECYCLE_STATES) {
+    for (const event of AGENT_LIFECYCLE_EVENTS) {
+      allPairs.push([state, event]);
+    }
+  }
+
+  const validPairs = getAllAgentTransitions().map((t) => `${t.from}:${t.event}`);
+
+  const invalidPairs = allPairs.filter(
+    ([state, event]) => !validPairs.includes(`${state}:${event}`)
+  );
+
+  it("should have exactly 18 invalid pairs", () => {
+    expect(invalidPairs).toHaveLength(18);
+  });
+
+  for (const [from, event] of invalidPairs) {
+    it(`returns null for ${from} + ${event}`, () => {
+      expect(transitionAgentState(from, event)).toBeNull();
     });
   }
 });

@@ -204,6 +204,27 @@ describe("createAgentActionHandler - inactive agent handling", () => {
     expect(result).toBeNull();
     expect(onEvent).not.toHaveBeenCalled();
   });
+
+  it("returns null when agent status is error_recovery", async () => {
+    const onEvent = vi.fn();
+    const agentConfig = createTestAgentConfig({ onEvent });
+    const loadState = vi.fn().mockResolvedValue(
+      createTestState({
+        checkpoint: createTestCheckpoint({ status: "error_recovery", lastProcessedPosition: 50 }),
+      })
+    );
+
+    const handler = createAgentActionHandler({
+      agentConfig,
+      loadState,
+    });
+
+    const args = createTestHandlerArgs({ globalPosition: 100 });
+    const result = await handler({}, args);
+
+    expect(result).toBeNull();
+    expect(onEvent).not.toHaveBeenCalled();
+  });
 });
 
 // ============================================================================

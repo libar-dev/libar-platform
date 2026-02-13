@@ -18,9 +18,8 @@ import {
   type AgentOnCompleteArgs,
   type AgentWorkpoolContext,
 } from "../../../src/agent/oncomplete-handler.js";
-import type { AgentComponentAPI } from "../../../src/agent/handler-types.js";
 import type { AgentActionResult } from "../../../src/agent/action-handler.js";
-import { createMockLogger } from "./_test-utils.js";
+import { createMockLogger, createMockComponent } from "./_test-utils.js";
 
 // ============================================================================
 // Test Fixtures
@@ -48,28 +47,6 @@ function createTestArgs(overrides?: Partial<AgentOnCompleteArgs>): AgentOnComple
     context: createTestContext(),
     result: { kind: "success", returnValue: null },
     ...overrides,
-  };
-}
-
-function createMockComponent(): AgentComponentAPI {
-  return {
-    checkpoints: {
-      loadOrCreate:
-        "mock_loadOrCreate" as unknown as AgentComponentAPI["checkpoints"]["loadOrCreate"],
-      update: "mock_update" as unknown as AgentComponentAPI["checkpoints"]["update"],
-    },
-    audit: {
-      record: "mock_audit_record" as unknown as AgentComponentAPI["audit"]["record"],
-    },
-    commands: {
-      record: "mock_commands_record" as unknown as AgentComponentAPI["commands"]["record"],
-    },
-    approvals: {
-      create: "mock_approvals_create" as unknown as AgentComponentAPI["approvals"]["create"],
-    },
-    deadLetters: {
-      record: "mock_deadLetters_record" as unknown as AgentComponentAPI["deadLetters"]["record"],
-    },
   };
 }
 

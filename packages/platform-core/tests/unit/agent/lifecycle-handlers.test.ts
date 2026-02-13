@@ -43,37 +43,7 @@ import {
 } from "../../../src/agent/lifecycle-handlers.js";
 import type { AgentComponentAPI } from "../../../src/agent/handler-types.js";
 import { AGENT_LIFECYCLE_ERROR_CODES } from "../../../src/agent/lifecycle-commands.js";
-import { createMockLogger } from "./_test-utils.js";
-
-// ============================================================================
-// Test Fixtures
-// ============================================================================
-
-function createMockComponent(): AgentComponentAPI {
-  return {
-    checkpoints: {
-      loadOrCreate:
-        "mock_loadOrCreate" as unknown as AgentComponentAPI["checkpoints"]["loadOrCreate"],
-      update: "mock_update" as unknown as AgentComponentAPI["checkpoints"]["update"],
-      transitionLifecycle:
-        "mock_transitionLifecycle" as unknown as AgentComponentAPI["checkpoints"]["transitionLifecycle"],
-      patchConfigOverrides:
-        "mock_patchConfigOverrides" as unknown as AgentComponentAPI["checkpoints"]["patchConfigOverrides"],
-    },
-    audit: {
-      record: "mock_audit_record" as unknown as AgentComponentAPI["audit"]["record"],
-    },
-    commands: {
-      record: "mock_commands_record" as unknown as AgentComponentAPI["commands"]["record"],
-    },
-    approvals: {
-      create: "mock_approvals_create" as unknown as AgentComponentAPI["approvals"]["create"],
-    },
-    deadLetters: {
-      record: "mock_deadLetters_record" as unknown as AgentComponentAPI["deadLetters"]["record"],
-    },
-  };
-}
+import { createMockLogger, createMockComponent } from "./_test-utils.js";
 
 /**
  * Create a mock mutation context that routes by ref string and returns
