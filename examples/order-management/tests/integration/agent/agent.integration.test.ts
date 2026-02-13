@@ -199,6 +199,7 @@ describe.skipIf(!process.env.OPENROUTER_INTEGRATION_TEST_API_KEY)(
         // Note: This depends on confidence threshold and pattern matching
         // In production, this would create an audit event with churn-risk pattern
         expect(auditEvents).toBeDefined();
+        expect(auditEvents.length).toBeGreaterThan(0);
       });
 
       it("should not trigger pattern with fewer than 3 cancellations", async () => {

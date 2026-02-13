@@ -1,3 +1,4 @@
+@integration @churn-risk
 Feature: Churn Risk Agent — Full Pipeline
 
   Tests the complete churn-risk agent flow:

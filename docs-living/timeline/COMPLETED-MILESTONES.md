@@ -183,6 +183,8 @@
 
 ## Recent Completions
 
+- ✅ Agent Churn Risk Completion (Phase 22)
+- ✅ Example App Modernization (Phase 23)
 - ✅ Agent As Bounded Context (Phase 22)
 - ✅ Agent Command Infrastructure (Phase 22)
 - ✅ Bdd Testing Infrastructure (Phase 19)
@@ -191,8 +193,6 @@
 - ✅ Decider Pattern (Phase 14)
 - ✅ Durable Events Integration (Phase 18)
 - ✅ Durable Function Adapters (Phase 18)
-- ✅ Dynamic Consistency Boundaries (Phase 16)
-- ✅ Ecst Fat Events (Phase 20)
 
 Showing 10 of 60 completed patterns. See quarterly files for full history.
 

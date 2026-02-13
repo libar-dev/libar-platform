@@ -5,6 +5,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { AppLayout } from "@/components/templates/app-layout";
+import { RouteErrorFallback } from "@/components/templates/route-error-fallback";
 import { OrderCreateForm } from "@/components/organisms/order-create-form";
 import { useProducts, useOrderCreation } from "@/hooks";
 import type { Product } from "@/hooks/use-products";
@@ -22,6 +23,14 @@ export const Route = createFileRoute("/orders/new")({
     await context.queryClient.ensureQueryData(convexQuery(listProductsQuery, {}));
   },
   component: NewOrderPage,
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback
+      title="Failed to Load New Order"
+      activeNav="orders"
+      error={error}
+      reset={reset}
+    />
+  ),
 });
 
 /**

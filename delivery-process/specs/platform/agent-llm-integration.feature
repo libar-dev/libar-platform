@@ -255,7 +255,7 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
       And the error message indicates LLM runtime or fallback must be configured
 
     @acceptance-criteria @edge-case
-    Scenario: LLM unavailable falls back to rule-based analysis
+    Scenario: LLM unavailable propagates error through retries to dead letter
       Given an agent configured with LLM runtime
       And the LLM API returns an error or times out
       When the action handler processes the event
@@ -319,7 +319,7 @@ Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
       When a new LLM call would cost approximately 0.60 USD
       Then the agent is paused automatically
       And an AgentBudgetExceeded audit event is recorded
-      And the event falls back to rule-based analysis
+      And the event is dead-lettered with reason "budget_exceeded"
 
     @acceptance-criteria @edge-case
     Scenario: Queue overflow triggers dead letter

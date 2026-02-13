@@ -124,6 +124,8 @@ agentPool.enqueueAction(analyzeEvent, args, { onComplete })
 
 The legacy `createAgentEventHandler()` (`onEvent` mutation callback) has been removed. The action handler reuses existing pure logic (pattern window filtering, minimum event check, approval determination).
 
+> **Migration:** Existing mutation-based agents should use `createAgentSubscription` directly (see [Event Subscription](#event-subscription) below) — no separate handler factory is needed. Agents that require LLM calls should migrate to `createAgentActionHandler()` + `createAgentActionSubscription()`.
+
 ### EventBus Subscription Types
 
 `EventSubscription` is now a discriminated union:
@@ -251,6 +253,9 @@ const summary: PatternExecutionSummary = await executePatterns(patterns, events,
 // summary.matchedPattern — name of first matching pattern (or null)
 // summary.decision — AgentDecision (or null if no match)
 // summary.analysisMethod — "llm" | "rule-based"
+// - "llm": LLM analysis was performed (action-based agent)
+// - "rule-based": Rule-only analysis (mutation-based agent, no LLM attempted)
+// Note: "rule-based-fallback" was removed — LLM failures propagate to retries/dead letter
 ```
 
 ## Command Routing

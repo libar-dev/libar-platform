@@ -30,7 +30,7 @@ export const Route = createFileRoute("/admin/products")({
   errorComponent: ({ error, reset }) => (
     <RouteErrorFallback
       title="Failed to Load Admin Products"
-      activeNav="products"
+      activeNav="admin"
       error={error}
       reset={reset}
     />
