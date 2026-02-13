@@ -351,14 +351,6 @@ export {
   createApprovalExpiredAudit,
   createGenericAuditEvent,
 
-  // Lifecycle Audit Factories
-  createAgentStartedAudit,
-  createAgentPausedAudit,
-  createAgentResumedAudit,
-  createAgentStoppedAudit,
-  createAgentReconfiguredAudit,
-  createAgentErrorRecoveryStartedAudit,
-
   // Type Guards
   isAgentAuditEventType,
   isPatternDetectedEvent,
@@ -388,15 +380,6 @@ export type {
   AgentStoppedPayload,
   AgentReconfiguredPayload,
   AgentErrorRecoveryStartedPayload,
-
-  // Schema Types
-  AgentAuditEventTypeSchemaType,
-  PatternDetectedPayloadSchemaType,
-  ApprovalGrantedPayloadSchemaType,
-  ApprovalRejectedPayloadSchemaType,
-  ApprovalExpiredPayloadSchemaType,
-  AuditLLMContextSchemaType,
-  AuditActionSchemaType,
 } from "./audit.js";
 
 // ============================================================================

@@ -4,12 +4,13 @@
  * Provides handler functions for the 5 lifecycle commands:
  * StartAgent, PauseAgent, ResumeAgent, StopAgent, ReconfigureAgent
  *
- * Each handler:
- * 1. Loads checkpoint via AgentComponentAPI
- * 2. Validates FSM transition via lifecycle-fsm
- * 3. Updates checkpoint status via agent component
- * 4. Records audit event
- * 5. Returns AgentLifecycleResult
+ * Each handler delegates to `executeLifecycleTransition`, which encapsulates
+ * the shared 5-step pattern:
+ * 1. Load checkpoint via AgentComponentAPI
+ * 2. Validate FSM transition via lifecycle-fsm
+ * 3. (Optional) Run pre-transition hook (e.g. config merge for ReconfigureAgent)
+ * 4. Update checkpoint status + record audit event atomically
+ * 5. Log and return AgentLifecycleResult
  *
  * Handlers use infrastructure mutations directly (NOT CommandOrchestrator).
  * They bypass the command bus per design -- lifecycle management is
@@ -112,6 +113,128 @@ export interface LifecycleHandlers<TCtx = unknown> {
 }
 
 // ============================================================================
+// Generic Lifecycle Transition Helper
+// ============================================================================
+
+/**
+ * Static configuration for a lifecycle transition -- invariant per command type.
+ */
+interface LifecycleTransitionConfig {
+  /** Command name: "StartAgent", "PauseAgent", etc. */
+  readonly commandName: string;
+  /** Audit event type: "AgentStarted", "AgentPaused", etc. */
+  readonly auditEventType: string;
+  /** Past-tense verb for log message: "started", "paused", etc. */
+  readonly logVerb: string;
+}
+
+/**
+ * Common lifecycle transition logic shared by all 5 handlers.
+ *
+ * Loads checkpoint, validates FSM transition, optionally runs a pre-transition
+ * hook, atomically transitions status + records audit, logs, and returns result.
+ *
+ * @param mutCtx - Convex mutation context
+ * @param comp - Agent component API
+ * @param logger - Logger instance
+ * @param agentId - Agent identifier
+ * @param config - Static transition config (command name + audit event type)
+ * @param buildAuditPayload - Builds the audit event payload from checkpoint state
+ * @param preTransition - Optional hook run after FSM validation but before the atomic transition
+ * @returns Lifecycle result (success or failure)
+ */
+async function executeLifecycleTransition(
+  mutCtx: RunMutationCtx,
+  comp: AgentComponentAPI,
+  logger: Logger,
+  agentId: string,
+  config: LifecycleTransitionConfig,
+  buildAuditPayload: (
+    currentState: AgentLifecycleState,
+    checkpoint: CheckpointShape
+  ) => Record<string, unknown>,
+  preTransition?: (checkpoint: CheckpointShape, nextState: AgentLifecycleState) => Promise<void>
+): Promise<AgentLifecycleResult> {
+  // 1. Load checkpoint
+  const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
+    agentId,
+    subscriptionId: getAgentSubscriptionId(agentId),
+  });
+  const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
+  if (!checkpoint) {
+    logger.error("Checkpoint unavailable from loadOrCreate", { agentId });
+    return {
+      success: false,
+      agentId,
+      code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+      message: "Failed to load or create checkpoint",
+      currentState: "stopped" as AgentLifecycleState,
+    };
+  }
+
+  // 2. Validate FSM transition
+  const currentState = checkpoint.status as AgentLifecycleState;
+  const event = commandToEvent(config.commandName);
+  if (!event) {
+    return {
+      success: false,
+      agentId,
+      code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+      message: `Unknown command type: ${config.commandName}`,
+      currentState,
+    };
+  }
+
+  const nextState = transitionAgentState(currentState, event);
+  if (nextState === null) {
+    logger.warn("Invalid lifecycle transition", {
+      agentId,
+      command: config.commandName,
+      currentState,
+    });
+    return {
+      success: false,
+      agentId,
+      code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
+      message: `Cannot ${event} agent from "${currentState}" state`,
+      currentState,
+    };
+  }
+
+  // 3. Optional pre-transition hook (e.g. config patch for ReconfigureAgent)
+  if (preTransition) {
+    await preTransition(checkpoint, nextState);
+  }
+
+  // 4. Atomic transition: update status + record audit
+  const decisionId = createLifecycleDecisionId(agentId);
+  await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
+    agentId,
+    status: nextState,
+    auditEvent: {
+      eventType: config.auditEventType,
+      decisionId,
+      timestamp: Date.now(),
+      payload: buildAuditPayload(currentState, checkpoint),
+    },
+  });
+
+  logger.info(`Agent ${config.logVerb}`, {
+    agentId,
+    previousState: currentState,
+    newState: nextState,
+  });
+
+  // 5. Return success
+  return {
+    success: true,
+    agentId,
+    previousState: currentState,
+    newState: nextState,
+  };
+}
+
+// ============================================================================
 // Individual Handlers
 // ============================================================================
 
@@ -131,84 +254,18 @@ export function handleStartAgent<TCtx = unknown>(
   const comp = config.agentComponent;
 
   return async (ctx: TCtx, args: StartAgentArgs): Promise<AgentLifecycleResult> => {
-    const mutCtx = ctx as RunMutationCtx;
-
-    // 1. Load checkpoint
-    const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
-      agentId: args.agentId,
-      subscriptionId: getAgentSubscriptionId(args.agentId),
-    });
-    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
-    if (!checkpoint) {
-      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Failed to load or create checkpoint",
-        currentState: "stopped" as AgentLifecycleState,
-      };
-    }
-
-    // 2. Validate FSM transition
-    const currentState = checkpoint.status as AgentLifecycleState;
-    const event = commandToEvent("StartAgent");
-    if (!event) {
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Unknown command type: StartAgent",
-        currentState,
-      };
-    }
-
-    const nextState = transitionAgentState(currentState, event);
-    if (nextState === null) {
-      logger.warn("Invalid lifecycle transition", {
-        agentId: args.agentId,
-        command: "StartAgent",
-        currentState,
-      });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: `Cannot START agent from "${currentState}" state`,
-        currentState,
-      };
-    }
-
-    // 3. Atomic lifecycle transition: update status + record audit
-    const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
-      agentId: args.agentId,
-      status: nextState,
-      auditEvent: {
-        eventType: "AgentStarted",
-        decisionId,
-        timestamp: Date.now(),
-        payload: {
-          previousState: currentState,
-          correlationId: args.correlationId,
-          resumeFromPosition: checkpoint.lastProcessedPosition + 1,
-        },
-      },
-    });
-
-    logger.info("Agent started", {
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    });
-
-    // 4. Return success
-    return {
-      success: true,
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    };
+    return executeLifecycleTransition(
+      ctx as RunMutationCtx,
+      comp,
+      logger,
+      args.agentId,
+      { commandName: "StartAgent", auditEventType: "AgentStarted", logVerb: "started" },
+      (currentState, checkpoint) => ({
+        previousState: currentState,
+        correlationId: args.correlationId,
+        resumeFromPosition: checkpoint.lastProcessedPosition + 1,
+      })
+    );
   };
 }
 
@@ -228,86 +285,19 @@ export function handlePauseAgent<TCtx = unknown>(
   const comp = config.agentComponent;
 
   return async (ctx: TCtx, args: PauseAgentArgs): Promise<AgentLifecycleResult> => {
-    const mutCtx = ctx as RunMutationCtx;
-
-    // 1. Load checkpoint
-    const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
-      agentId: args.agentId,
-      subscriptionId: getAgentSubscriptionId(args.agentId),
-    });
-    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
-    if (!checkpoint) {
-      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Failed to load or create checkpoint",
-        currentState: "stopped" as AgentLifecycleState,
-      };
-    }
-
-    // 2. Validate FSM transition
-    const currentState = checkpoint.status as AgentLifecycleState;
-    const event = commandToEvent("PauseAgent");
-    if (!event) {
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Unknown command type: PauseAgent",
-        currentState,
-      };
-    }
-
-    const nextState = transitionAgentState(currentState, event);
-    if (nextState === null) {
-      logger.warn("Invalid lifecycle transition", {
-        agentId: args.agentId,
-        command: "PauseAgent",
-        currentState,
-      });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: `Cannot PAUSE agent from "${currentState}" state`,
-        currentState,
-      };
-    }
-
-    // 3. Atomic lifecycle transition: update status + record audit
-    const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
-      agentId: args.agentId,
-      status: nextState,
-      auditEvent: {
-        eventType: "AgentPaused",
-        decisionId,
-        timestamp: Date.now(),
-        payload: {
-          reason: args.reason,
-          correlationId: args.correlationId,
-          pausedAtPosition: checkpoint.lastProcessedPosition,
-          eventsProcessedAtPause: checkpoint.eventsProcessed,
-        },
-      },
-    });
-
-    logger.info("Agent paused", {
-      agentId: args.agentId,
-      reason: args.reason,
-      previousState: currentState,
-      newState: nextState,
-    });
-
-    // 4. Return success
-    return {
-      success: true,
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    };
+    return executeLifecycleTransition(
+      ctx as RunMutationCtx,
+      comp,
+      logger,
+      args.agentId,
+      { commandName: "PauseAgent", auditEventType: "AgentPaused", logVerb: "paused" },
+      (_currentState, checkpoint) => ({
+        reason: args.reason,
+        correlationId: args.correlationId,
+        pausedAtPosition: checkpoint.lastProcessedPosition,
+        eventsProcessedAtPause: checkpoint.eventsProcessed,
+      })
+    );
   };
 }
 
@@ -327,83 +317,17 @@ export function handleResumeAgent<TCtx = unknown>(
   const comp = config.agentComponent;
 
   return async (ctx: TCtx, args: ResumeAgentArgs): Promise<AgentLifecycleResult> => {
-    const mutCtx = ctx as RunMutationCtx;
-
-    // 1. Load checkpoint
-    const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
-      agentId: args.agentId,
-      subscriptionId: getAgentSubscriptionId(args.agentId),
-    });
-    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
-    if (!checkpoint) {
-      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Failed to load or create checkpoint",
-        currentState: "stopped" as AgentLifecycleState,
-      };
-    }
-
-    // 2. Validate FSM transition
-    const currentState = checkpoint.status as AgentLifecycleState;
-    const event = commandToEvent("ResumeAgent");
-    if (!event) {
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Unknown command type: ResumeAgent",
-        currentState,
-      };
-    }
-
-    const nextState = transitionAgentState(currentState, event);
-    if (nextState === null) {
-      logger.warn("Invalid lifecycle transition", {
-        agentId: args.agentId,
-        command: "ResumeAgent",
-        currentState,
-      });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: `Cannot RESUME agent from "${currentState}" state`,
-        currentState,
-      };
-    }
-
-    // 3. Atomic lifecycle transition: update status + record audit
-    const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
-      agentId: args.agentId,
-      status: nextState,
-      auditEvent: {
-        eventType: "AgentResumed",
-        decisionId,
-        timestamp: Date.now(),
-        payload: {
-          resumeFromPosition: checkpoint.lastProcessedPosition + 1,
-          correlationId: args.correlationId,
-        },
-      },
-    });
-
-    logger.info("Agent resumed", {
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    });
-
-    // 4. Return success
-    return {
-      success: true,
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    };
+    return executeLifecycleTransition(
+      ctx as RunMutationCtx,
+      comp,
+      logger,
+      args.agentId,
+      { commandName: "ResumeAgent", auditEventType: "AgentResumed", logVerb: "resumed" },
+      (_currentState, checkpoint) => ({
+        resumeFromPosition: checkpoint.lastProcessedPosition + 1,
+        correlationId: args.correlationId,
+      })
+    );
   };
 }
 
@@ -424,86 +348,19 @@ export function handleStopAgent<TCtx = unknown>(
   const comp = config.agentComponent;
 
   return async (ctx: TCtx, args: StopAgentArgs): Promise<AgentLifecycleResult> => {
-    const mutCtx = ctx as RunMutationCtx;
-
-    // 1. Load checkpoint
-    const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
-      agentId: args.agentId,
-      subscriptionId: getAgentSubscriptionId(args.agentId),
-    });
-    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
-    if (!checkpoint) {
-      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Failed to load or create checkpoint",
-        currentState: "stopped" as AgentLifecycleState,
-      };
-    }
-
-    // 2. Validate FSM transition
-    const currentState = checkpoint.status as AgentLifecycleState;
-    const event = commandToEvent("StopAgent");
-    if (!event) {
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Unknown command type: StopAgent",
-        currentState,
-      };
-    }
-
-    const nextState = transitionAgentState(currentState, event);
-    if (nextState === null) {
-      logger.warn("Invalid lifecycle transition", {
-        agentId: args.agentId,
-        command: "StopAgent",
-        currentState,
-      });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: `Cannot STOP agent from "${currentState}" state`,
-        currentState,
-      };
-    }
-
-    // 3. Atomic lifecycle transition: update status + record audit
-    const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
-      agentId: args.agentId,
-      status: nextState,
-      auditEvent: {
-        eventType: "AgentStopped",
-        decisionId,
-        timestamp: Date.now(),
-        payload: {
-          previousState: currentState,
-          reason: args.reason,
-          correlationId: args.correlationId,
-          stoppedAtPosition: checkpoint.lastProcessedPosition,
-        },
-      },
-    });
-
-    logger.info("Agent stopped", {
-      agentId: args.agentId,
-      reason: args.reason,
-      previousState: currentState,
-      newState: nextState,
-    });
-
-    // 4. Return success
-    return {
-      success: true,
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    };
+    return executeLifecycleTransition(
+      ctx as RunMutationCtx,
+      comp,
+      logger,
+      args.agentId,
+      { commandName: "StopAgent", auditEventType: "AgentStopped", logVerb: "stopped" },
+      (currentState, checkpoint) => ({
+        previousState: currentState,
+        reason: args.reason,
+        correlationId: args.correlationId,
+        stoppedAtPosition: checkpoint.lastProcessedPosition,
+      })
+    );
   };
 }
 
@@ -526,98 +383,37 @@ export function handleReconfigureAgent<TCtx = unknown>(
   return async (ctx: TCtx, args: ReconfigureAgentArgs): Promise<AgentLifecycleResult> => {
     const mutCtx = ctx as RunMutationCtx;
 
-    // 1. Load checkpoint
-    const result = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
-      agentId: args.agentId,
-      subscriptionId: getAgentSubscriptionId(args.agentId),
-    });
-    const checkpoint = (result as { checkpoint?: CheckpointShape })?.checkpoint;
-    if (!checkpoint) {
-      logger.error("Checkpoint unavailable from loadOrCreate", { agentId: args.agentId });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Failed to load or create checkpoint",
-        currentState: "stopped" as AgentLifecycleState,
-      };
-    }
-
-    // 2. Validate FSM transition
-    const currentState = checkpoint.status as AgentLifecycleState;
-    const event = commandToEvent("ReconfigureAgent");
-    if (!event) {
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: "Unknown command type: ReconfigureAgent",
-        currentState,
-      };
-    }
-
-    const nextState = transitionAgentState(currentState, event);
-    if (nextState === null) {
-      logger.warn("Invalid lifecycle transition", {
-        agentId: args.agentId,
-        command: "ReconfigureAgent",
-        currentState,
-      });
-      return {
-        success: false,
-        agentId: args.agentId,
-        code: AGENT_LIFECYCLE_ERROR_CODES.INVALID_LIFECYCLE_TRANSITION,
-        message: `Cannot RECONFIGURE agent from "${currentState}" state`,
-        currentState,
-      };
-    }
-
-    // 3. Merge config overrides
-    const previousOverrides = checkpoint.configOverrides as AgentConfigOverrides | undefined;
-    const mergedOverrides: AgentConfigOverrides = {
-      ...previousOverrides,
-      ...args.configOverrides,
-    };
-
-    // 4. Patch config overrides first (if mutation available)
-    if (comp.checkpoints.patchConfigOverrides) {
-      await mutCtx.runMutation(comp.checkpoints.patchConfigOverrides, {
-        agentId: args.agentId,
-        configOverrides: mergedOverrides,
-      });
-    }
-
-    // 5. Atomic lifecycle transition: update status + record audit
-    const decisionId = createLifecycleDecisionId(args.agentId);
-    await mutCtx.runMutation(comp.checkpoints.transitionLifecycle, {
-      agentId: args.agentId,
-      status: nextState,
-      auditEvent: {
-        eventType: "AgentReconfigured",
-        decisionId,
-        timestamp: Date.now(),
-        payload: {
-          previousState: currentState,
-          previousOverrides,
-          newOverrides: args.configOverrides,
-          correlationId: args.correlationId,
-        },
+    return executeLifecycleTransition(
+      mutCtx,
+      comp,
+      logger,
+      args.agentId,
+      {
+        commandName: "ReconfigureAgent",
+        auditEventType: "AgentReconfigured",
+        logVerb: "reconfigured",
       },
-    });
-
-    logger.info("Agent reconfigured", {
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    });
-
-    // 6. Return success
-    return {
-      success: true,
-      agentId: args.agentId,
-      previousState: currentState,
-      newState: nextState,
-    };
+      (currentState, checkpoint) => ({
+        previousState: currentState,
+        previousOverrides: checkpoint.configOverrides as AgentConfigOverrides | undefined,
+        newOverrides: args.configOverrides,
+        correlationId: args.correlationId,
+      }),
+      async (checkpoint) => {
+        // Merge config overrides before transition
+        const previousOverrides = checkpoint.configOverrides as AgentConfigOverrides | undefined;
+        const mergedOverrides: AgentConfigOverrides = {
+          ...previousOverrides,
+          ...args.configOverrides,
+        };
+        if (comp.checkpoints.patchConfigOverrides) {
+          await mutCtx.runMutation(comp.checkpoints.patchConfigOverrides, {
+            agentId: args.agentId,
+            configOverrides: mergedOverrides,
+          });
+        }
+      }
+    );
   };
 }
 
