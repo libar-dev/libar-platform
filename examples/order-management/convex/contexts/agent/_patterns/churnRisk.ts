@@ -45,6 +45,9 @@ export const MIN_CANCELLATIONS = 3;
  */
 export const CHURN_RISK_WINDOW_DURATION = "30d" as const;
 
+/** Minimum confidence for pattern detection (separate from auto-execution threshold in config) */
+export const CHURN_RISK_DETECTION_THRESHOLD = 0.7;
+
 // ============================================================================
 // Custom Triggers
 // ============================================================================
@@ -150,7 +153,7 @@ export const churnRiskPattern: PatternDefinition = definePattern({
       const result = await agent.analyze(prompt, cancellations);
 
       return {
-        detected: result.confidence >= 0.7,
+        detected: result.confidence >= CHURN_RISK_DETECTION_THRESHOLD,
         confidence: result.confidence,
         reasoning: result.reasoning,
         matchingEventIds: cancellations.map((e) => e.eventId),
@@ -159,7 +162,7 @@ export const churnRiskPattern: PatternDefinition = definePattern({
           suggestedAction: result.suggestedAction,
         },
         // Command suggestion for routing via command bridge
-        ...(result.confidence >= 0.7
+        ...(result.confidence >= CHURN_RISK_DETECTION_THRESHOLD
           ? {
               command: {
                 type: "SuggestCustomerOutreach",

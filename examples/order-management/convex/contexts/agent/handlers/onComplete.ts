@@ -31,9 +31,9 @@ import {
   createAgentOnCompleteHandler,
   parseApprovalTimeout,
   DEFAULT_APPROVAL_TIMEOUT_MS,
-  type AgentComponentAPI,
 } from "@libar-dev/platform-core/agent";
 import { churnRiskAgentConfig } from "../_config.js";
+import { agentComponent } from "../_component.js";
 
 // TS2589 Prevention: Agent command bridge mutation reference at module level.
 // Double cast via unknown per CLAUDE.md internal visibility pattern --
@@ -57,22 +57,11 @@ const routeAgentCommandRef = makeFunctionReference<"mutation">(
  * All persistence uses the agent component API. The handler is a NO-THROW
  * ZONE -- failures are dead-lettered, never thrown.
  *
- * Note: Component refs have "internal" visibility, but AgentComponentAPI expects
+ * Note: agentComponent is imported from ../_component.ts (shared wiring).
+ * Component refs have "internal" visibility, but AgentComponentAPI expects
  * FunctionReference<"mutation"> (public). Cast via unknown per CLAUDE.md
  * internal visibility pattern -- Convex validates args at runtime.
  */
-const agentComponent = {
-  checkpoints: {
-    loadOrCreate: components.agentBC.checkpoints.loadOrCreate,
-    update: components.agentBC.checkpoints.update,
-    transitionLifecycle: components.agentBC.checkpoints.transitionLifecycle,
-    patchConfigOverrides: components.agentBC.checkpoints.patchConfigOverrides,
-  },
-  audit: { record: components.agentBC.audit.record },
-  commands: { record: components.agentBC.commands.record },
-  approvals: { create: components.agentBC.approvals.create },
-  deadLetters: { record: components.agentBC.deadLetters.record },
-} as unknown as AgentComponentAPI;
 
 // Derive approval timeout from agent config (humanInLoop.approvalTimeout)
 const approvalTimeoutMs = churnRiskAgentConfig.humanInLoop?.approvalTimeout

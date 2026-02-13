@@ -59,7 +59,7 @@ const getCancellationsByCustomerRef = makeFunctionReference<"query">(
  * This action:
  * 1. Loads the agent checkpoint from the agent component
  * 2. Checks idempotency (skips already-processed events)
- * 3. Calls the agent's onEvent handler for rule-based decisions
+ * 3. Calls the agent's pattern-based handler for rule-based decisions
  * 4. Optionally enriches with LLM analysis (when OPENROUTER_API_KEY is set)
  * 5. Returns AgentActionResult (NO persistence -- that is onComplete's job)
  *
@@ -116,7 +116,7 @@ export const analyzeChurnRiskEvent = internalAction({
         );
 
         // Load cancellation history from projection for churn risk pattern detection.
-        // The onEvent handler needs 3+ OrderCancelled events to trigger.
+        // The pattern handler needs 3+ OrderCancelled events to trigger.
         const payload = handlerArgs.payload as Record<string, unknown> | undefined;
         const customerId =
           typeof payload?.["customerId"] === "string" ? payload["customerId"] : undefined;

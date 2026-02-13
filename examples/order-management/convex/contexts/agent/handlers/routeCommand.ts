@@ -13,14 +13,13 @@
 
 import { internalMutation } from "../../../_generated/server.js";
 import { v } from "convex/values";
-import { components } from "../../../_generated/api.js";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
 import {
   createCommandBridgeHandler,
-  type AgentComponentAPI,
   type CommandBridgeConfig,
 } from "@libar-dev/platform-core/agent";
 import type { AgentCommandRouteMap } from "@libar-dev/platform-core/agent";
+import { agentComponent } from "../_component.js";
 
 // ============================================================================
 // Command Route Map
@@ -78,22 +77,6 @@ const minimalOrchestrator = {
 // ============================================================================
 // Bridge Mutation
 // ============================================================================
-
-const agentComponent = {
-  checkpoints: {
-    loadOrCreate: components.agentBC.checkpoints.loadOrCreate,
-    update: components.agentBC.checkpoints.update,
-    transitionLifecycle: components.agentBC.checkpoints.transitionLifecycle,
-    patchConfigOverrides: components.agentBC.checkpoints.patchConfigOverrides,
-  },
-  audit: { record: components.agentBC.audit.record },
-  commands: {
-    record: components.agentBC.commands.record,
-    updateStatus: components.agentBC.commands.updateStatus,
-  },
-  approvals: { create: components.agentBC.approvals.create },
-  deadLetters: { record: components.agentBC.deadLetters.record },
-} as unknown as AgentComponentAPI;
 
 const bridgeConfig: CommandBridgeConfig = {
   agentComponent,

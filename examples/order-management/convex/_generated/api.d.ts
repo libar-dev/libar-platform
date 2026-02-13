@@ -18,6 +18,7 @@ import type * as commands_durableOrchestrator from "../commands/durableOrchestra
 import type * as commands_inventory_configs from "../commands/inventory/configs.js";
 import type * as commands_orders_configs from "../commands/orders/configs.js";
 import type * as commands_registry from "../commands/registry.js";
+import type * as contexts_agent__component from "../contexts/agent/_component.js";
 import type * as contexts_agent__config from "../contexts/agent/_config.js";
 import type * as contexts_agent__llm_config from "../contexts/agent/_llm/config.js";
 import type * as contexts_agent__llm_index from "../contexts/agent/_llm/index.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   "commands/inventory/configs": typeof commands_inventory_configs;
   "commands/orders/configs": typeof commands_orders_configs;
   "commands/registry": typeof commands_registry;
+  "contexts/agent/_component": typeof contexts_agent__component;
   "contexts/agent/_config": typeof contexts_agent__config;
   "contexts/agent/_llm/config": typeof contexts_agent__llm_config;
   "contexts/agent/_llm/index": typeof contexts_agent__llm_index;

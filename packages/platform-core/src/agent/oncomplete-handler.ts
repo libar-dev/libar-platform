@@ -260,9 +260,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
           eventId,
           globalPosition,
           error: result.error,
-          // Workpool's onComplete does not surface the retry attempt count.
-          // The actual retry count is tracked internally by Workpool.
-          attemptCount: 1,
+          attemptCount: 1, // Placeholder: Workpool onComplete does not surface retry count
           workId,
         });
       } catch (dlError) {
@@ -418,7 +416,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
               approvalId: `apr_${decisionId}`,
               agentId,
               decisionId,
-              action: { type: decision.command ?? "unknown" },
+              action: { type: decision.command },
               confidence: decision.confidence,
               reason: decision.reason,
               triggeringEventIds: decision.triggeringEvents ?? [],
@@ -459,9 +457,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
           eventId,
           globalPosition,
           error: error instanceof Error ? error.message : String(error),
-          // Workpool's onComplete does not surface the retry attempt count.
-          // The actual retry count is tracked internally by Workpool.
-          attemptCount: 1,
+          attemptCount: 1, // Placeholder: Workpool onComplete does not surface retry count
           workId,
         });
       } catch (dlFallbackError) {

@@ -27,6 +27,7 @@ import { components } from "../../../_generated/api.js";
 import {
   createAgentEventHandler,
   parseDuration,
+  generateDecisionId,
   type AgentEventHandlerResult,
   type AgentCheckpoint,
 } from "@libar-dev/platform-core/agent";
@@ -201,7 +202,7 @@ export const handleChurnRiskEvent = internalMutation({
 
     // 6. Record audit event
     if (result.decision) {
-      const decisionId = `dec_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      const decisionId = generateDecisionId();
 
       await ctx.runMutation(components.agentBC.audit.record, {
         eventType: "PatternDetected",
