@@ -22,7 +22,7 @@
  */
 
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { LanguageModelV1 } from "@ai-sdk/provider";
+import type { LanguageModelV2 } from "@ai-sdk/provider";
 
 /**
  * Default model for agent pattern analysis.
@@ -57,7 +57,7 @@ export const OPENROUTER_SITE_NAME = "libar-platform";
  * // Use model for LLM calls
  * ```
  */
-export function createLanguageModel(apiKey: string | undefined): LanguageModelV1 | null {
+export function createLanguageModel(apiKey: string | undefined): LanguageModelV2 | null {
   if (!apiKey) {
     // Note: Caller should log the warning as Convex doesn't have console in mutations
     return null;
