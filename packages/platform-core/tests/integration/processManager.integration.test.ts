@@ -102,7 +102,29 @@ describe("Process Manager Integration", () => {
       const confirmResult = await testMutation(t, api.orders.confirmOrder, {
         orderId,
       });
-      expect(confirmResult.status).toBe("success");
+      // Note: submitOrder triggers OrderFulfillment saga which races with this call.
+      // If confirmOrder fails, the saga may have already confirmed it, or the saga
+      // may cancel due to no inventory. We need the order confirmed for PM to work.
+      if (confirmResult.status !== "success") {
+        // Wait for saga to complete - order will reach terminal state
+        await waitUntil(
+          async () => {
+            const order = await testQuery(t, api.orders.getOrderSummary, { orderId });
+            return order?.status === "confirmed" || order?.status === "cancelled";
+          },
+          { message: "Order should reach terminal state", timeoutMs: 30000 }
+        );
+
+        // Check final state - PM requires OrderConfirmed event
+        const order = await testQuery(t, api.orders.getOrderSummary, { orderId });
+        if (order?.status !== "confirmed") {
+          throw new Error(
+            `Order ${orderId} was cancelled by saga. PM requires confirmed orders. ` +
+              `Original confirmOrder error: ${confirmResult.message || confirmResult.code}`
+          );
+        }
+        // Saga confirmed the order - OrderConfirmed event exists
+      }
 
       // Wait for order confirmation projection
       // Projection processing via Workpool can take longer under load
