@@ -35,13 +35,20 @@ const agentCommandRoutes: AgentCommandRouteMap = {
   SuggestCustomerOutreach: {
     commandType: "SuggestCustomerOutreach",
     boundedContext: "agent",
-    toOrchestratorArgs: (command, context) => ({
-      customerId: (command.payload as Record<string, unknown>)?.["customerId"] ?? "unknown",
-      agentId: context.agentId,
-      correlationId: context.correlationId,
-      riskLevel: (command.payload as Record<string, unknown>)?.["riskLevel"] ?? "medium",
-      triggeringPatternId: command.patternId ?? "unknown",
-    }),
+    toOrchestratorArgs: (command, context) => {
+      const payload = command.payload as Record<string, unknown> | undefined;
+      const customerId = typeof payload?.["customerId"] === "string" ? payload["customerId"] : null;
+      if (!customerId) {
+        throw new Error("SuggestCustomerOutreach requires a valid customerId in command payload");
+      }
+      return {
+        customerId,
+        agentId: context.agentId,
+        correlationId: context.correlationId,
+        riskLevel: typeof payload?.["riskLevel"] === "string" ? payload["riskLevel"] : "medium",
+        triggeringPatternId: command.patternId ?? "unknown",
+      };
+    },
   },
 };
 

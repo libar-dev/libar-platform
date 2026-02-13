@@ -295,18 +295,22 @@ export const highValueChurnPattern: PatternDefinition = definePattern({
 // ============================================================================
 
 /**
- * Extract a customerId from a list of events.
+ * Extract the customerId with the most events meeting the cancellation threshold.
  *
- * Scans event payloads for a `customerId` field. Returns null if none found.
+ * Groups events by customer and selects the customer with the highest count,
+ * only returning a customerId if that count meets MIN_CANCELLATIONS.
  */
 function extractCustomerIdFromEvents(events: readonly PublishedEvent[]): string | null {
-  for (const event of events) {
-    const payload = event.payload as Record<string, unknown>;
-    if (typeof payload["customerId"] === "string") {
-      return payload["customerId"];
+  const grouped = groupEventsByCustomer(events);
+  let bestCustomerId: string | null = null;
+  let maxCount = 0;
+  for (const [customerId, customerEvents] of grouped.entries()) {
+    if (customerEvents.length > maxCount) {
+      maxCount = customerEvents.length;
+      bestCustomerId = customerId;
     }
   }
-  return null;
+  return maxCount >= MIN_CANCELLATIONS ? bestCustomerId : null;
 }
 
 // ============================================================================

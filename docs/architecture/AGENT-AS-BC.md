@@ -230,25 +230,6 @@ const churnRiskPattern = definePattern({
 });
 ```
 
-### onEvent (Legacy)
-
-Inline handler for simple rule-only agents:
-
-```typescript
-const config: AgentBCConfig = {
-  id: "simple-agent",
-  subscriptions: ["OrderCancelled"],
-  patternWindow: { duration: "7d", minEvents: 2 },
-  confidenceThreshold: 0.8,
-  onEvent: async (event, ctx) => {
-    // Rule-based analysis only (no LLM)
-    return { command: "MyCommand", payload: {}, confidence: 0.9, ... };
-  },
-};
-```
-
-> **Exactly one** of `onEvent` or `patterns` must be set — the validator rejects configs with both or neither.
-
 ### Pattern Registry Validation
 
 Pattern arrays are validated at initialization:
