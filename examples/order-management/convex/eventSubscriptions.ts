@@ -5,7 +5,7 @@
  * @libar-docs-infra
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-layer infrastructure
- * @libar-docs-uses OrderNotificationPM, ReservationReleasePM, AgentAsBoundedContext
+ * @libar-docs-uses OrderNotificationPM, ReservationReleasePM, AgentAsBoundedContext, AgentLLMIntegration
  * @libar-docs-used-by OrderManagementInfrastructure
  *
  * EventBus pub/sub subscription definitions.
@@ -14,7 +14,7 @@
  */
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";
-import { defineSubscriptions } from "@libar-dev/platform-core";
+import { defineSubscriptions, type WorkpoolOnCompleteArgs } from "@libar-dev/platform-core";
 import {
   createPMSubscription,
   type PMEventHandlerArgs,
@@ -35,10 +35,17 @@ const handleOrderConfirmedRef = makeFunctionReference<"mutation">(
   "processManagers/orderNotification:handleOrderConfirmed"
 ) as FunctionReference<"mutation", FunctionVisibility, PMEventHandlerArgs, unknown>;
 
-// Agent handler references (TS2589 prevention)
-const handleChurnRiskEventRef = makeFunctionReference<"mutation">(
-  "contexts/agent/handlers/eventHandler:handleChurnRiskEvent"
-) as FunctionReference<"mutation", FunctionVisibility, AgentEventHandlerArgs, unknown>;
+// Agent action handler reference (TS2589 prevention)
+// This is the ACTION half — runs in Workpool, can call LLM APIs
+const analyzeChurnRiskEventRef = makeFunctionReference<"action">(
+  "contexts/agent/handlers/analyzeEvent:analyzeChurnRiskEvent"
+) as FunctionReference<"action", FunctionVisibility, AgentEventHandlerArgs, unknown>;
+
+// Agent onComplete handler reference (TS2589 prevention)
+// This is the MUTATION half — persists audit, command, approval, checkpoint
+const handleChurnRiskOnCompleteRef = makeFunctionReference<"mutation">(
+  "contexts/agent/handlers/onComplete:handleChurnRiskOnComplete"
+) as FunctionReference<"mutation", FunctionVisibility, WorkpoolOnCompleteArgs, unknown>;
 
 /**
  * Event subscriptions for EventBus.
@@ -73,9 +80,12 @@ export const eventSubscriptions = defineSubscriptions((registry) => {
 
   // Churn Risk Agent: OrderCancelled → Pattern Detection → SuggestCustomerOutreach
   // Priority 250 = after projections (100) and PMs (200), before sagas (300)
+  // Uses action/mutation split: action for LLM calls, onComplete for persistence
   registry.add(
     createAgentSubscription(churnRiskAgentConfig, {
-      handler: handleChurnRiskEventRef,
+      actionHandler: analyzeChurnRiskEventRef,
+      onComplete: handleChurnRiskOnCompleteRef,
+      retry: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
       priority: 250,
     })
   );

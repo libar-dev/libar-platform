@@ -123,7 +123,11 @@ export {
   isAgentActive,
   isAgentPaused,
   isAgentStopped,
+  isAgentInErrorRecovery,
   isValidAgentCheckpoint,
+
+  // Config Resolution
+  resolveEffectiveConfig,
 } from "./checkpoint.js";
 
 export type {
@@ -181,6 +185,44 @@ export type {
   // Schema Types
   PatternWindowSchemaType,
 } from "./patterns.js";
+
+// ============================================================================
+// Pattern Registry
+// ============================================================================
+
+export {
+  // Error Codes
+  PATTERN_REGISTRY_ERROR_CODES,
+
+  // Validation
+  validatePatternDefinitions,
+} from "./pattern-registry.js";
+
+export type {
+  // Error Types
+  PatternRegistryErrorCode,
+
+  // Validation Types
+  PatternRegistryValidationResult,
+} from "./pattern-registry.js";
+
+// ============================================================================
+// Pattern Executor
+// ============================================================================
+
+export {
+  // Core Executor
+  executePatterns,
+
+  // Decision Builders
+  buildDecisionFromAnalysis,
+  buildDecisionFromTrigger,
+} from "./pattern-executor.js";
+
+export type {
+  // Execution Types
+  PatternExecutionSummary,
+} from "./pattern-executor.js";
 
 // ============================================================================
 // Rate Limiting
@@ -300,6 +342,7 @@ export {
 
   // ID Generation
   generateDecisionId,
+  createLifecycleDecisionId,
 
   // Factory Functions
   createPatternDetectedAudit,
@@ -307,6 +350,14 @@ export {
   createApprovalRejectedAudit,
   createApprovalExpiredAudit,
   createGenericAuditEvent,
+
+  // Lifecycle Audit Factories
+  createAgentStartedAudit,
+  createAgentPausedAudit,
+  createAgentResumedAudit,
+  createAgentStoppedAudit,
+  createAgentReconfiguredAudit,
+  createAgentErrorRecoveryStartedAudit,
 
   // Type Guards
   isAgentAuditEventType,
@@ -329,6 +380,14 @@ export type {
   ApprovalExpiredPayload,
   AgentAuditEventBase,
   AgentAuditEvent,
+
+  // Lifecycle Payload Types
+  AgentStartedPayload,
+  AgentPausedPayload,
+  AgentResumedPayload,
+  AgentStoppedPayload,
+  AgentReconfiguredPayload,
+  AgentErrorRecoveryStartedPayload,
 
   // Schema Types
   AgentAuditEventTypeSchemaType,
@@ -509,6 +568,146 @@ export type {
 // NOTE: CreateAgentSubscriptionOptions is available from @libar-dev/platform-bus/agent-subscription
 
 // ============================================================================
+// Action Handler (Action/Mutation Split Pattern)
+// ============================================================================
+
+export {
+  // Factory Function
+  createAgentActionHandler,
+} from "./action-handler.js";
+
+export type {
+  // State Loading Types
+  AgentStateLoader,
+  AgentActionState,
+
+  // Action Result Types
+  AgentActionResult,
+
+  // Factory Configuration
+  AgentActionHandlerConfig,
+} from "./action-handler.js";
+
+// ============================================================================
+// onComplete Handler (Action/Mutation Split Pattern)
+// ============================================================================
+
+export {
+  // Factory Function
+  createAgentOnCompleteHandler,
+} from "./oncomplete-handler.js";
+
+export type {
+  // Workpool Context Type
+  AgentWorkpoolContext,
+
+  // onComplete Args Type
+  AgentOnCompleteArgs,
+
+  // Agent Component API Interface
+  AgentComponentAPI,
+
+  // Factory Configuration
+  AgentOnCompleteConfig,
+} from "./oncomplete-handler.js";
+
+// ============================================================================
+// Thread Adapter (LLM Integration)
+// ============================================================================
+
+export { createThreadAdapter } from "./thread-adapter.js";
+
+export type { ThreadAdapterConfig, GenerateTextResult } from "./thread-adapter.js";
+
+// ============================================================================
+// Agent Rate Limiter (Runtime Integration)
+// ============================================================================
+
+export { withRateLimit } from "./agent-rate-limiter.js";
+
+export type { AgentRateLimiterConfig, RateLimitedResult } from "./agent-rate-limiter.js";
+
+// ============================================================================
+// Cost Budget Tracking
+// ============================================================================
+
+export { checkBudget, estimateCost, DEFAULT_MODEL_COSTS } from "./cost-budget.js";
+
+export type { CostBudgetConfig, CostTracker, BudgetCheckResult } from "./cost-budget.js";
+
+// ============================================================================
+// Lifecycle FSM
+// ============================================================================
+
+export {
+  // Constants
+  AGENT_LIFECYCLE_STATES,
+  AGENT_LIFECYCLE_EVENTS,
+
+  // Transition Functions
+  isValidAgentTransition,
+  transitionAgentState,
+  assertValidAgentTransition,
+
+  // Query Functions
+  getValidAgentEventsFrom,
+  getAllAgentTransitions,
+
+  // State Classification
+  isAgentErrorState,
+  isAgentProcessingState,
+  commandToEvent,
+} from "./lifecycle-fsm.js";
+
+export type {
+  // Types
+  AgentLifecycleState,
+  AgentLifecycleEvent,
+  AgentLifecycleTransition,
+} from "./lifecycle-fsm.js";
+
+// ============================================================================
+// Lifecycle Commands
+// ============================================================================
+
+export {
+  // Error Codes
+  AGENT_LIFECYCLE_ERROR_CODES,
+
+  // Convex Validators
+  lifecycleStateValidator,
+  costBudgetOverridesValidator,
+  rateLimitOverridesValidator,
+  configOverridesValidator,
+  startAgentArgsValidator,
+  pauseAgentArgsValidator,
+  resumeAgentArgsValidator,
+  stopAgentArgsValidator,
+  reconfigureAgentArgsValidator,
+} from "./lifecycle-commands.js";
+
+export type {
+  // Config Types
+  AgentConfigOverrides,
+
+  // Command Types
+  StartAgentCommand,
+  PauseAgentCommand,
+  ResumeAgentCommand,
+  StopAgentCommand,
+  ReconfigureAgentCommand,
+  AgentLifecycleCommand,
+
+  // Error Types
+  AgentLifecycleErrorCode,
+
+  // Result Types
+  AgentLifecycleSuccess,
+  AgentLifecycleFailure,
+  AgentLifecycleResult,
+} from "./lifecycle-commands.js";
+
+// ============================================================================
 // Cross-BC Query Types
 // ============================================================================
 
@@ -517,3 +716,86 @@ export type {
   CustomerCancellationHistory,
   AgentEventHandlerInjectedData,
 } from "./cross-bc-query.js";
+
+// ============================================================================
+// Command Router (DS-4)
+// ============================================================================
+
+export {
+  // Error Codes
+  COMMAND_ROUTING_ERROR_CODES,
+
+  // Route Lookup
+  getRoute,
+
+  // Route Validation
+  validateRoutes,
+} from "./command-router.js";
+
+export type {
+  // Error Types
+  CommandRoutingErrorCode,
+
+  // Types
+  RecordedAgentCommand,
+  RoutingContext,
+  AgentCommandRoute,
+  AgentCommandRouteMap,
+  RouteResult,
+} from "./command-router.js";
+
+// ============================================================================
+// Command Bridge (DS-4)
+// ============================================================================
+
+export {
+  // Factory Function
+  createCommandBridgeHandler,
+} from "./command-bridge.js";
+
+export type {
+  // Bridge Args
+  RouteAgentCommandArgs,
+
+  // Audit Event Types
+  AgentCommandRoutedEvent,
+  AgentCommandRoutingFailedEvent,
+
+  // Dependencies
+  CommandRegistryInterface,
+  CommandOrchestratorInterface,
+
+  // Configuration
+  CommandBridgeConfig,
+} from "./command-bridge.js";
+
+// ============================================================================
+// Lifecycle Handlers (DS-5)
+// ============================================================================
+
+export {
+  // Factory
+  createLifecycleHandlers,
+
+  // Individual Handlers
+  handleStartAgent,
+  handlePauseAgent,
+  handleResumeAgent,
+  handleStopAgent,
+  handleReconfigureAgent,
+} from "./lifecycle-handlers.js";
+
+export type {
+  // Configuration
+  LifecycleHandlerConfig,
+
+  // Args Types
+  StartAgentArgs,
+  PauseAgentArgs,
+  ResumeAgentArgs,
+  StopAgentArgs,
+  ReconfigureAgentArgs,
+
+  // Factory Return Type
+  LifecycleHandlers,
+} from "./lifecycle-handlers.js";

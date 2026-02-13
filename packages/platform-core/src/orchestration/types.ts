@@ -541,6 +541,47 @@ export interface WorkpoolClient {
       context?: unknown;
     }
   ) => Promise<unknown[]>;
+
+  /**
+   * Enqueue an action for execution in the Workpool.
+   *
+   * Used by ConvexEventBus for ActionSubscription dispatch.
+   * The action can make external HTTP calls (e.g., LLM APIs).
+   * The result flows to the onComplete handler via Workpool.
+   *
+   * Optional - when not provided, the EventBus can only dispatch mutations.
+   *
+   * @since Phase 22b (AgentLLMIntegration)
+   */
+  enqueueAction?: <TArgs extends UnknownRecord>(
+    ctx: MutationCtx,
+    actionRef: FunctionReference<"action", FunctionVisibility, TArgs, unknown>,
+    args: TArgs,
+    options?: {
+      onComplete?: FunctionReference<
+        "mutation",
+        FunctionVisibility,
+        WorkpoolOnCompleteArgs,
+        unknown
+      > | null;
+      context?: unknown;
+      /**
+       * Retry behavior for the action.
+       * - `true`: Use Workpool default retry behavior
+       * - `false`: No retries
+       * - Object: Custom retry behavior with backoff configuration
+       *
+       * Must be compatible with Workpool's RetryBehavior type.
+       */
+      retry?:
+        | boolean
+        | {
+            maxAttempts: number;
+            initialBackoffMs: number;
+            base: number;
+          };
+    }
+  ) => Promise<unknown>;
 }
 
 /**

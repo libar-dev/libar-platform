@@ -168,18 +168,10 @@ Analyze these events for patterns and provide your assessment.`;
 
         return llmResult;
       } catch (error) {
-        // Return a failed analysis result with zero confidence
-        // Note: Convex doesn't have console in mutations, so we don't log here
-        return {
-          patterns: [],
-          confidence: 0,
-          reasoning: `Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-          llmContext: {
-            model: OPENROUTER_MODEL,
-            tokens: 0,
-            durationMs: Date.now() - startTime,
-          },
-        };
+        // Re-throw — runtimes MUST throw on failure so the action handler
+        // at action-handler.ts:400 can distinguish "LLM returned low confidence"
+        // from "LLM call failed" and trigger the rule-based-fallback path.
+        throw error;
       }
     },
 
@@ -220,12 +212,8 @@ Provide a brief risk assessment of this event.`;
           },
         };
       } catch (error) {
-        // Note: Convex doesn't have console in mutations, so we don't log here
-        return {
-          assessment: `Reasoning failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-          riskLevel: "low",
-          confidence: 0,
-        };
+        // Re-throw for consistent error handling with analyze().
+        throw error;
       }
     },
   };

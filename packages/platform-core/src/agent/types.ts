@@ -8,6 +8,7 @@
  */
 
 import type { PublishedEvent } from "../eventbus/types.js";
+import type { PatternDefinition } from "./patterns.js";
 
 // ============================================================================
 // Error Codes
@@ -27,6 +28,10 @@ export const AGENT_CONFIG_ERROR_CODES = {
   CONFLICTING_APPROVAL_RULES: "CONFLICTING_APPROVAL_RULES",
   /** Agent must have a unique identifier */
   AGENT_ID_REQUIRED: "AGENT_ID_REQUIRED",
+  /** Agent must have either onEvent or patterns (not both, not neither) */
+  NO_EVENT_HANDLER: "NO_EVENT_HANDLER",
+  /** Agent cannot have both onEvent and patterns */
+  CONFLICTING_HANDLERS: "CONFLICTING_HANDLERS",
 } as const;
 
 export type AgentConfigErrorCode =
@@ -393,8 +398,17 @@ export interface AgentBCConfig {
   /**
    * Event handler invoked for each subscribed event.
    * Returns a decision about what action to take.
+   *
+   * Exactly one of onEvent or patterns must be set (XOR).
    */
-  readonly onEvent: AgentEventHandler;
+  readonly onEvent?: AgentEventHandler;
+
+  /**
+   * Pattern definitions for event analysis (alternative to onEvent).
+   * When set, the handler uses the pattern executor instead of onEvent.
+   * Exactly one of onEvent or patterns must be set (XOR).
+   */
+  readonly patterns?: readonly PatternDefinition[];
 }
 
 // ============================================================================
@@ -480,6 +494,26 @@ export function validateAgentBCConfig(config: Partial<AgentBCConfig>): AgentConf
         };
       }
     }
+  }
+
+  // XOR: exactly one of onEvent or patterns must be set
+  const hasOnEvent = typeof config.onEvent === "function";
+  const hasPatterns = Array.isArray(config.patterns) && config.patterns.length > 0;
+
+  if (!hasOnEvent && !hasPatterns) {
+    return {
+      valid: false,
+      code: AGENT_CONFIG_ERROR_CODES.NO_EVENT_HANDLER,
+      message: "Agent must have either onEvent handler or patterns array",
+    };
+  }
+
+  if (hasOnEvent && hasPatterns) {
+    return {
+      valid: false,
+      code: AGENT_CONFIG_ERROR_CODES.CONFLICTING_HANDLERS,
+      message: "Agent cannot have both onEvent and patterns — use one or the other",
+    };
   }
 
   return { valid: true };

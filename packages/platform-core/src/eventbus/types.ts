@@ -8,7 +8,11 @@
 import type { FunctionReference, FunctionVisibility } from "convex/server";
 import type { EventCategory } from "../events/category.js";
 import type { CorrelationChain } from "../correlation/types.js";
-import type { MutationCtx, WorkpoolOnCompleteArgs } from "../orchestration/types.js";
+import type {
+  MutationCtx,
+  WorkpoolClient,
+  WorkpoolOnCompleteArgs,
+} from "../orchestration/types.js";
 import type { UnknownRecord } from "../types.js";
 import type { Logger } from "../logging/types.js";
 
@@ -91,37 +95,21 @@ export interface PartitionKey {
 }
 
 /**
- * An event subscription that defines how to handle published events.
+ * Common fields for all subscription variants.
  *
  * @template THandlerArgs - The handler function argument type
  */
-export interface EventSubscription<THandlerArgs extends UnknownRecord = UnknownRecord> {
+interface BaseSubscription<THandlerArgs extends UnknownRecord = UnknownRecord> {
   /** Unique name for this subscription (e.g., "orderSummary.onOrderSubmitted") */
   name: string;
 
   /** Filter to determine which events this subscription receives */
   filter: SubscriptionFilter;
 
-  /**
-   * Reference to the handler mutation.
-   * Typically a projection handler or saga router.
-   */
-  handler: FunctionReference<"mutation", FunctionVisibility, THandlerArgs, unknown>;
-
-  /**
-   * Optional onComplete handler for dead letter tracking.
-   */
-  onComplete?: FunctionReference<"mutation", FunctionVisibility, WorkpoolOnCompleteArgs, unknown>;
-
-  /**
-   * Transform a published event into handler arguments.
-   */
+  /** Transform a published event into handler arguments */
   toHandlerArgs: (event: PublishedEvent, chain: CorrelationChain) => THandlerArgs;
 
-  /**
-   * Extract the partition key for ordering.
-   * Events with the same partition key value are processed in order.
-   */
+  /** Extract the partition key for ordering */
   getPartitionKey: (event: PublishedEvent) => PartitionKey;
 
   /**
@@ -130,6 +118,97 @@ export interface EventSubscription<THandlerArgs extends UnknownRecord = UnknownR
    * @default 100
    */
   priority?: number;
+}
+
+/**
+ * Subscription that dispatches events to a Convex mutation.
+ * This is the existing behavior for projections, process managers, and sagas.
+ *
+ * @template THandlerArgs - The handler function argument type
+ */
+export interface MutationSubscription<
+  THandlerArgs extends UnknownRecord = UnknownRecord,
+> extends BaseSubscription<THandlerArgs> {
+  /** Discriminant. Optional for backward compatibility — missing means "mutation". */
+  readonly handlerType?: "mutation";
+
+  /** Reference to the handler mutation */
+  handler: FunctionReference<"mutation", FunctionVisibility, THandlerArgs, unknown>;
+
+  /** Optional onComplete handler for dead letter tracking */
+  onComplete?: FunctionReference<"mutation", FunctionVisibility, WorkpoolOnCompleteArgs, unknown>;
+
+  /** Dedicated Workpool for this subscription type. Falls back to EventBus default. */
+  pool?: WorkpoolClient;
+}
+
+/**
+ * Subscription that dispatches events to a Convex action.
+ * Used by agent handlers that need to call external APIs (LLM).
+ *
+ * onComplete is REQUIRED because actions cannot persist state directly.
+ *
+ * @template THandlerArgs - The handler function argument type
+ * @since Phase 22b (AgentLLMIntegration)
+ */
+export interface ActionSubscription<
+  THandlerArgs extends UnknownRecord = UnknownRecord,
+> extends BaseSubscription<THandlerArgs> {
+  /** Discriminant: this is an action-based subscription */
+  readonly handlerType: "action";
+
+  /** Reference to the handler action */
+  handler: FunctionReference<"action", FunctionVisibility, THandlerArgs, unknown>;
+
+  /** onComplete handler — REQUIRED for actions (they can't persist state) */
+  onComplete: FunctionReference<"mutation", FunctionVisibility, WorkpoolOnCompleteArgs, unknown>;
+
+  /** Retry configuration for the action.
+   * - `true`: Use Workpool default retry behavior
+   * - `false`: No retries
+   * - Object: Custom retry behavior (all fields required per Workpool contract)
+   */
+  retry?: boolean | { maxAttempts: number; initialBackoffMs: number; base: number };
+
+  /** Dedicated Workpool for this subscription type */
+  pool?: WorkpoolClient;
+
+  /** Build Workpool context for onComplete handler */
+  toWorkpoolContext: (
+    event: PublishedEvent,
+    chain: CorrelationChain,
+    subscriptionName: string
+  ) => Record<string, unknown>;
+}
+
+/**
+ * An event subscription — discriminated union with handlerType.
+ *
+ * - "mutation" (or absent): Handler is a Convex mutation (existing behavior)
+ * - "action": Handler is a Convex action (new for agents/LLM)
+ *
+ * @template THandlerArgs - The handler function argument type
+ */
+export type EventSubscription<THandlerArgs extends UnknownRecord = UnknownRecord> =
+  | MutationSubscription<THandlerArgs>
+  | ActionSubscription<THandlerArgs>;
+
+/**
+ * Type guard: check if a subscription is action-based.
+ */
+export function isActionSubscription<T extends UnknownRecord>(
+  sub: EventSubscription<T>
+): sub is ActionSubscription<T> {
+  return "handlerType" in sub && sub.handlerType === "action";
+}
+
+/**
+ * Type guard: check if a subscription is mutation-based.
+ */
+export function isMutationSubscription<T extends UnknownRecord>(
+  sub: EventSubscription<T>
+): sub is MutationSubscription<T> {
+  return !("handlerType" in sub) || sub.handlerType === "mutation" || sub.handlerType === undefined;
 }
 
 /**

@@ -10,6 +10,8 @@
  */
 
 import { z } from "zod";
+import type { AgentConfigOverrides } from "./lifecycle-commands.js";
+import type { AgentRateLimitConfig } from "./types.js";
 
 // ============================================================================
 // Status Types
@@ -72,7 +74,7 @@ export const AgentCheckpointSchema = z.object({
   /** Timestamp of last checkpoint update */
   updatedAt: z.number(),
 
-  /** Forward-declared config overrides for DS-5 lifecycle reconfiguration */
+  /** Runtime configuration overrides applied via ReconfigureAgent command */
   configOverrides: z.unknown().optional(),
 });
 
@@ -111,8 +113,8 @@ export interface AgentCheckpoint {
   /** Timestamp of last checkpoint update */
   readonly updatedAt: number;
 
-  /** Forward-declared config overrides for DS-5 lifecycle reconfiguration */
-  readonly configOverrides?: unknown;
+  /** Runtime configuration overrides applied via ReconfigureAgent command */
+  readonly configOverrides?: AgentConfigOverrides;
 }
 
 /**
@@ -130,6 +132,9 @@ export interface AgentCheckpointUpdate {
 
   /** Increment events processed count */
   readonly incrementEventsProcessed?: number;
+
+  /** Configuration overrides to merge into checkpoint */
+  readonly configOverrides?: AgentConfigOverrides;
 }
 
 // ============================================================================
@@ -179,12 +184,15 @@ export function applyCheckpointUpdate(
   checkpoint: AgentCheckpoint,
   update: AgentCheckpointUpdate
 ): AgentCheckpoint {
+  const mergedOverrides = mergeConfigOverrides(checkpoint.configOverrides, update.configOverrides);
+
   return {
     ...checkpoint,
     lastProcessedPosition: update.lastProcessedPosition ?? checkpoint.lastProcessedPosition,
     lastEventId: update.lastEventId ?? checkpoint.lastEventId,
     status: update.status ?? checkpoint.status,
     eventsProcessed: checkpoint.eventsProcessed + (update.incrementEventsProcessed ?? 0),
+    ...(mergedOverrides !== undefined ? { configOverrides: mergedOverrides } : {}),
     updatedAt: Date.now(),
   };
 }
@@ -257,6 +265,174 @@ export function isAgentStopped(checkpoint: AgentCheckpoint): boolean {
 export function isValidAgentCheckpoint(checkpoint: unknown): checkpoint is AgentCheckpoint {
   const result = AgentCheckpointSchema.safeParse(checkpoint);
   return result.success;
+}
+
+// ============================================================================
+// Config Override Merging
+// ============================================================================
+
+/**
+ * Merge config overrides with field-level granularity.
+ *
+ * If update overrides are provided, they are merged on top of existing overrides.
+ * Nested `rateLimits.costBudget` is deep-merged when both exist.
+ *
+ * @param existing - Current config overrides (may be undefined)
+ * @param update - New config overrides to merge (may be undefined)
+ * @returns Merged overrides, or undefined if both are undefined
+ */
+function mergeConfigOverrides(
+  existing: AgentConfigOverrides | undefined,
+  update: AgentConfigOverrides | undefined
+): AgentConfigOverrides | undefined {
+  if (update === undefined) {
+    return existing;
+  }
+  if (existing === undefined) {
+    return update;
+  }
+
+  const mergedRateLimits =
+    existing.rateLimits || update.rateLimits
+      ? {
+          ...existing.rateLimits,
+          ...update.rateLimits,
+          ...(existing.rateLimits?.costBudget || update.rateLimits?.costBudget
+            ? {
+                costBudget: {
+                  ...existing.rateLimits?.costBudget,
+                  ...update.rateLimits?.costBudget,
+                },
+              }
+            : {}),
+        }
+      : undefined;
+
+  return {
+    ...existing,
+    ...update,
+    ...(mergedRateLimits !== undefined ? { rateLimits: mergedRateLimits } : {}),
+  };
+}
+
+// ============================================================================
+// Lifecycle State Helpers
+// ============================================================================
+
+/**
+ * Check if an agent checkpoint is in error recovery state.
+ *
+ * @param checkpoint - Agent checkpoint to check
+ * @returns true if agent is in error_recovery state
+ */
+export function isAgentInErrorRecovery(checkpoint: AgentCheckpoint): boolean {
+  return checkpoint.status === "error_recovery";
+}
+
+// ============================================================================
+// Effective Config Resolution
+// ============================================================================
+
+/**
+ * Resolve effective configuration by merging base config with optional overrides.
+ *
+ * Deep-merges `rateLimits.costBudget` when both base and overrides provide values.
+ * Override values take precedence over base config values.
+ *
+ * @param baseConfig - Base agent configuration
+ * @param overrides - Optional runtime overrides to apply on top
+ * @returns Resolved effective configuration
+ */
+export function resolveEffectiveConfig(
+  baseConfig: {
+    readonly confidenceThreshold: number;
+    readonly patternWindow: { readonly duration: string };
+    readonly rateLimits?: AgentRateLimitConfig;
+  },
+  overrides?: AgentConfigOverrides
+): {
+  confidenceThreshold: number;
+  patternWindowDuration: string;
+  rateLimits?: AgentRateLimitConfig;
+} {
+  if (overrides === undefined) {
+    const base: {
+      confidenceThreshold: number;
+      patternWindowDuration: string;
+      rateLimits?: AgentRateLimitConfig;
+    } = {
+      confidenceThreshold: baseConfig.confidenceThreshold,
+      patternWindowDuration: baseConfig.patternWindow.duration,
+    };
+    if (baseConfig.rateLimits !== undefined) {
+      base.rateLimits = baseConfig.rateLimits;
+    }
+    return base;
+  }
+
+  // Deep-merge rate limits with costBudget granularity
+  const mergedRateLimits = buildMergedRateLimits(baseConfig.rateLimits, overrides.rateLimits);
+
+  const result: {
+    confidenceThreshold: number;
+    patternWindowDuration: string;
+    rateLimits?: AgentRateLimitConfig;
+  } = {
+    confidenceThreshold: overrides.confidenceThreshold ?? baseConfig.confidenceThreshold,
+    patternWindowDuration: overrides.patternWindowDuration ?? baseConfig.patternWindow.duration,
+  };
+
+  if (mergedRateLimits !== undefined) {
+    result.rateLimits = mergedRateLimits;
+  }
+
+  return result;
+}
+
+/**
+ * Build merged rate limit config from base and overrides.
+ *
+ * @param baseRL - Base rate limit config (may be undefined)
+ * @param overRL - Rate limit overrides (may be undefined)
+ * @returns Merged rate limit config, or undefined if neither exists
+ */
+function buildMergedRateLimits(
+  baseRL: AgentRateLimitConfig | undefined,
+  overRL: AgentConfigOverrides["rateLimits"]
+): AgentRateLimitConfig | undefined {
+  if (!overRL) {
+    return baseRL;
+  }
+
+  const mergedCostBudget =
+    baseRL?.costBudget || overRL.costBudget
+      ? {
+          daily: overRL.costBudget?.daily ?? baseRL?.costBudget?.daily ?? 0,
+          alertThreshold:
+            overRL.costBudget?.alertThreshold ?? baseRL?.costBudget?.alertThreshold ?? 0,
+        }
+      : undefined;
+
+  const merged: AgentRateLimitConfig = {
+    maxRequestsPerMinute: overRL.maxRequestsPerMinute ?? baseRL?.maxRequestsPerMinute ?? 0,
+  };
+
+  const maxConcurrent = overRL.maxConcurrent ?? baseRL?.maxConcurrent;
+  if (maxConcurrent !== undefined) {
+    (merged as { maxConcurrent: number }).maxConcurrent = maxConcurrent;
+  }
+
+  const queueDepth = overRL.queueDepth ?? baseRL?.queueDepth;
+  if (queueDepth !== undefined) {
+    (merged as { queueDepth: number }).queueDepth = queueDepth;
+  }
+
+  if (mergedCostBudget !== undefined) {
+    (merged as { costBudget: { daily: number; alertThreshold: number } }).costBudget =
+      mergedCostBudget;
+  }
+
+  return merged;
 }
 
 // ============================================================================

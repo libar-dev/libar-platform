@@ -26,8 +26,10 @@ import type * as contexts_agent__patterns_churnRisk from "../contexts/agent/_pat
 import type * as contexts_agent__utils_confidence from "../contexts/agent/_utils/confidence.js";
 import type * as contexts_agent__utils_customer from "../contexts/agent/_utils/customer.js";
 import type * as contexts_agent__utils_index from "../contexts/agent/_utils/index.js";
+import type * as contexts_agent_handlers_analyzeEvent from "../contexts/agent/handlers/analyzeEvent.js";
 import type * as contexts_agent_handlers_eventHandler from "../contexts/agent/handlers/eventHandler.js";
 import type * as contexts_agent_handlers_onComplete from "../contexts/agent/handlers/onComplete.js";
+import type * as contexts_agent_handlers_routeCommand from "../contexts/agent/handlers/routeCommand.js";
 import type * as contexts_agent_index from "../contexts/agent/index.js";
 import type * as contexts_agent_tools_approval from "../contexts/agent/tools/approval.js";
 import type * as contexts_agent_tools_emitCommand from "../contexts/agent/tools/emitCommand.js";
@@ -110,8 +112,10 @@ declare const fullApi: ApiFromModules<{
   "contexts/agent/_utils/confidence": typeof contexts_agent__utils_confidence;
   "contexts/agent/_utils/customer": typeof contexts_agent__utils_customer;
   "contexts/agent/_utils/index": typeof contexts_agent__utils_index;
+  "contexts/agent/handlers/analyzeEvent": typeof contexts_agent_handlers_analyzeEvent;
   "contexts/agent/handlers/eventHandler": typeof contexts_agent_handlers_eventHandler;
   "contexts/agent/handlers/onComplete": typeof contexts_agent_handlers_onComplete;
+  "contexts/agent/handlers/routeCommand": typeof contexts_agent_handlers_routeCommand;
   "contexts/agent/index": typeof contexts_agent_index;
   "contexts/agent/tools/approval": typeof contexts_agent_tools_approval;
   "contexts/agent/tools/emitCommand": typeof contexts_agent_tools_emitCommand;

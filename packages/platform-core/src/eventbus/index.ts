@@ -14,10 +14,15 @@ export type {
   SubscriptionFilter,
   PartitionKey,
   EventSubscription,
+  MutationSubscription,
+  ActionSubscription,
   PublishResult,
   EventBus,
   EventBusConfig,
 } from "./types.js";
+
+// Type guards
+export { isActionSubscription, isMutationSubscription } from "./types.js";
 
 // Registry
 export {

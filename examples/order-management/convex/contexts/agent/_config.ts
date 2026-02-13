@@ -14,16 +14,8 @@
  * @module contexts/agent/config
  */
 
-import type {
-  AgentBCConfig,
-  AgentDecision,
-  AgentExecutionContext,
-} from "@libar-dev/platform-core/agent";
-import { PatternTriggers } from "@libar-dev/platform-core/agent";
-import type { PublishedEvent } from "@libar-dev/platform-core";
-
-// Import shared utilities
-import { extractCustomerId, calculateChurnConfidence, buildChurnReason } from "./_utils/index.js";
+import type { AgentBCConfig } from "@libar-dev/platform-core/agent";
+import { churnRiskPattern, highValueChurnPattern } from "./_patterns/churnRisk.js";
 
 // ============================================================================
 // Agent Configuration
@@ -89,54 +81,7 @@ export const churnRiskAgentConfig: AgentBCConfig = {
     },
   },
 
-  /**
-   * Event handler that processes events and makes decisions.
-   *
-   * This implementation uses rule-based pattern detection (no LLM).
-   * For LLM-based analysis, use ctx.agent.analyze() instead.
-   */
-  onEvent: async (
-    event: PublishedEvent,
-    ctx: AgentExecutionContext
-  ): Promise<AgentDecision | null> => {
-    // Extract customer ID from the stream (orders are keyed by customer)
-    const customerId = extractCustomerId(event);
-    if (!customerId) {
-      return null;
-    }
-
-    // Filter events for this customer
-    const customerEvents = ctx.history.filter((e) => extractCustomerId(e) === customerId);
-
-    // Check if pattern trigger fires (3+ cancellations)
-    const trigger = PatternTriggers.eventTypePresent(["OrderCancelled"], 3);
-    if (!trigger(customerEvents)) {
-      return null;
-    }
-
-    // Calculate confidence based on event count and recency
-    const confidence = calculateChurnConfidence(customerEvents);
-
-    // Below threshold - no action needed
-    if (confidence < ctx.config.confidenceThreshold) {
-      return null;
-    }
-
-    // Build decision with full explainability
-    return {
-      command: "SuggestCustomerOutreach",
-      payload: {
-        customerId,
-        riskLevel: confidence >= 0.9 ? "high" : "medium",
-        cancellationCount: customerEvents.filter((e) => e.eventType === "OrderCancelled").length,
-        windowDays: 30,
-      },
-      confidence,
-      reason: buildChurnReason(customerEvents, confidence),
-      requiresApproval: confidence < 0.9,
-      triggeringEvents: customerEvents.map((e) => e.eventId),
-    };
-  },
+  patterns: [churnRiskPattern, highValueChurnPattern],
 };
 
 // ============================================================================

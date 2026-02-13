@@ -468,7 +468,12 @@ export function createAgentEventHandler(
         config,
       };
 
-      // Call the agent's event handler
+      // Call the agent's event handler (only in onEvent mode)
+      if (!config.onEvent) {
+        throw new Error(
+          `Agent '${config.id}' has no onEvent handler. Use patterns mode with createAgentActionHandler instead.`
+        );
+      }
       const decision = await config.onEvent(event, executionContext);
 
       // Update checkpoint

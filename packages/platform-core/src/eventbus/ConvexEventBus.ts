@@ -22,6 +22,7 @@ import type { CorrelationChain } from "../correlation/types.js";
 import type { WorkpoolClient, MutationCtx } from "../orchestration/types.js";
 import {
   DEFAULT_SUBSCRIPTION_PRIORITY,
+  isActionSubscription,
   type EventBus,
   type EventSubscription,
   type SubscriptionFilter,
@@ -182,20 +183,38 @@ export class ConvexEventBus implements EventBus {
       // which are idempotent via globalPosition checkpointing.
       // TODO: Add key: partitionKey.value when Workpool adds key-based ordering support.
       try {
-        await this.workpool.enqueueMutation(ctx, subscription.handler, handlerArgs, {
-          // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-          ...(onComplete ? { onComplete } : {}),
-          context: {
-            subscriptionName: subscription.name,
-            eventId: event.eventId,
-            eventType: event.eventType,
-            globalPosition: event.globalPosition,
-            // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-            partition: partitionKey,
-            correlationId: chain.correlationId,
-            causationId: chain.causationId,
-          },
-        });
+        if (isActionSubscription(subscription)) {
+          // ACTION path — agent LLM handlers (Phase 22b)
+          const pool = subscription.pool ?? this.workpool;
+          if (!pool.enqueueAction) {
+            throw new Error(
+              `Action subscription "${subscription.name}" requires a Workpool with enqueueAction support`
+            );
+          }
+          const actionContext = subscription.toWorkpoolContext(event, chain, subscription.name);
+          await pool.enqueueAction(ctx, subscription.handler, handlerArgs, {
+            onComplete: subscription.onComplete,
+            ...(subscription.retry ? { retry: subscription.retry } : {}),
+            context: actionContext,
+          });
+        } else {
+          // MUTATION path — existing behavior, unchanged
+          const pool = subscription.pool ?? this.workpool;
+          await pool.enqueueMutation(ctx, subscription.handler, handlerArgs, {
+            // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
+            ...(onComplete ? { onComplete } : {}),
+            context: {
+              subscriptionName: subscription.name,
+              eventId: event.eventId,
+              eventType: event.eventType,
+              globalPosition: event.globalPosition,
+              // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+              partition: partitionKey,
+              correlationId: chain.correlationId,
+              causationId: chain.causationId,
+            },
+          });
+        }
       } catch (error) {
         this.logger.error("Failed to enqueue subscription", {
           subscriptionName: subscription.name,

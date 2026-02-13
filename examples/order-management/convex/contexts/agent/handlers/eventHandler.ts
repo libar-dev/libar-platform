@@ -8,10 +8,14 @@
  * @libar-docs-arch-layer application
  * @libar-docs-uses CustomerCancellationsProjection, AgentAsBoundedContext
  *
- * Churn risk event handler. Processes OrderCancelled events with checkpoint/idempotency.
+ * Legacy mutation handler for rule-only agents.
+ * For LLM-integrated agents, use analyzeEvent.ts (action handler).
+ *
+ * This mutation handler processes OrderCancelled events with checkpoint/idempotency.
  * Loads cancellation history from customerCancellations projection, runs LLM pattern
  * detection (3+ in 30 days), emits SuggestCustomerOutreach command.
  *
+ * @see analyzeEvent.ts for the action/mutation split pattern (Phase 22b)
  * @since Phase 22
  */
 

@@ -158,6 +158,19 @@ export const churnRiskPattern: PatternDefinition = definePattern({
           patternsFound: result.patterns,
           suggestedAction: result.suggestedAction,
         },
+        // Command suggestion for routing via command bridge
+        ...(result.confidence >= 0.7
+          ? {
+              command: {
+                type: "SuggestCustomerOutreach",
+                payload: {
+                  customerId: extractCustomerIdFromEvents(cancellations),
+                  riskLevel: result.confidence >= 0.9 ? "high" : "medium",
+                  cancellationCount: cancellations.length,
+                },
+              },
+            }
+          : {}),
       };
     } catch {
       // Fallback to rule-based analysis if LLM fails
@@ -226,6 +239,15 @@ function createRuleBasedAnalysis(cancellations: readonly PublishedEvent[]): Patt
       cancellationCount: count,
       recentCount,
     },
+    // Command suggestion for routing via command bridge
+    command: {
+      type: "SuggestCustomerOutreach",
+      payload: {
+        customerId: extractCustomerIdFromEvents(cancellations),
+        riskLevel: adjustedConfidence >= 0.9 ? "high" : "medium",
+        cancellationCount: count,
+      },
+    },
   };
 }
 
@@ -257,6 +279,25 @@ export const highValueChurnPattern: PatternDefinition = definePattern({
 
   // No LLM analysis for this variant - rule-only
 });
+
+// ============================================================================
+// Internal Helpers
+// ============================================================================
+
+/**
+ * Extract a customerId from a list of events.
+ *
+ * Scans event payloads for a `customerId` field. Returns "unknown" if none found.
+ */
+function extractCustomerIdFromEvents(events: readonly PublishedEvent[]): string {
+  for (const event of events) {
+    const payload = event.payload as Record<string, unknown>;
+    if (typeof payload["customerId"] === "string") {
+      return payload["customerId"];
+    }
+  }
+  return "unknown";
+}
 
 // ============================================================================
 // Exports

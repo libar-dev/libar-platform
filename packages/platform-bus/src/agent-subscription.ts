@@ -32,10 +32,13 @@ import type { FunctionReference, FunctionVisibility } from "convex/server";
 import type {
   Logger,
   EventSubscription,
+  MutationSubscription,
+  ActionSubscription,
   PublishedEvent,
   PartitionKey,
   CorrelationChain,
   UnknownRecord,
+  WorkpoolOnCompleteArgs,
 } from "@libar-dev/platform-core";
 
 // ============================================================================
@@ -147,6 +150,73 @@ export interface CreateAgentSubscriptionOptions<THandlerArgs extends UnknownReco
   logger?: Logger;
 }
 
+/**
+ * Options for creating an agent ACTION subscription.
+ *
+ * Used for agents that need to call external APIs (LLM).
+ * The key differences from mutation options:
+ * - Uses `actionHandler` instead of `handler`
+ * - `onComplete` is REQUIRED (actions can't persist state)
+ * - `retry` configuration for transient failures
+ *
+ * @since Phase 22b (AgentLLMIntegration)
+ */
+export interface CreateAgentActionSubscriptionOptions<
+  THandlerArgs extends UnknownRecord = AgentEventHandlerArgs,
+> {
+  /**
+   * Handler action function reference.
+   * Dispatched via Workpool.enqueueAction() for each matching event.
+   */
+  readonly actionHandler: FunctionReference<"action", FunctionVisibility, THandlerArgs, unknown>;
+
+  /**
+   * onComplete mutation — REQUIRED for actions.
+   * Called by Workpool after the action completes (success, failure, or cancel).
+   */
+  readonly onComplete: FunctionReference<
+    "mutation",
+    FunctionVisibility,
+    WorkpoolOnCompleteArgs,
+    unknown
+  >;
+
+  /**
+   * Retry configuration for the action.
+   * - `true`: Use Workpool default retry behavior
+   * - `false`: No retries
+   * - Object: Custom retry behavior (all fields required per Workpool contract)
+   *
+   * Agent recommendation: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 }
+   */
+  readonly retry?: boolean | { maxAttempts: number; initialBackoffMs: number; base: number };
+
+  /**
+   * Priority for ordering subscriptions (lower runs first).
+   * @default 250
+   */
+  readonly priority?: number;
+
+  /**
+   * Custom transformer for handler args.
+   */
+  readonly toHandlerArgs?: (
+    event: PublishedEvent,
+    chain: CorrelationChain,
+    agentId: string
+  ) => THandlerArgs;
+
+  /**
+   * Custom partition key extractor.
+   */
+  readonly getPartitionKey?: (event: PublishedEvent, agentId: string) => PartitionKey;
+
+  /**
+   * Optional logger.
+   */
+  readonly logger?: Logger;
+}
+
 // ============================================================================
 // Transformer Functions
 // ============================================================================
@@ -204,32 +274,51 @@ export function defaultAgentTransform(
  * This bridges agent definitions to the EventBus infrastructure,
  * allowing agents to receive events automatically.
  *
+ * Overloaded:
+ * - Pass `actionHandler` to create an ActionSubscription (for LLM/external API agents)
+ * - Pass `handler` to create a MutationSubscription (existing behavior)
+ *
  * @param definition - Agent definition with id and subscriptions
- * @param options - Subscription options
+ * @param options - Subscription options (mutation or action variant)
  * @returns EventSubscription for the EventBus
  *
- * @example
+ * @example Mutation subscription (existing)
  * ```typescript
  * const subscription = createAgentSubscription(churnRiskAgent, {
  *   handler: internal.agents.churnRisk.handleEvent,
  * });
+ * ```
  *
- * // Use in defineSubscriptions
- * const subscriptions = defineSubscriptions((registry) => {
- *   registry.add(subscription);
+ * @example Action subscription (new — Phase 22b)
+ * ```typescript
+ * const subscription = createAgentSubscription(llmAgent, {
+ *   actionHandler: internal.agents.llm.handleEvent,
+ *   onComplete: internal.agents.llm.onComplete,
+ *   retry: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
  * });
  * ```
  */
+
+// Overload 1: Action subscription
+export function createAgentSubscription<THandlerArgs extends UnknownRecord = AgentEventHandlerArgs>(
+  definition: AgentDefinitionForSubscription,
+  options: CreateAgentActionSubscriptionOptions<THandlerArgs>
+): ActionSubscription<THandlerArgs>;
+
+// Overload 2: Mutation subscription (existing behavior)
 export function createAgentSubscription<THandlerArgs extends UnknownRecord = AgentEventHandlerArgs>(
   definition: AgentDefinitionForSubscription,
   options: CreateAgentSubscriptionOptions<THandlerArgs>
+): MutationSubscription<THandlerArgs>;
+
+// Implementation
+export function createAgentSubscription<THandlerArgs extends UnknownRecord = AgentEventHandlerArgs>(
+  definition: AgentDefinitionForSubscription,
+  options:
+    | CreateAgentActionSubscriptionOptions<THandlerArgs>
+    | CreateAgentSubscriptionOptions<THandlerArgs>
 ): EventSubscription<THandlerArgs> {
-  const {
-    handler,
-    priority = DEFAULT_AGENT_SUBSCRIPTION_PRIORITY,
-    toHandlerArgs,
-    getPartitionKey,
-  } = options;
+  const priority = options.priority ?? DEFAULT_AGENT_SUBSCRIPTION_PRIORITY;
 
   // Build subscription name: agent:<context>:<agentId> or agent:<agentId>
   const subscriptionName = definition.context
@@ -250,28 +339,64 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
     return agentId;
   };
 
+  const resolvedToHandlerArgs = (event: PublishedEvent, chain: CorrelationChain): THandlerArgs => {
+    const agentId = getAgentId(event);
+    if (options.toHandlerArgs) {
+      return options.toHandlerArgs(event, chain, agentId);
+    }
+    // Cast through unknown for default transformer
+    return defaultAgentTransform(event, chain, agentId) as unknown as THandlerArgs;
+  };
+
+  const resolvedGetPartitionKey = (event: PublishedEvent): PartitionKey => {
+    const agentId = getAgentId(event);
+    if (options.getPartitionKey) {
+      return options.getPartitionKey(event, agentId);
+    }
+    // Default: partition by streamId for entity-ordered processing
+    return { name: "streamId", value: event.streamId };
+  };
+
+  // ACTION path — produce ActionSubscription
+  if ("actionHandler" in options) {
+    const actionOpts = options as CreateAgentActionSubscriptionOptions<THandlerArgs>;
+    return {
+      handlerType: "action" as const,
+      name: subscriptionName,
+      filter: {
+        eventTypes: [...definition.subscriptions],
+      },
+      handler: actionOpts.actionHandler,
+      onComplete: actionOpts.onComplete,
+      ...(actionOpts.retry !== undefined ? { retry: actionOpts.retry } : {}),
+      toHandlerArgs: resolvedToHandlerArgs,
+      getPartitionKey: resolvedGetPartitionKey,
+      toWorkpoolContext: (event: PublishedEvent, chain: CorrelationChain, subName: string) => ({
+        agentId: definition.id,
+        subscriptionId: subName,
+        eventId: event.eventId,
+        eventType: event.eventType,
+        globalPosition: event.globalPosition,
+        correlationId: chain.correlationId,
+        causationId: event.eventId,
+        streamId: event.streamId,
+        streamType: event.streamType,
+        boundedContext: event.boundedContext,
+      }),
+      priority,
+    };
+  }
+
+  // MUTATION path — existing behavior, produce MutationSubscription
+  const mutationOpts = options as CreateAgentSubscriptionOptions<THandlerArgs>;
   return {
     name: subscriptionName,
     filter: {
       eventTypes: [...definition.subscriptions],
     },
-    handler,
-    toHandlerArgs: (event: PublishedEvent, chain: CorrelationChain) => {
-      const agentId = getAgentId(event);
-      if (toHandlerArgs) {
-        return toHandlerArgs(event, chain, agentId);
-      }
-      // Cast through unknown for default transformer
-      return defaultAgentTransform(event, chain, agentId) as unknown as THandlerArgs;
-    },
-    getPartitionKey: (event: PublishedEvent) => {
-      const agentId = getAgentId(event);
-      if (getPartitionKey) {
-        return getPartitionKey(event, agentId);
-      }
-      // Default: partition by streamId for entity-ordered processing
-      return { name: "streamId", value: event.streamId };
-    },
+    handler: mutationOpts.handler,
+    toHandlerArgs: resolvedToHandlerArgs,
+    getPartitionKey: resolvedGetPartitionKey,
     priority,
   };
 }

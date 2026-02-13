@@ -66,6 +66,12 @@ export interface PatternAnalysisResult {
 
   /** Additional pattern-specific data */
   readonly data?: unknown;
+
+  /** Command suggested by analysis (enables routing through CommandOrchestrator) */
+  readonly command?: {
+    readonly type: string;
+    readonly payload: unknown;
+  };
 }
 
 /**

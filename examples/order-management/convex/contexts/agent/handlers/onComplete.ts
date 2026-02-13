@@ -6,128 +6,120 @@
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-context agent
  * @libar-docs-arch-layer infrastructure
- * @libar-docs-uses AgentAsBoundedContext
+ * @libar-docs-uses AgentAsBoundedContext, AgentLLMIntegration
  *
- * Workpool job completion handler for agent BC. Manages dead letter tracking,
- * replay, and ignore operations for failed agent event processing.
+ * Workpool job completion handler for agent BC.
+ * This is the MUTATION half of the action/mutation split pattern.
+ *
+ * Handles:
+ * - Success: audit -> command -> approval -> checkpoint (LAST, AD-7)
+ * - Failure: dead letter + failure audit (checkpoint NOT advanced)
+ * - Canceled: log only (checkpoint NOT advanced)
+ * - Dead letter replay and ignore operations
+ *
+ * @since Phase 22b (AgentLLMIntegration) -- factory-based handler
  */
 
 import { internalMutation } from "../../../_generated/server.js";
+import type { MutationCtx } from "../../../_generated/server.js";
+import { makeFunctionReference, type FunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
 import { vOnCompleteValidator } from "@convex-dev/workpool";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
-import { createAgentDeadLetter } from "@libar-dev/platform-core/agent";
-import { CHURN_RISK_AGENT_ID } from "../_config.js";
+import {
+  createAgentOnCompleteHandler,
+  parseApprovalTimeout,
+  DEFAULT_APPROVAL_TIMEOUT_MS,
+  type AgentComponentAPI,
+} from "@libar-dev/platform-core/agent";
+import { churnRiskAgentConfig } from "../_config.js";
+
+// TS2589 Prevention: Agent command bridge mutation reference at module level.
+// Double cast via unknown per CLAUDE.md internal visibility pattern --
+// AgentOnCompleteConfig.routeCommandRef expects FunctionReference<"mutation"> (public).
+const routeAgentCommandRef = makeFunctionReference<"mutation">(
+  "contexts/agent/handlers/routeCommand:routeAgentCommand"
+) as unknown as FunctionReference<"mutation">;
 
 // ============================================================================
-// onComplete Handler
+// onComplete Handler (Factory-Based)
 // ============================================================================
+
+/**
+ * Create the onComplete handler using the platform factory.
+ *
+ * The factory creates a handler that:
+ * 1. On success: persists audit -> command -> approval -> checkpoint (LAST)
+ * 2. On failure: creates dead letter, does NOT advance checkpoint
+ * 3. On canceled: logs, does NOT advance checkpoint
+ *
+ * All persistence uses the agent component API. The handler is a NO-THROW
+ * ZONE -- failures are dead-lettered, never thrown.
+ *
+ * Note: Component refs have "internal" visibility, but AgentComponentAPI expects
+ * FunctionReference<"mutation"> (public). Cast via unknown per CLAUDE.md
+ * internal visibility pattern -- Convex validates args at runtime.
+ */
+const agentComponent = {
+  checkpoints: {
+    loadOrCreate: components.agentBC.checkpoints.loadOrCreate,
+    update: components.agentBC.checkpoints.update,
+  },
+  audit: { record: components.agentBC.audit.record },
+  commands: { record: components.agentBC.commands.record },
+  approvals: { create: components.agentBC.approvals.create },
+  deadLetters: { record: components.agentBC.deadLetters.record },
+} as unknown as AgentComponentAPI;
+
+// Derive approval timeout from agent config (humanInLoop.approvalTimeout)
+const approvalTimeoutMs = churnRiskAgentConfig.humanInLoop?.approvalTimeout
+  ? (parseApprovalTimeout(churnRiskAgentConfig.humanInLoop.approvalTimeout) ??
+    DEFAULT_APPROVAL_TIMEOUT_MS)
+  : DEFAULT_APPROVAL_TIMEOUT_MS;
+
+const onCompleteHandler = createAgentOnCompleteHandler<MutationCtx>({
+  agentComponent,
+  logger: createPlatformNoOpLogger(),
+  approvalTimeoutMs,
+  routeCommandRef: routeAgentCommandRef,
+});
 
 /**
  * Handle Workpool job completion for the churn risk agent.
  *
- * This mutation is called by Workpool when a job completes (successfully or not).
- * It handles:
- * - Success: Update checkpoint metrics
- * - Failure: Create dead letter entry for retry/investigation
+ * Called by Workpool when an agent action completes (success, failure, or cancel).
+ * The context validator matches AgentWorkpoolContext shape produced by
+ * createAgentSubscription's toWorkpoolContext.
  *
  * @example
  * ```typescript
- * // Registered as EventBus subscription onComplete handler
+ * // Registered as EventBus action subscription onComplete handler
  * const subscription = createAgentSubscription(churnRiskAgentConfig, {
- *   handler: internal.contexts.agent.handlers.eventHandler.handleChurnRiskEvent,
- *   onComplete: internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
+ *   actionHandler: analyzeChurnRiskEventRef,
+ *   onComplete: handleChurnRiskOnCompleteRef,
+ *   retry: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
  * });
  * ```
  */
 export const handleChurnRiskOnComplete = internalMutation({
   args: vOnCompleteValidator(
     v.object({
-      subscriptionName: v.optional(v.string()),
+      agentId: v.string(),
+      subscriptionId: v.string(),
       eventId: v.string(),
-      eventType: v.optional(v.string()),
-      globalPosition: v.optional(v.number()),
-      partition: v.optional(v.object({ name: v.string(), value: v.string() })),
-      correlationId: v.optional(v.string()),
-      causationId: v.optional(v.string()),
+      eventType: v.string(),
+      globalPosition: v.number(),
+      correlationId: v.string(),
+      causationId: v.string(),
+      streamId: v.string(),
+      streamType: v.string(),
+      boundedContext: v.string(),
     })
   ),
   returns: v.null(),
-  handler: async (ctx, { workId, context, result }) => {
-    const logger = createPlatformNoOpLogger();
-    const agentId = CHURN_RISK_AGENT_ID;
-    const { eventId, globalPosition, correlationId } = context;
-
-    if (result.kind === "success") {
-      logger.debug("Agent job completed successfully", {
-        agentId,
-        eventId,
-      });
-      return null;
-    }
-
-    if (result.kind === "canceled") {
-      logger.debug("Agent job canceled", {
-        agentId,
-        eventId,
-      });
-      return null;
-    }
-
-    // result.kind === "failed" - create dead letter entry
-    const error = result.error;
-
-    logger.warn("Agent job failed", {
-      agentId,
-      eventId,
-      error,
-    });
-
-    // Create dead letter for investigation/retry
-    const deadLetter = createAgentDeadLetter(
-      agentId,
-      `sub_${agentId}`,
-      eventId,
-      globalPosition ?? 0,
-      error
-    );
-
-    const contextObj: {
-      correlationId?: string;
-      errorCode?: string;
-      ignoreReason?: string;
-    } = {};
-    if (correlationId) {
-      contextObj.correlationId = correlationId;
-    }
-
-    // Record dead letter via component (UPSERT semantics: auto-increments attemptCount on retry)
-    const dlResult = await ctx.runMutation(components.agentBC.deadLetters.record, {
-      agentId: deadLetter.agentId,
-      subscriptionId: `sub_${agentId}`,
-      eventId,
-      globalPosition: globalPosition ?? 0,
-      error: deadLetter.error,
-      attemptCount: 1,
-      workId,
-      ...(Object.keys(contextObj).length > 0 && { context: contextObj }),
-    });
-
-    if (dlResult.created) {
-      logger.info("Created dead letter entry", {
-        agentId: deadLetter.agentId,
-        eventId: deadLetter.eventId,
-        error: deadLetter.error,
-      });
-    } else {
-      logger.warn("Agent dead letter retry (upserted)", {
-        agentId: deadLetter.agentId,
-        eventId: deadLetter.eventId,
-        error: deadLetter.error,
-      });
-    }
-
+  handler: async (ctx, args) => {
+    await onCompleteHandler(ctx, args);
     return null;
   },
 });

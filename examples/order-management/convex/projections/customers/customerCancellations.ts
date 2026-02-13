@@ -12,7 +12,7 @@
  * Customer cancellation history with rolling 30-day window.
  * Provides getCustomerCancellations() for churn risk agent pattern detection. Added in Phase 22.
  */
-import { internalMutation } from "../../_generated/server";
+import { internalMutation, internalQuery } from "../../_generated/server";
 import { v } from "convex/values";
 import { withCheckpoint, type MutationCtx } from "../_helpers";
 import { createScopedLogger } from "@libar-dev/platform-core";
@@ -164,3 +164,42 @@ export async function getCustomerCancellations(
     count: filtered.length,
   };
 }
+
+// ============================================================================
+// Internal Query (for action ctx.runQuery access)
+// ============================================================================
+
+/**
+ * Query cancellation data for a customer within the rolling window.
+ *
+ * Wraps the same logic as getCustomerCancellations() but exposed as an
+ * internalQuery so actions can load history via ctx.runQuery().
+ * The helper function requires ctx.db (mutation context), but actions
+ * cannot use ctx.db directly -- they must use ctx.runQuery().
+ */
+export const getByCustomerId = internalQuery({
+  args: {
+    customerId: v.string(),
+    windowMs: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const windowMs = args.windowMs ?? DEFAULT_WINDOW_MS;
+
+    const record = await ctx.db
+      .query("customerCancellations")
+      .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+      .first();
+
+    if (!record) {
+      return null;
+    }
+
+    const cutoff = Date.now() - windowMs;
+    const filtered = record.cancellations.filter((c) => c.timestamp >= cutoff);
+
+    return {
+      cancellations: filtered,
+      count: filtered.length,
+    };
+  },
+});

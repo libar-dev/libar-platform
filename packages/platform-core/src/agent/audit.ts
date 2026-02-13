@@ -14,6 +14,8 @@
 import { z } from "zod";
 import { v7 as uuidv7 } from "uuid";
 import type { LLMContext } from "./types.js";
+import type { AgentLifecycleState } from "./lifecycle-fsm.js";
+import type { AgentConfigOverrides } from "./lifecycle-commands.js";
 
 // ============================================================================
 // Audit Event Types
@@ -271,6 +273,88 @@ export interface ApprovalExpiredPayload {
   readonly requestedAt: number;
   /** When the action expired */
   readonly expiredAt: number;
+}
+
+// ============================================================================
+// Lifecycle Audit Payloads
+// ============================================================================
+
+/**
+ * Payload for AgentStarted audit event.
+ */
+export interface AgentStartedPayload {
+  /** State the agent was in before starting (always "stopped") */
+  readonly previousState: "stopped";
+  /** Correlation ID for tracing */
+  readonly correlationId: string;
+  /** Position the agent will resume from */
+  readonly resumeFromPosition: number;
+}
+
+/**
+ * Payload for AgentPaused audit event.
+ */
+export interface AgentPausedPayload {
+  /** Optional reason for pausing */
+  readonly reason?: string;
+  /** Correlation ID for tracing */
+  readonly correlationId: string;
+  /** Event position at which the agent was paused */
+  readonly pausedAtPosition: number;
+  /** Total events processed at the time of pause */
+  readonly eventsProcessedAtPause: number;
+}
+
+/**
+ * Payload for AgentResumed audit event.
+ */
+export interface AgentResumedPayload {
+  /** Position the agent will resume from */
+  readonly resumeFromPosition: number;
+  /** Correlation ID for tracing */
+  readonly correlationId: string;
+}
+
+/**
+ * Payload for AgentStopped audit event.
+ */
+export interface AgentStoppedPayload {
+  /** State the agent was in before being stopped */
+  readonly previousState: AgentLifecycleState;
+  /** Optional reason for stopping */
+  readonly reason?: string;
+  /** Correlation ID for tracing */
+  readonly correlationId: string;
+  /** Event position at which the agent was stopped */
+  readonly stoppedAtPosition: number;
+}
+
+/**
+ * Payload for AgentReconfigured audit event.
+ */
+export interface AgentReconfiguredPayload {
+  /** State the agent was in when reconfigured */
+  readonly previousState: AgentLifecycleState;
+  /** Previous configuration overrides (if any) */
+  readonly previousOverrides?: AgentConfigOverrides;
+  /** New configuration overrides being applied */
+  readonly newOverrides: AgentConfigOverrides;
+  /** Correlation ID for tracing */
+  readonly correlationId: string;
+}
+
+/**
+ * Payload for AgentErrorRecoveryStarted audit event.
+ */
+export interface AgentErrorRecoveryStartedPayload {
+  /** Number of consecutive failures */
+  readonly failureCount: number;
+  /** Description of the last error */
+  readonly lastError: string;
+  /** Cooldown period in milliseconds before retry */
+  readonly cooldownMs: number;
+  /** Correlation ID for tracing */
+  readonly correlationId: string;
 }
 
 /**
@@ -571,6 +655,149 @@ export function createGenericAuditEvent(
     eventType,
     agentId,
     decisionId: generateDecisionId(),
+    timestamp: Date.now(),
+    payload,
+  };
+}
+
+// ============================================================================
+// Lifecycle Decision ID Generation
+// ============================================================================
+
+/**
+ * Generate a unique decision ID for lifecycle audit events.
+ *
+ * Format: `lifecycle_{agentId}_{timestamp}_{random}`
+ *
+ * @param agentId - Agent identifier to include in the decision ID
+ * @param timestamp - Optional timestamp (defaults to Date.now())
+ * @returns Unique lifecycle decision ID
+ */
+export function createLifecycleDecisionId(agentId: string, timestamp?: number): string {
+  const ts = timestamp ?? Date.now();
+  const suffix = uuidv7().slice(0, 8);
+  return `lifecycle_${agentId}_${ts}_${suffix}`;
+}
+
+// ============================================================================
+// Lifecycle Audit Factory Functions
+// ============================================================================
+
+/**
+ * Create an AgentStarted audit event.
+ *
+ * @param agentId - Agent BC identifier
+ * @param payload - Started event payload
+ * @returns AgentStarted audit event
+ */
+export function createAgentStartedAudit(
+  agentId: string,
+  payload: AgentStartedPayload
+): AgentAuditEvent {
+  return {
+    eventType: "AgentStarted",
+    agentId,
+    decisionId: createLifecycleDecisionId(agentId),
+    timestamp: Date.now(),
+    payload,
+  };
+}
+
+/**
+ * Create an AgentPaused audit event.
+ *
+ * @param agentId - Agent BC identifier
+ * @param payload - Paused event payload
+ * @returns AgentPaused audit event
+ */
+export function createAgentPausedAudit(
+  agentId: string,
+  payload: AgentPausedPayload
+): AgentAuditEvent {
+  return {
+    eventType: "AgentPaused",
+    agentId,
+    decisionId: createLifecycleDecisionId(agentId),
+    timestamp: Date.now(),
+    payload,
+  };
+}
+
+/**
+ * Create an AgentResumed audit event.
+ *
+ * @param agentId - Agent BC identifier
+ * @param payload - Resumed event payload
+ * @returns AgentResumed audit event
+ */
+export function createAgentResumedAudit(
+  agentId: string,
+  payload: AgentResumedPayload
+): AgentAuditEvent {
+  return {
+    eventType: "AgentResumed",
+    agentId,
+    decisionId: createLifecycleDecisionId(agentId),
+    timestamp: Date.now(),
+    payload,
+  };
+}
+
+/**
+ * Create an AgentStopped audit event.
+ *
+ * @param agentId - Agent BC identifier
+ * @param payload - Stopped event payload
+ * @returns AgentStopped audit event
+ */
+export function createAgentStoppedAudit(
+  agentId: string,
+  payload: AgentStoppedPayload
+): AgentAuditEvent {
+  return {
+    eventType: "AgentStopped",
+    agentId,
+    decisionId: createLifecycleDecisionId(agentId),
+    timestamp: Date.now(),
+    payload,
+  };
+}
+
+/**
+ * Create an AgentReconfigured audit event.
+ *
+ * @param agentId - Agent BC identifier
+ * @param payload - Reconfigured event payload
+ * @returns AgentReconfigured audit event
+ */
+export function createAgentReconfiguredAudit(
+  agentId: string,
+  payload: AgentReconfiguredPayload
+): AgentAuditEvent {
+  return {
+    eventType: "AgentReconfigured",
+    agentId,
+    decisionId: createLifecycleDecisionId(agentId),
+    timestamp: Date.now(),
+    payload,
+  };
+}
+
+/**
+ * Create an AgentErrorRecoveryStarted audit event.
+ *
+ * @param agentId - Agent BC identifier
+ * @param payload - Error recovery started event payload
+ * @returns AgentErrorRecoveryStarted audit event
+ */
+export function createAgentErrorRecoveryStartedAudit(
+  agentId: string,
+  payload: AgentErrorRecoveryStartedPayload
+): AgentAuditEvent {
+  return {
+    eventType: "AgentErrorRecoveryStarted",
+    agentId,
+    decisionId: createLifecycleDecisionId(agentId),
     timestamp: Date.now(),
     payload,
   };

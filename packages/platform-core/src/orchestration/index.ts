@@ -24,6 +24,7 @@ export type {
   EventStoreClient,
   CommandBusClient,
   WorkpoolClient,
+  WorkpoolOnCompleteArgs,
   OrchestratorDependencies,
   CommandCategoryLookup,
 } from "./types.js";
