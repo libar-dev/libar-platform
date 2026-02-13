@@ -7,11 +7,11 @@
 
 ## Overview
 
-This diagram was auto-generated from 52 annotated source files across 3 bounded contexts.
+This diagram was auto-generated from 51 annotated source files across 3 bounded contexts.
 
 | Metric           | Count |
 | ---------------- | ----- |
-| Total Components | 52    |
+| Total Components | 51    |
 | Bounded Contexts | 3     |
 | Component Roles  | 9     |
 
@@ -27,16 +27,15 @@ graph TB
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
         Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
         Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
-        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
-        ChurnRiskEventHandler["ChurnRiskEventHandler[command-handler]"]
-        AgentActionHandler["AgentActionHandler[command-handler]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
+        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
+        AgentActionHandler["AgentActionHandler[command-handler]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
     end
     subgraph inventory["Inventory BC"]
         InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
@@ -44,8 +43,8 @@ graph TB
         ProductCatalogProjection["ProductCatalogProjection[projection]"]
         ActiveReservationsProjection["ActiveReservationsProjection[projection]"]
         InventoryCommandConfigs["InventoryCommandConfigs[infrastructure]"]
-        InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
         InventoryCommandHandlers["InventoryCommandHandlers[command-handler]"]
+        InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
         InventoryDeciders["InventoryDeciders[decider]"]
     end
     subgraph orders["Orders BC"]
@@ -72,11 +71,11 @@ graph TB
         SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
         ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
         ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
+        DurableAppendAction["DurableAppendAction[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
-        DurableAppendAction["DurableAppendAction[infrastructure]"]
         DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
@@ -95,9 +94,9 @@ graph TB
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
     CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
@@ -108,9 +107,8 @@ graph TB
     InventoryCommandConfigs --> ActiveReservationsProjection
     InventoryCommandConfigs --> ProductCatalogProjection
     InventoryCommandConfigs --> OrderWithInventoryProjection
-    InventoryCommandHandlers --> InventoryDeciders
     OrderCommandHandlers --> OrderDeciders
-    ChurnRiskEventHandler --> CustomerCancellationsProjection
+    InventoryCommandHandlers --> InventoryDeciders
 ```
 
 ---
@@ -133,7 +131,6 @@ All components with architecture annotations:
 | Component                                     | Context   | Role            | Layer          | Source File                                                                                    |
 | --------------------------------------------- | --------- | --------------- | -------------- | ---------------------------------------------------------------------------------------------- |
 | ✅ Agent Action Handler                       | agent     | command-handler | application    | libar-platform/examples/order-management/convex/contexts/agent/handlers/analyzeEvent.ts        |
-| ✅ Churn Risk Event Handler                   | agent     | command-handler | application    | libar-platform/examples/order-management/convex/contexts/agent/handlers/eventHandler.ts        |
 | Churn Risk Pattern Definition                 | agent     | decider         | domain         | libar-platform/examples/order-management/convex/contexts/agent/\_patterns/churnRisk.ts         |
 | ✅ Agent On Complete Handler                  | agent     | infrastructure  | infrastructure | libar-platform/examples/order-management/convex/contexts/agent/handlers/onComplete.ts          |
 | Churn Risk Agent Configuration                | agent     | infrastructure  | application    | libar-platform/examples/order-management/convex/contexts/agent/\_config.ts                     |

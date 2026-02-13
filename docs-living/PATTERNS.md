@@ -300,6 +300,8 @@ Pattern relationships and dependencies:
 graph TD
     HandlerFactories --> DeciderPattern
     CMSRepository --> CMSDualWrite
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBus
     ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
@@ -307,8 +309,6 @@ graph TD
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBus
     InvariantFramework --> BoundedContextFoundation
     MiddlewarePipeline --> CommandBusFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -352,12 +352,6 @@ graph TD
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
@@ -399,6 +393,12 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---
