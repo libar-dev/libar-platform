@@ -24,7 +24,7 @@
 | 📋 [WorkpoolPartitioningStrategy](remaining/phase-18-workpool-partitioning-strategy.md) | 4         | 0      | 56%      |
 | 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                      | 1         | 0      | 67%      |
 | 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)             | 2         | 0      | 0%       |
-| 🚧 [ConfirmedOrderCancellation](remaining/phase-22-confirmed-order-cancellation.md)     | 3         | 3      | 50%      |
+| 🚧 [AgentChurnRiskCompletion](remaining/phase-22-agent-churn-risk-completion.md)        | 3         | 3      | 50%      |
 | 🚧 [ThemedDecisionArchitecture](remaining/phase-100-themed-decision-architecture.md)    | 3         | 1      | 50%      |
 | 🚧 Backlog (No Phase)                                                                   | 1         | 1      | 0%       |
 

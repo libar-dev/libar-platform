@@ -29,7 +29,7 @@
 | ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                 | 1/1      | 100%     |
 | ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)            | 1/1      | 100%     |
 | ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                        | 1/1      | 100%     |
-| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                              | 3/3      | 100%     |
+| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                   | 3/3      | 100%     |
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                      | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                          | 1/1      | 100%     |
@@ -101,7 +101,7 @@
 
 ---
 
-### ✅ EventUpcasting
+### ✅ EventBusAbstraction
 
 [███████████████] 3/3 100% complete
 

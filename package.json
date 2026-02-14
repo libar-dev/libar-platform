@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "^1.1.1",
-    "@libar-dev/delivery-process": "git+https://github.com/libar-dev/delivery-process.git#f314a0ff8b205d144129164f4fcf0436b4f422a2",
+    "@libar-dev/delivery-process": "git+https://github.com/libar-dev/delivery-process.git#8bf4c8da6c845e4370f9921960946cffc2d01870",
     "@edge-runtime/vm": "^5.0.0",
     "concurrently": "^9.2.1",
     "convex-helpers": "^0.1.108",

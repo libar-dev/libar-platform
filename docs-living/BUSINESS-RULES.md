@@ -71,7 +71,7 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 
 - **Rationale:** Recipe Rule blocks contain tables, rationale, and context that are the authoritative reference for the delivery process. Migration must be lossless.
 
-_[codec-driven-reference-generation.feature](libar-platform/delivery-process/specs/codec-driven-reference-generation.feature)_
+_[codec-driven-reference-generation.feature](delivery-process/specs/codec-driven-reference-generation.feature)_
 
 ### TestContentBlocks
 
@@ -85,7 +85,7 @@ Rule descriptions provide context for why this business rule exists.
 
 Each Rule keyword creates a separate entry in the Business Rules section.
 
-_[test-content-blocks.feature](libar-platform/delivery-process/specs/test-content-blocks.feature)_
+_[test-content-blocks.feature](delivery-process/specs/test-content-blocks.feature)_
 
 ---
 
@@ -139,7 +139,7 @@ _The churn-risk agent in the order-management example app has working_
 | correlationId     | From command context                     |
 | createdAt         | Current timestamp                        |
 
-_[agent-churn-risk-completion.feature](libar-platform/delivery-process/specs/example-app/agent-churn-risk-completion.feature)_
+_[agent-churn-risk-completion.feature](delivery-process/specs/example-app/agent-churn-risk-completion.feature)_
 
 ---
 
@@ -201,7 +201,7 @@ not a production application.
 | Fat Events                | 20    | convex/orders/events/                                 | CLAUDE.md#ecst-fat-events         |
 | Reservation Pattern       | 20    | convex/inventory/reservations/                        | docs/RESERVATION-PATTERN.md       |
 
-_[example-app-modernization.feature](libar-platform/delivery-process/specs/example-app/example-app-modernization.feature)_
+_[example-app-modernization.feature](delivery-process/specs/example-app/example-app-modernization.feature)_
 
 ---
 
@@ -236,7 +236,7 @@ When appending events, callers must provide an expectedVersion: - If expectedVer
 
 Projections track their lastProcessedPosition (a globalPosition value).
 
-_[event-store-foundation.feature](libar-platform/delivery-process/specs/platform/event-store-foundation.feature)_
+_[event-store-foundation.feature](delivery-process/specs/platform/event-store-foundation.feature)_
 
 ---
 
@@ -296,7 +296,7 @@ command execution with before/after hooks:
 
     Middleware executes in registration order, with early exit on failure.
 
-_[command-bus-foundation.feature](libar-platform/delivery-process/specs/platform/command-bus-foundation.feature)_
+_[command-bus-foundation.feature](delivery-process/specs/platform/command-bus-foundation.feature)_
 
 ---
 
@@ -342,7 +342,7 @@ Each saga has a unique sagaId (typically the entity ID triggering it).
 The workflow's onComplete handler updates the saga's status in the
 sagas table.
 
-_[saga-orchestration.feature](libar-platform/delivery-process/specs/platform/saga-orchestration.feature)_
+_[saga-orchestration.feature](delivery-process/specs/platform/saga-orchestration.feature)_
 
 ---
 
@@ -375,7 +375,7 @@ Each bounded context should define a contract that specifies: - **identity**: Na
 
     This contract serves as documentation and enables type-safe integration.
 
-_[bounded-context-foundation.feature](libar-platform/delivery-process/specs/platform/bounded-context-foundation.feature)_
+_[bounded-context-foundation.feature](delivery-process/specs/platform/bounded-context-foundation.feature)_
 
 ---
 
@@ -395,7 +395,7 @@ _The original @convex-es/core package grew to 25+ modules, creating issues:_
 
 #### No naming conflicts with libar-ai project
 
-_[package-architecture.feature](libar-platform/delivery-process/specs/platform/package-architecture.feature)_
+_[package-architecture.feature](delivery-process/specs/platform/package-architecture.feature)_
 
 ---
 
@@ -433,7 +433,7 @@ Evolve must not recalculate values - events are immutable source of truth.
 - `createDeciderHandler()` for modifications (loads existing state)
   - `createEntityDeciderHandler()` for creation (handles null state)
 
-_[decider-pattern.feature](libar-platform/delivery-process/specs/platform/decider-pattern.feature)_
+_[decider-pattern.feature](delivery-process/specs/platform/decider-pattern.feature)_
 
 ---
 
@@ -487,7 +487,7 @@ _Projections exist but categories are implicit._
 
 - **Rationale:** Reactive infrastructure is expensive (WebSocket connections, change detection, client memory). Limiting reactivity to View projections ensures resources are used only where instant UI feedback is needed.
 
-_[projection-categories.feature](libar-platform/delivery-process/specs/platform/projection-categories.feature)_
+_[projection-categories.feature](delivery-process/specs/platform/projection-categories.feature)_
 
 ---
 
@@ -532,7 +532,7 @@ These constraints ensure DCB operates safely within the Convex-Native ES model.
 
 DCB builds on pure deciders for validation logic.
 
-_[dynamic-consistency-boundaries.feature](libar-platform/delivery-process/specs/platform/dynamic-consistency-boundaries.feature)_
+_[dynamic-consistency-boundaries.feature](delivery-process/specs/platform/dynamic-consistency-boundaries.feature)_
 
 ---
 
@@ -592,7 +592,7 @@ The hook provides a unified interface for hybrid reactive projections.
 | durablePosition | number    | Last processed global position      |
 | pendingEvents   | number    | Count of optimistic events          |
 
-_[reactive-projections.feature](libar-platform/delivery-process/specs/platform/reactive-projections.feature)_
+_[reactive-projections.feature](delivery-process/specs/platform/reactive-projections.feature)_
 
 ---
 
@@ -653,7 +653,7 @@ When background work fails or stalls, operators need visibility into: - Workpool
 
 Admin operations are powerful and should be protected.
 
-_[admin-tooling-consolidation.feature](libar-platform/delivery-process/specs/platform/admin-tooling-consolidation.feature)_
+_[admin-tooling-consolidation.feature](delivery-process/specs/platform/admin-tooling-consolidation.feature)_
 
 ### CircuitBreakerPattern
 
@@ -698,7 +698,7 @@ Different services have different failure characteristics.
 | resetTimeoutMs   | 30000   | Time in open state before half-open   |
 | successThreshold | 1       | Successes in half-open before closing |
 
-_[circuit-breaker-pattern.feature](libar-platform/delivery-process/specs/platform/circuit-breaker-pattern.feature)_
+_[circuit-breaker-pattern.feature](delivery-process/specs/platform/circuit-breaker-pattern.feature)_
 
 ### DurableEventsIntegration
 
@@ -758,7 +758,7 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 
 - **Rationale:** Unit tests with mocks cannot verify the integration of multiple durability patterns working together. Integration tests ensure the patterns compose correctly and handle real-world scenarios like OCC conflicts and concurrent operations.
 
-_[durable-events-integration.feature](libar-platform/delivery-process/specs/platform/durable-events-integration.feature)_
+_[durable-events-integration.feature](delivery-process/specs/platform/durable-events-integration.feature)_
 
 ### DurableFunctionAdapters
 
@@ -795,7 +795,7 @@ _Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) 
 
 **Implementation:** `examples/order-management/convex/rateLimits.ts`
 
-_[durable-function-adapters.feature](libar-platform/delivery-process/specs/platform/durable-function-adapters.feature)_
+_[durable-function-adapters.feature](delivery-process/specs/platform/durable-function-adapters.feature)_
 
 ### EventReplayInfrastructure
 
@@ -879,7 +879,7 @@ _When projections become corrupted, require schema migration, or drift from_
 
 **Implementation:** `examples/order-management/convex/admin/projections.ts`
 
-_[event-replay-infrastructure.feature](libar-platform/delivery-process/specs/platform/event-replay-infrastructure.feature)_
+_[event-replay-infrastructure.feature](delivery-process/specs/platform/event-replay-infrastructure.feature)_
 
 ### EventStoreDurability
 
@@ -972,7 +972,7 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 | ignorePublicationDeadLetter   | Mark as ignored (e.g., obsolete event)   |
 | getPublicationDeadLetterStats | Count by target context and status       |
 
-_[event-store-durability.feature](libar-platform/delivery-process/specs/platform/event-store-durability.feature)_
+_[event-store-durability.feature](delivery-process/specs/platform/event-store-durability.feature)_
 
 ### HealthObservability
 
@@ -1030,7 +1030,7 @@ Overall system health is derived from individual component health.
 | Any degraded    | System degraded (200 with warning) |
 | Any unhealthy   | System unhealthy (503)             |
 
-_[health-observability.feature](libar-platform/delivery-process/specs/platform/health-observability.feature)_
+_[health-observability.feature](delivery-process/specs/platform/health-observability.feature)_
 
 ### ProductionHardening
 
@@ -1100,7 +1100,7 @@ Production systems use @convex-dev durable function components for reliability.
 | Workpool       | Projection processing | Parallelism + partition ordering | DLQ processing                  |
 | Workflow       | Multi-step sagas      | Compensation + awaitEvent        | Cross-BC coordination           |
 
-_[production-hardening.feature](libar-platform/delivery-process/specs/platform/production-hardening.feature)_
+_[production-hardening.feature](delivery-process/specs/platform/production-hardening.feature)_
 
 ### WorkpoolPartitioningStrategy
 
@@ -1184,7 +1184,7 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 
 **Implementation:** `withDCBRetry`
 
-_[workpool-partitioning-strategy.feature](libar-platform/delivery-process/specs/platform/workpool-partitioning-strategy.feature)_
+_[workpool-partitioning-strategy.feature](delivery-process/specs/platform/workpool-partitioning-strategy.feature)_
 
 ---
 
@@ -1214,7 +1214,7 @@ Command lifecycle tests validate full flow with assertions.
 
 libar-dev/platform-\* packages need BDD tests for public APIs.
 
-_[bdd-testing-infrastructure.feature](libar-platform/delivery-process/specs/platform/bdd-testing-infrastructure.feature)_
+_[bdd-testing-infrastructure.feature](delivery-process/specs/platform/bdd-testing-infrastructure.feature)_
 
 ---
 
@@ -1251,7 +1251,7 @@ Choose based on use case; both are valid uniqueness strategies.
 
     **Decision Tree:**
 
-_[deterministic-id-hashing.feature](libar-platform/delivery-process/specs/platform/deterministic-id-hashing.feature)_
+_[deterministic-id-hashing.feature](delivery-process/specs/platform/deterministic-id-hashing.feature)_
 
 ### EcstFatEvents
 
@@ -1278,7 +1278,7 @@ GDPR compliance requires marking personal data for deletion.
 
 Same-context projections can use thin events for efficiency.
 
-_[ecst-fat-events.feature](libar-platform/delivery-process/specs/platform/ecst-fat-events.feature)_
+_[ecst-fat-events.feature](delivery-process/specs/platform/ecst-fat-events.feature)_
 
 ### ReservationPattern
 
@@ -1314,7 +1314,7 @@ _Uniqueness constraints before entity creation require check-then-create_
 
 - **Rationale:** A single value like "alice" may need uniqueness in multiple contexts (username, display name, etc.). Type-scoped keys allow independent reservations.
 
-_[reservation-pattern.feature](libar-platform/delivery-process/specs/platform/reservation-pattern.feature)_
+_[reservation-pattern.feature](delivery-process/specs/platform/reservation-pattern.feature)_
 
 ---
 
@@ -1352,7 +1352,7 @@ _Cross-context communication is ad-hoc._
 
 - **Rationale:** Direct use of external models leaks foreign concepts into the domain, creating coupling and making the domain vocabulary impure. ACL enforces boundaries.
 
-_[integration-patterns-21a.feature](libar-platform/delivery-process/specs/platform/integration-patterns-21a.feature)_
+_[integration-patterns-21a.feature](delivery-process/specs/platform/integration-patterns-21a.feature)_
 
 ### IntegrationPatterns21b
 
@@ -1371,7 +1371,7 @@ Old consumers continue working when schemas evolve through upcasting and downcas
 
 Producer and consumer contracts are tested independently.
 
-_[integration-patterns-21b.feature](libar-platform/delivery-process/specs/platform/integration-patterns-21b.feature)_
+_[integration-patterns-21b.feature](delivery-process/specs/platform/integration-patterns-21b.feature)_
 
 ---
 
@@ -1428,7 +1428,7 @@ Audit trail captures pattern detection, reasoning, and outcomes.
 
     **Audit Event Structure:**
 
-_[agent-as-bounded-context.feature](libar-platform/delivery-process/specs/platform/agent-as-bounded-context.feature)_
+_[agent-as-bounded-context.feature](delivery-process/specs/platform/agent-as-bounded-context.feature)_
 
 ### AgentBCComponentIsolation
 
@@ -1452,7 +1452,7 @@ _Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,_
 | Order events          | EventBus         | Agent subscription | Delivered via Workpool        |
 | Agent decisions       | Agent component  | Admin UI queries   | Via component API             |
 
-_[agent-bc-component-isolation.feature](libar-platform/delivery-process/specs/platform/agent-bc-component-isolation.feature)_
+_[agent-bc-component-isolation.feature](delivery-process/specs/platform/agent-bc-component-isolation.feature)_
 
 ### AgentCommandInfrastructure
 
@@ -1484,7 +1484,7 @@ _Three interconnected gaps in agent command infrastructure:_
 
 - **Rationale:** The current codebase has two disconnected pattern implementations: `_config.ts` with inline rule-based detection and `_patterns/churnRisk.ts` with formal `PatternDefinition` including LLM analysis. This creates confusion about which code path runs in production and makes the LLM analysis unreachable.
 
-_[agent-command-infrastructure.feature](libar-platform/delivery-process/specs/platform/agent-command-infrastructure.feature)_
+_[agent-command-infrastructure.feature](delivery-process/specs/platform/agent-command-infrastructure.feature)_
 
 ### AgentLLMIntegration
 
@@ -1508,7 +1508,7 @@ _The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
 
 - **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete` field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler), agents need custom completion logic: checkpoint updates, agent-specific audit events, and rate limit tracking. Without this field, the agent-specific `handleChurnRiskOnComplete` handler is orphaned — defined but never wired.
 
-_[agent-llm-integration.feature](libar-platform/delivery-process/specs/platform/agent-llm-integration.feature)_
+_[agent-llm-integration.feature](delivery-process/specs/platform/agent-llm-integration.feature)_
 
 ### ConfirmedOrderCancellation
 
@@ -1534,7 +1534,7 @@ The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
 
 The primary use case is enabling the Agent BC churn risk detection demo.
 
-_[confirmed-order-cancellation.feature](libar-platform/delivery-process/specs/platform/confirmed-order-cancellation.feature)_
+_[confirmed-order-cancellation.feature](delivery-process/specs/platform/confirmed-order-cancellation.feature)_
 
 ---
 
@@ -1574,6 +1574,6 @@ The 33 ADRs fall into 3 evolutionary layers:
 
 #### Multiple output formats are generated
 
-_[themed-decision-architecture.feature](libar-platform/delivery-process/specs/themed-decision-architecture.feature)_
+_[themed-decision-architecture.feature](delivery-process/specs/themed-decision-architecture.feature)_
 
 ---

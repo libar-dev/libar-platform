@@ -21,7 +21,7 @@
 
 ## Active Phases
 
-### 🚧 ConfirmedOrderCancellation
+### 🚧 AgentChurnRiskCompletion
 
 [████████░░░░░░░] 3/6 50% complete (3 done, 3 active)
 
@@ -61,7 +61,7 @@
 - ✅ Design session methodology
 - ✅ Argument injection pattern
 
-[View ConfirmedOrderCancellation details →](current/phase-22-confirmed-order-cancellation.md)
+[View AgentChurnRiskCompletion details →](current/phase-22-agent-churn-risk-completion.md)
 
 ---
 
