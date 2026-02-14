@@ -7,26 +7,13 @@
 
 ## Summary
 
-**Overall Progress:** [████████████████░░░░] 60/74 (81%)
+**Overall Progress:** [████████████░░░░░░░░] 36/60 (60%)
 
 | Status              | Count |
 | ------------------- | ----- |
-| 🚧 Active           | 5     |
-| 📋 Planned          | 9     |
-| **Total Remaining** | 14    |
-
----
-
-## By Phase
-
-| Phase                                                                                   | Remaining | Active | Complete |
-| --------------------------------------------------------------------------------------- | --------- | ------ | -------- |
-| 📋 [WorkpoolPartitioningStrategy](remaining/phase-18-workpool-partitioning-strategy.md) | 4         | 0      | 56%      |
-| 📋 [ReservationPattern](remaining/phase-20-reservation-pattern.md)                      | 1         | 0      | 67%      |
-| 📋 [IntegrationPatterns21b](remaining/phase-21-integration-patterns-21b.md)             | 2         | 0      | 0%       |
-| 🚧 [AgentChurnRiskCompletion](remaining/phase-22-agent-churn-risk-completion.md)        | 3         | 3      | 50%      |
-| 🚧 [ThemedDecisionArchitecture](remaining/phase-100-themed-decision-architecture.md)    | 3         | 1      | 50%      |
-| 🚧 Backlog (No Phase)                                                                   | 1         | 1      | 0%       |
+| 🚧 Active           | 1     |
+| 📋 Planned          | 23    |
+| **Total Remaining** | 24    |
 
 ---
 
@@ -34,19 +21,24 @@
 
 | Priority          | Count |
 | ----------------- | ----- |
-| 🚧 In Progress    | 5     |
-| ✅ Ready to Start | 7     |
-| ⚠️ Blocked        | 3     |
+| 🚧 In Progress    | 1     |
+| ✅ Ready to Start | 23    |
+| ⚠️ Blocked        | 0     |
 
 ### Top Ready to Start
 
-- Circuit Breaker Pattern (Phase 18)
-- Health Observability (Phase 18)
-- Production Hardening (Phase 18)
-- Deterministic Id Hashing (Phase 20)
-- Integration Patterns21a (Phase 21)
-- Test Content Blocks (Phase 100)
-- Themed Decision Architecture (Phase 100)
+- Agent Action Handler Factory — DS-2 Stub
+- Agent Command Router — DS-4 Stub
+- Agent Component - Approval Public API — DS-1 Stub
+- Agent Component - Audit Public API — DS-1 Stub
+- Agent Component - Checkpoint Public API — DS-1 Stub
+- Agent Component - Command Public API — DS-1 Stub
+- Agent Component - Dead Letter Public API — DS-1 Stub
+- Agent Component Definition — DS-1 Stub
+- Agent Component Schema — DS-1 Stub
+- Agent Lifecycle FSM — DS-5 Stub
+
+See phase detail files for full list.
 
 ---
 
@@ -54,12 +46,12 @@
 
 Items ready to start (no blocking dependencies):
 
-- 📋 Circuit Breaker Pattern (Phase 18) - 1w
-- 📋 Health Observability (Phase 18) - 1w
-- 📋 Production Hardening (Phase 18) - 3w
-- 📋 Deterministic Id Hashing (Phase 20) - 2d
-- 📋 Integration Patterns21a (Phase 21) - 1w
+- 📋 Agent Action Handler Factory — DS-2 Stub
+- 📋 Agent Command Router — DS-4 Stub
+- 📋 Agent Component - Approval Public API — DS-1 Stub
+- 📋 Agent Component - Audit Public API — DS-1 Stub
+- 📋 Agent Component - Checkpoint Public API — DS-1 Stub
 
-Showing 5 of 7 actionable items.
+Showing 5 of 23 actionable items.
 
 ---

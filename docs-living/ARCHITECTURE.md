@@ -25,14 +25,14 @@ Component architecture with bounded context isolation:
 graph TB
     subgraph agent["Agent BC"]
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
-        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
-        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
         AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
         AgentActionHandler["AgentActionHandler[command-handler]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
+        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
@@ -75,9 +75,9 @@ graph TB
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
-        DurableAppendAction["DurableAppendAction[infrastructure]"]
         DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
+        DurableAppendAction["DurableAppendAction[infrastructure]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
         OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
@@ -88,18 +88,18 @@ graph TB
     OrderFulfillmentSaga --> OrderCommandHandlers
     OrderFulfillmentSaga --> InventoryCommandHandlers
     SagaCompletionHandler --> SagaRegistry
+    IntegrationRoutes --> OrderCommandHandlers
     ReservationReleasePM --> InventoryCommandHandlers
     ReservationReleasePM --> OrderWithInventoryProjection
     OrderNotificationPM --> OrderCommandHandlers
-    IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
     OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection

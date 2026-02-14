@@ -393,6 +393,21 @@ inline onEvent removed
 
 _Verified by: Agent config references patterns from registry, Handler uses pattern trigger for cheap detection, Handler uses pattern analyze for LLM analysis, Unknown pattern name in config fails validation_
 
+## Implementations
+
+Files that implement this pattern:
+
+- [`agent-bc-config.ts`](../../delivery-process/stubs/agent-command-routing/agent-bc-config.ts) - AgentBCConfig Evolution — DS-4 Stub
+- [`command-bridge.ts`](../../delivery-process/stubs/agent-command-routing/command-bridge.ts) - Command Bridge — DS-4 Stub
+- [`command-router.ts`](../../delivery-process/stubs/agent-command-routing/command-router.ts) - Agent Command Router — DS-4 Stub
+- [`pattern-executor.ts`](../../delivery-process/stubs/agent-command-routing/pattern-executor.ts) - Pattern Executor — DS-4 Stub
+- [`pattern-registry.ts`](../../delivery-process/stubs/agent-command-routing/pattern-registry.ts) - Pattern Registry — DS-4 Stub
+- [`checkpoint-status-extension.ts`](../../delivery-process/stubs/agent-lifecycle-fsm/checkpoint-status-extension.ts) - Checkpoint Status Extension for Agent Lifecycle FSM — DS-5 Stub
+- [`lifecycle-audit-events.ts`](../../delivery-process/stubs/agent-lifecycle-fsm/lifecycle-audit-events.ts) - Lifecycle Audit Event Types — DS-5 Stub
+- [`lifecycle-command-handlers.ts`](../../delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-handlers.ts) - Lifecycle Command Handlers — DS-5 Stub
+- [`lifecycle-command-types.ts`](../../delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-types.ts) - Lifecycle Command Type Definitions — DS-5 Stub
+- [`lifecycle-fsm.ts`](../../delivery-process/stubs/agent-lifecycle-fsm/lifecycle-fsm.ts) - Agent Lifecycle FSM — DS-5 Stub
+
 ---
 
 [← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)
