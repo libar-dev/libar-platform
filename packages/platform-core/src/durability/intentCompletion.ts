@@ -62,13 +62,7 @@
  * @libar-docs-uses EventStoreFoundation
  */
 
-import type {
-  IntentEvent,
-  CompletionEvent,
-  CompletionStatus,
-  IntentCompletionConfig,
-  IdempotentAppendDependencies,
-} from "./types.js";
+import type { IntentEvent, CompletionStatus, IdempotentAppendDependencies } from "./types.js";
 import type { SafeQueryRef, SafeMutationRef } from "../function-refs/types.js";
 import { idempotentAppendEvent } from "./idempotentAppend.js";
 

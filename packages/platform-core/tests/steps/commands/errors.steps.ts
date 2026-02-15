@@ -152,13 +152,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Type guard rejects invalid values", ({ When, Then }) => {
-      When("isErrorCategory is called with invalid values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-        state.isErrorCategoryResults = rows.map((row) => {
-          const actual = coerceValue(row.value, row.type);
-          return { input: actual, result: isErrorCategory(actual) };
-        });
-      });
+      When(
+        "isErrorCategory is called with invalid values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+          state.isErrorCategoryResults = rows.map((row) => {
+            const actual = coerceValue(row.value, row.type);
+            return { input: actual, result: isErrorCategory(actual) };
+          });
+        }
+      );
 
       Then("each isErrorCategory call returns false", () => {
         for (const row of state.isErrorCategoryResults) {
@@ -638,13 +641,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "getRetryDelay computes quick backoff for concurrency errors capped at 500ms",
     ({ RuleScenario }) => {
       RuleScenario("Concurrency error delays escalate then cap", ({ Then }) => {
-        Then("getRetryDelay for concurrency errors returns:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ attempt: string; delay: string }>(dataTable);
-          const error = CommandErrors.concurrency("TEST", "test");
-          for (const row of rows) {
-            expect(getRetryDelay(error, Number(row.attempt))).toBe(Number(row.delay));
+        Then(
+          "getRetryDelay for concurrency errors returns:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ attempt: string; delay: string }>(dataTable);
+            const error = CommandErrors.concurrency("TEST", "test");
+            for (const row of rows) {
+              expect(getRetryDelay(error, Number(row.attempt))).toBe(Number(row.delay));
+            }
           }
-        });
+        );
       });
     }
   );
@@ -653,13 +659,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "getRetryDelay computes exponential backoff for infrastructure errors capped at 30s",
     ({ RuleScenario }) => {
       RuleScenario("Infrastructure error delays escalate then cap", ({ Then }) => {
-        Then("getRetryDelay for infrastructure errors returns:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ attempt: string; delay: string }>(dataTable);
-          const error = CommandErrors.infrastructure("TEST", "test");
-          for (const row of rows) {
-            expect(getRetryDelay(error, Number(row.attempt))).toBe(Number(row.delay));
+        Then(
+          "getRetryDelay for infrastructure errors returns:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ attempt: string; delay: string }>(dataTable);
+            const error = CommandErrors.infrastructure("TEST", "test");
+            for (const row of rows) {
+              expect(getRetryDelay(error, Number(row.attempt))).toBe(Number(row.delay));
+            }
           }
-        });
+        );
       });
     }
   );

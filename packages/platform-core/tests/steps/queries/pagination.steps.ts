@@ -25,10 +25,7 @@ import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
 } from "../../../src/queries/pagination.js";
-import type {
-  NormalizedPaginationOptions,
-  PagedQueryResult,
-} from "../../../src/queries/types.js";
+import type { NormalizedPaginationOptions, PagedQueryResult } from "../../../src/queries/types.js";
 import { getDataTableRows } from "../_helpers/data-table.js";
 
 // =============================================================================

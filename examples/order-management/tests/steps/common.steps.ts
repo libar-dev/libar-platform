@@ -37,8 +37,7 @@ export interface TestContext {
  * For unit tests (convex-test): Fresh state is automatic.
  * For integration tests: Namespace isolation via testRunId prefix.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Parameter kept for API compatibility
-export async function ensureDeploymentStateIsClean(context: TestContext): Promise<void> {
+export async function ensureDeploymentStateIsClean(_context: TestContext): Promise<void> {
   // No-op with namespace isolation - each test run has unique IDs via testRunId prefix
 }
 

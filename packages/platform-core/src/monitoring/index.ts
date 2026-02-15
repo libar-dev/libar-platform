@@ -1,60 +1,17 @@
 /**
- * ## Production Hardening - Observability and Operational Tooling
+ * Circuit Breaker — Fault tolerance for external dependencies.
  *
- * Production-ready observability, monitoring, and operational tooling.
- *
- * Comprehensive production hardening including advanced observability, monitoring
- * dashboards, error tracking, performance profiling, and operational tooling. Builds
- * on existing logging infrastructure with metrics collection, distributed tracing,
- * and health check endpoints. Implements circuit breakers, rate limiting refinements,
- * and graceful degradation patterns.
- *
- * ### When to Use
- *
- * - When preparing for production deployment
- * - When operational visibility is critical
- * - When you need SLA monitoring and alerting
- * - When debugging production issues requires deep observability
- *
- * ### Key Components
- *
- * - **Metrics Collection**: Prometheus/Grafana integration
- * - **Distributed Tracing**: OpenTelemetry for request correlation
- * - **Health Checks**: Liveness and readiness probes
- * - **Circuit Breakers**: Fault tolerance for external dependencies
- * - **Admin Tooling**: Projection rebuild, DLQ management, diagnostics
- *
- * ### Observability Layers
- *
- * 1. **Metrics**: Counters, gauges, histograms (command latency, event throughput)
- * 2. **Logs**: Structured logging with correlation IDs (existing)
- * 3. **Traces**: Request flow across components (OpenTelemetry)
- * 4. **Profiles**: CPU/memory profiling for performance optimization
+ * In-memory circuit breaker useful within a single Convex action that makes
+ * multiple sequential calls to the same external service. State resets on
+ * each invocation (Convex fresh-isolate model).
  *
  * @example
  * ```typescript
- * // Health check endpoint
- * const health = await checkSystemHealth(ctx);
- * // { status: 'healthy', components: { eventStore: 'up', workpool: 'up' } }
- *
- * // Circuit breaker for external API
  * const result = await withCircuitBreaker('payment-gateway', async () => {
  *   return await callPaymentAPI();
  * });
  * ```
  */
-
-/**
- * System health status.
- */
-export interface SystemHealth {
-  /** Overall status */
-  status: "healthy" | "degraded" | "unhealthy";
-  /** Component-level health */
-  components: Record<string, "up" | "down" | "degraded">;
-  /** Optional details */
-  details?: Record<string, unknown>;
-}
 
 /**
  * Circuit breaker states.
@@ -222,16 +179,6 @@ function shouldAttemptRecovery(circuit: CircuitBreakerState): boolean {
 // ============================================================================
 // Public API
 // ============================================================================
-
-/**
- * Check overall system health.
- *
- * @param ctx - Convex query context
- * @returns System health status
- */
-export function checkSystemHealth(ctx: unknown): Promise<SystemHealth> {
-  throw new Error("ProductionHardening not yet implemented - roadmap pattern");
-}
 
 /**
  * Execute operation with circuit breaker protection.

@@ -440,15 +440,18 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("COMMAND_ROUTING_ERROR_CODES contains all expected codes", ({ RuleScenario }) => {
     RuleScenario("Contains all expected error codes", ({ Then }) => {
-      Then("COMMAND_ROUTING_ERROR_CODES contains the following codes:", (_ctx: unknown, table: unknown) => {
-        const rows = getDataTableRows<{ code: string }>(table);
-        for (const row of rows) {
-          const code = row["code"];
-          expect(
-            COMMAND_ROUTING_ERROR_CODES[code as keyof typeof COMMAND_ROUTING_ERROR_CODES]
-          ).toBe(code);
+      Then(
+        "COMMAND_ROUTING_ERROR_CODES contains the following codes:",
+        (_ctx: unknown, table: unknown) => {
+          const rows = getDataTableRows<{ code: string }>(table);
+          for (const row of rows) {
+            const code = row["code"];
+            expect(
+              COMMAND_ROUTING_ERROR_CODES[code as keyof typeof COMMAND_ROUTING_ERROR_CODES]
+            ).toBe(code);
+          }
         }
-      });
+      );
     });
 
     RuleScenario("Has exactly 4 error codes", ({ Then }) => {

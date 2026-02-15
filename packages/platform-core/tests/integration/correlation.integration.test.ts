@@ -17,7 +17,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../../../examples/order-management/convex/_generated/api";
 import { waitUntil, generateTestId } from "./support/helpers";
-import { testMutation, testQuery } from "./support/testHelpers";
+import { testMutation, testQuery } from "../../src/testing/integration-helpers.js";
 
 describe("Command-Event Correlation Integration", () => {
   let t: ConvexTestingHelper;

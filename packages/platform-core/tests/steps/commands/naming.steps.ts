@@ -96,14 +96,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("CREATE pattern matches PascalCase names starting with Create", ({ RuleScenario }) => {
     RuleScenario("CREATE pattern accepts valid Create-prefixed names", ({ When, Then }) => {
-      When("the CREATE pattern is tested against the following names:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
-        state.patternTestResults = rows.map((row) => ({
-          name: row.name,
-          expected: row.expected === "true",
-          result: CommandNamingPolicy.CREATE.test(row.name),
-        }));
-      });
+      When(
+        "the CREATE pattern is tested against the following names:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
+          state.patternTestResults = rows.map((row) => ({
+            name: row.name,
+            expected: row.expected === "true",
+            result: CommandNamingPolicy.CREATE.test(row.name),
+          }));
+        }
+      );
 
       Then("each pattern test returns the expected result", () => {
         for (const entry of state.patternTestResults) {
@@ -119,14 +122,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("ADD pattern matches PascalCase names starting with Add", ({ RuleScenario }) => {
     RuleScenario("ADD pattern accepts valid Add-prefixed names", ({ When, Then }) => {
-      When("the ADD pattern is tested against the following names:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
-        state.patternTestResults = rows.map((row) => ({
-          name: row.name,
-          expected: row.expected === "true",
-          result: CommandNamingPolicy.ADD.test(row.name),
-        }));
-      });
+      When(
+        "the ADD pattern is tested against the following names:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
+          state.patternTestResults = rows.map((row) => ({
+            name: row.name,
+            expected: row.expected === "true",
+            result: CommandNamingPolicy.ADD.test(row.name),
+          }));
+        }
+      );
 
       Then("each pattern test returns the expected result", () => {
         for (const entry of state.patternTestResults) {
@@ -146,14 +152,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       RuleScenario(
         "UPDATE pattern accepts Update, Change, and Modify prefixes",
         ({ When, Then }) => {
-          When("the UPDATE pattern is tested against the following names:", (_ctx: unknown, dataTable: unknown) => {
-            const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
-            state.patternTestResults = rows.map((row) => ({
-              name: row.name,
-              expected: row.expected === "true",
-              result: CommandNamingPolicy.UPDATE.test(row.name),
-            }));
-          });
+          When(
+            "the UPDATE pattern is tested against the following names:",
+            (_ctx: unknown, dataTable: unknown) => {
+              const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
+              state.patternTestResults = rows.map((row) => ({
+                name: row.name,
+                expected: row.expected === "true",
+                result: CommandNamingPolicy.UPDATE.test(row.name),
+              }));
+            }
+          );
 
           Then("each pattern test returns the expected result", () => {
             for (const entry of state.patternTestResults) {
@@ -173,14 +182,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "isValidCommandName returns true only for names matching any recognized prefix pattern",
     ({ RuleScenario }) => {
       RuleScenario("Valid command names are accepted", ({ When, Then }) => {
-        When("isValidCommandName is called with the following names:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
-          state.validityResults = rows.map((row) => ({
-            name: row.name,
-            expected: row.expected === "true",
-            result: isValidCommandName(row.name),
-          }));
-        });
+        When(
+          "isValidCommandName is called with the following names:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
+            state.validityResults = rows.map((row) => ({
+              name: row.name,
+              expected: row.expected === "true",
+              result: isValidCommandName(row.name),
+            }));
+          }
+        );
 
         Then("each validity check returns the expected result", () => {
           for (const entry of state.validityResults) {
@@ -190,14 +202,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       RuleScenario("Invalid command names are rejected", ({ When, Then }) => {
-        When("isValidCommandName is called with the following names:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
-          state.validityResults = rows.map((row) => ({
-            name: row.name,
-            expected: row.expected === "true",
-            result: isValidCommandName(row.name),
-          }));
-        });
+        When(
+          "isValidCommandName is called with the following names:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ name: string; expected: string }>(dataTable);
+            state.validityResults = rows.map((row) => ({
+              name: row.name,
+              expected: row.expected === "true",
+              result: isValidCommandName(row.name),
+            }));
+          }
+        );
 
         Then("each validity check returns the expected result", () => {
           for (const entry of state.validityResults) {
@@ -216,14 +231,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "validateCommandName returns structured validation results with matched prefix",
     ({ RuleScenario }) => {
       RuleScenario("Valid names return matched prefix and valid flag", ({ When, Then, And }) => {
-        When("validateCommandName is called with the following valid names:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ name: string; expectedPrefix: string }>(dataTable);
-          state.validationResults = rows.map((row) => ({
-            name: row.name,
-            expectedPrefix: row.expectedPrefix,
-            result: validateCommandName(row.name),
-          }));
-        });
+        When(
+          "validateCommandName is called with the following valid names:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ name: string; expectedPrefix: string }>(dataTable);
+            state.validationResults = rows.map((row) => ({
+              name: row.name,
+              expectedPrefix: row.expectedPrefix,
+              result: validateCommandName(row.name),
+            }));
+          }
+        );
 
         Then("each validation result is valid with the expected prefix", () => {
           for (const entry of state.validationResults) {
@@ -301,14 +319,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("getCommandPrefix extracts the matched prefix or returns undefined", ({ RuleScenario }) => {
     RuleScenario("Known names return their prefix", ({ When, Then }) => {
-      When("getCommandPrefix is called with the following names:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ name: string; expectedPrefix: string }>(dataTable);
-        state.prefixResults = rows.map((row) => ({
-          name: row.name,
-          expectedPrefix: row.expectedPrefix,
-          result: getCommandPrefix(row.name),
-        }));
-      });
+      When(
+        "getCommandPrefix is called with the following names:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ name: string; expectedPrefix: string }>(dataTable);
+          state.prefixResults = rows.map((row) => ({
+            name: row.name,
+            expectedPrefix: row.expectedPrefix,
+            result: getCommandPrefix(row.name),
+          }));
+        }
+      );
 
       Then("each prefix extraction returns the expected prefix", () => {
         for (const entry of state.prefixResults) {
@@ -318,14 +339,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Invalid or empty names return undefined", ({ When, Then }) => {
-      When("getCommandPrefix is called with the following names:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ name: string; expectedPrefix: string }>(dataTable);
-        state.prefixResults = rows.map((row) => ({
-          name: row.name,
-          expectedPrefix: row.expectedPrefix,
-          result: getCommandPrefix(row.name),
-        }));
-      });
+      When(
+        "getCommandPrefix is called with the following names:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ name: string; expectedPrefix: string }>(dataTable);
+          state.prefixResults = rows.map((row) => ({
+            name: row.name,
+            expectedPrefix: row.expectedPrefix,
+            result: getCommandPrefix(row.name),
+          }));
+        }
+      );
 
       Then("each prefix extraction returns the expected prefix", () => {
         for (const entry of state.prefixResults) {
@@ -344,17 +368,20 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "formatCommandName converts various input formats to valid PascalCase command names",
     ({ RuleScenario }) => {
       RuleScenario("Various input formats produce correct PascalCase names", ({ When, Then }) => {
-        When("formatCommandName is called with the following inputs:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ name: string; prefix: string; expected: string }>(
-            dataTable
-          );
-          state.formatResults = rows.map((row) => {
-            const result = row.prefix
-              ? formatCommandName(row.name, row.prefix)
-              : formatCommandName(row.name);
-            return { name: row.name, expected: row.expected, result };
-          });
-        });
+        When(
+          "formatCommandName is called with the following inputs:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ name: string; prefix: string; expected: string }>(
+              dataTable
+            );
+            state.formatResults = rows.map((row) => {
+              const result = row.prefix
+                ? formatCommandName(row.name, row.prefix)
+                : formatCommandName(row.name);
+              return { name: row.name, expected: row.expected, result };
+            });
+          }
+        );
 
         Then("each format call returns the expected output", () => {
           for (const entry of state.formatResults) {

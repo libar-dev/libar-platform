@@ -13,7 +13,7 @@
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { api, internal } from "../../convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 import { testMutation, testQuery } from "../support/integrationHelpers";
 import { waitUntil } from "../support/localBackendHelpers";
 import {
@@ -28,22 +28,11 @@ import { generateCustomerId } from "../fixtures/orders";
 // Type-Safe Access to Testing Modules
 // =============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const intentTestApi = (api as any)["testing/intentTest"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const poisonTestApi = (api as any)["testing/poisonEventTest"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const eventReplayTestApi = (api as any)["testing/eventReplayTest"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const publicationTestApi = (api as any)["testing/durablePublicationTest"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const idempotentAppendTestApi = (api as any)["testing/idempotentAppendTest"];
-// Internal APIs are accessed through the testing wrappers above
-// These are kept as documentation of the underlying admin APIs:
-// - internal["admin/intents"] - Intent operations
-// - internal["admin/poison"] - Poison event operations
-// - internal["admin/rebuildDemo"] - Rebuild demonstration
-void internal; // Suppress unused import warning
+const intentTestApi = api["testing/intentTest"];
+const poisonTestApi = api["testing/poisonEventTest"];
+const eventReplayTestApi = api["testing/eventReplayTest"];
+const publicationTestApi = api["testing/durablePublicationTest"];
+const idempotentAppendTestApi = api["testing/idempotentAppendTest"];
 
 // =============================================================================
 // Extended State for Durability Tests

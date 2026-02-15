@@ -31,16 +31,3 @@ export {
   IntegrationRouteError,
   type IntegrationRouteErrorCode,
 } from "./IntegrationEventPublisher.js";
-
-// Roadmap Patterns (Phase 21)
-export type {
-  ContextRelationship,
-  BoundedContextMetadata,
-  IntegrationEventSchema,
-  ACLTranslator,
-} from "./patterns.js";
-export {
-  registerIntegrationEventSchema,
-  validateIntegrationEvent,
-  createACLTranslator,
-} from "./patterns.js";

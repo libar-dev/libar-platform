@@ -152,18 +152,21 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     RuleScenario(
       "Branded IDs are assignable to plain string variables",
       ({ Given, When, Then }) => {
-        Given("branded IDs created from the following inputs:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ factory: string; input: string }>(dataTable);
-          state.brandedIds = rows.map((row) => {
-            const fn = factoryMap[row.factory];
-            expect(fn).toBeDefined();
-            return {
-              factory: row.factory,
-              input: row.input,
-              branded: fn!(row.input),
-            };
-          });
-        });
+        Given(
+          "branded IDs created from the following inputs:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ factory: string; input: string }>(dataTable);
+            state.brandedIds = rows.map((row) => {
+              const fn = factoryMap[row.factory];
+              expect(fn).toBeDefined();
+              return {
+                factory: row.factory,
+                input: row.input,
+                branded: fn!(row.input),
+              };
+            });
+          }
+        );
 
         When("each branded ID is assigned to a string variable", () => {
           // Assignment happens implicitly -- branded types are string subtypes
@@ -294,20 +297,23 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("isValidIdString returns false for non-string values", ({ Then }) => {
-      Then("isValidIdString returns false for all non-string values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ description: string }>(dataTable);
-        const valueMap: Record<string, unknown> = {
-          null: null,
-          undefined: undefined,
-          "number 123": 123,
-          object: {},
-          array: [],
-        };
-        for (const row of rows) {
-          const val = valueMap[row.description];
-          expect(isValidIdString(val)).toBe(false);
+      Then(
+        "isValidIdString returns false for all non-string values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ description: string }>(dataTable);
+          const valueMap: Record<string, unknown> = {
+            null: null,
+            undefined: undefined,
+            "number 123": 123,
+            object: {},
+            array: [],
+          };
+          for (const row of rows) {
+            const val = valueMap[row.description];
+            expect(isValidIdString(val)).toBe(false);
+          }
         }
-      });
+      );
     });
 
     RuleScenario("isValidIdString narrows type for TypeScript", ({ Given, When, Then }) => {

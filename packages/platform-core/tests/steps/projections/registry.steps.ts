@@ -785,41 +785,44 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
       }
     );
 
-    RuleScenario("Category index is maintained incrementally", ({ Given, When, Then, And: _And }) => {
-      Given("an empty projection registry", () => {
-        state.registry = createProjectionRegistry();
-      });
+    RuleScenario(
+      "Category index is maintained incrementally",
+      ({ Given, When, Then, And: _And }) => {
+        Given("an empty projection registry", () => {
+          state.registry = createProjectionRegistry();
+        });
 
-      When('I register "orderSummary" with category "view"', () => {
-        state.registry!.register(orderSummary);
-      });
+        When('I register "orderSummary" with category "view"', () => {
+          state.registry!.register(orderSummary);
+        });
 
-      Then('the category lookup for "view" returns 1 projection', () => {
-        expect(state.registry!.getByCategory("view")).toHaveLength(1);
-      });
+        Then('the category lookup for "view" returns 1 projection', () => {
+          expect(state.registry!.getByCategory("view")).toHaveLength(1);
+        });
 
-      When('I register "orderExistence" with category "logic"', () => {
-        state.registry!.register(orderExistence);
-      });
+        When('I register "orderExistence" with category "logic"', () => {
+          state.registry!.register(orderExistence);
+        });
 
-      Then(
-        "the category counts are:",
-        (_ctx: unknown, dataTable: { category: string; count: string }[]) => {
-          for (const row of dataTable) {
-            expect(state.registry!.getByCategory(row.category as "view" | "logic")).toHaveLength(
-              Number(row.count)
-            );
+        Then(
+          "the category counts are:",
+          (_ctx: unknown, dataTable: { category: string; count: string }[]) => {
+            for (const row of dataTable) {
+              expect(state.registry!.getByCategory(row.category as "view" | "logic")).toHaveLength(
+                Number(row.count)
+              );
+            }
           }
-        }
-      );
+        );
 
-      When('I register "productCatalog" with category "view"', () => {
-        state.registry!.register(productCatalog);
-      });
+        When('I register "productCatalog" with category "view"', () => {
+          state.registry!.register(productCatalog);
+        });
 
-      Then('the category lookup for "view" returns 2 projections', () => {
-        expect(state.registry!.getByCategory("view")).toHaveLength(2);
-      });
-    });
+        Then('the category lookup for "view" returns 2 projections', () => {
+          expect(state.registry!.getByCategory("view")).toHaveLength(2);
+        });
+      }
+    );
   });
 });

@@ -119,17 +119,20 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("CommandCategorySchema validates category strings via Zod", ({ RuleScenario }) => {
     RuleScenario("Schema accepts valid category strings", ({ When, Then }) => {
-      When("the following values are parsed with CommandCategorySchema:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string }>(dataTable);
-        state.schemaParseResults = rows.map((row) => {
-          try {
-            const result = CommandCategorySchema.parse(row.value);
-            return { input: row.value, result };
-          } catch (e) {
-            return { input: row.value, error: e };
-          }
-        });
-      });
+      When(
+        "the following values are parsed with CommandCategorySchema:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string }>(dataTable);
+          state.schemaParseResults = rows.map((row) => {
+            try {
+              const result = CommandCategorySchema.parse(row.value);
+              return { input: row.value, result };
+            } catch (e) {
+              return { input: row.value, error: e };
+            }
+          });
+        }
+      );
 
       Then("each parse returns the input value unchanged", () => {
         for (const entry of state.schemaParseResults) {
@@ -140,18 +143,21 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Schema rejects invalid category values", ({ When, Then }) => {
-      When("the following invalid values are parsed with CommandCategorySchema:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-        state.schemaParseResults = rows.map((row) => {
-          const actual = coerceValue(row.value, row.type);
-          try {
-            const result = CommandCategorySchema.parse(actual);
-            return { input: actual, result };
-          } catch (e) {
-            return { input: actual, error: e };
-          }
-        });
-      });
+      When(
+        "the following invalid values are parsed with CommandCategorySchema:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+          state.schemaParseResults = rows.map((row) => {
+            const actual = coerceValue(row.value, row.type);
+            try {
+              const result = CommandCategorySchema.parse(actual);
+              return { input: actual, result };
+            } catch (e) {
+              return { input: actual, error: e };
+            }
+          });
+        }
+      );
 
       Then("each parse throws a validation error", () => {
         for (const entry of state.schemaParseResults) {
@@ -179,13 +185,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("isCommandCategory returns true only for valid category strings", ({ RuleScenario }) => {
     RuleScenario("Type guard accepts all valid categories", ({ When, Then }) => {
-      When("isCommandCategory is called with the following values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string }>(dataTable);
-        state.typeGuardResults = rows.map((row) => ({
-          input: row.value,
-          result: isCommandCategory(row.value),
-        }));
-      });
+      When(
+        "isCommandCategory is called with the following values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string }>(dataTable);
+          state.typeGuardResults = rows.map((row) => ({
+            input: row.value,
+            result: isCommandCategory(row.value),
+          }));
+        }
+      );
 
       Then("each call returns true", () => {
         for (const row of state.typeGuardResults) {
@@ -195,16 +204,19 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Type guard rejects invalid values", ({ When, Then }) => {
-      When("isCommandCategory is called with the following invalid values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-        state.typeGuardResults = rows.map((row) => {
-          const actual = coerceValue(row.value, row.type);
-          return {
-            input: actual,
-            result: isCommandCategory(actual),
-          };
-        });
-      });
+      When(
+        "isCommandCategory is called with the following invalid values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+          state.typeGuardResults = rows.map((row) => {
+            const actual = coerceValue(row.value, row.type);
+            return {
+              input: actual,
+              result: isCommandCategory(actual),
+            };
+          });
+        }
+      );
 
       Then("each call returns false", () => {
         for (const row of state.typeGuardResults) {
@@ -222,13 +234,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "normalizeCommandCategory returns the category unchanged or falls back to aggregate",
     ({ RuleScenario }) => {
       RuleScenario("Valid categories are returned unchanged", ({ When, Then }) => {
-        When("normalizeCommandCategory is called with valid categories:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ input: string; expected: string }>(dataTable);
-          state.normalizeResults = rows.map((row) => ({
-            input: row.expected,
-            result: normalizeCommandCategory(row.input),
-          }));
-        });
+        When(
+          "normalizeCommandCategory is called with valid categories:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ input: string; expected: string }>(dataTable);
+            state.normalizeResults = rows.map((row) => ({
+              input: row.expected,
+              result: normalizeCommandCategory(row.input),
+            }));
+          }
+        );
 
         Then("each call returns the expected category", () => {
           for (const entry of state.normalizeResults) {
@@ -238,13 +253,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       RuleScenario("Invalid values normalize to aggregate", ({ When, Then }) => {
-        When("normalizeCommandCategory is called with invalid values:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-          state.normalizeResults = rows.map((row) => {
-            const actual = coerceValue(row.value, row.type);
-            return { input: actual, result: normalizeCommandCategory(actual) };
-          });
-        });
+        When(
+          "normalizeCommandCategory is called with invalid values:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+            state.normalizeResults = rows.map((row) => {
+              const actual = coerceValue(row.value, row.type);
+              return { input: actual, result: normalizeCommandCategory(actual) };
+            });
+          }
+        );
 
         Then('each call returns "aggregate"', () => {
           for (const entry of state.normalizeResults) {
@@ -261,13 +279,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("isAggregateCommand returns true only for aggregate category", ({ RuleScenario }) => {
     RuleScenario("Classification of categories as aggregate", ({ When, Then }) => {
-      When("isAggregateCommand is called with each category:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
-        state.classificationResults = rows.map((row) => ({
-          category: row.category,
-          result: isAggregateCommand(row.category),
-        }));
-      });
+      When(
+        "isAggregateCommand is called with each category:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
+          state.classificationResults = rows.map((row) => ({
+            category: row.category,
+            result: isAggregateCommand(row.category),
+          }));
+        }
+      );
 
       Then("each call returns the expected aggregate classification", () => {
         for (const row of state.classificationResults) {
@@ -283,13 +304,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("isProcessCommand returns true only for process category", ({ RuleScenario }) => {
     RuleScenario("Classification of categories as process", ({ When, Then }) => {
-      When("isProcessCommand is called with each category:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
-        state.classificationResults = rows.map((row) => ({
-          category: row.category,
-          result: isProcessCommand(row.category),
-        }));
-      });
+      When(
+        "isProcessCommand is called with each category:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
+          state.classificationResults = rows.map((row) => ({
+            category: row.category,
+            result: isProcessCommand(row.category),
+          }));
+        }
+      );
 
       Then("each call returns the expected process classification", () => {
         for (const row of state.classificationResults) {
@@ -368,28 +392,31 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Schema rejects invalid aggregate targets", ({ When, Then }) => {
-      When("the following invalid aggregate targets are parsed:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ type: string; idField: string; missing: string }>(
-          dataTable
-        );
-        state.targetParseResults = rows.map((row) => {
-          // Build the target object based on missing field
-          let target: Record<string, string>;
-          if (row.missing === "type") {
-            target = { idField: row.idField };
-          } else if (row.missing === "idField") {
-            target = { type: row.type };
-          } else {
-            target = { type: row.type, idField: row.idField };
-          }
-          try {
-            const result = AggregateTargetSchema.parse(target);
-            return { input: target, result };
-          } catch (e) {
-            return { input: target, error: e };
-          }
-        });
-      });
+      When(
+        "the following invalid aggregate targets are parsed:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ type: string; idField: string; missing: string }>(
+            dataTable
+          );
+          state.targetParseResults = rows.map((row) => {
+            // Build the target object based on missing field
+            let target: Record<string, string>;
+            if (row.missing === "type") {
+              target = { idField: row.idField };
+            } else if (row.missing === "idField") {
+              target = { type: row.type };
+            } else {
+              target = { type: row.type, idField: row.idField };
+            }
+            try {
+              const result = AggregateTargetSchema.parse(target);
+              return { input: target, result };
+            } catch (e) {
+              return { input: target, error: e };
+            }
+          });
+        }
+      );
 
       Then("each parse throws a validation error", () => {
         for (const entry of state.targetParseResults) {

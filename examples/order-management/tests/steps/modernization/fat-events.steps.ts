@@ -280,10 +280,9 @@ describeFeature(fatEventsFeature, ({ Background, Rule, AfterEachScenario }) => {
 
           // Parse nested field path (e.g., "customer.id")
           const parts = field.split(".");
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let actual: any = payload;
+          let actual: unknown = payload;
           for (const part of parts) {
-            actual = actual[part];
+            actual = (actual as Record<string, unknown>)[part];
           }
 
           expect(String(actual)).toBe(value);

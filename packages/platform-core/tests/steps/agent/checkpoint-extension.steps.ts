@@ -200,25 +200,30 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
         });
 
-        Then("the effective rateLimits have the following values:", (_ctx: unknown, table: unknown) => {
-          const rows = getDataTableRows<{
-            property: string;
-            value: string;
-          }>(table);
-          for (const row of rows) {
-            const prop = row["property"];
-            const expected = Number(row["value"]);
-            if (prop === "maxRequestsPerMinute") {
-              expect(state.effectiveConfig!.rateLimits?.maxRequestsPerMinute).toBe(expected);
-            } else if (prop === "maxConcurrent") {
-              expect(state.effectiveConfig!.rateLimits?.maxConcurrent).toBe(expected);
-            } else if (prop === "costBudget.daily") {
-              expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
-            } else if (prop === "costBudget.alertThreshold") {
-              expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(expected);
+        Then(
+          "the effective rateLimits have the following values:",
+          (_ctx: unknown, table: unknown) => {
+            const rows = getDataTableRows<{
+              property: string;
+              value: string;
+            }>(table);
+            for (const row of rows) {
+              const prop = row["property"];
+              const expected = Number(row["value"]);
+              if (prop === "maxRequestsPerMinute") {
+                expect(state.effectiveConfig!.rateLimits?.maxRequestsPerMinute).toBe(expected);
+              } else if (prop === "maxConcurrent") {
+                expect(state.effectiveConfig!.rateLimits?.maxConcurrent).toBe(expected);
+              } else if (prop === "costBudget.daily") {
+                expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
+              } else if (prop === "costBudget.alertThreshold") {
+                expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(
+                  expected
+                );
+              }
             }
           }
-        });
+        );
       });
 
       RuleScenario(
@@ -337,25 +342,28 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
             }
           );
 
-          Then("the effective rateLimits have the following values:", (_ctx: unknown, table: unknown) => {
-            const rows = getDataTableRows<{
-              property: string;
-              value: string;
-            }>(table);
-            for (const row of rows) {
-              const prop = row["property"];
-              const expected = Number(row["value"]);
-              if (prop === "maxRequestsPerMinute") {
-                expect(state.effectiveConfig!.rateLimits?.maxRequestsPerMinute).toBe(expected);
-              } else if (prop === "costBudget.daily") {
-                expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
-              } else if (prop === "costBudget.alertThreshold") {
-                expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(
-                  expected
-                );
+          Then(
+            "the effective rateLimits have the following values:",
+            (_ctx: unknown, table: unknown) => {
+              const rows = getDataTableRows<{
+                property: string;
+                value: string;
+              }>(table);
+              for (const row of rows) {
+                const prop = row["property"];
+                const expected = Number(row["value"]);
+                if (prop === "maxRequestsPerMinute") {
+                  expect(state.effectiveConfig!.rateLimits?.maxRequestsPerMinute).toBe(expected);
+                } else if (prop === "costBudget.daily") {
+                  expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
+                } else if (prop === "costBudget.alertThreshold") {
+                  expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(
+                    expected
+                  );
+                }
               }
             }
-          });
+          );
         }
       );
     }
@@ -394,21 +402,26 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           );
         });
 
-        Then("the effective rateLimits have the following values:", (_ctx: unknown, table: unknown) => {
-          const rows = getDataTableRows<{
-            property: string;
-            value: string;
-          }>(table);
-          for (const row of rows) {
-            const prop = row["property"];
-            const expected = Number(row["value"]);
-            if (prop === "costBudget.daily") {
-              expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
-            } else if (prop === "costBudget.alertThreshold") {
-              expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(expected);
+        Then(
+          "the effective rateLimits have the following values:",
+          (_ctx: unknown, table: unknown) => {
+            const rows = getDataTableRows<{
+              property: string;
+              value: string;
+            }>(table);
+            for (const row of rows) {
+              const prop = row["property"];
+              const expected = Number(row["value"]);
+              if (prop === "costBudget.daily") {
+                expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
+              } else if (prop === "costBudget.alertThreshold") {
+                expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(
+                  expected
+                );
+              }
             }
           }
-        });
+        );
       }
     );
 
@@ -440,21 +453,26 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           );
         });
 
-        Then("the effective rateLimits have the following values:", (_ctx: unknown, table: unknown) => {
-          const rows = getDataTableRows<{
-            property: string;
-            value: string;
-          }>(table);
-          for (const row of rows) {
-            const prop = row["property"];
-            const expected = Number(row["value"]);
-            if (prop === "costBudget.daily") {
-              expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
-            } else if (prop === "costBudget.alertThreshold") {
-              expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(expected);
+        Then(
+          "the effective rateLimits have the following values:",
+          (_ctx: unknown, table: unknown) => {
+            const rows = getDataTableRows<{
+              property: string;
+              value: string;
+            }>(table);
+            for (const row of rows) {
+              const prop = row["property"];
+              const expected = Number(row["value"]);
+              if (prop === "costBudget.daily") {
+                expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
+              } else if (prop === "costBudget.alertThreshold") {
+                expect(state.effectiveConfig!.rateLimits?.costBudget?.alertThreshold).toBe(
+                  expected
+                );
+              }
             }
           }
-        });
+        );
       }
     );
   });
@@ -551,21 +569,24 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         );
       });
 
-      Then("the effective rateLimits have the following values:", (_ctx: unknown, table: unknown) => {
-        const rows = getDataTableRows<{
-          property: string;
-          value: string;
-        }>(table);
-        for (const row of rows) {
-          const prop = row["property"];
-          const expected = Number(row["value"]);
-          if (prop === "maxRequestsPerMinute") {
-            expect(state.effectiveConfig!.rateLimits?.maxRequestsPerMinute).toBe(expected);
-          } else if (prop === "costBudget.daily") {
-            expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
+      Then(
+        "the effective rateLimits have the following values:",
+        (_ctx: unknown, table: unknown) => {
+          const rows = getDataTableRows<{
+            property: string;
+            value: string;
+          }>(table);
+          for (const row of rows) {
+            const prop = row["property"];
+            const expected = Number(row["value"]);
+            if (prop === "maxRequestsPerMinute") {
+              expect(state.effectiveConfig!.rateLimits?.maxRequestsPerMinute).toBe(expected);
+            } else if (prop === "costBudget.daily") {
+              expect(state.effectiveConfig!.rateLimits?.costBudget?.daily).toBe(expected);
+            }
           }
         }
-      });
+      );
     });
 
     RuleScenario(
@@ -643,35 +664,40 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         state.updatedCheckpoint = applyCheckpointUpdate(state.checkpoint!, update);
       });
 
-      Then("the result configOverrides has the following values:", (_ctx: unknown, table: unknown) => {
-        const rows = getDataTableRows<{
-          property: string;
-          value: string;
-        }>(table);
-        for (const row of rows) {
-          const prop = row["property"];
-          const expected = row["value"];
-          if (prop === "confidenceThreshold") {
-            expect(state.updatedCheckpoint!.configOverrides?.confidenceThreshold).toBe(
-              Number(expected)
-            );
-          } else if (prop === "patternWindowDuration") {
-            expect(state.updatedCheckpoint!.configOverrides?.patternWindowDuration).toBe(expected);
-          } else if (prop === "rateLimits.maxRequestsPerMinute") {
-            expect(state.updatedCheckpoint!.configOverrides?.rateLimits?.maxRequestsPerMinute).toBe(
-              Number(expected)
-            );
-          } else if (prop === "rateLimits.costBudget.daily") {
-            expect(state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.daily).toBe(
-              Number(expected)
-            );
-          } else if (prop === "rateLimits.costBudget.alertThreshold") {
-            expect(
-              state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.alertThreshold
-            ).toBe(Number(expected));
+      Then(
+        "the result configOverrides has the following values:",
+        (_ctx: unknown, table: unknown) => {
+          const rows = getDataTableRows<{
+            property: string;
+            value: string;
+          }>(table);
+          for (const row of rows) {
+            const prop = row["property"];
+            const expected = row["value"];
+            if (prop === "confidenceThreshold") {
+              expect(state.updatedCheckpoint!.configOverrides?.confidenceThreshold).toBe(
+                Number(expected)
+              );
+            } else if (prop === "patternWindowDuration") {
+              expect(state.updatedCheckpoint!.configOverrides?.patternWindowDuration).toBe(
+                expected
+              );
+            } else if (prop === "rateLimits.maxRequestsPerMinute") {
+              expect(
+                state.updatedCheckpoint!.configOverrides?.rateLimits?.maxRequestsPerMinute
+              ).toBe(Number(expected));
+            } else if (prop === "rateLimits.costBudget.daily") {
+              expect(state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.daily).toBe(
+                Number(expected)
+              );
+            } else if (prop === "rateLimits.costBudget.alertThreshold") {
+              expect(
+                state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.alertThreshold
+              ).toBe(Number(expected));
+            }
           }
         }
-      });
+      );
     });
 
     RuleScenario("Update overrides take precedence over existing", ({ Given, When, Then }) => {
@@ -715,25 +741,28 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           state.updatedCheckpoint = applyCheckpointUpdate(state.checkpoint!, update);
         });
 
-        Then("the result configOverrides has the following values:", (_ctx: unknown, table: unknown) => {
-          const rows = getDataTableRows<{
-            property: string;
-            value: string;
-          }>(table);
-          for (const row of rows) {
-            const prop = row["property"];
-            const expected = row["value"];
-            if (prop === "confidenceThreshold") {
-              expect(state.updatedCheckpoint!.configOverrides?.confidenceThreshold).toBe(
-                Number(expected)
-              );
-            } else if (prop === "rateLimits.maxRequestsPerMinute") {
-              expect(
-                state.updatedCheckpoint!.configOverrides?.rateLimits?.maxRequestsPerMinute
-              ).toBe(Number(expected));
+        Then(
+          "the result configOverrides has the following values:",
+          (_ctx: unknown, table: unknown) => {
+            const rows = getDataTableRows<{
+              property: string;
+              value: string;
+            }>(table);
+            for (const row of rows) {
+              const prop = row["property"];
+              const expected = row["value"];
+              if (prop === "confidenceThreshold") {
+                expect(state.updatedCheckpoint!.configOverrides?.confidenceThreshold).toBe(
+                  Number(expected)
+                );
+              } else if (prop === "rateLimits.maxRequestsPerMinute") {
+                expect(
+                  state.updatedCheckpoint!.configOverrides?.rateLimits?.maxRequestsPerMinute
+                ).toBe(Number(expected));
+              }
             }
           }
-        });
+        );
 
         And('the result status is "paused"', () => {
           expect(state.updatedCheckpoint!.status).toBe("paused");
@@ -769,25 +798,28 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           state.updatedCheckpoint = applyCheckpointUpdate(state.checkpoint!, update);
         });
 
-        Then("the result configOverrides has the following values:", (_ctx: unknown, table: unknown) => {
-          const rows = getDataTableRows<{
-            property: string;
-            value: string;
-          }>(table);
-          for (const row of rows) {
-            const prop = row["property"];
-            const expected = Number(row["value"]);
-            if (prop === "rateLimits.costBudget.daily") {
-              expect(state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.daily).toBe(
-                expected
-              );
-            } else if (prop === "rateLimits.costBudget.alertThreshold") {
-              expect(
-                state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.alertThreshold
-              ).toBe(expected);
+        Then(
+          "the result configOverrides has the following values:",
+          (_ctx: unknown, table: unknown) => {
+            const rows = getDataTableRows<{
+              property: string;
+              value: string;
+            }>(table);
+            for (const row of rows) {
+              const prop = row["property"];
+              const expected = Number(row["value"]);
+              if (prop === "rateLimits.costBudget.daily") {
+                expect(
+                  state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.daily
+                ).toBe(expected);
+              } else if (prop === "rateLimits.costBudget.alertThreshold") {
+                expect(
+                  state.updatedCheckpoint!.configOverrides?.rateLimits?.costBudget?.alertThreshold
+                ).toBe(expected);
+              }
             }
           }
-        });
+        );
       }
     );
 
@@ -944,21 +976,24 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         state.initialCheckpoint = createInitialAgentCheckpoint("my-agent", "my-sub");
       });
 
-      Then("the initial checkpoint has the following identity values:", (_ctx: unknown, table: unknown) => {
-        const rows = getDataTableRows<{
-          property: string;
-          value: string;
-        }>(table);
-        for (const row of rows) {
-          const prop = row["property"];
-          const expected = row["value"];
-          if (prop === "agentId") {
-            expect(state.initialCheckpoint!.agentId).toBe(expected);
-          } else if (prop === "subscriptionId") {
-            expect(state.initialCheckpoint!.subscriptionId).toBe(expected);
+      Then(
+        "the initial checkpoint has the following identity values:",
+        (_ctx: unknown, table: unknown) => {
+          const rows = getDataTableRows<{
+            property: string;
+            value: string;
+          }>(table);
+          for (const row of rows) {
+            const prop = row["property"];
+            const expected = row["value"];
+            if (prop === "agentId") {
+              expect(state.initialCheckpoint!.agentId).toBe(expected);
+            } else if (prop === "subscriptionId") {
+              expect(state.initialCheckpoint!.subscriptionId).toBe(expected);
+            }
           }
         }
-      });
+      );
     });
 
     RuleScenario("Does not include configOverrides", ({ When, Then }) => {

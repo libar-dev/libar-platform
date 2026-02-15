@@ -171,13 +171,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         }
       );
 
-      Then('the correlation for "cmd_123" contains event IDs:', async (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ eventId: string }>(dataTable);
-        const correlation = await state.service.getEventsByCommand("cmd_123");
-        for (const row of rows) {
-          expect(correlation?.eventIds).toContain(row.eventId);
+      Then(
+        'the correlation for "cmd_123" contains event IDs:',
+        async (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ eventId: string }>(dataTable);
+          const correlation = await state.service.getEventsByCommand("cmd_123");
+          for (const row of rows) {
+            expect(correlation?.eventIds).toContain(row.eventId);
+          }
         }
-      });
+      );
     });
   });
 
@@ -217,13 +220,18 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           state.queryResult = await state.service.getEventsByCommand("cmd_123");
         });
 
-        Then("the returned correlation has all properties:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ property: string; value: string }>(dataTable);
-          for (const row of rows) {
-            const actual = (state.queryResult as unknown as Record<string, unknown>)[row.property];
-            expect(actual).toBe(row.value);
+        Then(
+          "the returned correlation has all properties:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ property: string; value: string }>(dataTable);
+            for (const row of rows) {
+              const actual = (state.queryResult as unknown as Record<string, unknown>)[
+                row.property
+              ];
+              expect(actual).toBe(row.value);
+            }
           }
-        });
+        );
 
         And('the returned correlation has eventIds "evt_456" and "evt_789"', () => {
           expect(state.queryResult?.eventIds).toEqual(["evt_456", "evt_789"]);

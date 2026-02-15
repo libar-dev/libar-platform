@@ -120,17 +120,20 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("EventCategorySchema validates category strings via Zod", ({ RuleScenario }) => {
     RuleScenario("Schema accepts valid category strings", ({ When, Then }) => {
-      When("the following values are parsed with EventCategorySchema:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string }>(dataTable);
-        state.schemaParseResults = rows.map((row) => {
-          try {
-            const result = EventCategorySchema.parse(row.value);
-            return { input: row.value, result };
-          } catch (e) {
-            return { input: row.value, error: e };
-          }
-        });
-      });
+      When(
+        "the following values are parsed with EventCategorySchema:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string }>(dataTable);
+          state.schemaParseResults = rows.map((row) => {
+            try {
+              const result = EventCategorySchema.parse(row.value);
+              return { input: row.value, result };
+            } catch (e) {
+              return { input: row.value, error: e };
+            }
+          });
+        }
+      );
 
       Then("each parse returns the input value unchanged", () => {
         for (const entry of state.schemaParseResults) {
@@ -141,18 +144,21 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Schema rejects invalid category values", ({ When, Then }) => {
-      When("the following values are parsed with EventCategorySchema:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-        state.schemaParseResults = rows.map((row) => {
-          const actual = coerceValue(row.value, row.type);
-          try {
-            const result = EventCategorySchema.parse(actual);
-            return { input: actual, result };
-          } catch (e) {
-            return { input: actual, error: e };
-          }
-        });
-      });
+      When(
+        "the following values are parsed with EventCategorySchema:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+          state.schemaParseResults = rows.map((row) => {
+            const actual = coerceValue(row.value, row.type);
+            try {
+              const result = EventCategorySchema.parse(actual);
+              return { input: actual, result };
+            } catch (e) {
+              return { input: actual, error: e };
+            }
+          });
+        }
+      );
 
       Then("each parse throws a validation error", () => {
         for (const entry of state.schemaParseResults) {
@@ -186,13 +192,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("isEventCategory returns true only for valid category strings", ({ RuleScenario }) => {
     RuleScenario("Type guard accepts all valid categories", ({ When, Then }) => {
-      When("isEventCategory is called with the following values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string; expected: string }>(dataTable);
-        state.typeGuardResults = rows.map((row) => ({
-          input: row.value,
-          result: isEventCategory(row.value),
-        }));
-      });
+      When(
+        "isEventCategory is called with the following values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string; expected: string }>(dataTable);
+          state.typeGuardResults = rows.map((row) => ({
+            input: row.value,
+            result: isEventCategory(row.value),
+          }));
+        }
+      );
 
       Then("each call returns the expected boolean", () => {
         const rows = state.typeGuardResults;
@@ -203,16 +212,21 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
 
     RuleScenario("Type guard rejects invalid values", ({ When, Then }) => {
-      When("isEventCategory is called with the following invalid values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ value: string; type: string; expected: string }>(dataTable);
-        state.typeGuardResults = rows.map((row) => {
-          const actual = coerceValue(row.value, row.type);
-          return {
-            input: actual,
-            result: isEventCategory(actual),
-          };
-        });
-      });
+      When(
+        "isEventCategory is called with the following invalid values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ value: string; type: string; expected: string }>(
+            dataTable
+          );
+          state.typeGuardResults = rows.map((row) => {
+            const actual = coerceValue(row.value, row.type);
+            return {
+              input: actual,
+              result: isEventCategory(actual),
+            };
+          });
+        }
+      );
 
       Then("each call returns the expected boolean result", () => {
         for (const row of state.typeGuardResults) {
@@ -230,13 +244,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     "normalizeCategory returns the category unchanged or falls back to domain",
     ({ RuleScenario }) => {
       RuleScenario("Valid categories are returned unchanged", ({ When, Then }) => {
-        When("normalizeCategory is called with valid categories:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ input: string; expected: string }>(dataTable);
-          state.normalizeCategoryResults = rows.map((row) => ({
-            input: row.expected,
-            result: normalizeCategory(row.input),
-          }));
-        });
+        When(
+          "normalizeCategory is called with valid categories:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ input: string; expected: string }>(dataTable);
+            state.normalizeCategoryResults = rows.map((row) => ({
+              input: row.expected,
+              result: normalizeCategory(row.input),
+            }));
+          }
+        );
 
         Then("each call returns the expected result", () => {
           for (const entry of state.normalizeCategoryResults) {
@@ -246,13 +263,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       RuleScenario("Invalid values normalize to domain", ({ When, Then }) => {
-        When("normalizeCategory is called with invalid values:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-          state.normalizeCategoryResults = rows.map((row) => {
-            const actual = coerceValue(row.value, row.type);
-            return { input: actual, result: normalizeCategory(actual) };
-          });
-        });
+        When(
+          "normalizeCategory is called with invalid values:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+            state.normalizeCategoryResults = rows.map((row) => {
+              const actual = coerceValue(row.value, row.type);
+              return { input: actual, result: normalizeCategory(actual) };
+            });
+          }
+        );
 
         Then('each call returns "domain"', () => {
           for (const entry of state.normalizeCategoryResults) {
@@ -287,13 +307,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       RuleScenario("Invalid values normalize to 1", ({ When, Then }) => {
-        When("normalizeSchemaVersion is called with invalid values:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
-          state.normalizeVersionResults = rows.map((row) => {
-            const actual = coerceValue(row.value, row.type);
-            return { input: actual, result: normalizeSchemaVersion(actual) };
-          });
-        });
+        When(
+          "normalizeSchemaVersion is called with invalid values:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ value: string; type: string }>(dataTable);
+            state.normalizeVersionResults = rows.map((row) => {
+              const actual = coerceValue(row.value, row.type);
+              return { input: actual, result: normalizeSchemaVersion(actual) };
+            });
+          }
+        );
 
         Then("each call returns 1", () => {
           for (const entry of state.normalizeVersionResults) {
@@ -310,13 +333,18 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("isExternalCategory identifies trigger and fat as external", ({ RuleScenario }) => {
     RuleScenario("Classification of categories as external or internal", ({ When, Then }) => {
-      When("isExternalCategory is called with each category:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
-        state.externalResults = rows.map((row) => ({
-          category: row.category,
-          result: isExternalCategory(row.category as "domain" | "integration" | "trigger" | "fat"),
-        }));
-      });
+      When(
+        "isExternalCategory is called with each category:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
+          state.externalResults = rows.map((row) => ({
+            category: row.category,
+            result: isExternalCategory(
+              row.category as "domain" | "integration" | "trigger" | "fat"
+            ),
+          }));
+        }
+      );
 
       Then("each call returns the expected classification", () => {
         for (const row of state.externalResults) {
@@ -332,15 +360,18 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
   Rule("isCrossContextCategory identifies integration as cross-context", ({ RuleScenario }) => {
     RuleScenario("Classification of categories as cross-context", ({ When, Then }) => {
-      When("isCrossContextCategory is called with each category:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
-        state.crossContextResults = rows.map((row) => ({
-          category: row.category,
-          result: isCrossContextCategory(
-            row.category as "domain" | "integration" | "trigger" | "fat"
-          ),
-        }));
-      });
+      When(
+        "isCrossContextCategory is called with each category:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ category: string; expected: string }>(dataTable);
+          state.crossContextResults = rows.map((row) => ({
+            category: row.category,
+            result: isCrossContextCategory(
+              row.category as "domain" | "integration" | "trigger" | "fat"
+            ),
+          }));
+        }
+      );
 
       Then("each call returns the expected cross-context classification", () => {
         for (const row of state.crossContextResults) {

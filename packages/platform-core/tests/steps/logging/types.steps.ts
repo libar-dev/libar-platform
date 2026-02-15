@@ -176,13 +176,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         }
       });
 
-      And("shouldLog returns true for levels at WARN and above:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ messageLevel: string }>(dataTable);
-        const levels = rows.map((r) => r.messageLevel) as LogLevel[];
-        for (const level of levels) {
-          expect(shouldLog(level, state.configuredLevel!)).toBe(true);
+      And(
+        "shouldLog returns true for levels at WARN and above:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ messageLevel: string }>(dataTable);
+          const levels = rows.map((r) => r.messageLevel) as LogLevel[];
+          for (const level of levels) {
+            expect(shouldLog(level, state.configuredLevel!)).toBe(true);
+          }
         }
-      });
+      );
     });
   });
 });

@@ -108,19 +108,22 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     RuleScenario(
       "Lowercase alphanumeric values are accepted for context and type",
       ({ When, Then }) => {
-        When("generateId is called with the following inputs:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{
-            context: string;
-            type: string;
-            expectedPrefix: string;
-          }>(dataTable);
-          state.prefixResults = rows.map((row) => ({
-            context: row.context,
-            type: row.type,
-            expectedPrefix: row.expectedPrefix,
-            result: generateId(row.context, row.type),
-          }));
-        });
+        When(
+          "generateId is called with the following inputs:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{
+              context: string;
+              type: string;
+              expectedPrefix: string;
+            }>(dataTable);
+            state.prefixResults = rows.map((row) => ({
+              context: row.context,
+              type: row.type,
+              expectedPrefix: row.expectedPrefix,
+              result: generateId(row.context, row.type),
+            }));
+          }
+        );
 
         Then("each result starts with its expected prefix", () => {
           for (const entry of state.prefixResults) {

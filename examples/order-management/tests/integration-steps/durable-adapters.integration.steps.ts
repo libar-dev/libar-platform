@@ -18,10 +18,8 @@ import { api } from "../../convex/_generated/api";
 import { testMutation, testQuery } from "../support/integrationHelpers";
 
 // Type-safe access to testing subdirectory modules via bracket notation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const rateLimitTestApi = api["testing/rateLimitTest"] as any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dcbRetryTestApi = api["testing/dcbRetryTest"] as any;
+const rateLimitTestApi = api["testing/rateLimitTest"];
+const dcbRetryTestApi = api["testing/dcbRetryTest"];
 import {
   getState,
   setLastResult,

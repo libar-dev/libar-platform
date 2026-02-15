@@ -598,16 +598,19 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
         // Done in BeforeEachScenario
       });
 
-      And("the following categorized commands are registered:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ commandType: string; category: string }>(dataTable);
-        for (const row of rows) {
-          state.registry.register(
-            createMockRegistration(row.commandType, {
-              category: row.category as "aggregate" | "process" | "system" | "batch",
-            })
-          );
+      And(
+        "the following categorized commands are registered:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ commandType: string; category: string }>(dataTable);
+          for (const row of rows) {
+            state.registry.register(
+              createMockRegistration(row.commandType, {
+                category: row.category as "aggregate" | "process" | "system" | "batch",
+              })
+            );
+          }
         }
-      });
+      );
 
       Then("listByCategory returns the expected results:", (_ctx: unknown, dataTable: unknown) => {
         const rows = getDataTableRows<{ category: string; count: string; commandType: string }>(

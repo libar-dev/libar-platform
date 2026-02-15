@@ -181,18 +181,21 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           }
         );
 
-        Then("the rejected result has all expected fields:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
-          for (const row of rows) {
-            if (row.field === "status") {
-              expect(state.rejectedResult!.status).toBe(row.value);
-            } else if (row.field === "code") {
-              expect(state.rejectedResult!.code).toBe(row.value);
-            } else if (row.field === "reason") {
-              expect(state.rejectedResult!.reason).toBe(row.value);
+        Then(
+          "the rejected result has all expected fields:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
+            for (const row of rows) {
+              if (row.field === "status") {
+                expect(state.rejectedResult!.status).toBe(row.value);
+              } else if (row.field === "code") {
+                expect(state.rejectedResult!.code).toBe(row.value);
+              } else if (row.field === "reason") {
+                expect(state.rejectedResult!.reason).toBe(row.value);
+              }
             }
           }
-        });
+        );
       });
 
       RuleScenario("Rejected result includes context when provided", ({ When, Then, And }) => {

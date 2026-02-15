@@ -319,19 +319,21 @@ export const durableAppendPool: WorkpoolClient = isConvexTestMode
  *
  * @see workpoolParallelism for conditional parallelism explanation
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const workflowManager = new WorkflowManager(components.workflow as any, {
-  workpoolOptions: {
-    maxParallelism: workpoolParallelism,
-    retryActionsByDefault: false,
-    defaultRetryBehavior: {
-      maxAttempts: 3,
-      initialBackoffMs: 500,
-      base: 2,
+export const workflowManager = new WorkflowManager(
+  components.workflow as unknown as typeof components.workflow,
+  {
+    workpoolOptions: {
+      maxParallelism: workpoolParallelism,
+      retryActionsByDefault: false,
+      defaultRetryBehavior: {
+        maxAttempts: 3,
+        initialBackoffMs: 500,
+        base: 2,
+      },
+      logLevel: "INFO",
     },
-    logLevel: "INFO",
-  },
-});
+  }
+);
 
 /**
  * Action retrier for external API calls.

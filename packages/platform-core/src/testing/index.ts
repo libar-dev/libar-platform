@@ -69,10 +69,3 @@ export {
   type BaseIntegrationTestWorld,
   type ConvexTest,
 } from "./world.js";
-
-// =============================================================================
-// Roadmap Patterns (Phase 19) - To Be Implemented
-// =============================================================================
-
-export type { EventBuilder, StateFactory, TestAssertions } from "./bdd-infrastructure.js";
-export { createEventBuilder, createStateFactory } from "./bdd-infrastructure.js";

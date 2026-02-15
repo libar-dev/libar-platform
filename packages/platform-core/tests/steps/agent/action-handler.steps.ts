@@ -490,12 +490,15 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
         Then("the result is not null", () => {
           expect(state.result).not.toBeNull();
         });
-        And("the result has the following pattern properties:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ property: string; value: string }>(dataTable);
-          for (const row of rows) {
-            expect((state.result as Record<string, unknown>)![row.property]).toBe(row.value);
+        And(
+          "the result has the following pattern properties:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ property: string; value: string }>(dataTable);
+            for (const row of rows) {
+              expect((state.result as Record<string, unknown>)![row.property]).toBe(row.value);
+            }
           }
-        });
+        );
         And("the decision is not null", () => {
           expect(state.result!.decision).not.toBeNull();
         });
@@ -533,12 +536,15 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
         Then("the result is not null", () => {
           expect(state.result).not.toBeNull();
         });
-        And("the result has the following pattern properties:", (_ctx: unknown, dataTable: unknown) => {
-          const rows = getDataTableRows<{ property: string; value: string }>(dataTable);
-          for (const row of rows) {
-            expect((state.result as Record<string, unknown>)![row.property]).toBe(row.value);
+        And(
+          "the result has the following pattern properties:",
+          (_ctx: unknown, dataTable: unknown) => {
+            const rows = getDataTableRows<{ property: string; value: string }>(dataTable);
+            for (const row of rows) {
+              expect((state.result as Record<string, unknown>)![row.property]).toBe(row.value);
+            }
           }
-        });
+        );
         And('the decision command is "FlagFraud"', () => {
           expect(state.result!.decision!.command).toBe("FlagFraud");
         });

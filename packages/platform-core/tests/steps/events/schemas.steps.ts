@@ -180,20 +180,23 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         state.metadata = createValidEventMetadata();
       });
 
-      When("the metadata is parsed with invalid version values:", (_ctx: unknown, dataTable: unknown) => {
-        const rows = getDataTableRows<{ version: string }>(dataTable);
-        state.parseResults = rows.map((row) => {
-          try {
-            const result = EventMetadataSchema.parse({
-              ...state.metadata,
-              version: Number(row.version),
-            });
-            return { input: row.version, result };
-          } catch (e) {
-            return { input: row.version, error: e };
-          }
-        });
-      });
+      When(
+        "the metadata is parsed with invalid version values:",
+        (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ version: string }>(dataTable);
+          state.parseResults = rows.map((row) => {
+            try {
+              const result = EventMetadataSchema.parse({
+                ...state.metadata,
+                version: Number(row.version),
+              });
+              return { input: row.version, result };
+            } catch (e) {
+              return { input: row.version, error: e };
+            }
+          });
+        }
+      );
 
       Then("each parse throws a validation error", () => {
         for (const entry of state.parseResults) {
