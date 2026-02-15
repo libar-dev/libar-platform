@@ -5,6 +5,8 @@
  * @libar-docs-saga
  * @libar-docs-arch-role saga
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
+ * @libar-docs-extract-shapes OrderFulfillmentArgs, OrderFulfillmentResult
  * @libar-docs-uses OrderCommandHandlers, InventoryCommandHandlers
  *
  * Order Fulfillment Saga.

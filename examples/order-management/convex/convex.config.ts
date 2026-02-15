@@ -5,6 +5,7 @@
  * @libar-docs-infra
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-layer infrastructure
+ * @libar-docs-arch-view overview-topology
  *
  * Application composition root. Mounts all Convex components (workpool, workflow,
  * event store, command bus, rate limiter, agent BC) and bounded contexts (orders, inventory).

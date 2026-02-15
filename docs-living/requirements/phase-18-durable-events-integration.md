@@ -1076,6 +1076,18 @@ _Verified by: Full durable command flow, Command retry produces same result, Pro
 - Rebuild demonstration mutations (complete)
 - Integration test scenarios (complete)
 
+## Implementations
+
+Files that implement this pattern:
+
+- [`intents.ts`](../../examples/order-management/convex/admin/intents.ts) - Intent Admin Functions - CRUD operations for commandIntents table.
+- [`poison.ts`](../../examples/order-management/convex/admin/poison.ts) - Poison Event Admin Functions - CRUD operations for poisonEvents table.
+- [`rebuildDemo.ts`](../../examples/order-management/convex/admin/rebuildDemo.ts) - Rebuild Demonstration - Projection rebuild from event stream.
+- [`durableOrchestrator.ts`](../../examples/order-management/convex/commands/durableOrchestrator.ts) - Durable Command Orchestrator - Intent/Completion Bracketing Wrapper
+- [`durableAppend.ts`](../../examples/order-management/convex/eventStore/durableAppend.ts) - Durable Append - Workpool-backed event append with retry.
+- [`actions.ts`](../../examples/order-management/convex/sagas/payments/actions.ts) - Mock Payment Actions - Simulated external payment service.
+- [`outbox.ts`](../../examples/order-management/convex/sagas/payments/outbox.ts) - Payment Outbox Handler - Captures payment action results as events.
+
 ---
 
 [← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)

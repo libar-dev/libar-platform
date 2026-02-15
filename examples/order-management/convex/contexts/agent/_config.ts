@@ -4,6 +4,8 @@
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-context agent
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
+ * @libar-docs-extract-shapes CHURN_RISK_AGENT_ID, CHURN_RISK_SUBSCRIPTIONS, churnRiskAgentConfig
  *
  * Churn Risk Agent Configuration
  *

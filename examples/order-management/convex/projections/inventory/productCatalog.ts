@@ -6,6 +6,7 @@
  * @libar-docs-arch-role projection
  * @libar-docs-arch-context inventory
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses InventoryCommandHandlers
  *
  * Product catalog read model. Handles ProductCreated, StockAdded.

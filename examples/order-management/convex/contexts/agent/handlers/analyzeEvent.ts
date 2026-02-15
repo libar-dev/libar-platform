@@ -6,6 +6,7 @@
  * @libar-docs-arch-role command-handler
  * @libar-docs-arch-context agent
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses AgentLLMIntegration, AgentBCComponentIsolation
  *
  * Agent action handler for churn risk detection.

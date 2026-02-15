@@ -9,9 +9,9 @@
 
 | Metric             | Value |
 | ------------------ | ----- |
-| Completed Patterns | 36    |
+| Completed Patterns | 76    |
 | Completed Phases   | 9     |
-| Total Phases       | 9     |
+| Total Phases       | 10    |
 
 ---
 
@@ -108,17 +108,17 @@
 
 ## Recent Completions
 
+- ✅ Inventory Deciders
+- ✅ Order Deciders
+- ✅ Agent Action Handler
+- ✅ Agent On Complete Handler
+- ✅ Inventory Domain Events
+- ✅ Inventory Command Handlers
+- ✅ Order Domain Events
+- ✅ Order Command Handlers
 - ✅ Progress calculation utilities for replay operations.
 - ✅ Types for event replay and projection rebuilding.
-- ✅ Projection Complexity Classifier
-- ✅ Per-Projection Partition Configuration
-- ✅ Partition Key Helper Functions
-- ✅ Workpool Partitioning Strategy
-- ✅ Workpool Partition Key Types
-- ✅ Foundation Infrastructure (Phase 1)
-- ✅ Dual Write Contract
-- ✅ Bounded Context Identity
 
-Showing 10 of 36 completed patterns. See quarterly files for full history.
+Showing 10 of 76 completed patterns. See quarterly files for full history.
 
 ---

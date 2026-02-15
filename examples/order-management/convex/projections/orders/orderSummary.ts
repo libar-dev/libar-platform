@@ -6,6 +6,7 @@
  * @libar-docs-arch-role projection
  * @libar-docs-arch-context orders
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses EventStore
  *
  * OrderSummary projection handlers (app-level).

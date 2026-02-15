@@ -5,6 +5,7 @@
  * @libar-docs-infra
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-layer infrastructure
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses OrderNotificationPM, ReservationReleasePM, AgentAsBoundedContext, AgentLLMIntegration
  * @libar-docs-used-by OrderManagementInfrastructure
  *

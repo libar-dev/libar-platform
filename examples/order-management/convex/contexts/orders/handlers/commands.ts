@@ -6,6 +6,7 @@
  * @libar-docs-arch-role command-handler
  * @libar-docs-arch-context orders
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses OrderDeciders, OrderRepository
  *
  * Order command handlers implementing the dual-write pattern.

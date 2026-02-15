@@ -5,6 +5,7 @@
  * @libar-docs-infra
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-layer infrastructure
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses Workpool, Workflow, EventStore, CommandBus
  *
  * Infrastructure setup for the order-management application.

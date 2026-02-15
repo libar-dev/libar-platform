@@ -741,6 +741,12 @@ _Verified by: Agent decision creates audit event, Audit includes LLM metadata, Q
 - Dead letter handler (complete)
 - Agent as BC documentation (complete)
 
+## Implementations
+
+Files that implement this pattern:
+
+- [`index.ts`](../../examples/order-management/convex/contexts/agent/index.ts) - ## Agent as Bounded Context - AI-Driven Event Reactors
+
 ---
 
 [← Back to Product Requirements](../PRODUCT-REQUIREMENTS.md)

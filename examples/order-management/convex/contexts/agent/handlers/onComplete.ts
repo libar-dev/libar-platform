@@ -6,6 +6,7 @@
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-context agent
  * @libar-docs-arch-layer infrastructure
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses AgentAsBoundedContext, AgentLLMIntegration
  *
  * Workpool job completion handler for agent BC.

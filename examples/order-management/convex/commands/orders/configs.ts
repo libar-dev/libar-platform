@@ -6,6 +6,7 @@
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-context orders
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses OrderSummaryProjection, OrderWithInventoryProjection, OrderItemsProjection, CustomerCancellationsProjection
  * @libar-docs-used-by OrderManagementInfrastructure
  *

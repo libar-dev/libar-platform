@@ -6,6 +6,7 @@
  * @libar-docs-arch-role process-manager
  * @libar-docs-arch-context orders
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses InventoryCommandHandlers, OrderWithInventoryProjection
  * @libar-docs-used-by OrderManagementInfrastructure
  *

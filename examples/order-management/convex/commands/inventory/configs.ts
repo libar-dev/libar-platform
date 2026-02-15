@@ -6,6 +6,7 @@
  * @libar-docs-arch-role infrastructure
  * @libar-docs-arch-context inventory
  * @libar-docs-arch-layer application
+ * @libar-docs-arch-view overview-topology
  * @libar-docs-uses ActiveReservationsProjection, ProductCatalogProjection, OrderWithInventoryProjection
  * @libar-docs-used-by OrderManagementInfrastructure
  *

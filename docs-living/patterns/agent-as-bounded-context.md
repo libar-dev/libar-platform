@@ -393,6 +393,12 @@ rateLimits: v.optional(vRateLimitConfig),
 - Depends on: ReactiveProjections
 - Depends on: EcstFatEvents
 
+## Implementations
+
+Files that implement this pattern:
+
+- [`index.ts`](../../examples/order-management/convex/contexts/agent/index.ts) - ## Agent as Bounded Context - AI-Driven Event Reactors
+
 ## Acceptance Criteria
 
 **Agent receives subscribed events**
