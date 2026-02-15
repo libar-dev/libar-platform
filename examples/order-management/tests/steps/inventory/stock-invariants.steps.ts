@@ -50,6 +50,7 @@ function createTestInventoryCMS(overrides: Partial<InventoryCMS> = {}): Inventor
     sku: "SKU-TEST-001",
     availableQuantity: 100,
     reservedQuantity: 10,
+    unitPrice: 49.99,
     version: 1,
     stateVersion: 1,
     createdAt: 1000,

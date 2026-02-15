@@ -115,17 +115,16 @@ let state: TestState = createInitialState();
 
 const feature = await loadFeature("tests/features/behavior/agent/pattern-executor.feature");
 
-describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
+describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScenario }) => {
   BeforeEachScenario(() => {
     state = createInitialState();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
   });
 
-  // Cleanup after each scenario
-  // Note: vitest-cucumber doesn't have AfterEachScenario, so we use vi.useRealTimers in each When step's finally block
-  // Actually, we restore in BeforeEachScenario since the next scenario will reset anyway.
-  // We need an afterAll or similar. Let's just always set fake timers in BeforeEachScenario.
+  AfterEachScenario(() => {
+    vi.useRealTimers();
+  });
 
   Background(({ Given }) => {
     Given("the module is imported from platform-core", () => {

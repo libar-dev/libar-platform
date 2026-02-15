@@ -76,19 +76,19 @@ let state: TestState = createInitialState();
 
 const feature = await loadFeature("tests/features/behavior/agent/checkpoint.feature");
 
-describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
+describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScenario }) => {
   BeforeEachScenario(() => {
     state = createInitialState();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
   });
 
-  // Restore real timers after each scenario
-  // vitest-cucumber doesn't have AfterEachScenario, so we use vitest's afterEach
-  // which is set up by vitest itself
+  AfterEachScenario(() => {
+    vi.useRealTimers();
+  });
 
-  Background((ctx) => {
-    ctx.Given("the module is imported from platform-core", () => {
+  Background(({ Given }) => {
+    Given("the module is imported from platform-core", () => {
       // Module is imported at top level
     });
   });

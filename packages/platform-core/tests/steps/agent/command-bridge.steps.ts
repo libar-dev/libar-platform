@@ -179,19 +179,19 @@ let state: TestState = createInitialState();
 
 const feature = await loadFeature("tests/features/behavior/agent/command-bridge.feature");
 
-describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
+describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScenario }) => {
   BeforeEachScenario(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-06-15T10:00:00Z"));
     state = createInitialState();
   });
 
-  // NOTE: vitest-cucumber does not support AfterEachScenario, so we restore
-  // timers in a cleanup pattern at the end of each scenario's last Then step.
-  // Actually, we can just let BeforeEachScenario reset timers.
+  AfterEachScenario(() => {
+    vi.useRealTimers();
+  });
 
-  Background((ctx) => {
-    ctx.Given("the module is imported from platform-core", () => {
+  Background(({ Given }) => {
+    Given("the module is imported from platform-core", () => {
       // Module imported at top of file
     });
   });
