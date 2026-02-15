@@ -75,52 +75,7 @@ import {
 
 import type { PublishedEvent } from "../../../src/eventbus/types.js";
 
-// =============================================================================
-// DataTable Type Helper
-// =============================================================================
-
-/**
- * Helper to safely extract array from DataTable.
- *
- * vitest-cucumber passes DataTables in one of these formats:
- * 1. Direct array of objects: [{ col1: "val1", col2: "val2" }, ...]
- * 2. Sometimes undefined if no DataTable present
- *
- * The first row becomes the headers, subsequent rows become objects.
- */
-function getDataTableRows<T extends Record<string, string>>(dataTable: unknown): T[] {
-  if (!dataTable) return [];
-
-  // Already an array - vitest-cucumber passes it this way
-  if (Array.isArray(dataTable)) {
-    // Check if it's an array of arrays (raw format) or array of objects
-    if (dataTable.length > 0 && Array.isArray(dataTable[0])) {
-      // Raw format: first row is headers, rest are data
-      const raw = dataTable as string[][];
-      if (raw.length < 2) return []; // Need at least header + 1 data row
-      const headers = raw[0] as string[];
-      const rows: T[] = [];
-      for (let i = 1; i < raw.length; i++) {
-        const rowData: Record<string, string> = {};
-        const rawRow = raw[i];
-        if (rawRow) {
-          for (let j = 0; j < headers.length; j++) {
-            const header = headers[j];
-            if (header !== undefined && rawRow[j] !== undefined) {
-              rowData[header] = rawRow[j];
-            }
-          }
-          rows.push(rowData as T);
-        }
-      }
-      return rows;
-    }
-    // Already array of objects
-    return dataTable as T[];
-  }
-
-  return [];
-}
+import { getDataTableRows } from "../_helpers/data-table.js";
 
 // =============================================================================
 // Test State
@@ -732,7 +687,7 @@ describeFeature(
           expect(state.checkpoint).not.toBeNull();
         });
 
-        Then("it returns:", (dataTable: unknown) => {
+        Then("it returns:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; type: string }>(dataTable);
           const checkpoint = state.checkpoint!;
           for (const row of rows) {
@@ -2269,7 +2224,7 @@ describeFeature(
           expect(state.auditEvents[0].eventType).toBe("PatternDetected");
         });
 
-        And("event includes:", (dataTable: unknown) => {
+        And("event includes:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; description: string }>(dataTable);
           const event = state.auditEvents[0];
           expect(isPatternDetectedEvent(event)).toBe(true);
@@ -2389,7 +2344,7 @@ describeFeature(
           state.auditEvents.push(auditEvent);
         });
 
-        Then("event.llmContext includes:", (dataTable: unknown) => {
+        Then("event.llmContext includes:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; description: string }>(dataTable);
           const event = state.auditEvents[0];
           if (isPatternDetectedEvent(event)) {
@@ -2743,7 +2698,7 @@ describeFeature(
           // For this test, we already have the events in the array
         });
 
-        Then("result includes related events:", (dataTable: unknown) => {
+        Then("result includes related events:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ eventType: string }>(dataTable);
           const expectedTypes = rows.map((row) => row.eventType);
           const actualTypes = state.auditEvents.map((e) => e.eventType);

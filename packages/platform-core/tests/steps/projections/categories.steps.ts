@@ -12,6 +12,7 @@ import { expect } from "vitest";
 // Import modules under test
 import {
   PROJECTION_CATEGORIES,
+  ProjectionCategorySchema,
   type ProjectionCategory,
   isProjectionCategory,
   isLogicProjection,
@@ -22,6 +23,7 @@ import {
 } from "@libar-dev/platform-bc";
 
 import {
+  PROJECTION_VALIDATION_ERRORS,
   validateProjectionCategory,
   assertValidCategory,
   type ProjectionCategoryValidationResult,
@@ -590,3 +592,200 @@ describeFeature(
     });
   }
 );
+
+// =============================================================================
+// Edge Cases Feature (migrated from categories.test.ts)
+// =============================================================================
+
+const edgeCasesFeature = await loadFeature(
+  "tests/features/behavior/projections/categories.feature"
+);
+
+describeFeature(edgeCasesFeature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
+  BeforeEachScenario(() => {
+    resetState();
+  });
+
+  AfterEachScenario(() => {
+    resetState();
+  });
+
+  // ===========================================================================
+  // Zod Schema Validation
+  // ===========================================================================
+
+  Rule(
+    "ProjectionCategorySchema accepts only the four canonical categories",
+    ({ RuleScenario }) => {
+      RuleScenario("ProjectionCategorySchema accepts all valid categories", ({ When, Then }) => {
+        When("I parse each valid category through ProjectionCategorySchema", () => {
+          // Parsing happens in the Then step
+        });
+
+        Then(
+          "all parse results succeed for:",
+          (_ctx: unknown, dataTable: { category: string }[]) => {
+            for (const row of dataTable) {
+              const result = ProjectionCategorySchema.safeParse(row.category);
+              expect(result.success, `Expected "${row.category}" to be valid`).toBe(true);
+            }
+          }
+        );
+      });
+
+      RuleScenario("ProjectionCategorySchema rejects invalid values", ({ When, Then }) => {
+        When("I parse each invalid value through ProjectionCategorySchema", () => {
+          // Parsing happens in the Then step
+        });
+
+        Then("all parse results fail for:", (_ctx: unknown, dataTable: { value: string }[]) => {
+          for (const row of dataTable) {
+            const result = ProjectionCategorySchema.safeParse(row.value);
+            expect(result.success, `Expected "${row.value}" to be rejected`).toBe(false);
+          }
+        });
+      });
+
+      RuleScenario("ProjectionCategorySchema rejects non-string types", ({ When, Then, And }) => {
+        When("I parse non-string types through ProjectionCategorySchema", () => {
+          // Parsing happens in the Then/And steps
+        });
+
+        Then("the schema rejects the number 123", () => {
+          const result = ProjectionCategorySchema.safeParse(123);
+          expect(result.success).toBe(false);
+        });
+
+        And("the schema rejects null", () => {
+          const result = ProjectionCategorySchema.safeParse(null);
+          expect(result.success).toBe(false);
+        });
+      });
+    }
+  );
+
+  // ===========================================================================
+  // Type Guard Edge Cases
+  // ===========================================================================
+
+  Rule("isProjectionCategory returns false for all non-string types", ({ RuleScenario }) => {
+    RuleScenario("isProjectionCategory rejects objects", ({ When, Then }) => {
+      When("I call isProjectionCategory with an empty object", () => {
+        state.result = isProjectionCategory({});
+      });
+
+      Then("the type guard returns false", () => {
+        expect(state.result).toBe(false);
+      });
+    });
+
+    RuleScenario("isProjectionCategory rejects arrays", ({ When, Then }) => {
+      When('I call isProjectionCategory with an array containing "view"', () => {
+        state.result = isProjectionCategory(["view"]);
+      });
+
+      Then("the type guard returns false", () => {
+        expect(state.result).toBe(false);
+      });
+    });
+
+    RuleScenario("isProjectionCategory rejects booleans", ({ When, Then }) => {
+      When("I call isProjectionCategory with boolean values", () => {
+        // Both true and false are tested in the Then step
+      });
+
+      Then("the type guard returns false for both true and false", () => {
+        expect(isProjectionCategory(true)).toBe(false);
+        expect(isProjectionCategory(false)).toBe(false);
+      });
+    });
+
+    RuleScenario("isProjectionCategory rejects whitespace-padded strings", ({ When, Then }) => {
+      When("I call isProjectionCategory with whitespace-padded values", () => {
+        // Values tested in the Then step
+      });
+
+      Then("the type guard rejects space-padded view and tab-padded logic", () => {
+        expect(isProjectionCategory(" view ")).toBe(false);
+        expect(isProjectionCategory("\tlogic\n")).toBe(false);
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Validation Error Constants
+  // ===========================================================================
+
+  Rule("PROJECTION_VALIDATION_ERRORS exposes known error codes", ({ RuleScenario }) => {
+    RuleScenario("PROJECTION_VALIDATION_ERRORS has expected error codes", ({ Then, And }) => {
+      Then('CATEGORY_REQUIRED error code equals "CATEGORY_REQUIRED"', () => {
+        expect(PROJECTION_VALIDATION_ERRORS.CATEGORY_REQUIRED).toBe("CATEGORY_REQUIRED");
+      });
+
+      And('INVALID_CATEGORY error code equals "INVALID_CATEGORY"', () => {
+        expect(PROJECTION_VALIDATION_ERRORS.INVALID_CATEGORY).toBe("INVALID_CATEGORY");
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Validate Projection Category Edge Cases
+  // ===========================================================================
+
+  Rule(
+    "validateProjectionCategory returns INVALID_CATEGORY for non-string types",
+    ({ RuleScenario }) => {
+      RuleScenario("validateProjectionCategory rejects non-string types", ({ When, Then }) => {
+        When("I validate non-string types as projection categories", () => {
+          // Validation happens in the Then step
+        });
+
+        Then(
+          "all produce INVALID_CATEGORY errors:",
+          (_ctx: unknown, dataTable: { type: string }[]) => {
+            const typeToValue: Record<string, unknown> = {
+              object: {},
+              array: ["view"],
+              boolean: true,
+              number: 42,
+              whitespace: " view ",
+            };
+
+            for (const row of dataTable) {
+              const value = typeToValue[row.type];
+              const result = validateProjectionCategory(value);
+              expect(result.valid, `Expected ${row.type} to fail validation`).toBe(false);
+              if (!result.valid) {
+                expect(result.error.code, `Expected ${row.type} to produce INVALID_CATEGORY`).toBe(
+                  "INVALID_CATEGORY"
+                );
+              }
+            }
+          }
+        );
+      });
+    }
+  );
+
+  // ===========================================================================
+  // assertValidCategory Throws for Undefined
+  // ===========================================================================
+
+  Rule("assertValidCategory throws CATEGORY_REQUIRED for undefined input", ({ RuleScenario }) => {
+    RuleScenario("assertValidCategory throws CATEGORY_REQUIRED for undefined", ({ When, Then }) => {
+      When("I call assertValidCategory with undefined", () => {
+        try {
+          state.result = assertValidCategory(undefined);
+          state.error = null;
+        } catch (e) {
+          state.error = e as Error;
+        }
+      });
+
+      Then('the error message contains "CATEGORY_REQUIRED"', () => {
+        expect(state.error).not.toBeNull();
+        expect(state.error?.message).toContain("CATEGORY_REQUIRED");
+      });
+    });
+  });
+});
