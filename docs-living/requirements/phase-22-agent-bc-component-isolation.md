@@ -262,14 +262,14 @@ _Verified by: Agent handler receives projection data as argument, Missing projec
 
 Files that implement this pattern:
 
-- [`approvals.ts`](../../delivery-process/stubs/agent-component-isolation/component/approvals.ts) - Agent Component - Approval Public API — DS-1 Stub
-- [`audit.ts`](../../delivery-process/stubs/agent-component-isolation/component/audit.ts) - Agent Component - Audit Public API — DS-1 Stub
-- [`checkpoints.ts`](../../delivery-process/stubs/agent-component-isolation/component/checkpoints.ts) - Agent Component - Checkpoint Public API — DS-1 Stub
-- [`commands.ts`](../../delivery-process/stubs/agent-component-isolation/component/commands.ts) - Agent Component - Command Public API — DS-1 Stub
-- [`convex.config.ts`](../../delivery-process/stubs/agent-component-isolation/component/convex.config.ts) - Agent Component Definition — DS-1 Stub
-- [`deadLetters.ts`](../../delivery-process/stubs/agent-component-isolation/component/deadLetters.ts) - Agent Component - Dead Letter Public API — DS-1 Stub
-- [`schema.ts`](../../delivery-process/stubs/agent-component-isolation/component/schema.ts) - Agent Component Schema — DS-1 Stub
-- [`cross-bc-query.ts`](../../delivery-process/stubs/agent-component-isolation/cross-bc-query.ts) - Cross-Component Query Types for Agent BC — DS-1 Stub
+- [`approvals.ts`](../../architect/stubs/agent-component-isolation/component/approvals.ts) - Agent Component - Approval Public API — DS-1 Stub
+- [`audit.ts`](../../architect/stubs/agent-component-isolation/component/audit.ts) - Agent Component - Audit Public API — DS-1 Stub
+- [`checkpoints.ts`](../../architect/stubs/agent-component-isolation/component/checkpoints.ts) - Agent Component - Checkpoint Public API — DS-1 Stub
+- [`commands.ts`](../../architect/stubs/agent-component-isolation/component/commands.ts) - Agent Component - Command Public API — DS-1 Stub
+- [`convex.config.ts`](../../architect/stubs/agent-component-isolation/component/convex.config.ts) - Agent Component Definition — DS-1 Stub
+- [`deadLetters.ts`](../../architect/stubs/agent-component-isolation/component/deadLetters.ts) - Agent Component - Dead Letter Public API — DS-1 Stub
+- [`schema.ts`](../../architect/stubs/agent-component-isolation/component/schema.ts) - Agent Component Schema — DS-1 Stub
+- [`cross-bc-query.ts`](../../architect/stubs/agent-component-isolation/cross-bc-query.ts) - Cross-Component Query Types for Agent BC — DS-1 Stub
 
 ---
 

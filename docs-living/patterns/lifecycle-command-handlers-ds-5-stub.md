@@ -27,7 +27,7 @@ PDR: pdr-013-agent-lifecycle-fsm (AD-3)
 See: lifecycle-fsm.ts — FSM transition validation
 See: lifecycle-command-types.ts — command and result types
 See: lifecycle-audit-events.ts — audit event types and payloads
-See: delivery-process/stubs/agent-component-isolation/component/checkpoints.ts — component API
+See: libar-platform/architect/stubs/agent-component-isolation/component/checkpoints.ts — component API
 
 ---
 

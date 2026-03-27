@@ -19,12 +19,12 @@ Feature: PDR-012 Agent Command Routing & Pattern Unification
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | delivery-process/decisions/pdr-012-agent-command-routing.feature |
-      | Pattern registry stub | stub complete | delivery-process/stubs/agent-command-routing/pattern-registry.ts |
-      | Pattern executor stub | stub complete | delivery-process/stubs/agent-command-routing/pattern-executor.ts |
-      | AgentBCConfig evolution stub | stub complete | delivery-process/stubs/agent-command-routing/agent-bc-config.ts |
-      | Command bridge stub | stub complete | delivery-process/stubs/agent-command-routing/command-bridge.ts |
-      | AgentCommandRouter stub | stub complete | delivery-process/stubs/agent-command-routing/command-router.ts |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-012-agent-command-routing.feature |
+      | Pattern registry stub | stub complete | libar-platform/architect/stubs/agent-command-routing/pattern-registry.ts |
+      | Pattern executor stub | stub complete | libar-platform/architect/stubs/agent-command-routing/pattern-executor.ts |
+      | AgentBCConfig evolution stub | stub complete | libar-platform/architect/stubs/agent-command-routing/agent-bc-config.ts |
+      | Command bridge stub | stub complete | libar-platform/architect/stubs/agent-command-routing/command-bridge.ts |
+      | AgentCommandRouter stub | stub complete | libar-platform/architect/stubs/agent-command-routing/command-router.ts |
 
   # ============================================================================
   # RULE 1: Commands emitted by agents route through CommandOrchestrator

@@ -2,8 +2,8 @@
 /**
  * POC: Generate DCB API Reference Documentation
  *
- * Demonstrates code-first documentation generation using the delivery-process
- * DecisionDocGenerator. Extracts TypeScript types from annotated source files
+ * Demonstrates code-first documentation generation using architect's built-in
+ * `doc-from-decision` generator. Extracts TypeScript types from annotated source files
  * and generates both compact (for Claude context) and detailed (for humans) output.
  *
  * Usage: npx tsx scripts/generate-dcb-docs.ts
@@ -31,9 +31,9 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   console.log(`Created output directory: ${OUTPUT_DIR}`);
 }
 
-// Use the generate-docs CLI with doc-from-decision generator
+// Use architect-generate with the built-in doc-from-decision generator.
 const cmd = [
-  "pnpm exec generate-docs",
+  "pnpm exec architect-generate",
   "-g doc-from-decision",
   "-i 'packages/platform-core/src/dcb/**/*.ts'", // TypeScript sources for shape extraction
   "--features 'specs/platform/generated-docs/*.feature'",

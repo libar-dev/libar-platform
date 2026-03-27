@@ -92,7 +92,7 @@ ADR-001 (Dual-Write)
 
 - Given an existing ADR in "docs/architecture/decisions/adr-001-\*.md"
 - When migrating to delivery-process format
-- Then create "deps/libar-dev-packages/packages/tooling/delivery-process/tests/features/decisions/adr-001-\*.feature"
+- Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-\*.feature"
 - And include original decision content in Gherkin format
 - And add theme, layer, and dependency tags
 - And mark status (active, superseded, deprecated)

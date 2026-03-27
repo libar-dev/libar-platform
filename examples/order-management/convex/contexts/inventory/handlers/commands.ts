@@ -6,7 +6,7 @@
  * @architect-arch-role command-handler
  * @architect-arch-context inventory
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses InventoryDeciders, InventoryRepository
  *
  * Inventory command handlers implementing the dual-write pattern.

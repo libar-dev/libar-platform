@@ -7,25 +7,25 @@
 @architect-status:completed
 @architect-completed:2026-01-07
 @architect-product-area:Process
-Feature: PDR-001 - Process Decisions Live in /delivery-process/decisions/
+Feature: PDR-001 - Process Decisions Live in /libar-platform/architect/decisions/
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | decisions directory at repo level | Complete | No | delivery-process/decisions/ |
-      | PDR-001 feature file | Complete | No | delivery-process/decisions/pdr-001-*.feature |
-      | Repo-level tag-registry.json | Complete | No | delivery-process/tag-registry.json |
-      | PDR generator config | Complete | No | delivery-process/generators/decisions/pdrs.json |
+      | decisions directory at repo level | Complete | No | libar-platform/architect/decisions/ |
+      | PDR-001 feature file | Complete | No | libar-platform/architect/decisions/pdr-001-*.feature |
+      | Repo taxonomy reference | Complete | No | libar-platform/architect/docs/tag-taxonomy.md |
+      | Repo docs generation config | Complete | No | architect.config.js |
 
   Rule: Context - Separation of package ADRs from repo PDRs needed
 
     The monorepo needed a location for process-level decisions (PDRs) separate from
     package-level Architecture Decision Records (ADRs). Package ADRs live in
-    packages/libar-dev/delivery-process/tests/features/decisions/ and document
-    tooling decisions specific to the delivery-process package itself.
+    deps-packages/architect/architect/decisions/ and document tooling decisions
+    specific to the architect package itself.
 
     Key distinction:
-    - ADRs (package): Technical decisions about the delivery-process tool itself
+    - ADRs (package): Technical decisions about the architect tool itself
     - PDRs (repo): Process decisions about how to use the tool in this monorepo
 
     The separation enables:
@@ -33,28 +33,28 @@ Feature: PDR-001 - Process Decisions Live in /delivery-process/decisions/
     - Different tag registries for different scopes
     - Independent evolution of package vs repo process decisions
 
-  Rule: Decision - PDRs live in /delivery-process/decisions/ as Gherkin feature files
+  Rule: Decision - PDRs live in /libar-platform/architect/decisions/ as Gherkin feature files
 
-    Process Decision Records (PDRs) for the monorepo live in /delivery-process/decisions/
+    Process Decision Records (PDRs) for the monorepo live in /libar-platform/architect/decisions/
     as Gherkin feature files with the naming convention pdr-NNN-name.feature.
 
     PDRs use the same extraction infrastructure as ADRs:
-    - Tags: libar-process-adr:NNN (reuses existing tag system for compatibility)
+    - Tags: @architect-adr:NNN
     - Sections: Gherkin Rule: keywords for Context, Decision, Consequences
     - Generator: Uses adr-list section with "Process Decision Records" header
 
     Directory structure:
-    - delivery-process/decisions/ - PDRs for monorepo process configuration
-    - delivery-process/src/phases/ - TypeScript phase metadata
-    - delivery-process/generators/decisions/ - PDR generator configs
-    - delivery-process/templates/ - Reusable templates
-    - delivery-process/fragments/ - Fragment templates
-    - delivery-process/tag-registry.json - Repo-level tag registry
+    - libar-platform/architect/decisions/ - PDRs for monorepo process configuration
+    - libar-platform/architect/specs/ - roadmap feature specs
+    - libar-platform/architect/stubs/ - design-session stubs
+    - libar-platform/architect/releases/ - release definition files
+    - libar-platform/architect/docs/tag-taxonomy.md - generated repo taxonomy reference
+    - architect.config.js - repo-level architect configuration
 
     @acceptance-criteria
     Scenario: PDRs appear in generated DECISIONS.md
-      Given a Gherkin feature file with libar-process-adr:001 tag
-      And the file is in delivery-process/decisions/
+      Given a Gherkin feature file with @architect-adr:001 tag
+      And the file is in libar-platform/architect/decisions/
       When running pnpm docs:pdrs
       Then the decision appears in docs-living/DECISIONS.md
       And the header shows "Process Decision Records" (not "Architecture Decision Records")

@@ -16,7 +16,7 @@ Feature: PDR-009 Design Session Methodology
       | Deliverable | Status | Location |
       | Stub management rules | Complete | PDR-009 (this file) |
       | Design category for ADR taxonomy | Complete | PDR-009 Rule 3 |
-      | Design session prompt template | Complete | DESIGN-SESSION-GUIDE.md |
+      | Design session prompt template | Complete | libar-platform/architect/DESIGN-SESSION-GUIDE.md |
 
   Rule: Context - Design sessions needed structured outputs beyond plan-level specs
 
@@ -35,8 +35,8 @@ Feature: PDR-009 Design Session Methodology
     Design sessions produce two types of outputs:
 
     | Output | Format | Location | Purpose |
-    | Decision specs | Gherkin .feature | delivery-process/decisions/ | Architectural decisions with lasting value |
-    | Code stubs | TypeScript .ts | delivery-process/stubs/{pattern-name}/ | Interface contracts, schemas, handler signatures |
+    | Decision specs | Gherkin .feature | libar-platform/architect/decisions/ | Architectural decisions with lasting value |
+    | Code stubs | TypeScript .ts | libar-platform/architect/stubs/{pattern-name}/ | Interface contracts, schemas, handler signatures |
 
     Design sessions do NOT produce:
     | Avoided Output | Why |
@@ -47,18 +47,18 @@ Feature: PDR-009 Design Session Methodology
     Scenario: Design session produces decision specs not documents
       Given a design session for a new bounded context component
       When architectural decisions are made during the session
-      Then each lasting decision is recorded as a PDR in delivery-process/decisions/
+      Then each lasting decision is recorded as a PDR in libar-platform/architect/decisions/
       And no markdown design documents are created in docs/
 
     @acceptance-criteria
     Scenario: Design session produces code stubs
       Given a design session that defines API contracts
       When handler signatures and schemas are specified
-      Then code stubs are created in delivery-process/stubs/{pattern-name}/
+      Then code stubs are created in libar-platform/architect/stubs/{pattern-name}/
       And each stub has @architect-implements linking to the parent pattern
-      And the real destination is indicated by "Target:" plain text in the JSDoc
+      And the real destination is indicated by an @architect-target tag in the JSDoc
 
-  Rule: Decision - Stubs live outside compilation in delivery-process/stubs/
+  Rule: Decision - Stubs live outside compilation in libar-platform/architect/stubs/
 
     Code stubs created during design sessions would break compilation and linting if
     placed in real source folders:
@@ -68,19 +68,19 @@ Feature: PDR-009 Design Session Methodology
     | Unused variables | Handler args in stub bodies trigger eslint |
     | Progressive compilation | Cannot selectively enable parts of stub files |
 
-    Solution: All stubs live in delivery-process/stubs/{pattern-name}/ which is outside
+    Solution: All stubs live in libar-platform/architect/stubs/{pattern-name}/ which is outside
     all package tsconfig and eslint scopes. Zero configuration changes needed.
 
     Stub rules:
     | Rule | Description |
     | @architect-implements | Each stub uses @architect-implements to link to the parent pattern |
-    | Target: annotation | Each stub has a "Target:" plain text line indicating its real destination path |
+    | @architect-target annotation | Each stub has an @architect-target tag indicating its real destination path |
     | @architect-* tags first | All @architect-* tags MUST appear first in the JSDoc block |
     | Pattern-based naming | Folder names use the pattern/feature name, not session numbers |
-    | Implementation moves stubs | During implementation, stubs move from stubs/ to Target: locations |
+    | Implementation moves stubs | During implementation, stubs move from stubs/ to @architect-target locations |
     | Step definition stubs | Use existing tests/planning-stubs/ pattern (already excluded from test runner) |
 
-    Naming convention: delivery-process/stubs/{pattern-name-kebab-case}/
+    Naming convention: libar-platform/architect/stubs/{pattern-name-kebab-case}/
 
     | Correct | Incorrect |
     | agent-component-isolation/ | ds-1-component-isolation/ |
@@ -92,11 +92,11 @@ Feature: PDR-009 Design Session Methodology
 
     @acceptance-criteria
     Scenario: Stub file has target annotation
-      Given a code stub in delivery-process/stubs/agent-component-isolation/
+      Given a code stub in libar-platform/architect/stubs/agent-component-isolation/
       When reviewing the stub file
       Then @architect-* tags appear first in the JSDoc block
       And it contains @architect-implements linking to the parent pattern
-      And the real destination is indicated by "Target:" plain text
+      And the real destination is indicated by an @architect-target tag
 
     @acceptance-criteria
     Scenario: Stubs use pattern-based folder naming
@@ -137,10 +137,9 @@ Feature: PDR-009 Design Session Methodology
     - Zero tsconfig/eslint configuration changes for design sessions
     - Decision specs provide structured traceability with tags
     - Pattern-based naming is stable across planning cycles
-    - @architect-implements + Target: annotations create clear link from design to implementation
+    - @architect-implements + @architect-target annotations create clear link from design to implementation
 
     Negative outcomes:
     - Stubs are not type-checked until implementation moves them to target locations
     - Additional step needed during implementation to move stubs
     - Design category adds a third taxonomy value to track
-

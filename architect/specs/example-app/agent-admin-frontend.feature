@@ -79,7 +79,6 @@ Feature: Agent Admin Frontend - Complete Management UI with Multi-Agent Support
   # agentPool workpool, and OpenRouter LLM runtime.
   # ============================================================================
 
-  """
   High-Value Order Detection Agent Design
 
   Agent ID: high-value-order-agent
@@ -119,9 +118,6 @@ Feature: Agent Admin Frontend - Complete Management UI with Multi-Agent Support
     onComplete: persist audit → command → approval → checkpoint
          |
     Admin UI: approve/reject VIP flag
-  """
-
-  """
   High-Value Agent Configuration:
 
     id: "high-value-order-agent"
@@ -140,9 +136,6 @@ Feature: Agent Admin Frontend - Complete Management UI with Multi-Agent Support
       maxConcurrent: 5
       costBudget: { daily: 10.0, alertThreshold: 0.8 }
     patterns: [highValueOrderPattern]
-  """
-
-  """
   High-Value Pattern Definition:
 
     name: "high-value-order"
@@ -168,9 +161,6 @@ Feature: Agent Admin Frontend - Complete Management UI with Multi-Agent Support
     | vipLevel | LLM recommendation ("gold" / "platinum") |
     | priority | LLM recommendation ("standard" / "expedited") |
     | reasoning | LLM analysis text |
-  """
-
-  """
   File Structure (under order-management/convex/contexts/agent/):
 
     high-value/
@@ -185,8 +175,6 @@ Feature: Agent Admin Frontend - Complete Management UI with Multi-Agent Support
   Registration (in eventSubscriptions.ts):
     - Add createAgentSubscription(highValueOrderConfig, { ... })
     - Same agentPool, same retry config, priority 250
-  """
-
   **Design Decision: Authentication Pattern**
 
   | Option | Trade-off |

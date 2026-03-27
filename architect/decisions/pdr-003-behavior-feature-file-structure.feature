@@ -18,7 +18,7 @@ Feature: PDR-003 - Behavior Feature File Structure
       | TypeScript phase file convention | Complete | No | PDR-003 |
       | Tag conventions documentation | Complete | No | PDR-003 |
       | Separation of concerns pattern | Complete | No | PDR-003 |
-      | Process metadata in tag-registry | Complete | No | tag-registry.json |
+      | Process metadata conventions | Complete | No | libar-platform/architect/docs/tag-taxonomy.md |
 
   Rule: Context - Timeline feature files created maintenance problems
 
@@ -35,7 +35,7 @@ Feature: PDR-003 - Behavior Feature File Structure
 
   Rule: Decision - Separate specs from release association using two complementary systems
 
-    1. SPECS DIRECTORY (delivery-process/specs/)
+    1. SPECS DIRECTORY (libar-platform/architect/specs/)
        Pure Gherkin requirements that can evolve independently:
        - Focus on WHAT (requirements, acceptance criteria, deliverables)
        - Use semantic tags only (acceptance-criteria, opportunity-N, etc.)
@@ -43,11 +43,11 @@ Feature: PDR-003 - Behavior Feature File Structure
        - Can be combined, split, or refined without affecting release tracking
        - Background tables list deliverables with Status/Tests/Location (no Release column)
 
-    2. TYPESCRIPT PHASE FILES (delivery-process/src/phases/vX.Y.Z/)
+    2. TYPESCRIPT PHASE FILES (libar-platform/architect/src/phases/vX.Y.Z/)
        Centralized release association via code annotations:
        - Focus on WHEN (phase assignment, release association, dependencies)
-       - Use libar-docs-* JSDoc annotations for process metadata
-       - Reference specs by pattern name: "Spec: delivery-process/specs/name.feature"
+       - Use @architect-* JSDoc annotations for process metadata
+       - Reference specs by pattern name: "Spec: libar-platform/architect/specs/name.feature"
        - Single location for all phase/release information
        - Enables dependency graphs, roadmap generation, earned-value tracking
 
@@ -67,31 +67,31 @@ Feature: PDR-003 - Behavior Feature File Structure
     - Domain tags: orders, inventory, saga, etc.
     - Scenario tags: happy-path, validation, business-failure
 
-    TypeScript Phase File Annotations (in libar-docs-* format):
+    TypeScript Phase File Annotations (in @architect-* format):
 
     Core annotations (required):
-    - libar-docs-pattern Name - Pattern identifier
-    - libar-docs-status {roadmap|active|completed} - Phase status
-    - libar-docs-phase N - Phase number
-    - libar-docs-quarter QN-YYYY - Delivery quarter
+    - @architect-pattern Name - Pattern identifier
+    - @architect-status {roadmap|active|completed} - Phase status
+    - @architect-phase N - Phase number
+    - @architect-quarter QN-YYYY - Delivery quarter
 
     Completion annotations:
-    - libar-docs-completed YYYY-MM-DD - Completion date
-    - libar-docs-effort Nw - Planned effort (e.g., 4w, 2d, 8h)
-    - libar-docs-effort-actual Nw - Actual effort (for variance tracking)
+    - @architect-completed YYYY-MM-DD - Completion date
+    - @architect-effort Nw - Planned effort (e.g., 4w, 2d, 8h)
+    - @architect-effort-actual Nw - Actual effort (for variance tracking)
 
     Optional metadata:
-    - libar-docs-workflow {design|implementation|documentation|testing|discovery}
-    - libar-docs-priority {high|medium|low} - Backlog ordering (default: medium)
-    - libar-docs-risk {low|medium|high} - Risk level (default: low)
+    - @architect-workflow {design|implementation|documentation|testing|discovery}
+    - @architect-priority {high|medium|low} - Backlog ordering (default: medium)
+    - @architect-risk {low|medium|high} - Risk level (default: low)
 
     Relationship annotations:
-    - libar-docs-depends-on PatternA,PatternB - Dependencies (CSV)
-    - libar-docs-enables PatternC,PatternD - What this enables (CSV)
+    - @architect-depends-on PatternA,PatternB - Dependencies (CSV)
+    - @architect-enables PatternC,PatternD - What this enables (CSV)
 
     Behavior Test Files (tests/features/behavior/):
     Same conventions as before:
-    - libar-docs-pattern:Name - Links to pattern for traceability (optional)
+    - @architect-pattern:Name - Links to pattern for traceability (optional)
     - acceptance-criteria - Marks scenarios for PRD generation
     - Semantic tags for organization
     - NO Release columns in DataTables
@@ -104,7 +104,7 @@ Feature: PDR-003 - Behavior Feature File Structure
 
     @acceptance-criteria
     Scenario: Specs and TypeScript phase files are separate
-      Given the delivery-process/ directory structure
+      Given the libar-platform/architect/ directory structure
       Then specs/ contains only pure requirement feature files
       And src/phases/ contains TypeScript files with release annotations
       And specs have NO libar-process-* tags
@@ -112,7 +112,7 @@ Feature: PDR-003 - Behavior Feature File Structure
 
     @acceptance-criteria
     Scenario: Spec files use semantic tags only
-      Given a feature file in delivery-process/specs/
+      Given a feature file in libar-platform/architect/specs/
       Then the file should have semantic tags (acceptance-criteria, opportunity-N, etc.)
       And the file should have Background with deliverables DataTable
       And the DataTable should NOT include Release column
@@ -120,15 +120,15 @@ Feature: PDR-003 - Behavior Feature File Structure
 
     @acceptance-criteria
     Scenario: TypeScript phase files centralize release information
-      Given a TypeScript file in delivery-process/src/phases/vX.Y.Z/
-      Then the file should have libar-docs-pattern annotation
-      And the file should have libar-docs-phase annotation
-      And the file should have libar-docs-status annotation
-      And the file should reference the spec via comment or libar-docs-spec annotation
+      Given a TypeScript file in libar-platform/architect/src/phases/vX.Y.Z/
+      Then the file should have @architect-pattern annotation
+      And the file should have @architect-phase annotation
+      And the file should have @architect-status annotation
+      And the file should reference the spec via comment or matching @architect-pattern metadata
 
     @acceptance-criteria
     Scenario: Specs can evolve independently of phases
-      Given a spec file in delivery-process/specs/
+      Given a spec file in libar-platform/architect/specs/
       When the spec is refined, split, or combined
       Then only the TypeScript phase file needs updating
       And no phase/release metadata exists in the spec to update
@@ -158,16 +158,16 @@ Feature: PDR-003 - Behavior Feature File Structure
 
     @acceptance-criteria
     Scenario: TypeScript phase files support process metadata
-      Given a TypeScript file in delivery-process/src/phases/
-      Then the file may include libar-docs-effort for planned effort
-      And the file may include libar-docs-effort-actual for variance tracking
-      And the file may include libar-docs-workflow for time distribution analysis
-      And the file may include libar-docs-priority for backlog ordering
-      And the file may include libar-docs-risk for progressive governance
+      Given a TypeScript file in libar-platform/architect/src/phases/
+      Then the file may include @architect-effort for planned effort
+      And the file may include @architect-effort-actual for variance tracking
+      And the file may include @architect-workflow for time distribution analysis
+      And the file may include @architect-priority for backlog ordering
+      And the file may include @architect-risk for progressive governance
 
     @acceptance-criteria
     Scenario: TypeScript phase files support dependency tracking
-      Given a TypeScript file in delivery-process/src/phases/
-      Then the file may include libar-docs-depends-on for dependencies
-      And the file may include libar-docs-enables for downstream patterns
+      Given a TypeScript file in libar-platform/architect/src/phases/
+      Then the file may include @architect-depends-on for dependencies
+      And the file may include @architect-enables for downstream patterns
       And dependency information enables critical path analysis

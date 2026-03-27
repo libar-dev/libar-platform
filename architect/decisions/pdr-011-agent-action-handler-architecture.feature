@@ -21,11 +21,11 @@ Feature: PDR-011 Agent Action Handler Architecture
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | delivery-process/decisions/pdr-011-agent-action-handler-architecture.feature |
-      | Action handler factory stub | stub complete | delivery-process/stubs/agent-action-handler/action-handler.ts |
-      | onComplete handler factory stub | stub complete | delivery-process/stubs/agent-action-handler/oncomplete-handler.ts |
-      | EventSubscription type stub | stub complete | delivery-process/stubs/agent-action-handler/event-subscription-types.ts |
-      | Agent subscription options stub | stub complete | delivery-process/stubs/agent-action-handler/agent-subscription.ts |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-011-agent-action-handler-architecture.feature |
+      | Action handler factory stub | stub complete | libar-platform/architect/stubs/agent-action-handler/action-handler.ts |
+      | onComplete handler factory stub | stub complete | libar-platform/architect/stubs/agent-action-handler/oncomplete-handler.ts |
+      | EventSubscription type stub | stub complete | libar-platform/architect/stubs/agent-action-handler/event-subscription-types.ts |
+      | Agent subscription options stub | stub complete | libar-platform/architect/stubs/agent-action-handler/agent-subscription.ts |
 
   # ============================================================================
   # RULE 1: Agent handlers split into action (analysis) + mutation (persistence)

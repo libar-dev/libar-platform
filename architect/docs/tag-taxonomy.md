@@ -1,6 +1,6 @@
 # Tag Taxonomy Reference
 
-> ⚠️ **Auto-generated from `delivery-process.config.js`** - Do not edit manually.
+> ⚠️ **Auto-generated from `architect.config.js`** - Do not edit manually.
 
 ## File Opt-In
 

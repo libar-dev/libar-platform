@@ -6,7 +6,7 @@
  * @architect-arch-role projection
  * @architect-arch-context orders
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses EventStore
  *
  * OrderSummary projection handlers (app-level).

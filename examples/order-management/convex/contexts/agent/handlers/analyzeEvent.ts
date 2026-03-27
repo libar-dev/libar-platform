@@ -6,7 +6,7 @@
  * @architect-arch-role command-handler
  * @architect-arch-context agent
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses AgentLLMIntegration, AgentBCComponentIsolation
  *
  * Agent action handler for churn risk detection.

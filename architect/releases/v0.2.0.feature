@@ -49,5 +49,5 @@ Feature: v0.2.0 - Platform Roadmap (Aggregate-Less Pivot)
   **Migration Notes:**
 
   Pattern briefs in `docs/project-management/aggregate-less-pivot/pattern-briefs/`
-  are now superseded by executable specs in `architect/specs/platform/`.
+  are now superseded by executable specs in `libar-platform/architect/specs/platform/`.
   The pattern briefs remain as historical reference.

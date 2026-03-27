@@ -12,13 +12,13 @@ Feature: PDR-002 - Release Management Architecture
   Background: Implementation Details
     Given the following deliverables:
       | Deliverable | Status | Tests | Location |
-      | Add release tag to tag-registry.json | complete | No | delivery-process/tag-registry.json |
+      | Add release tag to tag-registry.json | complete | No | libar-platform/architect/docs/tag-taxonomy.md |
       | Update gherkin-ast-parser.ts for @release: | complete | Yes | packages/.../scanner/gherkin-ast-parser.ts |
       | Add release to ExtractedPatternSchema | complete | No | packages/.../validation-schemas/extracted-pattern.ts |
-      | Create releases folder structure | complete | No | delivery-process/releases/ |
-      | Create v0.1.0.feature | complete | No | delivery-process/releases/v0.1.0.feature |
-      | Create vNEXT.feature | complete | No | delivery-process/releases/vNEXT.feature |
-      | Tag PDRs 001-004 with release | complete | No | delivery-process/decisions/ |
+      | Create releases folder structure | complete | No | libar-platform/architect/releases/ |
+      | Create v0.1.0.feature | complete | No | libar-platform/architect/releases/v0.1.0.feature |
+      | Create vNEXT.feature | complete | No | libar-platform/architect/releases/vNEXT.feature |
+      | Tag PDRs 001-004 with release | complete | No | libar-platform/architect/decisions/ |
 
   Rule: Context - Previous release management approaches created friction
 
@@ -43,13 +43,13 @@ Feature: PDR-002 - Release Management Architecture
 
     Adopt a minimal release management architecture with three components:
 
-    1. Release definition files (delivery-process/releases/*.feature)
+    1. Release definition files (libar-platform/architect/releases/*.feature)
        Minimal Gherkin feature files that define releases:
        - One file per release version (v0.1.0.feature, vNEXT.feature)
        - Contains: version, status, quarter, highlights
        - NO DataTables for deliverables (those are discovered, not listed)
 
-    2. Deliverable association via tags (libar-docs-release:v0.1.0)
+    2. Deliverable association via tags (@architect-release:v0.1.0)
        Each deliverable declares its target release:
        - PDRs, ADRs, code patterns, feature specs, documentation
        - Easy to change during development
@@ -78,7 +78,7 @@ Feature: PDR-002 - Release Management Architecture
     - v2.0.x: Aggregate-less roadmap (in progress)
 
     vNEXT Pattern:
-    Use libar-docs-release:vNEXT for work in progress not yet assigned
+    Use @architect-release:vNEXT for work in progress not yet assigned
     to a specific version. When cutting a release:
     1. Determine version based on changes (major/minor/patch)
     2. Create new release feature file
@@ -96,13 +96,13 @@ Feature: PDR-002 - Release Management Architecture
     @acceptance-criteria
     Scenario: PDR tagged with release version
       Given a Process Decision Record feature file
-      When it includes "libar-docs-release:v0.1.0"
+      When it includes "@architect-release:v0.1.0"
       Then the scanner extracts the release field
       And the changelog generator groups it under v0.1.0
 
     @acceptance-criteria
     Scenario: Changelog generation from scattered tags
-      Given multiple files tagged with "libar-docs-release:v0.1.0"
+      Given multiple files tagged with "@architect-release:v0.1.0"
       When running the changelog generator
       Then all tagged deliverables appear under "## v0.1.0"
       And the release file highlights appear as header
@@ -117,7 +117,7 @@ Feature: PDR-002 - Release Management Architecture
     - Works for both internal and public releases with same mental model
 
     Negative outcomes:
-    - Requires scanner support for libar-docs-release tag (implemented)
+    - Requires scanner support for @architect-release tag (implemented)
     - Two places to maintain (release file + tag on deliverable)
 
     Neutral:

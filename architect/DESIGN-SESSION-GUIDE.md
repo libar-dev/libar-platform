@@ -43,36 +43,36 @@ For this session we should do **DS-X**.
 
 ## Context
 
-@libar-platform/delivery-process/DELIVERY-PROCESS-GUIDE.md
-@libar-platform/delivery-process/DESIGN-SESSION-GUIDE.md
-@deps-packages/delivery-process/docs/METHODOLOGY.md
-@deps-packages/delivery-process/docs/SESSION-GUIDES.md
+@libar-platform/architect/ARCHITECT-GUIDE.md
+@libar-platform/architect/DESIGN-SESSION-GUIDE.md
+@deps-packages/architect/docs/METHODOLOGY.md
+@deps-packages/architect/docs/SESSION-GUIDES.md
 
 ## Source Specs (from DS-X section in DESIGN-SESSION-GUIDE.md)
 
 Include the plan-level spec for this DS session:
-@libar-platform/delivery-process/specs/...  (see Source Spec Reference table)
+@libar-platform/architect/specs/...  (see Source Spec Reference table)
 
 For platform DS sessions (DS-2 through DS-5), also include consumer specs
 for outside-in validation:
-@libar-platform/delivery-process/specs/example-app/agent-churn-risk-completion.feature
-@libar-platform/delivery-process/specs/example-app/agent-admin-frontend.feature
+@libar-platform/architect/specs/example-app/agent-churn-risk-completion.feature
+@libar-platform/architect/specs/example-app/agent-admin-frontend.feature
 
 For consumer DS sessions (DS-6, DS-7 — which ARE the consumer specs),
 include completed platform stubs they consume instead:
-@libar-platform/delivery-process/stubs/agent-component-isolation/
-@libar-platform/delivery-process/stubs/agent-action-handler/
-@libar-platform/delivery-process/stubs/agent-command-routing/
-@libar-platform/delivery-process/stubs/agent-lifecycle-fsm/
+@libar-platform/architect/stubs/agent-component-isolation/
+@libar-platform/architect/stubs/agent-action-handler/
+@libar-platform/architect/stubs/agent-command-routing/
+@libar-platform/architect/stubs/agent-lifecycle-fsm/
 
 ## Critical Reminders
 
 1. This is NOT an implementation session. Once we do all design sessions we will do
    holistic reviews and iterate on details as necessary.
 2. No design documents. Record important decisions as decision specs (.feature)
-   in delivery-process/decisions/.
-3. Code stubs go in delivery-process/stubs/{pattern-name}/ with @architect-implements
-   tags and Target: annotations indicating real destination. Never directly in package source.
+   in libar-platform/architect/decisions/.
+3. Code stubs go in libar-platform/architect/stubs/{pattern-name}/ with @architect-implements
+   and @architect-target annotations indicating the real destination. Never directly in package source.
 4. Open questions section: note interactions with other DS sessions.
    These get resolved during holistic review.
 5. Check consumer specs (22d, 22e) for requirements that validate your design.
@@ -146,23 +146,23 @@ DS-5 (Lifecycle) and DS-7 (Frontend) are off the critical path.
 | #   | Deliverable                       | Location                                                                                   |
 | --- | --------------------------------- | ------------------------------------------------------------------------------------------ |
 | 1   | Design document (historical)      | `docs/project-management/plans/designs/draft/DESIGN-2026-005-agent-component-isolation.md` |
-| 2   | Component definition stub         | `delivery-process/stubs/agent-component-isolation/component/convex.config.ts`              |
-| 3   | Component schema stub             | `delivery-process/stubs/agent-component-isolation/component/schema.ts`                     |
-| 4   | Checkpoint API stub (5 handlers)  | `delivery-process/stubs/agent-component-isolation/component/checkpoints.ts`                |
-| 5   | Audit API stub (3 handlers)       | `delivery-process/stubs/agent-component-isolation/component/audit.ts`                      |
-| 6   | Dead Letter API stub (4 handlers) | `delivery-process/stubs/agent-component-isolation/component/deadLetters.ts`                |
-| 7   | Command API stub (4 handlers)     | `delivery-process/stubs/agent-component-isolation/component/commands.ts`                   |
-| 8   | Approval API stub (6 handlers)    | `delivery-process/stubs/agent-component-isolation/component/approvals.ts`                  |
-| 9   | Cross-BC query types              | `delivery-process/stubs/agent-component-isolation/cross-bc-query.ts`                       |
-| 10  | Design session methodology        | `delivery-process/decisions/pdr-009-design-session-methodology.feature`                    |
-| 11  | Argument injection pattern        | `delivery-process/decisions/pdr-010-cross-component-argument-injection.feature`            |
+| 2   | Component definition stub         | `libar-platform/architect/stubs/agent-component-isolation/component/convex.config.ts`      |
+| 3   | Component schema stub             | `libar-platform/architect/stubs/agent-component-isolation/component/schema.ts`             |
+| 4   | Checkpoint API stub (5 handlers)  | `libar-platform/architect/stubs/agent-component-isolation/component/checkpoints.ts`        |
+| 5   | Audit API stub (3 handlers)       | `libar-platform/architect/stubs/agent-component-isolation/component/audit.ts`              |
+| 6   | Dead Letter API stub (4 handlers) | `libar-platform/architect/stubs/agent-component-isolation/component/deadLetters.ts`        |
+| 7   | Command API stub (4 handlers)     | `libar-platform/architect/stubs/agent-component-isolation/component/commands.ts`           |
+| 8   | Approval API stub (6 handlers)    | `libar-platform/architect/stubs/agent-component-isolation/component/approvals.ts`          |
+| 9   | Cross-BC query types              | `libar-platform/architect/stubs/agent-component-isolation/cross-bc-query.ts`               |
+| 10  | Design session methodology        | `libar-platform/architect/decisions/pdr-009-design-session-methodology.feature`            |
+| 11  | Argument injection pattern        | `libar-platform/architect/decisions/pdr-010-cross-component-argument-injection.feature`    |
 
 **Open Questions for Holistic Review:**
 
 1. DS-4: Command routing extensibility — `commands.record` may need additional fields
 2. DS-7: Admin UI queries — ensure responses have enough data without N+1
 
-**Note:** DS-1 was created before the stubs-in-delivery-process pattern was established.
+**Note:** DS-1 was created before the stubs-in-architect pattern was established.
 The design document (DESIGN-2026-005) has been superseded per PDR-009 methodology.
 
 ---
@@ -201,13 +201,13 @@ The design document (DESIGN-2026-005) has been superseded per PDR-009 methodolog
 
 **Deliverables:**
 
-| #   | Deliverable                     | Location                                                                       |
-| --- | ------------------------------- | ------------------------------------------------------------------------------ |
-| 1   | Decision spec                   | `delivery-process/decisions/pdr-011-agent-action-handler-architecture.feature` |
-| 2   | Action handler factory stub     | `delivery-process/stubs/agent-action-handler/action-handler.ts`                |
-| 3   | onComplete handler factory stub | `delivery-process/stubs/agent-action-handler/oncomplete-handler.ts`            |
-| 4   | EventSubscription type stub     | `delivery-process/stubs/agent-action-handler/event-subscription-types.ts`      |
-| 5   | Agent subscription options stub | `delivery-process/stubs/agent-action-handler/agent-subscription.ts`            |
+| #   | Deliverable                     | Location                                                                               |
+| --- | ------------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Decision spec                   | `libar-platform/architect/decisions/pdr-011-agent-action-handler-architecture.feature` |
+| 2   | Action handler factory stub     | `libar-platform/architect/stubs/agent-action-handler/action-handler.ts`                |
+| 3   | onComplete handler factory stub | `libar-platform/architect/stubs/agent-action-handler/oncomplete-handler.ts`            |
+| 4   | EventSubscription type stub     | `libar-platform/architect/stubs/agent-action-handler/event-subscription-types.ts`      |
+| 5   | Agent subscription options stub | `libar-platform/architect/stubs/agent-action-handler/agent-subscription.ts`            |
 
 **DS-1 Open Questions Resolved:**
 
@@ -308,14 +308,14 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 **Deliverables:**
 
-| #   | Deliverable                  | Location                                                           |
-| --- | ---------------------------- | ------------------------------------------------------------------ |
-| 1   | Decision spec                | `delivery-process/decisions/pdr-012-agent-command-routing.feature` |
-| 2   | Pattern Registry stub        | `delivery-process/stubs/agent-command-routing/pattern-registry.ts` |
-| 3   | AgentBCConfig evolution stub | `delivery-process/stubs/agent-command-routing/agent-bc-config.ts`  |
-| 4   | Pattern Executor stub        | `delivery-process/stubs/agent-command-routing/pattern-executor.ts` |
-| 5   | AgentCommandRouter stub      | `delivery-process/stubs/agent-command-routing/command-router.ts`   |
-| 6   | Command Bridge stub          | `delivery-process/stubs/agent-command-routing/command-bridge.ts`   |
+| #   | Deliverable                  | Location                                                                   |
+| --- | ---------------------------- | -------------------------------------------------------------------------- |
+| 1   | Decision spec                | `libar-platform/architect/decisions/pdr-012-agent-command-routing.feature` |
+| 2   | Pattern Registry stub        | `libar-platform/architect/stubs/agent-command-routing/pattern-registry.ts` |
+| 3   | AgentBCConfig evolution stub | `libar-platform/architect/stubs/agent-command-routing/agent-bc-config.ts`  |
+| 4   | Pattern Executor stub        | `libar-platform/architect/stubs/agent-command-routing/pattern-executor.ts` |
+| 5   | AgentCommandRouter stub      | `libar-platform/architect/stubs/agent-command-routing/command-router.ts`   |
+| 6   | Command Bridge stub          | `libar-platform/architect/stubs/agent-command-routing/command-bridge.ts`   |
 
 **DS-2 Open Questions Resolved:**
 
@@ -366,14 +366,14 @@ const { ok, retryAfter } = await rateLimiter.limit(ctx, "llmTokens", {
 
 **Deliverables:**
 
-| #   | Deliverable                     | Location                                                                    |
-| --- | ------------------------------- | --------------------------------------------------------------------------- |
-| 1   | Decision spec                   | `delivery-process/decisions/pdr-013-agent-lifecycle-fsm.feature`            |
-| 2   | Lifecycle FSM stub              | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-fsm.ts`               |
-| 3   | Lifecycle command types stub    | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-types.ts`     |
-| 4   | Lifecycle command handlers stub | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-handlers.ts`  |
-| 5   | Lifecycle audit events stub     | `delivery-process/stubs/agent-lifecycle-fsm/lifecycle-audit-events.ts`      |
-| 6   | Checkpoint status extension     | `delivery-process/stubs/agent-lifecycle-fsm/checkpoint-status-extension.ts` |
+| #   | Deliverable                     | Location                                                                            |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------- |
+| 1   | Decision spec                   | `libar-platform/architect/decisions/pdr-013-agent-lifecycle-fsm.feature`            |
+| 2   | Lifecycle FSM stub              | `libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-fsm.ts`               |
+| 3   | Lifecycle command types stub    | `libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-command-types.ts`     |
+| 4   | Lifecycle command handlers stub | `libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-command-handlers.ts`  |
+| 5   | Lifecycle audit events stub     | `libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-audit-events.ts`      |
+| 6   | Checkpoint status extension     | `libar-platform/architect/stubs/agent-lifecycle-fsm/checkpoint-status-extension.ts` |
 
 **DS-2 Open Questions Resolved:**
 

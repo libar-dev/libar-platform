@@ -6,11 +6,11 @@
 
 ## Overview
 
-| Property | Value                             |
-| -------- | --------------------------------- |
-| Status   | completed                         |
-| Category | Completed Before Delivery Process |
-| Phase    | 6                                 |
+| Property | Value                   |
+| -------- | ----------------------- |
+| Status   | completed               |
+| Category | Pre Existing Completion |
+| Phase    | 6                       |
 
 ## Description
 

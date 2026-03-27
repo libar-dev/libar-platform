@@ -1,4 +1,4 @@
-# ✅ ADR-002: Release Management Architecture
+# ADR-002: Release Management Architecture
 
 **Purpose:** Architecture decision record for Release Management Architecture
 
@@ -34,13 +34,13 @@ Previous approaches to release management created friction:
 
 Adopt a minimal release management architecture with three components:
 
-    1. Release definition files (delivery-process/releases/*.feature)
+    1. Release definition files (libar-platform/architect/releases/*.feature)
        Minimal Gherkin feature files that define releases:
        - One file per release version (v0.1.0.feature, vNEXT.feature)
        - Contains: version, status, quarter, highlights
        - NO DataTables for deliverables (those are discovered, not listed)
 
-    2. Deliverable association via tags (libar-docs-release:v0.1.0)
+    2. Deliverable association via tags (@architect-release:v0.1.0)
        Each deliverable declares its target release:
        - PDRs, ADRs, code patterns, feature specs, documentation
        - Easy to change during development
@@ -69,7 +69,7 @@ Adopt a minimal release management architecture with three components:
     - v2.0.x: Aggregate-less roadmap (in progress)
 
     vNEXT Pattern:
-    Use libar-docs-release:vNEXT for work in progress not yet assigned
+    Use @architect-release:vNEXT for work in progress not yet assigned
     to a specific version. When cutting a release:
     1. Determine version based on changes (major/minor/patch)
     2. Create new release feature file
@@ -81,7 +81,7 @@ Adopt a minimal release management architecture with three components:
 Positive outcomes: - Minimal ceremony: release files are ~20 lines, deliverables just add one tag - Flexible: scope can change during development without restructuring - Discoverable: changelog is generated, always up-to-date - True to philosophy: Git is the event store, documentation is projection - Works for both internal and public releases with same mental model
 
     Negative outcomes:
-    - Requires scanner support for libar-docs-release tag (implemented)
+    - Requires scanner support for @architect-release tag (implemented)
     - Two places to maintain (release file + tag on deliverable)
 
     Neutral:

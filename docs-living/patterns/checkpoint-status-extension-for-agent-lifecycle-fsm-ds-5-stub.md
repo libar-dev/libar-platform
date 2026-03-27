@@ -23,7 +23,7 @@ DS-5 Design Session: Agent Lifecycle FSM
 PDR: pdr-013-agent-lifecycle-fsm (AD-2, AD-5)
 
 Modifies: platform-core/src/agent/checkpoint.ts — extends existing types
-See: delivery-process/stubs/agent-component-isolation/component/schema.ts (DS-1, lines 44-49)
+See: libar-platform/architect/stubs/agent-component-isolation/component/schema.ts (DS-1, lines 44-49)
 See: platform-core/src/processManager/types.ts — precedent for status const arrays
 
 ---

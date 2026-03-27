@@ -206,11 +206,11 @@ When circuit is open:
 
 Files that implement this pattern:
 
-- [`action-handler.ts`](../../delivery-process/stubs/agent-action-handler/action-handler.ts) - Agent Action Handler Factory — DS-2 Stub
-- [`agent-subscription.ts`](../../delivery-process/stubs/agent-action-handler/agent-subscription.ts) - Agent Subscription Factory — DS-2 Stub
-- [`event-subscription-types.ts`](../../delivery-process/stubs/agent-action-handler/event-subscription-types.ts) - EventSubscription Discriminated Union — DS-2 Stub
-- [`eventbus-publish-update.ts`](../../delivery-process/stubs/agent-action-handler/eventbus-publish-update.ts) - EventBus Publish Update — DS-2 Stub
-- [`oncomplete-handler.ts`](../../delivery-process/stubs/agent-action-handler/oncomplete-handler.ts) - Agent onComplete Handler Factory — DS-2 Stub
+- [`action-handler.ts`](../../architect/stubs/agent-action-handler/action-handler.ts) - Agent Action Handler Factory — DS-2 Stub
+- [`agent-subscription.ts`](../../architect/stubs/agent-action-handler/agent-subscription.ts) - Agent Subscription Factory — DS-2 Stub
+- [`event-subscription-types.ts`](../../architect/stubs/agent-action-handler/event-subscription-types.ts) - EventSubscription Discriminated Union — DS-2 Stub
+- [`eventbus-publish-update.ts`](../../architect/stubs/agent-action-handler/eventbus-publish-update.ts) - EventBus Publish Update — DS-2 Stub
+- [`oncomplete-handler.ts`](../../architect/stubs/agent-action-handler/oncomplete-handler.ts) - Agent onComplete Handler Factory — DS-2 Stub
 
 ## Acceptance Criteria
 

@@ -6,7 +6,7 @@
  * @architect-arch-role infrastructure
  * @architect-arch-context inventory
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses ActiveReservationsProjection, ProductCatalogProjection, OrderWithInventoryProjection
  * @architect-used-by OrderManagementInfrastructure
  *

@@ -108,6 +108,13 @@ interface ParsedScopeKey {
 }
 ```
 
+| Property    | Description                                  |
+| ----------- | -------------------------------------------- |
+| `tenantId`  | Tenant ID for isolation                      |
+| `scopeType` | Type of scope (e.g., "reservation", "order") |
+| `scopeId`   | Unique ID within the scope type              |
+| `raw`       | Original scope key                           |
+
 ```typescript
 /**
  * Validation error for scope keys.
@@ -141,6 +148,17 @@ interface DCBScope {
   streamIds?: string[];
 }
 ```
+
+| Property         | Description                                                  |
+| ---------------- | ------------------------------------------------------------ |
+| `scopeKey`       | Unique scope key                                             |
+| `currentVersion` | Current version for OCC                                      |
+| `tenantId`       | Tenant ID for isolation                                      |
+| `scopeType`      | Type of scope                                                |
+| `scopeId`        | Unique ID within scope type                                  |
+| `createdAt`      | Creation timestamp                                           |
+| `lastUpdatedAt`  | Last update timestamp                                        |
+| `streamIds`      | Stream IDs participating in this scope (for virtual streams) |
 
 ```typescript
 /**
@@ -227,6 +245,11 @@ interface ScopeOperations {
 }
 ````
 
+| Property      | Description                                                                                                                                                                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getScope`    | Get current scope state. Returns scope data if exists, null if scope doesn't exist. For new scopes (expectedVersion = 0), this may return null.                                                                                                                                              |
+| `commitScope` | Atomically commit scope version increment with OCC validation. This function: 1. Validates expectedVersion matches current version 2. Increments version if match 3. Updates streamIds list for virtual stream queries 4. Returns success with new version, or conflict with current version |
+
 ```typescript
 /**
  * Entity state within a DCB scope.
@@ -242,6 +265,12 @@ interface DCBEntityState<TCms, TId = unknown> {
   _id: TId;
 }
 ```
+
+| Property   | Description              |
+| ---------- | ------------------------ |
+| `streamId` | Stream ID of this entity |
+| `cms`      | Current CMS state        |
+| `_id`      | Document ID for updates  |
 
 ```typescript
 /**
@@ -259,6 +288,12 @@ interface DCBAggregatedState<TCms> {
   entities: Map<string, DCBEntityState<TCms>>;
 }
 ```
+
+| Property       | Description                     |
+| -------------- | ------------------------------- |
+| `scopeKey`     | Scope key for this operation    |
+| `scopeVersion` | Current scope version (for OCC) |
+| `entities`     | Map of streamId → entity state  |
 
 ```typescript
 /**
@@ -321,6 +356,11 @@ interface DCBEntityConfig<TCtx, TCms, TId = unknown> {
   } | null>;
 }
 ```
+
+| Property     | Description                    |
+| ------------ | ------------------------------ |
+| `streamIds`  | Stream IDs of entities to load |
+| `loadEntity` | Load function for each entity. |
 
 ```typescript
 /**
@@ -414,6 +454,23 @@ interface ExecuteWithDCBConfig<
 }
 ```
 
+| Property          | Description                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scopeKey`        | Scope key for coordination                                                                                                                                                                                                                                                                                                  |
+| `expectedVersion` | Expected scope version for OCC (0 for new scopes)                                                                                                                                                                                                                                                                           |
+| `boundedContext`  | Bounded context name                                                                                                                                                                                                                                                                                                        |
+| `streamType`      | Stream type for events                                                                                                                                                                                                                                                                                                      |
+| `schemaVersion`   | Event schema version                                                                                                                                                                                                                                                                                                        |
+| `eventCategory`   | Event category for taxonomy classification. Defaults to "domain" if not specified. - domain: Internal facts within bounded context for ES replay - integration: Cross-context communication with versioned contracts - trigger: ID-only notifications for GDPR compliance - fat: Full state snapshots for external systems  |
+| `scopeOperations` | Scope operations for OCC (Optimistic Concurrency Control). These callbacks wrap platform-store component functions to enable scope-level version checking and committing within the mutation. **Required for OCC enforcement.** If not provided, scope version checking is skipped (useful for testing pure decider logic). |
+| `entities`        | Entity loading configuration                                                                                                                                                                                                                                                                                                |
+| `decider`         | Pure decider function                                                                                                                                                                                                                                                                                                       |
+| `command`         | Command to execute                                                                                                                                                                                                                                                                                                          |
+| `applyUpdate`     | Apply state update to individual entity. Called for each entity with an update in the decider's stateUpdate map.                                                                                                                                                                                                            |
+| `commandId`       | Command ID for correlation                                                                                                                                                                                                                                                                                                  |
+| `correlationId`   | Correlation ID for tracing                                                                                                                                                                                                                                                                                                  |
+| `logger`          | Optional logger                                                                                                                                                                                                                                                                                                             |
+
 ```typescript
 /**
  * Result from executeWithDCB.
@@ -440,6 +497,12 @@ interface DCBSuccessResult<TData extends object> {
 }
 ```
 
+| Property       | Description                     |
+| -------------- | ------------------------------- |
+| `data`         | Data returned from decider      |
+| `scopeVersion` | New scope version after commit  |
+| `events`       | Events to append to Event Store |
+
 ```typescript
 /**
  * Rejected DCB execution (business rule violation, no events emitted).
@@ -454,6 +517,12 @@ interface DCBRejectedResult {
   context?: UnknownRecord;
 }
 ```
+
+| Property  | Description           |
+| --------- | --------------------- |
+| `code`    | Error code            |
+| `reason`  | Human-readable reason |
+| `context` | Optional context      |
 
 ```typescript
 /**
@@ -470,6 +539,12 @@ interface DCBFailedResult {
 }
 ```
 
+| Property  | Description                       |
+| --------- | --------------------------------- |
+| `reason`  | Failure reason                    |
+| `events`  | Events to append (failure events) |
+| `context` | Optional context                  |
+
 ```typescript
 /**
  * OCC conflict detected during DCB execution.
@@ -480,6 +555,10 @@ interface DCBConflictResult {
   currentVersion: number;
 }
 ```
+
+| Property         | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `currentVersion` | Current scope version (different from expected) |
 
 ```typescript
 /**
@@ -501,6 +580,12 @@ interface DCBDeferredResult {
   scheduledAfterMs: number;
 }
 ```
+
+| Property           | Description                                      |
+| ------------------ | ------------------------------------------------ |
+| `workId`           | Workpool job ID for tracking the scheduled retry |
+| `retryAttempt`     | Which retry attempt was scheduled (0-indexed)    |
+| `scheduledAfterMs` | Delay in milliseconds before retry executes      |
 
 ```typescript
 /**
@@ -667,6 +752,67 @@ function extractScopeType(scopeKey: DCBScopeKey): string;
 function extractScopeId(scopeKey: DCBScopeKey): string;
 ```
 
+### executeWithDCB Flow
+
+```typescript
+import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core/dcb";
+
+const result = await executeWithDCB(ctx, {
+  scopeKey: createScopeKey("tenant_1", "reservation", "res_123"),
+  expectedVersion: 0,
+  boundedContext: "inventory",
+  streamType: "Reservation",
+  schemaVersion: 1,
+  entities: {
+    streamIds: ["product-1", "product-2"],
+    loadEntity: async (ctx, streamId) => {
+      const product = await inventoryRepo.tryLoad(ctx, streamId);
+      return product ? { cms: product, _id: product._id } : null;
+    },
+  },
+  decider: reserveMultipleDecider,
+  command: { orderId: "order_456", items },
+  applyUpdate: async (ctx, _id, cms, update, version, timestamp) => {
+    await ctx.db.patch(_id, { ...update, version, updatedAt: timestamp });
+  },
+  commandId: "cmd_789",
+  correlationId: "corr_abc",
+});
+
+switch (result.status) {
+  case "success":
+    // Append result.events to Event Store
+    break;
+  case "rejected":
+    // Business rule violation - result.code, result.reason
+    break;
+  case "conflict":
+    // OCC conflict - retry with fresh state
+    break;
+}
+```
+
+```mermaid
+flowchart TD
+        A[1. Validate Scope Key] --> B[2. Load All Entities]
+        B --> C[3. Build Aggregated State]
+        C --> D[4. Execute Pure Decider]
+        D --> E{Result Status?}
+        E -->|rejected| F[Return Rejection<br/>No events, no state changes]
+        E -->|failed| G[Return Failure<br/>With failure event]
+        E -->|success| H[5. Check Scope Version OCC]
+        H --> I{Version Match?}
+        I -->|no| J[Return Conflict<br/>currentVersion in result]
+        I -->|yes| K[6. Apply State Updates]
+        K --> L[7. Return Success<br/>data + scopeVersion + events]
+
+        style A fill:#e1f5fe
+        style D fill:#fff3e0
+        style E fill:#fce4ec
+        style I fill:#fce4ec
+        style L fill:#e8f5e9
+```
+
 ### Constraints
 
 This feature file demonstrates code-first documentation generation.
@@ -688,8 +834,6 @@ bounded context with scope-based OCC.
 
 ### Constraints and Error Codes
 
-**Mandatory Constraints:**
-
 | Constraint                  | Enforcement          | Error Code               |
 | --------------------------- | -------------------- | ------------------------ |
 | Single bounded context only | Runtime validation   | CROSS_BC_NOT_ALLOWED     |
@@ -698,14 +842,14 @@ bounded context with scope-based OCC.
 | Valid scope key format      | Regex validation     | INVALID_SCOPE_KEY_FORMAT |
 | Decider must be pure        | Design pattern       | N/A (enforced by types)  |
 
+**Mandatory Constraints:**
+
     **Scope Key Validation:**
     - The `tenant:` prefix is mandatory in all scope keys
     - Empty `tenantId`, `scopeType`, or `scopeId` are rejected
     - Colons are not allowed in `tenantId` or `scopeType` (but allowed in `scopeId`)
 
 ### Guarantees
-
-**System Guarantees:**
 
 | Guarantee          | How Enforced                                                         |
 | ------------------ | -------------------------------------------------------------------- |
@@ -715,6 +859,8 @@ bounded context with scope-based OCC.
 | No partial updates | Rejected/failed status means no CMS changes persisted                |
 | Decider purity     | Type system enforces no ctx/I/O in decider function signature        |
 | Event immutability | Events returned for caller to append; not modified by DCB            |
+
+**System Guarantees:**
 
     **Conflict Resolution:**
     When an OCC conflict occurs (`status: "conflict"`), the caller should:
@@ -726,8 +872,6 @@ bounded context with scope-based OCC.
 
 ## Source Mapping - Content Extraction Configuration
 
-The following table defines which content is extracted from which source files:
-
 | Section             | Source File                                | Extraction Method           |
 | ------------------- | ------------------------------------------ | --------------------------- |
 | Core Types          | packages/platform-core/src/dcb/types.ts    | @extract-shapes tag         |
@@ -736,6 +880,8 @@ The following table defines which content is extracted from which source files:
 | Usage Example       | THIS DECISION                              | Fenced code block           |
 | Constraints         | THIS DECISION                              | Rule block table            |
 | Guarantees          | THIS DECISION                              | Rule block table            |
+
+The following table defines which content is extracted from which source files:
 
     **Usage Example:**
 

@@ -5,7 +5,7 @@
  * @architect-saga
  * @architect-arch-role saga
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-extract-shapes OrderFulfillmentArgs, OrderFulfillmentResult
  * @architect-uses OrderCommandHandlers, InventoryCommandHandlers
  *

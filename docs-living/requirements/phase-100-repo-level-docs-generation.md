@@ -27,7 +27,7 @@ metadata. See session learnings documented in the Gherkin comments below.
 
 **Generate PRD from specs**
 
-- Given feature files in delivery-process/specs/ with PRD tags
+- Given feature files in libar-platform/architect/specs/ with PRD tags
 - When running pnpm docs:prd
 - Then PRODUCT-REQUIREMENTS.md is generated in docs-living/
 - And features are grouped by product area

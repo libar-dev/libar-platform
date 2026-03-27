@@ -6,7 +6,7 @@
  * @architect-arch-role infrastructure
  * @architect-arch-context orders
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses OrderSummaryProjection, OrderWithInventoryProjection, OrderItemsProjection, CustomerCancellationsProjection
  * @architect-used-by OrderManagementInfrastructure
  *

@@ -19,7 +19,7 @@
  * See: lifecycle-fsm.ts — FSM transition validation
  * See: lifecycle-command-types.ts — command and result types
  * See: lifecycle-audit-events.ts — audit event types and payloads
- * See: architect/stubs/agent-component-isolation/component/checkpoints.ts — component API
+ * See: libar-platform/architect/stubs/agent-component-isolation/component/checkpoints.ts — component API
  */
 
 import type { MutationCtx } from "convex/server";

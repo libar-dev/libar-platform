@@ -6,7 +6,7 @@
  * @architect-arch-role process-manager
  * @architect-arch-context orders
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses OrderCommandHandlers
  * @architect-used-by OrderManagementInfrastructure
  *

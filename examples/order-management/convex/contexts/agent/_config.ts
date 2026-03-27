@@ -4,7 +4,7 @@
  * @architect-arch-role infrastructure
  * @architect-arch-context agent
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-extract-shapes CHURN_RISK_AGENT_ID, CHURN_RISK_SUBSCRIPTIONS, churnRiskAgentConfig
  *
  * Churn Risk Agent Configuration

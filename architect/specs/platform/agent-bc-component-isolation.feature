@@ -148,8 +148,8 @@ Feature: Agent BC Component Isolation - Physical Bounded Context Enforcement
       | Command public API | pending | @libar-dev/platform-core/src/agent/component/commands.ts | Yes | integration |
       | Approval public API | pending | @libar-dev/platform-core/src/agent/component/approvals.ts | Yes | integration |
       | Cross-component query pattern | pending | @libar-dev/platform-core/src/agent/cross-bc-query.ts | Yes | integration |
-      | Design session methodology | complete | architect/decisions/pdr-009-design-session-methodology.feature | No | - |
-      | Argument injection pattern | complete | architect/decisions/pdr-010-cross-component-argument-injection.feature | No | - |
+      | Design session methodology | complete | libar-platform/architect/decisions/pdr-009-design-session-methodology.feature | No | - |
+      | Argument injection pattern | complete | libar-platform/architect/decisions/pdr-010-cross-component-argument-injection.feature | No | - |
 
   # ============================================================================
   # RULE 1: Agent Component Provides Isolated Database

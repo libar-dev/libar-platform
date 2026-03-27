@@ -29,7 +29,7 @@ Without these tags, opportunities 2-8 from the convergence roadmap could not
 be implemented. The tag registry needed expansion to enable future capabilities.
 
 **Solution:**
-Added 6 new metadata tags to delivery-process/tag-registry.json:
+Added 6 new metadata tags to architect/tag-registry.json:
 
 - @libar-process-risk:{low|medium|high} - Progressive governance (Opp 6)
 - @libar-process-effort-actual:Nw - Variance tracking (Opp 3)
@@ -46,7 +46,7 @@ This work is foundation for Setup A (Framework Roadmap OS) from convergence docs
 
 **New tags are defined in tag registry**
 
-- Given the delivery-process/tag-registry.json file
+- Given the architect/tag-registry.json file
 - Then it should contain metadataTags for risk, effort-actual, workflow, priority, level, parent
 - And each tag should have format, purpose, and example fields
 - And enum tags should have values and default fields

@@ -9,6 +9,7 @@
 @architect-effort:2h
 @architect-effort-actual:2h
 @architect-completed:2026-01-08
+@architect-unlock-reason:Path-cleanup-for-architect-migration
 @architect-product-area:DeliveryProcess
 @architect-business-value:enable-variance-and-governance-tracking
 @architect-priority:high
@@ -48,7 +49,7 @@ Feature: Process Metadata Expansion
       | Priority tag in registry | complete | No | architect/tag-registry.json |
       | Level tag in registry | complete | No | architect/tag-registry.json |
       | Parent tag in registry | complete | No | architect/tag-registry.json |
-      | PDR-003 tag conventions update | complete | No | architect/decisions/pdr-003-*.feature |
+      | PDR-003 tag conventions update | complete | No | libar-platform/architect/decisions/pdr-003-*.feature |
 
   @acceptance-criteria
   Scenario: New tags are defined in tag registry

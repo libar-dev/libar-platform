@@ -21,12 +21,12 @@ Feature: PDR-013 Agent Lifecycle FSM
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | delivery-process/decisions/pdr-013-agent-lifecycle-fsm.feature |
-      | Lifecycle FSM stub | stub complete | delivery-process/stubs/agent-lifecycle-fsm/lifecycle-fsm.ts |
-      | Lifecycle command types stub | stub complete | delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-types.ts |
-      | Lifecycle command handlers stub | stub complete | delivery-process/stubs/agent-lifecycle-fsm/lifecycle-command-handlers.ts |
-      | Lifecycle audit events stub | stub complete | delivery-process/stubs/agent-lifecycle-fsm/lifecycle-audit-events.ts |
-      | Checkpoint status extension stub | stub complete | delivery-process/stubs/agent-lifecycle-fsm/checkpoint-status-extension.ts |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-013-agent-lifecycle-fsm.feature |
+      | Lifecycle FSM stub | stub complete | libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-fsm.ts |
+      | Lifecycle command types stub | stub complete | libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-command-types.ts |
+      | Lifecycle command handlers stub | stub complete | libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-command-handlers.ts |
+      | Lifecycle audit events stub | stub complete | libar-platform/architect/stubs/agent-lifecycle-fsm/lifecycle-audit-events.ts |
+      | Checkpoint status extension stub | stub complete | libar-platform/architect/stubs/agent-lifecycle-fsm/checkpoint-status-extension.ts |
 
   # ============================================================================
   # RULE 1: Agent lifecycle transitions are validated by a formal FSM

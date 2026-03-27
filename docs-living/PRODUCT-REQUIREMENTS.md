@@ -7,12 +7,12 @@
 
 ## Summary
 
-**Overall:** [█████████████░░░░░░░] 24/36 (67%)
+**Overall:** [██████████████░░░░░░] 25/37 (68%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Features | 36    |
-| Completed      | 24    |
+| Total Features | 37    |
+| Completed      | 25    |
 | Active         | 4     |
 | Planned        | 8     |
 | Product Areas  | 3     |
@@ -41,7 +41,7 @@
 
 ### Platform
 
-19/29 complete (66%)
+20/30 complete (67%)
 
 - [✅ Agent As Bounded Context](requirements/phase-22-agent-as-bounded-context.md)
 - [✅ Agent Command Infrastructure](requirements/phase-22-agent-command-infrastructure.md)
@@ -56,6 +56,7 @@
 - [✅ Event Replay Infrastructure - projection recovery and schema migration](requirements/phase-18-event-replay-infrastructure.md)
 - [✅ Event Store Durability - guaranteed event capture and audit trail](requirements/phase-18-event-store-durability.md)
 - [✅ Event Store Foundation](requirements/phase-02-event-store-foundation.md)
+- [✅ Foundation Infrastructure](requirements/phase-01-foundation-infrastructure.md)
 - [✅ Package Architecture - focused packages for consumers with clear boundaries](requirements/phase-13-package-architecture.md)
 - [✅ Projection Categories](requirements/phase-15-projection-categories.md)
 - [✅ Reactive Projections](requirements/phase-17-reactive-projections.md)
@@ -95,6 +96,7 @@
 | ✅ Event Store Durability            | Platform        | -         | completed |
 | ✅ Event Store Foundation            | Platform        | -         | completed |
 | ✅ Example App Modernization         | ExampleApp      | -         | completed |
+| ✅ Foundation Infrastructure         | Platform        | -         | completed |
 | ✅ Package Architecture              | Platform        | -         | completed |
 | ✅ Process Metadata Expansion        | DeliveryProcess | -         | completed |
 | ✅ Projection Categories             | Platform        | -         | completed |

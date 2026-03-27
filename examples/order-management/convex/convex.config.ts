@@ -5,7 +5,7 @@
  * @architect-infra
  * @architect-arch-role infrastructure
  * @architect-arch-layer infrastructure
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  *
  * Application composition root. Mounts all Convex components (workpool, workflow,
  * event store, command bus, rate limiter, agent BC) and bounded contexts (orders, inventory).

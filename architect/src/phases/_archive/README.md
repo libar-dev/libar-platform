@@ -12,7 +12,7 @@ Per [PDR-002 - Release Management Architecture](../../../decisions/pdr-002-relea
 
 ## New Approach
 
-- **Release definitions**: `delivery-process/releases/*.feature` (minimal Gherkin)
+- **Release definitions**: `libar-platform/architect/releases/*.feature` (minimal Gherkin)
 - **Deliverable association**: `@architect-release:v0.1.0` tag on each deliverable
 - **vNEXT pattern**: `@architect-release:vNEXT` for unreleased work
 
@@ -20,7 +20,7 @@ Per [PDR-002 - Release Management Architecture](../../../decisions/pdr-002-relea
 
 When migrating from TypeScript phase files:
 
-1. Create release `.feature` file in `delivery-process/releases/`
+1. Create release `.feature` file in `libar-platform/architect/releases/`
 2. Tag deliverables with `@architect-release:<version>`
 3. Move TypeScript phase file to this `_archive/` directory
 

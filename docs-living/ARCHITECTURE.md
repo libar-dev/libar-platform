@@ -7,13 +7,13 @@
 
 ## Overview
 
-This diagram was auto-generated from 51 annotated source files across 3 bounded contexts.
+This diagram shows 51 key components with explicit architectural roles across 3 bounded contexts.
 
-| Metric           | Count |
-| ---------------- | ----- |
-| Total Components | 51    |
-| Bounded Contexts | 3     |
-| Component Roles  | 9     |
+| Metric             | Count |
+| ------------------ | ----- |
+| Diagram Components | 51    |
+| Bounded Contexts   | 3     |
+| Component Roles    | 9     |
 
 ---
 
@@ -25,6 +25,8 @@ Component architecture with bounded context isolation:
 graph TB
     subgraph agent["Agent BC"]
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
+        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
+        AgentActionHandler["AgentActionHandler[command-handler]"]
         Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
         Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
@@ -34,8 +36,6 @@ graph TB
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
-        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
-        AgentActionHandler["AgentActionHandler[command-handler]"]
     end
     subgraph inventory["Inventory BC"]
         InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
@@ -55,8 +55,8 @@ graph TB
         OrderItemsProjection["OrderItemsProjection[projection]"]
         CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderCommandConfigs["OrderCommandConfigs[infrastructure]"]
-        OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
         OrderDomainEvents["OrderDomainEvents[bounded-context]"]
+        OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
         OrderDeciders["OrderDeciders[decider]"]
     end
     subgraph shared["Shared Infrastructure"]
@@ -65,6 +65,10 @@ graph TB
         EventSubscriptionRegistry["EventSubscriptionRegistry[infrastructure]"]
         CrossContextReadModel["CrossContextReadModel[read-model]"]
         AppCompositionRoot["AppCompositionRoot[infrastructure]"]
+        SagaRouter["SagaRouter[infrastructure]"]
+        SagaRegistry["SagaRegistry[infrastructure]"]
+        OrderFulfillmentSaga["OrderFulfillmentSaga[saga]"]
+        SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
         ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
         ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
@@ -74,32 +78,28 @@ graph TB
         DurableAppendAction["DurableAppendAction[infrastructure]"]
         DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         CommandRegistry["CommandRegistry[infrastructure]"]
-        SagaRouter["SagaRouter[infrastructure]"]
-        SagaRegistry["SagaRegistry[infrastructure]"]
-        OrderFulfillmentSaga["OrderFulfillmentSaga[saga]"]
-        SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
-        OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
+        OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
     end
     EventSubscriptionRegistry --> OrderNotificationPM
     EventSubscriptionRegistry --> ReservationReleasePM
+    SagaRouter --> OrderFulfillmentSaga
+    OrderFulfillmentSaga --> OrderCommandHandlers
+    OrderFulfillmentSaga --> InventoryCommandHandlers
+    SagaCompletionHandler --> SagaRegistry
     ReservationReleasePM --> InventoryCommandHandlers
     ReservationReleasePM --> OrderWithInventoryProjection
     OrderNotificationPM --> OrderCommandHandlers
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
-    SagaRouter --> OrderFulfillmentSaga
-    OrderFulfillmentSaga --> OrderCommandHandlers
-    OrderFulfillmentSaga --> InventoryCommandHandlers
-    SagaCompletionHandler --> SagaRegistry
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
     OrderItemsProjection --> OrderCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection

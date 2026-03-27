@@ -18,7 +18,7 @@ Feature: PDR-006 - TypeScript-Sourced Taxonomy
 
   Rule: Context - JSON taxonomy lacked compile-time safety
 
-    The delivery-process package uses tag-registry.json files to define taxonomy:
+    The architect package used tag-registry.json files to define taxonomy:
     - Categories (scanner, extractor, generator, etc.)
     - Metadata tags (status, phase, effort, etc.)
     - Aggregation tags (overview, decision, etc.)
@@ -50,7 +50,7 @@ Feature: PDR-006 - TypeScript-Sourced Taxonomy
 
     Implementation (2026-01-09):
 
-    The taxonomy module was implemented at packages/libar-dev/delivery-process/src/taxonomy/:
+    The taxonomy module was implemented at deps-packages/architect/src/taxonomy/:
 
     | File | Purpose |
     |------|---------|

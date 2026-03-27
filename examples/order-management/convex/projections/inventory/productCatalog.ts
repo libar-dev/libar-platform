@@ -6,7 +6,7 @@
  * @architect-arch-role projection
  * @architect-arch-context inventory
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses InventoryCommandHandlers
  *
  * Product catalog read model. Handles ProductCreated, StockAdded.

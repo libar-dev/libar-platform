@@ -68,8 +68,8 @@ Feature: Codec-Driven Reference Generation
       | ReferenceDocGenerator (DocumentGenerator impl) | complete | Yes | src/generators/built-in/reference-generators.ts |
       | @architect-convention tag in registry | complete | No | upstream: deps-packages/architect/src/taxonomy/ |
       | Convention values in taxonomy | complete | No | src/taxonomy/conventions.ts |
-      | Decision record migration (existing ADRs) | complete | No | architect/decisions/ |
-      | Decision record creation (new from recipe Rules) | complete | No | architect/decisions/ |
+      | Decision record migration (existing ADRs) | complete | No | libar-platform/architect/decisions/ |
+      | Decision record creation (new from recipe Rules) | complete | No | libar-platform/architect/decisions/ |
       | Recipe directory removal | complete | No | architect/recipes/ (delete) |
       | CLI integration (generate-docs --generators reference-*) | complete | No | src/cli/generate-docs.ts |
 

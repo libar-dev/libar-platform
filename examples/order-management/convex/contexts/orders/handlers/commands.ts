@@ -6,7 +6,7 @@
  * @architect-arch-role command-handler
  * @architect-arch-context orders
  * @architect-arch-layer application
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses OrderDeciders, OrderRepository
  *
  * Order command handlers implementing the dual-write pattern.

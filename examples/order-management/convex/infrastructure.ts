@@ -5,7 +5,7 @@
  * @architect-infra
  * @architect-arch-role infrastructure
  * @architect-arch-layer infrastructure
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses Workpool, Workflow, EventStore, CommandBus
  *
  * Infrastructure setup for the order-management application.

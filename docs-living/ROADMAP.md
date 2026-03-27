@@ -24,12 +24,12 @@
 
 | Phase                                                                                                                          | Progress | Complete |
 | ------------------------------------------------------------------------------------------------------------------------------ | -------- | -------- |
-| ✅ [CMSDualWrite](phases/phase-01-cms-dual-write.md)                                                                           | 2/2      | 100%     |
-| ✅ [EventStoreFoundation](phases/phase-02-event-store-foundation.md)                                                           | 1/1      | 100%     |
-| ✅ [CommandBusFoundation](phases/phase-03-command-bus-foundation.md)                                                           | 1/1      | 100%     |
-| ✅ [ProjectionCheckpointing](phases/phase-04-projection-checkpointing.md)                                                      | 1/1      | 100%     |
-| ✅ [SagaOrchestration](phases/phase-06-saga-orchestration.md)                                                                  | 1/1      | 100%     |
-| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                                                                        | 3/3      | 100%     |
+| ✅ [Inception](phases/phase-01-inception.md)                                                                                   | 2/2      | 100%     |
+| ✅ [Elaboration](phases/phase-02-elaboration.md)                                                                               | 1/1      | 100%     |
+| ✅ [Session](phases/phase-03-session.md)                                                                                       | 1/1      | 100%     |
+| ✅ [Construction](phases/phase-04-construction.md)                                                                             | 1/1      | 100%     |
+| ✅ [Retrospective](phases/phase-06-retrospective.md)                                                                           | 1/1      | 100%     |
+| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                                                             | 3/3      | 100%     |
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                                                                | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                                                          | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                                                                    | 1/1      | 100%     |
@@ -50,7 +50,7 @@
 
 ## Phases
 
-### ✅ CMSDualWrite
+### ✅ Inception
 
 [███████████████] 2/2 100% complete
 
@@ -61,7 +61,7 @@
 
 ---
 
-### ✅ EventStoreFoundation
+### ✅ Elaboration
 
 [███████████████] 1/1 100% complete
 
@@ -71,7 +71,7 @@
 
 ---
 
-### ✅ CommandBusFoundation
+### ✅ Session
 
 [███████████████] 1/1 100% complete
 
@@ -81,7 +81,7 @@
 
 ---
 
-### ✅ ProjectionCheckpointing
+### ✅ Construction
 
 [███████████████] 1/1 100% complete
 
@@ -91,7 +91,7 @@
 
 ---
 
-### ✅ SagaOrchestration
+### ✅ Retrospective
 
 [███████████████] 1/1 100% complete
 
@@ -101,7 +101,7 @@
 
 ---
 
-### ✅ EventUpcasting
+### ✅ EventBusAbstraction
 
 [███████████████] 3/3 100% complete
 
@@ -283,7 +283,7 @@
 
 | Pattern                              | Status    | Description                                                                                                     |
 | ------------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------- |
-| ✅ Codec Driven Reference Generation | completed | Reference documentation is specified via 11 recipe `.feature` files in `delivery-process/recipes/`.             |
+| ✅ Codec Driven Reference Generation | completed | Reference documentation is specified via 11 recipe `.feature` files in `architect/recipes/`.                    |
 | 🚧 Process Enhancements              | active    | Vision: Transform the delivery process from a documentation tool into a delivery operating system.              |
 | ✅ Process Metadata Expansion        | completed | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
 | ✅ Repo Level Docs Generation        | completed | As a monorepo maintainer, I want unified documentation generation from multiple sources.                        |

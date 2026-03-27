@@ -52,7 +52,7 @@ Feature: Process Enhancements - Unified Software Delivery Process
 
   @acceptance-criteria
   Scenario: Specs can evolve independently of phases
-    Given a spec file in architect/specs/
+    Given a spec file in libar-platform/architect/specs/
     When the spec is refined, split, or combined
     Then TypeScript phase files maintain release association
     And no phase metadata needs updating in the spec

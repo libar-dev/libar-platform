@@ -17,7 +17,7 @@
 
 **Problem:**
 Reference documentation is specified via 11 recipe `.feature` files in
-`delivery-process/recipes/`. Each recipe contains a Source Mapping table
+`architect/recipes/`. Each recipe contains a Source Mapping table
 (static configuration) and Rule blocks (durable content). But recipes
 are configuration masquerading as feature files — no scenarios execute,
 no BDD benefit exists. The Source Mapping is static and the Rule blocks

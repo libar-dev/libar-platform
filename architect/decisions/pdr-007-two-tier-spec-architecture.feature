@@ -14,9 +14,9 @@ Feature: PDR-007 Two-Tier Spec Architecture
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Roadmap specs directory | Complete | delivery-process/specs/ |
+      | Roadmap specs directory | Complete | libar-platform/architect/specs/ |
       | Package specs directories | Complete | packages/*/tests/features/ |
-      | Traceability tag system | Complete | libar-docs-executable-specs, libar-docs-roadmap-spec |
+      | Traceability tag system | Complete | @architect-executable-specs, @architect-roadmap-spec |
 
   Rule: Context - Conflated specs created duplication and confusion
 
@@ -35,30 +35,30 @@ Feature: PDR-007 Two-Tier Spec Architecture
 
     | Tier | Location | Purpose | Executable |
     |------|----------|---------|------------|
-    | Roadmap | delivery-process/specs/ | Planning, tracking, deliverables | No |
+    | Roadmap | libar-platform/architect/specs/ | Planning, tracking, deliverables | No |
     | Package | packages/*/tests/features/ | Implementation tests | Yes |
 
     Traceability via Metadata:
 
-    Instead of duplicating scenarios, use libar-docs-* tags for linking:
+    Instead of duplicating scenarios, use @architect-* tags for linking:
 
     | Spec Type | Tag | Purpose |
     |-----------|-----|---------|
-    | Roadmap | libar-docs-executable-specs:path | Points to package tests |
-    | Package | libar-docs-roadmap-spec:PatternName | Links back to roadmap |
+    | Roadmap | @architect-executable-specs:path | Points to package tests |
+    | Package | @architect-roadmap-spec:PatternName | Links back to roadmap |
 
     Architecture Rules:
 
     1. Roadmap specs are planning documents, not executable tests
-       - Located in delivery-process/specs/{product-area}/
+       - Located in libar-platform/architect/specs/{product-area}/
        - Contains deliverables tables and high-level acceptance criteria
-       - Has libar-docs-pattern tag for tracking
+       - Has @architect-pattern tag for tracking
        - Has high-level Rule blocks (not granular scenarios)
        - Does NOT have step definitions
 
     2. Package specs are executable implementation tests
-       - Located in packages/libar-dev/{package}/tests/features/
-       - Has libar-docs-pattern tag linking to roadmap
+       - Located in libar-platform/packages/{package}/tests/features/behavior/
+       - Has @architect-pattern tag linking to roadmap
        - Has step definitions that run via vitest-cucumber
        - Covers edge cases and error scenarios
 
@@ -70,7 +70,7 @@ Feature: PDR-007 Two-Tier Spec Architecture
        - Detailed behavior lives in package specs
        - Roadmap spec becomes lightweight record with links
        - Deliverables table shows all items complete
-       - libar-docs-executable-specs points to package tests
+       - @architect-executable-specs points to package tests
 
     5. Active roadmap specs may have placeholder scenarios
        - During implementation, acceptance criteria guide development
@@ -80,8 +80,8 @@ Feature: PDR-007 Two-Tier Spec Architecture
     Scenario: Roadmap spec structure
       Given a pattern requiring implementation
       When creating the roadmap spec
-      Then it should be in delivery-process/specs/{product-area}/
-      And it should have libar-docs-pattern tag
+      Then it should be in libar-platform/architect/specs/{product-area}/
+      And it should have @architect-pattern tag
       And it should have Background with deliverables table
       And it should have high-level Rule blocks (not granular scenarios)
       And it should NOT have step definitions
@@ -90,8 +90,8 @@ Feature: PDR-007 Two-Tier Spec Architecture
     Scenario: Package spec structure
       Given implemented functionality in a package
       When creating executable specs
-      Then they should be in packages/libar-dev/{package}/tests/features/
-      And they should have libar-docs-pattern tag linking to roadmap
+      Then they should be in libar-platform/packages/{package}/tests/features/behavior/
+      And they should have @architect-pattern tag linking to roadmap
       And they should have step definitions
       And they should cover edge cases and error scenarios
       And they should run via vitest-cucumber
@@ -101,21 +101,21 @@ Feature: PDR-007 Two-Tier Spec Architecture
       Given a completed roadmap spec "DeciderPattern"
       And package specs exist at platform-decider/tests/features/
       When adding traceability
-      Then roadmap spec should have libar-docs-executable-specs tag
+      Then roadmap spec should have @architect-executable-specs tag
       And deliverables table should include "Executable Spec" column
-      And package spec should have libar-docs-roadmap-spec:DeciderPattern
+      And package spec should have @architect-roadmap-spec:DeciderPattern
 
     @acceptance-criteria
     Scenario: Completed pattern roadmap spec
-      Given roadmap spec with libar-docs-status:completed
+      Given roadmap spec with @architect-status:completed
       Then detailed scenarios should NOT be in roadmap spec
       And high-level Rule descriptions should remain
       And deliverables table should have all items "complete"
-      And libar-docs-executable-specs should point to package tests
+      And @architect-executable-specs should point to package tests
 
     @acceptance-criteria
     Scenario: Active pattern with acceptance criteria
-      Given roadmap spec with libar-docs-status:active
+      Given roadmap spec with @architect-status:active
       When defining acceptance criteria
       Then high-level scenarios can exist in roadmap spec
       And they guide implementation (not executable)
@@ -134,7 +134,7 @@ Feature: PDR-007 Two-Tier Spec Architecture
 
   # References to existing patterns
   #
-  # Roadmap specs: delivery-process/specs/platform/*.feature
+  # Roadmap specs: libar-platform/architect/specs/platform/*.feature
   # Package specs:
   #   - platform-fsm/tests/features/behavior/fsm-transitions.feature
   #   - platform-decider/tests/features/behavior/decider-outputs.feature

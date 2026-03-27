@@ -44,7 +44,7 @@ Feature: Repo-Level Documentation Generation
       | docs:prd:plan script | complete | No | package.json |
       | docs:prd:checklist script | complete | No | package.json |
       | docs:prd:all script | complete | No | package.json |
-      | PRD tags added to all specs | complete | No | architect/specs/*.feature |
+      | PRD tags added to all specs | complete | No | libar-platform/architect/specs/*.feature |
       | Platform-core behavior tests annotated | complete | No | deps/libar-dev-packages/packages/platform/core/tests/features/behavior/testing/*.feature |
       | Multi-source generation validated | complete | No | package.json docs:prd script |
       | Session learnings documented | complete | No | This file |
@@ -52,7 +52,7 @@ Feature: Repo-Level Documentation Generation
 
   @acceptance-criteria
   Scenario: Generate PRD from specs
-    Given feature files in architect/specs/ with PRD tags
+    Given feature files in libar-platform/architect/specs/ with PRD tags
     When running pnpm docs:prd
     Then PRODUCT-REQUIREMENTS.md is generated in docs-living/
     And features are grouped by product area

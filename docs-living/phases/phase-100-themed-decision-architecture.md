@@ -44,7 +44,7 @@ Convex-native live projections.
 
 **Strategic Direction:**
 
-- Package (@libar-dev/delivery-process): Document generation capabilities
+- Package (@libar-dev/architect): Document generation capabilities
 - Monorepo: Eventually leverage Convex projections for live queryable views
 
 **Architecture Decision (PDR-002):**
@@ -53,20 +53,20 @@ TypeScript phase files link deliverables to phases/releases centrally.
 This separation enables specs to be combined, split, or refined without
 affecting release association.
 
-See: deps/libar-dev-packages/packages/tooling/delivery-process/docs/ideation-convergence/
+See: deps/libar-dev-packages/packages/tooling/architect/docs/ideation-convergence/
 
 #### Acceptance Criteria
 
 **Specs can evolve independently of phases**
 
-- Given a spec file in delivery-process/specs/
+- Given a spec file in libar-platform/architect/specs/
 - When the spec is refined, split, or combined
 - Then TypeScript phase files maintain release association
 - And no phase metadata needs updating in the spec
 
 **TypeScript phase files link specs to releases**
 
-- Given a TypeScript phase file in delivery-process/src/phases/
+- Given a TypeScript phase file in architect/src/phases/
 - Then it references the spec by pattern name
 - And contains minimal metadata (phase, status, quarter, effort)
 - And centralized location enables consistent release tracking
@@ -246,7 +246,7 @@ ADR-001 (Dual-Write)
 
 - Given an existing ADR in "docs/architecture/decisions/adr-001-\*.md"
 - When migrating to delivery-process format
-- Then create "deps/libar-dev-packages/packages/tooling/delivery-process/tests/features/decisions/adr-001-\*.feature"
+- Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-\*.feature"
 - And include original decision content in Gherkin format
 - And add theme, layer, and dependency tags
 - And mark status (active, superseded, deprecated)
@@ -332,7 +332,7 @@ _Verified by: Generate all decision artifacts_
 
 **Problem:**
 Reference documentation is specified via 11 recipe `.feature` files in
-`delivery-process/recipes/`. Each recipe contains a Source Mapping table
+`architect/recipes/`. Each recipe contains a Source Mapping table
 (static configuration) and Rule blocks (durable content). But recipes
 are configuration masquerading as feature files — no scenarios execute,
 no BDD benefit exists. The Source Mapping is static and the Rule blocks
@@ -604,7 +604,7 @@ Without these tags, opportunities 2-8 from the convergence roadmap could not
 be implemented. The tag registry needed expansion to enable future capabilities.
 
 **Solution:**
-Added 6 new metadata tags to delivery-process/tag-registry.json:
+Added 6 new metadata tags to architect/tag-registry.json:
 
 - @libar-process-risk:{low|medium|high} - Progressive governance (Opp 6)
 - @libar-process-effort-actual:Nw - Variance tracking (Opp 3)
@@ -621,7 +621,7 @@ This work is foundation for Setup A (Framework Roadmap OS) from convergence docs
 
 **New tags are defined in tag registry**
 
-- Given the delivery-process/tag-registry.json file
+- Given the architect/tag-registry.json file
 - Then it should contain metadataTags for risk, effort-actual, workflow, priority, level, parent
 - And each tag should have format, purpose, and example fields
 - And enum tags should have values and default fields
@@ -666,7 +666,7 @@ metadata. See session learnings documented in the Gherkin comments below.
 
 **Generate PRD from specs**
 
-- Given feature files in delivery-process/specs/ with PRD tags
+- Given feature files in libar-platform/architect/specs/ with PRD tags
 - When running pnpm docs:prd
 - Then PRODUCT-REQUIREMENTS.md is generated in docs-living/
 - And features are grouped by product area

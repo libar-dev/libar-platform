@@ -17,7 +17,7 @@ Feature: PDR-010 Cross-Component Argument Injection Pattern
     Given the following deliverables:
       | Deliverable | Status | Location |
       | Pattern definition | Complete | PDR-010 (this file) |
-      | Type stubs | Complete | delivery-process/stubs/agent-component-isolation/cross-bc-query.ts |
+      | Type stubs | Complete | libar-platform/architect/stubs/agent-component-isolation/cross-bc-query.ts |
 
   Rule: Context - Components cannot query outside their isolated database
 

@@ -1,3 +1,25 @@
+# Historical Process API Configuration Audit — Monorepo vs Package
+
+> **Historical note:** This document captures a point-in-time audit from the
+> pre-rebrand `delivery-process` era. It is retained as migration context, not
+> as current operational guidance.
+>
+> **Current source of truth:** Use `architect.config.js`, `package.json`,
+> `libar-platform/package.json`, and the current `@libar-dev/architect`
+> package docs when making live configuration changes.
+>
+> **Original branch:** `feature/process-api-for-repo-context`
+> **Created:** 2026-02-09 | **Auditor:** Claude Code session
+
+---
+
+## Archived Audit
+
+This file intentionally preserves the original audit body below with its
+historical package names, script names, and path references.
+
+---
+
 # Process API Configuration Audit — Monorepo vs Package
 
 > **Purpose:** Cross-context configuration reference. Documents all delivery process

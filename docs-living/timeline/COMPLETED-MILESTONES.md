@@ -18,7 +18,7 @@
 ## Completed Phases
 
 <details>
-<summary>✅ CMSDualWrite (2 patterns)</summary>
+<summary>✅ Inception (2 patterns)</summary>
 
 | Pattern                   | Description                                                                                                         |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -28,7 +28,7 @@
 </details>
 
 <details>
-<summary>✅ ProjectionCheckpointing (1 patterns)</summary>
+<summary>✅ Construction (1 patterns)</summary>
 
 | Pattern                  | Description                                                   |
 | ------------------------ | ------------------------------------------------------------- |
@@ -110,10 +110,10 @@
 
 - ✅ Inventory Deciders
 - ✅ Order Deciders
-- ✅ Agent Action Handler
-- ✅ Agent On Complete Handler
 - ✅ Inventory Domain Events
 - ✅ Inventory Command Handlers
+- ✅ Agent Action Handler
+- ✅ Agent On Complete Handler
 - ✅ Order Domain Events
 - ✅ Order Command Handlers
 - ✅ Progress calculation utilities for replay operations.

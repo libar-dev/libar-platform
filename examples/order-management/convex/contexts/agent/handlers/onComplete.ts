@@ -6,7 +6,7 @@
  * @architect-arch-role infrastructure
  * @architect-arch-context agent
  * @architect-arch-layer infrastructure
- * @architect-arch-view overview-topology
+ * @architect-include overview-topology
  * @architect-uses AgentAsBoundedContext, AgentLLMIntegration
  *
  * Workpool job completion handler for agent BC.
