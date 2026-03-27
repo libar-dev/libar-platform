@@ -173,20 +173,19 @@ describeFeature(reactiveFeature, ({ Background, Rule, AfterEachScenario }) => {
 
         // The key insight: createReactiveResult is SYNCHRONOUS
         // This is what enables <50ms updates - no async, no polling
-        const startTime = performance.now();
-
-        state!.reactiveResult = createReactiveResult(
+        const result = createReactiveResult(
           state!.durableProjection,
           state!.events,
           evolveOrderSummary,
           (p) => p.lastGlobalPosition
         );
 
-        const endTime = performance.now();
+        state!.reactiveResult = result;
 
-        // Verify the operation was synchronous (< 10ms proves no async I/O or polling,
-        // while tolerating CPU pressure during parallel test runs)
-        state!.mergeWasSynchronous = endTime - startTime < 10;
+        // Verify synchronous behavior structurally: the function returns a value,
+        // not a Promise. This is the correct way to prove synchronous execution —
+        // timing-based checks are fragile under CPU pressure during parallel runs.
+        state!.mergeWasSynchronous = result !== null && !(result instanceof Promise);
 
         // Double-check that the event was applied correctly
         if (newStatus === "submitted") {
