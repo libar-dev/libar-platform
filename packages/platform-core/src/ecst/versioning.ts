@@ -1,10 +1,10 @@
 /**
  * Schema Versioning - Fat event schema evolution support
  *
- * @libar-docs
- * @libar-docs-implements EcstFatEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EcstFatEvents
+ * @architect-status completed
+ * @architect-event-sourcing
  *
  * Provides schema versioning and migration capabilities for fat events.
  * Enables backward-compatible evolution of event structures over time.

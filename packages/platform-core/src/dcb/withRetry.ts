@@ -1,11 +1,11 @@
 /**
  * ## DCB Retry Helper - Automatic OCC Conflict Retry via Workpool
  *
- * @libar-docs
- * @libar-docs-implements DurableFunctionAdapters
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-uses DCB, Workpool
+ * @architect
+ * @architect-implements DurableFunctionAdapters
+ * @architect-status completed
+ * @architect-infra
+ * @architect-uses DCB, Workpool
  *
  * Wraps DCB operations to automatically retry on OCC (Optimistic Concurrency
  * Control) conflicts using Workpool for durable, delayed execution.

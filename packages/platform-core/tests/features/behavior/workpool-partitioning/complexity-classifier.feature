@@ -1,5 +1,5 @@
-@libar-docs
-@libar-docs-implements:WorkpoolPartitioningStrategy
+@architect
+@architect-implements:WorkpoolPartitioningStrategy
 Feature: Projection Complexity Classifier
 
   As a platform developer

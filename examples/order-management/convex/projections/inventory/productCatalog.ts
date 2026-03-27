@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-pattern ProductCatalogProjection
- * @libar-docs-status completed
- * @libar-docs-projection
- * @libar-docs-arch-role projection
- * @libar-docs-arch-context inventory
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses InventoryCommandHandlers
+ * @architect
+ * @architect-pattern ProductCatalogProjection
+ * @architect-status completed
+ * @architect-projection
+ * @architect-arch-role projection
+ * @architect-arch-context inventory
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses InventoryCommandHandlers
  *
  * Product catalog read model. Handles ProductCreated, StockAdded.
  * Also updates stockAvailability as secondary projection.

@@ -1,8 +1,8 @@
 /**
  * Platform Package BDD Coverage - Step Definitions
  *
- * @libar-docs
- * @libar-docs-pattern BddTestingInfrastructure
+ * @architect
+ * @architect-pattern BddTestingInfrastructure
  *
  * BDD step definitions validating that each @libar-dev/platform-* package
  * has appropriate BDD test coverage for its public APIs.

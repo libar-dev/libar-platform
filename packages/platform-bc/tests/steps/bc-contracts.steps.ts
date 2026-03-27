@@ -5,8 +5,8 @@
  * This is a Layer 0 package (pure TypeScript, no Convex dependencies),
  * so tests run without any backend - just pure function testing.
  *
- * @libar-docs
- * @libar-docs-pattern BddTestingInfrastructure
+ * @architect
+ * @architect-pattern BddTestingInfrastructure
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

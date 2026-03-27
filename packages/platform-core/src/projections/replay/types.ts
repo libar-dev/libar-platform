@@ -1,7 +1,7 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventReplayInfrastructure
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements EventReplayInfrastructure
+ * @architect-status completed
  *
  * Types for event replay and projection rebuilding.
  */

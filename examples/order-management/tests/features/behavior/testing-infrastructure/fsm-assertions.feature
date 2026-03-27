@@ -1,4 +1,4 @@
-@libar-docs-pattern:FSMAssertions
+@architect-pattern:FSMAssertions
 @testing-infrastructure
 Feature: FSM Testing Assertions
 

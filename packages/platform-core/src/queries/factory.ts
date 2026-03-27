@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern QueryAbstraction
- * @libar-docs-status completed
- * @libar-docs-phase 12
- * @libar-docs-cqrs
+ * @architect
+ * @architect-pattern QueryAbstraction
+ * @architect-status completed
+ * @architect-phase 12
+ * @architect-cqrs
  *
  * ## Query Abstraction - Read Model Factories
  *

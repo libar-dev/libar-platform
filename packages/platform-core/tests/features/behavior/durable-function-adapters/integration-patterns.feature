@@ -1,7 +1,7 @@
-@libar-docs-implements:DurableFunctionAdapters
-@libar-docs-status:active
-@libar-docs-phase:18a
-@libar-docs-product-area:Platform
+@architect-implements:DurableFunctionAdapters
+@architect-status:active
+@architect-phase:18a
+@architect-product-area:Platform
 @acceptance-criteria
 Feature: Adapter Integration Patterns
 

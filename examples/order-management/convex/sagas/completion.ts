@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern SagaCompletionHandler
- * @libar-docs-status completed
- * @libar-docs-saga
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-uses SagaRegistry
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern SagaCompletionHandler
+ * @architect-status completed
+ * @architect-saga
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-uses SagaRegistry
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Workflow onComplete callback handler. Updates saga status on completion
  * and cleans up workflow state.

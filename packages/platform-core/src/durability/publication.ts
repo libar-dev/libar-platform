@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
  *
- * @libar-docs-uses Workpool, idempotentAppend, WorkpoolPartitioningStrategy, EventBusAbstraction
- * @libar-docs-used-by IntegrationRoutes, CrossContextIntegration, SagaEngine
- * @libar-docs-usecase "When publishing events across bounded contexts durably"
+ * @architect-uses Workpool, idempotentAppend, WorkpoolPartitioningStrategy, EventBusAbstraction
+ * @architect-used-by IntegrationRoutes, CrossContextIntegration, SagaEngine
+ * @architect-usecase "When publishing events across bounded contexts durably"
  *
  * ## Durable Cross-Context Event Publication
  *
@@ -47,7 +47,7 @@
  * });
  * ```
  *
- * @libar-docs-uses DurableFunctionAdapters, WorkpoolPartitioningStrategy
+ * @architect-uses DurableFunctionAdapters, WorkpoolPartitioningStrategy
  */
 
 import type { DurablePublisherConfig, EventPublication, PublicationStatus } from "./types.js";

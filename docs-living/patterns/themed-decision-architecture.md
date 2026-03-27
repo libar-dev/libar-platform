@@ -33,7 +33,7 @@ that show how decisions build upon each other.
 
 **Scope:**
 
-1. Add theme/category tagging to decisions (`@libar-docs-adr-theme:persistence`)
+1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
 2. Generate grouped decision documents per theme
 3. Generate dependency graph visualization (ASCII or Mermaid)
 4. Port existing 33 ADRs to delivery-process format (with validity review)
@@ -42,7 +42,7 @@ that show how decisions build upon each other.
 
 **Generate themed decision document**
 
-- Given decisions tagged with "@libar-docs-adr-theme:persistence"
+- Given decisions tagged with "@architect-adr-theme:persistence"
 - When running the themed-decisions generator
 - Then output file "docs-living/decisions/PERSISTENCE.md" is created
 - And it contains ADRs 001, 002, 010, 011 grouped together
@@ -52,13 +52,13 @@ that show how decisions build upon each other.
 
 - Given an ADR feature file
 - When adding theme classification
-- Then it includes "@libar-docs-adr-theme:<theme-name>"
+- Then it includes "@architect-adr-theme:<theme-name>"
 - And theme-name is one of: persistence, isolation, commands, projections, coordination, taxonomy, testing
 
 **ADR with dependency declaration**
 
 - Given ADR-016 (Checkpoint) depends on ADR-002 (Event Store)
-- When the ADR file includes "@libar-docs-depends-on:002"
+- When the ADR file includes "@architect-depends-on:002"
 - Then the dependency graph shows ADR-002 → ADR-016
 
 **Generate dependency graph**

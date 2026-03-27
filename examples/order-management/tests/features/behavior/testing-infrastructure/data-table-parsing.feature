@@ -1,4 +1,4 @@
-@libar-docs-pattern:DataTableParsing
+@architect-pattern:DataTableParsing
 @testing-infrastructure
 Feature: Gherkin DataTable Parsing Utilities
 

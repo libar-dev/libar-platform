@@ -1,9 +1,9 @@
-@libar-docs
-@libar-docs-status:completed
-@libar-docs-unlock-reason:Initial-implementation-complete
-@libar-docs-implements:EcstFatEvents
-@libar-docs-phase:20
-@libar-docs-product-area:PlatformCore
+@architect
+@architect-status:completed
+@architect-unlock-reason:Initial-implementation-complete
+@architect-implements:EcstFatEvents
+@architect-phase:20
+@architect-product-area:PlatformCore
 @ecst
 Feature: Schema Versioning
 

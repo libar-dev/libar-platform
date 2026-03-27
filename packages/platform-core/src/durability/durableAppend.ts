@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
  *
- * @libar-docs-uses idempotentAppend, Workpool, WorkpoolPartitioningStrategy
- * @libar-docs-used-by SagaEngine, ScheduledJobs, outbox
- * @libar-docs-usecase "When event append must survive failures in async contexts"
+ * @architect-uses idempotentAppend, Workpool, WorkpoolPartitioningStrategy
+ * @architect-used-by SagaEngine, ScheduledJobs, outbox
+ * @architect-usecase "When event append must survive failures in async contexts"
  *
  * ## Durable Append via Workpool Actions
  *
@@ -53,7 +53,7 @@
  * });
  * ```
  *
- * @libar-docs-uses EventStoreFoundation, DurableFunctionAdapters
+ * @architect-uses EventStoreFoundation, DurableFunctionAdapters
  */
 
 import type {

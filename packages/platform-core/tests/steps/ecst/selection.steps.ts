@@ -1,8 +1,8 @@
 /**
  * Fat vs Thin Event Selection - Step Definitions
  *
- * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @architect
+ * @architect-pattern EcstFatEvents
  *
  * BDD step definitions for fat vs thin event selection guidelines:
  * - Cross-context integration scenarios

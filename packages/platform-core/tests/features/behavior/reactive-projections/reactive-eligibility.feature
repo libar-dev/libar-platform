@@ -1,7 +1,7 @@
-@libar-docs-pattern:ReactiveProjectionEligibility
-@libar-docs-status:completed
-@libar-docs-phase:17
-@libar-docs-product-area:Platform
+@architect-pattern:ReactiveProjectionEligibility
+@architect-status:completed
+@architect-phase:17
+@architect-product-area:Platform
 @acceptance-criteria
 Feature: Reactive Eligibility by Category
 

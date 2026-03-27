@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-uses AgentAsBoundedContext
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-context agent
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-uses AgentAsBoundedContext
+ * @architect-arch-role infrastructure
+ * @architect-arch-context agent
+ * @architect-arch-layer infrastructure
  *
  * LLM Provider Configuration
  *

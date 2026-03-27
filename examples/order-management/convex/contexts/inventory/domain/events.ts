@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern InventoryDomainEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
- * @libar-docs-arch-role bounded-context
- * @libar-docs-arch-context inventory
- * @libar-docs-arch-layer domain
- * @libar-docs-used-by InventoryCommandHandlers, OrderWithInventoryProjection, ActiveReservationsProjection, ProductCatalogProjection
+ * @architect
+ * @architect-pattern InventoryDomainEvents
+ * @architect-status completed
+ * @architect-event-sourcing
+ * @architect-arch-role bounded-context
+ * @architect-arch-context inventory
+ * @architect-arch-layer domain
+ * @architect-used-by InventoryCommandHandlers, OrderWithInventoryProjection, ActiveReservationsProjection, ProductCatalogProjection
  *
  * Inventory BC domain events (7 types). Product lifecycle (Created, StockAdded)
  * and reservation lifecycle (Reserved, Failed, Confirmed, Released, Expired).

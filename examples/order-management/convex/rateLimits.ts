@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern RateLimitDefinitions
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern RateLimitDefinitions
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * Centralized rate limit configuration for the order-management application.
  * Uses @convex-dev/rate-limiter for production-grade limiting with sharding.

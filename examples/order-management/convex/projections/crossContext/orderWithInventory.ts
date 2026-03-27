@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderWithInventoryProjection
- * @libar-docs-status completed
- * @libar-docs-projection
- * @libar-docs-arch-role projection
- * @libar-docs-arch-layer application
- * @libar-docs-uses OrderCommandHandlers, InventoryCommandHandlers
+ * @architect
+ * @architect-pattern OrderWithInventoryProjection
+ * @architect-status completed
+ * @architect-projection
+ * @architect-arch-role projection
+ * @architect-arch-layer application
+ * @architect-uses OrderCommandHandlers, InventoryCommandHandlers
  *
  * OrderWithInventoryStatus cross-context projection handlers (app-level).
  *

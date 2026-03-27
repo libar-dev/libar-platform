@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderSummaryProjection
- * @libar-docs-status completed
- * @libar-docs-projection
- * @libar-docs-arch-role projection
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-uses EventStore
+ * @architect
+ * @architect-pattern OrderSummaryProjection
+ * @architect-status completed
+ * @architect-projection
+ * @architect-arch-role projection
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-uses EventStore
  *
  * OrderSummary projection handlers (app-level).
  *

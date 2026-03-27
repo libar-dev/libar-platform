@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderItemsProjection
- * @libar-docs-status completed
- * @libar-docs-projection
- * @libar-docs-arch-role projection
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-uses OrderCommandHandlers
+ * @architect
+ * @architect-pattern OrderItemsProjection
+ * @architect-status completed
+ * @architect-projection
+ * @architect-arch-role projection
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-uses OrderCommandHandlers
  *
  * Order line items read model. Upsert behavior for individual items.
  * Handles OrderItemAdded, OrderItemRemoved.

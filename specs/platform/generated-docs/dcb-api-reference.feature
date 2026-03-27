@@ -1,10 +1,10 @@
-@libar-docs
-@libar-docs-pattern:DCBAPIReference
-@libar-docs-status:active
-@libar-docs-phase:99
-@libar-docs-core
-@libar-docs-ddd
-@libar-docs-claude-md-section:platform
+@architect
+@architect-pattern:DCBAPIReference
+@architect-status:active
+@architect-phase:99
+@architect-core
+@architect-ddd
+@architect-claude-md-section:platform
 Feature: DCB API Reference - Auto-Generated Documentation
 
   This feature file demonstrates code-first documentation generation.

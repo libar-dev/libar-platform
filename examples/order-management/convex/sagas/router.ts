@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern SagaRouter
- * @libar-docs-status completed
- * @libar-docs-saga
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-uses OrderFulfillmentSaga
+ * @architect
+ * @architect-pattern SagaRouter
+ * @architect-status completed
+ * @architect-saga
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-uses OrderFulfillmentSaga
  *
  * Routes domain events to saga workflows.
  * Currently: OrderSubmitted -> OrderFulfillment saga (idempotent start).

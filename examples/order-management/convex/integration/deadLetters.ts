@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern IntegrationDeadLetters
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern IntegrationDeadLetters
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * Dead letter queue management for cross-context event publications.
  * Handles failed integration event processing with replay and ignore operations.

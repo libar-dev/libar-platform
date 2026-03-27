@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderManagementInfrastructure
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses Workpool, Workflow, EventStore, CommandBus
+ * @architect
+ * @architect-pattern OrderManagementInfrastructure
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-arch-view overview-topology
+ * @architect-uses Workpool, Workflow, EventStore, CommandBus
  *
  * Infrastructure setup for the order-management application.
  *

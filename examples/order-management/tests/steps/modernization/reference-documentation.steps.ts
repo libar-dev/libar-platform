@@ -1,9 +1,9 @@
 /**
  * Reference Implementation Documentation - Step Definitions
  *
- * @libar-docs
- * @libar-docs-implements ExampleAppModernization
- * @libar-docs-phase 23
+ * @architect
+ * @architect-implements ExampleAppModernization
+ * @architect-phase 23
  *
  * These tests verify the README.md structure and link validity:
  * - Reference Implementation designation is present

@@ -1,7 +1,7 @@
-@libar-docs-phase:23
-@libar-docs-product-area:ExampleApp
-@libar-docs-pattern:EcstFatEvents
-@libar-docs-status:completed
+@architect-phase:23
+@architect-product-area:ExampleApp
+@architect-pattern:EcstFatEvents
+@architect-status:completed
 @acceptance-criteria
 Feature: Fat Events - Enriched OrderSubmitted
 

@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-uses AgentAsBoundedContext
- * @libar-docs-arch-role service
- * @libar-docs-arch-context agent
- * @libar-docs-arch-layer domain
+ * @architect
+ * @architect-uses AgentAsBoundedContext
+ * @architect-arch-role service
+ * @architect-arch-context agent
+ * @architect-arch-layer domain
  *
  * Customer Utility Functions for Agent BC
  *

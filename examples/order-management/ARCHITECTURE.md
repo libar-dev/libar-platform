@@ -1,10 +1,10 @@
 <!--
-@libar-docs
-@libar-docs-pattern ExampleAppArchitecture
-@libar-docs-status completed
-@libar-docs-phase 23
-@libar-docs-uses CommandOrchestrator, EventStore, Workpool, Workflow, DCB
-@libar-docs-example-app
+@architect
+@architect-pattern ExampleAppArchitecture
+@architect-status completed
+@architect-phase 23
+@architect-uses CommandOrchestrator, EventStore, Workpool, Workflow, DCB
+@architect-example-app
 -->
 
 # Order Management Example App Architecture

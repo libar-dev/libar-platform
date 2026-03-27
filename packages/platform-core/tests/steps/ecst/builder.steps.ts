@@ -1,8 +1,8 @@
 /**
  * Fat Event Builder - Step Definitions
  *
- * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @architect
+ * @architect-pattern EcstFatEvents
  *
  * BDD step definitions for fat event builder behavior:
  * - createFatEvent() creation

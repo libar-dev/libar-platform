@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern IntegrationEventHandlers
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern IntegrationEventHandlers
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * Integration event handlers. Processes integration events from the Published Language
  * and dispatches to appropriate bounded context commands.

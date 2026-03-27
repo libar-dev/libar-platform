@@ -1,6 +1,6 @@
-@libar-docs
-@libar-docs-phase:19
-@libar-docs-product-area:PlatformStore
+@architect
+@architect-phase:19
+@architect-product-area:PlatformStore
 @testing-infrastructure
 Feature: Event Store Type Contracts
 

@@ -1,5 +1,5 @@
-@libar-docs
-@libar-docs-implements:WorkpoolPartitioningStrategy
+@architect
+@architect-implements:WorkpoolPartitioningStrategy
 Feature: Command Config Partition Key Validation
 
   As a platform developer

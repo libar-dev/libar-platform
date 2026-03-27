@@ -4,10 +4,10 @@
  * Integration test steps for validating poison event handling
  * against a real Convex backend with the poisonEvents table.
  *
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status active
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status active
+ * @architect-event-sourcing
  *
  * @since Phase 18b
  */

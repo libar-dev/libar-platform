@@ -6,8 +6,8 @@
  * This is a Layer 0 package (pure TypeScript, no Convex dependencies),
  * so tests run without any backend - just pure function testing.
  *
- * @libar-docs-fsm
- * @libar-docs-pattern FSMTransitions
+ * @architect-fsm
+ * @architect-pattern FSMTransitions
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

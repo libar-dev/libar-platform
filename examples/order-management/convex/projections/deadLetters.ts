@@ -2,13 +2,13 @@
 // apps/frontend/convex/projections/deadLetters.ts
 
 /**
- * @libar-docs
- * @libar-docs-pattern ProjectionDeadLetters
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern ProjectionDeadLetters
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Dead letter queue for failed projection and subscription handlers.
  * Shared onComplete handler for both direct projections and EventBus delivery.

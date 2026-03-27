@@ -4,10 +4,10 @@
  * Integration test steps for validating idempotent event append
  * against a real Convex backend with the Event Store component.
  *
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status active
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status active
+ * @architect-event-sourcing
  *
  * @since Phase 18b
  */

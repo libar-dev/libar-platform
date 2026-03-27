@@ -1,15 +1,15 @@
-@libar-docs-pattern:DeciderOutputs
+@architect-pattern:DeciderOutputs
 @acceptance-criteria
-@libar-docs-status:completed
-@libar-docs-phase:60
-@libar-docs-quarter:Q1-2026
-@libar-docs-effort:3h
-@libar-docs-effort-actual:3h
-@libar-docs-completed:2026-01-08
-@libar-docs-product-area:PlatformDecider
-@libar-docs-business-value:type-safe-command-outcome-handling
-@libar-docs-priority:high
-@libar-docs-implements:DeciderPattern
+@architect-status:completed
+@architect-phase:60
+@architect-quarter:Q1-2026
+@architect-effort:3h
+@architect-effort-actual:3h
+@architect-completed:2026-01-08
+@architect-product-area:PlatformDecider
+@architect-business-value:type-safe-command-outcome-handling
+@architect-priority:high
+@architect-implements:DeciderPattern
 Feature: Decider Output Helpers and Type Guards
 
   The Decider pattern uses discriminated unions to represent command outcomes:
@@ -23,7 +23,7 @@ Feature: Decider Output Helpers and Type Guards
   # NOTE: This is a reference implementation for PDR-003 behavior feature files.
   # - No Release column in DataTables (per PDR-003)
   # - Uses @acceptance-criteria tag for scenarios
-  # - Links to pattern via @libar-docs-pattern tag
+  # - Links to pattern via @architect-pattern tag
 
   Background:
     Given test event types are defined

@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-uses AgentAsBoundedContext
- * @libar-docs-arch-role decider
- * @libar-docs-arch-context agent
- * @libar-docs-arch-layer domain
+ * @architect
+ * @architect-uses AgentAsBoundedContext
+ * @architect-arch-role decider
+ * @architect-arch-context agent
+ * @architect-arch-layer domain
  *
  * Churn Risk Pattern Definition
  *

@@ -3,8 +3,8 @@
  *
  * Provides checkpoint-based replay for projection recovery and schema migration.
  *
- * @libar-docs
- * @libar-docs-implements EventReplayInfrastructure
+ * @architect
+ * @architect-implements EventReplayInfrastructure
  */
 
 // Types

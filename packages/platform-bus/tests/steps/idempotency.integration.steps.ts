@@ -9,8 +9,8 @@
  *   just test-infrastructure          # Full cycle on port 3210
  *   just test-infrastructure-isolated # Full cycle on port 3215 (parallel safe)
  *
- * @libar-docs-command
- * @libar-docs-pattern CommandBusIdempotency
+ * @architect-command
+ * @architect-pattern CommandBusIdempotency
  */
 
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";

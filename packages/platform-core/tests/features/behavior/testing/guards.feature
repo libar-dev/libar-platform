@@ -1,15 +1,15 @@
-@libar-docs-pattern:TestEnvironmentGuards
+@architect-pattern:TestEnvironmentGuards
 @testing-infrastructure
-@libar-docs-pattern:TestEnvironmentGuards
-@libar-docs-status:completed
-@libar-docs-phase:58
-@libar-docs-quarter:Q1-2026
-@libar-docs-effort:1h
-@libar-docs-effort-actual:1h
-@libar-docs-completed:2026-01-08
-@libar-docs-product-area:PlatformCore
-@libar-docs-business-value:prevent-test-utilities-in-production
-@libar-docs-priority:high
+@architect-pattern:TestEnvironmentGuards
+@architect-status:completed
+@architect-phase:58
+@architect-quarter:Q1-2026
+@architect-effort:1h
+@architect-effort-actual:1h
+@architect-completed:2026-01-08
+@architect-product-area:PlatformCore
+@architect-business-value:prevent-test-utilities-in-production
+@architect-priority:high
 Feature: Test Environment Guards
 
   As a platform developer

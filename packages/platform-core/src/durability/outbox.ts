@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
  *
- * @libar-docs-uses idempotentAppend, ActionRetrier, Workpool
- * @libar-docs-used-by CommandOrchestrator, SagaEngine, PaymentHandler
- * @libar-docs-usecase "When capturing external API results as domain events"
+ * @architect-uses idempotentAppend, ActionRetrier, Workpool
+ * @architect-used-by CommandOrchestrator, SagaEngine, PaymentHandler
+ * @architect-usecase "When capturing external API results as domain events"
  *
  * ## Outbox Pattern for Action Results
  *
@@ -51,7 +51,7 @@
  * });
  * ```
  *
- * @libar-docs-uses EventStoreFoundation, DurableFunctionAdapters
+ * @architect-uses EventStoreFoundation, DurableFunctionAdapters
  */
 
 import type {

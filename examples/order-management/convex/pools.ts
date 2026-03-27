@@ -7,13 +7,13 @@
  * Both infrastructure.ts and eventSubscriptions.ts can safely import
  * from this module without creating cycles.
  *
- * @libar-docs
- * @libar-docs-pattern OrderManagementInfrastructure
- * @libar-docs-status completed
- * @libar-docs-unlock-reason:'Extract-agentPool-break-circular-dep'
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern OrderManagementInfrastructure
+ * @architect-status completed
+ * @architect-unlock-reason:'Extract-agentPool-break-circular-dep'
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  */
 
 import { Workpool } from "@convex-dev/workpool";

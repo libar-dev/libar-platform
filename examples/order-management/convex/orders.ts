@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderPublicAPI
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern OrderPublicAPI
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-context orders
+ * @architect-arch-layer infrastructure
  *
  * App-level public API for Orders bounded context.
  * Exposes CommandOrchestrator-backed mutations for external consumers.

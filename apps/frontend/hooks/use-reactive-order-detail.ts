@@ -10,9 +10,9 @@
  * - Recent events from event store (reactive push)
  * - Shared evolve logic (same on client and server)
  *
- * @libar-docs
- * @libar-docs-implements ReactiveProjections
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements ReactiveProjections
+ * @architect-status completed
  */
 
 import { useQuery } from "convex/react";

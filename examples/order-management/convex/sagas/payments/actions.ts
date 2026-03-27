@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern MockPaymentActions
- * @libar-docs-status completed
- * @libar-docs-implements DurableEventsIntegration
- * @libar-docs-saga
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern MockPaymentActions
+ * @architect-status completed
+ * @architect-implements DurableEventsIntegration
+ * @architect-saga
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * Mock Payment Actions - Simulated external payment service.
  *

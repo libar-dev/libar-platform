@@ -1,9 +1,9 @@
-@libar-docs
-@libar-docs-pattern:FSMTransitions
-@libar-docs-status:completed
+@architect
+@architect-pattern:FSMTransitions
+@architect-status:completed
 @acceptance-criteria
-@libar-docs-implements:DeciderPattern
-@libar-docs-unlock-reason:metadata-alignment
+@architect-implements:DeciderPattern
+@architect-unlock-reason:metadata-alignment
 Feature: FSM State Transitions
 
   The FSM (Finite State Machine) module provides type-safe state management
@@ -16,7 +16,7 @@ Feature: FSM State Transitions
   # NOTE: This is a reference implementation for PDR-003 behavior feature files.
   # - No Release column in DataTables (per PDR-003)
   # - Uses @acceptance-criteria tag for scenarios
-  # - Links to pattern via @libar-docs-pattern tag
+  # - Links to pattern via @architect-pattern tag
 
   Background:
     Given a test FSM with states: draft, submitted, confirmed, cancelled

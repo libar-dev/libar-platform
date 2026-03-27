@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderDeciders
- * @libar-docs-status completed
- * @libar-docs-decider
- * @libar-docs-arch-role decider
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer domain
- * @libar-docs-used-by OrderCommandHandlers
+ * @architect
+ * @architect-pattern OrderDeciders
+ * @architect-status completed
+ * @architect-decider
+ * @architect-arch-role decider
+ * @architect-arch-context orders
+ * @architect-arch-layer domain
+ * @architect-used-by OrderCommandHandlers
  *
  * Pure decision functions for Order aggregate.
  * Each decider validates invariants and produces events.

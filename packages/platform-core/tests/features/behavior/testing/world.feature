@@ -1,15 +1,15 @@
-@libar-docs-pattern:BDDWorld
+@architect-pattern:BDDWorld
 @testing-infrastructure
-@libar-docs-pattern:BDDWorld
-@libar-docs-status:completed
-@libar-docs-phase:57
-@libar-docs-quarter:Q1-2026
-@libar-docs-effort:2h
-@libar-docs-effort-actual:2h
-@libar-docs-completed:2026-01-08
-@libar-docs-product-area:PlatformCore
-@libar-docs-business-value:manage-scenario-context-across-steps
-@libar-docs-priority:high
+@architect-pattern:BDDWorld
+@architect-status:completed
+@architect-phase:57
+@architect-quarter:Q1-2026
+@architect-effort:2h
+@architect-effort-actual:2h
+@architect-completed:2026-01-08
+@architect-product-area:PlatformCore
+@architect-business-value:manage-scenario-context-across-steps
+@architect-priority:high
 Feature: BDD Test World State Management
 
   As a BDD test author

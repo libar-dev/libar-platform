@@ -4,7 +4,7 @@
  * Provides test isolation through unique command ID prefixes per test run.
  * This eliminates the need for database cleanup between tests.
  *
- * @libar-docs-pattern CommandBusIdempotency
+ * @architect-pattern CommandBusIdempotency
  */
 
 import { ConvexTestingHelper } from "convex-helpers/testing";

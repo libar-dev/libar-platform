@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern MiddlewarePipeline
- * @libar-docs-status completed
- * @libar-docs-phase 10
- * @libar-docs-command
- * @libar-docs-uses CommandBusFoundation
- * @libar-docs-used-by CommandOrchestrator
+ * @architect
+ * @architect-pattern MiddlewarePipeline
+ * @architect-status completed
+ * @architect-phase 10
+ * @architect-command
+ * @architect-uses CommandBusFoundation
+ * @architect-used-by CommandOrchestrator
  *
  * ## Middleware Pipeline - Command Execution Hooks
  *

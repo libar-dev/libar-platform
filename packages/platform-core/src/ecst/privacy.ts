@@ -1,10 +1,10 @@
 /**
  * Crypto-Shredding Markers - GDPR compliance for fat events
  *
- * @libar-docs
- * @libar-docs-implements EcstFatEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EcstFatEvents
+ * @architect-status completed
+ * @architect-event-sourcing
  *
  * Provides tools for marking PII (Personally Identifiable Information) in
  * fat events for GDPR-compliant deletion. Marked fields can be identified

@@ -1,8 +1,8 @@
 /**
  * Example App Modernization - Step Definitions Stub
  *
- * @libar-docs
- * @libar-docs-implements ExampleAppModernization
+ * @architect
+ * @architect-implements ExampleAppModernization
  *
  * NOTE: This file is in tests/planning-stubs/ and excluded from vitest.
  * Move to tests/steps/modernization/ during implementation and replace throw statements.

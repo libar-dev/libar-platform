@@ -1,15 +1,15 @@
-@libar-docs-pattern:PollingUtilities
+@architect-pattern:PollingUtilities
 @testing-infrastructure
-@libar-docs-pattern:PollingUtilities
-@libar-docs-status:completed
-@libar-docs-phase:56
-@libar-docs-quarter:Q1-2026
-@libar-docs-effort:2h
-@libar-docs-effort-actual:2h
-@libar-docs-completed:2026-01-08
-@libar-docs-product-area:PlatformCore
-@libar-docs-business-value:enable-async-condition-waiting-in-tests
-@libar-docs-priority:high
+@architect-pattern:PollingUtilities
+@architect-status:completed
+@architect-phase:56
+@architect-quarter:Q1-2026
+@architect-effort:2h
+@architect-effort-actual:2h
+@architect-completed:2026-01-08
+@architect-product-area:PlatformCore
+@architect-business-value:enable-async-condition-waiting-in-tests
+@architect-priority:high
 Feature: Polling Utilities for Integration Tests
 
   As a developer writing integration tests

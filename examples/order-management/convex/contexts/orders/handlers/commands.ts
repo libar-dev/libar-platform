@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderCommandHandlers
- * @libar-docs-status completed
- * @libar-docs-command
- * @libar-docs-arch-role command-handler
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses OrderDeciders, OrderRepository
+ * @architect
+ * @architect-pattern OrderCommandHandlers
+ * @architect-status completed
+ * @architect-command
+ * @architect-arch-role command-handler
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses OrderDeciders, OrderRepository
  *
  * Order command handlers implementing the dual-write pattern.
  *

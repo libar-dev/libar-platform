@@ -5,8 +5,8 @@
  * - createOutboxHandler factory
  * - Event building from action results
  *
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
+ * @architect
+ * @architect-implements EventStoreDurability
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";

@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-pattern CustomerCancellationsProjection
- * @libar-docs-status completed
- * @libar-docs-projection
- * @libar-docs-arch-role projection
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-uses OrderCommandHandlers
- * @libar-docs-used-by AgentAsBoundedContext
+ * @architect
+ * @architect-pattern CustomerCancellationsProjection
+ * @architect-status completed
+ * @architect-projection
+ * @architect-arch-role projection
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-uses OrderCommandHandlers
+ * @architect-used-by AgentAsBoundedContext
  *
  * Customer cancellation history with rolling 30-day window.
  * Provides getCustomerCancellations() for churn risk agent pattern detection. Added in Phase 22.

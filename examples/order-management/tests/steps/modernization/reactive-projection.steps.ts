@@ -1,9 +1,9 @@
 /**
  * Reactive Order Detail View - Step Definitions
  *
- * @libar-docs
- * @libar-docs-implements ExampleAppModernization
- * @libar-docs-phase 23
+ * @architect
+ * @architect-implements ExampleAppModernization
+ * @architect-phase 23
  *
  * These tests verify the reactive projection pattern for OrderDetailView:
  * - Instant updates via synchronous event merging

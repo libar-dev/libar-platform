@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Logging Testing Utilities
 
   As a platform developer

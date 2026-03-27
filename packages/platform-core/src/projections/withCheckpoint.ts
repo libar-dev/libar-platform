@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern ProjectionCheckpointing
- * @libar-docs-status completed
- * @libar-docs-phase 04
- * @libar-docs-projection
- * @libar-docs-uses EventStoreFoundation
+ * @architect
+ * @architect-pattern ProjectionCheckpointing
+ * @architect-status completed
+ * @architect-phase 04
+ * @architect-projection
+ * @architect-uses EventStoreFoundation
  *
  * ## Projection Checkpointing - Idempotent Processing
  *

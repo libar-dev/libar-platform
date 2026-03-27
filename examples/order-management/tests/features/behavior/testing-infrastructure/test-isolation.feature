@@ -1,4 +1,4 @@
-@libar-docs-pattern:TestIsolation
+@architect-pattern:TestIsolation
 @testing-infrastructure
 Feature: Test Isolation via Namespace Prefixing
 

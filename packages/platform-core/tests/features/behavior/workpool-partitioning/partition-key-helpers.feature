@@ -1,5 +1,5 @@
-@libar-docs
-@libar-docs-implements:WorkpoolPartitioningStrategy
+@architect
+@architect-implements:WorkpoolPartitioningStrategy
 Feature: Workpool Partition Key Helpers
 
   As a platform developer

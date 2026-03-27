@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderFulfillmentSaga
- * @libar-docs-status completed
- * @libar-docs-saga
- * @libar-docs-arch-role saga
- * @libar-docs-arch-layer application
- * @libar-docs-uses OrderCommandHandlers, InventoryCommandHandlers
+ * @architect
+ * @architect-pattern OrderFulfillmentSaga
+ * @architect-status completed
+ * @architect-saga
+ * @architect-arch-role saga
+ * @architect-arch-layer application
+ * @architect-uses OrderCommandHandlers, InventoryCommandHandlers
  *
  * Order Fulfillment Saga.
  *

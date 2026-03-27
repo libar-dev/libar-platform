@@ -23,7 +23,7 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 
 #### Convention content is extracted from tagged decision records
 
-- **Invariant:** Decision records tagged with `@libar-docs-convention` are the source of truth for durable reference content. The extractor filters by convention tag value and extracts Rule block content.
+- **Invariant:** Decision records tagged with `@architect-convention` are the source of truth for durable reference content. The extractor filters by convention tag value and extracts Rule block content.
 
 - **Rationale:** Recipe Rule blocks contain durable knowledge (tables, context, rationale) that belongs in decision records — permanent, queryable, tagged. Decision records are already extracted as patterns in MasterDataset.
 
@@ -47,9 +47,9 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 
 #### Convention tag values classify decision records by topic
 
-- **Invariant:** The `@libar-docs-convention` tag uses CSV format with defined values. Each value maps to a knowledge domain that reference codecs consume.
+- **Invariant:** The `@architect-convention` tag uses CSV format with defined values. Each value maps to a knowledge domain that reference codecs consume.
 
-- **Rationale:** Convention tags are orthogonal to existing `@libar-docs-adr-category` (which is too coarse — "process" covers both testing policy and FSM rules). | Value | Knowledge Domain | Reference Docs That Consume | | --- | --- | --- | | testing-policy | Test safety, Gherkin-only policy | GherkinPatternsReference, ValidationReference | | fsm-rules | FSM transitions, protection levels | ProcessGuardReference, SessionGuidesReference | | cli-patterns | CLI conventions, arg parsing | InstructionsReference, ConfigurationReference | | output-format | Text vs markdown, codec patterns | ArchitectureReference | | pattern-naming | Pattern identifiers, @implements | InstructionsReference, MethodologyReference | | session-workflow | Session types, handoff, stubs | SessionGuidesReference, MethodologyReference | | config-presets | Presets, tag prefixes, RegexBuilders | ConfigurationReference | | annotation-system | Tag formats, dual-source, opt-in | InstructionsReference, TaxonomyReference | | pipeline-architecture | Four-stage pipeline, codecs, MasterDataset | ArchitectureReference | | publishing | Publishing strategy, versioning | PublishingReference | | doc-generation | Recipes, generators, dual output | IndexReference |
+- **Rationale:** Convention tags are orthogonal to existing `@architect-adr-category` (which is too coarse — "process" covers both testing policy and FSM rules). | Value | Knowledge Domain | Reference Docs That Consume | | --- | --- | --- | | testing-policy | Test safety, Gherkin-only policy | GherkinPatternsReference, ValidationReference | | fsm-rules | FSM transitions, protection levels | ProcessGuardReference, SessionGuidesReference | | cli-patterns | CLI conventions, arg parsing | InstructionsReference, ConfigurationReference | | output-format | Text vs markdown, codec patterns | ArchitectureReference | | pattern-naming | Pattern identifiers, @implements | InstructionsReference, MethodologyReference | | session-workflow | Session types, handoff, stubs | SessionGuidesReference, MethodologyReference | | config-presets | Presets, tag prefixes, RegexBuilders | ConfigurationReference | | annotation-system | Tag formats, dual-source, opt-in | InstructionsReference, TaxonomyReference | | pipeline-architecture | Four-stage pipeline, codecs, MasterDataset | ArchitectureReference | | publishing | Publishing strategy, versioning | PublishingReference | | doc-generation | Recipes, generators, dual output | IndexReference |
 
 | Value                 | Knowledge Domain                           | Reference Docs That Consume                   |
 | --------------------- | ------------------------------------------ | --------------------------------------------- |
@@ -67,7 +67,7 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 
 #### Recipe Rule blocks are migrated to convention-tagged decision records
 
-- **Invariant:** Every Rule block from the 11 recipe .feature files is preserved as a Rule block in a decision record tagged with the appropriate `@libar-docs-convention` value. No durable content is lost during migration.
+- **Invariant:** Every Rule block from the 11 recipe .feature files is preserved as a Rule block in a decision record tagged with the appropriate `@architect-convention` value. No durable content is lost during migration.
 
 - **Rationale:** Recipe Rule blocks contain tables, rationale, and context that are the authoritative reference for the delivery process. Migration must be lossless.
 

@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern DurableAppendAction
- * @libar-docs-status completed
- * @libar-docs-implements DurableEventsIntegration
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern DurableAppendAction
+ * @architect-status completed
+ * @architect-implements DurableEventsIntegration
+ * @architect-infra
  *
  * Durable Append - Workpool-backed event append with retry.
  *

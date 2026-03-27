@@ -13,9 +13,9 @@
  * Event payloads may contain sensitive data. These queries filter events
  * to only return those for the requesting entity (streamId match).
  *
- * @libar-docs
- * @libar-docs-implements ReactiveProjections
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements ReactiveProjections
+ * @architect-status completed
  */
 
 import { query } from "../_generated/server";

@@ -1,5 +1,5 @@
-@libar-docs
-@libar-docs-implements:EventStoreDurability
+@architect
+@architect-implements:EventStoreDurability
 @acceptance-criteria
 Feature: Outbox Handler Pattern
 

@@ -1,8 +1,8 @@
-@libar-docs
-@libar-docs-status:completed
-@libar-docs-implements:AgentAsBoundedContext
-@libar-docs-phase:22
-@libar-docs-product-area:Platform
+@architect
+@architect-status:completed
+@architect-implements:AgentAsBoundedContext
+@architect-phase:22
+@architect-product-area:Platform
 @agent
 Feature: Agent Audit Trail
 

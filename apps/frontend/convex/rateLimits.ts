@@ -4,10 +4,10 @@
  * Centralized rate limit configuration for the order-management application.
  * Uses @convex-dev/rate-limiter for production-grade limiting with sharding.
  *
- * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern DurableFunctionAdapters
+ * @architect-status active
+ * @architect-infra
  */
 import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
 import { components } from "./_generated/api";

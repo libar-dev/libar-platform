@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Circuit Breaker
 
   As a platform developer

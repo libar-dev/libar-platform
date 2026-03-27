@@ -1,8 +1,8 @@
 /**
  * Privacy Markers (Crypto-Shredding) - Step Definitions
  *
- * @libar-docs
- * @libar-docs-pattern EcstFatEvents
+ * @architect
+ * @architect-pattern EcstFatEvents
  *
  * BDD step definitions for crypto-shredding behavior:
  * - PII field marking

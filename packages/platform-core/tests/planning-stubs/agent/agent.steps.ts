@@ -1,8 +1,8 @@
 /**
  * Agent as Bounded Context - Step Definitions (Stub)
  *
- * @libar-docs
- * @libar-docs-roadmap-spec AgentAsBoundedContext
+ * @architect
+ * @architect-roadmap-spec AgentAsBoundedContext
  *
  * PLANNING ARTIFACT: Stub step definitions for Phase 22 Agent features.
  * Covers: event-subscription, pattern-detection, command-emission, human-in-loop, audit-trail

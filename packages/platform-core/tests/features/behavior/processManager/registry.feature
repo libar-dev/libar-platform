@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Process Manager Registry
 
   As a platform developer

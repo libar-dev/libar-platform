@@ -1,4 +1,4 @@
-@libar-docs-pattern:DeciderAssertions
+@architect-pattern:DeciderAssertions
 @testing-infrastructure
 Feature: Decider Testing Assertions
 

@@ -1,8 +1,8 @@
-@libar-docs
-@libar-docs-implements:ReservationPattern
-@libar-docs-status:active
-@libar-docs-phase:20
-@libar-docs-product-area:PlatformCore
+@architect
+@architect-implements:ReservationPattern
+@architect-status:active
+@architect-phase:20
+@architect-product-area:PlatformCore
 @reservation
 Feature: Release Operation
 

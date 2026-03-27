@@ -15,7 +15,7 @@ Feature: Pattern Annotation Prioritization
     4. CMS (Command Model State)
     5. Handlers (command/event handling)
   - Annotate foundational patterns before advanced ones
-  - Use @libar-docs-roadmap tag for patterns relevant to planned phases
+  - Use @architect-roadmap tag for patterns relevant to planned phases
   - Progressive annotation: annotate per PR as code is touched
 
   **Priority Tiers:**

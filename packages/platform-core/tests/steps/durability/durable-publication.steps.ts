@@ -9,8 +9,8 @@
  * - retryPublication mutation
  * - onComplete callback behavior
  *
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
+ * @architect
+ * @architect-implements EventStoreDurability
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";

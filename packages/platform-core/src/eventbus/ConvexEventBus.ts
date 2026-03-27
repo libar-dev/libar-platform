@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern EventBusAbstraction
- * @libar-docs-status completed
- * @libar-docs-phase 09
- * @libar-docs-event-sourcing
- * @libar-docs-used-by ProcessManagerLifecycle, SagaOrchestration
+ * @architect
+ * @architect-pattern EventBusAbstraction
+ * @architect-status completed
+ * @architect-phase 09
+ * @architect-event-sourcing
+ * @architect-used-by ProcessManagerLifecycle, SagaOrchestration
  *
  * ## EventBus - Pub/Sub for Domain Events
  *

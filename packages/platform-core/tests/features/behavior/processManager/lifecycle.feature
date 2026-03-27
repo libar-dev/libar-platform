@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Process Manager Lifecycle State Machine
 
   As a platform developer

@@ -5,11 +5,11 @@
  * Enables production-grade rate limiting with persistence and sharding without
  * requiring changes to the middleware pipeline.
  *
- * @libar-docs
- * @libar-docs-implements DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
- * @libar-docs-uses RateLimitChecker
+ * @architect
+ * @architect-implements DurableFunctionAdapters
+ * @architect-status active
+ * @architect-infra
+ * @architect-uses RateLimitChecker
  */
 import type { RateLimitChecker, RateLimitResult } from "./types.js";
 

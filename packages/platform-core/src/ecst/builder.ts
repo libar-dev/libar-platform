@@ -1,10 +1,10 @@
 /**
  * Fat Event Builder - Creates ECST (Event-Carried State Transfer) events
  *
- * @libar-docs
- * @libar-docs-implements EcstFatEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EcstFatEvents
+ * @architect-status completed
+ * @architect-event-sourcing
  *
  * Builder utilities for creating fat events with embedded context.
  * Fat events carry full context for downstream consumers, eliminating

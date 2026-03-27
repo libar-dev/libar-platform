@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements WorkpoolPartitioningStrategy
- * @libar-docs-status completed
- * @libar-docs-projection
+ * @architect
+ * @architect-implements WorkpoolPartitioningStrategy
+ * @architect-status completed
+ * @architect-projection
  *
- * @libar-docs-uses EventBusAbstraction
- * @libar-docs-used-by CommandOrchestrator, Projections, DCBRetry
- * @libar-docs-usecase "When creating partition keys for Workpool-based event processing"
+ * @architect-uses EventBusAbstraction
+ * @architect-used-by CommandOrchestrator, Projections, DCBRetry
+ * @architect-usecase "When creating partition keys for Workpool-based event processing"
  *
  * ## Partition Key Helper Functions
  *

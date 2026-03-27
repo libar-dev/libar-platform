@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern PaymentOutboxHandler
- * @libar-docs-status completed
- * @libar-docs-implements DurableEventsIntegration
- * @libar-docs-saga
+ * @architect
+ * @architect-pattern PaymentOutboxHandler
+ * @architect-status completed
+ * @architect-implements DurableEventsIntegration
+ * @architect-saga
  *
  * Payment Outbox Handler - Captures payment action results as events.
  *

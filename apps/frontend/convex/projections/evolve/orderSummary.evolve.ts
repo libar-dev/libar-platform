@@ -13,9 +13,9 @@
  * 2. **Deterministic**: Same inputs always produce same outputs
  * 3. **Total**: Handles ALL event types (unknown types return state unchanged)
  *
- * @libar-docs
- * @libar-docs-implements ReactiveProjections
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements ReactiveProjections
+ * @architect-status completed
  */
 
 // Types for documentation purposes - the evolve function implements EvolveFunction pattern

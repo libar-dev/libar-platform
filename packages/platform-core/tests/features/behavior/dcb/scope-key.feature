@@ -1,7 +1,7 @@
-@libar-docs-implements:DynamicConsistencyBoundaries
-@libar-docs-status:active
-@libar-docs-phase:16
-@libar-docs-product-area:PlatformCore
+@architect-implements:DynamicConsistencyBoundaries
+@architect-status:active
+@architect-phase:16
+@architect-product-area:PlatformCore
 Feature: DCB Scope Key Utilities
 
   As a platform developer

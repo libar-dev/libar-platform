@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern CorrelationChainSystem
- * @libar-docs-status completed
- * @libar-docs-phase 09
- * @libar-docs-uses EventStoreFoundation
- * @libar-docs-used-by CommandOrchestrator, SagaOrchestration
+ * @architect
+ * @architect-pattern CorrelationChainSystem
+ * @architect-status completed
+ * @architect-phase 09
+ * @architect-uses EventStoreFoundation
+ * @architect-used-by CommandOrchestrator, SagaOrchestration
  *
  * ## Correlation Chain - Request Tracing
  *

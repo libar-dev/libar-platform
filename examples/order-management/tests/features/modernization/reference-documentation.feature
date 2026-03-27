@@ -1,7 +1,7 @@
-@libar-docs-phase:23
-@libar-docs-product-area:ExampleApp
-@libar-docs-pattern:ExampleAppModernization
-@libar-docs-status:completed
+@architect-phase:23
+@architect-product-area:ExampleApp
+@architect-pattern:ExampleAppModernization
+@architect-status:completed
 @acceptance-criteria
 Feature: Reference Implementation Documentation
 

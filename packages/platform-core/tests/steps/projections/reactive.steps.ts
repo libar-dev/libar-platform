@@ -7,8 +7,8 @@
  * - conflict-detection.feature: Conflict detection and rollback
  * - reactive-eligibility.feature: Category-based eligibility
  *
- * @libar-docs
- * @libar-docs-roadmap-spec ReactiveProjections
+ * @architect
+ * @architect-roadmap-spec ReactiveProjections
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

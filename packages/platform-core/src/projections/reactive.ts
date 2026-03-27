@@ -49,9 +49,9 @@
  * });
  * ```
  *
- * @libar-docs
- * @libar-docs-implements ReactiveProjections
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements ReactiveProjections
+ * @architect-status completed
  */
 
 import { isViewProjection, type ProjectionCategory } from "@libar-dev/platform-bc";

@@ -1,14 +1,14 @@
 /**
- * @libar-docs
- * @libar-docs-pattern ReservationReleasePM
- * @libar-docs-status completed
- * @libar-docs-saga
- * @libar-docs-arch-role process-manager
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses InventoryCommandHandlers, OrderWithInventoryProjection
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern ReservationReleasePM
+ * @architect-status completed
+ * @architect-saga
+ * @architect-arch-role process-manager
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses InventoryCommandHandlers, OrderWithInventoryProjection
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Process manager: OrderCancelled -> ReleaseReservation command.
  * Queries orderWithInventory projection to check active reservation exists before emitting release.

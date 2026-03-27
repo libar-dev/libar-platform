@@ -1,10 +1,10 @@
 /**
  * Entity Embedding Helpers - Snapshot entity data into fat events
  *
- * @libar-docs
- * @libar-docs-implements EcstFatEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EcstFatEvents
+ * @architect-status completed
+ * @architect-event-sourcing
  *
  * Helper functions for embedding entity data into fat events.
  * Enables selective field inclusion and crypto-shredding markers.

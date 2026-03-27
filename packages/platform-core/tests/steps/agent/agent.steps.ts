@@ -1,8 +1,8 @@
 /**
  * Agent as Bounded Context - Step Definitions
  *
- * @libar-docs
- * @libar-docs-pattern AgentAsBoundedContext
+ * @architect
+ * @architect-pattern AgentAsBoundedContext
  *
  * BDD step definitions for Phase 22 Agent features.
  * Tests the PURE FUNCTIONS from the agent module:

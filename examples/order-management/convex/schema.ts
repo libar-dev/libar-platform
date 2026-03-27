@@ -539,8 +539,8 @@ export default defineSchema({
    * Tracks progress of projection rebuild operations.
    * Enables checkpoint-based resumption for long-running replays.
    *
-   * @libar-docs
-   * @libar-docs-implements EventReplayInfrastructure
+   * @architect
+   * @architect-implements EventReplayInfrastructure
    */
   replayCheckpoints: defineTable({
     replayId: v.string(), // Unique identifier (for external reference)

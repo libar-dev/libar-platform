@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Logging Types
 
   As a platform developer

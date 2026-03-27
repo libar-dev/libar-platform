@@ -20,9 +20,9 @@
  * - Timestamps can drift, be out of sync, or have precision issues
  * - Position comparison is deterministic and reliable
  *
- * @libar-docs
- * @libar-docs-implements ReactiveProjections
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements ReactiveProjections
+ * @architect-status completed
  */
 
 // ============================================================================

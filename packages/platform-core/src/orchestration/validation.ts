@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements WorkpoolPartitioningStrategy
- * @libar-docs-status active
- * @libar-docs-command
+ * @architect
+ * @architect-implements WorkpoolPartitioningStrategy
+ * @architect-status active
+ * @architect-command
  *
- * @libar-docs-uses WorkpoolPartitioningStrategy
- * @libar-docs-used-by CommandOrchestrator
- * @libar-docs-usecase "When validating command configs have explicit partition keys"
+ * @architect-uses WorkpoolPartitioningStrategy
+ * @architect-used-by CommandOrchestrator
+ * @architect-usecase "When validating command configs have explicit partition keys"
  *
  * ## Command Config Partition Key Validation
  *

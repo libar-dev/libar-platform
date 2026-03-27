@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-pattern SagaRegistry
- * @libar-docs-status completed
- * @libar-docs-saga
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-used-by SagaRouter, OrderFulfillmentSaga
+ * @architect
+ * @architect-pattern SagaRegistry
+ * @architect-status completed
+ * @architect-saga
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-used-by SagaRouter, OrderFulfillmentSaga
  *
  * Saga registry providing idempotent saga start (startSagaIfNotExists),
  * status tracking, and Zod payload validation at runtime.

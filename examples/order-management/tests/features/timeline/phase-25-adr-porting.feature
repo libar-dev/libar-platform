@@ -9,7 +9,7 @@ Feature: ADR Porting to Feature Files
 
   **Solution:**
   - Review each ADR against new aggregate-less roadmap for validity
-  - Convert valid ADRs to .feature files with @libar-docs-decision tag
+  - Convert valid ADRs to .feature files with @architect-decision tag
   - Archive or supersede outdated ADRs with proper annotation
   - Wire docs:adrs generator to monorepo-level commands
   - Generate DECISIONS.md with categorized ADR index

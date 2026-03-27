@@ -1,10 +1,10 @@
 /**
  * ECST Type Definitions
  *
- * @libar-docs
- * @libar-docs-implements EcstFatEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EcstFatEvents
+ * @architect-status completed
+ * @architect-event-sourcing
  *
  * Core type definitions for Event-Carried State Transfer (ECST) fat events.
  */

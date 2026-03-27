@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Process Manager Executor
 
   As a platform developer

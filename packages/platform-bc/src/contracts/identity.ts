@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern BoundedContextIdentity
- * @libar-docs-status completed
- * @libar-docs-ddd
- * @libar-docs-deliverable BoundedContextFoundation:bounded-context-identity
+ * @architect
+ * @architect-pattern BoundedContextIdentity
+ * @architect-status completed
+ * @architect-ddd
+ * @architect-deliverable BoundedContextFoundation:bounded-context-identity
  *
  * ## Bounded Context Identity - Domain Metadata
  *

@@ -3,10 +3,10 @@
  *
  * Exponential backoff with jitter for DCB conflict retry scheduling.
  *
- * @libar-docs
- * @libar-docs-implements DurableFunctionAdapters
- * @libar-docs-status completed
- * @libar-docs-infra
+ * @architect
+ * @architect-implements DurableFunctionAdapters
+ * @architect-status completed
+ * @architect-infra
  *
  * ### Formula
  *

@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern ProjectionDefinitions
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern ProjectionDefinitions
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * Registry of all projection definitions and replay handler registry.
  * Central configuration for projection infrastructure.

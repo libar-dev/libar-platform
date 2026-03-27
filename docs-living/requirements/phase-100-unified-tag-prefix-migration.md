@@ -15,13 +15,13 @@
 
 ## Description
 
-**Problem:** Per PDR-004, all tags should use the unified `@libar-docs-*` prefix.
+**Problem:** Per PDR-004, all tags should use the unified `@architect-*` prefix.
 The codebase had multiple tag formats that needed standardization.
 
 **Current State (2026-01-08):** All ~119 feature files migrated (~1,159 tags converted).
 Migration script created and tested. Package internals still use hardcoded
 `@libar-process-*` (scanner/extractor). Remaining: Update package to recognize
-`@libar-docs-*` natively.
+`@architect-*` natively.
 
 **Tooling:**
 
@@ -41,19 +41,19 @@ Migration script created and tested. Package internals still use hardcoded
 
 - Given a feature file with `@pattern:MyPattern`
 - When running the pattern linter
-- Then warning: "Deprecated: @pattern: should be @libar-docs-pattern:"
+- Then warning: "Deprecated: @pattern: should be @architect-pattern:"
 - And validation still passes
 
 **Old prefix tags trigger deprecation warning**
 
 - Given a feature file with `@libar-process-pattern:MyPattern`
 - When running the pattern linter
-- Then warning: "Deprecated: @libar-process-_ prefix should be @libar-docs-_"
+- Then warning: "Deprecated: @libar-process-_ prefix should be @architect-_"
 - And validation still passes
 
 **New unified prefix passes without warning**
 
-- Given a feature file with `@libar-docs-pattern:MyPattern`
+- Given a feature file with `@architect-pattern:MyPattern`
 - When running the pattern linter
 - Then no deprecation warning is emitted
 - And validation passes
@@ -62,17 +62,17 @@ Migration script created and tested. Package internals still use hardcoded
 
 - Given a feature file with short-form tags
 - When running migrate-tags --file path/to/file.feature
-- Then all `@pattern:` become `@libar-docs-pattern:`
-- And all `@status:` become `@libar-docs-status:`
+- Then all `@pattern:` become `@architect-pattern:`
+- And all `@status:` become `@architect-status:`
 - And file is updated in place
 
 **Migrate old prefix tags**
 
 - Given a feature file with `@libar-process-*` tags
 - When running migrate-tags --file path/to/file.feature
-- Then all `@libar-process-pattern:` become `@libar-docs-pattern:`
-- And all `@libar-process-status:` become `@libar-docs-status:`
-- And all `@libar-process-adr:` become `@libar-docs-adr:`
+- Then all `@libar-process-pattern:` become `@architect-pattern:`
+- And all `@libar-process-status:` become `@architect-status:`
+- And all `@libar-process-adr:` become `@architect-adr:`
 - And file is updated in place
 
 **Dry run shows changes without modifying**
@@ -86,7 +86,7 @@ Migration script created and tested. Package internals still use hardcoded
 
 - Given delivery-process/decisions/ contains 4 PDR files
 - When running migrate-tags --dir delivery-process/decisions/
-- Then all files are updated to use `@libar-docs-*` prefix
+- Then all files are updated to use `@architect-*` prefix
 - And summary shows "Migrated 4 files"
 
 **Scanner extracts from old prefix tags**
@@ -98,7 +98,7 @@ Migration script created and tested. Package internals still use hardcoded
 
 **Scanner extracts from new prefix tags**
 
-- Given a feature file with `@libar-docs-adr:001`
+- Given a feature file with `@architect-adr:001`
 - When the scanner parses the file
 - Then ADR number 001 is extracted
 - And no deprecation warning is logged
@@ -125,7 +125,7 @@ Migration script created and tested. Package internals still use hardcoded
 
 **Generator processes new unified prefix tags**
 
-- Given a feature file with `@libar-docs-pattern:MyPattern`
+- Given a feature file with `@architect-pattern:MyPattern`
 - When generating documentation
 - Then pattern is included in output
 - And no deprecation warning is logged
@@ -184,7 +184,7 @@ _Verified by: Override taxonomy via CLI flag, Default taxonomy uses package cate
 - Migration script (CLI) (Complete)
 - Repo-wide tag migration (Complete)
 - Scanner dual-prefix support (Pending)
-- Package internal @libar-docs-\* support (Pending)
+- Package internal @architect-\* support (Pending)
 - Deprecation warning in generators (Pending)
 - Taxonomy override CLI option (Pending)
 

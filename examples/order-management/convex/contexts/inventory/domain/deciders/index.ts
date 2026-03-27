@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern InventoryDeciders
- * @libar-docs-status completed
- * @libar-docs-decider
- * @libar-docs-arch-role decider
- * @libar-docs-arch-context inventory
- * @libar-docs-arch-layer domain
- * @libar-docs-used-by InventoryCommandHandlers
+ * @architect
+ * @architect-pattern InventoryDeciders
+ * @architect-status completed
+ * @architect-decider
+ * @architect-arch-role decider
+ * @architect-arch-context inventory
+ * @architect-arch-layer domain
+ * @architect-used-by InventoryCommandHandlers
  *
  * Pure decision functions for Inventory aggregate (product + reservation).
  * SKU uniqueness, stock sufficiency, reservation lifecycle invariants. No I/O.

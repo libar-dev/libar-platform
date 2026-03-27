@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern DCBRetryExecution
- * @libar-docs-status active
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern DCBRetryExecution
+ * @architect-status active
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * DCB Retry Execution — reference implementation for integrating withDCBRetry
  * into command handlers. Self-referential retry pattern where the retry mutation

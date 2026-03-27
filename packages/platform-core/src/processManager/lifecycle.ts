@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern ProcessManagerLifecycle
- * @libar-docs-status completed
- * @libar-docs-phase 13
- * @libar-docs-uses EventBusAbstraction
+ * @architect
+ * @architect-pattern ProcessManagerLifecycle
+ * @architect-status completed
+ * @architect-phase 13
+ * @architect-uses EventBusAbstraction
  *
  * ## Process Manager Lifecycle FSM
  *

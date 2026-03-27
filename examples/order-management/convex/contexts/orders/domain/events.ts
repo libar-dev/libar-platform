@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderDomainEvents
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
- * @libar-docs-arch-role bounded-context
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer domain
- * @libar-docs-used-by OrderCommandHandlers, OrderSummaryProjection, OrderFulfillmentSaga, OrderNotificationPM, ReservationReleasePM
+ * @architect
+ * @architect-pattern OrderDomainEvents
+ * @architect-status completed
+ * @architect-event-sourcing
+ * @architect-arch-role bounded-context
+ * @architect-arch-context orders
+ * @architect-arch-layer domain
+ * @architect-used-by OrderCommandHandlers, OrderSummaryProjection, OrderFulfillmentSaga, OrderNotificationPM, ReservationReleasePM
  *
  * Orders BC domain events (6 types, 2 schema versions).
  * V1: Original schemas. V2: OrderSubmitted with CustomerSnapshot (Fat Events).

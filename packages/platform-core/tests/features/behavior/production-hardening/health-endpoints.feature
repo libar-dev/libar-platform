@@ -1,9 +1,9 @@
-@libar-docs
-@libar-docs-implements:ProductionHardening
+@architect
+@architect-implements:ProductionHardening
 @acceptance-criteria
-@libar-docs-status:roadmap
-@libar-docs-phase:18
-@libar-docs-product-area:Platform
+@architect-status:roadmap
+@architect-phase:18
+@architect-product-area:Platform
 Feature: Health Endpoints - Kubernetes Probes
 
   As a Kubernetes operator

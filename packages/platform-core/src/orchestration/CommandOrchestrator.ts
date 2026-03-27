@@ -27,15 +27,15 @@ import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 
 /**
- * @libar-docs
- * @libar-docs-command @libar-docs-core @libar-docs-overview
- * @libar-docs-pattern CommandOrchestrator
- * @libar-docs-status completed
- * @libar-docs-usecase "Executing commands with dual-write pattern"
- * @libar-docs-usecase "Coordinating CMS update, event append, and projection trigger"
- * @libar-docs-usecase "Ensuring command idempotency across retries"
- * @libar-docs-uses EventStore, CommandBus, MiddlewarePipeline, Workpool
- * @libar-docs-used-by BoundedContextHandlers
+ * @architect
+ * @architect-command @architect-core @architect-overview
+ * @architect-pattern CommandOrchestrator
+ * @architect-status completed
+ * @architect-usecase "Executing commands with dual-write pattern"
+ * @architect-usecase "Coordinating CMS update, event append, and projection trigger"
+ * @architect-usecase "Ensuring command idempotency across retries"
+ * @architect-uses EventStore, CommandBus, MiddlewarePipeline, Workpool
+ * @architect-used-by BoundedContextHandlers
  *
  * ## CommandOrchestrator - Dual-Write Pattern Implementation
  *

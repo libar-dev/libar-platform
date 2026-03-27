@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern IntegrationRoutes
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-uses OrderCommandHandlers
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern IntegrationRoutes
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-uses OrderCommandHandlers
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Integration event routes. Translates internal domain events to integration
  * events for external consumers. Currently: OrderSubmitted -> OrderPlacedIntegration.

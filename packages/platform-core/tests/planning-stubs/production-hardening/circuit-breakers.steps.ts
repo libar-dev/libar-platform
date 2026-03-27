@@ -1,8 +1,8 @@
 /**
  * Circuit Breakers - Step Definitions Stub
  *
- * @libar-docs
- * @libar-docs-roadmap-spec ProductionHardening
+ * @architect
+ * @architect-roadmap-spec ProductionHardening
  *
  * NOTE: This file is in tests/planning-stubs/ and excluded from vitest.
  * Move to tests/steps/monitoring/ during implementation.

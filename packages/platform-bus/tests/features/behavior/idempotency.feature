@@ -1,15 +1,15 @@
-@libar-docs-pattern:CommandBusIdempotency
+@architect-pattern:CommandBusIdempotency
 @acceptance-criteria
-@libar-docs-pattern:CommandBusIdempotency
-@libar-docs-status:completed
-@libar-docs-phase:59
-@libar-docs-quarter:Q1-2026
-@libar-docs-effort:4h
-@libar-docs-effort-actual:4h
-@libar-docs-completed:2026-01-08
-@libar-docs-product-area:PlatformBus
-@libar-docs-business-value:prevent-duplicate-command-processing
-@libar-docs-priority:critical
+@architect-pattern:CommandBusIdempotency
+@architect-status:completed
+@architect-phase:59
+@architect-quarter:Q1-2026
+@architect-effort:4h
+@architect-effort-actual:4h
+@architect-completed:2026-01-08
+@architect-product-area:PlatformBus
+@architect-business-value:prevent-duplicate-command-processing
+@architect-priority:critical
 Feature: Command Bus Idempotency
 
   Command idempotency ensures that duplicate command submissions (same commandId)
@@ -21,7 +21,7 @@ Feature: Command Bus Idempotency
   # NOTE: This is a reference implementation for PDR-003 behavior feature files.
   # - No Release column in DataTables (per PDR-003)
   # - Uses @acceptance-criteria tag for scenarios
-  # - Links to pattern via @libar-docs-pattern tag
+  # - Links to pattern via @architect-pattern tag
 
   Background:
     Given the command bus component is available

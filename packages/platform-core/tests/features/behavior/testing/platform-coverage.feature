@@ -1,6 +1,6 @@
-@libar-docs
-@libar-docs-phase:19
-@libar-docs-product-area:PlatformCore
+@architect
+@architect-phase:19
+@architect-product-area:PlatformCore
 @testing-infrastructure
 Feature: Platform Package BDD Coverage
 

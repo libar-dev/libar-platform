@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern CrossContextReadModel
- * @libar-docs-status completed
- * @libar-docs-cqrs
- * @libar-docs-arch-role read-model
- * @libar-docs-arch-layer application
+ * @architect
+ * @architect-pattern CrossContextReadModel
+ * @architect-status completed
+ * @architect-cqrs
+ * @architect-arch-role read-model
+ * @architect-arch-layer application
  *
  * Cross-context query APIs. Combines data from multiple bounded contexts
  * into unified read models for the frontend. Uses app-level projections.

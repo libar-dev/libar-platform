@@ -1,8 +1,8 @@
-@libar-docs
-@libar-docs-status:completed
-@libar-docs-implements:EcstFatEvents
-@libar-docs-phase:20
-@libar-docs-product-area:PlatformCore
+@architect
+@architect-status:completed
+@architect-implements:EcstFatEvents
+@architect-phase:20
+@architect-product-area:PlatformCore
 @ecst @gdpr
 Feature: Privacy Markers (Crypto-Shredding)
 

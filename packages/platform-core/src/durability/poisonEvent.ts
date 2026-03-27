@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
  *
- * @libar-docs-uses EventStoreFoundation, Workpool
- * @libar-docs-used-by ProjectionProcessor, EventReplayInfrastructure, ProjectionRebuilder
- * @libar-docs-usecase "When projection processing must not be blocked by malformed events"
+ * @architect-uses EventStoreFoundation, Workpool
+ * @architect-used-by ProjectionProcessor, EventReplayInfrastructure, ProjectionRebuilder
+ * @architect-usecase "When projection processing must not be blocked by malformed events"
  *
  * ## Poison Event Handling
  *
@@ -50,7 +50,7 @@
  * await handler(ctx, event);
  * ```
  *
- * @libar-docs-uses EventStoreFoundation
+ * @architect-uses EventStoreFoundation
  */
 
 import type { PoisonEventRecord, PoisonEventConfig } from "./types.js";

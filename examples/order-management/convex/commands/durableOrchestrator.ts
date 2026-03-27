@@ -1,7 +1,7 @@
 /**
- * @libar-docs
- * @libar-docs-implements DurableEventsIntegration
- * @libar-docs-command
+ * @architect
+ * @architect-implements DurableEventsIntegration
+ * @architect-command
  *
  * Durable Command Orchestrator - Intent/Completion Bracketing Wrapper
  *

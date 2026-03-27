@@ -1,14 +1,14 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderCommandConfigs
- * @libar-docs-status completed
- * @libar-docs-command
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses OrderSummaryProjection, OrderWithInventoryProjection, OrderItemsProjection, CustomerCancellationsProjection
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern OrderCommandConfigs
+ * @architect-status completed
+ * @architect-command
+ * @architect-arch-role infrastructure
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses OrderSummaryProjection, OrderWithInventoryProjection, OrderItemsProjection, CustomerCancellationsProjection
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Command configs for 6 order commands. Wires each command to primary/secondary
  * projections, saga routes, and integration events.

@@ -8,8 +8,8 @@
  * - isActiveReplay
  * - isTerminalReplayStatus
  *
- * @libar-docs
- * @libar-docs-implements EventReplayInfrastructure
+ * @architect
+ * @architect-implements EventReplayInfrastructure
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

@@ -1,8 +1,8 @@
 /**
  * Fat Events - OrderSubmitted with Customer Snapshot
  *
- * @libar-docs
- * @libar-docs-implements ExampleAppModernization
+ * @architect
+ * @architect-implements ExampleAppModernization
  *
  * These tests verify the Fat Events pattern for OrderSubmitted:
  * - V2 events include customer snapshot (name, email)

@@ -1,8 +1,8 @@
-@libar-docs
-@libar-docs-status:roadmap
-@libar-docs-implements:IntegrationPatterns21a
-@libar-docs-phase:21
-@libar-docs-product-area:PlatformCore
+@architect
+@architect-status:roadmap
+@architect-implements:IntegrationPatterns21a
+@architect-phase:21
+@architect-product-area:PlatformCore
 @integration
 Feature: Context Map Documentation
 

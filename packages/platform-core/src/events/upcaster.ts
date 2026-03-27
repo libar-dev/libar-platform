@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern EventUpcasting
- * @libar-docs-status completed
- * @libar-docs-phase 09
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-pattern EventUpcasting
+ * @architect-status completed
+ * @architect-phase 09
+ * @architect-event-sourcing
  *
  * ## Event Upcasting Pipeline - Schema Evolution
  *

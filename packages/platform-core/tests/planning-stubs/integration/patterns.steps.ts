@@ -1,9 +1,9 @@
 /**
  * Integration Patterns - Step Definitions (Stub)
  *
- * @libar-docs
- * @libar-docs-roadmap-spec IntegrationPatterns21a (context-map, published-language, anti-corruption-layer)
- * @libar-docs-roadmap-spec IntegrationPatterns21b (event-versioning, contract-testing)
+ * @architect
+ * @architect-roadmap-spec IntegrationPatterns21a (context-map, published-language, anti-corruption-layer)
+ * @architect-roadmap-spec IntegrationPatterns21b (event-versioning, contract-testing)
  *
  * PLANNING ARTIFACT: Stub step definitions for Phase 21 Integration Patterns.
  * Split into two phases:

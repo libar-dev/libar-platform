@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern CMSRepository
- * @libar-docs-status completed
- * @libar-docs-phase 11
- * @libar-docs-uses CMSDualWrite
- * @libar-docs-used-by BoundedContextHandlers
+ * @architect
+ * @architect-pattern CMSRepository
+ * @architect-status completed
+ * @architect-phase 11
+ * @architect-uses CMSDualWrite
+ * @architect-used-by BoundedContextHandlers
  *
  * ## CMS Repository - Entity Access with Auto-Upcast
  *

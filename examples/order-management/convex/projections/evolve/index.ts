@@ -14,9 +14,9 @@
  * import { evolveOrderSummary } from "@convex/projections/evolve";
  * ```
  *
- * @libar-docs
- * @libar-docs-implements ReactiveProjections
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements ReactiveProjections
+ * @architect-status completed
  */
 
 // Order Summary evolve function

@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-pattern EventSubscriptionRegistry
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses OrderNotificationPM, ReservationReleasePM, AgentAsBoundedContext, AgentLLMIntegration
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern EventSubscriptionRegistry
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-arch-view overview-topology
+ * @architect-uses OrderNotificationPM, ReservationReleasePM, AgentAsBoundedContext, AgentLLMIntegration
+ * @architect-used-by OrderManagementInfrastructure
  *
  * EventBus pub/sub subscription definitions.
  * PM subscriptions (priority 200) + Agent subscriptions (priority 250).

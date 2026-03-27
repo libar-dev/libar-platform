@@ -4,10 +4,10 @@
  * Integration test steps for validating the withDCBRetry adapter
  * that handles OCC conflicts with automatic retry via Workpool.
  *
- * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern DurableFunctionAdapters
+ * @architect-status active
+ * @architect-infra
  *
  * @since Phase 18a
  */

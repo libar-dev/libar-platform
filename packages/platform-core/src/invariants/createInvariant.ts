@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern InvariantFramework
- * @libar-docs-status completed
- * @libar-docs-phase 11
- * @libar-docs-ddd
- * @libar-docs-uses BoundedContextFoundation
+ * @architect
+ * @architect-pattern InvariantFramework
+ * @architect-status completed
+ * @architect-phase 11
+ * @architect-ddd
+ * @architect-uses BoundedContextFoundation
  *
  * ## Invariant Framework - Declarative Business Rules
  *

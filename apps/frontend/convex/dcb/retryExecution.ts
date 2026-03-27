@@ -5,10 +5,10 @@
  * command handlers. It shows the self-referential retry pattern where
  * the retry mutation schedules itself for re-execution on OCC conflicts.
  *
- * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern DurableFunctionAdapters
+ * @architect-status active
+ * @architect-infra
  *
  * ## Pattern Overview
  *

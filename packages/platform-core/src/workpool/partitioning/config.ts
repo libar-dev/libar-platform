@@ -1,8 +1,8 @@
 /**
- * @libar-docs
- * @libar-docs-implements WorkpoolPartitioningStrategy
- * @libar-docs-status completed
- * @libar-docs-projection
+ * @architect
+ * @architect-implements WorkpoolPartitioningStrategy
+ * @architect-status completed
+ * @architect-projection
  *
  * ## Per-Projection Partition Configuration
  *

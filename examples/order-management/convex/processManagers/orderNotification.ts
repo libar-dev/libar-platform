@@ -1,14 +1,14 @@
 /**
- * @libar-docs
- * @libar-docs-pattern OrderNotificationPM
- * @libar-docs-status completed
- * @libar-docs-saga
- * @libar-docs-arch-role process-manager
- * @libar-docs-arch-context orders
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses OrderCommandHandlers
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern OrderNotificationPM
+ * @architect-status completed
+ * @architect-saga
+ * @architect-arch-role process-manager
+ * @architect-arch-context orders
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses OrderCommandHandlers
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Process manager: OrderConfirmed -> SendNotification command.
  * Fire-and-forget coordinator (no compensation, unlike Sagas).

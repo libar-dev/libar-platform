@@ -7,10 +7,10 @@
  * - Returns `DCBStateUpdates<InventoryStateUpdate>` (updates per entity)
  * - Enables atomic cross-entity invariant validation via executeWithDCB
  *
- * @libar-docs
- * @libar-docs-pattern ExampleAppModernization
- * @libar-docs-status roadmap
- * @libar-docs-uses DynamicConsistencyBoundaries, ReservationPattern
+ * @architect
+ * @architect-pattern ExampleAppModernization
+ * @architect-status roadmap
+ * @architect-uses DynamicConsistencyBoundaries, ReservationPattern
  *
  * @since Phase 23 (Example App Modernization - Rule 1)
  */

@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-pattern AgentOnCompleteHandler
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-context agent
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses AgentAsBoundedContext, AgentLLMIntegration
+ * @architect
+ * @architect-pattern AgentOnCompleteHandler
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-context agent
+ * @architect-arch-layer infrastructure
+ * @architect-arch-view overview-topology
+ * @architect-uses AgentAsBoundedContext, AgentLLMIntegration
  *
  * Workpool job completion handler for agent BC.
  * This is the MUTATION half of the action/mutation split pattern.

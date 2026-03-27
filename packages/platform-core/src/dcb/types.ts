@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern DCBTypes
- * @libar-docs-status completed
- * @libar-docs-phase 16
- * @libar-docs-ddd
- * @libar-docs-extract-shapes DCBScopeKey, ParsedScopeKey, ScopeKeyValidationError, DCBScope, ScopeVersionCheckResult, ScopeCommitResult, ScopeOperations, DCBEntityState, DCBAggregatedState, DCBStateUpdates, DCBDecider, DCBEntityConfig, ExecuteWithDCBConfig, DCBExecutionResult, DCBSuccessResult, DCBRejectedResult, DCBFailedResult, DCBConflictResult, DCBDeferredResult, DCBRetryResult
+ * @architect
+ * @architect-pattern DCBTypes
+ * @architect-status completed
+ * @architect-phase 16
+ * @architect-ddd
+ * @architect-extract-shapes DCBScopeKey, ParsedScopeKey, ScopeKeyValidationError, DCBScope, ScopeVersionCheckResult, ScopeCommitResult, ScopeOperations, DCBEntityState, DCBAggregatedState, DCBStateUpdates, DCBDecider, DCBEntityConfig, ExecuteWithDCBConfig, DCBExecutionResult, DCBSuccessResult, DCBRejectedResult, DCBFailedResult, DCBConflictResult, DCBDeferredResult, DCBRetryResult
  *
  * ## Dynamic Consistency Boundaries (DCB) - Type Definitions
  *

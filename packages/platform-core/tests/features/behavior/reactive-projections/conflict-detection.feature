@@ -1,7 +1,7 @@
-@libar-docs-pattern:ReactiveProjectionConflictDetection
-@libar-docs-status:completed
-@libar-docs-phase:17
-@libar-docs-product-area:Platform
+@architect-pattern:ReactiveProjectionConflictDetection
+@architect-status:completed
+@architect-phase:17
+@architect-product-area:Platform
 @acceptance-criteria
 Feature: Conflict Detection and Rollback
 

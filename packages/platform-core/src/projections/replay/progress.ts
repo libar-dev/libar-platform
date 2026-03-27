@@ -1,7 +1,7 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventReplayInfrastructure
- * @libar-docs-status completed
+ * @architect
+ * @architect-implements EventReplayInfrastructure
+ * @architect-status completed
  *
  * Progress calculation utilities for replay operations.
  */

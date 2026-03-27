@@ -25,7 +25,7 @@ Mutable aggregates complicate state management and prevent property-based testin
 This eliminates mutable aggregates and enables testing without Docker.
 
 **Executable Specs:** Detailed behavior tests live at the package level per PDR-007.
-See `@libar-docs-executable-specs` tag for locations.
+See `@architect-executable-specs` tag for locations.
 
 ## Dependencies
 

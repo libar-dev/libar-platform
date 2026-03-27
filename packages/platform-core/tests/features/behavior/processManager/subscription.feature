@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Process Manager EventBus Subscription
 
   As a platform developer

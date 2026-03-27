@@ -13,7 +13,7 @@ Feature: Modular CLAUDE.md with Hybrid Generation
   - Extract CLAUDE.md build system to delivery-process package
   - Create hybrid architecture: generated + manual modules
   - Support tag-based variations (patterns, process, security, etc.)
-  - Integrate with @libar-docs annotations for auto-generated pattern docs
+  - Integrate with @architect annotations for auto-generated pattern docs
   - Enable session templates as includable prompt content
   - Add effectiveness tracking for evidence-based content decisions
 
@@ -36,9 +36,9 @@ Feature: Modular CLAUDE.md with Hybrid Generation
   | Content Type | Generation | Source |
   |--------------|------------|--------|
   | Project vision | Manual | Static repo description |
-  | Architecture | Generated | @libar-docs annotations |
+  | Architecture | Generated | @architect annotations |
   | Commands | Manual | package.json (changes rarely) |
-  | Patterns | Generated | @libar-docs-pattern tags |
+  | Patterns | Generated | @architect-pattern tags |
   | Key Rules | Manual | Critical constraints |
   | Skills | Generated | Skills definitions |
   | Active Phase | Generated | .feature @libar-process-status:active |
@@ -55,7 +55,7 @@ Feature: Modular CLAUDE.md with Hybrid Generation
       | Create instance delivery-process/claude-md/ directory | Pending | No | delivery-process/claude-md/ | - |
       | Create instance metadata.json configuration | Pending | No | delivery-process/claude-md/metadata.json | - |
       | Decompose current CLAUDE.md into modules | Pending | No | delivery-process/claude-md/manual/ | - |
-      | Identify content for @libar-docs generation | Pending | No | - | - |
+      | Identify content for @architect generation | Pending | No | - | - |
       | Wire claude-md generator to package.json | Pending | No | package.json | - |
       | Create docs:claude-md command | Pending | No | package.json | - |
       | Implement tag-based variation filtering | Pending | No | deps/libar-dev-packages/packages/tooling/delivery-process/src/claude-md/ | - |
@@ -86,7 +86,7 @@ Feature: Modular CLAUDE.md with Hybrid Generation
 
   @acceptance-criteria
   Scenario: Pattern content is auto-generated
-    Given @libar-docs-pattern annotations exist in code
+    Given @architect-pattern annotations exist in code
     When running docs:claude-md
     Then pattern modules are generated in generated/patterns/
     And changes to code annotations update CLAUDE.md

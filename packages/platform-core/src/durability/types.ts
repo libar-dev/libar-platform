@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
- * @libar-docs-core
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
+ * @architect-core
  *
  * ## Event Store Durability Types
  *
@@ -20,8 +20,8 @@
  * the shared vocabulary for event append operations, outbox handling,
  * cross-context publication, and failure recovery.
  *
- * @libar-docs-uses EventStoreFoundation, DurableFunctionAdapters, Workpool
- * @libar-docs-used-by idempotentAppend, outbox, durableAppend, publication, intentCompletion, poisonEvent
+ * @architect-uses EventStoreFoundation, DurableFunctionAdapters, Workpool
+ * @architect-used-by idempotentAppend, outbox, durableAppend, publication, intentCompletion, poisonEvent
  */
 
 import type { SafeMutationRef, SafeQueryRef } from "../function-refs/types.js";

@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern CMSDualWrite
- * @libar-docs-status completed
- * @libar-docs-phase 01
- * @libar-docs-core
- * @libar-docs-used-by CommandOrchestrator, CMSRepository
+ * @architect
+ * @architect-pattern CMSDualWrite
+ * @architect-status completed
+ * @architect-phase 01
+ * @architect-core
+ * @architect-used-by CommandOrchestrator, CMSRepository
  *
  * ## CMS Dual-Write Pattern - O(1) State + Full Audit
  *

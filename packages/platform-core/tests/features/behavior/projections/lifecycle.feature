@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Projection Lifecycle State Machine
 
   As a platform developer

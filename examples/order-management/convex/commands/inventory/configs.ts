@@ -1,14 +1,14 @@
 /**
- * @libar-docs
- * @libar-docs-pattern InventoryCommandConfigs
- * @libar-docs-status completed
- * @libar-docs-command
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-context inventory
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses ActiveReservationsProjection, ProductCatalogProjection, OrderWithInventoryProjection
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern InventoryCommandConfigs
+ * @architect-status completed
+ * @architect-command
+ * @architect-arch-role infrastructure
+ * @architect-arch-context inventory
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses ActiveReservationsProjection, ProductCatalogProjection, OrderWithInventoryProjection
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Command configs for 7 inventory commands. Wires each command to
  * primary/secondary projections including cross-context orderWithInventory.

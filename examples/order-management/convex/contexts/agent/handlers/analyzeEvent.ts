@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-pattern AgentActionHandler
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role command-handler
- * @libar-docs-arch-context agent
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-uses AgentLLMIntegration, AgentBCComponentIsolation
+ * @architect
+ * @architect-pattern AgentActionHandler
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role command-handler
+ * @architect-arch-context agent
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-uses AgentLLMIntegration, AgentBCComponentIsolation
  *
  * Agent action handler for churn risk detection.
  * This is the ACTION half of the action/mutation split pattern.

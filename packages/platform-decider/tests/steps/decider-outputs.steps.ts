@@ -6,8 +6,8 @@
  * This is a Layer 0 package (pure TypeScript, no Convex dependencies),
  * so tests run without any backend - just pure function testing.
  *
- * @libar-docs-decider
- * @libar-docs-pattern DeciderOutputs
+ * @architect-decider
+ * @architect-pattern DeciderOutputs
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

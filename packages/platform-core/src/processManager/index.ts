@@ -1,13 +1,13 @@
 /**
- * @libar-docs
- * @libar-docs-saga @libar-docs-ddd @libar-docs-core
- * @libar-docs-pattern ProcessManager
- * @libar-docs-status completed
- * @libar-docs-usecase "Event-reactive coordination without orchestration"
- * @libar-docs-usecase "Fire-and-forget command emission from events"
- * @libar-docs-usecase "Time-triggered or hybrid event/time patterns"
- * @libar-docs-uses EventBusAbstraction
- * @libar-docs-used-by BoundedContextHandlers
+ * @architect
+ * @architect-saga @architect-ddd @architect-core
+ * @architect-pattern ProcessManager
+ * @architect-status completed
+ * @architect-usecase "Event-reactive coordination without orchestration"
+ * @architect-usecase "Fire-and-forget command emission from events"
+ * @architect-usecase "Time-triggered or hybrid event/time patterns"
+ * @architect-uses EventBusAbstraction
+ * @architect-used-by BoundedContextHandlers
  *
  * ## ProcessManager - Event-Reactive Coordination
  *

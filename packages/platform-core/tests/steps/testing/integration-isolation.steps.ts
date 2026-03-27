@@ -1,8 +1,8 @@
 /**
  * Integration Test Isolation - Step Definitions
  *
- * @libar-docs
- * @libar-docs-pattern BddTestingInfrastructure
+ * @architect
+ * @architect-pattern BddTestingInfrastructure
  *
  * BDD step definitions validating the Docker restart pattern for state cleanup,
  * test namespacing for entity isolation, and Workpool/scheduler isolation.

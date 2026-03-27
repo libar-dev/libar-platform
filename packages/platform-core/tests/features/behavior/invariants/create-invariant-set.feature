@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 @invariants
 Feature: createInvariantSet
 

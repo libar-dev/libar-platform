@@ -55,8 +55,8 @@
  * }
  * ```
  *
- * @libar-docs
- * @libar-docs-implements EcstFatEvents
+ * @architect
+ * @architect-implements EcstFatEvents
  */
 
 // Type exports

@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Command Logging Helpers
 
   As a platform developer

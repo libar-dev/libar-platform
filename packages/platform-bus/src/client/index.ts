@@ -155,13 +155,13 @@ export interface CommandBusApi {
 }
 
 /**
- * @libar-docs
- * @libar-docs-pattern CommandBus
- * @libar-docs-command @libar-docs-overview @libar-docs-core
- * @libar-docs-status completed
- * @libar-docs-usecase "Ensuring command idempotency"
- * @libar-docs-usecase "Tracking command execution status"
- * @libar-docs-used-by CommandOrchestrator
+ * @architect
+ * @architect-pattern CommandBus
+ * @architect-command @architect-overview @architect-core
+ * @architect-status completed
+ * @architect-usecase "Ensuring command idempotency"
+ * @architect-usecase "Tracking command execution status"
+ * @architect-used-by CommandOrchestrator
  *
  * ## CommandBus - Command Idempotency Infrastructure
  *

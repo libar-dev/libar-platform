@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
  *
- * @libar-docs-uses EventStoreFoundation
- * @libar-docs-used-by outbox, durableAppend, publication, SagaEngine
- * @libar-docs-usecase "When appending events that may be retried or deduplicated"
+ * @architect-uses EventStoreFoundation
+ * @architect-used-by outbox, durableAppend, publication, SagaEngine
+ * @architect-usecase "When appending events that may be retried or deduplicated"
  *
  * ## Idempotent Event Append
  *
@@ -38,7 +38,7 @@
  * }
  * ```
  *
- * @libar-docs-uses EventStoreFoundation
+ * @architect-uses EventStoreFoundation
  */
 
 import type { IdempotentAppendConfig, IdempotentAppendResult } from "./types.js";

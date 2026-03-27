@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
  *
- * @libar-docs-uses EventStoreFoundation, idempotentAppend
- * @libar-docs-used-by SagaEngine, LongRunningOperations, ReconciliationService
- * @libar-docs-usecase "When operations span multiple steps and need visibility"
+ * @architect-uses EventStoreFoundation, idempotentAppend
+ * @architect-used-by SagaEngine, LongRunningOperations, ReconciliationService
+ * @architect-usecase "When operations span multiple steps and need visibility"
  *
  * ## Intent/Completion Event Pattern
  *
@@ -59,7 +59,7 @@
  * });
  * ```
  *
- * @libar-docs-uses EventStoreFoundation
+ * @architect-uses EventStoreFoundation
  */
 
 import type { IntentEvent, CompletionStatus, IdempotentAppendDependencies } from "./types.js";

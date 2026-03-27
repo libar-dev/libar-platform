@@ -1,7 +1,7 @@
 /**
- * @libar-docs
- * @libar-docs-implements DurableEventsIntegration
- * @libar-docs-infra
+ * @architect
+ * @architect-implements DurableEventsIntegration
+ * @architect-infra
  *
  * Poison Event Admin Functions - CRUD operations for poisonEvents table.
  *

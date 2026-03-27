@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-implements EventStoreDurability
- * @libar-docs-status completed
- * @libar-docs-event-sourcing
- * @libar-docs-core
+ * @architect
+ * @architect-implements EventStoreDurability
+ * @architect-status completed
+ * @architect-event-sourcing
+ * @architect-core
  *
- * @libar-docs-uses EventStoreFoundation, DurableFunctionAdapters, WorkpoolPartitioningStrategy
- * @libar-docs-used-by CommandOrchestrator, SagaEngine, ProjectionProcessor
+ * @architect-uses EventStoreFoundation, DurableFunctionAdapters, WorkpoolPartitioningStrategy
+ * @architect-used-by CommandOrchestrator, SagaEngine, ProjectionProcessor
  *
  * ## Event Store Durability
  *
@@ -35,8 +35,8 @@
  * } from "@libar-dev/platform-core/durability";
  * ```
  *
- * @libar-docs-uses EventStoreFoundation, DurableFunctionAdapters
- * @libar-docs-used-by CommandOrchestrator, SagaEngine
+ * @architect-uses EventStoreFoundation, DurableFunctionAdapters
+ * @architect-used-by CommandOrchestrator, SagaEngine
  */
 
 // Types

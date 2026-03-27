@@ -8,7 +8,7 @@ Feature: Documentation & Knowledge Infrastructure
   Page Object Model. Enhanced CI/CD pipeline with artifact caching and concurrency control.
 
   Key Deliverables:
-  - @libar-dev/delivery-process package with JSDoc directive extraction (@libar-docs-*)
+  - @libar-dev/delivery-process package with JSDoc directive extraction (@architect-*)
   - Pattern registry (PATTERNS.md with 53 patterns + 7 deep-dive theory docs)
   - DDD Fundamentals Skill (Building Blocks, Strategic Patterns, Ubiquitous Language)
   - Frontend MVP (Next.js 16 + React 19 + Tailwind CSS v4 + Base UI 1.0)

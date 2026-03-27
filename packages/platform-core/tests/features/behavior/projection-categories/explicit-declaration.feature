@@ -1,7 +1,7 @@
-@libar-docs-implements:ProjectionCategories
-@libar-docs-status:active
-@libar-docs-phase:15
-@libar-docs-product-area:PlatformCore
+@architect-implements:ProjectionCategories
+@architect-status:active
+@architect-phase:15
+@architect-product-area:PlatformCore
 Feature: Explicit Category Declaration
 
   As a platform developer

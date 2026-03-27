@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern IntegrationEventSchemas
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
+ * @architect
+ * @architect-pattern IntegrationEventSchemas
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
  *
  * Integration event schema definitions for cross-context communication.
  * Published Language pattern — defines the contract for external consumers.

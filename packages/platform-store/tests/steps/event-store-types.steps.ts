@@ -6,8 +6,8 @@
  * This is a Layer 1 package (Convex component), but these tests focus on
  * type contracts which are pure TypeScript - no Convex runtime required.
  *
- * @libar-docs-event-sourcing
- * @libar-docs-pattern BddTestingInfrastructure
+ * @architect-event-sourcing
+ * @architect-pattern BddTestingInfrastructure
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

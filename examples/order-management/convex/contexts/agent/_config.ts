@@ -1,11 +1,11 @@
 /**
- * @libar-docs
- * @libar-docs-uses AgentAsBoundedContext
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-context agent
- * @libar-docs-arch-layer application
- * @libar-docs-arch-view overview-topology
- * @libar-docs-extract-shapes CHURN_RISK_AGENT_ID, CHURN_RISK_SUBSCRIPTIONS, churnRiskAgentConfig
+ * @architect
+ * @architect-uses AgentAsBoundedContext
+ * @architect-arch-role infrastructure
+ * @architect-arch-context agent
+ * @architect-arch-layer application
+ * @architect-arch-view overview-topology
+ * @architect-extract-shapes CHURN_RISK_AGENT_ID, CHURN_RISK_SUBSCRIPTIONS, churnRiskAgentConfig
  *
  * Churn Risk Agent Configuration
  *

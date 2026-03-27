@@ -1,9 +1,9 @@
 /**
- * @libar-docs
- * @libar-docs-pattern LoggingInfrastructure
- * @libar-docs-status completed
- * @libar-docs-phase 13
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern LoggingInfrastructure
+ * @architect-status completed
+ * @architect-phase 13
+ * @architect-infra
  *
  * ## Logging Infrastructure - Scoped Loggers
  *

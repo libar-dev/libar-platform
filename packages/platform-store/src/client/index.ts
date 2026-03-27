@@ -159,13 +159,13 @@ export interface EventStoreApi {
 }
 
 /**
- * @libar-docs
- * @libar-docs-pattern EventStore
- * @libar-docs-event-sourcing @libar-docs-overview @libar-docs-core
- * @libar-docs-status completed
- * @libar-docs-usecase "Appending events after CMS updates"
- * @libar-docs-usecase "Reading events for projection processing"
- * @libar-docs-used-by CommandOrchestrator
+ * @architect
+ * @architect-pattern EventStore
+ * @architect-event-sourcing @architect-overview @architect-core
+ * @architect-status completed
+ * @architect-usecase "Appending events after CMS updates"
+ * @architect-usecase "Reading events for projection processing"
+ * @architect-used-by CommandOrchestrator
  *
  * ## EventStore - Central Event Storage
  *

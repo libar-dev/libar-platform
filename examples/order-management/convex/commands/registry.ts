@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern CommandRegistry
- * @libar-docs-status completed
- * @libar-docs-infra
- * @libar-docs-arch-role infrastructure
- * @libar-docs-arch-layer infrastructure
- * @libar-docs-uses OrderCommandHandlers, InventoryCommandHandlers
- * @libar-docs-used-by OrderManagementInfrastructure
+ * @architect
+ * @architect-pattern CommandRegistry
+ * @architect-status completed
+ * @architect-infra
+ * @architect-arch-role infrastructure
+ * @architect-arch-layer infrastructure
+ * @architect-uses OrderCommandHandlers, InventoryCommandHandlers
+ * @architect-used-by OrderManagementInfrastructure
  *
  * Command registry with Zod validation schemas per command type.
  * Used by registry validation middleware for runtime args validation.

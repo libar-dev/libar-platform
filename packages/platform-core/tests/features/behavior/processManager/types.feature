@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Process Manager Types
 
   As a platform developer

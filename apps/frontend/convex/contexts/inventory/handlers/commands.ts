@@ -1,12 +1,12 @@
 /**
- * @libar-docs
- * @libar-docs-pattern InventoryCommandHandlers
- * @libar-docs-status completed
- * @libar-docs-command
- * @libar-docs-arch-role command-handler
- * @libar-docs-arch-context inventory
- * @libar-docs-arch-layer application
- * @libar-docs-uses InventoryDeciders, InventoryRepository
+ * @architect
+ * @architect-pattern InventoryCommandHandlers
+ * @architect-status completed
+ * @architect-command
+ * @architect-arch-role command-handler
+ * @architect-arch-context inventory
+ * @architect-arch-layer application
+ * @architect-uses InventoryDeciders, InventoryRepository
  *
  * Inventory command handlers implementing the dual-write pattern.
  *

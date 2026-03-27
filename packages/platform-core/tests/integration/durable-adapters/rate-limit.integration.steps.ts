@@ -4,10 +4,10 @@
  * Integration test steps for validating the ConvexRateLimitAdapter
  * that bridges the RateLimitChecker interface to @convex-dev/rate-limiter.
  *
- * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern DurableFunctionAdapters
+ * @architect-status active
+ * @architect-infra
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";

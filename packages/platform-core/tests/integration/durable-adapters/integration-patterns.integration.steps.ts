@@ -4,10 +4,10 @@
  * Integration tests for validating adapter integration with
  * middleware pipeline, Workpool infrastructure, and component mounting.
  *
- * @libar-docs
- * @libar-docs-pattern DurableFunctionAdapters
- * @libar-docs-status active
- * @libar-docs-infra
+ * @architect
+ * @architect-pattern DurableFunctionAdapters
+ * @architect-status active
+ * @architect-infra
  *
  * @since Phase 18a
  */

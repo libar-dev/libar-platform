@@ -1,5 +1,5 @@
-@libar-docs
-@libar-docs-implements:EventReplayInfrastructure
+@architect
+@architect-implements:EventReplayInfrastructure
 @acceptance-criteria
 Feature: Replay Progress Calculator
 

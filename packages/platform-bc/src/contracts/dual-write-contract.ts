@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern DualWriteContract
- * @libar-docs-status completed
- * @libar-docs-core
- * @libar-docs-deliverable BoundedContextFoundation:dual-write-contract
- * @libar-docs-uses BoundedContextIdentity
+ * @architect
+ * @architect-pattern DualWriteContract
+ * @architect-status completed
+ * @architect-core
+ * @architect-deliverable BoundedContextFoundation:dual-write-contract
+ * @architect-uses BoundedContextIdentity
  *
  * ## Dual-Write Contract - BC Type Declaration
  *

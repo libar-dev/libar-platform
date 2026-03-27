@@ -50,9 +50,9 @@ placed in real source folders:
 
     Stub rules:
     | Rule | Description |
-    | @libar-docs-implements | Each stub uses @libar-docs-implements to link to the parent pattern |
+    | @architect-implements | Each stub uses @architect-implements to link to the parent pattern |
     | Target: annotation | Each stub has a "Target:" plain text line indicating its real destination path |
-    | @libar-docs-* tags first | All @libar-docs-* tags MUST appear first in the JSDoc block |
+    | @architect-* tags first | All @architect-* tags MUST appear first in the JSDoc block |
     | Pattern-based naming | Folder names use the pattern/feature name, not session numbers |
     | Implementation moves stubs | During implementation, stubs move from stubs/ to Target: locations |
     | Step definition stubs | Use existing tests/planning-stubs/ pattern (already excluded from test runner) |
@@ -67,7 +67,7 @@ placed in real source folders:
     Session numbers (ds-1, ds-2) are ephemeral internal designations. Pattern names
     are stable and meaningful beyond the current planning cycle.
 
-The existing @libar-docs-adr-category values (process, architecture) do not cover
+The existing @architect-adr-category values (process, architecture) do not cover
 design-session scoped decisions about API shapes, schema strategies, and interface
 contracts that are specific to a feature but have lasting reference value.
 
@@ -87,7 +87,7 @@ contracts that are specific to a feature but have lasting reference value.
 
 ## Consequences
 
-Positive outcomes: - Stubs never break compilation or linting - Zero tsconfig/eslint configuration changes for design sessions - Decision specs provide structured traceability with tags - Pattern-based naming is stable across planning cycles - @libar-docs-implements + Target: annotations create clear link from design to implementation
+Positive outcomes: - Stubs never break compilation or linting - Zero tsconfig/eslint configuration changes for design sessions - Decision specs provide structured traceability with tags - Pattern-based naming is stable across planning cycles - @architect-implements + Target: annotations create clear link from design to implementation
 
     Negative outcomes:
     - Stubs are not type-checked until implementation moves them to target locations

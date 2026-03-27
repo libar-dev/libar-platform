@@ -1,10 +1,10 @@
 /**
- * @libar-docs
- * @libar-docs-pattern HandlerFactories
- * @libar-docs-status completed
- * @libar-docs-phase 14
- * @libar-docs-decider
- * @libar-docs-uses DeciderPattern
+ * @architect
+ * @architect-pattern HandlerFactories
+ * @architect-status completed
+ * @architect-phase 14
+ * @architect-decider
+ * @architect-uses DeciderPattern
  *
  * ## Handler Factories - Decider-to-Handler Wrappers
  *

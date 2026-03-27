@@ -1,4 +1,4 @@
-@libar-docs
+@architect
 Feature: Scoped Logger
 
   As a platform developer

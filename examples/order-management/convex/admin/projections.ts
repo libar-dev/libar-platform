@@ -1,12 +1,12 @@
 /**
  * Admin mutations for projection replay and rebuilding.
  *
- * @libar-docs
- * @libar-docs-implements EventReplayInfrastructure
- * @libar-docs-status active
- * @libar-docs-event-sourcing
- * @libar-docs-projection
- * @libar-docs-infra
+ * @architect
+ * @architect-implements EventReplayInfrastructure
+ * @architect-status active
+ * @architect-event-sourcing
+ * @architect-projection
+ * @architect-infra
  *
  * All admin operations use internal mutations for security.
  * No public API exposure for admin operations.

@@ -1,7 +1,7 @@
 /**
- * @libar-docs
- * @libar-docs-implements DurableEventsIntegration
- * @libar-docs-projection
+ * @architect
+ * @architect-implements DurableEventsIntegration
+ * @architect-projection
  *
  * Rebuild Demonstration - Projection rebuild from event stream.
  *

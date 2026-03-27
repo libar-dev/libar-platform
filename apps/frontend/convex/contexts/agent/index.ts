@@ -1,12 +1,12 @@
-/** @libar-docs */
+/** @architect */
 
 /**
- * @libar-docs-ddd @libar-docs-core
- * @libar-docs-pattern AgentAsBoundedContext
- * @libar-docs-status roadmap
- * @libar-docs-phase 22
- * @libar-docs-depends-on IntegrationPatterns,ReactiveProjections
- * @libar-docs-brief docs/project-management/aggregate-less-pivot/pattern-briefs/08-agent-as-bc.md
+ * @architect-ddd @architect-core
+ * @architect-pattern AgentAsBoundedContext
+ * @architect-status roadmap
+ * @architect-phase 22
+ * @architect-depends-on IntegrationPatterns,ReactiveProjections
+ * @architect-brief docs/project-management/aggregate-less-pivot/pattern-briefs/08-agent-as-bc.md
  *
  * ## Agent as Bounded Context - AI-Driven Event Reactors
  *

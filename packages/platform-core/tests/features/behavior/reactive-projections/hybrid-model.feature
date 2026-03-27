@@ -1,7 +1,7 @@
-@libar-docs-pattern:ReactiveProjectionHybridModel
-@libar-docs-status:completed
-@libar-docs-phase:17
-@libar-docs-product-area:Platform
+@architect-pattern:ReactiveProjectionHybridModel
+@architect-status:completed
+@architect-phase:17
+@architect-product-area:Platform
 @acceptance-criteria
 Feature: Hybrid Model - Durable + Reactive Projections
 
