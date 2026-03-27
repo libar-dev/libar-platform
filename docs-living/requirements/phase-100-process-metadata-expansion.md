@@ -31,12 +31,12 @@ be implemented. The tag registry needed expansion to enable future capabilities.
 **Solution:**
 Added 6 new metadata tags to architect/tag-registry.json:
 
-- @libar-process-risk:{low|medium|high} - Progressive governance (Opp 6)
-- @libar-process-effort-actual:Nw - Variance tracking (Opp 3)
-- @libar-process-workflow:{design|impl|docs|testing|discovery} - Time distribution
-- @libar-process-priority:{high|medium|low} - Backlog ordering
-- @libar-process-level:{epic|phase|task} - Hierarchy support (Opp 8)
-- @libar-process-parent:PatternName - Hierarchy linking (Opp 8)
+- @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
+- @architect-effort-actual:Nw - Variance tracking (Opp 3)
+- @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
+- @architect-priority:{high|medium|low} - Backlog ordering
+- @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
+- @architect-parent:PatternName - Hierarchy linking (Opp 8)
 
 Updated PDR-003 with new tag conventions and acceptance criteria.
 

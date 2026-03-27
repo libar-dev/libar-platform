@@ -475,11 +475,11 @@ graph TD
     OrderFulfillmentSaga --> OrderCommandHandlers
     OrderFulfillmentSaga --> InventoryCommandHandlers
     SagaCompletionHandler --> SagaRegistry
-    IntegrationRoutes --> OrderCommandHandlers
     ReservationReleasePM --> InventoryCommandHandlers
     ReservationReleasePM --> OrderWithInventoryProjection
     OrderNotificationPM --> OrderCommandHandlers
     DurableAppendAction ..-> DurableEventsIntegration
+    IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
     Durable_Command_Orchestrator___Intent_Completion_Bracketing_Wrapper ..-> DurableEventsIntegration
@@ -504,6 +504,8 @@ graph TD
     Agent_Subscription_Factory___DS_2_Stub ..-> AgentLLMIntegration
     Agent_Action_Handler_Factory___DS_2_Stub ..-> AgentLLMIntegration
     CMSRepository --> CMSDualWrite
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBusAbstraction
     ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
@@ -511,8 +513,6 @@ graph TD
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBusAbstraction
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -550,15 +550,11 @@ graph TD
     MockPaymentActions ..-> DurableEventsIntegration
     OrderSummaryProjection --> EventStore
     OrderItemsProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
-    Churn_Risk_Agent_Configuration --> AgentAsBoundedContext
+    CustomerCancellationsProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> InventoryCommandHandlers
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
@@ -566,6 +562,10 @@ graph TD
     InventoryCommandConfigs --> ActiveReservationsProjection
     InventoryCommandConfigs --> ProductCatalogProjection
     InventoryCommandConfigs --> OrderWithInventoryProjection
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
+    Churn_Risk_Agent_Configuration --> AgentAsBoundedContext
     Agent_Component_Schema___DS_1_Stub ..-> AgentBCComponentIsolation
     Agent_Component___Dead_Letter_Public_API___DS_1_Stub --> AgentDeadLetter
     Agent_Component___Dead_Letter_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
@@ -593,16 +593,16 @@ graph TD
     OrderCommandHandlers --> OrderRepository
     InventoryCommandHandlers --> InventoryDeciders
     InventoryCommandHandlers --> InventoryRepository
+    Agent_Command_Emission_Tool --> AgentAsBoundedContext
+    Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentBCComponentIsolation
-    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     Agent_BC_Utility_Functions --> AgentAsBoundedContext
     Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
     Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
-    Agent_Command_Emission_Tool --> AgentAsBoundedContext
-    Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
+    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     OpenRouter_Agent_Runtime --> AgentAsBoundedContext
     LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
     LLM_Provider_Configuration --> AgentAsBoundedContext

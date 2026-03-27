@@ -25,10 +25,10 @@ Component architecture with bounded context isolation:
 graph TB
     subgraph agent["Agent BC"]
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
-        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
-        AgentActionHandler["AgentActionHandler[command-handler]"]
         Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
         Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
+        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
+        AgentActionHandler["AgentActionHandler[command-handler]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
@@ -94,19 +94,19 @@ graph TB
     IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
     CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
     InventoryCommandHandlers --> InventoryDeciders
 ```

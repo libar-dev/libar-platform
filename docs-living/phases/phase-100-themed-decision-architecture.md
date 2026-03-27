@@ -190,7 +190,7 @@ that show how decisions build upon each other.
 1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
 2. Generate grouped decision documents per theme
 3. Generate dependency graph visualization (ASCII or Mermaid)
-4. Port existing 33 ADRs to delivery-process format (with validity review)
+4. Port existing 33 ADRs to architect format (with validity review)
 
 #### Acceptance Criteria
 
@@ -245,7 +245,7 @@ ADR-001 (Dual-Write)
 **Port ADR from old format to feature file**
 
 - Given an existing ADR in "docs/architecture/decisions/adr-001-\*.md"
-- When migrating to delivery-process format
+- When migrating to architect format
 - Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-\*.feature"
 - And include original decision content in Gherkin format
 - And add theme, layer, and dependency tags
@@ -606,12 +606,12 @@ be implemented. The tag registry needed expansion to enable future capabilities.
 **Solution:**
 Added 6 new metadata tags to architect/tag-registry.json:
 
-- @libar-process-risk:{low|medium|high} - Progressive governance (Opp 6)
-- @libar-process-effort-actual:Nw - Variance tracking (Opp 3)
-- @libar-process-workflow:{design|impl|docs|testing|discovery} - Time distribution
-- @libar-process-priority:{high|medium|low} - Backlog ordering
-- @libar-process-level:{epic|phase|task} - Hierarchy support (Opp 8)
-- @libar-process-parent:PatternName - Hierarchy linking (Opp 8)
+- @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
+- @architect-effort-actual:Nw - Variance tracking (Opp 3)
+- @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
+- @architect-priority:{high|medium|low} - Backlog ordering
+- @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
+- @architect-parent:PatternName - Hierarchy linking (Opp 8)
 
 Updated PDR-003 with new tag conventions and acceptance criteria.
 

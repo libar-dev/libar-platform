@@ -38,7 +38,7 @@ or implemented consistently. Without proper partitioning:
 | Consistency boundaries | Partition scope = consistency scope |
 | DCB alignment | Partition keys can match DCB scope keys for coherent retry |
 
-**Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to delivery-process)
+**Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to architect)
 
 ## Dependencies
 

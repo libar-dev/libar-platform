@@ -52,11 +52,11 @@ Adopt the phase-state-machine FSM with Decider-based enforcement:
 
     Enforcement:
     The process-guard-linter validates transitions via Decider pattern:
-    - State derived from libar-docs-status annotations
+    - State derived from @architect-status annotations
     - Protection levels prevent accidental modifications
     - Taxonomy changes blocked if they affect protected specs
 
-    Required tags: libar-docs-pattern, libar-docs-status
+    Required tags: @architect-pattern, @architect-status
     Optional tags: phase, effort, completed, release, unlock-reason
 
 ## Consequences

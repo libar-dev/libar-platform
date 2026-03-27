@@ -64,8 +64,8 @@ Adopt a minimal release management architecture with three components:
     - v1.0.0 (public release)
 
     Current versioning scheme:
-    - v0.1.x: Delivery process setup (current)
-    - v1.0.x: Foundational roadmap (completed, pre-delivery-process)
+    - v0.1.x: Architect setup (formerly delivery-process)
+    - v1.0.x: Foundational roadmap (completed, pre-architect)
     - v2.0.x: Aggregate-less roadmap (in progress)
 
     vNEXT Pattern:

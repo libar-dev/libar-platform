@@ -36,7 +36,7 @@ that show how decisions build upon each other.
 1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
 2. Generate grouped decision documents per theme
 3. Generate dependency graph visualization (ASCII or Mermaid)
-4. Port existing 33 ADRs to delivery-process format (with validity review)
+4. Port existing 33 ADRs to architect format (with validity review)
 
 ## Acceptance Criteria
 
@@ -91,7 +91,7 @@ ADR-001 (Dual-Write)
 **Port ADR from old format to feature file**
 
 - Given an existing ADR in "docs/architecture/decisions/adr-001-\*.md"
-- When migrating to delivery-process format
+- When migrating to architect format
 - Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-\*.feature"
 - And include original decision content in Gherkin format
 - And add theme, layer, and dependency tags
