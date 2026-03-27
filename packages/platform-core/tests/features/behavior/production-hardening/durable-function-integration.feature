@@ -11,7 +11,7 @@ Feature: Durable Function Integration - Reliable Execution Patterns
   So that external calls, retries, and conflict handling are reliable
 
   This is the implementation proof for the roadmap spec at:
-  delivery-process/specs/platform/production-hardening.feature
+  libar-platform/architect/specs/platform/production-hardening.feature
 
   # ===========================================================================
   # TEST CONTEXT

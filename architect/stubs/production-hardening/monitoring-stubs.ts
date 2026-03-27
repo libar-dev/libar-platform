@@ -4,8 +4,8 @@
  * Stub for system health check endpoint. To be implemented when
  * production observability infrastructure is built.
  *
- * @architect-pattern ProductionHardening
- * @architect-status roadmap
+ * @architect
+ * @architect-implements ProductionHardening
  */
 
 /**

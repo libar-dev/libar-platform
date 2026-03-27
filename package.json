@@ -33,7 +33,7 @@
     "docs:business-rules": "architect-generate --input 'architect/src/**/*.ts' --input 'packages/*/src/**/*.ts' --features 'architect/specs/**/*.feature' --features 'architect/specs/**/*.feature.md' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators business-rules --output docs-living --overwrite && prettier --write 'docs-living/BUSINESS-RULES.md'",
     "docs:changelog": "architect-generate --input 'packages/*/src/**/*.ts' --input 'architect/src/**/*.ts' --features 'architect/decisions/*.feature' --features 'architect/releases/*.feature' --features 'architect/specs/**/*.feature' --features 'packages/platform-core/tests/features/behavior/**/*.feature' --generators changelog --output docs-living --overwrite && prettier --write 'docs-living/CHANGELOG-GENERATED.md'",
     "lint:patterns": "architect-lint-patterns -i 'packages/*/src/**/*.ts'",
-    "lint-process": "architect-guard"
+    "architect-guard": "architect-guard"
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "^1.1.1",

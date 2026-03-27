@@ -11,7 +11,7 @@ Feature: Health Endpoints - Kubernetes Probes
   So that I can configure readiness and liveness probes for the application
 
   This is the implementation proof for the roadmap spec at:
-  delivery-process/specs/platform/production-hardening.feature
+  libar-platform/architect/specs/platform/production-hardening.feature
 
   # ===========================================================================
   # TEST CONTEXT

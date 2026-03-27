@@ -81,7 +81,7 @@ reference, not as an editable dependency.
 | Command                                                          | Purpose                          |
 | ---------------------------------------------------------------- | -------------------------------- |
 | `pnpm exec architect -- overview`                                | Project health and active work   |
-| `pnpm process:query -- overview`                                 | Repo wrapper around the same API |
+| `pnpm architect -- overview`                                     | Repo wrapper around the same API |
 | `pnpm exec architect -- context <pattern> --session <type>`      | Curated session context          |
 | `pnpm exec architect -- scope-validate <pattern> <session-type>` | FSM and prerequisite pre-flight  |
 
@@ -121,7 +121,7 @@ reference, not as an editable dependency.
 | Design         | `libar-platform/architect/decisions/` and `libar-platform/architect/stubs/{pattern-name}/` |
 | Implementation | Runtime packages, tests, and docs under `libar-platform/`                                  |
 
-For interactive sessions, prefer the architect CLI and `pnpm process:query` over
+For interactive sessions, prefer the architect CLI and `pnpm architect` over
 manually reading generated markdown.
 
 ---

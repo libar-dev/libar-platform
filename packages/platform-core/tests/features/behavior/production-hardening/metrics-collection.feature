@@ -11,7 +11,7 @@ Feature: Metrics Collection - System Health Tracking
   So that I can monitor projection lag, event throughput, and command latency
 
   This is the implementation proof for the roadmap spec at:
-  delivery-process/specs/platform/production-hardening.feature
+  libar-platform/architect/specs/platform/production-hardening.feature
 
   # ===========================================================================
   # TEST CONTEXT

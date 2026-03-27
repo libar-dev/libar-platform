@@ -11,7 +11,7 @@ Feature: Distributed Tracing - Event Flow Visualization
   So that I can debug issues and understand command-to-projection paths
 
   This is the implementation proof for the roadmap spec at:
-  delivery-process/specs/platform/production-hardening.feature
+  libar-platform/architect/specs/platform/production-hardening.feature
 
   # ===========================================================================
   # TEST CONTEXT

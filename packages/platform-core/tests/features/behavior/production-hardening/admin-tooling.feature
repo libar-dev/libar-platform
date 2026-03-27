@@ -11,7 +11,7 @@ Feature: Admin Tooling - Operational Tasks
   So that I can rebuild projections, manage dead letters, and diagnose issues
 
   This is the implementation proof for the roadmap spec at:
-  delivery-process/specs/platform/production-hardening.feature
+  libar-platform/architect/specs/platform/production-hardening.feature
 
   # ===========================================================================
   # TEST CONTEXT

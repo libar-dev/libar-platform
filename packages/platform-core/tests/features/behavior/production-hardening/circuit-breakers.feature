@@ -11,7 +11,7 @@ Feature: Circuit Breakers - Fault Isolation
   So that failures are isolated and the system degrades gracefully
 
   This is the implementation proof for the roadmap spec at:
-  delivery-process/specs/platform/production-hardening.feature
+  libar-platform/architect/specs/platform/production-hardening.feature
 
   # ===========================================================================
   # TEST CONTEXT
