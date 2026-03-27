@@ -79,147 +79,147 @@ Feature: Agent Admin Frontend - Complete Management UI with Multi-Agent Support
   # agentPool workpool, and OpenRouter LLM runtime.
   # ============================================================================
 
-  High-Value Order Detection Agent Design
+  # High-Value Order Detection Agent Design
 
-  Agent ID: high-value-order-agent
-  Subscribes to: OrderConfirmed
-  Pattern trigger: totalAmount > $500 (configurable)
-  LLM analysis: Analyze order value, customer context, product categories
-                → recommend VIP treatment level and priority
-  Command: FlagForVIPReview
-  Human-in-loop: Requires approval for all VIP flags (confidence < 0.95)
-  Rate limits: Same pool as churn-risk (shared agentPool)
+  # Agent ID: high-value-order-agent
+  # Subscribes to: OrderConfirmed
+  # Pattern trigger: totalAmount > $500 (configurable)
+  # LLM analysis: Analyze order value, customer context, product categories
+                # → recommend VIP treatment level and priority
+  # Command: FlagForVIPReview
+  # Human-in-loop: Requires approval for all VIP flags (confidence < 0.95)
+  # Rate limits: Same pool as churn-risk (shared agentPool)
 
-  Demo flow:
-  1. Create product with stock (e.g., "Premium Widget" at $200/unit)
-  2. Create order with 3+ units (total > $500)
-  3. Submit order → OrderSubmitted → saga → ReserveStock → ConfirmOrder
-  4. OrderConfirmed fires → EventBus delivers to high-value-order-agent
-  5. Agent loads checkpoint, checks totalAmount > $500
-  6. LLM analysis via OpenRouter → confidence, reasoning, VIP level
-  7. FlagForVIPReview command emitted (or approval if low confidence)
-  8. Admin sees VIP flag in dashboard, approves/rejects
+  # Demo flow:
+  # 1. Create product with stock (e.g., "Premium Widget" at $200/unit)
+  # 2. Create order with 3+ units (total > $500)
+  # 3. Submit order → OrderSubmitted → saga → ReserveStock → ConfirmOrder
+  # 4. OrderConfirmed fires → EventBus delivers to high-value-order-agent
+  # 5. Agent loads checkpoint, checks totalAmount > $500
+  # 6. LLM analysis via OpenRouter → confidence, reasoning, VIP level
+  # 7. FlagForVIPReview command emitted (or approval if low confidence)
+  # 8. Admin sees VIP flag in dashboard, approves/rejects
 
-  End-to-end flow:
-    OrderConfirmed event
-         |
-    EventBus → agentPool action (priority 250)
-         |
-    Action handler: load checkpoint, check totalAmount
-         |
-    totalAmount > $500? ─── No → Skip, advance checkpoint
-         |
-        Yes → LLM analysis: VIP recommendation
-         |
-    Confidence >= 0.95? ─── Yes → Auto-emit FlagForVIPReview
-         |
-        No → Create pending approval for human review
-         |
-    onComplete: persist audit → command → approval → checkpoint
-         |
-    Admin UI: approve/reject VIP flag
-  High-Value Agent Configuration:
+  # End-to-end flow:
+    # OrderConfirmed event
+         # |
+    # EventBus → agentPool action (priority 250)
+         # |
+    # Action handler: load checkpoint, check totalAmount
+         # |
+    # totalAmount > $500? ─── No → Skip, advance checkpoint
+         # |
+        # Yes → LLM analysis: VIP recommendation
+         # |
+    # Confidence >= 0.95? ─── Yes → Auto-emit FlagForVIPReview
+         # |
+        # No → Create pending approval for human review
+         # |
+    # onComplete: persist audit → command → approval → checkpoint
+         # |
+    # Admin UI: approve/reject VIP flag
+  # High-Value Agent Configuration:
 
-    id: "high-value-order-agent"
-    subscriptions: ["OrderConfirmed"]
-    patternWindow:
-      duration: "7d"    # Shorter window (VIP is per-order, not pattern over time)
-      minEvents: 1      # Single high-value order is enough
-      eventLimit: 10
-    confidenceThreshold: 0.95   # High bar for auto-execution (VIP is significant)
-    humanInLoop:
-      confidenceThreshold: 0.95
-      requiresApproval: ["FlagForVIPReview"]
-      approvalTimeout: "24h"
-    rateLimits:
-      maxRequestsPerMinute: 60
-      maxConcurrent: 5
-      costBudget: { daily: 10.0, alertThreshold: 0.8 }
-    patterns: [highValueOrderPattern]
-  High-Value Pattern Definition:
+    # id: "high-value-order-agent"
+    # subscriptions: ["OrderConfirmed"]
+    # patternWindow:
+      # duration: "7d"    # Shorter window (VIP is per-order, not pattern over time)
+      # minEvents: 1      # Single high-value order is enough
+      # eventLimit: 10
+    # confidenceThreshold: 0.95   # High bar for auto-execution (VIP is significant)
+    # humanInLoop:
+      # confidenceThreshold: 0.95
+      # requiresApproval: ["FlagForVIPReview"]
+      # approvalTimeout: "24h"
+    # rateLimits:
+      # maxRequestsPerMinute: 60
+      # maxConcurrent: 5
+      # costBudget: { daily: 10.0, alertThreshold: 0.8 }
+    # patterns: [highValueOrderPattern]
+  # High-Value Pattern Definition:
 
-    name: "high-value-order"
-    description: "Detect high-value orders for VIP review"
-    window: { duration: "7d", minEvents: 1, eventLimit: 10 }
+    # name: "high-value-order"
+    # description: "Detect high-value orders for VIP review"
+    # window: { duration: "7d", minEvents: 1, eventLimit: 10 }
 
-    trigger: totalAmount > VALUE_THRESHOLD (from event payload)
-      - Extract totalAmount from OrderConfirmed payload
-      - Compare against configurable threshold ($500 default)
-      - Single event is enough to trigger (not a multi-event pattern)
+    # trigger: totalAmount > VALUE_THRESHOLD (from event payload)
+      # - Extract totalAmount from OrderConfirmed payload
+      # - Compare against configurable threshold ($500 default)
+      # - Single event is enough to trigger (not a multi-event pattern)
 
-    analyze(events, agent):
-      - Build prompt with order details (totalAmount, items, customerId)
-      - LLM analyzes: VIP priority level, recommended actions, reasoning
-      - Returns confidence + FlagForVIPReview command with priority
-      - NO rule-based fallback — LLM failure → retry → dead letter
+    # analyze(events, agent):
+      # - Build prompt with order details (totalAmount, items, customerId)
+      # - LLM analyzes: VIP priority level, recommended actions, reasoning
+      # - Returns confidence + FlagForVIPReview command with priority
+      # - NO rule-based fallback — LLM failure → retry → dead letter
 
-  FlagForVIPReview Command Payload:
-    | Field | Source |
-    | orderId | From OrderConfirmed event payload |
-    | customerId | From OrderConfirmed event payload |
-    | totalAmount | From OrderConfirmed event payload |
-    | vipLevel | LLM recommendation ("gold" / "platinum") |
-    | priority | LLM recommendation ("standard" / "expedited") |
-    | reasoning | LLM analysis text |
-  File Structure (under order-management/convex/contexts/agent/):
+  # FlagForVIPReview Command Payload:
+    # | Field | Source |
+    # | orderId | From OrderConfirmed event payload |
+    # | customerId | From OrderConfirmed event payload |
+    # | totalAmount | From OrderConfirmed event payload |
+    # | vipLevel | LLM recommendation ("gold" / "platinum") |
+    # | priority | LLM recommendation ("standard" / "expedited") |
+    # | reasoning | LLM analysis text |
+  # File Structure (under order-management/convex/contexts/agent/):
 
-    high-value/
-      _config.ts              — AgentBCConfig for high-value-order-agent
-      _patterns/
-        highValueOrder.ts     — PatternDefinition with trigger + analyze
-      handlers/
-        analyzeEvent.ts       — internalAction (action half)
-        onComplete.ts         — internalMutation (persistence half)
-        routeCommand.ts       — FlagForVIPReview command routing
+    # high-value/
+      # _config.ts              — AgentBCConfig for high-value-order-agent
+      # _patterns/
+        # highValueOrder.ts     — PatternDefinition with trigger + analyze
+      # handlers/
+        # analyzeEvent.ts       — internalAction (action half)
+        # onComplete.ts         — internalMutation (persistence half)
+        # routeCommand.ts       — FlagForVIPReview command routing
 
-  Registration (in eventSubscriptions.ts):
-    - Add createAgentSubscription(highValueOrderConfig, { ... })
-    - Same agentPool, same retry config, priority 250
-  **Design Decision: Authentication Pattern**
+  # Registration (in eventSubscriptions.ts):
+    # - Add createAgentSubscription(highValueOrderConfig, { ... })
+    # - Same agentPool, same retry config, priority 250
+  # **Design Decision: Authentication Pattern**
 
-  | Option | Trade-off |
-  | A: Convex Auth | Full auth stack, but adds complexity to example app |
-  | B: Clerk integration | Proven pattern, but external dependency |
-  | C: Mock with pattern (Recommended) | Document integration point, use mock for now |
+  # | Option | Trade-off |
+  # | A: Convex Auth | Full auth stack, but adds complexity to example app |
+  # | B: Clerk integration | Proven pattern, but external dependency |
+  # | C: Mock with pattern (Recommended) | Document integration point, use mock for now |
 
-  **Decision:** Option C. Document where `useReviewerId()` connects to real auth
-  (Convex Auth or Clerk). Provide mock for development and E2E tests. Real auth
-  is a separate concern outside this spec's scope.
+  # **Decision:** Option C. Document where `useReviewerId()` connects to real auth
+  # (Convex Auth or Clerk). Provide mock for development and E2E tests. Real auth
+  # is a separate concern outside this spec's scope.
 
-  **Design Decision: Toast Notification Library**
+  # **Design Decision: Toast Notification Library**
 
-  Use Sonner for toast notifications:
-  - Lightweight and accessible (ARIA live regions)
-  - Works with React 19 and TanStack Start
-  - No additional peer dependencies
-  - Commonly used in Convex example apps
+  # Use Sonner for toast notifications:
+  # - Lightweight and accessible (ARIA live regions)
+  # - Works with React 19 and TanStack Start
+  # - No additional peer dependencies
+  # - Commonly used in Convex example apps
 
-  **Design Decision: E2E Test Scope**
+  # **Design Decision: E2E Test Scope**
 
-  The `agent-approvals.feature` file has ~50 scenarios covering 4 agent types.
-  Only churn-risk and high-value-order agents have backend implementations.
+  # The `agent-approvals.feature` file has ~50 scenarios covering 4 agent types.
+  # Only churn-risk and high-value-order agents have backend implementations.
 
-  | Agent | Scenarios | Status |
-  | churn-risk-agent | Dashboard, approvals, monitoring, history, risk preview | Implement steps |
-  | high-value-order-agent | Dashboard, approvals, history | Implement steps |
-  | low-stock-alert-agent | 4 approval + 2 stock preview + 2 history | Tag @skip |
-  | order-consolidation-agent | 4 approval + 1 history | Tag @skip |
+  # | Agent | Scenarios | Status |
+  # | churn-risk-agent | Dashboard, approvals, monitoring, history, risk preview | Implement steps |
+  # | high-value-order-agent | Dashboard, approvals, history | Implement steps |
+  # | low-stock-alert-agent | 4 approval + 2 stock preview + 2 history | Tag @skip |
+  # | order-consolidation-agent | 4 approval + 1 history | Tag @skip |
 
-  **Step implementation approach:**
-  - Page object pattern (consistent with existing `BasePage`, `OrdersPage`, etc.)
-  - Shared `AgentAdminPage` page object for the agents admin section
-  - `waitUntilProjection()` for eventual consistency waits (existing utility)
-  - `prefixName()` / `prefixSku()` for test data isolation (existing utility)
+  # **Step implementation approach:**
+  # - Page object pattern (consistent with existing `BasePage`, `OrdersPage`, etc.)
+  # - Shared `AgentAdminPage` page object for the agents admin section
+  # - `waitUntilProjection()` for eventual consistency waits (existing utility)
+  # - `prefixName()` / `prefixSku()` for test data isolation (existing utility)
 
-  **Design Decision: Dead Letter Panel vs. Tab**
+  # **Design Decision: Dead Letter Panel vs. Tab**
 
-  | Option | Trade-off |
-  | Separate tab | Clean navigation, but adds a 5th tab |
-  | Section in Monitoring (Recommended) | Contextually related to agent health |
+  # | Option | Trade-off |
+  # | Separate tab | Clean navigation, but adds a 5th tab |
+  # | Section in Monitoring (Recommended) | Contextually related to agent health |
 
-  **Decision:** Add dead letters as a section within the Monitoring tab. Dead letters
-  are operational concerns closely related to agent health monitoring. This avoids
-  tab proliferation while keeping operational tools grouped.
+  # **Decision:** Add dead letters as a section within the Monitoring tab. Dead letters
+  # are operational concerns closely related to agent health monitoring. This avoids
+  # tab proliferation while keeping operational tools grouped.
 
   Background: Deliverables
     Given the following deliverables:
