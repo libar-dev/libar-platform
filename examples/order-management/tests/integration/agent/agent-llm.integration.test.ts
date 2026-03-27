@@ -11,7 +11,6 @@
  * - OPENROUTER_API_KEY: must be set on the Convex backend via `convex env set`
  *   (Justfile `set-openrouter-key` recipe handles this)
  *
- * @see agent.integration.test.ts for rule-based agent tests (always run)
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
