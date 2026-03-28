@@ -7,14 +7,14 @@
 
 ## Progress
 
-**Overall:** [█████████████░░░░░░░] 100/153 (65% complete)
+**Overall:** [█████████████░░░░░░░] 100/154 (65% complete)
 
 | Status       | Count |
 | ------------ | ----- |
 | ✅ Completed | 100   |
 | 🚧 Active    | 7     |
-| 📋 Planned   | 46    |
-| **Total**    | 153   |
+| 📋 Planned   | 47    |
+| **Total**    | 154   |
 
 ---
 
@@ -24,7 +24,7 @@
 - [Command](#command) (9)
 - [Core](#core) (2)
 - [CQRS](#cqrs) (2)
-- [DDD](#ddd) (33)
+- [DDD](#ddd) (34)
 - [Decider](#decider) (3)
 - [Event Sourcing](#event-sourcing) (14)
 - [Implements](#implements) (2)
@@ -165,6 +165,7 @@
 | 📋 Agent Lifecycle FSM — DS-5 Stub                                     | Infra                   | planned   | Agent Lifecycle FSM — DS-5 Stub Formal state machine governing agent start/pause/resume/stop/reconfigure transitions.       |
 | 📋 Agent onComplete Handler Factory — DS-2 Stub                        | Infra                   | planned   | Agent onComplete Handler Factory — DS-2 Stub Creates a Workpool onComplete mutation that persists all agent state...        |
 | 📋 Agent Subscription Factory — DS-2 Stub                              | Infra                   | planned   | Agent Subscription Factory — DS-2 Stub Extends the existing `createAgentSubscription` factory to produce...                 |
+| 📋 Agent Admin Frontend                                                | DDD                     | planned   | Problem: The admin UI at `/admin/agents` has implementation gaps identified in the E2E feature file...                      |
 | 📋 AgentBCConfig Evolution — DS-4 Stub                                 | Infra                   | planned   | AgentBCConfig Evolution — DS-4 Stub Evolves AgentBCConfig to support pattern-based detection alongside the legacy...        |
 | 📋 Checkpoint Status Extension for Agent Lifecycle FSM — DS-5 Stub     | Infra                   | planned   | Checkpoint Status Extension for Agent Lifecycle FSM — DS-5 Stub Extends the existing AgentCheckpointStatus (3 states)...    |
 | Churn Risk Agent Configuration                                         | Arch                    | planned   | Churn Risk Agent Configuration Defines the configuration for the churn risk detection agent.                                |
@@ -270,7 +271,7 @@
 
 ### DDD
 
-21/33 complete (64%)
+21/34 complete (62%)
 
 - [✅ Agent As Bounded Context](patterns/agent-as-bounded-context.md)
 - [✅ Agent Churn Risk Completion](patterns/agent-churn-risk-completion.md)
@@ -298,6 +299,7 @@
 - [🚧 Agent LLM Integration](patterns/agent-llm-integration.md)
 - [🚧 Confirmed Order Cancellation](patterns/confirmed-order-cancellation.md)
 - [📋 Admin Tooling Consolidation](patterns/admin-tooling-consolidation.md)
+- [📋 Agent Admin Frontend](patterns/agent-admin-frontend.md)
 - [📋 Circuit Breaker Pattern](patterns/circuit-breaker-pattern.md)
 - [📋 Deterministic Id Hashing](patterns/deterministic-id-hashing.md)
 - [📋 Health Observability](patterns/health-observability.md)
@@ -471,21 +473,6 @@ graph TD
     EventSubscriptionRegistry --> AgentAsBoundedContext
     EventSubscriptionRegistry --> AgentLLMIntegration
     HandlerFactories --> DeciderPattern
-    SagaRouter --> OrderFulfillmentSaga
-    OrderFulfillmentSaga --> OrderCommandHandlers
-    OrderFulfillmentSaga --> InventoryCommandHandlers
-    SagaCompletionHandler --> SagaRegistry
-    ReservationReleasePM --> InventoryCommandHandlers
-    ReservationReleasePM --> OrderWithInventoryProjection
-    OrderNotificationPM --> OrderCommandHandlers
-    DurableAppendAction ..-> DurableEventsIntegration
-    IntegrationRoutes --> OrderCommandHandlers
-    CommandRegistry --> OrderCommandHandlers
-    CommandRegistry --> InventoryCommandHandlers
-    Durable_Command_Orchestrator___Intent_Completion_Bracketing_Wrapper ..-> DurableEventsIntegration
-    Rebuild_Demonstration___Projection_rebuild_from_event_stream_ ..-> DurableEventsIntegration
-    Poison_Event_Admin_Functions___CRUD_operations_for_poisonEvents_table_ ..-> DurableEventsIntegration
-    Intent_Admin_Functions___CRUD_operations_for_commandIntents_table_ ..-> DurableEventsIntegration
     Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Command_Type_Definitions___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Command_Handlers___DS_5_Stub ..-> AgentCommandInfrastructure
@@ -503,9 +490,22 @@ graph TD
     EventSubscription_Discriminated_Union___DS_2_Stub ..-> AgentLLMIntegration
     Agent_Subscription_Factory___DS_2_Stub ..-> AgentLLMIntegration
     Agent_Action_Handler_Factory___DS_2_Stub ..-> AgentLLMIntegration
+    SagaRouter --> OrderFulfillmentSaga
+    OrderFulfillmentSaga --> OrderCommandHandlers
+    OrderFulfillmentSaga --> InventoryCommandHandlers
+    SagaCompletionHandler --> SagaRegistry
+    ReservationReleasePM --> InventoryCommandHandlers
+    ReservationReleasePM --> OrderWithInventoryProjection
+    OrderNotificationPM --> OrderCommandHandlers
+    DurableAppendAction ..-> DurableEventsIntegration
+    IntegrationRoutes --> OrderCommandHandlers
+    Rebuild_Demonstration___Projection_rebuild_from_event_stream_ ..-> DurableEventsIntegration
+    Poison_Event_Admin_Functions___CRUD_operations_for_poisonEvents_table_ ..-> DurableEventsIntegration
+    Intent_Admin_Functions___CRUD_operations_for_commandIntents_table_ ..-> DurableEventsIntegration
+    CommandRegistry --> OrderCommandHandlers
+    CommandRegistry --> InventoryCommandHandlers
+    Durable_Command_Orchestrator___Intent_Completion_Bracketing_Wrapper ..-> DurableEventsIntegration
     CMSRepository --> CMSDualWrite
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBusAbstraction
     ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
@@ -513,6 +513,8 @@ graph TD
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBusAbstraction
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -546,26 +548,6 @@ graph TD
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
     DualWriteContract --> BoundedContextIdentity
-    PaymentOutboxHandler ..-> DurableEventsIntegration
-    MockPaymentActions ..-> DurableEventsIntegration
-    OrderSummaryProjection --> EventStore
-    OrderItemsProjection --> OrderCommandHandlers
-    ProductCatalogProjection --> InventoryCommandHandlers
-    ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> InventoryCommandHandlers
-    OrderCommandConfigs --> OrderSummaryProjection
-    OrderCommandConfigs --> OrderWithInventoryProjection
-    OrderCommandConfigs --> OrderItemsProjection
-    OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
-    Churn_Risk_Agent_Configuration --> AgentAsBoundedContext
     Agent_Component_Schema___DS_1_Stub ..-> AgentBCComponentIsolation
     Agent_Component___Dead_Letter_Public_API___DS_1_Stub --> AgentDeadLetter
     Agent_Component___Dead_Letter_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
@@ -580,6 +562,26 @@ graph TD
     Agent_Component___Approval_Public_API___DS_1_Stub --> PendingApproval
     Agent_Component___Approval_Public_API___DS_1_Stub --> HumanInLoopConfig
     Agent_Component___Approval_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
+    PaymentOutboxHandler ..-> DurableEventsIntegration
+    MockPaymentActions ..-> DurableEventsIntegration
+    ProductCatalogProjection --> InventoryCommandHandlers
+    ActiveReservationsProjection --> InventoryCommandHandlers
+    OrderSummaryProjection --> EventStore
+    OrderItemsProjection --> OrderCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> InventoryCommandHandlers
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
+    Churn_Risk_Agent_Configuration --> AgentAsBoundedContext
+    OrderCommandConfigs --> OrderSummaryProjection
+    OrderCommandConfigs --> OrderWithInventoryProjection
+    OrderCommandConfigs --> OrderItemsProjection
+    OrderCommandConfigs --> CustomerCancellationsProjection
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     Workpool_Partition_Key_Types --> EventBusAbstraction
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -591,10 +593,9 @@ graph TD
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
     OrderCommandHandlers --> OrderDeciders
     OrderCommandHandlers --> OrderRepository
-    InventoryCommandHandlers --> InventoryDeciders
-    InventoryCommandHandlers --> InventoryRepository
     Agent_Command_Emission_Tool --> AgentAsBoundedContext
     Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
+    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentLLMIntegration
@@ -602,16 +603,18 @@ graph TD
     Agent_BC_Utility_Functions --> AgentAsBoundedContext
     Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
     Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
-    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     OpenRouter_Agent_Runtime --> AgentAsBoundedContext
     LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
     LLM_Provider_Configuration --> AgentAsBoundedContext
+    InventoryCommandHandlers --> InventoryDeciders
+    InventoryCommandHandlers --> InventoryRepository
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
     ExampleAppModernization -.-> DynamicConsistencyBoundaries
     ExampleAppModernization -.-> ReactiveProjections
     ExampleAppModernization -.-> EcstFatEvents
     ExampleAppModernization -.-> ReservationPattern
     AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     SagaOrchestration -.-> CommandBusFoundation
     SagaOrchestration -.-> BoundedContextFoundation
