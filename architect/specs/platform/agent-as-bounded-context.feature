@@ -2,11 +2,13 @@
 @architect-release:v0.2.0
 @architect-pattern:AgentAsBoundedContext
 @architect-status:completed
+@architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
 @architect-phase:22
 @architect-effort:2w
 @architect-product-area:Platform
 @architect-depends-on:ReactiveProjections,EcstFatEvents
 @architect-executable-specs:platform-core/tests/features/behavior/agent
+@architect-sequence-orchestrator:agent-event-pipeline
 Feature: Agent as Bounded Context - AI-Native Architecture Pattern
 
   **Problem:** AI agents are invoked manually without integration into the
@@ -393,9 +395,14 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       | Dead letter handler | complete | @libar-dev/platform-core/src/agent/dead-letter.ts | Yes | unit |
       | Agent as BC documentation | complete | docs/architecture/AGENT-AS-BC.md | No | - |
 
+  @architect-sequence-step:1
+  @architect-sequence-module:event-bus,agent-subscription
   Rule: Agent subscribes to relevant event streams
 
     EventBus delivers events to agent BC like any other subscriber.
+
+    **Input:** FatEvent -- eventType, streamId, globalPosition, payload
+    **Output:** AgentSubscription -- subscriptionId, agentId, checkpoint
 
     **Subscription API:**
     """typescript
@@ -456,9 +463,14 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
         | conflicting approval rules   | CONFLICTING_APPROVAL_RULES   | Action cannot be in both autoApprove and requiresApproval |
         | missing agent id             | AGENT_ID_REQUIRED            | Agent must have a unique identifier                  |
 
+  @architect-sequence-step:2
+  @architect-sequence-module:pattern-detection,workpool-action
   Rule: Agent detects patterns across events
 
     Pattern window groups events for analysis (LLM or rule-based).
+
+    **Input:** AgentSubscription -- checkpoint, eventBatch
+    **Output:** PatternResult -- detected, confidence, triggeringEvents
 
     **Pattern Detection API:**
     """typescript
@@ -528,7 +540,12 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
         | negative minEvents     | INVALID_MIN_EVENTS      |
         | duration not parseable | INVALID_DURATION_FORMAT |
 
+  @architect-sequence-step:3
+  @architect-sequence-module:command-emission,audit-trail
   Rule: Agent emits commands with explainability
+
+    **Input:** PatternResult -- detected, confidence, reasoning, suggestedCommand
+    **Output:** AgentDecision -- command, confidence, reason, triggeringEvents
 
     Commands include reasoning and suggested action.
 
@@ -585,7 +602,7 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       When emitCommand is called
       Then an error is thrown with code "REASON_REQUIRED"
 
-    @acceptance-criteria @edge-case
+    @acceptance-criteria @edge-case @architect-sequence-error
     Scenario: LLM rate limit is handled with exponential backoff
       Given an agent attempting LLM analysis
       And LLM API returns 429 rate limit error
@@ -623,7 +640,12 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
         | invalid response  | LLM_INVALID_RESPONSE | log and skip event    |
         | auth error        | LLM_AUTH_FAILED      | alert and pause agent |
 
+  @architect-sequence-step:4
+  @architect-sequence-module:approval-workflow,command-orchestrator
   Rule: Human-in-loop controls automatic execution
+
+    **Input:** AgentDecision -- command, confidence, requiresApproval
+    **Output:** ApprovalResult -- approved, approvedBy, timestamp
 
     High-confidence actions can auto-execute; low-confidence require approval.
 
@@ -676,16 +698,26 @@ Feature: Agent as Bounded Context - AI-Native Architecture Pattern
       Then action status becomes "expired"
       And AgentActionExpired event is recorded
 
+  @architect-sequence-step:5
+  @architect-sequence-module:rate-limiter,workpool-action
   Rule: LLM calls are rate-limited
 
     Rate limiting behavior including token bucket throttling, queue overflow handling,
     and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
 
+    **Input:** PatternResult -- analysisRequest, agentId
+    **Output:** RateLimitResult -- allowed, retryAfterMs
+
     See agent-llm-integration.feature Rule: Rate limiting is enforced before LLM calls
 
+  @architect-sequence-step:6
+  @architect-sequence-module:audit-trail,checkpoint
   Rule: All agent decisions are audited
 
     Audit trail captures pattern detection, reasoning, and outcomes.
+
+    **Input:** AgentDecision -- command, confidence, reason, triggeringEvents
+    **Output:** AgentAuditEvent -- agentId, eventType, decisionId, payload
 
     **Audit Event Structure:**
     """typescript
