@@ -2,13 +2,14 @@
 @architect-release:v0.2.0
 @architect-pattern:WorkpoolPartitioningStrategy
 @architect-status:completed
-@architect-unlock-reason:Fix-curried-helper-usage-example-per-PR-review
+@architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
 @architect-phase:18c
 @architect-effort:3d
 @architect-product-area:Platform
 @architect-business-value:projection-ordering-and-occ-prevention
 @architect-depends-on:DurableFunctionAdapters
 @architect-executable-specs:platform-core/tests/features/behavior/workpool-partitioning
+@architect-sequence-orchestrator:partition-key-selection
 Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
 
   **Problem:** ADR-018 defines critical partition key strategies for preventing OCC conflicts
@@ -53,10 +54,16 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
   # RULE 1: Per-Entity Partitioning
   # ===========================================================================
 
+  @architect-sequence-step:1
+  @architect-sequence-module:partition-helpers
   Rule: Per-entity projections use streamId as partition key
 
     **Invariant:** Events for the same entity must process in the exact order they
     occurred in the Event Store—no out-of-order processing per entity.
+
+    **Input:** EntityPartitionArgs -- streamId, streamType
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Out-of-order event processing causes projection corruption. An
     ItemRemoved event processed before ItemAdded results in invalid state. Using
@@ -141,10 +148,16 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
   # RULE 2: Per-Customer Partitioning
   # ===========================================================================
 
+  @architect-sequence-step:2
+  @architect-sequence-module:partition-helpers
   Rule: Customer-scoped projections use customerId as partition key
 
     **Invariant:** All events affecting a customer's aggregate view must process in
     FIFO order for that customer—regardless of which entity generated the event.
+
+    **Input:** CustomerPartitionArgs -- customerId
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Customer-scoped projections (order history, metrics, preferences)
     combine data from multiple entities. Processing order-123's event before order-122's
@@ -205,10 +218,16 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
   # RULE 3: Global Partitioning for Rollups
   # ===========================================================================
 
+  @architect-sequence-step:3
+  @architect-sequence-module:partition-helpers
   Rule: Global rollup projections use single partition key or maxParallelism 1
 
     **Invariant:** Global aggregate projections must serialize all updates—no concurrent
     writes to the same aggregate document.
+
+    **Input:** RollupCharacteristics -- singleWriter, globalAggregate
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Global rollups (daily sales, inventory totals) write to a single
     document. Concurrent workers cause read-modify-write races: Worker A reads 100,
@@ -294,10 +313,16 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
   # RULE 4: Saga-Scoped Partitioning
   # ===========================================================================
 
+  @architect-sequence-step:4
+  @architect-sequence-module:partition-helpers
   Rule: Cross-context projections use correlationId or sagaId as partition key
 
     **Invariant:** Events within a saga/workflow must process in causal order across
     all bounded contexts—saga step N+1 must not process before step N.
+
+    **Input:** SagaPartitionArgs -- correlationId
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Cross-context projections join data from multiple BCs coordinated
     by a saga. Processing OrderConfirmed before StockReserved shows "confirmed" status
@@ -371,10 +396,16 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
   # RULE 5: Partition Key Selection Guidelines
   # ===========================================================================
 
+  @architect-sequence-step:5
+  @architect-sequence-module:complexity-classifier,validation
   Rule: Partition key selection follows decision tree
 
     **Invariant:** Every projection config must have an explicit `getPartitionKey`
     function—implicit or missing partition keys are rejected at validation time.
+
+    **Input:** ProjectionConfig -- projectionName, getPartitionKey
+
+    **Output:** ValidationResult -- valid, strategy, rationale
 
     **Rationale:** Wrong partition keys cause subtle bugs: too fine-grained wastes
     throughput, too coarse-grained causes out-of-order processing, missing keys
@@ -435,14 +466,14 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
     }
     """
 
-    @acceptance-criteria @validation
+    @acceptance-criteria @validation @architect-sequence-error
     Scenario: Missing partition key fails validation
       Given a projection config without getPartitionKey
       When CommandOrchestrator validates the config
       Then validation should fail with "missing getPartitionKey"
       And error should suggest available helper functions
 
-    @acceptance-criteria @validation
+    @acceptance-criteria @validation @architect-sequence-error
     Scenario: Invalid partition key shape fails validation
       Given a projection config with getPartitionKey returning null
       When CommandOrchestrator validates the config
@@ -466,10 +497,16 @@ Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
   # RULE 6: DCB Alignment
   # ===========================================================================
 
+  @architect-sequence-step:6
+  @architect-sequence-module:partition-helpers,dcb-retry
   Rule: DCB retry partition keys align with scope keys for coherent retry
 
     **Invariant:** DCB retry partition keys must derive from scope keys so retries
     serialize with new operations on the same scope—no interleaving.
+
+    **Input:** DCBScopeKey -- scopeKey
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Misaligned partition keys allow retry attempt 2 for scope X to
     interleave with new operation for scope X, causing the retry to read stale state.

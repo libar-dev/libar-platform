@@ -2,13 +2,14 @@
 @architect-release:v0.2.0
 @architect-pattern:DurableFunctionAdapters
 @architect-status:completed
-@architect-unlock-reason:deliverable-status-update-not-scope-creep
+@architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
 @architect-phase:18a
 @architect-effort:3d
 @architect-product-area:Platform
 @architect-business-value:production-grade-reliability-with-minimal-code
 @architect-depends-on:DCB
 @architect-executable-specs:platform-core/tests/features/behavior/durable-function-adapters
+@architect-sequence-orchestrator:durable-adapter-bridge
 Feature: Durable Function Adapters - Bridge Platform to Convex Components
 
   **Problem:** Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses
@@ -73,6 +74,8 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
   # RULE 1: Rate Limit Adapter
   # ===========================================================================
 
+  @architect-sequence-step:1
+  @architect-sequence-module:rate-limit-adapter,rate-limiter-component
   Rule: Rate limit adapter bridges middleware to component
 
     **Invariant:** Rate limiting decisions must persist across server restarts and scale
@@ -91,6 +94,10 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
 
     The adapter implements the existing `RateLimitChecker` interface, allowing the current
     middleware pipeline to use `@convex-dev/rate-limiter` without any changes to middleware code.
+
+    **Input:** RateLimitCheckArgs -- key
+
+    **Output:** RateLimitResult -- allowed, retryAfterMs
 
     **Interface Contract (existing):**
     """typescript
@@ -187,6 +194,8 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
   # RULE 2: DCB Conflict Retry
   # ===========================================================================
 
+  @architect-sequence-step:2
+  @architect-sequence-module:dcb-retry,backoff-calculator
   Rule: DCB retry helper automatically handles OCC conflicts
 
     **Invariant:** OCC conflicts from DCB operations must be retried automatically with
@@ -311,6 +320,10 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
     }
     """
 
+    **Input:** DCBRetryOptions -- attempt, onComplete, context
+
+    **Output:** DCBRetryResult -- status, retryKey, scheduledAt
+
     **Backoff Calculation (standard formula from CONVEX-DURABILITY-REFERENCE.md):**
     """typescript
     // platform-core/src/dcb/backoff.ts
@@ -351,7 +364,7 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
       And the result should have status "deferred"
       And the retry should use expectedVersion 6
 
-    @acceptance-criteria @validation
+    @acceptance-criteria @validation @architect-sequence-error
     Scenario: Max retries exceeded returns rejected
       Given a DCB operation that conflicts
       And attempt is equal to maxAttempts (5)
@@ -398,10 +411,16 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
   # RULE 3: Integration Patterns
   # ===========================================================================
 
+  @architect-sequence-step:3
+  @architect-sequence-module:middleware-pipeline,workpool-mount
   Rule: Adapters integrate with existing platform infrastructure
 
     **Invariant:** Adapters must plug into existing platform interfaces without requiring
     changes to middleware pipeline, command configs, or core orchestration logic.
+
+    **Input:** PlatformInterfaces -- RateLimitChecker, DCBExecutor
+
+    **Output:** IntegrationResult -- rateLimiterMounted, dcbRetryPoolMounted
 
     **Rationale:** The platform already has well-defined interfaces (RateLimitChecker,
     DCB execution flow). Adapters bridge these to Convex durable components without

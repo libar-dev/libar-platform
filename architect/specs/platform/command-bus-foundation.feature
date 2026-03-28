@@ -8,7 +8,8 @@
 @architect-depends-on:EventStoreFoundation
 @architect-completed:2026-01-18
 @architect-pre-existing-completion
-@architect-unlock-reason:initial-completion
+@architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
+@architect-sequence-orchestrator:command-orchestration-flow
 Feature: Command Bus Foundation - Command Idempotency and Orchestration
 
   **Problem:** Command execution requires idempotency (same command = same result),
@@ -45,7 +46,11 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
   # RULE 1: Command Idempotency
   # =============================================================================
 
+  @architect-sequence-step:1
+  @architect-sequence-module:record-command
   Rule: Commands are idempotent via commandId deduplication
+
+    **Invariant:** Same commandId always returns same result without re-execution.
 
     Every command has a unique commandId. When a command is recorded, the
     Command Bus checks if that commandId already exists:
@@ -54,6 +59,10 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
 
     This ensures retries are safe - network failures don't cause duplicate
     domain state changes.
+
+    **Input:** RecordCommandArgs -- commandId, commandType, payload, metadata
+
+    **Output:** RecordCommandResult -- status, isNew, cachedResult
 
     @acceptance-criteria
     Scenario: First command execution is recorded
@@ -73,7 +82,11 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
   # RULE 2: Command Status Lifecycle
   # =============================================================================
 
+  @architect-sequence-step:5
+  @architect-sequence-module:status-tracking
   Rule: Status tracks the complete command lifecycle
+
+    **Invariant:** Status transitions are atomic with result — pending to executed, rejected, or failed.
 
     Commands progress through well-defined states:
     - **pending**: Command received, execution in progress
@@ -84,6 +97,10 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
     The status is updated atomically with the command result, ensuring
     consistent state even under concurrent access.
 
+    **Input:** CommandResult -- status, data
+
+    **Output:** CommandStatusInfo -- commandId, status, result, updatedAt
+
     @acceptance-criteria
     Scenario: Successful command transitions to executed
       Given a command in "pending" status
@@ -91,14 +108,14 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
       Then the status becomes "executed"
       And the result contains success data
 
-    @acceptance-criteria
+    @acceptance-criteria @architect-sequence-error
     Scenario: Business rejection transitions to rejected
       Given a command in "pending" status
       When the command handler returns rejected with code "INVALID_STATUS"
       Then the status becomes "rejected"
       And the result contains the rejection code
 
-    @acceptance-criteria
+    @acceptance-criteria @architect-sequence-error
     Scenario: Unexpected error transitions to failed
       Given a command in "pending" status
       When the command handler throws an unexpected error
@@ -109,7 +126,11 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
   # RULE 3: The 7-Step CommandOrchestrator
   # =============================================================================
 
+  @architect-sequence-step:3
+  @architect-sequence-module:command-orchestrator,event-store
   Rule: The CommandOrchestrator is the only command execution path
+
+    **Invariant:** Every command flows through the same 7-step orchestration — no bypass allowed.
 
     Every command in the system flows through the same 7-step orchestration:
 
@@ -127,11 +148,19 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
     - Automatic projection triggering
     - Consistent error handling and status reporting
 
+    **Input:** CommandConfig -- handler, projection, sagaRoute
+
+    **Output:** CommandResult -- status, data, eventId, globalPosition
+
   # =============================================================================
   # RULE 4: Correlation Enables Distributed Tracing
   # =============================================================================
 
+  @architect-sequence-step:4
+  @architect-sequence-module:correlation-chain
   Rule: correlationId links commands, events, and projections
+
+    **Invariant:** correlationId flows from command through handler to event metadata to projection.
 
     Every command carries a correlationId that flows through the entire
     execution path:
@@ -142,11 +171,19 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
     The commandEventCorrelations table tracks which events were produced
     by each command, enabling forward (command -> events) lookups.
 
+    **Input:** EventData -- eventId, eventType, streamId, metadata
+
+    **Output:** CorrelationEntry -- commandId, eventIds
+
   # =============================================================================
   # RULE 5: Middleware Pipeline
   # =============================================================================
 
+  @architect-sequence-step:2
+  @architect-sequence-module:middleware-pipeline
   Rule: Middleware provides composable cross-cutting concerns
+
+    **Invariant:** Middleware executes in registration order with early exit on failure.
 
     The CommandOrchestrator supports a middleware pipeline that wraps
     command execution with before/after hooks:
@@ -158,3 +195,7 @@ Feature: Command Bus Foundation - Command Idempotency and Orchestration
 
     Middleware executes in registration order, with early exit on failure.
     This separates infrastructure concerns from domain logic.
+
+    **Input:** MiddlewareContext -- command, correlationId, custom
+
+    **Output:** MiddlewareResult -- continue, enrichedContext

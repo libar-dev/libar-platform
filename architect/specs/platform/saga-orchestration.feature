@@ -8,7 +8,8 @@
 @architect-depends-on:CommandBusFoundation,BoundedContextFoundation
 @architect-completed:2026-01-18
 @architect-pre-existing-completion
-@architect-unlock-reason:initial-completion
+@architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
+@architect-sequence-orchestrator:saga-fulfillment-flow
 Feature: Saga Orchestration - Cross-Context Coordination with Compensation
 
   **Problem:** Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot
@@ -42,7 +43,11 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
   # RULE 1: Sagas Coordinate Cross-BC Operations
   # =============================================================================
 
+  @architect-sequence-step:1
+  @architect-sequence-module:saga-router,command-orchestrator
   Rule: Sagas orchestrate operations across multiple bounded contexts
+
+    **Invariant:** Each saga step uses the CommandOrchestrator for dual-write semantics within target BC.
 
     When a business process spans multiple bounded contexts (e.g., Orders,
     Inventory, Shipping), a Saga coordinates the steps:
@@ -55,6 +60,10 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
     Each step uses the CommandOrchestrator to maintain dual-write semantics
     within the target bounded context.
 
+    **Input:** TriggerEvent -- eventType, eventId, streamId, payload
+
+    **Output:** SagaStep -- stepName, targetBC, commandType, result
+
     @acceptance-criteria
     Scenario: Successful cross-context coordination
       Given an OrderSubmitted event for order "ord-123"
@@ -63,7 +72,7 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
       And on success, it confirms the order
       And the saga completes with status "completed"
 
-    @acceptance-criteria
+    @acceptance-criteria @architect-sequence-error
     Scenario: Compensation on step failure
       Given an OrderSubmitted event for order "ord-456"
       When the Inventory BC rejects the reservation (insufficient stock)
@@ -75,7 +84,11 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
   # RULE 2: Workflow Durability
   # =============================================================================
 
+  @architect-sequence-step:3
+  @architect-sequence-module:workflow-manager
   Rule: @convex-dev/workflow provides durability across server restarts
+
+    **Invariant:** Workflow state persists automatically — server restarts resume from last completed step.
 
     Sagas use Convex Workflow for durable execution:
     - Workflow state is persisted automatically
@@ -85,11 +98,19 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
     This durability is critical for long-running processes that may span
     minutes or hours (e.g., waiting for payment confirmation).
 
+    **Input:** WorkflowArgs -- orderId, customerId, items, correlationId
+
+    **Output:** WorkflowState -- workflowId, status, currentStep
+
   # =============================================================================
   # RULE 3: Compensation Handles Failures
   # =============================================================================
 
+  @architect-sequence-step:4
+  @architect-sequence-module:compensation-handler
   Rule: Compensation reverses partial operations on failure
+
+    **Invariant:** Compensation runs in reverse order of completed steps on failure.
 
     If step N fails after steps 1..N-1 succeeded, compensation logic
     must undo the effects of the completed steps:
@@ -101,11 +122,19 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
 
     Compensation runs in reverse order of the original steps.
 
+    **Input:** FailedStep -- stepName, error, completedSteps
+
+    **Output:** CompensationResult -- reversedSteps, finalStatus
+
   # =============================================================================
   # RULE 4: Saga Idempotency
   # =============================================================================
 
+  @architect-sequence-step:2
+  @architect-sequence-module:saga-registry
   Rule: Saga idempotency prevents duplicate workflows via sagaId
+
+    **Invariant:** Same sagaId never starts duplicate workflows — registry returns existing info.
 
     Each saga has a unique sagaId (typically the entity ID triggering it).
     The registry checks for existing sagas before starting:
@@ -115,6 +144,10 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
 
     This ensures network retries and event redelivery don't create
     multiple workflows for the same business operation.
+
+    **Input:** StartSagaArgs -- sagaType, sagaId, triggerEventId, correlationId
+
+    **Output:** RegistryResult -- status, workflowId, isNew
 
     @acceptance-criteria
     Scenario: First trigger starts saga
@@ -136,7 +169,11 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
   # RULE 5: External Status Tracking
   # =============================================================================
 
+  @architect-sequence-step:5
+  @architect-sequence-module:completion-handler
   Rule: Saga status is updated via onComplete callback, not inside workflow
+
+    **Invariant:** Workflow code has no database access — status updates are external via onComplete.
 
     The workflow's onComplete handler updates the saga's status in the
     sagas table. This separation ensures:
@@ -146,3 +183,7 @@ Feature: Saga Orchestration - Cross-Context Coordination with Compensation
     - Failed status updates can be retried independently
 
     Status values: pending -> running -> completed | failed | compensating
+
+    **Input:** WorkflowResult -- workflowId, result, context
+
+    **Output:** SagaStatus -- sagaId, status, completedAt
