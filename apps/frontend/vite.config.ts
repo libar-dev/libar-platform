@@ -1,11 +1,13 @@
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
+  },
   ssr: {
     noExternal: ["@convex-dev/react-query", "@tanstack/react-router-ssr-query"],
   },
@@ -33,8 +35,6 @@ export default defineConfig({
   plugins: [
     // Tailwind CSS v4 Vite plugin
     tailwindcss(),
-    // Enables Vite to resolve imports using path aliases from tsconfig
-    tsconfigPaths(),
     // TanStack Start configuration
     tanstackStart({
       srcDirectory: ".", // Root of the app

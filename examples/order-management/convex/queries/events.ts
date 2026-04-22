@@ -28,6 +28,14 @@ import { components } from "../_generated/api";
  */
 const MAX_RECENT_EVENTS = 20;
 
+type StreamEvent = {
+  eventId: string;
+  eventType: string;
+  globalPosition: number;
+  timestamp: number;
+  payload: Record<string, unknown>;
+};
+
 /**
  * Get recent order events for reactive projection updates.
  *
@@ -64,12 +72,12 @@ export const getRecentOrderEvents = query({
     const { orderId, afterGlobalPosition } = args;
 
     // Read events from the Order stream
-    const events = await ctx.runQuery(components.eventStore.lib.readStream, {
+    const events = (await ctx.runQuery(components.eventStore.lib.readStream, {
       streamType: "Order",
       streamId: orderId,
       // Note: readStream uses version, not globalPosition
       // We'll filter by globalPosition after fetching
-    });
+    })) as StreamEvent[];
 
     // Filter to events after the checkpoint and limit to recent ones
     let filteredEvents = events;
@@ -118,10 +126,10 @@ export const getOrderStreamPosition = query({
 
     // Read all events from the Order stream to find the highest globalPosition
     // Note: We can't use limit here because events are ordered by version, not globalPosition
-    const events = await ctx.runQuery(components.eventStore.lib.readStream, {
+    const events = (await ctx.runQuery(components.eventStore.lib.readStream, {
       streamType: "Order",
       streamId: orderId,
-    });
+    })) as StreamEvent[];
 
     if (events.length === 0) {
       return null;
@@ -160,10 +168,10 @@ export const getRecentInventoryEvents = query({
     const { productId, afterGlobalPosition } = args;
 
     // Read events from the Product stream
-    const events = await ctx.runQuery(components.eventStore.lib.readStream, {
+    const events = (await ctx.runQuery(components.eventStore.lib.readStream, {
       streamType: "Product",
       streamId: productId,
-    });
+    })) as StreamEvent[];
 
     // Filter to events after the checkpoint
     let filteredEvents = events;

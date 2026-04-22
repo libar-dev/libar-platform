@@ -21,7 +21,7 @@
  * @since Phase 22 (AgentAsBoundedContext)
  */
 
-import type { LanguageModelV2 } from "@ai-sdk/provider";
+import type { LanguageModelV3 } from "@ai-sdk/provider";
 
 /**
  * Default model for agent pattern analysis.
@@ -58,7 +58,7 @@ export const OPENROUTER_SITE_NAME = "libar-platform";
  */
 export async function createLanguageModel(
   apiKey: string | undefined
-): Promise<LanguageModelV2 | null> {
+): Promise<LanguageModelV3 | null> {
   if (!apiKey) {
     // Note: Caller should log the warning as Convex doesn't have console in mutations
     return null;

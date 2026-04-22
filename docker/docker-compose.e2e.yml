@@ -20,7 +20,7 @@
 
 services:
   backend:
-    image: ghcr.io/get-convex/convex-backend:latest
+    image: ghcr.io/get-convex/convex-backend:c34b8eca2d740de3cde3f6a3ab7d1dc9e98ee7d6
     container_name: convex-es-e2e-backend
     ports:
       - "3230:3210"
@@ -43,7 +43,7 @@ services:
       start_period: 10s
 
   dashboard:
-    image: ghcr.io/get-convex/convex-dashboard:latest
+    image: ghcr.io/get-convex/convex-dashboard:c34b8eca2d740de3cde3f6a3ab7d1dc9e98ee7d6
     container_name: convex-es-e2e-dashboard
     ports:
       - "6792:6791"

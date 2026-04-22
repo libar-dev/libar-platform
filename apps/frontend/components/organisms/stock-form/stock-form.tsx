@@ -124,7 +124,7 @@ export function StockForm({
         <Field data-invalid={!!errors.productId}>
           <FieldLabel htmlFor={`${formId}-product`}>Product</FieldLabel>
           <Select
-            value={selectedProductId || undefined}
+            value={selectedProductId}
             onValueChange={(value) => setSelectedProductId(value ?? "")}
             disabled={isSubmitting}
           >

@@ -32,12 +32,6 @@ export default defineConfig({
     teardownTimeout: 15000, // 15 seconds for teardown
     isolate: true,
     pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true, // Run integration tests in single fork
-        isolate: true,
-      },
-    },
     // Disable parallel execution for integration tests
     fileParallelism: false,
     maxWorkers: 1,

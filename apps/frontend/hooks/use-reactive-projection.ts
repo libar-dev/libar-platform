@@ -203,7 +203,8 @@ export function useReactiveProjection<TProjection, TEvent extends ReactiveDomain
           throw new Error(
             `Failed to apply event ${index + 1}/${sortedEvents.length} (${eventInfo}): ${
               innerError instanceof Error ? innerError.message : String(innerError)
-            }`
+            }`,
+            { cause: innerError }
           );
         }
       }, projection);

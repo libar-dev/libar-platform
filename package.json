@@ -36,20 +36,30 @@
     "architect-guard": "architect-guard"
   },
   "devDependencies": {
-    "@convex-dev/eslint-plugin": "^1.1.1",
+    "@convex-dev/eslint-plugin": "catalog:",
     "@libar-dev/architect": "1.0.0-pre.3",
-    "@edge-runtime/vm": "^5.0.0",
+    "@edge-runtime/vm": "catalog:",
     "concurrently": "^9.2.1",
-    "convex-helpers": "^0.1.108",
-    "eslint": "^9.17.0",
-    "prettier": "^3.4.2",
+    "convex-helpers": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0",
-    "vitest": "^2.1.8"
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
   },
   "engines": {
     "node": ">=20.11"
+  },
+  "pnpm": {
+    "overrides": {
+      "@typescript-eslint/project-service": "8.59.0",
+      "@typescript-eslint/tsconfig-utils": "8.59.0",
+      "@typescript-eslint/types": "8.59.0",
+      "@typescript-eslint/typescript-estree": "8.59.0",
+      "@typescript-eslint/visitor-keys": "8.59.0"
+    }
   },
   "packageManager": "pnpm@10.26.1"
 }

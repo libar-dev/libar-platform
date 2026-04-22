@@ -16,7 +16,7 @@
  * @architect-arch-layer infrastructure
  */
 
-import { Workpool } from "@convex-dev/workpool";
+import { Workpool, type WorkpoolComponent, type WorkpoolOptions } from "@convex-dev/workpool";
 import type { WorkpoolClient } from "@libar-dev/platform-core";
 import { components } from "./_generated/api";
 
@@ -54,6 +54,10 @@ const noOpWorkpool: WorkpoolClient = {
   },
 };
 
+function createWorkpool(component: unknown, options: WorkpoolOptions): WorkpoolClient {
+  return new Workpool(component as WorkpoolComponent, options) as unknown as WorkpoolClient;
+}
+
 // ============================================================================
 // Pool Definitions
 // ============================================================================
@@ -76,7 +80,7 @@ const noOpWorkpool: WorkpoolClient = {
  */
 export const agentPool: WorkpoolClient = isConvexTestMode
   ? noOpWorkpool
-  : new Workpool(components.agentPool, {
+  : createWorkpool(components.agentPool, {
       maxParallelism: 10,
       retryActionsByDefault: true,
       defaultRetryBehavior: {

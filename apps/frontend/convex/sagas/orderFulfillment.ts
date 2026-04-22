@@ -20,6 +20,7 @@
  */
 import { v } from "convex/values";
 import { makeFunctionReference } from "convex/server";
+import type { RegisteredMutation } from "convex/server";
 import { createScopedLogger, type SafeMutationRef } from "@libar-dev/platform-core";
 import { workflowManager, PLATFORM_LOG_LEVEL } from "../infrastructure";
 
@@ -84,6 +85,15 @@ export interface OrderFulfillmentResult {
   reason?: string;
 }
 
+type OrderFulfillmentWorkflowMutation = RegisteredMutation<
+  "internal",
+  {
+    fn: "You should not call this directly, call workflow.start instead";
+    args: OrderFulfillmentArgs;
+  },
+  OrderFulfillmentResult
+>;
+
 // =============================================================================
 // Type Guards
 // =============================================================================
@@ -120,7 +130,7 @@ function hasReservationId(data: unknown): data is ReserveStockSuccessData {
  * The workflow is durable - it will resume from the last step on restart.
  * The onComplete callback updates saga status to completed/failed.
  */
-export const orderFulfillmentWorkflow = workflowManager.define({
+export const orderFulfillmentWorkflow: OrderFulfillmentWorkflowMutation = workflowManager.define({
   args: {
     orderId: v.string(),
     customerId: v.string(),

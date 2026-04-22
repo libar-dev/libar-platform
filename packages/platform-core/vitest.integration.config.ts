@@ -32,13 +32,8 @@ export default defineConfig({
     testTimeout: 60000, // 60s for integration tests
     hookTimeout: 30000,
     // Run sequentially to avoid OCC transaction conflicts at the backend level
+    isolate: true,
     pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-        isolate: true,
-      },
-    },
     // Ensure tests run sequentially (matches order-management config)
     fileParallelism: false,
     maxWorkers: 1,

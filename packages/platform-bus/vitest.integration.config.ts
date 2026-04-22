@@ -7,13 +7,8 @@ export default defineConfig({
     include: ["tests/steps/**/*.integration.steps.ts"],
     testTimeout: 60000,
     hookTimeout: 30000,
+    isolate: true,
     pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-        isolate: true,
-      },
-    },
     fileParallelism: false,
     maxWorkers: 1,
   },

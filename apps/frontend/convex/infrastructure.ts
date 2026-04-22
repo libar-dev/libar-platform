@@ -12,8 +12,8 @@
  * Initializes Workpool, Workflow, and other infrastructure components.
  */
 
-import { Workpool } from "@convex-dev/workpool";
-import { WorkflowManager } from "@convex-dev/workflow";
+import { Workpool, type WorkpoolComponent, type WorkpoolOptions } from "@convex-dev/workpool";
+import { WorkflowManager, type WorkflowComponent } from "@convex-dev/workflow";
 import { ActionRetrier } from "@convex-dev/action-retrier";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";
@@ -174,6 +174,10 @@ const isIntegrationTest = safeGlobal.process?.env?.["IS_TEST"] === "true";
  */
 const workpoolParallelism = isIntegrationTest ? 3 : 10;
 
+function createWorkpool(component: unknown, options: WorkpoolOptions): WorkpoolClient {
+  return new Workpool(component as WorkpoolComponent, options) as unknown as WorkpoolClient;
+}
+
 /**
  * Projection pool - for processing projection updates.
  *
@@ -193,7 +197,7 @@ const workpoolParallelism = isIntegrationTest ? 3 : 10;
  */
 export const projectionPool: WorkpoolClient = isConvexTestMode
   ? noOpWorkpool
-  : new Workpool(components.projectionPool, {
+  : createWorkpool(components.projectionPool, {
       maxParallelism: workpoolParallelism,
       defaultRetryBehavior: {
         maxAttempts: 3,
@@ -226,7 +230,7 @@ export const projectionPool: WorkpoolClient = isConvexTestMode
  */
 export const dcbRetryPool: WorkpoolClient = isConvexTestMode
   ? noOpWorkpool
-  : new Workpool(components.dcbRetryPool, {
+  : createWorkpool(components.dcbRetryPool, {
       maxParallelism: workpoolParallelism,
       defaultRetryBehavior: {
         maxAttempts: 1, // withDCBRetry handles retries internally
@@ -258,7 +262,7 @@ export const dcbRetryPool: WorkpoolClient = isConvexTestMode
  */
 export const eventReplayPool: WorkpoolClient = isConvexTestMode
   ? noOpWorkpool
-  : new Workpool(components.eventReplayPool, {
+  : createWorkpool(components.eventReplayPool, {
       maxParallelism: 5, // Low priority, preserves 50%+ budget for live ops
       defaultRetryBehavior: {
         maxAttempts: 5,
@@ -292,7 +296,7 @@ export const eventReplayPool: WorkpoolClient = isConvexTestMode
  */
 export const durableAppendPool: WorkpoolClient = isConvexTestMode
   ? noOpWorkpool
-  : new Workpool(components.durableAppendPool, {
+  : createWorkpool(components.durableAppendPool, {
       maxParallelism: workpoolParallelism,
       defaultRetryBehavior: {
         maxAttempts: 5,
@@ -320,7 +324,7 @@ export const durableAppendPool: WorkpoolClient = isConvexTestMode
  * @see workpoolParallelism for conditional parallelism explanation
  */
 export const workflowManager = new WorkflowManager(
-  components.workflow as unknown as typeof components.workflow,
+  components.workflow as unknown as WorkflowComponent,
   {
     workpoolOptions: {
       maxParallelism: workpoolParallelism,

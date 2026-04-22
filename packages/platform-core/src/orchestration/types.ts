@@ -497,8 +497,6 @@ export interface WorkpoolClient {
         unknown
       > | null;
       context?: unknown;
-      runAt?: number;
-      runAfter?: number;
       /**
        * Partition key for ordering within the Workpool.
        *
@@ -509,7 +507,7 @@ export interface WorkpoolClient {
        * @since Phase 18a
        */
       key?: string;
-    }
+    } & ({ runAt?: number; runAfter?: never } | { runAfter?: number; runAt?: never })
   ) => Promise<unknown>;
 
   /**
