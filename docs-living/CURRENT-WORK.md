@@ -7,14 +7,14 @@
 
 ## Summary
 
-**Overall Progress:** [█████████████░░░░░░░] 100/153 (65%)
+**Overall Progress:** [█████████████░░░░░░░] 100/159 (63%)
 
 | Metric         | Value |
 | -------------- | ----- |
-| Total Patterns | 153   |
+| Total Patterns | 159   |
 | Completed      | 100   |
 | Active         | 7     |
-| Planned        | 46    |
+| Planned        | 52    |
 | Active Phases  | 2     |
 
 ---
@@ -23,7 +23,7 @@
 
 ### 🚧 Agent as Bounded Context - AI-Driven Event Reactors
 
-[██████░░░░░░░░░] 3/7 43% complete (3 done, 4 active)
+[██████░░░░░░░░░] 3/8 38% complete (3 done, 4 active, 1 planned)
 
 | Pattern                                                | Description                                                                                                           |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |

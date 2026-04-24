@@ -10,7 +10,7 @@ export const EventMetadataSchema = z.object({
   streamType: z.string(),
   streamId: z.string(),
   version: z.number().int().positive(),
-  globalPosition: z.number().int().nonnegative(),
+  globalPosition: z.bigint().nonnegative(),
   timestamp: z.number().int().positive(), // Unix timestamp in milliseconds
   correlationId: z.string(),
   causationId: z.string().optional(),
@@ -457,11 +457,23 @@ export const AppendResultSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("success"),
     eventIds: z.array(z.string()),
-    globalPositions: z.array(z.number()),
+    globalPositions: z.array(z.bigint()),
+    newVersion: z.number(),
+  }),
+  z.object({
+    status: z.literal("duplicate"),
+    eventIds: z.array(z.string()),
+    globalPositions: z.array(z.bigint()),
     newVersion: z.number(),
   }),
   z.object({
     status: z.literal("conflict"),
+    currentVersion: z.number(),
+  }),
+  z.object({
+    status: z.literal("idempotency_conflict"),
+    existingEventId: z.string(),
+    auditId: z.string(),
     currentVersion: z.number(),
   }),
 ]);

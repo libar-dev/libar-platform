@@ -15,19 +15,18 @@
 ## Description
 
 **Problem:** Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot
-use atomic transactions because bounded contexts have isolated databases. Without
-coordination infrastructure, partial failures leave the system in inconsistent states.
+  use atomic transactions because bounded contexts have isolated databases. Without
+  coordination infrastructure, partial failures leave the system in inconsistent states.
 
-**Solution:** Sagas use @convex-dev/workflow for durable multi-step orchestration:
+  **Solution:** Sagas use @convex-dev/workflow for durable multi-step orchestration:
+  - Each step calls into a bounded context via the CommandOrchestrator
+  - Failures trigger compensation logic to rollback partial operations
+  - Saga idempotency prevents duplicate workflows from the same trigger event
+  - onComplete callback updates saga status external to the workflow
 
-- Each step calls into a bounded context via the CommandOrchestrator
-- Failures trigger compensation logic to rollback partial operations
-- Saga idempotency prevents duplicate workflows from the same trigger event
-- onComplete callback updates saga status external to the workflow
-
-**Note:** This pattern was implemented before the delivery process existed
-and is documented retroactively to provide context for IntegrationPatterns
-and AgentAsBoundedContext phases.
+  **Note:** This pattern was implemented before the delivery process existed
+  and is documented retroactively to provide context for IntegrationPatterns
+  and AgentAsBoundedContext phases.
 
 ## Dependencies
 
@@ -72,8 +71,10 @@ and AgentAsBoundedContext phases.
 
 **Sagas orchestrate operations across multiple bounded contexts**
 
-When a business process spans multiple bounded contexts (e.g., Orders,
-Inventory, Shipping), a Saga coordinates the steps:
+**Invariant:** Each saga step uses the CommandOrchestrator for dual-write semantics within target BC.
+
+    When a business process spans multiple bounded contexts (e.g., Orders,
+    Inventory, Shipping), a Saga coordinates the steps:
 
     1. Receive trigger event (e.g., OrderSubmitted)
     2. Call Inventory BC to reserve stock
@@ -83,19 +84,34 @@ Inventory, Shipping), a Saga coordinates the steps:
     Each step uses the CommandOrchestrator to maintain dual-write semantics
     within the target bounded context.
 
+    **Input:** TriggerEvent -- eventType, eventId, streamId, payload
+
+    **Output:** SagaStep -- stepName, targetBC, commandType, result
+
 _Verified by: Successful cross-context coordination, Compensation on step failure_
 
 **@convex-dev/workflow provides durability across server restarts**
 
-Sagas use Convex Workflow for durable execution: - Workflow state is persisted automatically - Server restarts resume from the last completed step - External events (awaitEvent) allow pausing for external input
+**Invariant:** Workflow state persists automatically — server restarts resume from last completed step.
+
+    Sagas use Convex Workflow for durable execution:
+    - Workflow state is persisted automatically
+    - Server restarts resume from the last completed step
+    - External events (awaitEvent) allow pausing for external input
 
     This durability is critical for long-running processes that may span
     minutes or hours (e.g., waiting for payment confirmation).
 
+    **Input:** WorkflowArgs -- orderId, customerId, items, correlationId
+
+    **Output:** WorkflowState -- workflowId, status, currentStep
+
 **Compensation reverses partial operations on failure**
 
-If step N fails after steps 1..N-1 succeeded, compensation logic
-must undo the effects of the completed steps:
+**Invariant:** Compensation runs in reverse order of completed steps on failure.
+
+    If step N fails after steps 1..N-1 succeeded, compensation logic
+    must undo the effects of the completed steps:
 
     | Step | Success Action | Compensation |
     | Reserve inventory | Stock reserved | Release reservation |
@@ -104,10 +120,16 @@ must undo the effects of the completed steps:
 
     Compensation runs in reverse order of the original steps.
 
+    **Input:** FailedStep -- stepName, error, completedSteps
+
+    **Output:** CompensationResult -- reversedSteps, finalStatus
+
 **Saga idempotency prevents duplicate workflows via sagaId**
 
-Each saga has a unique sagaId (typically the entity ID triggering it).
-The registry checks for existing sagas before starting:
+**Invariant:** Same sagaId never starts duplicate workflows — registry returns existing info.
+
+    Each saga has a unique sagaId (typically the entity ID triggering it).
+    The registry checks for existing sagas before starting:
 
     - If saga exists: Return existing saga info, do not start duplicate
     - If new: Create saga record, start workflow
@@ -115,18 +137,28 @@ The registry checks for existing sagas before starting:
     This ensures network retries and event redelivery don't create
     multiple workflows for the same business operation.
 
+    **Input:** StartSagaArgs -- sagaType, sagaId, triggerEventId, correlationId
+
+    **Output:** RegistryResult -- status, workflowId, isNew
+
 _Verified by: First trigger starts saga, Duplicate trigger returns existing saga_
 
 **Saga status is updated via onComplete callback, not inside workflow**
 
-The workflow's onComplete handler updates the saga's status in the
-sagas table. This separation ensures:
+**Invariant:** Workflow code has no database access — status updates are external via onComplete.
+
+    The workflow's onComplete handler updates the saga's status in the
+    sagas table. This separation ensures:
 
     - Workflow code remains pure (no database access)
     - Status updates are atomic with workflow completion
     - Failed status updates can be retried independently
 
     Status values: pending -> running -> completed | failed | compensating
+
+    **Input:** WorkflowResult -- workflowId, result, context
+
+    **Output:** SagaStatus -- sagaId, status, completedAt
 
 ---
 

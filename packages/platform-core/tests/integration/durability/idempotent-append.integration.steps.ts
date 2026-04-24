@@ -15,7 +15,7 @@ import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { makeFunctionReference } from "convex/server";
-import type { SafeMutationRef, SafeQueryRef } from "../../../src/types/function-references.js";
+import type { SafeMutationRef, SafeQueryRef } from "../../../src/function-refs/types.js";
 import { withPrefix, testMutation, testQuery } from "../../../src/testing/index.js";
 
 // =============================================================================
@@ -224,6 +224,7 @@ describeFeature(
               eventType: "TestEventA",
               eventData: { key: "A" },
               boundedContext: "testing",
+              correlationId: withPrefix(`corr-key-a-${Date.now()}`),
             });
           });
 
@@ -243,6 +244,7 @@ describeFeature(
               eventData: { key: "B" },
               boundedContext: "testing",
               expectedVersion,
+              correlationId: withPrefix(`corr-key-b-${Date.now()}`),
             });
           });
 
@@ -286,6 +288,7 @@ describeFeature(
                 eventType: "OriginalEvent",
                 eventData: { original: true },
                 boundedContext: "testing",
+                correlationId: withPrefix(`corr-dup-initial-${Date.now()}`),
               });
 
               state.originalEventId = state.appendResult!.eventId;
@@ -296,9 +299,10 @@ describeFeature(
                 idempotencyKey: state.currentIdempotencyKey!,
                 streamType: state.currentStreamType!,
                 streamId: state.currentStreamId!,
-                eventType: "DuplicateEvent",
-                eventData: { duplicate: true },
+                eventType: "OriginalEvent",
+                eventData: { original: true },
                 boundedContext: "testing",
+                correlationId: withPrefix(`corr-dup-repeat-${Date.now()}`),
               });
             });
 
@@ -322,9 +326,7 @@ describeFeature(
           }
         );
 
-        RuleScenario(
-          "Duplicate append preserves original event data",
-          ({ Given, When, Then, And }) => {
+        RuleScenario("Same key with different payload is rejected", ({ Given, When, Then, And }) => {
             Given(
               'an event with payload "original data" was appended with key "preserve-key"',
               async () => {
@@ -336,10 +338,11 @@ describeFeature(
                   idempotencyKey: state.currentIdempotencyKey,
                   streamType: state.currentStreamType,
                   streamId: state.currentStreamId,
-                  eventType: "DataEvent",
-                  eventData: { message: "original data" },
-                  boundedContext: "testing",
-                });
+                   eventType: "DataEvent",
+                   eventData: { message: "original data" },
+                   boundedContext: "testing",
+                   correlationId: withPrefix(`corr-preserve-initial-${Date.now()}`),
+                 });
 
                 state.originalEventId = state.appendResult!.eventId;
               }
@@ -348,19 +351,25 @@ describeFeature(
             When(
               'I append an event with different payload "new data" using key "preserve-key"',
               async () => {
-                state.secondAppendResult = await testMutation(state.t!, testIdempotentAppend, {
-                  idempotencyKey: state.currentIdempotencyKey!,
-                  streamType: state.currentStreamType!,
-                  streamId: state.currentStreamId!,
-                  eventType: "DataEvent",
-                  eventData: { message: "new data" },
-                  boundedContext: "testing",
-                });
+                try {
+                  state.secondAppendResult = await testMutation(state.t!, testIdempotentAppend, {
+                    idempotencyKey: state.currentIdempotencyKey!,
+                    streamType: state.currentStreamType!,
+                    streamId: state.currentStreamId!,
+                     eventType: "DataEvent",
+                     eventData: { message: "new data" },
+                     boundedContext: "testing",
+                     correlationId: withPrefix(`corr-preserve-repeat-${Date.now()}`),
+                   });
+                } catch (error) {
+                  state.lastError = error as Error;
+                }
               }
             );
 
-            Then('the append result status should be "duplicate"', () => {
-              expect(state.secondAppendResult!.status).toBe("duplicate");
+            Then("an idempotency conflict error should be thrown", () => {
+              expect(state.lastError).not.toBeNull();
+              expect(state.lastError?.message).toContain("different payload");
             });
 
             And('the event in the store should have payload "original data"', async () => {
@@ -404,6 +413,7 @@ describeFeature(
                 eventType: "OrderEvent",
                 eventData: { type: "order" },
                 boundedContext: "orders",
+                correlationId: withPrefix(`corr-order-${Date.now()}`),
               });
               state.crossStreamResults.set("order", result);
             }
@@ -420,6 +430,7 @@ describeFeature(
                 eventType: "InventoryEvent",
                 eventData: { type: "inventory" },
                 boundedContext: "inventory",
+                correlationId: withPrefix(`corr-inventory-${Date.now()}`),
               });
               state.crossStreamResults.set("inventory", result);
             }

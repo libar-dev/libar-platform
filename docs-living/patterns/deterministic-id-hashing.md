@@ -15,43 +15,42 @@
 ## Description
 
 **Problem:** TTL-based reservations work well for multi-step flows (registration wizards),
-but add overhead for simple "create if unique" operations. Need a lighter-weight alternative.
+  but add overhead for simple "create if unique" operations. Need a lighter-weight alternative.
 
-**Solution:** Generate entity stream ID from unique business key via deterministic hash.
-Concurrent creates target the same stream ID; OCC detects conflict automatically.
+  **Solution:** Generate entity stream ID from unique business key via deterministic hash.
+  Concurrent creates target the same stream ID; OCC detects conflict automatically.
 
-**When to Use Each Pattern:**
-| Pattern | Use Case | Mechanism | Overhead |
-| Reservation | Multi-step flow, may abandon | TTL table + cron | Medium |
-| Deterministic ID | Single-step create, immutable key | Hash + OCC | Low |
+  **When to Use Each Pattern:**
+  | Pattern | Use Case | Mechanism | Overhead |
+  | Reservation | Multi-step flow, may abandon | TTL table + cron | Medium |
+  | Deterministic ID | Single-step create, immutable key | Hash + OCC | Low |
 
-**Example:**
+  **Example:**
+  ```typescript
+  // Two concurrent "create user with email" requests
+  const streamId = deterministicStreamId('User', email);
+  // Both get: "User:a1b2c3d4" (hash of email)
 
-```typescript
-// Two concurrent "create user with email" requests
-const streamId = deterministicStreamId("User", email);
-// Both get: "User:a1b2c3d4" (hash of email)
+  // First writer succeeds, second gets OCC conflict
+  await appendToStream(ctx, streamId, events, { expectedVersion: 0 });
+  ```
 
-// First writer succeeds, second gets OCC conflict
-await appendToStream(ctx, streamId, events, { expectedVersion: 0 });
-```
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Zero infrastructure | No reservation table or cron needed |
+  | OCC-native | Uses existing Event Store conflict detection |
+  | Idempotent creates | Same input always targets same stream |
+  | Simpler mental model | "Hash then write" vs "reserve, create, confirm" |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Zero infrastructure | No reservation table or cron needed |
-| OCC-native | Uses existing Event Store conflict detection |
-| Idempotent creates | Same input always targets same stream |
-| Simpler mental model | "Hash then write" vs "reserve, create, confirm" |
+  **Constraint:** Only for truly immutable unique keys (username, external ID).
+  For mutable keys (email that can change), use Reservation Pattern instead.
 
-**Constraint:** Only for truly immutable unique keys (username, external ID).
-For mutable keys (email that can change), use Reservation Pattern instead.
-
-**Key Concepts:**
-| Concept | Description | Example |
-| Business Key | Field(s) that define uniqueness | email, username, externalId |
-| Hash Function | Deterministic, collision-resistant | SHA-256 truncated |
-| Stream ID Format | `{EntityType}:{hash}` | `User:a1b2c3d4e5f6` |
-| OCC Conflict | expectedVersion mismatch | "Stream already exists" |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | Business Key | Field(s) that define uniqueness | email, username, externalId |
+  | Hash Function | Deterministic, collision-resistant | SHA-256 truncated |
+  | Stream ID Format | `{EntityType}:{hash}` | `User:a1b2c3d4e5f6` |
+  | OCC Conflict | expectedVersion mismatch | "Stream already exists" |
 
 ## Dependencies
 

@@ -25,6 +25,7 @@
  */
 
 import type { SafeMutationRef, SafeQueryRef } from "../function-refs/types.js";
+import type { GlobalPosition, GlobalPositionLike } from "../events/globalPosition.js";
 
 // =============================================================================
 // Base Context Types
@@ -85,6 +86,8 @@ export interface IdempotentAppendEventData<TData = Record<string, unknown>> {
   eventData: TData;
   /** Bounded context name */
   boundedContext: string;
+  /** Optional tenant binding for component-side verification */
+  tenantId?: string;
   /** Optional metadata */
   correlationId?: string;
   causationId?: string;
@@ -103,6 +106,43 @@ export interface IdempotentAppendDependencies {
   getByIdempotencyKey: SafeQueryRef;
   /** Mutation to append events to stream */
   appendToStream: SafeMutationRef;
+}
+
+export interface IdempotencyConflictAuditRecord {
+  auditId: string;
+  idempotencyKey: string;
+  streamType: string;
+  streamId: string;
+  boundedContext: string;
+  tenantId?: string;
+  incomingEventType: string;
+  existingEventId: string;
+  existingEventType: string;
+  conflictReason: string;
+  incomingFingerprint: string;
+  existingFingerprint: string;
+  incomingPayload: unknown;
+  existingPayload: unknown;
+  attemptedAt: number;
+}
+
+export interface ExistingEventByIdempotencyKey {
+  eventId: string;
+  eventType: string;
+  streamType: string;
+  streamId: string;
+  version: number;
+  globalPosition: GlobalPosition | GlobalPositionLike;
+  boundedContext: string;
+  tenantId?: string;
+  category: "domain" | "integration" | "trigger" | "fat";
+  schemaVersion: number;
+  correlationId: string;
+  causationId?: string;
+  timestamp: number;
+  payload: unknown;
+  metadata?: unknown;
+  idempotencyKey?: string;
 }
 
 /**
@@ -133,6 +173,8 @@ export type ActionResult<T = unknown> =
 export interface OutboxHandlerConfig<TContext, TResult> {
   /** Function to extract idempotency key from context */
   getIdempotencyKey: (context: TContext) => string;
+  /** Function to extract correlation ID from context */
+  getCorrelationId: (context: TContext) => string;
   /** Function to build event from result and context */
   buildEvent: (
     result: ActionResult<TResult>,

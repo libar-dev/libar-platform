@@ -44,10 +44,10 @@ Feature: Idempotent Event Append (App Integration)
       And only one event should exist with that idempotency key
 
     @duplicate
-    Scenario: Duplicate append preserves original event data
+    Scenario: Same key with different payload is rejected
       Given an event with payload "original data" was appended with key "preserve-key"
       When I append an event with different payload "new data" using key "preserve-key"
-      Then the append result status should be "duplicate"
+      Then an idempotency conflict error should be thrown
       And the event in the store should have payload "original data"
 
   Rule: Idempotency works across different stream types

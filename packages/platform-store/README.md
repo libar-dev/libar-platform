@@ -1,131 +1,92 @@
 # @libar-dev/platform-store
 
-Event Store component for Convex-Native Event Sourcing.
+Central event storage, stream ordering, and idempotency conflict auditing for Convex.
 
-## Overview
+## What this package gives you
 
-Central event storage with global ordering and OCC:
+- a typed event-store client wrapper
+- stream appends with optimistic concurrency control
+- globally ordered event reads for projections
+- correlation-based event tracing
+- verification-proof wiring for append calls
+- idempotency conflict audit lookup support
 
-- **Optimistic Concurrency** — Version-based conflict detection
-- **Global Position** — Monotonic ordering for projection checkpoints
-- **Stream Isolation** — Events grouped by `streamType` + `streamId`
-- **Correlation Tracing** — Query events by `correlationId`
-- **Event Categories** — Domain, integration, trigger, fat events
-
-## Installation
+## Install
 
 ```bash
-pnpm add @libar-dev/platform-store
+pnpm add @libar-dev/platform-store @libar-dev/platform-core convex
 ```
 
-**Peer Dependencies:**
+## Example
 
-- `convex` (>=1.17.0 <1.35.0)
-
-## Quick Start
-
-### Setup Component
-
-```typescript
-// convex/convex.config.ts
+```ts
 import { defineApp } from "convex/server";
-import eventStore from "@libar-dev/platform-store/convex.config";
+import eventStoreComponent from "@libar-dev/platform-store/convex.config";
+import { EventStore } from "@libar-dev/platform-store";
 
 const app = defineApp();
-app.use(eventStore, { name: "eventStore" });
-export default app;
-```
-
-### Use EventStore Client
-
-```typescript
-import { EventStore } from "@libar-dev/platform-store";
-import { components } from "./_generated/api";
+app.use(eventStoreComponent, { name: "eventStore" });
 
 const eventStore = new EventStore(components.eventStore);
 
-// Append event with OCC
-const result = await eventStore.appendToStream(ctx, {
+const appendResult = await eventStore.appendToStream(ctx, {
   streamType: "Order",
   streamId: orderId,
-  expectedVersion: 0, // 0 = new stream, n = expected current version
+  expectedVersion: 0,
   boundedContext: "orders",
   events: [
     {
-      eventId: uuid(),
+      eventId,
       eventType: "OrderCreated",
-      payload: { customerId, items },
-      category: "domain",
-      schemaVersion: 1,
-      metadata: { correlationId, causationId },
+      payload: { orderId, customerId },
+      metadata: { correlationId },
     },
   ],
 });
 
-if (result.status === "conflict") {
-  // Handle version conflict - retry or reject
-  console.log(`Expected version conflict. Current: ${result.currentVersion}`);
+if (appendResult.status === "conflict") {
+  return appendResult.currentVersion;
 }
 
-// Read for projections
-const events = await eventStore.readFromPosition(ctx, {
-  fromPosition: lastCheckpoint,
-  limit: 100,
-});
+const page = await eventStore.readFromPosition(ctx, { fromPosition: 0n, limit: 100 });
 ```
 
-## API Reference
+## Main exports
 
-### Event Operations
+- `EventStore`
+- `AppendArgs`, `AppendResult`, `StoredEvent`
+- `ReadStreamArgs`, `ReadFromPositionArgs`, `ReadFromPositionResult`
+- `GetByCorrelationResult`, `IdempotencyConflictAudit`
 
-| Method              | Description                                    |
-| ------------------- | ---------------------------------------------- |
-| `appendToStream`    | Append events with OCC (`expectedVersion`)     |
-| `readStream`        | Read events from specific stream               |
-| `readFromPosition`  | Read globally ordered events (for projections) |
-| `getStreamVersion`  | Get current version of a stream                |
-| `getByCorrelation`  | Query events by `correlationId`                |
-| `getGlobalPosition` | Get current global position                    |
+## Stability
 
-### Append Result
+| Surface | Status | Notes |
+| --- | --- | --- |
+| Client wrapper | Stable | Covered by unit and isolated integration tests |
+| Component config export | Stable | Used by the example app and platform harnesses |
+| Idempotency conflict audit surface | Stable | Added for the stricter event append contract |
 
-| Status     | Meaning                                                              |
-| ---------- | -------------------------------------------------------------------- |
-| `success`  | Events appended, returns `eventIds`, `globalPositions`, `newVersion` |
-| `conflict` | Version mismatch, returns `currentVersion` for retry                 |
+## Known limitations
 
-### Event Categories
+- The store appends and reads events. It does not update CMS state for you.
+- Callers still need to choose event category and schema version sensibly.
+- Workpool key-based ordering is still awaiting upstream support.
 
-| Category      | Purpose                                              |
-| ------------- | ---------------------------------------------------- |
-| `domain`      | Internal facts within bounded context (ES replay)    |
-| `integration` | Cross-context communication with versioned contracts |
-| `trigger`     | ID-only notifications for GDPR compliance            |
-| `fat`         | Full state snapshots for external systems            |
+## Security notes
 
-## Dual-Write Pattern
+- `appendToStream` attaches a verification proof and should be called from trusted bounded-context code.
+- Treat correlation and tenant fields as auditable metadata, not as auth decisions by themselves.
+- Idempotency conflicts are hard failures because same-key different-payload reuse is rejected and audited.
 
-The EventStore is used as part of the dual-write pattern:
+## Dependency notes
 
-```typescript
-// In mutation handler:
-// 1. Update CMS (current state)
-await ctx.db.patch(orderId, cmsUpdate);
+- `@libar-dev/platform-store` depends on the published `@libar-dev/platform-core` export surfaces for global-position helpers, verification-proof creation, validation utilities, and process-manager lifecycle helpers.
+- Consumers should use those `@libar-dev/platform-core/*` public subpaths too, not private `src/**` reach-throughs.
 
-// 2. Append event (audit trail) - atomic with CMS update
-await eventStore.appendToStream(ctx, {
-  streamType: "Order",
-  streamId: orderId,
-  expectedVersion: currentVersion,
-  boundedContext: "orders",
-  events: [event],
-});
+## Testing
+
+```bash
+pnpm --filter @libar-dev/platform-store test
+pnpm --filter @libar-dev/platform-store test:integration:ci
+pnpm --filter @libar-dev/platform-store test:coverage
 ```
-
-Both operations happen in the same Convex mutation, ensuring atomicity.
-
-## Related Packages
-
-- `@libar-dev/platform-core` — CommandOrchestrator uses EventStore
-- `@libar-dev/platform-bus` — Command Bus component
-- `@libar-dev/platform-decider` — Pure decider functions

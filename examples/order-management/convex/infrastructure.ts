@@ -32,6 +32,7 @@ import {
   createConvexRateLimitAdapter,
   RateLimitKeys,
   createScopedLogger,
+  createConsoleMetrics,
   type WorkpoolClient,
   type IIntegrationEventPublisher,
   type EventBus,
@@ -208,6 +209,42 @@ export const projectionPool: WorkpoolClient = isConvexTestMode
       logLevel: "INFO",
     });
 
+/**
+ * Saga pool - for asynchronous saga router dispatch.
+ *
+ * Separate from projectionPool so deep workflow routing does not compete with
+ * live read-model updates for the same queue budget.
+ */
+export const sagaPool: WorkpoolClient = isConvexTestMode
+  ? noOpWorkpool
+  : createWorkpool(components.sagaPool, {
+      maxParallelism: workpoolParallelism,
+      defaultRetryBehavior: {
+        maxAttempts: 3,
+        initialBackoffMs: 250,
+        base: 2,
+      },
+      logLevel: "INFO",
+    });
+
+/**
+ * Fanout pool - for secondary projections and event fan-out handlers.
+ *
+ * Separate from projectionPool and sagaPool so wider secondary dispatch does
+ * not create head-of-line blocking for primary projections or saga routing.
+ */
+export const fanoutPool: WorkpoolClient = isConvexTestMode
+  ? noOpWorkpool
+  : createWorkpool(components.fanoutPool, {
+      maxParallelism: workpoolParallelism,
+      defaultRetryBehavior: {
+        maxAttempts: 3,
+        initialBackoffMs: 250,
+        base: 2,
+      },
+      logLevel: "INFO",
+    });
+
 // Re-export agentPool from pools.ts (leaf module, breaks circular dep).
 export { agentPool } from "./pools.js";
 
@@ -366,6 +403,7 @@ const orchestratorLogger = createScopedLogger("Orchestrator", PLATFORM_LOG_LEVEL
  * IntegrationPublisher logger for cross-context event publishing tracing.
  */
 const integrationLogger = createScopedLogger("Integration", PLATFORM_LOG_LEVEL);
+const platformMetrics = createConsoleMetrics("OrderManagementMetrics");
 
 // =============================================================================
 // Projection Handler Reference (TS2589 Prevention)
@@ -388,9 +426,10 @@ const deadLetterOnComplete = makeFunctionReference<"mutation">(
  *
  * @see eventSubscriptions.ts for subscription definitions
  */
-export const eventBus: EventBus = new ConvexEventBus(projectionPool, eventSubscriptions, {
+export const eventBus: EventBus = new ConvexEventBus(fanoutPool, eventSubscriptions, {
   defaultOnComplete: deadLetterOnComplete,
   logger: eventBusLogger,
+  metrics: platformMetrics,
 });
 
 /**
@@ -462,6 +501,8 @@ export const commandOrchestrator: CommandOrchestrator = new CommandOrchestrator(
   eventStore,
   commandBus,
   projectionPool,
+  sagaPool,
+  fanoutPool,
   eventBus,
   defaultOnComplete: deadLetterOnComplete,
   middlewarePipeline,
@@ -469,6 +510,7 @@ export const commandOrchestrator: CommandOrchestrator = new CommandOrchestrator(
     recordCommandEventCorrelation: components.commandBus.lib.recordCommandEventCorrelation,
   },
   logger: orchestratorLogger,
+  metrics: platformMetrics,
 });
 
 /**
@@ -480,16 +522,17 @@ export const commandOrchestrator: CommandOrchestrator = new CommandOrchestrator(
  * Currently configured routes:
  * - OrderSubmitted → OrderPlacedIntegration → inventory pre-check handlers
  *
- * TODO: Wire to CommandOrchestrator or EventBus for automatic domain→integration
+ * Backlog: T5-005. Wire to CommandOrchestrator or EventBus for automatic domain-to-integration
  * event translation (currently requires manual invocation).
  *
  * In test environment, uses no-op workpool to avoid scheduling errors.
  */
 export const integrationPublisher: IIntegrationEventPublisher = new IntegrationEventPublisher(
-  projectionPool,
+  fanoutPool,
   integrationRoutes,
   {
     onComplete: deadLetterOnComplete,
     logger: integrationLogger,
+    metrics: platformMetrics,
   }
 );

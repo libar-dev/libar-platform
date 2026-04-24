@@ -14,12 +14,7 @@
 
 ## Description
 
-Functions for creating, parsing, and validating scope keys.
-
-Scope keys follow the format: `tenant:${tenantId}:${scopeType}:${scopeId}`
-
-The tenant prefix is **mandatory** to ensure tenant isolation - all DCB
-operations are scoped to a single tenant, preventing cross-tenant invariants.
+Re-export the canonical shared scope-key contract used across platform packages.
 
 ---
 

@@ -28,11 +28,11 @@
 
 ## By Priority
 
-| Priority          | Count |
-| ----------------- | ----- |
-| 🚧 In Progress    | 3     |
+| Priority         | Count |
+| ---------------- | ----- |
+| 🚧 In Progress   | 3     |
 | ✅ Ready to Start | 37    |
-| ⚠️ Blocked        | 0     |
+| ⚠️ Blocked       | 0     |
 
 ### Top Ready to Start
 

@@ -178,7 +178,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
             eventType: "ApprovalGranted",
             limit: 10,
           });
-          return auditEvents.some((e) => e.payload.approvalId === approvalId);
+          return auditEvents.some(
+            (e: { payload: { approvalId?: string } }) => e.payload.approvalId === approvalId
+          );
         },
         { message: "ApprovalGranted audit event created", timeoutMs: APPROVAL_TEST_TIMEOUT }
       );
@@ -190,7 +192,8 @@ describe("Agent Approval Workflow Integration Tests", () => {
       });
 
       const approvalAudit = auditEvents.find(
-        (e) => e.eventType === "ApprovalGranted" && e.payload.approvalId === approvalId
+        (e: { eventType: string; payload: { approvalId?: string; reviewerId?: string } }) =>
+          e.eventType === "ApprovalGranted" && e.payload.approvalId === approvalId
       );
       expect(approvalAudit).toBeDefined();
       expect(approvalAudit?.payload.reviewerId).toBe(reviewerId);
@@ -280,7 +283,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
             eventType: "ApprovalRejected",
             limit: 10,
           });
-          return auditEvents.some((e) => e.payload.approvalId === approvalId);
+          return auditEvents.some(
+            (e: { payload: { approvalId?: string } }) => e.payload.approvalId === approvalId
+          );
         },
         { message: "ApprovalRejected audit event created", timeoutMs: APPROVAL_TEST_TIMEOUT }
       );
@@ -374,7 +379,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
             eventType: "ApprovalExpired",
             limit: 10,
           });
-          return auditEvents.some((e) => e.payload.approvalId === approvalId);
+          return auditEvents.some(
+            (e: { payload: { approvalId?: string } }) => e.payload.approvalId === approvalId
+          );
         },
         { message: "ApprovalExpired audit event created", timeoutMs: APPROVAL_TEST_TIMEOUT }
       );
@@ -599,7 +606,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
         status: "approved",
       });
 
-      const found = approvedApprovals.find((a) => a.approvalId === approvalId);
+      const found = approvedApprovals.find((a: { approvalId: string }) => a.approvalId === approvalId);
       expect(found).toBeDefined();
       expect(found?.status).toBe("approved");
     });
@@ -699,7 +706,7 @@ describe("Agent Approval Workflow Integration Tests", () => {
       expect(approval?.reviewerId).toBe("reviewer_authorized");
     });
 
-    it("should allow approval when no authorization restrictions specified", async () => {
+    it("should deny approval when no authorization restrictions are specified", async () => {
       const approvalId = generateApprovalId();
       const decisionId = generateDecisionId();
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
@@ -719,20 +726,20 @@ describe("Agent Approval Workflow Integration Tests", () => {
         expiresAt,
       });
 
-      // Approve without specifying authorizedAgentIds (no restrictions)
+      // Approve without specifying authorizedAgentIds (should fail closed)
       const result = await testMutation(t, api.testingFunctions.testApproveAgentActionWithAuth, {
         approvalId,
         reviewerId: "reviewer_unrestricted",
-        // No authorizedAgentIds - should be allowed
       });
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("UNAUTHORIZED_REVIEWER");
 
-      // Verify the approval was approved
+      // Verify the approval remains pending
       const approval = await testQuery(t, api.queries.agent.getApprovalById, {
         approvalId,
       });
-      expect(approval?.status).toBe("approved");
+      expect(approval?.status).toBe("pending");
     });
   });
 });

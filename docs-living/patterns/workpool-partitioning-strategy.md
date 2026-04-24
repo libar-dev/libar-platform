@@ -15,30 +15,28 @@
 ## Description
 
 **Problem:** ADR-018 defines critical partition key strategies for preventing OCC conflicts
-and ensuring per-entity event ordering, but this knowledge is not formalized in a spec
-or implemented consistently. Without proper partitioning:
+  and ensuring per-entity event ordering, but this knowledge is not formalized in a spec
+  or implemented consistently. Without proper partitioning:
+  - Events for the same entity may process out-of-order
+  - Global rollup projections cause OCC conflicts under load
+  - Cross-context projections lack saga-scoped consistency
 
-- Events for the same entity may process out-of-order
-- Global rollup projections cause OCC conflicts under load
-- Cross-context projections lack saga-scoped consistency
+  **Solution:** Formalize partition key patterns from ADR-018 with:
+  - **Per-entity partitioning** - streamId ensures entity-scoped ordering
+  - **Per-customer partitioning** - customerId for customer-scoped consistency
+  - **Global partitioning** - Single key or maxParallelism:1 for aggregate rollups
+  - **Saga-scoped partitioning** - correlationId for cross-context coordination
+  - **Helper functions** - Type-safe partition key generation
 
-**Solution:** Formalize partition key patterns from ADR-018 with:
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Event ordering | Partition key ensures FIFO processing per entity |
+  | OCC prevention | Same-key work serializes, reducing write conflicts |
+  | Throughput scaling | Different keys parallelize across maxParallelism slots |
+  | Consistency boundaries | Partition scope = consistency scope |
+  | DCB alignment | Partition keys can match DCB scope keys for coherent retry |
 
-- **Per-entity partitioning** - streamId ensures entity-scoped ordering
-- **Per-customer partitioning** - customerId for customer-scoped consistency
-- **Global partitioning** - Single key or maxParallelism:1 for aggregate rollups
-- **Saga-scoped partitioning** - correlationId for cross-context coordination
-- **Helper functions** - Type-safe partition key generation
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Event ordering | Partition key ensures FIFO processing per entity |
-| OCC prevention | Same-key work serializes, reducing write conflicts |
-| Throughput scaling | Different keys parallelize across maxParallelism slots |
-| Consistency boundaries | Partition scope = consistency scope |
-| DCB alignment | Partition keys can match DCB scope keys for coherent retry |
-
-**Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to architect)
+  **Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to architect)
 
 ## Dependencies
 
@@ -172,7 +170,11 @@ Files that implement this pattern:
 **Per-entity projections use streamId as partition key**
 
 **Invariant:** Events for the same entity must process in the exact order they
-occurred in the Event Store—no out-of-order processing per entity.
+    occurred in the Event Store—no out-of-order processing per entity.
+
+    **Input:** EntityPartitionArgs -- streamId, streamType
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Out-of-order event processing causes projection corruption. An
     ItemRemoved event processed before ItemAdded results in invalid state. Using
@@ -237,7 +239,11 @@ _Verified by: Entity projection processes events in order, Different entities pr
 **Customer-scoped projections use customerId as partition key**
 
 **Invariant:** All events affecting a customer's aggregate view must process in
-FIFO order for that customer—regardless of which entity generated the event.
+    FIFO order for that customer—regardless of which entity generated the event.
+
+    **Input:** CustomerPartitionArgs -- customerId
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Customer-scoped projections (order history, metrics, preferences)
     combine data from multiple entities. Processing order-123's event before order-122's
@@ -286,7 +292,11 @@ _Verified by: Customer projection aggregates across orders, Customer partition k
 **Global rollup projections use single partition key or maxParallelism 1**
 
 **Invariant:** Global aggregate projections must serialize all updates—no concurrent
-writes to the same aggregate document.
+    writes to the same aggregate document.
+
+    **Input:** RollupCharacteristics -- singleWriter, globalAggregate
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Global rollups (daily sales, inventory totals) write to a single
     document. Concurrent workers cause read-modify-write races: Worker A reads 100,
@@ -353,7 +363,11 @@ _Verified by: Global rollup processes sequentially, Global rollup avoids OCC con
 **Cross-context projections use correlationId or sagaId as partition key**
 
 **Invariant:** Events within a saga/workflow must process in causal order across
-all bounded contexts—saga step N+1 must not process before step N.
+    all bounded contexts—saga step N+1 must not process before step N.
+
+    **Input:** SagaPartitionArgs -- correlationId
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Cross-context projections join data from multiple BCs coordinated
     by a saga. Processing OrderConfirmed before StockReserved shows "confirmed" status
@@ -413,7 +427,11 @@ _Verified by: Cross-context projection maintains saga ordering, Different sagas 
 **Partition key selection follows decision tree**
 
 **Invariant:** Every projection config must have an explicit `getPartitionKey`
-function—implicit or missing partition keys are rejected at validation time.
+    function—implicit or missing partition keys are rejected at validation time.
+
+    **Input:** ProjectionConfig -- projectionName, getPartitionKey
+
+    **Output:** ValidationResult -- valid, strategy, rationale
 
     **Rationale:** Wrong partition keys cause subtle bugs: too fine-grained wastes
     throughput, too coarse-grained causes out-of-order processing, missing keys
@@ -448,33 +466,32 @@ What does this projection aggregate?
 ```
 
 **Partition Key Validation:**
-CommandOrchestrator should validate that: 1. Every projection config has `getPartitionKey` defined 2. Partition key function returns valid `{ name, value }` shape 3. Value is non-empty string
+    CommandOrchestrator should validate that:
+    1. Every projection config has `getPartitionKey` defined
+    2. Partition key function returns valid `{ name, value }` shape
+    3. Value is non-empty string
 
     **Target Implementation:**
 
 ```typescript
 // orchestration/validation.ts
-export function validateProjectionConfig(config: ProjectionConfig): void {
-  if (!config.getPartitionKey) {
-    throw new Error(
-      `Projection "${config.projectionName}" missing getPartitionKey. ` +
-        `Use createEntityPartitionKey, createCustomerPartitionKey, ` +
-        `createSagaPartitionKey, or GLOBAL_PARTITION_KEY.`
-    );
-  }
+    export function validateProjectionConfig(config: ProjectionConfig): void {
+      if (!config.getPartitionKey) {
+        throw new Error(
+          `Projection "${config.projectionName}" missing getPartitionKey. ` +
+          `Use createEntityPartitionKey, createCustomerPartitionKey, ` +
+          `createSagaPartitionKey, or GLOBAL_PARTITION_KEY.`
+        );
+      }
 
-  // Test with sample args
-  const testKey = config.getPartitionKey({
-    orderId: "test",
-    customerId: "test",
-    correlationId: "test",
-  });
-  if (!testKey?.name || !testKey?.value) {
-    throw new Error(
-      `Projection "${config.projectionName}" getPartitionKey must return { name, value }.`
-    );
-  }
-}
+      // Test with sample args
+      const testKey = config.getPartitionKey({ orderId: "test", customerId: "test", correlationId: "test" });
+      if (!testKey?.name || !testKey?.value) {
+        throw new Error(
+          `Projection "${config.projectionName}" getPartitionKey must return { name, value }.`
+        );
+      }
+    }
 ```
 
 _Verified by: Missing partition key fails validation, Invalid partition key shape fails validation, Decision tree guides correct partition choice_
@@ -482,7 +499,11 @@ _Verified by: Missing partition key fails validation, Invalid partition key shap
 **DCB retry partition keys align with scope keys for coherent retry**
 
 **Invariant:** DCB retry partition keys must derive from scope keys so retries
-serialize with new operations on the same scope—no interleaving.
+    serialize with new operations on the same scope—no interleaving.
+
+    **Input:** DCBScopeKey -- scopeKey
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Misaligned partition keys allow retry attempt 2 for scope X to
     interleave with new operation for scope X, causing the retry to read stale state.
@@ -523,16 +544,16 @@ Without alignment:
 
 ```typescript
 // DCB retry uses aligned partition key
-const handler = withDCBRetry(ctx, {
-  workpool: dcbRetryPool,
-  retryMutation: internal.inventory.reserveWithRetry,
-  scopeKey: createScopeKey(tenantId, "reservation", reservationId),
-  // Partition key for retry derived from scope key
-  getRetryPartitionKey: (scopeKey) => ({
-    name: "dcb",
-    value: scopeKey, // Same as DCB scope for serialization
-  }),
-});
+    const handler = withDCBRetry(ctx, {
+      workpool: dcbRetryPool,
+      retryMutation: internal.inventory.reserveWithRetry,
+      scopeKey: createScopeKey(tenantId, "reservation", reservationId),
+      // Partition key for retry derived from scope key
+      getRetryPartitionKey: (scopeKey) => ({
+        name: "dcb",
+        value: scopeKey,  // Same as DCB scope for serialization
+      }),
+    });
 ```
 
 _Verified by: DCB retry partition aligns with scope, Aligned partition prevents interleaving_

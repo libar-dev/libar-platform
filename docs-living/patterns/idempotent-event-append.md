@@ -18,12 +18,12 @@ regardless of how many times the append operation is retried.
 
 ### Idempotency Key Strategy
 
-| Event Source   | Pattern                                | Example                                  |
-| -------------- | -------------------------------------- | ---------------------------------------- |
-| Command result | `{commandType}:{entityId}:{commandId}` | `SubmitOrder:ord-123:cmd-456`            |
-| Action result  | `{actionType}:{entityId}`              | `payment:ord-123`                        |
-| Saga step      | `{sagaType}:{sagaId}:{step}`           | `OrderFulfillment:saga-789:reserveStock` |
-| Scheduled job  | `{jobType}:{scheduleId}:{timestamp}`   | `expireReservations:job-001:1704067200`  |
+| Event Source | Pattern | Example |
+|--------------|---------|---------|
+| Command result | `{commandType}:{entityId}:{commandId}` | `SubmitOrder:ord-123:cmd-456` |
+| Action result | `{actionType}:{entityId}` | `payment:ord-123` |
+| Saga step | `{sagaType}:{sagaId}:{step}` | `OrderFulfillment:saga-789:reserveStock` |
+| Scheduled job | `{jobType}:{scheduleId}:{timestamp}` | `expireReservations:job-001:1704067200` |
 
 ### Usage
 

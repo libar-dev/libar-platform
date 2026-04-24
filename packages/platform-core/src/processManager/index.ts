@@ -93,6 +93,7 @@ export type {
   ProcessManagerLifecycleState,
   ProcessManagerLifecycleEvent,
   PMStateTransition,
+  PMProcessingEntryPlan,
 } from "./lifecycle.js";
 
 export {
@@ -101,6 +102,7 @@ export {
   getPMValidEventsFrom,
   getAllPMTransitions,
   assertPMValidTransition,
+  planPMProcessingEntry,
   isTerminalState,
   isErrorState,
 } from "./lifecycle.js";

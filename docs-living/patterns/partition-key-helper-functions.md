@@ -18,13 +18,13 @@ and OCC prevention in Workpool-based processing.
 
 ### Quick Reference
 
-| Helper                     | Key Format                | Use Case                     |
-| -------------------------- | ------------------------- | ---------------------------- |
-| createEntityPartitionKey   | `{streamType}:{entityId}` | Per-entity projections       |
-| createCustomerPartitionKey | `{customerId}`            | Customer-scoped aggregations |
-| createSagaPartitionKey     | `{correlationId}`         | Cross-context projections    |
-| GLOBAL_PARTITION_KEY       | `global`                  | Global rollups               |
-| createDCBPartitionKey      | `{scopeKey}`              | DCB retry serialization      |
+| Helper | Key Format | Use Case |
+|--------|------------|----------|
+| createEntityPartitionKey | `{streamType}:{entityId}` | Per-entity projections |
+| createCustomerPartitionKey | `{customerId}` | Customer-scoped aggregations |
+| createSagaPartitionKey | `{correlationId}` | Cross-context projections |
+| GLOBAL_PARTITION_KEY | `global` | Global rollups |
+| createDCBPartitionKey | `{scopeKey}` | DCB retry serialization |
 
 ## Use Cases
 

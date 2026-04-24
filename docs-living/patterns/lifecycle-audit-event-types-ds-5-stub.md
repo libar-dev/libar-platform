@@ -22,9 +22,9 @@ DS-5 Design Session: Agent Lifecycle FSM
 PDR: pdr-013-agent-lifecycle-fsm
 
 Modifies: libar-platform/architect/stubs/agent-component-isolation/component/schema.ts
-The agentAuditEvents.eventType union (lines 71-80) must include these 6 new types.
+  The agentAuditEvents.eventType union (lines 71-80) must include these 6 new types.
 Modifies: libar-platform/architect/stubs/agent-component-isolation/component/audit.ts
-The auditEventTypeValidator must include these 6 new types.
+  The auditEventTypeValidator must include these 6 new types.
 
 ---
 

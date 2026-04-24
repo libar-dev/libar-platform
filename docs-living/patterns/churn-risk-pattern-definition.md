@@ -1,4 +1,4 @@
-# Churn Risk Pattern Definition
+#  Churn Risk Pattern Definition
 
 **Purpose:** Detailed documentation for the Churn Risk Pattern Definition pattern
 

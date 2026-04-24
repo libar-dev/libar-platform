@@ -1,0 +1,55 @@
+/**
+ * Vitest globalSetup that verifies the Convex backend is running before tests start.
+ * Prevents long timeout waits when Docker isn't running.
+ */
+export async function setup(): Promise<void> {
+  const backendUrl = process.env.CONVEX_URL ?? "http://127.0.0.1:3210";
+  const maxRetries = 5;
+  const retryDelayMs = 1000;
+
+  console.log(`\nChecking backend health at ${backendUrl}...`);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(backendUrl, {
+        method: "GET",
+        signal: AbortSignal.timeout(2000),
+      });
+
+      if (response.ok) {
+        console.log(`Backend is healthy at ${backendUrl}\n`);
+        return;
+      }
+    } catch (error) {
+      if (attempt === maxRetries) {
+        const port = new URL(backendUrl).port;
+        const isInfraPort = port === "3215";
+        const startCommand = isInfraPort ? "just start-infra" : "just start";
+
+        throw new Error(
+          `\n\n` +
+            `===================================================================\n` +
+            `  BACKEND NOT RUNNING\n` +
+            `===================================================================\n` +
+            `  Tests require a Convex backend at: ${backendUrl}\n` +
+            `  Last error: ${error instanceof Error ? error.message : String(error)}\n` +
+            `\n` +
+            `  To fix, run one of these commands:\n` +
+            `\n` +
+            `    ${startCommand}\n` +
+            `    just test-all-parallel\n` +
+            `\n` +
+            `  Port reference:\n` +
+            `    3210 = App integration tests (order-management)\n` +
+            `    3215 = Infrastructure tests (platform-*)\n` +
+            `===================================================================\n`
+        );
+      }
+
+      console.log(
+        `  Attempt ${attempt}/${maxRetries}: Backend not ready, retrying in ${retryDelayMs}ms...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    }
+  }
+}

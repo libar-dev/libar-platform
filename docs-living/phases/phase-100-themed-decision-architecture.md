@@ -8,12 +8,12 @@
 
 **Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 3     |
-| 🚧 Active    | 1     |
-| 📋 Planned   | 2     |
-| **Total**    | 6     |
+| 🚧 Active   | 1     |
+| 📋 Planned  | 2     |
+| **Total**   | 6     |
 
 ---
 
@@ -30,30 +30,29 @@
 
 **Vision:** Transform the delivery process from a documentation tool into a delivery operating system.
 
-Enable code-driven, multi-workflow documentation where code + .feature
-files are authoritative sources, and all artifacts are generated projections.
+  Enable code-driven, multi-workflow documentation where code + .feature
+  files are authoritative sources, and all artifacts are generated projections.
 
-**Problem:** Current delivery process capabilities are limited to document generation.
-The convergence roadmap identified 8 opportunities: Process Views as Projections,
-DoD as Machine-Checkable, Earned-Value Tracking, Requirements-Tests Traceability,
-Architecture Change Control, Progressive Governance, and Living Roadmap.
+  **Problem:** Current delivery process capabilities are limited to document generation.
+  The convergence roadmap identified 8 opportunities: Process Views as Projections,
+  DoD as Machine-Checkable, Earned-Value Tracking, Requirements-Tests Traceability,
+  Architecture Change Control, Progressive Governance, and Living Roadmap.
 
-**Solution:** Incrementally implement convergence opportunities, starting with foundation
-work (metadata tags) and progressing to validators, generators, and eventually
-Convex-native live projections.
+  **Solution:** Incrementally implement convergence opportunities, starting with foundation
+  work (metadata tags) and progressing to validators, generators, and eventually
+  Convex-native live projections.
 
-**Strategic Direction:**
+  **Strategic Direction:**
+  - Package (@libar-dev/architect): Document generation capabilities
+  - Monorepo: Eventually leverage Convex projections for live queryable views
 
-- Package (@libar-dev/architect): Document generation capabilities
-- Monorepo: Eventually leverage Convex projections for live queryable views
+  **Architecture Decision (PDR-002):**
+  Specs (this file) capture requirements that can evolve independently.
+  TypeScript phase files link deliverables to phases/releases centrally.
+  This separation enables specs to be combined, split, or refined without
+  affecting release association.
 
-**Architecture Decision (PDR-002):**
-Specs (this file) capture requirements that can evolve independently.
-TypeScript phase files link deliverables to phases/releases centrally.
-This separation enables specs to be combined, split, or refined without
-affecting release association.
-
-See: deps/libar-dev-packages/packages/tooling/architect/docs/ideation-convergence/
+  See: deps/libar-dev-packages/packages/tooling/architect/docs/ideation-convergence/
 
 #### Acceptance Criteria
 
@@ -83,20 +82,19 @@ See: deps/libar-dev-packages/packages/tooling/architect/docs/ideation-convergenc
 | Business Value | test what generators capture |
 
 This feature demonstrates what content blocks are captured and rendered
-by the PRD generator. Use this as a reference for writing rich specs.
+  by the PRD generator. Use this as a reference for writing rich specs.
 
-**Overview**
+  **Overview**
 
-The delivery process supports **rich Markdown** in descriptions:
+  The delivery process supports **rich Markdown** in descriptions:
+  - Bullet points work
+  - *Italics* and **bold** work
+  - `inline code` works
 
-- Bullet points work
-- _Italics_ and **bold** work
-- `inline code` works
+  **Custom Section**
 
-**Custom Section**
-
-You can create any section you want using bold headers.
-This content will appear in the PRD Description section.
+  You can create any section you want using bold headers.
+  This content will appear in the PRD Description section.
 
 #### Acceptance Criteria
 
@@ -147,7 +145,7 @@ Use DocStrings when you need multi-line content blocks.
 **Business rules appear as a separate section**
 
 Rule descriptions provide context for why this business rule exists.
-You can include multiple paragraphs here.
+    You can include multiple paragraphs here.
 
     This is a second paragraph explaining edge cases or exceptions.
 
@@ -156,7 +154,7 @@ _Verified by: Scenario with DocString for rich content, Scenario with DataTable 
 **Multiple rules create multiple Business Rule entries**
 
 Each Rule keyword creates a separate entry in the Business Rules section.
-This helps organize complex features into logical business domains.
+    This helps organize complex features into logical business domains.
 
 _Verified by: Simple scenario under second rule, Scenario with examples table_
 
@@ -169,28 +167,26 @@ _Verified by: Simple scenario under second rule, Scenario with examples table_
 | Status   | planned |
 
 Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.
-The synthesis of 33 active ADRs revealed natural themes and dependencies that
-should be preserved in generated documentation.
+  The synthesis of 33 active ADRs revealed natural themes and dependencies that
+  should be preserved in generated documentation.
 
-**Context:**
-Current state: Decisions are listed chronologically or alphabetically in flat files.
-This loses the rich structure that exists in the codebase:
+  **Context:**
+  Current state: Decisions are listed chronologically or alphabetically in flat files.
+  This loses the rich structure that exists in the codebase:
+  - Theme groupings (Persistence, Isolation, Commands, etc.)
+  - Dependency relationships (ADR-001 enables ADR-002, ADR-003, ADR-005)
+  - Evolutionary layers (Foundation → Infrastructure → Refinement)
 
-- Theme groupings (Persistence, Isolation, Commands, etc.)
-- Dependency relationships (ADR-001 enables ADR-002, ADR-003, ADR-005)
-- Evolutionary layers (Foundation → Infrastructure → Refinement)
+  **Vision:**
+  Generate themed decision documents that reflect the conceptual architecture,
+  not just the chronological order of creation. Include dependency graphs
+  that show how decisions build upon each other.
 
-**Vision:**
-Generate themed decision documents that reflect the conceptual architecture,
-not just the chronological order of creation. Include dependency graphs
-that show how decisions build upon each other.
-
-**Scope:**
-
-1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
-2. Generate grouped decision documents per theme
-3. Generate dependency graph visualization (ASCII or Mermaid)
-4. Port existing 33 ADRs to architect format (with validity review)
+  **Scope:**
+  1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
+  2. Generate grouped decision documents per theme
+  3. Generate dependency graph visualization (ASCII or Mermaid)
+  4. Port existing 33 ADRs to architect format (with validity review)
 
 #### Acceptance Criteria
 
@@ -225,14 +221,14 @@ that show how decisions build upon each other.
 ```markdown
 ADR-001 (Dual-Write)
 ├── ADR-002 (Event Store)
-│ └── ADR-016 (Checkpoint)
-│ └── ADR-015 (Workpool)
-│ └── ADR-018 (Partitioning)
+│   └── ADR-016 (Checkpoint)
+│       └── ADR-015 (Workpool)
+│           └── ADR-018 (Partitioning)
 ├── ADR-003 (Command Bus)
-│ └── ADR-017 (Idempotency)
-│ └── ADR-021 (Orchestrator)
+│   └── ADR-017 (Idempotency)
+│       └── ADR-021 (Orchestrator)
 └── ADR-005 (BC as Component)
-└── ADR-023 (Proj at App)
+    └── ADR-023 (Proj at App)
 ```
 
 **Layer information in generated docs**
@@ -244,9 +240,9 @@ ADR-001 (Dual-Write)
 
 **Port ADR from old format to feature file**
 
-- Given an existing ADR in "docs/architecture/decisions/adr-001-\*.md"
+- Given an existing ADR in "docs/architecture/decisions/adr-001-*.md"
 - When migrating to architect format
-- Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-\*.feature"
+- Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-*.feature"
 - And include original decision content in Gherkin format
 - And add theme, layer, and dependency tags
 - And mark status (active, superseded, deprecated)
@@ -331,51 +327,51 @@ _Verified by: Generate all decision artifacts_
 | Business Value | eliminate recipe files via codec composition |
 
 **Problem:**
-Reference documentation is specified via 11 recipe `.feature` files in
-`architect/recipes/`. Each recipe contains a Source Mapping table
-(static configuration) and Rule blocks (durable content). But recipes
-are configuration masquerading as feature files — no scenarios execute,
-no BDD benefit exists. The Source Mapping is static and the Rule blocks
-are durable knowledge that belongs in decision records.
+  Reference documentation is specified via 11 recipe `.feature` files in
+  `architect/recipes/`. Each recipe contains a Source Mapping table
+  (static configuration) and Rule blocks (durable content). But recipes
+  are configuration masquerading as feature files — no scenarios execute,
+  no BDD benefit exists. The Source Mapping is static and the Rule blocks
+  are durable knowledge that belongs in decision records.
 
-**Solution:**
-Replace recipe files with a parameterized `ReferenceDocumentCodec` that
-composes reference documents from convention-tagged decision records,
-TypeScript shape extractions, and behavior spec content. The Source Mapping
-becomes a TypeScript config object registered in the existing `GeneratorRegistry`.
-Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
+  **Solution:**
+  Replace recipe files with a parameterized `ReferenceDocumentCodec` that
+  composes reference documents from convention-tagged decision records,
+  TypeScript shape extractions, and behavior spec content. The Source Mapping
+  becomes a TypeScript config object registered in the existing `GeneratorRegistry`.
+  Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 
-**Business Value:**
+  **Business Value:**
 
-| Benefit                                | Impact                                              |
-| -------------------------------------- | --------------------------------------------------- |
-| Eliminate 11 recipe files              | Less surface area, no parallel config format        |
-| Reuse existing codec infrastructure    | z.codec(), DetailLevel, DocumentGenerator           |
-| Convention content in decision records | Durable, queryable, tagged — not trapped in recipes |
-| Dual output from single config         | DetailLevel controls docs/ vs \_claude-md/ output   |
-| Codec IS the config                    | No external configuration files to maintain         |
+  | Benefit | Impact |
+  | --- | --- |
+  | Eliminate 11 recipe files | Less surface area, no parallel config format |
+  | Reuse existing codec infrastructure | z.codec(), DetailLevel, DocumentGenerator |
+  | Convention content in decision records | Durable, queryable, tagged — not trapped in recipes |
+  | Dual output from single config | DetailLevel controls docs/ vs _claude-md/ output |
+  | Codec IS the config | No external configuration files to maintain |
 
-**Architecture:**
+  **Architecture:**
 
-| Component                 | Role                                                                  | Status             |
-| ------------------------- | --------------------------------------------------------------------- | ------------------ |
-| ReferenceDocConfig        | TypeScript config per document type                                   | New                |
-| ReferenceDocumentCodec    | Parameterized codec composing from conventions + shapes + behaviors   | New                |
-| ConventionExtractor       | Filters MasterDataset for convention-tagged decision records          | New                |
-| ReferenceDocGenerator     | Implements DocumentGenerator directly, registers in GeneratorRegistry | New                |
-| @architect-convention tag | CSV tag on decision records                                           | New taxonomy entry |
-| Decision record migration | Recipe Rule blocks → decision records                                 | Migration          |
+  | Component | Role | Status |
+  | --- | --- | --- |
+  | ReferenceDocConfig | TypeScript config per document type | New |
+  | ReferenceDocumentCodec | Parameterized codec composing from conventions + shapes + behaviors | New |
+  | ConventionExtractor | Filters MasterDataset for convention-tagged decision records | New |
+  | ReferenceDocGenerator | Implements DocumentGenerator directly, registers in GeneratorRegistry | New |
+  | @architect-convention tag | CSV tag on decision records | New taxonomy entry |
+  | Decision record migration | Recipe Rule blocks → decision records | Migration |
 
-**What Stays, What Goes:**
+  **What Stays, What Goes:**
 
-| Current                                 | After                                         |
-| --------------------------------------- | --------------------------------------------- |
-| 11 recipe .feature files (recipes/)     | Deleted                                       |
-| Recipe Source Mapping tables            | ReferenceDocConfig objects in TypeScript      |
-| Recipe Rule blocks (durable content)    | Decision records tagged @architect-convention |
-| Recipe @architect-claude-md-section tag | ReferenceDocConfig.claudeMdSection field      |
-| docs-generated/ staging area            | Direct output to \_claude-md/ and docs/       |
-| Manual \_claude-md/ modules             | Generated by codec at summary DetailLevel     |
+  | Current | After |
+  | --- | --- |
+  | 11 recipe .feature files (recipes/) | Deleted |
+  | Recipe Source Mapping tables | ReferenceDocConfig objects in TypeScript |
+  | Recipe Rule blocks (durable content) | Decision records tagged @architect-convention |
+  | Recipe @architect-claude-md-section tag | ReferenceDocConfig.claudeMdSection field |
+  | docs-generated/ staging area | Direct output to _claude-md/ and docs/ |
+  | Manual _claude-md/ modules | Generated by codec at summary DetailLevel |
 
 #### Acceptance Criteria
 
@@ -383,7 +379,7 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 
 - Given a ReferenceDocConfig for "Process Guard"
 - And convention-tagged decision records exist for "fsm-rules"
-- And TypeScript shapes are extracted from "src/lint/\*.ts"
+- And TypeScript shapes are extracted from "src/lint/*.ts"
 - When the reference codec decodes the MasterDataset
 - Then a RenderableDocument is produced with Process Guard content
 - And sections include convention content, API types, and validation rules
@@ -421,7 +417,7 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 
 **No shape sources match any pattern file paths**
 
-- Given a ReferenceDocConfig with shapeSources "src/nonexistent/\*.ts"
+- Given a ReferenceDocConfig with shapeSources "src/nonexistent/*.ts"
 - When the reference codec decodes the MasterDataset
 - Then the output omits the type definitions section
 - And no error is raised
@@ -438,7 +434,7 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 - Given a ReferenceDocConfig with claudeMdSection "validation"
 - When the reference generator runs
 - Then "docs/PROCESS-GUARD-REFERENCE.md" is generated at "detailed" level
-- And "\_claude-md/validation/process-guard.md" is generated at "summary" level
+- And "_claude-md/validation/process-guard.md" is generated at "summary" level
 
 **Summary compaction quality**
 
@@ -482,8 +478,8 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 **Reference documents are generated by a parameterized codec**
 
 **Invariant:** Each reference document type is a configuration object, not a
-separate codec class. One `createReferenceCodec(config)` factory serves all
-11 document types.
+    separate codec class. One `createReferenceCodec(config)` factory serves all
+    11 document types.
 
     **Rationale:** 11 separate codec classes would just be reimplementing recipes
     in TypeScript. A parameterized codec keeps the configuration declarative
@@ -494,8 +490,8 @@ _Verified by: Generate process guard reference at standard detail level, Generat
 **Convention content is extracted from tagged decision records**
 
 **Invariant:** Decision records tagged with `@architect-convention` are the
-source of truth for durable reference content. The extractor filters by
-convention tag value and extracts Rule block content.
+    source of truth for durable reference content. The extractor filters by
+    convention tag value and extracts Rule block content.
 
     **Rationale:** Recipe Rule blocks contain durable knowledge (tables, context,
     rationale) that belongs in decision records — permanent, queryable, tagged.
@@ -506,8 +502,8 @@ _Verified by: Extract conventions by tag value, Convention content preserves Rul
 **Reference codec handles missing or empty sources gracefully**
 
 **Invariant:** When convention tags, shape sources, or behavior tags match
-zero items in the MasterDataset, the codec produces a valid but sparse
-document rather than failing.
+    zero items in the MasterDataset, the codec produces a valid but sparse
+    document rather than failing.
 
     **Rationale:** Not all reference configs will have all three source types
     populated. Some references have no shapes (Session Guides), others have
@@ -518,9 +514,9 @@ _Verified by: No conventions found for requested tag values, No shape sources ma
 **Each reference generator produces dual output via DetailLevel**
 
 **Invariant:** A single ReferenceDocConfig drives both the detailed human
-reference (docs/) and the compact AI context (\_claude-md/). The
-ReferenceDocGenerator invokes the codec factory twice with different
-DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
+    reference (docs/) and the compact AI context (_claude-md/). The
+    ReferenceDocGenerator invokes the codec factory twice with different
+    DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
 
     **Rationale:** The recipe system declared dual targets in its Target Documents
     table. The generator approach achieves the same by running the same codec with
@@ -533,9 +529,9 @@ _Verified by: Dual output generation, Summary compaction quality_
 **Reference generators are discovered via the existing registry**
 
 **Invariant:** Reference generators register themselves in the GeneratorRegistry
-by implementing DocumentGenerator directly, following the DecisionDocGeneratorImpl
-precedent. DOCUMENT_TYPES is `as const` and not dynamically extensible, so the
-CodecBasedGenerator adapter is not used.
+    by implementing DocumentGenerator directly, following the DecisionDocGeneratorImpl
+    precedent. DOCUMENT_TYPES is `as const` and not dynamically extensible, so the
+    CodecBasedGenerator adapter is not used.
 
     **Rationale:** DecisionDocGeneratorImpl already demonstrates this pattern:
     direct DocumentGenerator implementation, dual output, factory function registration.
@@ -546,7 +542,7 @@ _Verified by: Reference generators appear in available generators list, CLI invo
 **Convention tag values classify decision records by topic**
 
 **Invariant:** The `@architect-convention` tag uses CSV format with defined
-values. Each value maps to a knowledge domain that reference codecs consume.
+    values. Each value maps to a knowledge domain that reference codecs consume.
 
     **Rationale:** Convention tags are orthogonal to existing `@architect-adr-category`
     (which is too coarse — "process" covers both testing policy and FSM rules).
@@ -570,8 +566,8 @@ _Verified by: Convention tag is registered in taxonomy_
 **Recipe Rule blocks are migrated to convention-tagged decision records**
 
 **Invariant:** Every Rule block from the 11 recipe .feature files is
-preserved as a Rule block in a decision record tagged with the appropriate
-`@architect-convention` value. No durable content is lost during migration.
+    preserved as a Rule block in a decision record tagged with the appropriate
+    `@architect-convention` value. No durable content is lost during migration.
 
     **Rationale:** Recipe Rule blocks contain tables, rationale, and context
     that are the authoritative reference for the delivery process. Migration
@@ -591,31 +587,29 @@ _Verified by: Recipe Rule block content preserved in decision record_
 | Business Value | enable variance and governance tracking |
 
 **Problem:**
-The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
-Missing tag categories included:
+  The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
+  Missing tag categories included:
+  - Variance tracking (planned vs actual effort)
+  - Progressive governance (risk-based filtering)
+  - Backlog ordering (priority)
+  - Time distribution analysis (workflow types)
+  - Hierarchical roadmap views (epic→phase→task)
 
-- Variance tracking (planned vs actual effort)
-- Progressive governance (risk-based filtering)
-- Backlog ordering (priority)
-- Time distribution analysis (workflow types)
-- Hierarchical roadmap views (epic→phase→task)
+  Without these tags, opportunities 2-8 from the convergence roadmap could not
+  be implemented. The tag registry needed expansion to enable future capabilities.
 
-Without these tags, opportunities 2-8 from the convergence roadmap could not
-be implemented. The tag registry needed expansion to enable future capabilities.
+  **Solution:**
+  Added 6 new metadata tags to architect/tag-registry.json:
+  - @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
+  - @architect-effort-actual:Nw - Variance tracking (Opp 3)
+  - @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
+  - @architect-priority:{high|medium|low} - Backlog ordering
+  - @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
+  - @architect-parent:PatternName - Hierarchy linking (Opp 8)
 
-**Solution:**
-Added 6 new metadata tags to architect/tag-registry.json:
+  Updated PDR-003 with new tag conventions and acceptance criteria.
 
-- @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
-- @architect-effort-actual:Nw - Variance tracking (Opp 3)
-- @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
-- @architect-priority:{high|medium|low} - Backlog ordering
-- @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
-- @architect-parent:PatternName - Hierarchy linking (Opp 8)
-
-Updated PDR-003 with new tag conventions and acceptance criteria.
-
-This work is foundation for Setup A (Framework Roadmap OS) from convergence docs.
+  This work is foundation for Setup A (Framework Roadmap OS) from convergence docs.
 
 #### Acceptance Criteria
 
@@ -652,11 +646,11 @@ This work is foundation for Setup A (Framework Roadmap OS) from convergence docs
 
 As a monorepo maintainer, I want unified documentation generation from multiple sources.
 
-So that specs, platform packages, and example app produce coherent documentation.
+  So that specs, platform packages, and example app produce coherent documentation.
 
-The PoC validated multi-source generation with combined Gherkin feature sources
-and established tag conventions for PRD extraction, roadmap planning, and timeline
-metadata. See session learnings documented in the Gherkin comments below.
+  The PoC validated multi-source generation with combined Gherkin feature sources
+  and established tag conventions for PRD extraction, roadmap planning, and timeline
+  metadata. See session learnings documented in the Gherkin comments below.
 
 #### Dependencies
 

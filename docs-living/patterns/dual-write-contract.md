@@ -15,6 +15,7 @@
 
 BoundedContextFoundation:dual-write-contract
 
+
 ## Dual-Write Contract - BC Type Declaration
 
 Type-safe contract for bounded contexts using the dual-write pattern,

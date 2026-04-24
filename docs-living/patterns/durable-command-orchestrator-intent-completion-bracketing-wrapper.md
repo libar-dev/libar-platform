@@ -1,4 +1,4 @@
-# Durable Command Orchestrator - Intent/Completion Bracketing Wrapper
+#  Durable Command Orchestrator - Intent/Completion Bracketing Wrapper
 
 **Purpose:** Detailed documentation for the Durable Command Orchestrator - Intent/Completion Bracketing Wrapper pattern
 
@@ -16,7 +16,6 @@
 Durable Command Orchestrator - Intent/Completion Bracketing Wrapper
 
 Wraps the standard CommandOrchestrator with durability features:
-
 - Intent recording before execution (with scheduled timeout)
 - Completion recording after success/failure
 - Orphan detection for stuck commands

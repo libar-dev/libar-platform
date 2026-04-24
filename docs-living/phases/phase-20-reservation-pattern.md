@@ -8,12 +8,12 @@
 
 **Progress:** [█████████████░░░░░░░] 2/3 (67%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 2     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 1     |
-| **Total**    | 3     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 1     |
+| **Total**   | 3     |
 
 ---
 
@@ -27,43 +27,42 @@
 | Effort   | 2d      |
 
 **Problem:** TTL-based reservations work well for multi-step flows (registration wizards),
-but add overhead for simple "create if unique" operations. Need a lighter-weight alternative.
+  but add overhead for simple "create if unique" operations. Need a lighter-weight alternative.
 
-**Solution:** Generate entity stream ID from unique business key via deterministic hash.
-Concurrent creates target the same stream ID; OCC detects conflict automatically.
+  **Solution:** Generate entity stream ID from unique business key via deterministic hash.
+  Concurrent creates target the same stream ID; OCC detects conflict automatically.
 
-**When to Use Each Pattern:**
-| Pattern | Use Case | Mechanism | Overhead |
-| Reservation | Multi-step flow, may abandon | TTL table + cron | Medium |
-| Deterministic ID | Single-step create, immutable key | Hash + OCC | Low |
+  **When to Use Each Pattern:**
+  | Pattern | Use Case | Mechanism | Overhead |
+  | Reservation | Multi-step flow, may abandon | TTL table + cron | Medium |
+  | Deterministic ID | Single-step create, immutable key | Hash + OCC | Low |
 
-**Example:**
+  **Example:**
+  ```typescript
+  // Two concurrent "create user with email" requests
+  const streamId = deterministicStreamId('User', email);
+  // Both get: "User:a1b2c3d4" (hash of email)
 
-```typescript
-// Two concurrent "create user with email" requests
-const streamId = deterministicStreamId("User", email);
-// Both get: "User:a1b2c3d4" (hash of email)
+  // First writer succeeds, second gets OCC conflict
+  await appendToStream(ctx, streamId, events, { expectedVersion: 0 });
+  ```
 
-// First writer succeeds, second gets OCC conflict
-await appendToStream(ctx, streamId, events, { expectedVersion: 0 });
-```
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Zero infrastructure | No reservation table or cron needed |
+  | OCC-native | Uses existing Event Store conflict detection |
+  | Idempotent creates | Same input always targets same stream |
+  | Simpler mental model | "Hash then write" vs "reserve, create, confirm" |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Zero infrastructure | No reservation table or cron needed |
-| OCC-native | Uses existing Event Store conflict detection |
-| Idempotent creates | Same input always targets same stream |
-| Simpler mental model | "Hash then write" vs "reserve, create, confirm" |
+  **Constraint:** Only for truly immutable unique keys (username, external ID).
+  For mutable keys (email that can change), use Reservation Pattern instead.
 
-**Constraint:** Only for truly immutable unique keys (username, external ID).
-For mutable keys (email that can change), use Reservation Pattern instead.
-
-**Key Concepts:**
-| Concept | Description | Example |
-| Business Key | Field(s) that define uniqueness | email, username, externalId |
-| Hash Function | Deterministic, collision-resistant | SHA-256 truncated |
-| Stream ID Format | `{EntityType}:{hash}` | `User:a1b2c3d4e5f6` |
-| OCC Conflict | expectedVersion mismatch | "Stream already exists" |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | Business Key | Field(s) that define uniqueness | email, username, externalId |
+  | Hash Function | Deterministic, collision-resistant | SHA-256 truncated |
+  | Stream ID Format | `{EntityType}:{hash}` | `User:a1b2c3d4e5f6` |
+  | OCC Conflict | expectedVersion mismatch | "Stream already exists" |
 
 #### Dependencies
 
@@ -216,27 +215,26 @@ _Verified by: Pattern selection by use case_
 | Effort   | 1w        |
 
 **Problem:** Thin events require consumers to query back to the source BC,
-creating coupling and requiring synchronous communication.
+  creating coupling and requiring synchronous communication.
 
-**Solution:** Event-Carried State Transfer (ECST) - events carry full context
-for downstream consumers, eliminating back-queries:
+  **Solution:** Event-Carried State Transfer (ECST) - events carry full context
+  for downstream consumers, eliminating back-queries:
+  - **Thin Event:** `{ type: 'OrderCreated', orderId: 'ord_123' }`
+  - **Fat Event:** `{ type: 'OrderCreated', orderId, customerId, customerName, items, totalAmount }`
 
-- **Thin Event:** `{ type: 'OrderCreated', orderId: 'ord_123' }`
-- **Fat Event:** `{ type: 'OrderCreated', orderId, customerId, customerName, items, totalAmount }`
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Service Independence | Consumers don't need to query source BC |
+  | Decoupled Evolution | Source can change without breaking consumers |
+  | Offline Processing | Event contains everything needed |
+  | Published Language | Fat events define the integration contract |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Service Independence | Consumers don't need to query source BC |
-| Decoupled Evolution | Source can change without breaking consumers |
-| Offline Processing | Event contains everything needed |
-| Published Language | Fat events define the integration contract |
-
-**Key Concepts:**
-| Concept | Description | Example |
-| embedEntity | Snapshot entity fields into event | embedEntity(customer, ['id', 'name']) |
-| embedCollection | Snapshot collection into event | embedCollection(orderItems) |
-| schemaVersion | Track structure for upcasting | schemaVersion: 2 |
-| cryptoShred | Mark PII for GDPR deletion | { field: 'email', shred: true } |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | embedEntity | Snapshot entity fields into event | embedEntity(customer, ['id', 'name']) |
+  | embedCollection | Snapshot collection into event | embedCollection(orderItems) |
+  | schemaVersion | Track structure for upcasting | schemaVersion: 2 |
+  | cryptoShred | Mark PII for GDPR deletion | { field: 'email', shred: true } |
 
 #### Dependencies
 
@@ -281,25 +279,25 @@ Consumers don't need to query source BC for context.
 
 ```typescript
 // Thin event - consumer must query source BC
-const event = {
-  type: "OrderSubmitted",
-  payload: { orderId: "ord_123" },
-};
-// Consumer: "I need customer name... let me query Orders BC"
-const order = await ordersBC.getOrder(event.payload.orderId);
+    const event = {
+      type: 'OrderSubmitted',
+      payload: { orderId: 'ord_123' }
+    };
+    // Consumer: "I need customer name... let me query Orders BC"
+    const order = await ordersBC.getOrder(event.payload.orderId);
 ```
 
 **Target State (fat event - self-contained):**
 
 ```typescript
 // Fat event - consumer has all context
-const event = createFatEvent("OrderSubmitted", {
-  orderId: "ord_123",
-  customer: embedEntity(customer, ["id", "name", "email"]),
-  items: embedCollection(orderItems),
-  totalAmount: 150.0,
-});
-// Consumer: "I have everything I need!"
+    const event = createFatEvent('OrderSubmitted', {
+      orderId: 'ord_123',
+      customer: embedEntity(customer, ['id', 'name', 'email']),
+      items: embedCollection(orderItems),
+      totalAmount: 150.00
+    });
+    // Consumer: "I have everything I need!"
 ```
 
 _Verified by: Consumer processes event without back-query_
@@ -332,13 +330,12 @@ _Verified by: Event type selection by use case_
 | Effort   | 1w        |
 
 **Problem:** Uniqueness constraints before entity creation require check-then-create
-patterns with race condition risk, or post-creation unique indexes.
+  patterns with race condition risk, or post-creation unique indexes.
 
-**Solution:** TTL-based reservations for enforcing uniqueness BEFORE entity creation:
-
-1. **Reserve** — Claim a unique value with TTL
-2. **Confirm** — Convert reservation to permanent entity
-3. **Release/Expire** — Free the reservation if unused
+  **Solution:** TTL-based reservations for enforcing uniqueness BEFORE entity creation:
+  1. **Reserve** — Claim a unique value with TTL
+  2. **Confirm** — Convert reservation to permanent entity
+  3. **Release/Expire** — Free the reservation if unused
 
 #### Dependencies
 
@@ -402,7 +399,7 @@ patterns with race condition risk, or post-creation unique indexes.
 **Reservations prevent race conditions**
 
 **Invariant:** Only one reservation can exist for a given key at any time.
-Concurrent claims resolve deterministically via OCC.
+    Concurrent claims resolve deterministically via OCC.
 
     **Rationale:** Check-then-create patterns have a TOCTOU vulnerability where
     two requests may both see "not exists" and proceed to create, violating uniqueness.
@@ -412,26 +409,23 @@ Concurrent claims resolve deterministically via OCC.
 
 ```typescript
 // Race condition: both may see email as available
-const exists = await db
-  .query("users")
-  .filter((q) => q.eq("email", email))
-  .first();
-if (!exists) {
-  await db.insert("users", { email }); // Both may succeed!
-}
+    const exists = await db.query('users').filter(q => q.eq('email', email)).first();
+    if (!exists) {
+      await db.insert('users', { email }); // Both may succeed!
+    }
 ```
 
 **Target State (reservation eliminates race):**
 
 ```typescript
 // Atomic reservation - only one succeeds
-const reservation = await reserve(ctx, {
-  type: "email",
-  value: "alice@example.com",
-  ttl: 300_000, // 5 minutes
-  correlationId,
-});
-// Returns: { reservationId, key: 'email:alice@example.com', expiresAt }
+    const reservation = await reserve(ctx, {
+      type: 'email',
+      value: 'alice@example.com',
+      ttl: 300_000, // 5 minutes
+      correlationId
+    });
+    // Returns: { reservationId, key: 'email:alice@example.com', expiresAt }
 ```
 
 **Verified by:** Concurrent reservations for same value
@@ -441,7 +435,7 @@ _Verified by: Concurrent reservations for same value_
 **Reservations have TTL for auto-cleanup**
 
 **Invariant:** All reservations must have a TTL. After TTL expiry, the reservation
-transitions to "expired" and the key becomes available.
+    transitions to "expired" and the key becomes available.
 
     **Rationale:** Without TTL, abandoned reservations (user closes browser, network failure)
     would permanently block values. TTL ensures eventual availability.
@@ -453,7 +447,7 @@ _Verified by: Reservation expires after TTL_
 **Confirmation converts to permanent entity**
 
 **Invariant:** A reservation can only be confirmed once. Confirmation atomically
-transitions state to "confirmed" and links to the created entity.
+    transitions state to "confirmed" and links to the created entity.
 
     **Rationale:** The two-phase reservation→confirmation ensures the unique value is
     guaranteed available before the expensive entity creation occurs.
@@ -465,7 +459,7 @@ _Verified by: Confirm links reservation to entity_
 **Release frees reservation before expiry**
 
 **Invariant:** An active reservation can be explicitly released, immediately freeing
-the key for other consumers without waiting for TTL.
+    the key for other consumers without waiting for TTL.
 
     **Rationale:** Good UX requires immediate availability when users cancel.
     Waiting for TTL (potentially minutes) creates unnecessary blocking.
@@ -477,7 +471,7 @@ _Verified by: User cancels registration_
 **Reservation key combines type and value**
 
 **Invariant:** Reservation keys are namespaced by type. The same value can be
-reserved in different namespaces simultaneously.
+    reserved in different namespaces simultaneously.
 
     **Rationale:** A single value like "alice" may need uniqueness in multiple contexts
     (username, display name, etc.). Type-scoped keys allow independent reservations.

@@ -16,7 +16,6 @@
 Order Fulfillment Saga.
 
 Coordinates the order fulfillment process across bounded contexts:
-
 1. When OrderSubmitted event is received
 2. Request inventory reservation from Inventory context
 3. If reservation succeeds, confirm order and reservation

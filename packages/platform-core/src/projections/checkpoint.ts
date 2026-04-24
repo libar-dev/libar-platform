@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  NO_GLOBAL_POSITION,
+  isGlobalPositionAfter,
+} from "../events/globalPosition.js";
 import type { ProjectionCheckpoint } from "./types.js";
 
 /**
@@ -7,7 +11,7 @@ import type { ProjectionCheckpoint } from "./types.js";
 export const ProjectionCheckpointSchema = z.object({
   projectionName: z.string(),
   partitionKey: z.string(),
-  lastGlobalPosition: z.number().int().min(-1), // -1 is sentinel for "no events processed"
+  lastGlobalPosition: z.bigint().gte(NO_GLOBAL_POSITION),
   lastEventId: z.string(),
   updatedAt: z.number(),
 });
@@ -23,7 +27,7 @@ export const ProjectionStatusSchema = z.enum(["active", "rebuilding", "paused", 
 export const ProjectionStateSchema = z.object({
   projectionName: z.string(),
   status: ProjectionStatusSchema,
-  lastGlobalPosition: z.number().int().min(-1), // -1 is sentinel for "no events processed"
+  lastGlobalPosition: z.bigint().gte(NO_GLOBAL_POSITION),
   eventsProcessed: z.number().int().nonnegative(),
   eventsFailed: z.number().int().nonnegative(),
   lastUpdatedAt: z.number(),
@@ -64,10 +68,10 @@ export const ProjectionProcessResultSchema = z.object({
  * @returns true if the event should be processed
  */
 export function shouldProcessEvent(
-  eventGlobalPosition: number,
-  checkpointGlobalPosition: number
+  eventGlobalPosition: ProjectionCheckpoint["lastGlobalPosition"],
+  checkpointGlobalPosition: ProjectionCheckpoint["lastGlobalPosition"]
 ): boolean {
-  return eventGlobalPosition > checkpointGlobalPosition;
+  return isGlobalPositionAfter(eventGlobalPosition, checkpointGlobalPosition);
 }
 
 /**
@@ -83,7 +87,7 @@ export function createInitialCheckpoint(
   return {
     projectionName,
     partitionKey,
-    lastGlobalPosition: -1, // All real events have globalPosition >= 0
+    lastGlobalPosition: NO_GLOBAL_POSITION,
     lastEventId: "", // No events processed yet
     updatedAt: Date.now(),
   };

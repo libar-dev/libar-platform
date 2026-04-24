@@ -26,7 +26,6 @@ Eliminates 5-line boilerplate for loading, validating, and upcasting CMS entitie
 ### Problem Solved
 
 Before:
-
 ```typescript
 const rawCMS = await ctx.db
   .query("orderCMS")
@@ -37,7 +36,6 @@ const cms = upcastOrderCMS(rawCMS);
 ```
 
 After:
-
 ```typescript
 const { cms, _id } = await orderRepo.load(ctx, orderId);
 ```

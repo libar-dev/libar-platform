@@ -78,7 +78,12 @@ Adopt a minimal release management architecture with three components:
 
 ## Consequences
 
-Positive outcomes: - Minimal ceremony: release files are ~20 lines, deliverables just add one tag - Flexible: scope can change during development without restructuring - Discoverable: changelog is generated, always up-to-date - True to philosophy: Git is the event store, documentation is projection - Works for both internal and public releases with same mental model
+Positive outcomes:
+    - Minimal ceremony: release files are ~20 lines, deliverables just add one tag
+    - Flexible: scope can change during development without restructuring
+    - Discoverable: changelog is generated, always up-to-date
+    - True to philosophy: Git is the event store, documentation is projection
+    - Works for both internal and public releases with same mental model
 
     Negative outcomes:
     - Requires scanner support for @architect-release tag (implemented)

@@ -15,20 +15,19 @@
 ## Description
 
 **Problem:** Command execution requires idempotency (same command = same result),
-status tracking, and a standardized flow from receipt through execution. Without
-infrastructure-level idempotency, duplicate requests could corrupt domain state.
+  status tracking, and a standardized flow from receipt through execution. Without
+  infrastructure-level idempotency, duplicate requests could corrupt domain state.
 
-**Solution:** The Command Bus component provides:
+  **Solution:** The Command Bus component provides:
+  - Infrastructure-level idempotency via commandId deduplication
+  - Status lifecycle tracking (pending -> executed | rejected | failed)
+  - The 7-step CommandOrchestrator pattern for dual-write execution
+  - Correlation tracking via correlationId for distributed tracing
+  - TTL-based cleanup of expired command records
 
-- Infrastructure-level idempotency via commandId deduplication
-- Status lifecycle tracking (pending -> executed | rejected | failed)
-- The 7-step CommandOrchestrator pattern for dual-write execution
-- Correlation tracking via correlationId for distributed tracing
-- TTL-based cleanup of expired command records
-
-**Note:** This pattern was implemented before the delivery process existed
-and is documented retroactively to provide context for IntegrationPatterns
-and AgentAsBoundedContext phases.
+  **Note:** This pattern was implemented before the delivery process existed
+  and is documented retroactively to provide context for IntegrationPatterns
+  and AgentAsBoundedContext phases.
 
 ## Dependencies
 
@@ -75,26 +74,46 @@ and AgentAsBoundedContext phases.
 
 **Commands are idempotent via commandId deduplication**
 
-Every command has a unique commandId. When a command is recorded, the
-Command Bus checks if that commandId already exists: - If new: Record command with status "pending", proceed to execution - If duplicate: Return cached result without re-execution
+**Invariant:** Same commandId always returns same result without re-execution.
+
+    Every command has a unique commandId. When a command is recorded, the
+    Command Bus checks if that commandId already exists:
+    - If new: Record command with status "pending", proceed to execution
+    - If duplicate: Return cached result without re-execution
 
     This ensures retries are safe - network failures don't cause duplicate
     domain state changes.
+
+    **Input:** RecordCommandArgs -- commandId, commandType, payload, metadata
+
+    **Output:** RecordCommandResult -- status, isNew, cachedResult
 
 _Verified by: First command execution is recorded, Duplicate command returns cached result_
 
 **Status tracks the complete command lifecycle**
 
-Commands progress through well-defined states: - **pending**: Command received, execution in progress - **executed**: Command succeeded, event(s) emitted - **rejected**: Business rule violation, no event emitted - **failed**: Unexpected error during execution
+**Invariant:** Status transitions are atomic with result — pending to executed, rejected, or failed.
+
+    Commands progress through well-defined states:
+    - **pending**: Command received, execution in progress
+    - **executed**: Command succeeded, event(s) emitted
+    - **rejected**: Business rule violation, no event emitted
+    - **failed**: Unexpected error during execution
 
     The status is updated atomically with the command result, ensuring
     consistent state even under concurrent access.
+
+    **Input:** CommandResult -- status, data
+
+    **Output:** CommandStatusInfo -- commandId, status, result, updatedAt
 
 _Verified by: Successful command transitions to executed, Business rejection transitions to rejected, Unexpected error transitions to failed_
 
 **The CommandOrchestrator is the only command execution path**
 
-Every command in the system flows through the same 7-step orchestration:
+**Invariant:** Every command flows through the same 7-step orchestration — no bypass allowed.
+
+    Every command in the system flows through the same 7-step orchestration:
 
     | Step | Action | Component | Purpose |
     | 1 | Record command | Command Bus | Idempotency check |
@@ -110,18 +129,33 @@ Every command in the system flows through the same 7-step orchestration:
     - Automatic projection triggering
     - Consistent error handling and status reporting
 
+    **Input:** CommandConfig -- handler, projection, sagaRoute
+
+    **Output:** CommandResult -- status, data, eventId, globalPosition
+
 **correlationId links commands, events, and projections**
 
-Every command carries a correlationId that flows through the entire
-execution path: - Command -> Handler -> Event metadata -> Projection processing - Enables tracing a user action through all system components - Supports debugging and audit trail reconstruction
+**Invariant:** correlationId flows from command through handler to event metadata to projection.
+
+    Every command carries a correlationId that flows through the entire
+    execution path:
+    - Command -> Handler -> Event metadata -> Projection processing
+    - Enables tracing a user action through all system components
+    - Supports debugging and audit trail reconstruction
 
     The commandEventCorrelations table tracks which events were produced
     by each command, enabling forward (command -> events) lookups.
 
+    **Input:** EventData -- eventId, eventType, streamId, metadata
+
+    **Output:** CorrelationEntry -- commandId, eventIds
+
 **Middleware provides composable cross-cutting concerns**
 
-The CommandOrchestrator supports a middleware pipeline that wraps
-command execution with before/after hooks:
+**Invariant:** Middleware executes in registration order with early exit on failure.
+
+    The CommandOrchestrator supports a middleware pipeline that wraps
+    command execution with before/after hooks:
 
     - **Validation middleware**: Schema validation before handler
     - **Authorization middleware**: Permission checks
@@ -130,6 +164,10 @@ command execution with before/after hooks:
 
     Middleware executes in registration order, with early exit on failure.
     This separates infrastructure concerns from domain logic.
+
+    **Input:** MiddlewareContext -- command, correlationId, custom
+
+    **Output:** MiddlewareResult -- continue, enrichedContext
 
 ---
 

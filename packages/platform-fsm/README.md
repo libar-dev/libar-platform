@@ -1,121 +1,73 @@
 # @libar-dev/platform-fsm
 
-Type-safe Finite State Machine for explicit state transitions.
+Explicit, typed state-transition rules for domain workflows.
 
-## Overview
+## What this package gives you
 
-FSM for enforcing valid state transitions:
+- `defineFSM` for declaring allowed transitions
+- helpers for transition checks and terminal-state checks
+- `FSMTransitionError` for rejected transitions
 
-- **Compile-time Safety** — Invalid transitions are type errors
-- **Runtime Validation** — Throws on invalid transitions
-- **Declarative** — Define states and transitions in one place
-- **Lightweight** — Pure TypeScript, no dependencies
-
-## Installation
+## Install
 
 ```bash
 pnpm add @libar-dev/platform-fsm
 ```
 
-**Peer Dependencies:**
+## Example
 
-- `vitest` (>=2.0.0) — Optional, for testing utilities
+```ts
+import {
+  defineFSM,
+  canTransition,
+  assertTransition,
+  validTransitions,
+} from "@libar-dev/platform-fsm";
 
-## Quick Start
-
-```typescript
-import { defineFSM, canTransition, assertTransition } from "@libar-dev/platform-fsm";
-
-// Define FSM with explicit transitions
-type OrderStatus = "draft" | "submitted" | "confirmed" | "shipped" | "cancelled";
-
-const orderFSM = defineFSM<OrderStatus>({
-  initial: "draft",
-  transitions: {
-    draft: ["submitted", "cancelled"],
-    submitted: ["confirmed", "cancelled"],
-    confirmed: ["shipped"],
-    shipped: [], // Terminal state
-    cancelled: [], // Terminal state
-  },
-});
-
-// Check if transition is valid
-canTransition(orderFSM, "draft", "submitted"); // true
-canTransition(orderFSM, "draft", "shipped"); // false
-
-// Assert transition (throws if invalid)
-assertTransition(orderFSM, "draft", "submitted"); // OK
-assertTransition(orderFSM, "draft", "shipped"); // Throws FSMTransitionError
-
-// Get valid transitions from current state
-validTransitions(orderFSM, "draft"); // ["submitted", "cancelled"]
-
-// Check if state is terminal (no outgoing transitions)
-isTerminal(orderFSM, "shipped"); // true
-isTerminal(orderFSM, "draft"); // false
-```
-
-## API Reference
-
-### Factory
-
-| Function            | Description                   |
-| ------------------- | ----------------------------- |
-| `defineFSM(config)` | Create FSM from configuration |
-
-### Operations
-
-| Function                          | Description                                |
-| --------------------------------- | ------------------------------------------ |
-| `canTransition(fsm, from, to)`    | Check if transition is valid               |
-| `assertTransition(fsm, from, to)` | Throw if transition invalid                |
-| `validTransitions(fsm, from)`     | Get valid target states                    |
-| `isTerminal(fsm, state)`          | Check if state has no outgoing transitions |
-| `isValidState(fsm, state)`        | Check if state exists in FSM               |
-
-### Types
-
-| Type                    | Description                        |
-| ----------------------- | ---------------------------------- |
-| `FSMDefinition<TState>` | Configuration for `defineFSM`      |
-| `FSM<TState>`           | Created FSM instance               |
-| `FSMTransitionError`    | Error thrown on invalid transition |
-
-## Usage in Deciders
-
-FSM is commonly used in deciders to validate state transitions:
-
-```typescript
-import { defineFSM, canTransition } from "@libar-dev/platform-fsm";
-import { rejected, success } from "@libar-dev/platform-decider";
+type OrderStatus = "draft" | "submitted" | "confirmed" | "cancelled";
 
 const orderFSM = defineFSM<OrderStatus>({
   initial: "draft",
   transitions: {
     draft: ["submitted", "cancelled"],
     submitted: ["confirmed", "cancelled"],
-    confirmed: ["shipped"],
-    shipped: [],
+    confirmed: [],
     cancelled: [],
   },
 });
 
-function submitOrderDecider(state, command, context) {
-  // Validate transition is allowed
-  if (!canTransition(orderFSM, state.status, "submitted")) {
-    return rejected("INVALID_TRANSITION", `Cannot transition from ${state.status} to submitted`);
-  }
-
-  return success({
-    data: { submittedAt: context.now },
-    event: { eventType: "OrderSubmitted", payload: { orderId: state.orderId } },
-    stateUpdate: { status: "submitted" },
-  });
-}
+canTransition(orderFSM, "draft", "submitted");
+assertTransition(orderFSM, "submitted", "confirmed");
+validTransitions(orderFSM, "draft");
 ```
 
-## Related Packages
+## Main exports
 
-- `@libar-dev/platform-decider` — Pure decider functions
-- `@libar-dev/platform-core` — Re-exports FSM for convenience
+- `defineFSM`
+- `canTransition`, `assertTransition`, `validTransitions`, `isTerminal`, `isValidState`
+- `FSMDefinition`, `FSM`, `FSMTransitionError`
+
+## Stability
+
+| Surface | Status | Notes |
+| --- | --- | --- |
+| FSM definition and operations | Stable | Pure TypeScript with strong unit and BDD coverage |
+| Error type | Stable | Safe for `instanceof` checks in calling code |
+| Testing subpath | Stable | Useful when sharing helpers in spec-style tests |
+
+## Known limitations
+
+- FSM rules do not enforce business invariants on their own. They only describe valid transitions.
+- Use deciders or command handlers for richer validation that depends on data beyond the current state label.
+
+## Security notes
+
+- Treat transition checks as domain guards, not authorization checks.
+- Keep caller context out of the FSM definition itself so rules remain deterministic.
+
+## Testing
+
+```bash
+pnpm --filter @libar-dev/platform-fsm test
+pnpm --filter @libar-dev/platform-fsm test:coverage
+```

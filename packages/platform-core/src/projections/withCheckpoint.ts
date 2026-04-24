@@ -19,6 +19,11 @@
  * - Building reusable projection infrastructure with consistent patterns
  */
 import type { ProjectionCheckpoint } from "./types.js";
+import {
+  normalizeGlobalPosition,
+  type GlobalPositionLike,
+  isGlobalPositionAtOrBefore,
+} from "../events/globalPosition.js";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 
@@ -38,7 +43,7 @@ export interface WithCheckpointConfig<TCtx> {
   partitionKey: string;
 
   /** Global position of the event being processed */
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
 
   /** Event ID for checkpoint tracking */
   eventId: string;
@@ -58,10 +63,10 @@ export interface WithCheckpointConfig<TCtx> {
     partitionKey: string,
     checkpoint: {
       projectionName: string;
-      partitionKey: string;
-      lastGlobalPosition: number;
-      lastEventId: string;
-      updatedAt: number;
+        partitionKey: string;
+        lastGlobalPosition: ProjectionCheckpoint["lastGlobalPosition"];
+        lastEventId: string;
+        updatedAt: number;
     }
   ) => Promise<void>;
 
@@ -146,7 +151,7 @@ export async function withCheckpoint<TCtx>(
   const {
     projectionName,
     partitionKey,
-    globalPosition,
+    globalPosition: rawGlobalPosition,
     eventId,
     getCheckpoint,
     updateCheckpoint,
@@ -156,11 +161,12 @@ export async function withCheckpoint<TCtx>(
 
   // Use provided logger or fall back to no-op
   const logger = configLogger ?? createPlatformNoOpLogger();
+  const globalPosition = normalizeGlobalPosition(rawGlobalPosition);
 
   // 1. Check checkpoint - skip if already processed
   const checkpoint = await getCheckpoint(ctx, partitionKey);
 
-  if (checkpoint && globalPosition <= checkpoint.lastGlobalPosition) {
+  if (checkpoint && isGlobalPositionAtOrBefore(globalPosition, checkpoint.lastGlobalPosition)) {
     logger.debug("Skipped: already processed", {
       projectionName,
       partitionKey,

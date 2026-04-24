@@ -415,10 +415,12 @@ export const processReplayChunk = internalMutation({
     }
 
     // Fetch events from Event Store
-    const events = await eventStore.readFromPosition(ctx, {
+    const batch = await eventStore.readFromPosition(ctx, {
       fromPosition: fromPosition,
       limit: chunkSize,
     });
+
+    const { events, nextPosition, hasMore } = batch;
 
     if (events.length === 0) {
       // Replay complete
@@ -471,14 +473,14 @@ export const processReplayChunk = internalMutation({
     });
 
     // Schedule next chunk if more events might exist
-    if (events.length === chunkSize) {
+    if (hasMore) {
       await eventReplayPool.enqueueMutation(
         ctx,
         processChunkRef,
         {
           checkpointId,
           projectionName,
-          fromPosition: lastEvent.globalPosition + 1,
+          fromPosition: nextPosition,
           chunkSize,
         },
         { key: `replay:${projectionName}` }

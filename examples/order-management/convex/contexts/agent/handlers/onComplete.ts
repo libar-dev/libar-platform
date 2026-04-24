@@ -28,11 +28,12 @@ import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
 import { vOnCompleteValidator } from "@convex-dev/workpool";
 import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
+import { compatGlobalPositionValidator } from "../../../lib/globalPosition";
+import { createAgentOnCompleteHandler } from "../../../../../../packages/platform-core/src/agent/oncomplete-handler.js";
 import {
-  createAgentOnCompleteHandler,
   parseApprovalTimeout,
   DEFAULT_APPROVAL_TIMEOUT_MS,
-} from "@libar-dev/platform-core/agent";
+} from "../../../../../../packages/platform-core/src/agent/approval.js";
 import { churnRiskAgentConfig } from "../_config.js";
 import { agentComponent } from "../_component.js";
 
@@ -101,7 +102,7 @@ export const handleChurnRiskOnComplete = internalMutation({
       subscriptionId: v.string(),
       eventId: v.string(),
       eventType: v.string(),
-      globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
       correlationId: v.string(),
       causationId: v.string(),
       streamId: v.string(),

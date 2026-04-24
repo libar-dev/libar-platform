@@ -26,6 +26,11 @@ import {
   type ReplayProgress,
   type ReplayStatus,
 } from "@libar-dev/platform-core";
+import {
+  normalizeGlobalPosition,
+  subtractGlobalPositions,
+  type GlobalPositionLike,
+} from "../lib/globalPosition";
 
 // TS2589 Prevention: Pre-declare function references at module level
 const processChunkRef = makeFunctionReference<"mutation">(
@@ -64,9 +69,9 @@ function toReplayCheckpoint(dbRecord: {
   _id: unknown;
   replayId: string;
   projection: string;
-  startPosition: number;
-  lastPosition: number;
-  targetPosition?: number;
+  startPosition: GlobalPositionLike;
+  lastPosition: GlobalPositionLike;
+  targetPosition?: GlobalPositionLike;
   status: string;
   eventsProcessed: number;
   chunksCompleted: number;
@@ -153,11 +158,17 @@ export const triggerRebuild = internalMutation({
 
     // Get max global position for progress calculation
     const maxPosition = await eventStore.getGlobalPosition(ctx);
+    const normalizedFromPosition = normalizeGlobalPosition(fromGlobalPosition);
 
     // Validate and clamp inputs to prevent negative totals in status queries
-    const safeFromPosition = Math.max(0, Math.min(fromGlobalPosition, maxPosition));
+    const safeFromPosition =
+      normalizedFromPosition < 0n
+        ? 0n
+        : normalizedFromPosition > maxPosition
+          ? maxPosition
+          : normalizedFromPosition;
     const safeChunkSize = Math.max(1, chunkSize);
-    const totalEvents = Math.max(0, maxPosition - safeFromPosition);
+    const totalEvents = Number(subtractGlobalPositions(maxPosition, safeFromPosition));
 
     // Handle empty event range
     if (totalEvents === 0) {
@@ -312,7 +323,7 @@ export const getRebuildStatus = internalQuery({
     // Calculate total events using stored startPosition
     const totalEvents =
       checkpoint.targetPosition !== undefined
-        ? checkpoint.targetPosition - checkpoint.startPosition
+        ? Number(subtractGlobalPositions(checkpoint.targetPosition, checkpoint.startPosition))
         : checkpoint.eventsProcessed;
 
     // Convert to ReplayCheckpoint and calculate progress using platform-core
@@ -358,7 +369,9 @@ export const listActiveRebuilds = internalQuery({
     return allActive.map((cp) => {
       // Calculate total events using stored startPosition
       const totalEvents =
-        cp.targetPosition !== undefined ? cp.targetPosition - cp.startPosition : cp.eventsProcessed;
+        cp.targetPosition !== undefined
+          ? Number(subtractGlobalPositions(cp.targetPosition, cp.startPosition))
+          : cp.eventsProcessed;
 
       // Use platform-core calculatePercentComplete for consistency
       const percentComplete = calculatePercentComplete(cp.eventsProcessed, totalEvents);
@@ -414,10 +427,12 @@ export const processReplayChunk = internalMutation({
     }
 
     // Fetch events from Event Store
-    const events = await eventStore.readFromPosition(ctx, {
+    const batch = await eventStore.readFromPosition(ctx, {
       fromPosition: fromPosition,
       limit: chunkSize,
     });
+
+    const { events, nextPosition, hasMore } = batch;
 
     if (events.length === 0) {
       // Replay complete
@@ -470,14 +485,14 @@ export const processReplayChunk = internalMutation({
     });
 
     // Schedule next chunk if more events might exist
-    if (events.length === chunkSize) {
+    if (hasMore) {
       await eventReplayPool.enqueueMutation(
         ctx,
         processChunkRef,
         {
           checkpointId,
           projectionName,
-          fromPosition: lastEvent.globalPosition + 1,
+          fromPosition: nextPosition,
           chunkSize,
         },
         { key: `replay:${projectionName}` }

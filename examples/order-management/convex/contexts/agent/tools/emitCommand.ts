@@ -16,11 +16,12 @@
 import { internalMutation, internalQuery } from "../../../_generated/server.js";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
+import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
+import { createVerificationProof } from "../../../../../../packages/platform-core/src/security/verificationProof.js";
 import {
   createEmittedAgentCommand,
   type EmittedAgentCommand,
 } from "@libar-dev/platform-core/agent";
-import { createPlatformNoOpLogger } from "@libar-dev/platform-core";
 import { CHURN_RISK_AGENT_ID } from "../_config.js";
 
 // ============================================================================
@@ -132,6 +133,13 @@ export const emitAgentCommand = internalMutation({
 
     // Generate command ID for external reference
     const commandId = `cmd_${now}_${Math.random().toString(36).substring(2, 8)}`;
+    const agentVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/emitCommand:emitAgentCommand",
+      subjectId: agentId,
+      subjectType: "agent",
+      boundedContext: "agent",
+    });
 
     // Store the command via component
     await ctx.runMutation(components.agentBC.commands.record, {
@@ -144,6 +152,7 @@ export const emitAgentCommand = internalMutation({
       decisionId: command.metadata.decisionId,
       ...(command.metadata.patternId && { patternId: command.metadata.patternId }),
       ...(args.correlationId && { correlationId: args.correlationId }),
+      verificationProof: agentVerificationProof,
     });
 
     // Record in audit trail via component
@@ -152,6 +161,7 @@ export const emitAgentCommand = internalMutation({
       agentId,
       decisionId: command.metadata.decisionId,
       timestamp: now,
+      verificationProof: agentVerificationProof,
       payload: {
         commandId,
         commandType: command.type,
@@ -287,6 +297,13 @@ export const processCommand = internalMutation({
         agentId: command.agentId,
         decisionId: command.decisionId,
         timestamp: now,
+        verificationProof: await createVerificationProof({
+          target: "agentBC",
+          issuer: "order-management:contexts/agent/tools/emitCommand:processCommand",
+          subjectId: command.agentId,
+          subjectType: "agent",
+          boundedContext: "agent",
+        }),
         payload: {
           commandId,
           commandType: command.type,

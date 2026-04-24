@@ -22,6 +22,7 @@ import { makeFunctionReference } from "convex/server";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { components } from "../_generated/api";
 import { defineProcessManager } from "@libar-dev/platform-bc";
+import { compatGlobalPositionValidator, type GlobalPositionLike } from "../lib/globalPosition";
 import {
   createProcessManagerExecutor,
   type PMDomainEvent,
@@ -189,7 +190,7 @@ export const orderNotificationExecutor = createProcessManagerExecutor<MutationCt
       // Build updates object only with defined values to satisfy exactOptionalPropertyTypes
       const updateObj: {
         status?: "idle" | "processing" | "completed" | "failed";
-        lastGlobalPosition?: number;
+        lastGlobalPosition?: GlobalPositionLike;
         commandsEmitted?: number;
         commandsFailed?: number;
         errorMessage?: string;
@@ -221,7 +222,7 @@ export const orderNotificationExecutor = createProcessManagerExecutor<MutationCt
       attemptCount: number,
       context?: {
         eventId?: string;
-        globalPosition?: number;
+        globalPosition?: GlobalPositionLike;
         correlationId?: string;
         streamType?: string;
         streamId?: string;
@@ -307,7 +308,7 @@ export const handleOrderConfirmed = internalMutation({
   args: {
     eventId: v.string(),
     eventType: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
     correlationId: v.string(),
     streamType: v.string(),
     streamId: v.string(),

@@ -14,7 +14,9 @@
 
 ## Context
 
-We have two distinct needs for feature files: 1. Planning and Tracking - What to build, progress, deliverables 2. Implementation Proof - How it works, unit tests, edge cases
+We have two distinct needs for feature files:
+    1. Planning and Tracking - What to build, progress, deliverables
+    2. Implementation Proof - How it works, unit tests, edge cases
 
     Initially, both were conflated into single feature files. This led to:
     - Duplication between roadmap specs and package tests
@@ -26,7 +28,7 @@ We have two distinct needs for feature files: 1. Planning and Tracking - What to
 | Tier    | Location                        | Purpose                          | Executable |
 | ------- | ------------------------------- | -------------------------------- | ---------- |
 | Roadmap | libar-platform/architect/specs/ | Planning, tracking, deliverables | No         |
-| Package | packages/\*/tests/features/     | Implementation tests             | Yes        |
+| Package | packages/*/tests/features/      | Implementation tests             | Yes        |
 
 | Spec Type | Tag                                 | Purpose                 |
 | --------- | ----------------------------------- | ----------------------- |
@@ -34,6 +36,7 @@ We have two distinct needs for feature files: 1. Planning and Tracking - What to
 | Package   | @architect-roadmap-spec:PatternName | Links back to roadmap   |
 
 Establish a two-tier architecture with clear separation:
+
 
     Traceability via Metadata:
 
@@ -71,7 +74,10 @@ Establish a two-tier architecture with clear separation:
 
 ## Consequences
 
-Positive outcomes: - No duplication, clear ownership, metadata-based traceability - Roadmap specs stay lightweight (planning documents) - Package specs are authoritative for behavior
+Positive outcomes:
+    - No duplication, clear ownership, metadata-based traceability
+    - Roadmap specs stay lightweight (planning documents)
+    - Package specs are authoritative for behavior
 
     Negative outcomes:
     - Requires discipline to maintain tag relationships

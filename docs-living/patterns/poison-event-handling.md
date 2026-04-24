@@ -24,16 +24,15 @@ manual investigation.
 
 ### Poison Event Flow
 
-| Attempt | Action                                             |
-| ------- | -------------------------------------------------- |
-| 1       | Process event, catch error, record attempt         |
-| 2       | Retry with backoff, catch error, record attempt    |
-| 3       | Quarantine event, skip in future processing, alert |
+| Attempt | Action |
+|---------|--------|
+| 1 | Process event, catch error, record attempt |
+| 2 | Retry with backoff, catch error, record attempt |
+| 3 | Quarantine event, skip in future processing, alert |
 
 ### Recovery
 
 Quarantined events can be:
-
 - Manually fixed and reprocessed after code fix deployed
 - Permanently ignored if event data is invalid
 - Used to generate compensating events

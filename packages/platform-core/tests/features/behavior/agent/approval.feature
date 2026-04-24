@@ -249,7 +249,7 @@ Feature: Approval Module
       Then shouldRequireApproval for action "SomeAction" with confidence 1 returns false
 
   Rule: isAuthorizedReviewer checks agentIds restriction
-    **Invariant:** If agentIds is set and non-empty, approval agentId must be in the list
+    **Invariant:** Authorization fails closed; if agentIds is set it must be non-empty and include approval.agentId
     **Verified by:** Scenarios for matching, non-matching, undefined, and empty agentIds
 
     Scenario: Returns true when agentId is in authContext agentIds
@@ -262,18 +262,18 @@ Feature: Approval Module
       And an auth context with agentIds "agent-1,agent-2"
       Then isAuthorizedReviewer returns false
 
-    Scenario: Returns true when agentIds is undefined
+    Scenario: Returns false when agentIds is undefined
       Given an approval with agentId "any-agent"
       And an auth context with no agentIds
-      Then isAuthorizedReviewer returns true
+      Then isAuthorizedReviewer returns false
 
-    Scenario: Returns true when agentIds is empty
+    Scenario: Returns false when agentIds is empty
       Given an approval with agentId "any-agent"
       And an auth context with empty agentIds
-      Then isAuthorizedReviewer returns true
+      Then isAuthorizedReviewer returns false
 
   Rule: isAuthorizedReviewer checks roles
-    **Invariant:** Roles are checked after agentIds; empty or undefined roles pass
+    **Invariant:** Roles are checked after agentIds; empty or undefined roles fail closed
     **Verified by:** Scenarios for present, undefined, and empty roles
 
     Scenario: Returns true when user has at least one role
@@ -281,15 +281,15 @@ Feature: Approval Module
       And an auth context with roles "reviewer"
       Then isAuthorizedReviewer returns true
 
-    Scenario: Returns true when roles is undefined
+    Scenario: Returns false when roles is undefined
       Given a default approval
       And an auth context with no roles
-      Then isAuthorizedReviewer returns true
+      Then isAuthorizedReviewer returns false
 
-    Scenario: Returns true when roles is empty
+    Scenario: Returns false when roles is empty
       Given a default approval
       And an auth context with empty roles
-      Then isAuthorizedReviewer returns true
+      Then isAuthorizedReviewer returns false
 
   Rule: isAuthorizedReviewer evaluates agentIds before roles
     **Invariant:** AgentIds check fails even if user has admin role
@@ -306,14 +306,14 @@ Feature: Approval Module
       Then isAuthorizedReviewer returns true
 
   Rule: generateApprovalId produces correctly formatted unique IDs
-    **Invariant:** IDs have apr_ prefix, 3 underscore-delimited parts, 8-char random suffix
+    **Invariant:** IDs have apr_ prefix and a full UUIDv7 suffix
     **Verified by:** Scenarios for format and uniqueness
 
     Scenario: Generates ID with apr_ prefix and correct format
       When I generate an approval ID
       Then the approval ID starts with "apr_"
-      And the approval ID has 3 underscore-delimited parts
-      And the third part has 8 characters
+      And the approval ID has 2 underscore-delimited parts
+      And the second part has 36 characters
 
     Scenario: Generates unique IDs over multiple calls
       When I generate 3 approval IDs with delay
@@ -360,7 +360,7 @@ Feature: Approval Module
         | rejectionReason |
 
   Rule: approveAction transitions pending to approved
-    **Invariant:** Only pending approvals can be approved; sets reviewerId, reviewedAt, and optional reviewNote
+    **Invariant:** Only unexpired pending approvals can be approved; sets reviewerId, reviewedAt, and optional reviewNote
     **Verified by:** Scenarios for transition, reviewer fields, note, and error cases
 
     Scenario: Transitions pending approval to approved
@@ -390,6 +390,11 @@ Feature: Approval Module
         | rejected |
         | expired  |
 
+    Scenario: Throws error for expired pending approvals
+      Given fake time is set to "2024-01-15T12:00:00Z"
+      When I approve an expired pending approval
+      Then the approval action throws "approval has expired"
+
     Scenario: Preserves other fields after approval
       Given fake time is set to "2024-01-15T12:00:00Z"
       And a pending approval with agentId "my-agent" decisionId "my-decision" confidence 0.8
@@ -397,7 +402,7 @@ Feature: Approval Module
       Then the result preserves agentId "my-agent" decisionId "my-decision" confidence 0.8
 
   Rule: rejectAction transitions pending to rejected
-    **Invariant:** Only pending approvals can be rejected; sets reviewerId, rejectionReason, reviewedAt
+    **Invariant:** Only unexpired pending approvals can be rejected; sets reviewerId, rejectionReason, reviewedAt
     **Verified by:** Scenarios for transition, fields, and error cases
 
     Scenario: Transitions pending approval to rejected with reason
@@ -416,6 +421,11 @@ Feature: Approval Module
 
     Scenario: Throws error when rejecting non-pending approval
       Then rejecting a non-pending approval throws for status "approved"
+
+    Scenario: Throws error when rejecting expired pending approval
+      Given fake time is set to "2024-01-15T12:00:00Z"
+      When I reject an expired pending approval
+      Then the rejection action throws "approval has expired"
 
   Rule: expireAction transitions pending to expired
     **Invariant:** Only pending approvals can be expired; no reviewerId is set

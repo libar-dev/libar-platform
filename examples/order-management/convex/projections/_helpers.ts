@@ -7,6 +7,11 @@ import type { GenericMutationCtx } from "convex/server";
 import type { DataModel, Doc } from "../_generated/dataModel";
 import { createScopedLogger, type Logger } from "@libar-dev/platform-core";
 import { PLATFORM_LOG_LEVEL } from "../infrastructure.js";
+import {
+  isGlobalPositionAfter,
+  normalizeGlobalPosition,
+  type GlobalPositionLike,
+} from "../lib/globalPosition";
 
 /**
  * Default logger for projection checkpoint operations.
@@ -29,7 +34,7 @@ export type ProjectionResult = { status: "skipped" } | { status: "processed" };
  */
 export interface BaseProjectionArgs {
   eventId: string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
 }
 
 /**
@@ -57,12 +62,13 @@ export async function updateCheckpoint(
   projectionName: string,
   partitionKey: string,
   eventId: string,
-  globalPosition: number
+  globalPosition: GlobalPositionLike
 ): Promise<void> {
   const now = Date.now();
+  const normalizedGlobalPosition = normalizeGlobalPosition(globalPosition);
   if (checkpoint) {
     await ctx.db.patch(checkpoint._id, {
-      lastGlobalPosition: globalPosition,
+      lastGlobalPosition: normalizedGlobalPosition,
       lastEventId: eventId,
       updatedAt: now,
     });
@@ -70,7 +76,7 @@ export async function updateCheckpoint(
     await ctx.db.insert("projectionCheckpoints", {
       projectionName,
       partitionKey,
-      lastGlobalPosition: globalPosition,
+      lastGlobalPosition: normalizedGlobalPosition,
       lastEventId: eventId,
       updatedAt: now,
     });
@@ -85,10 +91,11 @@ export async function shouldProcess(
   ctx: MutationCtx,
   projectionName: string,
   partitionKey: string,
-  globalPosition: number
+  globalPosition: GlobalPositionLike
 ): Promise<{ shouldProcess: boolean; checkpoint: Doc<"projectionCheckpoints"> | null }> {
   const checkpoint = await getCheckpoint(ctx, projectionName, partitionKey);
-  const shouldProcess = !checkpoint || globalPosition > checkpoint.lastGlobalPosition;
+  const shouldProcess =
+    !checkpoint || isGlobalPositionAfter(globalPosition, checkpoint.lastGlobalPosition);
   return { shouldProcess, checkpoint };
 }
 

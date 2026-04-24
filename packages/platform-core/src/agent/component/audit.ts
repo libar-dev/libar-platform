@@ -1,6 +1,12 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { AGENT_AUDIT_EVENT_TYPES } from "./schema.js";
+import { verificationProofValidator, verifyActor } from "./verification.js";
+import {
+  assertBoundaryValuesSize,
+  DEFAULT_BOUNDARY_VALUE_MAX_BYTES,
+} from "../../validation/boundary.js";
+import { vUnknown } from "../../validation/convexUnknown.js";
 
 // ============================================================================
 // Shared Validators
@@ -9,6 +15,7 @@ import { AGENT_AUDIT_EVENT_TYPES } from "./schema.js";
 const auditEventTypeValidator = v.union(
   ...AGENT_AUDIT_EVENT_TYPES.map((t) => v.literal(t))
 ) as ReturnType<typeof v.union>;
+const AGENT_AUDIT_VALUE_MAX_BYTES = DEFAULT_BOUNDARY_VALUE_MAX_BYTES;
 
 // ============================================================================
 // Mutations
@@ -24,17 +31,33 @@ export const record = mutation({
     agentId: v.string(),
     decisionId: v.string(),
     timestamp: v.number(),
-    payload: v.any(),
+    payload: vUnknown(),
+    verificationProof: verificationProofValidator,
   },
   handler: async (ctx, args) => {
-    const { eventType, agentId, decisionId, timestamp, payload } = args;
+    assertBoundaryValuesSize([
+      {
+        fieldName: "agentAudit.record.payload",
+        value: args.payload,
+        maxBytes: AGENT_AUDIT_VALUE_MAX_BYTES,
+      },
+    ]);
 
-    const existingAudits = await ctx.db
+    const { eventType, decisionId, timestamp, payload } = args;
+    const verifiedActor = await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: args.agentId,
+      expectedSubjectType: "agent",
+      expectedBoundedContext: "agent",
+    });
+    const agentId = verifiedActor.subjectId;
+
+    const existingAudit = await ctx.db
       .query("agentAuditEvents")
-      .withIndex("by_decisionId", (q) => q.eq("decisionId", decisionId))
-      .collect();
+      .withIndex("by_decision_eventtype", (q) => q.eq("decisionId", decisionId).eq("eventType", eventType))
+      .first();
 
-    if (existingAudits.some((a) => a.eventType === eventType)) {
+    if (existingAudit) {
       return null;
     }
 

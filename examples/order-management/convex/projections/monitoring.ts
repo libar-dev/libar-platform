@@ -6,6 +6,7 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
+import { subtractGlobalPositions } from "../lib/globalPosition";
 
 /**
  * Get lag for a specific projection.
@@ -31,7 +32,7 @@ export const getProjectionLag = query({
       .first();
 
     const lastPosition = checkpoint?.lastGlobalPosition ?? 0;
-    const lag = globalPosition - lastPosition;
+    const lag = subtractGlobalPositions(globalPosition, lastPosition);
 
     return {
       projectionName,
@@ -40,7 +41,7 @@ export const getProjectionLag = query({
       lastProcessedPosition: lastPosition,
       lag,
       lastUpdatedAt: checkpoint?.updatedAt,
-      status: lag === 0 ? "caught_up" : lag < 100 ? "healthy" : "behind",
+      status: lag === 0n ? "caught_up" : lag < 100n ? "healthy" : "behind",
     };
   },
 });
@@ -62,20 +63,24 @@ export const getProjectionHealth = query({
     return {
       currentGlobalPosition: globalPosition,
       projections: checkpoints.map((cp) => {
-        const lag = globalPosition - cp.lastGlobalPosition;
+        const lag = subtractGlobalPositions(globalPosition, cp.lastGlobalPosition);
         return {
           projectionName: cp.projectionName,
           partitionKey: cp.partitionKey,
           lastProcessedPosition: cp.lastGlobalPosition,
           lag,
           lastUpdatedAt: cp.updatedAt,
-          status: lag === 0 ? "caught_up" : lag < 100 ? "healthy" : "behind",
+          status: lag === 0n ? "caught_up" : lag < 100n ? "healthy" : "behind",
         };
       }),
       summary: {
         total: checkpoints.length,
-        caughtUp: checkpoints.filter((cp) => globalPosition - cp.lastGlobalPosition === 0).length,
-        behind: checkpoints.filter((cp) => globalPosition - cp.lastGlobalPosition >= 100).length,
+        caughtUp: checkpoints.filter(
+          (cp) => subtractGlobalPositions(globalPosition, cp.lastGlobalPosition) === 0n
+        ).length,
+        behind: checkpoints.filter(
+          (cp) => subtractGlobalPositions(globalPosition, cp.lastGlobalPosition) >= 100n
+        ).length,
       },
     };
   },

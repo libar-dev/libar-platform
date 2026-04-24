@@ -3,6 +3,7 @@
  */
 
 import type { UnknownRecord } from "../types.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 
 /**
  * Checkpoint for tracking projection progress.
@@ -17,7 +18,7 @@ export interface ProjectionCheckpoint {
   partitionKey: string;
 
   /** Last processed global position */
-  lastGlobalPosition: number;
+  lastGlobalPosition: GlobalPositionLike;
 
   /** Last processed event ID (for debugging) */
   lastEventId: string;
@@ -42,7 +43,7 @@ export interface ProjectionState {
   status: ProjectionStatus;
 
   /** Current checkpoint position */
-  lastGlobalPosition: number;
+  lastGlobalPosition: GlobalPositionLike;
 
   /** Number of events processed */
   eventsProcessed: number;
@@ -99,10 +100,10 @@ export interface ProjectionProcessResult {
  */
 export interface ProjectionRebuildOptions {
   /** Start from this global position (default: 0) */
-  fromPosition?: number;
+  fromPosition?: GlobalPositionLike;
 
   /** Process events up to this position (default: current) */
-  toPosition?: number;
+  toPosition?: GlobalPositionLike;
 
   /** Batch size for processing (default: 100) */
   batchSize?: number;

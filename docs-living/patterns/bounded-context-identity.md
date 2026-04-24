@@ -15,6 +15,7 @@
 
 BoundedContextFoundation:bounded-context-identity
 
+
 ## Bounded Context Identity - Domain Metadata
 
 Core identification contract for bounded contexts, providing metadata

@@ -25,12 +25,12 @@ idempotency at the infrastructure layer, ensuring commands with the same
 
 ### Key Features
 
-| Feature             | Description                                     |
-| ------------------- | ----------------------------------------------- |
-| **Idempotency**     | Duplicate commands return cached results        |
-| **Status Tracking** | `pending` → `executed` / `rejected` / `failed`  |
-| **Correlation**     | Commands linked via `correlationId` for tracing |
-| **TTL Cleanup**     | Expired commands cleaned up periodically        |
+| Feature | Description |
+|---------|-------------|
+| **Idempotency** | Duplicate commands return cached results |
+| **Status Tracking** | `pending` → `executed` / `rejected` / `failed` |
+| **Correlation** | Commands linked via `correlationId` for tracing |
+| **TTL Cleanup** | Expired commands cleaned up periodically |
 
 ### Command Flow
 

@@ -914,7 +914,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         );
 
         Then("the initial checkpoint lastProcessedPosition is -1", () => {
-          expect(state.initialCheckpoint!.lastProcessedPosition).toBe(-1);
+          expect(state.initialCheckpoint!.lastProcessedPosition).toBe(-1n);
         });
       }
     );

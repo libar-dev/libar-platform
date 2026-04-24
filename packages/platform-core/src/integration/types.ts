@@ -10,7 +10,9 @@
 import type { FunctionReference, FunctionVisibility } from "convex/server";
 import type { MutationCtx, WorkpoolOnCompleteArgs } from "../orchestration/types.js";
 import type { CorrelationChain } from "../correlation/types.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { Logger } from "../logging/types.js";
+import type { PlatformMetrics } from "../metrics/index.js";
 import type { SafeMutationRef } from "../function-refs/types.js";
 
 /**
@@ -49,7 +51,7 @@ export interface IntegrationEventMetadata {
   timestamp: number;
 
   /** Global position of the source event */
-  sourceGlobalPosition: number;
+  sourceGlobalPosition: GlobalPositionLike;
 }
 
 /**
@@ -69,7 +71,7 @@ export interface SourceEventInfo {
   eventId: string;
   eventType: string;
   boundedContext: string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   payload: unknown;
   correlation: {
     correlationId: string;
@@ -176,4 +178,7 @@ export interface IntegrationPublisherConfig {
    * - INFO: Integration event published (integrationEventId, targetEventType, handlersInvoked)
    */
   logger?: Logger;
+
+  /** Optional metrics sink for integration publish observability. */
+  metrics?: PlatformMetrics;
 }

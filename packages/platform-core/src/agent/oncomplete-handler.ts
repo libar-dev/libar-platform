@@ -21,6 +21,7 @@
 import type { FunctionReference } from "convex/server";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { AgentActionResult } from "./action-handler.js";
 import { DEFAULT_APPROVAL_TIMEOUT_MS } from "./approval.js";
 import type { AgentComponentAPI, RunMutationCtx } from "./handler-types.js";
@@ -74,7 +75,7 @@ export interface AgentWorkpoolContext {
   readonly eventType: string;
 
   /** Global position in event store -- used for checkpoint advancement */
-  readonly globalPosition: number;
+  readonly globalPosition: GlobalPositionLike;
 
   /** Correlation ID for tracing */
   readonly correlationId: string;

@@ -1,4 +1,4 @@
-# LLM Configuration and Runtime Exports
+#  LLM Configuration and Runtime Exports
 
 **Purpose:** Detailed documentation for the LLM Configuration and Runtime Exports pattern
 

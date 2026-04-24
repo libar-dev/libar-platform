@@ -30,6 +30,7 @@ import {
   type SafeQueryRef,
   type SafeMutationRef,
 } from "@libar-dev/platform-core";
+import { compatGlobalPositionValidator, type GlobalPositionLike } from "../../lib/globalPosition";
 import { PLATFORM_LOG_LEVEL } from "../../infrastructure.js";
 
 // ============================================================================
@@ -107,7 +108,7 @@ async function processOrderCreated(
     orderId: string;
     customerId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   }
 ): Promise<{ status: "skipped" | "processed" }> {
   const { orderId, customerId } = args;
@@ -139,7 +140,7 @@ export const onOrderCreated = internalMutation({
     orderId: v.string(),
     customerId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { eventId } = args;
@@ -209,7 +210,7 @@ export const onOrderItemAdded = internalMutation({
     itemCount: v.number(),
     totalAmount: v.number(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId, itemCount, totalAmount } = args;
@@ -235,7 +236,7 @@ export const onOrderItemRemoved = internalMutation({
     itemCount: v.number(),
     totalAmount: v.number(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId, itemCount, totalAmount } = args;
@@ -259,7 +260,7 @@ export const onOrderSubmitted = internalMutation({
   args: {
     orderId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId } = args;
@@ -282,7 +283,7 @@ export const onOrderConfirmed = internalMutation({
   args: {
     orderId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId } = args;
@@ -305,7 +306,7 @@ export const onOrderCancelled = internalMutation({
   args: {
     orderId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId } = args;

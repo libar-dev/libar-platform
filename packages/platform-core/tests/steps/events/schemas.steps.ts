@@ -39,7 +39,7 @@ function createValidEventMetadata() {
     streamType: "Test",
     streamId: "test_456",
     version: 1,
-    globalPosition: 100,
+    globalPosition: 100n,
     timestamp: Date.now(),
     correlationId: "corr_789",
     boundedContext: "testing",
@@ -213,12 +213,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       When("the metadata is parsed with globalPosition 0", () => {
         state.parseResult = EventMetadataSchema.parse({
           ...state.metadata,
-          globalPosition: 0,
+          globalPosition: 0n,
         }) as Record<string, unknown>;
       });
 
       Then("globalPosition equals 0", () => {
-        expect(state.parseResult!.globalPosition).toBe(0);
+        expect(state.parseResult!.globalPosition).toBe(0n);
       });
     });
   });

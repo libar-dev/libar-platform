@@ -16,6 +16,7 @@
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";
 import type { CommandConfig, CommandHandlerResult } from "@libar-dev/platform-core";
+import type { GlobalPositionLike } from "../../lib/globalPosition";
 import { components } from "../../_generated/api";
 import type {
   CreateOrderData,
@@ -176,7 +177,7 @@ export const createOrderConfig: CommandConfig<
     orderId: string;
     customerId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   CreateOrderData
 > = {
@@ -240,7 +241,7 @@ export const addOrderItemConfig: CommandConfig<
     itemCount: number;
     totalAmount: number;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   AddOrderItemData
 > = {
@@ -322,7 +323,7 @@ export const removeOrderItemConfig: CommandConfig<
     itemCount: number;
     totalAmount: number;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   RemoveOrderItemData
 > = {
@@ -395,7 +396,7 @@ export const submitOrderConfig: CommandConfig<
   {
     orderId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   SubmitOrderData
 > = {
@@ -453,7 +454,7 @@ export const confirmOrderConfig: CommandConfig<
   {
     orderId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   ConfirmOrderData
 > = {
@@ -507,7 +508,7 @@ export const cancelOrderConfig: CommandConfig<
   {
     orderId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   CancelOrderData
 > = {

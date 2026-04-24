@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { vUnknown } from "../../../platform-core/src/validation/convexUnknown.js";
 
 export default defineSchema({
   /**
@@ -18,7 +19,7 @@ export default defineSchema({
      * Each bounded context defines its own command schemas with Zod validation.
      * The Command Bus acts as a generic message store, not a typed repository.
      */
-    payload: v.any(),
+    payload: vUnknown(),
 
     // Metadata
     metadata: v.object({
@@ -26,6 +27,9 @@ export default defineSchema({
       correlationId: v.string(),
       timestamp: v.number(),
     }),
+
+    // Precomputed stable cursor for correlation pagination
+    correlationCursor: v.string(),
 
     // Status tracking
     status: v.union(
@@ -40,7 +44,7 @@ export default defineSchema({
      * Result structure varies by command type and execution outcome.
      * May contain success data, error details, or rejection context.
      */
-    result: v.optional(v.any()),
+    result: v.optional(vUnknown()),
 
     // Timing
     executedAt: v.optional(v.number()),
@@ -56,6 +60,7 @@ export default defineSchema({
     .index("by_commandId", ["commandId"])
     // For correlation tracing
     .index("by_correlationId", ["metadata.correlationId"])
+    .index("by_correlation_cursor", ["metadata.correlationId", "correlationCursor"])
     // For status queries
     .index("by_status", ["status", "metadata.timestamp"])
     // For context-specific queries

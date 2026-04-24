@@ -96,7 +96,7 @@ export interface IntegrationEventSchema<T = unknown> {
   /** Schema version (semver) */
   version: string;
   /** Zod schema for validation */
-  schema: unknown; // TODO: Type with z.ZodSchema<T>
+  schema: unknown; // Deferred typing follow-up, use z.ZodSchema<T> when this stub is promoted.
   /** Backward compatible versions */
   backwardCompatible?: string[];
   /** Optional migration function */

@@ -27,7 +27,22 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       approve: FunctionReference<
         "mutation",
         "internal",
-        { approvalId: string; reviewNote?: string; reviewerId: string },
+        {
+          approvalId: string;
+          reviewNote?: string;
+          reviewerId: string;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
+        },
         any,
         Name
       >;
@@ -69,7 +84,22 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       reject: FunctionReference<
         "mutation",
         "internal",
-        { approvalId: string; reviewNote?: string; reviewerId: string },
+        {
+          approvalId: string;
+          reviewNote?: string;
+          reviewerId: string;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
+        },
         any,
         Name
       >;
@@ -136,6 +166,17 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "AgentAnalysisFailed";
           payload: any;
           timestamp: number;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
         },
         any,
         Name
@@ -274,6 +315,17 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           routingAttempts?: number;
           triggeringEventIds: Array<string>;
           type: string;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
         },
         any,
         Name

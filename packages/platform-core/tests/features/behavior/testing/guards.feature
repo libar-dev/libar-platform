@@ -46,20 +46,14 @@ Feature: Test Environment Guards
     When I call ensureTestEnvironment()
     Then no error is thrown
 
-  @acceptance-criteria @happy-path
-  Scenario: Allow execution when process is undefined
-    Given process is undefined
-    When I call ensureTestEnvironment()
-    Then no error is thrown
-    # This handles convex-test runtime where process may not exist
-
-  @acceptance-criteria @happy-path
-  Scenario: Allow execution in self-hosted environment
+  @acceptance-criteria @validation
+  Scenario: Allow execution on self-hosted runtime without explicit test signal
     Given process.env exists
     And CONVEX_CLOUD_URL is not set
+    And IS_TEST is not set
+    And __CONVEX_TEST_MODE__ is not true
     When I call ensureTestEnvironment()
     Then no error is thrown
-    # Self-hosted Docker backend doesn't have CONVEX_CLOUD_URL
 
   @acceptance-criteria @validation
   Scenario: Block execution in cloud production

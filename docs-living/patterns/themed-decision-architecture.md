@@ -15,28 +15,26 @@
 ## Description
 
 Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.
-The synthesis of 33 active ADRs revealed natural themes and dependencies that
-should be preserved in generated documentation.
+  The synthesis of 33 active ADRs revealed natural themes and dependencies that
+  should be preserved in generated documentation.
 
-**Context:**
-Current state: Decisions are listed chronologically or alphabetically in flat files.
-This loses the rich structure that exists in the codebase:
+  **Context:**
+  Current state: Decisions are listed chronologically or alphabetically in flat files.
+  This loses the rich structure that exists in the codebase:
+  - Theme groupings (Persistence, Isolation, Commands, etc.)
+  - Dependency relationships (ADR-001 enables ADR-002, ADR-003, ADR-005)
+  - Evolutionary layers (Foundation → Infrastructure → Refinement)
 
-- Theme groupings (Persistence, Isolation, Commands, etc.)
-- Dependency relationships (ADR-001 enables ADR-002, ADR-003, ADR-005)
-- Evolutionary layers (Foundation → Infrastructure → Refinement)
+  **Vision:**
+  Generate themed decision documents that reflect the conceptual architecture,
+  not just the chronological order of creation. Include dependency graphs
+  that show how decisions build upon each other.
 
-**Vision:**
-Generate themed decision documents that reflect the conceptual architecture,
-not just the chronological order of creation. Include dependency graphs
-that show how decisions build upon each other.
-
-**Scope:**
-
-1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
-2. Generate grouped decision documents per theme
-3. Generate dependency graph visualization (ASCII or Mermaid)
-4. Port existing 33 ADRs to architect format (with validity review)
+  **Scope:**
+  1. Add theme/category tagging to decisions (`@architect-adr-theme:persistence`)
+  2. Generate grouped decision documents per theme
+  3. Generate dependency graph visualization (ASCII or Mermaid)
+  4. Port existing 33 ADRs to architect format (with validity review)
 
 ## Acceptance Criteria
 
@@ -71,14 +69,14 @@ that show how decisions build upon each other.
 ```markdown
 ADR-001 (Dual-Write)
 ├── ADR-002 (Event Store)
-│ └── ADR-016 (Checkpoint)
-│ └── ADR-015 (Workpool)
-│ └── ADR-018 (Partitioning)
+│   └── ADR-016 (Checkpoint)
+│       └── ADR-015 (Workpool)
+│           └── ADR-018 (Partitioning)
 ├── ADR-003 (Command Bus)
-│ └── ADR-017 (Idempotency)
-│ └── ADR-021 (Orchestrator)
+│   └── ADR-017 (Idempotency)
+│       └── ADR-021 (Orchestrator)
 └── ADR-005 (BC as Component)
-└── ADR-023 (Proj at App)
+    └── ADR-023 (Proj at App)
 ```
 
 **Layer information in generated docs**
@@ -90,9 +88,9 @@ ADR-001 (Dual-Write)
 
 **Port ADR from old format to feature file**
 
-- Given an existing ADR in "docs/architecture/decisions/adr-001-\*.md"
+- Given an existing ADR in "docs/architecture/decisions/adr-001-*.md"
 - When migrating to architect format
-- Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-\*.feature"
+- Then create "deps/libar-dev-packages/packages/tooling/architect/tests/features/decisions/adr-001-*.feature"
 - And include original decision content in Gherkin format
 - And add theme, layer, and dependency tags
 - And mark status (active, superseded, deprecated)

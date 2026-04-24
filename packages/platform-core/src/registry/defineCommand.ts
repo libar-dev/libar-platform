@@ -21,6 +21,7 @@ import type { CommandDefinitionMetadata, CommandRegistration } from "./types.js"
 import { CommandRegistry } from "./CommandRegistry.js";
 import type { UnknownRecord } from "../types.js";
 import type { SagaRouteArgs } from "../orchestration/types.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 
 /**
  * Projection configuration for defineAggregateCommand.
@@ -40,7 +41,7 @@ export interface ProjectionDefinition<
   toProjectionArgs: (
     args: TArgs,
     result: { data: TData; event: { eventId: string } },
-    globalPosition: number
+    globalPosition: GlobalPositionLike
   ) => TProjectionArgs;
 
   /** Optional custom partition key (defaults to aggregateIdField) */
@@ -249,7 +250,7 @@ export function defineAggregateCommand<
       toProjectionArgs: (
         args: TArgs,
         result: CommandHandlerSuccess<TData>,
-        globalPosition: number
+        globalPosition: GlobalPositionLike
       ) =>
         projection.toProjectionArgs(
           args,
@@ -268,7 +269,7 @@ export function defineAggregateCommand<
             toProjectionArgs: (
               args: TArgs,
               result: CommandHandlerSuccess<TData>,
-              globalPosition: number
+              globalPosition: GlobalPositionLike
             ) =>
               sp.toProjectionArgs(args, { data: result.data, event: result.event }, globalPosition),
             getPartitionKey: sp.getPartitionKey ?? defaultGetPartitionKey,
@@ -301,7 +302,7 @@ export function defineAggregateCommand<
             toProjectionArgs: (
               args: TArgs,
               failedResult: CommandHandlerFailed,
-              globalPosition: number
+              globalPosition: GlobalPositionLike
             ) =>
               failedProjection.toProjectionArgs(
                 args,
@@ -551,7 +552,7 @@ export function defineSystemCommand<TArgs extends UnknownRecord, TData>(
             toProjectionArgs: projection.toProjectionArgs as (
               args: TArgs,
               result: CommandHandlerSuccess<TData>,
-              globalPosition: number
+              globalPosition: GlobalPositionLike
             ) => UnknownRecord,
             getPartitionKey:
               projection.getPartitionKey ?? (() => ({ name: "system", value: commandType })),

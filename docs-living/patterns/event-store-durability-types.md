@@ -14,7 +14,6 @@
 ## Description
 
 Core types for durable event persistence patterns:
-
 - Outbox pattern for action result capture
 - Idempotent event append
 - Durable cross-context publication

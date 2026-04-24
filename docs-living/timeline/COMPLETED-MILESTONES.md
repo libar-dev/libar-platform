@@ -37,12 +37,12 @@
 </details>
 
 <details>
-<summary>✅ EventBusAbstraction (3 patterns)</summary>
+<summary>✅ EventUpcasting (3 patterns)</summary>
 
 | Pattern                  | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
-| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
+| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Correlation Chain System | Correlation types for tracking causal relationships in command-event flows.              |
 
 </details>
@@ -97,10 +97,10 @@
 <details>
 <summary>✅ DCBTypes (2 patterns)</summary>
 
-| Pattern                 | Description                                                              |
-| ----------------------- | ------------------------------------------------------------------------ |
-| DCB Types               | Types for scope-based multi-entity coordination within bounded contexts. |
-| DCB Scope Key Utilities | Functions for creating, parsing, and validating scope keys.              |
+| Pattern                 | Description                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| DCB Types               | Types for scope-based multi-entity coordination within bounded contexts.         |
+| DCB Scope Key Utilities | Re-export the canonical shared scope-key contract used across platform packages. |
 
 </details>
 
@@ -110,14 +110,14 @@
 
 - ✅ Inventory Deciders
 - ✅ Order Deciders
-- ✅ Inventory Domain Events
-- ✅ Inventory Command Handlers
 - ✅ Agent Action Handler
 - ✅ Agent On Complete Handler
+- ✅ Inventory Domain Events
+- ✅ Inventory Command Handlers
 - ✅ Order Domain Events
 - ✅ Order Command Handlers
+- ✅ Foundation Infrastructure (Phase 1)
 - ✅ Progress calculation utilities for replay operations.
-- ✅ Types for event replay and projection rebuilding.
 
 Showing 10 of 76 completed patterns. See quarterly files for full history.
 

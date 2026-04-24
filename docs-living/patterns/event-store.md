@@ -26,12 +26,12 @@ for Event Sourcing with optimistic concurrency control (OCC) and global ordering
 
 ### Key Features
 
-| Feature              | Description                                            |
-| -------------------- | ------------------------------------------------------ |
-| **OCC**              | Version-based conflict detection via `expectedVersion` |
-| **Global Position**  | Monotonic ordering for projection checkpoints          |
-| **Stream Isolation** | Events grouped by `streamType` + `streamId`            |
-| **Correlation**      | Event tracing via `correlationId` chain                |
+| Feature | Description |
+|---------|-------------|
+| **OCC** | Version-based conflict detection via `expectedVersion` |
+| **Global Position** | Monotonic ordering for projection checkpoints |
+| **Stream Isolation** | Events grouped by `streamType` + `streamId` |
+| **Correlation** | Event tracing via `correlationId` chain |
 
 ### Usage Pattern
 

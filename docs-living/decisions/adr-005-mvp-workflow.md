@@ -14,8 +14,8 @@
 ## Context
 
 Previous status values (implemented, partial, roadmap, completed, active)
-had overlapping semantics and no programmatic enforcement. Work items could
-transition between states without validation, leading to inconsistent process state.
+    had overlapping semantics and no programmatic enforcement. Work items could
+    transition between states without validation, leading to inconsistent process state.
 
 ## Decision
 
@@ -27,6 +27,7 @@ transition between states without validation, leading to inconsistent process st
 | deferred  | On hold      | None         | Explicitly parked for later        |
 
 Adopt the phase-state-machine FSM with Decider-based enforcement:
+
 
     Valid Transitions:
     ```
@@ -61,7 +62,11 @@ Adopt the phase-state-machine FSM with Decider-based enforcement:
 
 ## Consequences
 
-Positive outcomes: - Consistent with phase-state-machine.feature - Decider-based enforcement catches invalid transitions - Protection levels prevent accidental scope creep - Aligns with platform Decider/FSM patterns (dogfooding)
+Positive outcomes:
+    - Consistent with phase-state-machine.feature
+    - Decider-based enforcement catches invalid transitions
+    - Protection levels prevent accidental scope creep
+    - Aligns with platform Decider/FSM patterns (dogfooding)
 
     Negative outcomes:
     - Requires lint:process in pre-commit/CI

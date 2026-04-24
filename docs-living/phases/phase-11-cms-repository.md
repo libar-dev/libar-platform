@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 3/3 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 3     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 3     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 3     |
 
 ---
 
@@ -27,20 +27,19 @@
 | Effort   | 4w        |
 
 **Problem:** DDD Bounded Contexts need clear boundaries with physical enforcement,
-type-safe contracts, and domain purity (no infrastructure coupling in domain logic).
-Without physical isolation, accidental coupling between contexts undermines the
-benefits of domain-driven design.
+  type-safe contracts, and domain purity (no infrastructure coupling in domain logic).
+  Without physical isolation, accidental coupling between contexts undermines the
+  benefits of domain-driven design.
 
-**Solution:** Convex Components provide physical database isolation for bounded
-contexts. The platform-bc package defines:
+  **Solution:** Convex Components provide physical database isolation for bounded
+  contexts. The platform-bc package defines:
+  - BoundedContextIdentity for context identification
+  - DualWriteContextContract for type-safe BC public APIs
+  - CMSTypeDefinition and other type definitions
 
-- BoundedContextIdentity for context identification
-- DualWriteContextContract for type-safe BC public APIs
-- CMSTypeDefinition and other type definitions
-
-**Note:** This pattern was implemented before the delivery process existed
-and is documented retroactively to provide context for IntegrationPatterns
-and AgentAsBoundedContext phases.
+  **Note:** This pattern was implemented before the delivery process existed
+  and is documented retroactively to provide context for IntegrationPatterns
+  and AgentAsBoundedContext phases.
 
 #### Dependencies
 
@@ -87,7 +86,7 @@ and AgentAsBoundedContext phases.
 **Components have isolated databases that parent cannot query directly**
 
 Each Convex component (bounded context) has its own isolated database.
-The parent application CANNOT directly query component tables:
+    The parent application CANNOT directly query component tables:
 
     ```typescript
     // FAILS - table doesn't exist in parent database
@@ -105,7 +104,9 @@ _Verified by: Direct table query fails across component boundary, Component API 
 **Sub-transactions are atomic within components**
 
 When a component handler is called, all writes within that handler
-commit atomically. If the handler throws and the caller catches: - Only the component's writes roll back - Parent writes (before the call) are preserved
+    commit atomically. If the handler throws and the caller catches:
+    - Only the component's writes roll back
+    - Parent writes (before the call) are preserved
 
     This enables partial failure handling while maintaining consistency
     within each bounded context.
@@ -113,7 +114,9 @@ commit atomically. If the handler throws and the caller catches: - Only the comp
 **ctx.auth does not cross component boundaries**
 
 Authentication context (ctx.auth) is NOT passed to component handlers.
-If a component needs user identity: - Pass userId explicitly as a handler argument - Component validates/uses the explicit userId
+    If a component needs user identity:
+    - Pass userId explicitly as a handler argument
+    - Component validates/uses the explicit userId
 
     This explicit passing prevents implicit coupling to auth infrastructure
     and makes security requirements clear in the API.
@@ -123,7 +126,9 @@ _Verified by: User ID passed explicitly to component_
 **Id<"table"> inside component becomes string at API boundary**
 
 Convex typed IDs (Id<"table">) are scoped to their database. Since
-components have isolated databases: - Inside component: Use Id<"orderCMS"> normally - At API boundary: Convert to/from string
+    components have isolated databases:
+    - Inside component: Use Id<"orderCMS"> normally
+    - At API boundary: Convert to/from string
 
     This ensures type safety within components while enabling inter-context
     communication.
@@ -132,7 +137,13 @@ _Verified by: ID conversion at boundary_
 
 **DualWriteContextContract formalizes the bounded context API**
 
-Each bounded context should define a contract that specifies: - **identity**: Name, description, version, streamTypePrefix - **executionMode**: "dual-write" for CMS + Event pattern - **commandTypes**: List of commands the context handles - **eventTypes**: List of events the context produces - **cmsTypes**: CMS tables with schema versions - **errorCodes**: Domain errors that can be returned
+Each bounded context should define a contract that specifies:
+    - **identity**: Name, description, version, streamTypePrefix
+    - **executionMode**: "dual-write" for CMS + Event pattern
+    - **commandTypes**: List of commands the context handles
+    - **eventTypes**: List of events the context produces
+    - **cmsTypes**: CMS tables with schema versions
+    - **errorCodes**: Domain errors that can be returned
 
     This contract serves as documentation and enables type-safe integration.
 
@@ -160,7 +171,6 @@ Eliminates 5-line boilerplate for loading, validating, and upcasting CMS entitie
 ### Problem Solved
 
 Before:
-
 ```typescript
 const rawCMS = await ctx.db
   .query("orderCMS")
@@ -171,7 +181,6 @@ const cms = upcastOrderCMS(rawCMS);
 ```
 
 After:
-
 ```typescript
 const { cms, _id } = await orderRepo.load(ctx, orderId);
 ```

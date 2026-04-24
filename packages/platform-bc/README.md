@@ -1,26 +1,26 @@
 # @libar-dev/platform-bc
 
-TypeScript contracts for Convex DDD/ES bounded contexts.
+TypeScript-only contracts and metadata helpers for bounded contexts.
 
-## Overview
+## What this package gives you
 
-This package provides type-safe contracts for defining bounded contexts **without any Convex runtime dependency**. It's purely for TypeScript type definitions and documentation.
+- bounded-context identity and dual-write contract types
+- metadata helpers for commands, events, queries, projections, process managers, and CMS upcasters
+- no Convex runtime dependency
 
-## Installation
+## Install
 
 ```bash
-pnpm add @libar-dev/platform-bc
+pnpm add @libar-dev/platform-bc zod
 ```
 
-## Usage
+## Example
 
-### Define a Context Contract
+```ts
+import type { CMSTypeDefinition, DualWriteContextContract } from "@libar-dev/platform-bc";
+import { defineCommand, defineEvent } from "@libar-dev/platform-bc";
 
-```typescript
-// contexts/orders/contract.ts
-import type { DualWriteContextContract, CMSTypeDefinition } from "@libar-dev/platform-bc";
-
-export const OrdersContextContract = {
+export const OrdersContract = {
   identity: {
     name: "orders",
     description: "Order management bounded context",
@@ -28,86 +28,65 @@ export const OrdersContextContract = {
     streamTypePrefix: "Order",
   },
   executionMode: "dual-write",
-  commandTypes: ["CreateOrder", "AddItem", "SubmitOrder", "CancelOrder"] as const,
-  eventTypes: ["OrderCreated", "ItemAdded", "OrderSubmitted", "OrderCancelled"] as const,
+  commandTypes: ["CreateOrder", "SubmitOrder"] as const,
+  eventTypes: ["OrderCreated", "OrderSubmitted"] as const,
   cmsTypes: {
     orderCMS: {
       tableName: "orderCMS",
       currentStateVersion: 1,
-      description: "Order aggregate state",
+      description: "Current order state",
     },
   },
-  errorCodes: ["ORDER_NOT_FOUND", "ORDER_ALREADY_EXISTS", "ORDER_NOT_IN_DRAFT"],
+  errorCodes: ["ORDER_NOT_FOUND"],
 } as const satisfies DualWriteContextContract<
-  readonly ["CreateOrder", "AddItem", "SubmitOrder", "CancelOrder"],
-  readonly ["OrderCreated", "ItemAdded", "OrderSubmitted", "OrderCancelled"],
+  readonly ["CreateOrder", "SubmitOrder"],
+  readonly ["OrderCreated", "OrderSubmitted"],
   { orderCMS: CMSTypeDefinition }
 >;
+
+export const CreateOrder = defineCommand({
+  commandType: "CreateOrder",
+  description: "Create a new order",
+  targetAggregate: "Order",
+  createsAggregate: true,
+  producesEvents: ["OrderCreated"],
+});
+
+export const OrderCreated = defineEvent({
+  eventType: "OrderCreated",
+  description: "Order creation domain event",
+  category: "domain",
+});
 ```
 
-### Extract Types from Contract
+## Main exports
 
-```typescript
-import type { ExtractCommandTypes, ExtractEventTypes } from "@libar-dev/platform-bc";
-import { OrdersContextContract } from "./contract";
+- `DualWriteContextContract`
+- `defineCommand`, `defineEvent`, `defineProjection`, `defineQuery`, `defineProcessManager`, `defineUpcaster`
+- `ExtractCommandTypes`, `ExtractEventTypes`, `ExtractCMSTableNames`
 
-// Get union type of all command types
-type OrderCommand = ExtractCommandTypes<typeof OrdersContextContract>;
-// => "CreateOrder" | "AddItem" | "SubmitOrder" | "CancelOrder"
+## Stability
 
-// Get union type of all event types
-type OrderEvent = ExtractEventTypes<typeof OrdersContextContract>;
-// => "OrderCreated" | "ItemAdded" | "OrderSubmitted" | "OrderCancelled"
+| Surface | Status | Notes |
+| --- | --- | --- |
+| Contract types | Stable | Used across platform packages and example app |
+| Definition helpers | Stable | Suitable for package and app metadata declarations |
+| Registry-style metadata types | Stable | Useful for docs and introspection, not runtime execution |
+
+## Known limitations
+
+- This package documents metadata. It does not execute commands or queries.
+- Runtime behavior still lives in `@libar-dev/platform-core`, `@libar-dev/platform-bus`, and `@libar-dev/platform-store`.
+- The definition layer is intentionally verbose so generated docs stay explicit.
+
+## Security notes
+
+- These helpers describe contracts. They do not enforce auth or tenancy by themselves.
+- Treat metadata as documentation and typing support, not as a replacement for runtime validation.
+
+## Testing
+
+```bash
+pnpm --filter @libar-dev/platform-bc test
+pnpm --filter @libar-dev/platform-bc test:coverage
 ```
-
-## API Reference
-
-### `BoundedContextIdentity`
-
-Core identification for a bounded context.
-
-```typescript
-interface BoundedContextIdentity {
-  name: string; // Unique context name (lowercase)
-  description: string; // Human-readable description
-  version: number; // Contract version
-  streamTypePrefix: string; // Event stream prefix
-}
-```
-
-### `DualWriteContextContract`
-
-Contract for dual-write bounded contexts (CMS + Event in same transaction).
-
-```typescript
-interface DualWriteContextContract<
-  TCommandTypes extends readonly string[],
-  TEventTypes extends readonly string[],
-  TCMSTypes extends Record<string, CMSTypeDefinition>,
-> {
-  identity: BoundedContextIdentity;
-  executionMode: "dual-write";
-  commandTypes: TCommandTypes;
-  eventTypes: TEventTypes;
-  cmsTypes: TCMSTypes;
-  errorCodes: readonly string[];
-}
-```
-
-### `CMSTypeDefinition`
-
-Metadata about a CMS table.
-
-```typescript
-interface CMSTypeDefinition {
-  tableName: string;
-  currentStateVersion: number;
-  description: string;
-}
-```
-
-## Type Helpers
-
-- `ExtractCommandTypes<T>` - Extract command type union from contract
-- `ExtractEventTypes<T>` - Extract event type union from contract
-- `ExtractCMSTableNames<T>` - Extract CMS table name union from contract

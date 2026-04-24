@@ -21,6 +21,12 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
+import {
+  compatGlobalPositionValidator,
+  isGlobalPositionAfter,
+  maxGlobalPosition,
+  type GlobalPosition,
+} from "../lib/globalPosition";
 
 /**
  * Maximum number of recent events to return.
@@ -31,7 +37,7 @@ const MAX_RECENT_EVENTS = 20;
 type StreamEvent = {
   eventId: string;
   eventType: string;
-  globalPosition: number;
+  globalPosition: GlobalPosition;
   timestamp: number;
   payload: Record<string, unknown>;
 };
@@ -56,13 +62,13 @@ export const getRecentOrderEvents = query({
     /** Order ID to get events for */
     orderId: v.string(),
     /** Only return events after this global position (exclusive) */
-    afterGlobalPosition: v.optional(v.number()),
+    afterGlobalPosition: v.optional(compatGlobalPositionValidator),
   },
   returns: v.array(
     v.object({
       eventId: v.string(),
       eventType: v.string(),
-      globalPosition: v.number(),
+      globalPosition: v.int64(),
       timestamp: v.number(),
       // Use record type for better type safety than v.any()
       payload: v.record(v.string(), v.any()),
@@ -83,7 +89,7 @@ export const getRecentOrderEvents = query({
     let filteredEvents = events;
 
     if (afterGlobalPosition !== undefined) {
-      filteredEvents = events.filter((e) => e.globalPosition > afterGlobalPosition);
+      filteredEvents = events.filter((e) => isGlobalPositionAfter(e.globalPosition, afterGlobalPosition));
     }
 
     // Take only the most recent events to limit payload size
@@ -120,7 +126,7 @@ export const getOrderStreamPosition = query({
   args: {
     orderId: v.string(),
   },
-  returns: v.union(v.number(), v.null()),
+  returns: v.union(v.int64(), v.null()),
   handler: async (ctx, args) => {
     const { orderId } = args;
 
@@ -137,7 +143,7 @@ export const getOrderStreamPosition = query({
 
     // Find the highest global position across all events
     // (events are returned in order by version, not global position)
-    return Math.max(...events.map((e) => e.globalPosition));
+    return maxGlobalPosition(events.map((event) => event.globalPosition));
   },
 });
 
@@ -152,13 +158,13 @@ export const getRecentInventoryEvents = query({
     /** Product ID to get events for */
     productId: v.string(),
     /** Only return events after this global position (exclusive) */
-    afterGlobalPosition: v.optional(v.number()),
+    afterGlobalPosition: v.optional(compatGlobalPositionValidator),
   },
   returns: v.array(
     v.object({
       eventId: v.string(),
       eventType: v.string(),
-      globalPosition: v.number(),
+      globalPosition: v.int64(),
       timestamp: v.number(),
       // Use record type for better type safety than v.any()
       payload: v.record(v.string(), v.any()),
@@ -177,7 +183,7 @@ export const getRecentInventoryEvents = query({
     let filteredEvents = events;
 
     if (afterGlobalPosition !== undefined) {
-      filteredEvents = events.filter((e) => e.globalPosition > afterGlobalPosition);
+      filteredEvents = events.filter((e) => isGlobalPositionAfter(e.globalPosition, afterGlobalPosition));
     }
 
     // Take only the most recent events

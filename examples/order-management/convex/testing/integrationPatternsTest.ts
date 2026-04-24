@@ -11,7 +11,7 @@
  */
 import { query, mutation } from "../_generated/server";
 import { v } from "convex/values";
-import { dcbRetryPool, projectionPool } from "../infrastructure";
+import { dcbRetryPool, projectionPool, sagaPool, fanoutPool } from "../infrastructure";
 import { rateLimiter } from "../rateLimits";
 import { RATE_LIMIT_ORDER, MIDDLEWARE_ORDER } from "@libar-dev/platform-core/middleware";
 import { ensureTestEnvironment } from "@libar-dev/platform-core";
@@ -98,7 +98,7 @@ export const simulateRateLimitedRejection = mutation({
 // =============================================================================
 
 /**
- * Verify dcbRetryPool and projectionPool are separate instances.
+ * Verify the named workpools are independently addressable.
  */
 export const verifyWorkpoolIsolation = query({
   args: {},
@@ -107,18 +107,20 @@ export const verifyWorkpoolIsolation = query({
     // Both pools should have enqueueMutation
     const dcbHasEnqueue = typeof dcbRetryPool.enqueueMutation === "function";
     const projHasEnqueue = typeof projectionPool.enqueueMutation === "function";
+    const sagaHasEnqueue = typeof sagaPool.enqueueMutation === "function";
+    const fanoutHasEnqueue = typeof fanoutPool.enqueueMutation === "function";
 
-    // They should be different objects (separate instances)
-    // Note: In test mode, both may point to noOpWorkpool
-    // In real deployment, they point to different Workpool instances
     const areSeparate =
       dcbRetryPool !== projectionPool ||
-      // In noOp mode, check they both exist and are functional
-      (dcbHasEnqueue && projHasEnqueue);
+      projectionPool !== sagaPool ||
+      sagaPool !== fanoutPool ||
+      (dcbHasEnqueue && projHasEnqueue && sagaHasEnqueue && fanoutHasEnqueue);
 
     return {
       dcbRetryPoolConfigured: dcbHasEnqueue,
       projectionPoolConfigured: projHasEnqueue,
+      sagaPoolConfigured: sagaHasEnqueue,
+      fanoutPoolConfigured: fanoutHasEnqueue,
       areSeparateInstances: areSeparate,
     };
   },
@@ -202,15 +204,19 @@ export const verifyComponentMounting = query({
     // Both Workpools should be functional
     const dcbPoolAddressable = typeof dcbRetryPool.enqueueMutation === "function";
     const projPoolAddressable = typeof projectionPool.enqueueMutation === "function";
+    const sagaPoolAddressable = typeof sagaPool.enqueueMutation === "function";
+    const fanoutPoolAddressable = typeof fanoutPool.enqueueMutation === "function";
 
-    // Workpools are independent if they're different objects or both functional
-    const workpoolsIndependent = dcbPoolAddressable && projPoolAddressable;
+    const workpoolsIndependent =
+      dcbPoolAddressable && projPoolAddressable && sagaPoolAddressable && fanoutPoolAddressable;
 
     return {
       rateLimiterAccessible,
       workpoolsIndependent,
       dcbPoolAddressable,
       projPoolAddressable,
+      sagaPoolAddressable,
+      fanoutPoolAddressable,
     };
   },
 });

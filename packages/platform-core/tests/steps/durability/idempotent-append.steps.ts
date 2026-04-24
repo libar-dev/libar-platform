@@ -27,12 +27,28 @@ import type { IdempotentAppendResult } from "../../../src/durability/types.js";
 
 interface TestState {
   idempotencyKey: string | null;
-  existingEvent: { eventId: string; version: number } | null;
+  existingEvent: {
+    eventId: string;
+    eventType: string;
+    streamType: string;
+    streamId: string;
+    version: number;
+    globalPosition: bigint;
+    boundedContext: string;
+    category: "domain";
+    schemaVersion: number;
+    correlationId: string;
+    timestamp: number;
+    payload: { chargeId: string };
+    idempotencyKey: string;
+  } | null;
   appendResult:
     | { status: "success"; newVersion: number }
+    | { status: "duplicate"; eventIds: string[]; globalPositions: bigint[]; newVersion: number }
     | { status: "conflict"; currentVersion: number }
+    | { status: "idempotency_conflict"; existingEventId: string; auditId: string; currentVersion: number }
     | null;
-  recheckResult: { eventId: string; version: number } | null;
+  recheckResult: TestState["existingEvent"];
   appendCalled: boolean;
   getByKeyCallCount: number;
   result: IdempotentAppendResult | null;
@@ -175,6 +191,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
             eventType: "PaymentCompleted",
             eventData: { chargeId: "ch-456" },
             boundedContext: "orders",
+            correlationId: "corr-payment-ord-123",
           },
           dependencies: {
             getByIdempotencyKey: "mock",
@@ -198,7 +215,21 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
 
   Scenario("Duplicate append returns existing event", ({ Given, When, Then, And }) => {
     Given('an existing event with idempotency key "payment:ord-123" and ID "evt-456"', () => {
-      state.existingEvent = { eventId: "evt-456", version: 1 };
+      state.existingEvent = {
+        eventId: "evt-456",
+        eventType: "PaymentCompleted",
+        streamType: "Order",
+        streamId: "ord-123",
+        version: 1,
+        globalPosition: 1000n,
+        boundedContext: "orders",
+        category: "domain",
+        schemaVersion: 1,
+        correlationId: "corr-123",
+        timestamp: 1700000000000,
+        payload: { chargeId: "ch-456" },
+        idempotencyKey: "payment:ord-123",
+      };
     });
 
     When('calling idempotentAppendEvent with key "payment:ord-123"', async () => {
@@ -212,6 +243,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
             eventType: "PaymentCompleted",
             eventData: { chargeId: "ch-456" },
             boundedContext: "orders",
+            correlationId: "corr-payment-ord-123",
           },
           dependencies: {
             getByIdempotencyKey: "mock",
@@ -232,6 +264,70 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
     });
   });
 
+  Scenario("Same key with different payload is rejected", ({ Given, And, When, Then }) => {
+    Given(
+      'an existing event with idempotency key "payment:ord-123" and payload chargeId "ch-legacy"',
+      () => {
+        state.existingEvent = {
+          eventId: "evt-456",
+          eventType: "PaymentCompleted",
+          streamType: "Order",
+          streamId: "ord-123",
+          version: 1,
+          globalPosition: 1000n,
+          boundedContext: "orders",
+          category: "domain",
+          schemaVersion: 1,
+          correlationId: "corr-123",
+          timestamp: 1700000000000,
+          payload: { chargeId: "ch-legacy" },
+          idempotencyKey: "payment:ord-123",
+        };
+      }
+    );
+
+    And('appendToStream reports an audited idempotency conflict for existing event "evt-456"', () => {
+      state.appendResult = {
+        status: "idempotency_conflict",
+        existingEventId: "evt-456",
+        auditId: "ida-123",
+        currentVersion: 1,
+      };
+    });
+
+    When(
+      'calling idempotentAppendEvent with key "payment:ord-123" and payload chargeId "ch-new"',
+      async () => {
+        const ctx = createMockContext();
+        try {
+          state.result = await idempotentAppendEvent(ctx, {
+            event: {
+              idempotencyKey: "payment:ord-123",
+              streamType: "Order",
+              streamId: "ord-123",
+              eventType: "PaymentCompleted",
+              eventData: { chargeId: "ch-new" },
+              boundedContext: "orders",
+              correlationId: "corr-payment-ord-123",
+            },
+            dependencies: {
+              getByIdempotencyKey: "mock",
+              appendToStream: "mock",
+            },
+          });
+        } catch (e) {
+          state.error = e as Error;
+        }
+      }
+    );
+
+    Then("an idempotency conflict error should be thrown", () => {
+      expect(state.error).not.toBeNull();
+      expect(state.error?.message).toContain("different payload");
+      expect(state.error?.message).toContain("evt-456");
+    });
+  });
+
   Scenario("Different idempotency keys create separate events", ({ Given, When, Then }) => {
     Given('no existing event for idempotency key "payment:ord-456"', () => {
       state.existingEvent = null;
@@ -249,6 +345,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
             eventType: "PaymentCompleted",
             eventData: { chargeId: "ch-789" },
             boundedContext: "orders",
+            correlationId: "corr-payment-ord-456",
           },
           dependencies: {
             getByIdempotencyKey: "mock",
@@ -273,7 +370,21 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
     Given('no initial event but duplicate appears on recheck for key "payment:ord-123"', () => {
       state.existingEvent = null;
       state.appendResult = { status: "conflict", currentVersion: 5 };
-      state.recheckResult = { eventId: "evt-concurrent", version: 5 };
+      state.recheckResult = {
+        eventId: "evt-concurrent",
+        eventType: "PaymentCompleted",
+        streamType: "Order",
+        streamId: "ord-123",
+        version: 5,
+        globalPosition: 2000n,
+        boundedContext: "orders",
+        category: "domain",
+        schemaVersion: 1,
+        correlationId: "corr-456",
+        timestamp: 1700000000001,
+        payload: { chargeId: "ch-456" },
+        idempotencyKey: "payment:ord-123",
+      };
     });
 
     When("calling idempotentAppendEvent with OCC conflict", async () => {
@@ -287,6 +398,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
             eventType: "PaymentCompleted",
             eventData: { chargeId: "ch-456" },
             boundedContext: "orders",
+            correlationId: "corr-payment-ord-123",
           },
           dependencies: {
             getByIdempotencyKey: "mock",
@@ -322,6 +434,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
             eventData: { chargeId: "ch-456" },
             boundedContext: "orders",
             expectedVersion: 0,
+            correlationId: "corr-payment-ord-123",
           },
           dependencies: {
             getByIdempotencyKey: "mock",

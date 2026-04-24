@@ -15,27 +15,26 @@
 ## Description
 
 **Problem:** Thin events require consumers to query back to the source BC,
-creating coupling and requiring synchronous communication.
+  creating coupling and requiring synchronous communication.
 
-**Solution:** Event-Carried State Transfer (ECST) - events carry full context
-for downstream consumers, eliminating back-queries:
+  **Solution:** Event-Carried State Transfer (ECST) - events carry full context
+  for downstream consumers, eliminating back-queries:
+  - **Thin Event:** `{ type: 'OrderCreated', orderId: 'ord_123' }`
+  - **Fat Event:** `{ type: 'OrderCreated', orderId, customerId, customerName, items, totalAmount }`
 
-- **Thin Event:** `{ type: 'OrderCreated', orderId: 'ord_123' }`
-- **Fat Event:** `{ type: 'OrderCreated', orderId, customerId, customerName, items, totalAmount }`
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Service Independence | Consumers don't need to query source BC |
+  | Decoupled Evolution | Source can change without breaking consumers |
+  | Offline Processing | Event contains everything needed |
+  | Published Language | Fat events define the integration contract |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Service Independence | Consumers don't need to query source BC |
-| Decoupled Evolution | Source can change without breaking consumers |
-| Offline Processing | Event contains everything needed |
-| Published Language | Fat events define the integration contract |
-
-**Key Concepts:**
-| Concept | Description | Example |
-| embedEntity | Snapshot entity fields into event | embedEntity(customer, ['id', 'name']) |
-| embedCollection | Snapshot collection into event | embedCollection(orderItems) |
-| schemaVersion | Track structure for upcasting | schemaVersion: 2 |
-| cryptoShred | Mark PII for GDPR deletion | { field: 'email', shred: true } |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | embedEntity | Snapshot entity fields into event | embedEntity(customer, ['id', 'name']) |
+  | embedCollection | Snapshot collection into event | embedCollection(orderItems) |
+  | schemaVersion | Track structure for upcasting | schemaVersion: 2 |
+  | cryptoShred | Mark PII for GDPR deletion | { field: 'email', shred: true } |
 
 ## Acceptance Criteria
 
@@ -76,25 +75,25 @@ Consumers don't need to query source BC for context.
 
 ```typescript
 // Thin event - consumer must query source BC
-const event = {
-  type: "OrderSubmitted",
-  payload: { orderId: "ord_123" },
-};
-// Consumer: "I need customer name... let me query Orders BC"
-const order = await ordersBC.getOrder(event.payload.orderId);
+    const event = {
+      type: 'OrderSubmitted',
+      payload: { orderId: 'ord_123' }
+    };
+    // Consumer: "I need customer name... let me query Orders BC"
+    const order = await ordersBC.getOrder(event.payload.orderId);
 ```
 
 **Target State (fat event - self-contained):**
 
 ```typescript
 // Fat event - consumer has all context
-const event = createFatEvent("OrderSubmitted", {
-  orderId: "ord_123",
-  customer: embedEntity(customer, ["id", "name", "email"]),
-  items: embedCollection(orderItems),
-  totalAmount: 150.0,
-});
-// Consumer: "I have everything I need!"
+    const event = createFatEvent('OrderSubmitted', {
+      orderId: 'ord_123',
+      customer: embedEntity(customer, ['id', 'name', 'email']),
+      items: embedCollection(orderItems),
+      totalAmount: 150.00
+    });
+    // Consumer: "I have everything I need!"
 ```
 
 _Verified by: Consumer processes event without back-query_

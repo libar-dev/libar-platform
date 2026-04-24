@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { vUnknown } from "../../validation/convexUnknown.js";
 
 /**
  * All valid agent audit event types.
@@ -49,7 +50,7 @@ export default defineSchema({
     eventsProcessed: v.number(),
     updatedAt: v.number(),
     // Forward declaration for DS-5 ReconfigureAgent — typed validator deferred
-    configOverrides: v.optional(v.any()),
+    configOverrides: v.optional(vUnknown()),
   })
     .index("by_agentId", ["agentId"])
     .index("by_agentId_subscriptionId", ["agentId", "subscriptionId"])
@@ -66,10 +67,11 @@ export default defineSchema({
     agentId: v.string(),
     decisionId: v.string(),
     timestamp: v.number(),
-    payload: v.any(),
+    payload: vUnknown(),
   })
     .index("by_agentId_timestamp", ["agentId", "timestamp"])
     .index("by_decisionId", ["decisionId"])
+    .index("by_decision_eventtype", ["decisionId", "eventType"])
     .index("by_eventType", ["eventType", "timestamp"]),
 
   /**
@@ -107,7 +109,7 @@ export default defineSchema({
   agentCommands: defineTable({
     agentId: v.string(),
     type: v.string(),
-    payload: v.any(),
+    payload: vUnknown(),
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),
@@ -141,7 +143,7 @@ export default defineSchema({
     decisionId: v.string(),
     action: v.object({
       type: v.string(),
-      payload: v.any(),
+      payload: vUnknown(),
     }),
     confidence: v.number(),
     reason: v.string(),

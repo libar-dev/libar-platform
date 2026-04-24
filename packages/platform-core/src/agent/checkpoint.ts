@@ -10,6 +10,12 @@
  */
 
 import { z } from "zod";
+import {
+  NO_GLOBAL_POSITION,
+  isGlobalPositionAfter,
+  normalizeGlobalPosition,
+  type GlobalPositionLike,
+} from "../events/globalPosition.js";
 import type { AgentConfigOverrides } from "./lifecycle-commands.js";
 import type { AgentRateLimitConfig } from "./types.js";
 
@@ -60,7 +66,7 @@ export const AgentCheckpointSchema = z.object({
    * Last processed global position.
    * -1 is sentinel value indicating no events have been processed.
    */
-  lastProcessedPosition: z.number().int().min(-1),
+  lastProcessedPosition: z.bigint().gte(NO_GLOBAL_POSITION),
 
   /** Last processed event ID for causation tracking */
   lastEventId: z.string(),
@@ -99,7 +105,7 @@ export interface AgentCheckpoint {
    * Last processed global position.
    * -1 indicates no events have been processed yet.
    */
-  readonly lastProcessedPosition: number;
+  readonly lastProcessedPosition: GlobalPositionLike;
 
   /** Last processed event ID for causation tracking */
   readonly lastEventId: string;
@@ -122,7 +128,7 @@ export interface AgentCheckpoint {
  */
 export interface AgentCheckpointUpdate {
   /** New last processed position */
-  readonly lastProcessedPosition?: number;
+  readonly lastProcessedPosition?: GlobalPositionLike;
 
   /** New last event ID */
   readonly lastEventId?: string;
@@ -165,7 +171,7 @@ export function createInitialAgentCheckpoint(
   return {
     agentId,
     subscriptionId,
-    lastProcessedPosition: -1, // Sentinel: all real events have globalPosition >= 0
+    lastProcessedPosition: NO_GLOBAL_POSITION,
     lastEventId: "", // No events processed yet
     status: "active",
     eventsProcessed: 0,
@@ -185,10 +191,14 @@ export function applyCheckpointUpdate(
   update: AgentCheckpointUpdate
 ): AgentCheckpoint {
   const mergedOverrides = mergeConfigOverrides(checkpoint.configOverrides, update.configOverrides);
+  const normalizedLastProcessedPosition =
+    update.lastProcessedPosition !== undefined
+      ? normalizeGlobalPosition(update.lastProcessedPosition, "lastProcessedPosition")
+      : checkpoint.lastProcessedPosition;
 
   return {
     ...checkpoint,
-    lastProcessedPosition: update.lastProcessedPosition ?? checkpoint.lastProcessedPosition,
+    lastProcessedPosition: normalizedLastProcessedPosition,
     lastEventId: update.lastEventId ?? checkpoint.lastEventId,
     status: update.status ?? checkpoint.status,
     eventsProcessed: checkpoint.eventsProcessed + (update.incrementEventsProcessed ?? 0),
@@ -220,10 +230,10 @@ export function applyCheckpointUpdate(
  * ```
  */
 export function shouldProcessAgentEvent(
-  eventGlobalPosition: number,
-  checkpointPosition: number
+  eventGlobalPosition: GlobalPositionLike,
+  checkpointPosition: GlobalPositionLike
 ): boolean {
-  return eventGlobalPosition > checkpointPosition;
+  return isGlobalPositionAfter(eventGlobalPosition, checkpointPosition);
 }
 
 /**

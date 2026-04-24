@@ -1,50 +1,32 @@
 # @libar-dev/platform-bus
 
-Command Bus component for idempotent command execution with correlation tracking.
+Command idempotency and command-status tracking for Convex components.
 
-## Overview
+## What this package gives you
 
-This package provides a Convex component for command lifecycle management:
+- a typed client wrapper for the command-bus component API
+- duplicate-command detection keyed by command ID
+- command status tracking across pending, executed, rejected, and failed states
+- correlation-based lookups for tracing and audit work
 
-- **Idempotency** — Prevents duplicate command processing via `commandId`
-- **Status Tracking** — Pending → Executed/Rejected/Failed transitions
-- **Correlation** — Traces commands through the system via `correlationId`
-- **TTL Cleanup** — Expired commands cleaned up periodically
-
-## Installation
+## Install
 
 ```bash
-pnpm add @libar-dev/platform-bus
+pnpm add @libar-dev/platform-bus convex zod
 ```
 
-**Peer Dependencies:**
+## Example
 
-- `convex` (>=1.17.0 <1.35.0)
-- `zod` (^4.0.0)
-
-## Quick Start
-
-### Setup Component
-
-```typescript
-// convex/convex.config.ts
+```ts
 import { defineApp } from "convex/server";
-import commandBus from "@libar-dev/platform-bus/convex.config";
+import commandBusComponent from "@libar-dev/platform-bus/convex.config";
+import { CommandBus } from "@libar-dev/platform-bus";
 
 const app = defineApp();
-app.use(commandBus, { name: "commandBus" });
-export default app;
-```
-
-### Use CommandBus Client
-
-```typescript
-import { CommandBus } from "@libar-dev/platform-bus";
-import { components } from "./_generated/api";
+app.use(commandBusComponent, { name: "commandBus" });
 
 const commandBus = new CommandBus(components.commandBus);
 
-// 1. Record command (check idempotency)
 const recordResult = await commandBus.recordCommand(ctx, {
   commandId,
   commandType: "CreateOrder",
@@ -53,48 +35,47 @@ const recordResult = await commandBus.recordCommand(ctx, {
   metadata: { correlationId, timestamp: Date.now() },
 });
 
-if (recordResult.status === "duplicate") {
-  return recordResult.result; // Return cached result
+if (recordResult.status === "new") {
+  const result = await handleCreateOrder(ctx, payload);
+  await commandBus.updateCommandResult(ctx, {
+    commandId,
+    status: result.status === "success" ? "executed" : "rejected",
+    result,
+  });
 }
-
-// 2. Execute handler (in bounded context)
-const result = await handleCreateOrder(ctx, payload);
-
-// 3. Update status
-await commandBus.updateCommandResult(ctx, {
-  commandId,
-  status: result.status === "success" ? "executed" : "rejected",
-  result,
-});
 ```
 
-## API Reference
+## Main exports
 
-| Method                | Description                                                    |
-| --------------------- | -------------------------------------------------------------- |
-| `recordCommand`       | Record new command (idempotent) — returns `new` or `duplicate` |
-| `updateCommandResult` | Update command status after execution                          |
-| `getCommandStatus`    | Query command status by `commandId`                            |
-| `getByCorrelation`    | Find related commands by `correlationId`                       |
-| `cleanupExpired`      | Remove expired commands (call via cron)                        |
+- `CommandBus`
+- `CommandBusApi`
+- `RecordCommandArgs`, `RecordCommandResult`
+- `CommandStatusInfo`, `GetByCorrelationResult`, `CleanupExpiredResult`
 
-### Command Status Flow
+## Stability
 
+| Surface | Status | Notes |
+| --- | --- | --- |
+| Client wrapper | Stable | Covered by unit and isolated integration tests |
+| Component config export | Stable | Mounts cleanly from consuming Convex apps |
+| Agent subscription helper | Emerging | Useful when integrating agent flows, still less battle-tested than the core bus path |
+
+## Known limitations
+
+- The package tracks command IDs and status. It does not execute business logic for you.
+- Exactly-once semantics depend on callers reusing the same `commandId` on retries.
+- Auth decisions still belong inside the bounded-context mutation, not in the bus wrapper.
+
+## Security notes
+
+- Do not treat a recorded command as an authorization decision.
+- Pass verified actor context through the owning mutation boundary.
+- Use correlation data for traceability, not as a trust token.
+
+## Testing
+
+```bash
+pnpm --filter @libar-dev/platform-bus test
+pnpm --filter @libar-dev/platform-bus test:integration:ci
+pnpm --filter @libar-dev/platform-bus test:coverage
 ```
-pending → executed  (success)
-        → rejected  (business rule failed)
-        → failed    (system error)
-```
-
-### Record Command Result
-
-| Status      | Meaning                                        |
-| ----------- | ---------------------------------------------- |
-| `new`       | Command recorded, proceed with execution       |
-| `duplicate` | Command already exists, return cached `result` |
-
-## Related Packages
-
-- `@libar-dev/platform-core` — CommandOrchestrator uses CommandBus
-- `@libar-dev/platform-store` — Event Store component
-- `@libar-dev/platform-decider` — Pure decider functions

@@ -207,6 +207,30 @@ export const projectionPool: WorkpoolClient = isConvexTestMode
       logLevel: "INFO",
     });
 
+export const sagaPool: WorkpoolClient = isConvexTestMode
+  ? noOpWorkpool
+  : createWorkpool(components.sagaPool, {
+      maxParallelism: workpoolParallelism,
+      defaultRetryBehavior: {
+        maxAttempts: 3,
+        initialBackoffMs: 250,
+        base: 2,
+      },
+      logLevel: "INFO",
+    });
+
+export const fanoutPool: WorkpoolClient = isConvexTestMode
+  ? noOpWorkpool
+  : createWorkpool(components.fanoutPool, {
+      maxParallelism: workpoolParallelism,
+      defaultRetryBehavior: {
+        maxAttempts: 3,
+        initialBackoffMs: 250,
+        base: 2,
+      },
+      logLevel: "INFO",
+    });
+
 /**
  * DCB Retry Pool - for scheduling DCB conflict retries (Phase 18a).
  *
@@ -390,7 +414,7 @@ const deadLetterOnComplete = makeFunctionReference<"mutation">(
  *
  * @see eventSubscriptions.ts for subscription definitions
  */
-export const eventBus: EventBus = new ConvexEventBus(projectionPool, eventSubscriptions, {
+export const eventBus: EventBus = new ConvexEventBus(fanoutPool, eventSubscriptions, {
   defaultOnComplete: deadLetterOnComplete,
   logger: eventBusLogger,
 });
@@ -464,6 +488,8 @@ export const commandOrchestrator: CommandOrchestrator = new CommandOrchestrator(
   eventStore,
   commandBus,
   projectionPool,
+  sagaPool,
+  fanoutPool,
   eventBus,
   defaultOnComplete: deadLetterOnComplete,
   middlewarePipeline,
@@ -482,13 +508,13 @@ export const commandOrchestrator: CommandOrchestrator = new CommandOrchestrator(
  * Currently configured routes:
  * - OrderSubmitted → OrderPlacedIntegration → inventory pre-check handlers
  *
- * TODO: Wire to CommandOrchestrator or EventBus for automatic domain→integration
+ * Backlog: T5-005. Wire to CommandOrchestrator or EventBus for automatic domain-to-integration
  * event translation (currently requires manual invocation).
  *
  * In test environment, uses no-op workpool to avoid scheduling errors.
  */
 export const integrationPublisher: IIntegrationEventPublisher = new IntegrationEventPublisher(
-  projectionPool,
+  fanoutPool,
   integrationRoutes,
   {
     onComplete: deadLetterOnComplete,

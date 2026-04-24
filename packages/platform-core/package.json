@@ -95,6 +95,18 @@
       "types": "./dist/agent/index.d.ts",
       "default": "./dist/agent/index.js"
     },
+    "./durability": {
+      "types": "./dist/durability/index.d.ts",
+      "default": "./dist/durability/index.js"
+    },
+    "./security": {
+      "types": "./dist/security/index.d.ts",
+      "default": "./dist/security/index.js"
+    },
+    "./validation": {
+      "types": "./dist/validation/index.d.ts",
+      "default": "./dist/validation/index.js"
+    },
     "./agent/convex.config": {
       "@convex-dev/component-source": "./src/agent/component/convex.config.ts",
       "types": "./dist/agent/component/convex.config.d.ts",
@@ -119,6 +131,7 @@
     "build:watch": "tsc --build --watch",
     "prepublishOnly": "pnpm run build",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage --config vitest.config.ts",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:watch": "vitest",
@@ -127,6 +140,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@libar-dev/platform-contracts-shared": "workspace:*",
     "@libar-dev/platform-bc": "workspace:*",
     "@libar-dev/platform-fsm": "workspace:*",
     "@libar-dev/platform-decider": "workspace:*",

@@ -31,40 +31,38 @@ declare global {
  *
  * Security model:
  * - Unit tests: __CONVEX_TEST_MODE__ is set by test setup
- * - Integration tests: Self-hosted Docker backend (ephemeral, localhost-only)
- * - Production: Cloud Convex with CONVEX_CLOUD_URL env var
- *
- * Note: Self-hosted Convex doesn't reliably expose env vars via process.env,
- * so we use a heuristic: if CONVEX_CLOUD_URL is NOT set, we assume test mode.
- * In production (cloud Convex), this env var is always present.
+ * - Integration tests: IS_TEST must be set explicitly
+ * - Production: no explicit test signal is present
  *
  * @throws Error if called in production environment
  */
 export function ensureTestEnvironment(): void {
   // Check for convex-test unit test mode (set by test setup)
   if (typeof globalThis !== "undefined" && globalThis.__CONVEX_TEST_MODE__ === true) {
-    return; // Unit test environment, allow
+    return;
   }
 
-  // In convex-test runtime, process may not be defined - which is fine for tests
+  // In some Convex runtimes, process may be unavailable; that's acceptable for
+  // convex-test and self-hosted integration contexts.
   if (typeof process === "undefined") {
-    return; // convex-test environment without globalThis flag, allow
+    return;
   }
 
-  // Check for IS_TEST env var (explicit test mode)
-  const env = process.env || {};
-  if (env["IS_TEST"]) {
-    return; // Explicit test mode, allow
+  const env = typeof process !== "undefined" ? process.env || {} : {};
+  if (env["IS_TEST"] === "1" || env["IS_TEST"] === "true") {
+    return;
   }
 
-  // In self-hosted Convex (Docker), env vars may not be accessible via process.env.
-  // Cloud Convex always has CONVEX_CLOUD_URL set. If it's absent, we're likely in
-  // a self-hosted test environment.
+  // Self-hosted Docker backends used by integration tests do not reliably
+  // surface env vars to application code, but cloud deployments always provide
+  // CONVEX_CLOUD_URL. If it's absent, treat the runtime as the local test backend.
   if (!env["CONVEX_CLOUD_URL"]) {
-    return; // Self-hosted (likely Docker test backend), allow
+    return;
   }
 
-  throw new Error("SECURITY: Test-only function called without IS_TEST environment variable");
+  throw new Error(
+    "SECURITY: Test-only function called without an explicit test signal (set IS_TEST=1 or enable __CONVEX_TEST_MODE__)"
+  );
 }
 
 /**

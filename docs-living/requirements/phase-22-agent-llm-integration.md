@@ -15,188 +15,182 @@
 ## Description
 
 **Problem:** The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that
-cannot call external APIs. The LLM runtime (`_llm/runtime.ts`) exists with OpenRouter
-integration but is never invoked because mutations cannot make HTTP calls. Additionally,
-rate limiting config exists as types only — no runtime enforcement protects against
-runaway LLM costs.
+  cannot call external APIs. The LLM runtime (`_llm/runtime.ts`) exists with OpenRouter
+  integration but is never invoked because mutations cannot make HTTP calls. Additionally,
+  rate limiting config exists as types only — no runtime enforcement protects against
+  runaway LLM costs.
 
-**Solution:** Implement hybrid action/mutation handler pattern:
+  **Solution:** Implement hybrid action/mutation handler pattern:
+  1. **Action handler factory** — EventBus delivers to Workpool action (not mutation)
+  2. **onComplete mutation** — Persists state atomically after LLM analysis
+  3. **Rate limiting enforcement** — `@convex-dev/rate-limiter` token bucket per agent
+  4. **Cost budget tracking** — Daily spend limits with automatic pause
+  5. **LLM fallback** — Graceful degradation to rule-based when LLM unavailable
 
-1. **Action handler factory** — EventBus delivers to Workpool action (not mutation)
-2. **onComplete mutation** — Persists state atomically after LLM analysis
-3. **Rate limiting enforcement** — `@convex-dev/rate-limiter` token bucket per agent
-4. **Cost budget tracking** — Daily spend limits with automatic pause
-5. **LLM fallback** — Graceful degradation to rule-based when LLM unavailable
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | LLM integration works | Actions can make external HTTP calls (mutations cannot) |
+  | Atomic persistence | Mutations in onComplete provide transactional guarantees |
+  | Cost control | Rate limiting prevents runaway LLM API costs |
+  | Graceful degradation | Fallback to rules when LLM unavailable or rate-limited |
+  | Conversation context | Thread adapter retains analysis history across events |
+  | Fault isolation | Circuit breaker prevents cascade failures from LLM outages |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| LLM integration works | Actions can make external HTTP calls (mutations cannot) |
-| Atomic persistence | Mutations in onComplete provide transactional guarantees |
-| Cost control | Rate limiting prevents runaway LLM API costs |
-| Graceful degradation | Fallback to rules when LLM unavailable or rate-limited |
-| Conversation context | Thread adapter retains analysis history across events |
-| Fault isolation | Circuit breaker prevents cascade failures from LLM outages |
+  **The Fundamental Constraint:**
 
-**The Fundamental Constraint:**
+  | Function Type | Can Call External APIs | Database Writes | Workpool Retry |
+  | Mutation | No | Yes (atomic) | No (OCC auto-retry) |
+  | Action | Yes (fetch, LLM) | No (must use runMutation) | Yes (if enabled) |
 
-| Function Type | Can Call External APIs | Database Writes | Workpool Retry |
-| Mutation | No | Yes (atomic) | No (OCC auto-retry) |
-| Action | Yes (fetch, LLM) | No (must use runMutation) | Yes (if enabled) |
+  This means the current single-mutation handler architecture fundamentally blocks LLM
+  integration. The solution requires splitting into action (LLM) + mutation (persist).
 
-This means the current single-mutation handler architecture fundamentally blocks LLM
-integration. The solution requires splitting into action (LLM) + mutation (persist).
+  **Action/Mutation Split Architecture:**
+  """
+  EventBus
+     |
+     v
+  Workpool.enqueueAction (agent event handler)
+     |
+     +--- 1. Load checkpoint (via runQuery)
+     +--- 2. Check idempotency (skip if already processed)
+     +--- 3. Load event history (via cross-component query)
+     +--- 4. Evaluate rule trigger (cheap, no LLM)
+     +--- 5. If triggered: call LLM analysis (external API)
+     +--- 6. Return AgentDecision
+     |
+     v
+  onComplete Mutation
+     |
+     +--- 7. Validate decision
+     +--- 8. Record to agent component (audit, command)
+     +--- 9. Create pending approval (if needed)
+     +--- 10. Update checkpoint
+     +--- 11. Handle failure (dead letter)
+  """
 
-**Action/Mutation Split Architecture:**
-"""
-EventBus
-|
-v
-Workpool.enqueueAction (agent event handler)
-|
-+--- 1. Load checkpoint (via runQuery)
-+--- 2. Check idempotency (skip if already processed)
-+--- 3. Load event history (via cross-component query)
-+--- 4. Evaluate rule trigger (cheap, no LLM)
-+--- 5. If triggered: call LLM analysis (external API)
-+--- 6. Return AgentDecision
-|
-v
-onComplete Mutation
-|
-+--- 7. Validate decision
-+--- 8. Record to agent component (audit, command)
-+--- 9. Create pending approval (if needed)
-+--- 10. Update checkpoint
-+--- 11. Handle failure (dead letter)
-"""
+  **Design Decision: @convex-dev/agent Integration**
 
-**Design Decision: @convex-dev/agent Integration**
+  | Option | Trade-off |
+  | A: Full @convex-dev/agent | Thread management, tool execution, but opinionated patterns that may conflict with event-reactive architecture |
+  | B: Vercel AI SDK only (current) | More control, but must implement thread/tool patterns manually |
+  | C: Hybrid (Recommended) | Use @convex-dev/agent for threads and tools, keep custom EventBus subscription and pattern detection |
 
-| Option | Trade-off |
-| A: Full @convex-dev/agent | Thread management, tool execution, but opinionated patterns that may conflict with event-reactive architecture |
-| B: Vercel AI SDK only (current) | More control, but must implement thread/tool patterns manually |
-| C: Hybrid (Recommended) | Use @convex-dev/agent for threads and tools, keep custom EventBus subscription and pattern detection |
+  **Decision:** Option C — Hybrid approach.
+  - **@convex-dev/agent provides:** Thread management (conversation context), tool execution (structured tool calls), model abstraction
+  - **Platform provides:** EventBus subscription, pattern detection triggers, checkpoint/audit infrastructure, rate limiting
+  - **Integration point:** Agent action handler creates/resumes thread per customer, uses @convex-dev/agent for LLM call, returns result to platform's onComplete handler
 
-**Decision:** Option C — Hybrid approach.
+  **Design Decision: Rate Limiting Implementation**
 
-- **@convex-dev/agent provides:** Thread management (conversation context), tool execution (structured tool calls), model abstraction
-- **Platform provides:** EventBus subscription, pattern detection triggers, checkpoint/audit infrastructure, rate limiting
-- **Integration point:** Agent action handler creates/resumes thread per customer, uses @convex-dev/agent for LLM call, returns result to platform's onComplete handler
+  Use `@convex-dev/rate-limiter` component (already installed in example app):
+  - **Token bucket per agent** — configurable maxRequestsPerMinute
+  - **Cost budget** — daily USD limit with alertThreshold and hard pause
+  - **Exceeded behavior** — queue event for later retry, or dead letter if queue full
 
-**Design Decision: Rate Limiting Implementation**
+  | Rate Limit Type | Mechanism | Action When Exceeded |
+  | Requests/minute | Token bucket (@convex-dev/rate-limiter) | Queue for retry |
+  | Concurrent calls | Workpool maxParallelism | Natural backpressure |
+  | Daily cost budget | Custom tracker (agent component table) | Pause agent |
+  | Queue overflow | Workpool queueDepth | Dead letter |
 
-Use `@convex-dev/rate-limiter` component (already installed in example app):
+  **Design Decision: LLM Fallback Strategy**
 
-- **Token bucket per agent** — configurable maxRequestsPerMinute
-- **Cost budget** — daily USD limit with alertThreshold and hard pause
-- **Exceeded behavior** — queue event for later retry, or dead letter if queue full
+  When LLM is unavailable (API key missing, rate limited, circuit breaker open):
+  1. Error propagates from pattern.analyze() through the action handler
+  2. Workpool retries with exponential backoff (maxAttempts: 3)
+  3. After retries exhausted, event goes to dead letter queue
 
-| Rate Limit Type | Mechanism | Action When Exceeded |
-| Requests/minute | Token bucket (@convex-dev/rate-limiter) | Queue for retry |
-| Concurrent calls | Workpool maxParallelism | Natural backpressure |
-| Daily cost budget | Custom tracker (agent component table) | Pause agent |
-| Queue overflow | Workpool queueDepth | Dead letter |
+  This ensures failed events are tracked and can be replayed after the issue is resolved.
 
-**Design Decision: LLM Fallback Strategy**
+  **Dedicated Agent Workpool:**
 
-When LLM is unavailable (API key missing, rate limited, circuit breaker open):
+  A dedicated `agentPool` peer mount exists in `convex.config.ts`, separating LLM
+  work from `projectionPool` to avoid resource contention.
 
-1. Error propagates from pattern.analyze() through the action handler
-2. Workpool retries with exponential backoff (maxAttempts: 3)
-3. After retries exhausted, event goes to dead letter queue
+  | Config | Value | Rationale |
+  | Name | agentPool | Dedicated pool, separate from projectionPool |
+  | maxParallelism | 10 | LLM calls are slow (~1-5s) — limit concurrency to control costs |
+  | retryActionsByDefault | true | LLM APIs have transient failures |
+  | defaultRetryBehavior | 3 attempts, 1s initial, base 2 | Exponential backoff for rate limits |
+  | Partition key | event.streamId | Per-customer ordering (matches PM pattern) |
 
-This ensures failed events are tracked and can be replayed after the issue is resolved.
+  """typescript
+  // convex.config.ts — dedicated agent pool
+  app.use(workpool, { name: "agentPool" });
 
-**Dedicated Agent Workpool:**
+  // Agent pool configuration
+  const agentPool = new Workpool(components.agentPool, {
+    maxParallelism: 10,
+    retryActionsByDefault: true,
+    defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
+  });
+  """
 
-A dedicated `agentPool` peer mount exists in `convex.config.ts`, separating LLM
-work from `projectionPool` to avoid resource contention.
+  Separation of concerns: agent LLM calls don't compete with projection processing
+  in `projectionPool` (which handles high-throughput, low-latency CMS updates).
 
-| Config | Value | Rationale |
-| Name | agentPool | Dedicated pool, separate from projectionPool |
-| maxParallelism | 10 | LLM calls are slow (~1-5s) — limit concurrency to control costs |
-| retryActionsByDefault | true | LLM APIs have transient failures |
-| defaultRetryBehavior | 3 attempts, 1s initial, base 2 | Exponential backoff for rate limits |
-| Partition key | event.streamId | Per-customer ordering (matches PM pattern) |
+  **createAgentActionHandler — Factory:**
 
-"""typescript
-// convex.config.ts — dedicated agent pool
-app.use(workpool, { name: "agentPool" });
+  `createAgentActionHandler` returns an `internalAction` that can call external APIs
+  (LLM). The legacy `createAgentEventHandler` (mutation-based `onEvent` callback) has
+  been removed — all agent event handling now uses the action-based handler.
+  The action handler reuses existing pure logic from the mutation handler:
+  - Pattern window filtering (`filterEventsInWindow`)
+  - Minimum event check (`hasMinimumEvents`)
+  - Approval determination (`shouldRequireApproval`)
 
-// Agent pool configuration
-const agentPool = new Workpool(components.agentPool, {
-maxParallelism: 10,
-retryActionsByDefault: true,
-defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
-});
-"""
+  The new capability is the LLM call between trigger evaluation and decision creation:
+  """typescript
+  // Simplified action handler flow
+  // Steps 1-4: Same as mutation handler (reused pure functions)
+  // Step 5: NEW — LLM analysis (only possible in action context)
+  const analysis = await runtime.analyze(prompt, filteredEvents);
+  // Step 6: Build AgentDecision from analysis (reused pure function)
+  """
 
-Separation of concerns: agent LLM calls don't compete with projection processing
-in `projectionPool` (which handles high-throughput, low-latency CMS updates).
+  **Thread Adapter Design — @convex-dev/agent Integration:**
 
-**createAgentActionHandler — Factory:**
+  One thread per (agentId, customerId) pair enables conversation context across events:
 
-`createAgentActionHandler` returns an `internalAction` that can call external APIs
-(LLM). The legacy `createAgentEventHandler` (mutation-based `onEvent` callback) has
-been removed — all agent event handling now uses the action-based handler.
-The action handler reuses existing pure logic from the mutation handler:
+  | Concern | Mechanism |
+  | Thread identity | Key: `agent:{agentId}:customer:{customerId}` |
+  | First event | Creates new thread, seeds with customer context |
+  | Subsequent events | Resumes existing thread, appends new event context |
+  | History window | Thread retains LLM conversation history for richer analysis |
+  | Thread cleanup | Threads expire naturally via @convex-dev/agent TTL |
 
-- Pattern window filtering (`filterEventsInWindow`)
-- Minimum event check (`hasMinimumEvents`)
-- Approval determination (`shouldRequireApproval`)
+  The adapter translates between platform's `AgentInterface` (analyze/reason methods)
+  and `@convex-dev/agent`'s `Agent.generateText()`:
+  """typescript
+  // Thread adapter bridges platform interface to @convex-dev/agent
+  class ThreadAdapter implements AgentInterface {
+    async analyze(prompt: string, events: FatEvent[]): Promise<LLMAnalysisResult> {
+      const threadId = await this.getOrCreateThread(agentId, customerId);
+      const result = await this.agent.generateText(ctx, { threadId }, {
+        prompt: buildAnalysisPrompt(prompt, events),
+      });
+      return parseAnalysisResult(result);
+    }
+  }
+  """
 
-The new capability is the LLM call between trigger evaluation and decision creation:
-"""typescript
-// Simplified action handler flow
-// Steps 1-4: Same as mutation handler (reused pure functions)
-// Step 5: NEW — LLM analysis (only possible in action context)
-const analysis = await runtime.analyze(prompt, filteredEvents);
-// Step 6: Build AgentDecision from analysis (reused pure function)
-"""
+  **Circuit Breaker Integration — Phase 18 Relationship:**
 
-**Thread Adapter Design — @convex-dev/agent Integration:**
+  Phase 18's circuit breaker (`platform-core/src/infrastructure/circuit-breaker.ts`)
+  provides the failure isolation pattern. Agent LLM calls use a named instance:
 
-One thread per (agentId, customerId) pair enables conversation context across events:
+  | Config | Value |
+  | Circuit name | "llm-provider" (or per-provider: "openrouter", "openai") |
+  | Failure threshold | 5 consecutive failures |
+  | Reset timeout | 60 seconds |
+  | Fallback | Rule-based analysis via existing `createMockAgentRuntime()` pattern |
 
-| Concern | Mechanism |
-| Thread identity | Key: `agent:{agentId}:customer:{customerId}` |
-| First event | Creates new thread, seeds with customer context |
-| Subsequent events | Resumes existing thread, appends new event context |
-| History window | Thread retains LLM conversation history for richer analysis |
-| Thread cleanup | Threads expire naturally via @convex-dev/agent TTL |
-
-The adapter translates between platform's `AgentInterface` (analyze/reason methods)
-and `@convex-dev/agent`'s `Agent.generateText()`:
-"""typescript
-// Thread adapter bridges platform interface to @convex-dev/agent
-class ThreadAdapter implements AgentInterface {
-async analyze(prompt: string, events: FatEvent[]): Promise<LLMAnalysisResult> {
-const threadId = await this.getOrCreateThread(agentId, customerId);
-const result = await this.agent.generateText(ctx, { threadId }, {
-prompt: buildAnalysisPrompt(prompt, events),
-});
-return parseAnalysisResult(result);
-}
-}
-"""
-
-**Circuit Breaker Integration — Phase 18 Relationship:**
-
-Phase 18's circuit breaker (`platform-core/src/infrastructure/circuit-breaker.ts`)
-provides the failure isolation pattern. Agent LLM calls use a named instance:
-
-| Config | Value |
-| Circuit name | "llm-provider" (or per-provider: "openrouter", "openai") |
-| Failure threshold | 5 consecutive failures |
-| Reset timeout | 60 seconds |
-| Fallback | Rule-based analysis via existing `createMockAgentRuntime()` pattern |
-
-When circuit is open:
-
-1. LLM call is skipped (no HTTP request made)
-2. Error propagates to Workpool which retries after backoff
-3. Dead letter records circuit state context if retries exhausted
-4. Circuit half-opens after timeout, allowing one probe request
+  When circuit is open:
+  1. LLM call is skipped (no HTTP request made)
+  2. Error propagates to Workpool which retries after backoff
+  3. Dead letter records circuit state context if retries exhausted
+  4. Circuit half-opens after timeout, allowing one probe request
 
 ## Acceptance Criteria
 
@@ -306,8 +300,8 @@ When circuit is open:
 **Agent event handlers are actions for LLM integration**
 
 **Invariant:** Agent event handlers that require LLM analysis must be Convex actions,
-not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete
-mutation handler, never in the action.
+    not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete
+    mutation handler, never in the action.
 
     **Rationale:** Convex mutations cannot make external HTTP calls. The action/mutation
     split enables LLM integration while maintaining atomic state persistence. Actions are
@@ -317,12 +311,12 @@ mutation handler, never in the action.
 
 ```typescript
 // createAgentActionHandler replaces createAgentEventHandler
-// Returns an internalAction (not internalMutation)
-export function createAgentActionHandler(config: {
-  agentConfig: AgentBCConfig;
-  runtime: AgentRuntimeConfig; // LLM runtime (or mock)
-  loadHistory: (ctx: ActionCtx, event: AgentEventHandlerArgs) => Promise<EventHistory>;
-}): RegisteredAction<"internal", AgentEventHandlerArgs, AgentDecision>;
+    // Returns an internalAction (not internalMutation)
+    export function createAgentActionHandler(config: {
+      agentConfig: AgentBCConfig;
+      runtime: AgentRuntimeConfig; // LLM runtime (or mock)
+      loadHistory: (ctx: ActionCtx, event: AgentEventHandlerArgs) => Promise<EventHistory>;
+    }): RegisteredAction<"internal", AgentEventHandlerArgs, AgentDecision>
 ```
 
 **Verified by:** Action calls LLM, onComplete persists, fallback works, timeout handled
@@ -332,7 +326,7 @@ _Verified by: Agent action handler calls LLM and returns decision, onComplete mu
 **Rate limiting is enforced before LLM calls**
 
 **Invariant:** Every LLM call must check rate limits before execution. Exceeded
-limits queue the event for later retry or send to dead letter if queue is full.
+    limits queue the event for later retry or send to dead letter if queue is full.
 
     **Rationale:** LLM API costs can spiral quickly under high event volume. Rate limiting
     protects against runaway costs and external API throttling. The existing `rateLimits`
@@ -348,15 +342,15 @@ Event arrives → Check token bucket → Allowed? → Proceed to LLM
 ```
 
 **Verified by:** Rate limit blocks excess calls, cost budget pauses agent,
-queue overflow creates dead letter
+    queue overflow creates dead letter
 
 _Verified by: Rate limiter allows LLM call within limits, Rate limiter blocks LLM call when exceeded, Cost budget exceeded pauses agent, Queue overflow triggers dead letter_
 
 **Agent subscriptions support onComplete callbacks**
 
 **Invariant:** `CreateAgentSubscriptionOptions` must include an optional `onComplete`
-field that receives Workpool completion callbacks, enabling agent-specific dead letter
-handling and checkpoint updates.
+    field that receives Workpool completion callbacks, enabling agent-specific dead letter
+    handling and checkpoint updates.
 
     **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete`
     field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler),
@@ -393,7 +387,7 @@ handling and checkpoint updates.
 ```
 
 **Verified by:** onComplete receives callbacks, dead letters created on failure,
-checkpoint updated on success
+    checkpoint updated on success
 
 _Verified by: Agent subscription with onComplete receives completion callbacks, Failed agent jobs create dead letters via onComplete, Agent subscription without onComplete uses global default_
 

@@ -35,6 +35,7 @@ import {
   type AgentDeadLetter,
   type AgentDeadLetterContext,
 } from "../../../src/agent/dead-letter.js";
+import { normalizeGlobalPosition } from "../../../src/events/globalPosition.js";
 import { getDataTableRows } from "../_helpers/data-table.js";
 
 // =============================================================================
@@ -46,12 +47,12 @@ function createTestDeadLetter(overrides: Partial<AgentDeadLetter> = {}): AgentDe
     agentId: "test-agent",
     subscriptionId: "sub-001",
     eventId: "evt-123",
-    globalPosition: 1000,
     error: "Test error message",
     attemptCount: 1,
     status: "pending",
     failedAt: Date.now(),
     ...overrides,
+    globalPosition: normalizeGlobalPosition(overrides.globalPosition ?? 1000n),
   };
 }
 
@@ -367,7 +368,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
 
     RuleScenario("Accepts dead letter with globalPosition of 0", ({ Given, Then }) => {
       Given("a test dead letter with globalPosition 0", () => {
-        state.deadLetter = createTestDeadLetter({ globalPosition: 0 });
+      state.deadLetter = createTestDeadLetter({ globalPosition: 0n });
       });
       Then("AgentDeadLetterSchema accepts the dead letter", () => {
         const result = AgentDeadLetterSchema.safeParse(state.deadLetter);
@@ -681,7 +682,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           const prop = row.property as keyof AgentDeadLetter;
           const expected = row.value;
           if (prop === "globalPosition") {
-            expect(state.deadLetter![prop]).toBe(Number(expected));
+            expect(state.deadLetter![prop]).toBe(BigInt(expected));
           } else {
             expect(state.deadLetter![prop]).toBe(expected);
           }
@@ -1022,7 +1023,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           expect(state.deadLetter!.agentId).toBe("my-agent");
           expect(state.deadLetter!.subscriptionId).toBe("my-sub");
           expect(state.deadLetter!.eventId).toBe("my-evt");
-          expect(state.deadLetter!.globalPosition).toBe(500);
+          expect(state.deadLetter!.globalPosition).toBe(500n);
           expect(state.deadLetter!.status).toBe("pending");
           expect(state.deadLetter!.context).toEqual(createTestContext());
         }

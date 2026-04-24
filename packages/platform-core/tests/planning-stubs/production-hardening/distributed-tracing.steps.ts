@@ -11,7 +11,7 @@
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 
-// TODO: Import modules under test when implemented
+// Deferred to T5-008. Import modules under test when this planning stub becomes executable.
 // import { TraceContext, propagateTraceContext } from "../../../src/monitoring/index.js";
 
 // ============================================================================

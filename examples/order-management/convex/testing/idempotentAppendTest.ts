@@ -12,7 +12,11 @@
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
-import { ensureTestEnvironment, idempotentAppendEvent } from "@libar-dev/platform-core";
+import { createVerificationProof } from "../../../../packages/platform-core/src/security/verificationProof.js";
+import {
+  ensureTestEnvironment,
+  idempotentAppendEvent,
+} from "@libar-dev/platform-core";
 import type { SafeQueryRef, SafeMutationRef } from "@libar-dev/platform-core";
 import { makeFunctionReference } from "convex/server";
 
@@ -45,7 +49,8 @@ export const testIdempotentAppend = mutation({
     eventType: v.string(),
     eventData: v.any(),
     boundedContext: v.string(),
-    correlationId: v.optional(v.string()),
+    tenantId: v.optional(v.string()),
+    correlationId: v.string(),
     expectedVersion: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -58,6 +63,7 @@ export const testIdempotentAppend = mutation({
       eventType,
       eventData,
       boundedContext,
+      tenantId,
       correlationId,
       expectedVersion,
     } = args;
@@ -81,6 +87,8 @@ export const testIdempotentAppend = mutation({
             streamId: string;
             expectedVersion: number;
             boundedContext: string;
+            tenantId?: string;
+            verificationProof?: unknown;
             events: Array<{
               eventId: string;
               eventType: string;
@@ -100,6 +108,7 @@ export const testIdempotentAppend = mutation({
           eventType,
           eventData,
           boundedContext,
+          ...(tenantId !== undefined && { tenantId }),
           // Only include optional properties when defined (exactOptionalPropertyTypes)
           ...(correlationId !== undefined && { correlationId }),
           ...(expectedVersion !== undefined && { expectedVersion }),
@@ -132,6 +141,19 @@ export const getEventByIdempotencyKey = query({
     });
 
     return event;
+  },
+});
+
+export const getConflictAuditsByIdempotencyKey = query({
+  args: {
+    idempotencyKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    return await ctx.runQuery(components.eventStore.lib.getIdempotencyConflictAudits, {
+      idempotencyKey: args.idempotencyKey,
+    });
   },
 });
 
@@ -189,10 +211,13 @@ export const appendTestEvent = mutation({
     streamType: v.string(),
     streamId: v.string(),
     eventType: v.string(),
+    scopeKey: v.optional(v.string()),
     eventData: v.any(),
     boundedContext: v.string(),
+    tenantId: v.optional(v.string()),
     expectedVersion: v.number(),
     idempotencyKey: v.optional(v.string()),
+    correlationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     ensureTestEnvironment();
@@ -201,26 +226,41 @@ export const appendTestEvent = mutation({
       streamType,
       streamId,
       eventType,
+      scopeKey,
       eventData,
       boundedContext,
+      tenantId,
       expectedVersion,
       idempotencyKey,
+      correlationId,
     } = args;
 
     const eventId = `evt_test_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "order-management:testing:idempotentAppendTest:appendTestEvent",
+      subjectId: boundedContext,
+      subjectType: "boundedContext",
+      boundedContext,
+      ...(tenantId !== undefined && { tenantId }),
+    });
 
     const result = await ctx.runMutation(components.eventStore.lib.appendToStream, {
       streamType,
       streamId,
       expectedVersion,
       boundedContext,
+      ...(tenantId !== undefined && { tenantId }),
+      verificationProof,
       events: [
         {
           eventId,
           eventType,
+          ...(scopeKey !== undefined && { scopeKey }),
           payload: eventData,
           metadata: {
-            correlationId: `corr_test_${Date.now()}`,
+            correlationId: correlationId ?? `corr_test_${Date.now()}`,
           },
           ...(idempotencyKey && { idempotencyKey }),
         },

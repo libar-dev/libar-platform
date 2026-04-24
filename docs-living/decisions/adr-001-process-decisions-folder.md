@@ -14,9 +14,9 @@
 ## Context
 
 The monorepo needed a location for process-level decisions (PDRs) separate from
-package-level Architecture Decision Records (ADRs). Package ADRs live in
-deps-packages/architect/architect/decisions/ and document tooling decisions
-specific to the architect package itself.
+    package-level Architecture Decision Records (ADRs). Package ADRs live in
+    deps-packages/architect/architect/decisions/ and document tooling decisions
+    specific to the architect package itself.
 
     Key distinction:
     - ADRs (package): Technical decisions about the architect tool itself
@@ -30,7 +30,7 @@ specific to the architect package itself.
 ## Decision
 
 Process Decision Records (PDRs) for the monorepo live in /libar-platform/architect/decisions/
-as Gherkin feature files with the naming convention pdr-NNN-name.feature.
+    as Gherkin feature files with the naming convention pdr-NNN-name.feature.
 
     PDRs use the same extraction infrastructure as ADRs:
     - Tags: @architect-adr:NNN
@@ -47,7 +47,12 @@ as Gherkin feature files with the naming convention pdr-NNN-name.feature.
 
 ## Consequences
 
-Positive outcomes: - Clear separation between package ADRs and repo PDRs - Reuses existing ADR extraction infrastructure without code changes - Gherkin format enables executable acceptance criteria - Consistent with package-level ADR approach - Independent tag registry allows repo-specific categories
+Positive outcomes:
+    - Clear separation between package ADRs and repo PDRs
+    - Reuses existing ADR extraction infrastructure without code changes
+    - Gherkin format enables executable acceptance criteria
+    - Consistent with package-level ADR approach
+    - Independent tag registry allows repo-specific categories
 
     Negative outcomes:
     - Two separate registries to maintain (package vs repo)

@@ -14,6 +14,7 @@
 import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";
 import { withCheckpoint } from "../_helpers";
+import { compatGlobalPositionValidator } from "../../lib/globalPosition";
 
 const PROJECTION_NAME = "orderItems";
 
@@ -31,7 +32,7 @@ export const onOrderItemAdded = internalMutation({
     quantity: v.number(),
     unitPrice: v.number(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId, productId, productName, quantity, unitPrice } = args;
@@ -84,7 +85,7 @@ export const onOrderItemRemoved = internalMutation({
     orderId: v.string(),
     productId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { orderId, productId } = args;

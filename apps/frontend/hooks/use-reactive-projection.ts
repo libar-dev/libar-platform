@@ -28,11 +28,22 @@
 
 import { useMemo } from "react";
 
-// Import types from platform-core to avoid duplication
-import type { ReactiveDomainEvent, EvolveFunction } from "@libar-dev/platform-core/projections";
+import {
+  compareGlobalPositions,
+  isGlobalPositionAfter,
+  type GlobalPositionLike,
+} from "../../../packages/platform-core/src/events/globalPosition.js";
 
-// Re-export for convenience
-export type { ReactiveDomainEvent, EvolveFunction };
+export interface ReactiveDomainEvent {
+  eventType: string;
+  globalPosition: GlobalPositionLike;
+  payload?: Record<string, unknown>;
+}
+
+export type EvolveFunction<TProjection, TEvent extends ReactiveDomainEvent> = (
+  projection: TProjection,
+  event: TEvent
+) => TProjection;
 
 /**
  * Options for useReactiveProjection hook.
@@ -60,7 +71,7 @@ export interface UseReactiveProjectionOptions<TProjection, TEvent extends Reacti
    * Extract global position from projection state.
    * Returns 0 for missing projections.
    */
-  getPosition: (projection: TProjection) => number;
+  getPosition: (projection: TProjection) => GlobalPositionLike;
 }
 
 /**
@@ -77,7 +88,7 @@ export interface ReactiveProjectionResult<T> {
   isOptimistic: boolean;
 
   /** Last processed global position from durable projection */
-  durablePosition: number;
+  durablePosition: GlobalPositionLike;
 
   /** Count of optimistic (pending) events applied */
   pendingEvents: number;
@@ -152,7 +163,7 @@ export function useReactiveProjection<TProjection, TEvent extends ReactiveDomain
         state: null,
         isLoading: projection === undefined || projectionLagging,
         isOptimistic: false,
-        durablePosition: 0,
+        durablePosition: 0n,
         pendingEvents: 0,
         error: null,
       };
@@ -174,7 +185,9 @@ export function useReactiveProjection<TProjection, TEvent extends ReactiveDomain
 
     // Filter events that might already be in durable state
     // This provides defense against duplicate event processing
-    const optimisticEvents = recentEvents.filter((event) => event.globalPosition > durablePosition);
+    const optimisticEvents = recentEvents.filter((event) =>
+      isGlobalPositionAfter(event.globalPosition, durablePosition)
+    );
 
     // No optimistic events - return durable state
     if (optimisticEvents.length === 0) {
@@ -189,7 +202,9 @@ export function useReactiveProjection<TProjection, TEvent extends ReactiveDomain
     }
 
     // Sort filtered events by globalPosition to ensure correct ordering
-    const sortedEvents = [...optimisticEvents].sort((a, b) => a.globalPosition - b.globalPosition);
+    const sortedEvents = [...optimisticEvents].sort((a, b) =>
+      compareGlobalPositions(a.globalPosition, b.globalPosition)
+    );
 
     // Apply events in sequence with error handling
     // Falls back to durable state if evolve fails (malformed events, bugs)
@@ -254,9 +269,9 @@ export function useReactiveProjection<TProjection, TEvent extends ReactiveDomain
  * const getPosition = useGetPosition<OrderSummary>('updatedAt');
  * ```
  */
-export function createGetPosition<T>(field: keyof T): (projection: T) => number {
+export function createGetPosition<T>(field: keyof T): (projection: T) => GlobalPositionLike {
   return (projection: T) => {
     const value = projection[field];
-    return typeof value === "number" ? value : 0;
+    return typeof value === "number" || typeof value === "bigint" ? value : 0n;
   };
 }

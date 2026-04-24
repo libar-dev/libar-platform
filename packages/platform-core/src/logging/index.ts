@@ -28,6 +28,7 @@ export { LOG_LEVEL_PRIORITY, DEFAULT_LOG_LEVEL, shouldLog } from "./types.js";
 export {
   createScopedLogger,
   createPlatformNoOpLogger,
+  createPlatformDefaultLogger,
   createChildLogger,
   TRACE_TIMING,
 } from "./scoped.js";

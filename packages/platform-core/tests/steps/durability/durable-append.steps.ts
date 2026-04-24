@@ -309,6 +309,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
             eventType: "TestEvent",
             eventData: { test: true },
             boundedContext: "test",
+            correlationId: "corr-test-ord-123",
           },
           dependencies: {
             getByIdempotencyKey: "mock",

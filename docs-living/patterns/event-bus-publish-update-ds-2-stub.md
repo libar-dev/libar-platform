@@ -16,7 +16,6 @@
 EventBus Publish Update — DS-2 Stub
 
 Shows the two changes needed to support the EventSubscription discriminated union:
-
 1. WorkpoolClient interface gains `enqueueAction`
 2. ConvexEventBus.publish branches on `subscription.handlerType`
 

@@ -21,6 +21,7 @@ import { internalMutation, internalQuery } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { TableNames } from "../_generated/dataModel";
 import { createScopedLogger } from "@libar-dev/platform-core";
+import { compatGlobalPositionValidator } from "../lib/globalPosition";
 import { eventReplayPool, PLATFORM_LOG_LEVEL } from "../infrastructure.js";
 
 // ============================================================================
@@ -284,8 +285,8 @@ export const getRebuildStatus = internalQuery({
         v.literal("failed"),
         v.literal("cancelled")
       ),
-      startPosition: v.number(),
-      lastPosition: v.number(),
+      startPosition: compatGlobalPositionValidator,
+      lastPosition: compatGlobalPositionValidator,
       eventsProcessed: v.number(),
       chunksCompleted: v.number(),
       startedAt: v.number(),

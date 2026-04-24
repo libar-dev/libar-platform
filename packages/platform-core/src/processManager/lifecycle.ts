@@ -63,6 +63,12 @@ export interface PMStateTransition {
   readonly to: ProcessManagerLifecycleState;
 }
 
+export interface PMProcessingEntryPlan {
+  readonly mode: "resume" | "transition";
+  readonly event: ProcessManagerLifecycleEvent | null;
+  readonly to: ProcessManagerLifecycleState;
+}
+
 /**
  * Valid state transitions.
  *
@@ -224,6 +230,45 @@ export function assertPMValidTransition(
     );
   }
   return newState;
+}
+
+/**
+ * Resolve how a PM enters processing for an execution attempt.
+ *
+ * This is the canonical source for transition consumers such as withPMCheckpoint:
+ * - `idle` enters processing via `START`
+ * - `failed` re-enters processing via `RETRY`
+ * - `processing` resumes in place after a prior incomplete attempt
+ * - `completed` cannot re-enter processing
+ */
+export function planPMProcessingEntry(
+  from: ProcessManagerLifecycleState
+): PMProcessingEntryPlan | null {
+  if (from === "processing") {
+    return {
+      mode: "resume",
+      event: null,
+      to: "processing",
+    };
+  }
+
+  if (from === "idle") {
+    return {
+      mode: "transition",
+      event: "START",
+      to: "processing",
+    };
+  }
+
+  if (from === "failed") {
+    return {
+      mode: "transition",
+      event: "RETRY",
+      to: "processing",
+    };
+  }
+
+  return null;
 }
 
 /**

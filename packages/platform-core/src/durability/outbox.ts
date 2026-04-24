@@ -34,6 +34,7 @@
  * // Create the onComplete handler
  * export const onPaymentComplete = createOutboxHandler({
  *   getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
+ *   getCorrelationId: (ctx) => ctx.correlationId,
  *   buildEvent: (result, ctx) => ({
  *     streamType: "Order",
  *     streamId: ctx.orderId,
@@ -98,6 +99,7 @@ export interface OutboxHandlerFullConfig<TContext, TResult> extends OutboxHandle
  * ```typescript
  * export const onPaymentComplete = createOutboxHandler({
  *   getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
+ *   getCorrelationId: (ctx) => ctx.correlationId,
  *   buildEvent: (result, ctx) => ({
  *     streamType: "Order",
  *     streamId: ctx.orderId,
@@ -120,13 +122,14 @@ export function createOutboxHandler<TContext, TResult>(
   ctx: OutboxHandlerContext,
   args: { result: ActionResult<TResult>; context: TContext }
 ) => Promise<void> {
-  const { getIdempotencyKey, buildEvent, dependencies, boundedContext } = config;
+  const { getIdempotencyKey, getCorrelationId, buildEvent, dependencies, boundedContext } = config;
 
   return async (ctx, args) => {
     const { result, context } = args;
 
     // Build idempotency key from context
     const idempotencyKey = getIdempotencyKey(context);
+    const correlationId = getCorrelationId(context);
 
     // Build event from result and context
     const eventSpec = buildEvent(result, context);
@@ -141,6 +144,7 @@ export function createOutboxHandler<TContext, TResult>(
         eventType: eventSpec.eventType,
         eventData: eventSpec.eventData,
         boundedContext,
+        correlationId,
       },
       dependencies,
     });

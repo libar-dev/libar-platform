@@ -217,6 +217,8 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
             const actual = savedCheckpoint![row.field as keyof ProjectionCheckpoint];
             if (typeof actual === "number") {
               expect(actual).toBe(Number(row.value));
+            } else if (typeof actual === "bigint") {
+              expect(actual).toBe(BigInt(row.value));
             } else {
               expect(actual).toBe(row.value);
             }
@@ -369,11 +371,11 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
       });
 
       And('the saved checkpoint for partition "ord_001" has lastGlobalPosition 1000', () => {
-        expect(state.checkpointStore.get("ord_001")?.lastGlobalPosition).toBe(1000);
+        expect(state.checkpointStore.get("ord_001")?.lastGlobalPosition).toBe(1000n);
       });
 
       And('the saved checkpoint for partition "ord_002" has lastGlobalPosition 500', () => {
-        expect(state.checkpointStore.get("ord_002")?.lastGlobalPosition).toBe(500);
+        expect(state.checkpointStore.get("ord_002")?.lastGlobalPosition).toBe(500n);
       });
     });
 
@@ -521,7 +523,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
       });
 
       And('the saved checkpoint for partition "ord_123" has lastGlobalPosition 1000', () => {
-        expect(state.checkpointStore.get("ord_123")?.lastGlobalPosition).toBe(1000);
+        expect(state.checkpointStore.get("ord_123")?.lastGlobalPosition).toBe(1000n);
       });
     });
   });
@@ -560,7 +562,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
             expect.objectContaining({
               projectionName: "productCatalog",
               partitionKey: "prod_xyz",
-              lastGlobalPosition: 12345,
+              lastGlobalPosition: 12345n,
               lastEventId: "evt_abc123",
               updatedAt: expect.any(Number),
             })
@@ -571,6 +573,8 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
             const actual = checkpoint[row.field as keyof ProjectionCheckpoint];
             if (typeof actual === "number") {
               expect(actual).toBe(Number(row.value));
+            } else if (typeof actual === "bigint") {
+              expect(actual).toBe(BigInt(row.value));
             } else {
               expect(actual).toBe(row.value);
             }
@@ -619,7 +623,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
       });
 
       And('the helper checkpoint for partition "ord_123" has lastGlobalPosition 1000', () => {
-        expect(state.helperCheckpointStore.get("ord_123")?.lastGlobalPosition).toBe(1000);
+        expect(state.helperCheckpointStore.get("ord_123")?.lastGlobalPosition).toBe(1000n);
       });
     });
 

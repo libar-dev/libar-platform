@@ -19,7 +19,6 @@ for visibility, timeout detection, and reconciliation support.
 ### Why Intent/Completion?
 
 Without bracketing, partially-completed operations are:
-
 - Invisible to monitoring
 - Undetectable by reconciliation
 - Missing from audit trail
@@ -29,11 +28,11 @@ for stuck operations.
 
 ### Pattern
 
-| Operation          | Intent Event             | Completion Events                                               |
-| ------------------ | ------------------------ | --------------------------------------------------------------- |
-| Order submission   | OrderSubmissionStarted   | OrderSubmitted, OrderSubmissionFailed, OrderSubmissionAbandoned |
-| Payment processing | PaymentProcessingStarted | PaymentCompleted, PaymentFailed                                 |
-| Stock reservation  | ReservationRequested     | StockReserved, ReservationFailed                                |
+| Operation | Intent Event | Completion Events |
+|-----------|--------------|-------------------|
+| Order submission | OrderSubmissionStarted | OrderSubmitted, OrderSubmissionFailed, OrderSubmissionAbandoned |
+| Payment processing | PaymentProcessingStarted | PaymentCompleted, PaymentFailed |
+| Stock reservation | ReservationRequested | StockReserved, ReservationFailed |
 
 ### Timeout Handling
 

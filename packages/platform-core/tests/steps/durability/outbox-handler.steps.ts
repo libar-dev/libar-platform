@@ -20,6 +20,7 @@ import type { ActionResult } from "../../../src/durability/types.js";
 
 interface PaymentContext {
   orderId: string;
+  correlationId: string;
   customerId?: string;
   amount?: number;
 }
@@ -94,6 +95,7 @@ function createMockContext() {
 function createPaymentOutboxHandler(): OutboxHandler {
   return createOutboxHandler<PaymentContext, PaymentResult>({
     getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
+    getCorrelationId: (ctx) => ctx.correlationId,
     buildEvent: (result, ctx) => ({
       eventType: result.kind === "success" ? "PaymentCompleted" : "PaymentFailed",
       eventData:
@@ -150,7 +152,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
       const ctx = createMockContext();
       await state.handler!(ctx, {
         result: { kind: "success", returnValue: { chargeId: "ch-456" } },
-        context: { orderId: "ord-123" },
+        context: { orderId: "ord-123", correlationId: "corr-123" },
       });
     });
 
@@ -170,7 +172,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
         const ctx = createMockContext();
         await state.handler!(ctx, {
           result: { kind: "success", returnValue: { chargeId: "ch-456" } },
-          context: { orderId: "ord-123" },
+          context: { orderId: "ord-123", correlationId: "corr-123" },
         });
       });
 
@@ -197,7 +199,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
           const ctx = createMockContext();
           await state.handler!(ctx, {
             result: { kind: "failed", error: "Card declined" },
-            context: { orderId: "ord-123" },
+            context: { orderId: "ord-123", correlationId: "corr-123" },
           });
         }
       );
@@ -227,7 +229,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
         const ctx = createMockContext();
         await state.handler!(ctx, {
           result: { kind: "success", returnValue: { chargeId: "ch-456" } },
-          context: { orderId: "ord-123" },
+          context: { orderId: "ord-123", correlationId: "corr-123" },
         });
       });
 
@@ -252,7 +254,7 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
       try {
         await state.handler!(ctx, {
           result: { kind: "success", returnValue: { chargeId: "ch-456" } },
-          context: { orderId: "ord-123" },
+          context: { orderId: "ord-123", correlationId: "corr-123" },
         });
       } catch (e) {
         state.error = e as Error;

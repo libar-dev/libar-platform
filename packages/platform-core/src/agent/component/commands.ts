@@ -1,6 +1,12 @@
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { verificationProofValidator, verifyActor } from "./verification.js";
+import {
+  assertBoundaryValuesSize,
+  DEFAULT_BOUNDARY_VALUE_MAX_BYTES,
+} from "../../validation/boundary.js";
+import { vUnknown } from "../../validation/convexUnknown.js";
 
 // ============================================================================
 // Shared Validators
@@ -12,6 +18,7 @@ const commandStatusValidator = v.union(
   v.literal("completed"),
   v.literal("failed")
 );
+const AGENT_COMMAND_VALUE_MAX_BYTES = DEFAULT_BOUNDARY_VALUE_MAX_BYTES;
 
 function toCommandDTO(cmd: Doc<"agentCommands">) {
   return {
@@ -44,7 +51,7 @@ export const record = mutation({
   args: {
     agentId: v.string(),
     type: v.string(),
-    payload: v.any(),
+    payload: vUnknown(),
     confidence: v.number(),
     reason: v.string(),
     triggeringEventIds: v.array(v.string()),
@@ -52,8 +59,25 @@ export const record = mutation({
     patternId: v.optional(v.string()),
     correlationId: v.optional(v.string()),
     routingAttempts: v.optional(v.number()),
+    verificationProof: verificationProofValidator,
   },
   handler: async (ctx, args) => {
+    assertBoundaryValuesSize([
+      {
+        fieldName: "agentCommands.record.payload",
+        value: args.payload,
+        maxBytes: AGENT_COMMAND_VALUE_MAX_BYTES,
+      },
+    ]);
+
+    const verifiedActor = await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: args.agentId,
+      expectedSubjectType: "agent",
+      expectedBoundedContext: "agent",
+    });
+    const agentId = verifiedActor.subjectId;
+
     const existing = await ctx.db
       .query("agentCommands")
       .withIndex("by_decisionId", (q) => q.eq("decisionId", args.decisionId))
@@ -63,7 +87,7 @@ export const record = mutation({
     const now = Date.now();
 
     await ctx.db.insert("agentCommands", {
-      agentId: args.agentId,
+      agentId,
       type: args.type,
       payload: args.payload,
       status: "pending" as const,
@@ -132,7 +156,7 @@ export const queryByAgent = query({
   handler: async (ctx, args) => {
     const { agentId, status, limit = 100 } = args;
 
-    let results;
+    let results: Doc<"agentCommands">[];
 
     if (status) {
       results = await ctx.db

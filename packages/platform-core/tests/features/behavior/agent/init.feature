@@ -148,8 +148,8 @@ Feature: Agent Initialization
       Then the handler args correlationId is "corr_chain_001"
 
   Rule: generateSubscriptionId produces deterministic agent-scoped IDs
-    **Invariant:** IDs start with sub_ prefix, contain agentId, contain timestamp, differ when time changes
-    **Verified by:** Scenarios covering prefix, agentId inclusion, timestamp, and uniqueness
+    **Invariant:** IDs start with sub_ prefix, contain agentId, contain a UUIDv7 suffix, and differ when regenerated
+    **Verified by:** Scenarios covering prefix, agentId inclusion, UUIDv7 suffix, and uniqueness
 
     Scenario: Subscription ID starts with sub_ prefix
       Given the system time is fixed at "2024-01-15T12:00:00Z"
@@ -161,10 +161,10 @@ Feature: Agent Initialization
       When I generate a subscription ID for "churn-risk-agent"
       Then the subscription ID contains "churn-risk-agent"
 
-    Scenario: Subscription ID contains a timestamp segment
+    Scenario: Subscription ID contains a UUID segment
       Given the system time is fixed at "2024-01-15T12:00:00Z"
       When I generate a subscription ID for "my-agent"
-      Then the subscription ID contains the current timestamp
+      Then the subscription ID contains a UUIDv7 suffix
 
     Scenario: Produces different IDs when timestamp differs
       Given the system time is fixed at "2024-01-15T12:00:00Z"

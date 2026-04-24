@@ -23,7 +23,6 @@ discriminated union supporting both mutation and action handlers.
 - AD-2: EventSubscription as discriminated union with handlerType discriminant
 
 Follows the codebase's established pattern for variant types:
-
 - DeciderOutput = DeciderSuccess | DeciderRejected | DeciderFailed (platform-decider)
 - ActionResult = { kind: "success" } | { kind: "failed" } | { kind: "canceled" } (durability)
 - WorkpoolRunResult (same pattern, orchestration)

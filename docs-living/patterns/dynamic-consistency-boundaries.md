@@ -15,25 +15,24 @@
 ## Description
 
 **Problem:** Cross-entity invariants within a bounded context currently require
-sequential commands (no atomicity) or saga coordination (eventual consistency).
-This leads to complex compensation logic and race conditions between related
-entities that should be validated together.
+  sequential commands (no atomicity) or saga coordination (eventual consistency).
+  This leads to complex compensation logic and race conditions between related
+  entities that should be validated together.
 
-**Solution:** DCB enables cross-entity invariants by:
+  **Solution:** DCB enables cross-entity invariants by:
+  1. Defining a **scope** that groups related entities
+  2. Applying **OCC on the scope** (not individual entities)
+  3. Using **correlation chains** to track the boundary
 
-1. Defining a **scope** that groups related entities
-2. Applying **OCC on the scope** (not individual entities)
-3. Using **correlation chains** to track the boundary
+  Atomic multi-product reservation: scope `tenant:t1:reservation:res_123`.
 
-Atomic multi-product reservation: scope `tenant:t1:reservation:res_123`.
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| --- | --- |
-| Multi-entity invariants | Validate across entities without distributed locking |
-| Flexible boundaries | Scope determined at runtime, not design time |
-| OCC at scope level | Conflict detection on business boundary |
-| Virtual streams | Query events across a scope |
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | --- | --- |
+  | Multi-entity invariants | Validate across entities without distributed locking |
+  | Flexible boundaries | Scope determined at runtime, not design time |
+  | OCC at scope level | Conflict detection on business boundary |
+  | Virtual streams | Query events across a scope |
 
 ## Dependencies
 
@@ -141,7 +140,7 @@ Atomic multi-product reservation: scope `tenant:t1:reservation:res_123`.
 **DCB defines four core concepts for scope-based coordination**
 
 These concepts work together to enable multi-entity invariants within
-a bounded context. Each concept has a specific role in the coordination.
+    a bounded context. Each concept has a specific role in the coordination.
 
     | Concept | Description |
     | Scope Key | Unique identifier for consistency boundary (format: tenant:${tenantId}:${scopeType}:${scopeId}) |
@@ -154,33 +153,33 @@ _Verified by: Scope key follows tenant-prefixed format, Invalid scope key format
 **Scope key uniquely identifies consistency boundary with OCC**
 
 All entities within a scope are validated together with scope-level OCC.
-The scope version tracks the last modification across all entities in
-the boundary, not individual entity versions.
+    The scope version tracks the last modification across all entities in
+    the boundary, not individual entity versions.
 
     **Current State (Saga-based):**
 
 ```typescript
 // Current: Saga for multi-product reservation
-workflow.step("reserve-product-1", () => reserveStock(product1));
-workflow.step("reserve-product-2", () => reserveStock(product2));
-workflow.step("reserve-product-3", () => reserveStock(product3));
-// Eventual consistency, complex compensation on failure
+    workflow.step('reserve-product-1', () => reserveStock(product1));
+    workflow.step('reserve-product-2', () => reserveStock(product2));
+    workflow.step('reserve-product-3', () => reserveStock(product3));
+    // Eventual consistency, complex compensation on failure
 ```
 
 **Target State (DCB-based):**
 
 ```typescript
 // Target: DCB for atomic multi-product
-await executeWithDCB(ctx, {
-  scopeKey: `tenant:${tenantId}:reservation:${reservationId}`,
-  expectedVersion: currentVersion,
-  deciders: [
-    { streamId: "product-1", decider: productDecider },
-    { streamId: "product-2", decider: productDecider },
-    { streamId: "product-3", decider: productDecider },
-  ],
-});
-// Single atomic operation with scope-level OCC
+    await executeWithDCB(ctx, {
+      scopeKey: `tenant:${tenantId}:reservation:${reservationId}`,
+      expectedVersion: currentVersion,
+      deciders: [
+        { streamId: 'product-1', decider: productDecider },
+        { streamId: 'product-2', decider: productDecider },
+        { streamId: 'product-3', decider: productDecider }
+      ]
+    });
+    // Single atomic operation with scope-level OCC
 ```
 
 _Verified by: Scope-level OCC prevents concurrent modifications, Scope version increments on successful commit, New scope starts at version 0_
@@ -188,15 +187,15 @@ _Verified by: Scope-level OCC prevents concurrent modifications, Scope version i
 **Virtual streams compose events across scope**
 
 Virtual streams provide a logical view of all events within a scope,
-regardless of which physical stream (entity) they belong to. This enables
-scope-based event queries and replay for the entire consistency boundary.
+    regardless of which physical stream (entity) they belong to. This enables
+    scope-based event queries and replay for the entire consistency boundary.
 
 _Verified by: Query events across scope, Virtual stream supports scope-based replay, Virtual stream excludes events outside scope_
 
 **DCB enforces three mandatory constraints**
 
 These constraints ensure DCB operates safely within the Convex-Native ES model.
-Violations are rejected at validation time, before any operation is attempted.
+    Violations are rejected at validation time, before any operation is attempted.
 
     | Constraint | Reason |
     | Single-BC only | Cross-BC invariants must use Sagas for compensation |
@@ -208,30 +207,32 @@ _Verified by: DCB constraint validation, DCB rejects cross-BC scope, Scope inclu
 **Operations must use Decider pattern**
 
 DCB builds on pure deciders for validation logic. The decider receives
-aggregated state from all entities in the scope, enabling cross-entity
-business rule validation in a pure function.
+    aggregated state from all entities in the scope, enabling cross-entity
+    business rule validation in a pure function.
 
 ```typescript
 // Decider receives aggregated state from all scope entities
-function reserveMultipleDecider(
-  scopeState: { products: ProductCMS[] },
-  command: ReserveMultipleCommand
-): DeciderOutput {
-  // Validate across all products in scope
-  const allAvailable = scopeState.products.every((p) => p.availableQty >= command.quantities[p.id]);
+    function reserveMultipleDecider(
+      scopeState: { products: ProductCMS[] },
+      command: ReserveMultipleCommand
+    ): DeciderOutput {
+      // Validate across all products in scope
+      const allAvailable = scopeState.products.every(
+        p => p.availableQty >= command.quantities[p.id]
+      );
 
-  if (!allAvailable) {
-    return rejected("INSUFFICIENT_STOCK", "One or more products unavailable");
-  }
+      if (!allAvailable) {
+        return rejected('INSUFFICIENT_STOCK', 'One or more products unavailable');
+      }
 
-  return success({
-    events: scopeState.products.map((p) => ({
-      type: "StockReserved",
-      productId: p.id,
-      quantity: command.quantities[p.id],
-    })),
-  });
-}
+      return success({
+        events: scopeState.products.map(p => ({
+          type: 'StockReserved',
+          productId: p.id,
+          quantity: command.quantities[p.id]
+        }))
+      });
+    }
 ```
 
 _Verified by: DCB execution requires decider, Decider result determines operation outcome_

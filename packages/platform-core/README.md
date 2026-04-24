@@ -1,116 +1,116 @@
 # @libar-dev/platform-core
 
-Core infrastructure for Convex-Native Event Sourcing.
+Shared runtime, orchestration, projection, middleware, and agent utilities for the Convex event sourcing stack.
 
-## Overview
+## What this package gives you
 
-This package provides the foundational building blocks for implementing Domain-Driven Design (DDD) with Event Sourcing and CQRS patterns on Convex. It includes:
+- command schemas, errors, and orchestration helpers
+- event helpers, global-position utilities, and correlation support
+- projection lifecycle, replay, and registration tools
+- middleware, repository, testing, monitoring, and workpool helpers
+- agent, security, durability, and DCB support used by the example app
 
-- **Events** — Event schemas, builders, and category taxonomy
-- **Commands** — Command factories, schemas, and error handling
-- **DCB** — Dynamic Consistency Boundaries for multi-entity invariants
-- **Orchestration** — CommandOrchestrator for 7-step command processing
-- **Projections** — Checkpoint-based projection lifecycle management
-- **Process Managers** — Event-driven process coordination
-
-## Installation
+## Install
 
 ```bash
-pnpm add @libar-dev/platform-core
+pnpm add @libar-dev/platform-core @libar-dev/platform-bc @libar-dev/platform-decider @libar-dev/platform-fsm convex zod
 ```
 
-**Peer Dependencies:**
+## Example
 
-- `convex` (>=1.17.0 <1.35.0)
-- `zod` (^4.0.0)
-
-## Module Overview
-
-| Module           | Import                                    | Description                        |
-| ---------------- | ----------------------------------------- | ---------------------------------- |
-| `events`         | `@libar-dev/platform-core/events`         | Event schemas, builders, upcasting |
-| `commands`       | `@libar-dev/platform-core/commands`       | Command factories and validation   |
-| `dcb`            | `@libar-dev/platform-core/dcb`            | Dynamic Consistency Boundaries     |
-| `orchestration`  | `@libar-dev/platform-core/orchestration`  | CommandOrchestrator                |
-| `handlers`       | `@libar-dev/platform-core/handlers`       | Handler result utilities           |
-| `decider`        | `@libar-dev/platform-core/decider`        | Decider handler factories          |
-| `projections`    | `@libar-dev/platform-core/projections`    | Projection lifecycle               |
-| `processManager` | `@libar-dev/platform-core/processManager` | Process manager utilities          |
-| `cms`            | `@libar-dev/platform-core/cms`            | CMS types and upcasting            |
-| `repository`     | `@libar-dev/platform-core/repository`     | Repository patterns                |
-| `middleware`     | `@libar-dev/platform-core/middleware`     | Middleware pipeline                |
-| `invariants`     | `@libar-dev/platform-core/invariants`     | Invariant validation               |
-| `ids`            | `@libar-dev/platform-core/ids`            | ID generation and branded types    |
-| `correlation`    | `@libar-dev/platform-core/correlation`    | Correlation chain tracking         |
-| `eventbus`       | `@libar-dev/platform-core/eventbus`       | Event bus infrastructure           |
-| `integration`    | `@libar-dev/platform-core/integration`    | Integration event patterns         |
-| `registry`       | `@libar-dev/platform-core/registry`       | Command registry                   |
-| `batch`          | `@libar-dev/platform-core/batch`          | Batch execution utilities          |
-| `queries`        | `@libar-dev/platform-core/queries`        | Query factories                    |
-| `fsm`            | `@libar-dev/platform-core/fsm`            | FSM re-exports                     |
-| `testing`        | `@libar-dev/platform-core/testing`        | Testing utilities                  |
-
-## Quick Start
-
-### Dual-Write Pattern
-
-The core pattern: CMS update + Event append in a single atomic mutation.
-
-```typescript
-import { success, rejected } from "@libar-dev/platform-decider";
-
-// Pure decider function (no I/O)
-const confirmOrderDecider = (state, command, context) => {
-  if (state.status !== "pending") {
-    return rejected("ORDER_NOT_PENDING", "Order must be pending to confirm");
-  }
-
-  return success({
-    data: { confirmedAt: context.now },
-    event: { eventType: "OrderConfirmed", payload: { orderId: state.orderId } },
-    stateUpdate: { status: "confirmed", confirmedAt: context.now },
-  });
-};
-```
-
-### Dynamic Consistency Boundaries (DCB)
-
-For multi-entity invariants within a bounded context:
-
-```typescript
+```ts
+import { createAggregateCommandSchema } from "@libar-dev/platform-core/commands";
+import { CommandErrors } from "@libar-dev/platform-core/commands";
+import { createQueryRegistry, createReadModelQuery } from "@libar-dev/platform-core/queries";
 import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core/dcb";
+import { z } from "zod";
 
-const result = await executeWithDCB(ctx, {
-  scopeKey: createScopeKey(tenantId, "reservation", reservationId),
-  expectedVersion: 0,
-  boundedContext: "inventory",
-  streamType: "Reservation",
-  schemaVersion: 1,
-  entities: {
-    streamIds: ["product-1", "product-2"],
-    loadEntity: (ctx, streamId) => inventoryRepo.tryLoad(ctx, streamId),
+export const CreateOrderSchema = createAggregateCommandSchema({
+  commandType: "CreateOrder",
+  payloadSchema: z.object({
+    orderId: z.string(),
+    customerId: z.string(),
+  }),
+  aggregateTarget: {
+    type: "Order",
+    idField: "orderId",
   },
-  decider: reserveMultipleDecider,
-  command: { orderId, items },
-  applyUpdate: async (ctx, _id, cms, update, version, now) => {
-    await ctx.db.patch(_id, { ...update, version, updatedAt: now });
-  },
-  commandId,
-  correlationId,
 });
+
+export const orderQueries = createQueryRegistry("orders", "orderSummary", {
+  getById: createReadModelQuery(
+    {
+      queryName: "getById",
+      description: "Fetch a single order summary",
+      sourceProjection: "orderSummary",
+      targetTable: "orderSummaries",
+    },
+    "single"
+  ),
+});
+
+export async function reserveInventory(ctx: unknown, tenantId: string, reservationId: string) {
+  return executeWithDCB(ctx as never, {
+    scopeKey: createScopeKey(tenantId, "reservation", reservationId),
+    expectedVersion: 0,
+    boundedContext: "inventory",
+    streamType: "Reservation",
+    schemaVersion: 1,
+    entities: {
+      streamIds: [reservationId],
+      loadEntity: async () => null,
+    },
+    decider: () => {
+      throw CommandErrors.validation("NOT_IMPLEMENTED", "Replace example decider");
+    },
+    command: { reservationId },
+    applyUpdate: async () => undefined,
+    commandId: "cmd_demo",
+    correlationId: "corr_demo",
+  });
+}
 ```
 
-See [docs/dcb.md](docs/dcb.md) for complete DCB documentation.
+## Main subpath exports
 
-## Documentation
+- `@libar-dev/platform-core/commands`
+- `@libar-dev/platform-core/events`
+- `@libar-dev/platform-core/orchestration`
+- `@libar-dev/platform-core/projections`
+- `@libar-dev/platform-core/middleware`
+- `@libar-dev/platform-core/validation`
+- `@libar-dev/platform-core/repository`
+- `@libar-dev/platform-core/queries`
+- `@libar-dev/platform-core/testing`
+- `@libar-dev/platform-core/agent`
+- `@libar-dev/platform-core/security`
+- `@libar-dev/platform-core/durability`
+- `@libar-dev/platform-core/dcb`
 
-- [DCB (Dynamic Consistency Boundaries)](docs/dcb.md) — Multi-entity coordination
-- [Architecture Overview](../../docs/architecture/OVERVIEW.md) — System architecture
+## Stability
 
-## Related Packages
+| Surface | Status | Notes |
+| --- | --- | --- |
+| Commands, queries, projections, repository, testing | Stable | Used broadly across the repo |
+| Agent, security, durability, DCB, reservations | Active | Real code paths exist, but the surface area is still evolving fastest here |
+| Metrics and monitoring helpers | Stable | Good for instrumentation, still intentionally lightweight |
 
-- `@libar-dev/platform-bc` — Bounded context contracts
-- `@libar-dev/platform-decider` — Pure decider functions
-- `@libar-dev/platform-store` — Event Store component
-- `@libar-dev/platform-bus` — Command Bus component
-- `@libar-dev/platform-fsm` — Finite State Machine utilities
+## Known limitations
+
+- This package is broad. Consumers should prefer subpath imports over the root barrel when possible.
+- A few runtime areas, especially agent and reservation support, still have more API churn than the older command and query helpers.
+- Workpool key-based ordering is still gated by upstream support.
+
+## Security notes
+
+- Verification proofs and boundary validation live here, but the caller still needs to wire them correctly.
+- Do not bypass component boundaries by reaching into private tables or assuming auth passthrough.
+- Use typed error categories instead of loose string reasons at orchestration boundaries.
+
+## Testing
+
+```bash
+pnpm --filter @libar-dev/platform-core test
+pnpm --filter @libar-dev/platform-core test:integration:ci
+pnpm --filter @libar-dev/platform-core test:coverage
+```

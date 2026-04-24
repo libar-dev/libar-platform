@@ -23,6 +23,8 @@ app.use(commandBus);
 // Mount workpool for projection processing
 // Note: Sagas use workflow's internal workpool for step execution
 app.use(workpool, { name: "projectionPool" });
+app.use(workpool, { name: "sagaPool" });
+app.use(workpool, { name: "fanoutPool" });
 
 // Mount workpool for DCB retry scheduling (Phase 18a)
 // Separate from projectionPool to:

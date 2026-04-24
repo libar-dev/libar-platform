@@ -64,7 +64,6 @@ domain events via EventBus and emit commands based on pattern detection.
 ### Example: Churn Risk Detection
 
 This example implements a churn risk agent that:
-
 1. Subscribes to OrderCancelled events via EventBus
 2. Tracks cancellation patterns per customer (30-day window)
 3. Detects churn risk when a customer cancels 3+ orders

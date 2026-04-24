@@ -1813,6 +1813,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
             eventData: { orderId: `${testRunId}_ord_unique` },
             boundedContext: "orders",
             expectedVersion: 0,
+            correlationId: `${testRunId}_corr_unique`,
           });
           state.durability.appendResult = result;
           setLastResult(result);
@@ -1881,6 +1882,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
               eventData: { key: keyName },
               boundedContext: "orders",
               expectedVersion: version ?? 0,
+              correlationId: `${testRunId}_corr_${keyName}_a`,
             });
           }
         );
@@ -1904,6 +1906,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
               eventData: { key: keyName },
               boundedContext: "orders",
               expectedVersion: version ?? 0,
+              correlationId: `${testRunId}_corr_${keyName}_b`,
             });
           }
         );
@@ -1952,6 +1955,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
             eventData: { orderId: "dup-test" },
             boundedContext: "orders",
             expectedVersion: 0,
+            correlationId: `${testRunId}_corr_dup_initial`,
           });
         });
 
@@ -1966,6 +1970,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
             eventData: { orderId: "dup-test-2" },
             boundedContext: "orders",
             expectedVersion: 0,
+            correlationId: `${testRunId}_corr_dup_repeat`,
           });
           state.durability.appendResult = result;
           setLastResult(result);
@@ -2013,6 +2018,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
           eventData: { payload: "original data" },
           boundedContext: "orders",
           expectedVersion: 0,
+          correlationId: `${testRunId}_corr_preserve_initial`,
         });
       });
 
@@ -2027,6 +2033,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
           eventData: { payload: "new data" },
           boundedContext: "orders",
           expectedVersion: 0,
+          correlationId: `${testRunId}_corr_preserve_repeat`,
         });
         state.durability.appendResult = result;
         setLastResult(result);
@@ -2085,6 +2092,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
                 eventData: { id: streamId },
                 boundedContext: streamType.toLowerCase(),
                 expectedVersion: 0,
+                correlationId: `${testRunId}_corr_${streamType}_${streamId}_a`,
               }
             );
             setLastResult(result);
@@ -2109,6 +2117,7 @@ describeFeature(idempotentAppendFeature, ({ Background, Rule }) => {
                 eventData: { id: streamId },
                 boundedContext: streamType.toLowerCase(),
                 expectedVersion: 0,
+                correlationId: `${testRunId}_corr_${streamType}_${streamId}_b`,
               }
             );
             setLastResult(result);

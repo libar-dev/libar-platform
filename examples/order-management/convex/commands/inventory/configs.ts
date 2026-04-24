@@ -16,6 +16,7 @@
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";
 import type { CommandConfig, CommandHandlerResult } from "@libar-dev/platform-core";
+import type { GlobalPositionLike } from "../../lib/globalPosition";
 import { components } from "../../_generated/api";
 import type {
   CreateProductData,
@@ -167,7 +168,7 @@ export const createProductConfig: CommandConfig<
     sku: string;
     unitPrice: number;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   CreateProductData
 > = {
@@ -215,7 +216,7 @@ export const addStockConfig: CommandConfig<
     productId: string;
     newAvailableQuantity: number;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   AddStockData
 > = {
@@ -268,7 +269,7 @@ export const reserveStockConfig: CommandConfig<
     items: Array<{ productId: string; quantity: number }>;
     expiresAt: number;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   ReserveStockData
 > = {
@@ -343,7 +344,7 @@ export const confirmReservationConfig: CommandConfig<
     reservationId: string;
     orderId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   ConfirmReservationData
 > = {
@@ -392,7 +393,7 @@ export const confirmReservationConfig: CommandConfig<
  *
  * Note: Projection args include items from the enriched event for proper ES pattern.
  * The event.payload["items"] cast remains because EventData.payload is Record<string, unknown>.
- * TODO: Consider making EventData generic for fully typed event payloads.
+ * Backlog: T5-004. Consider making EventData generic for fully typed event payloads.
  */
 export const releaseReservationConfig: CommandConfig<
   ReleaseReservationArgs,
@@ -409,7 +410,7 @@ export const releaseReservationConfig: CommandConfig<
     reason: string;
     items: Array<{ productId: string; quantity: number }>;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   ReleaseReservationData
 > = {
@@ -430,7 +431,7 @@ export const releaseReservationConfig: CommandConfig<
       reservationId: args.reservationId,
       orderId: result.data.orderId,
       reason: args.reason,
-      // Event payload access remains typed as Record<string, unknown> - see TODO above
+// Event payload access remains typed as Record<string, unknown>. See T5-004 above.
       items: result.event.payload["items"] as Array<{ productId: string; quantity: number }>,
       eventId: result.event.eventId,
       globalPosition,
@@ -507,7 +508,7 @@ export const reserveStockDCBConfig: CommandConfig<
     items: Array<{ productId: string; quantity: number }>;
     expiresAt: number;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   ReserveStockData & { reservationId: string }
 > = {
@@ -594,7 +595,7 @@ export const expireReservationConfig: CommandConfig<
     orderId: string;
     items: Array<{ productId: string; quantity: number }>;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
   },
   ExpireReservationData
 > = {

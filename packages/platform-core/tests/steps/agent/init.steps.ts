@@ -644,7 +644,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterAllScenarios }) => {
       });
     });
 
-    RuleScenario("Subscription ID contains a timestamp segment", ({ Given, When, Then }) => {
+    RuleScenario("Subscription ID contains a UUID segment", ({ Given, When, Then }) => {
       Given('the system time is fixed at "2024-01-15T12:00:00Z"', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
@@ -654,9 +654,9 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterAllScenarios }) => {
         state.subscriptionId = generateSubscriptionId("my-agent");
       });
 
-      Then("the subscription ID contains the current timestamp", () => {
-        const timestamp = String(Date.now());
-        expect(state.subscriptionId!).toContain(timestamp);
+      Then("the subscription ID contains a UUIDv7 suffix", () => {
+        const parts = state.subscriptionId!.split("_");
+        expect(parts[parts.length - 1]).toMatch(/^[0-9a-f-]{36}$/);
       });
     });
 
@@ -863,7 +863,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterAllScenarios }) => {
         });
 
         And("the handle checkpoint has lastProcessedPosition -1", () => {
-          expect(state.initResult!.handle!.checkpoint.lastProcessedPosition).toBe(-1);
+          expect(state.initResult!.handle!.checkpoint.lastProcessedPosition).toBe(-1n);
         });
 
         And("the handle checkpoint has eventsProcessed 0", () => {

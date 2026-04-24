@@ -16,42 +16,41 @@
 ## Description
 
 **Problem:** Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses
-in-memory implementations not suitable for production. DCB returns `conflict` status but callers must
-implement manual retry logic, leading to boilerplate and inconsistent patterns.
+  in-memory implementations not suitable for production. DCB returns `conflict` status but callers must
+  implement manual retry logic, leading to boilerplate and inconsistent patterns.
 
-**Solution:** Minimal adapters that bridge existing platform interfaces to production-grade
-Convex durable function components:
+  **Solution:** Minimal adapters that bridge existing platform interfaces to production-grade
+  Convex durable function components:
+  - **RateLimitAdapter** - Connects `RateLimitChecker` interface to `@convex-dev/rate-limiter`
+  - **withDCBRetry** - Wraps `executeWithDCB` with Workpool-based OCC retry and backoff
+  - **Delete in-memory implementations** - Single production-grade option (no fallbacks)
 
-- **RateLimitAdapter** - Connects `RateLimitChecker` interface to `@convex-dev/rate-limiter`
-- **withDCBRetry** - Wraps `executeWithDCB` with Workpool-based OCC retry and backoff
-- **Delete in-memory implementations** - Single production-grade option (no fallbacks)
+  **Reference:** See `docs/architecture/CONVEX-DURABILITY-REFERENCE.md` for component selection,
+  retry strategies, and the standard backoff formula used in this implementation.
 
-**Reference:** See `docs/architecture/CONVEX-DURABILITY-REFERENCE.md` for component selection,
-retry strategies, and the standard backoff formula used in this implementation.
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Production-grade rate limiting | Sharding, persistence, reservation patterns via component |
+  | Automatic OCC retry | Workpool handles backoff, jitter, partition ordering |
+  | Zero middleware changes | Adapter implements existing `RateLimitChecker` interface |
+  | Consistent retry patterns | Centralized backoff config, prevents boilerplate |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Production-grade rate limiting | Sharding, persistence, reservation patterns via component |
-| Automatic OCC retry | Workpool handles backoff, jitter, partition ordering |
-| Zero middleware changes | Adapter implements existing `RateLimitChecker` interface |
-| Consistent retry patterns | Centralized backoff config, prevents boilerplate |
+  **Architectural Context:**
+  """
+  Current State                           After Adapters
+  ─────────────                           ──────────────
+  Middleware Pipeline                     Middleware Pipeline
+       │                                       │
+       ▼                                       ▼
+  RateLimitChecker ──→ In-memory         RateLimitChecker ──→ ConvexRateLimitAdapter
+  (lost on cold start)                   (persisted, sharded)  ──→ @convex-dev/rate-limiter
 
-**Architectural Context:**
-"""
-Current State After Adapters
-───────────── ──────────────
-Middleware Pipeline Middleware Pipeline
-│ │
-▼ ▼
-RateLimitChecker ──→ In-memory RateLimitChecker ──→ ConvexRateLimitAdapter
-(lost on cold start) (persisted, sharded) ──→ @convex-dev/rate-limiter
-
-DCB executeWithDCB DCB withDCBRetry
-│ │
-▼ ▼
-Returns { status: "conflict" } Auto-retry via Workpool
-(caller handles retry) (backoff, jitter, partition key)
-"""
+  DCB executeWithDCB                     DCB withDCBRetry
+       │                                       │
+       ▼                                       ▼
+  Returns { status: "conflict" }         Auto-retry via Workpool
+  (caller handles retry)                 (backoff, jitter, partition key)
+  """
 
 ## Acceptance Criteria
 
@@ -117,7 +116,7 @@ Returns { status: "conflict" } Auto-retry via Workpool
 
 - Given a backoff config with initialMs=100, base=2, maxMs=30000
 - When calculating backoff for attempt 3
-- Then the base delay should be 800ms (100 \* 2^3)
+- Then the base delay should be 800ms (100 * 2^3)
 - And jitter should multiply by 0.5-1.5 (result: 400-1200ms)
 - And total should not exceed 30000ms
 
@@ -176,7 +175,7 @@ Returns { status: "conflict" } Auto-retry via Workpool
 **Rate limit adapter bridges middleware to component**
 
 **Invariant:** Rate limiting decisions must persist across server restarts and scale
-horizontally via sharding—no in-memory implementations in production.
+    horizontally via sharding—no in-memory implementations in production.
 
     **Rationale:** In-memory rate limiters lose state on cold starts and cannot enforce
     consistent limits across multiple server instances. The `@convex-dev/rate-limiter`
@@ -192,65 +191,69 @@ horizontally via sharding—no in-memory implementations in production.
     The adapter implements the existing `RateLimitChecker` interface, allowing the current
     middleware pipeline to use `@convex-dev/rate-limiter` without any changes to middleware code.
 
+    **Input:** RateLimitCheckArgs -- key
+
+    **Output:** RateLimitResult -- allowed, retryAfterMs
+
     **Interface Contract (existing):**
 
 ```typescript
 // platform-core/src/middleware/types.ts - EXISTING interface
-export type RateLimitChecker = (key: string) => Promise<RateLimitResult>;
+    export type RateLimitChecker = (key: string) => Promise<RateLimitResult>;
 
-export interface RateLimitResult {
-  allowed: boolean;
-  retryAfterMs?: number;
-}
+    export interface RateLimitResult {
+      allowed: boolean;
+      retryAfterMs?: number;
+    }
 ```
 
 **Adapter Implementation:**
 
 ```typescript
 // platform-core/src/middleware/rateLimitAdapter.ts - NEW
-import type { RateLimiter } from "@convex-dev/rate-limiter";
-import type { MutationCtx } from "convex/server";
-import type { RateLimitChecker, RateLimitResult } from "./types.js";
+    import type { RateLimiter } from "@convex-dev/rate-limiter";
+    import type { MutationCtx } from "convex/server";
+    import type { RateLimitChecker, RateLimitResult } from "./types.js";
 
-/**
- * Create a RateLimitChecker that delegates to @convex-dev/rate-limiter.
- *
- * @param rateLimiter - Instance from the mounted component
- * @param limitName - Named limit from rateLimiter config
- * @returns Factory that creates RateLimitChecker for a given ctx
- *
- * @example
- * // In convex/rateLimits.ts
- * export const rateLimiter = new RateLimiter(components.rateLimiter, {
- *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
- * });
- *
- * // In middleware setup
- * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
- * const result = await checker("user:" + userId);
- */
-export function createConvexRateLimitAdapter(
-  rateLimiter: RateLimiter,
-  limitName: string
-): (ctx: MutationCtx) => RateLimitChecker {
-  return (ctx: MutationCtx): RateLimitChecker => {
-    return async (key: string): Promise<RateLimitResult> => {
-      const status = await rateLimiter.limit(ctx, limitName, { key });
-      return {
-        allowed: status.ok,
-        retryAfterMs: status.retryAfter,
+    /**
+     * Create a RateLimitChecker that delegates to @convex-dev/rate-limiter.
+     *
+     * @param rateLimiter - Instance from the mounted component
+     * @param limitName - Named limit from rateLimiter config
+     * @returns Factory that creates RateLimitChecker for a given ctx
+     *
+     * @example
+     * // In convex/rateLimits.ts
+     * export const rateLimiter = new RateLimiter(components.rateLimiter, {
+     *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
+     * });
+     *
+     * // In middleware setup
+     * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
+     * const result = await checker("user:" + userId);
+     */
+    export function createConvexRateLimitAdapter(
+      rateLimiter: RateLimiter,
+      limitName: string
+    ): (ctx: MutationCtx) => RateLimitChecker {
+      return (ctx: MutationCtx): RateLimitChecker => {
+        return async (key: string): Promise<RateLimitResult> => {
+          const status = await rateLimiter.limit(ctx, limitName, { key });
+          return {
+            allowed: status.ok,
+            retryAfterMs: status.retryAfter,
+          };
+        };
       };
-    };
-  };
-}
+    }
 ```
 
 **Sharding Guidelines (from CONVEX-DURABILITY-REFERENCE.md Section 7):**
-| Expected QPS | Recommended Shards |
-| < 50 | None (default) |
-| 50-200 | 5-10 |
-| 200-1000 | 10-50 |
-| > 1000 | 50+ |
+    | Expected QPS | Recommended Shards |
+    | < 50 | None (default) |
+    | 50-200 | 5-10 |
+    | 200-1000 | 10-50 |
+    | > 1000 | 50+ |
 
     **Formula:** `shards ≈ QPS / 2`
 
@@ -259,7 +262,7 @@ _Verified by: Adapter allows request within rate limit, Adapter rejects request 
 **DCB retry helper automatically handles OCC conflicts**
 
 **Invariant:** OCC conflicts from DCB operations must be retried automatically with
-exponential backoff and scope-based serialization—callers must not implement retry logic.
+    exponential backoff and scope-based serialization—callers must not implement retry logic.
 
     **Rationale:** Manual retry leads to inconsistent patterns, missing jitter (thundering
     herd), and no partition ordering (OCC storms). Workpool provides durable retry with
@@ -279,11 +282,11 @@ exponential backoff and scope-based serialization—callers must not implement r
 
 ```typescript
 // Caller must implement retry manually
-const result = await executeWithDCB(ctx, config);
-if (result.status === "conflict") {
-  // Manual retry logic required - inconsistent across codebase
-  // No backoff, no jitter, no partition ordering
-}
+    const result = await executeWithDCB(ctx, config);
+    if (result.status === "conflict") {
+      // Manual retry logic required - inconsistent across codebase
+      // No backoff, no jitter, no partition ordering
+    }
 ```
 
 **Solution with withDCBRetry:**
@@ -382,27 +385,31 @@ if (result.status === "conflict") {
     }
 ```
 
-**Backoff Calculation (standard formula from CONVEX-DURABILITY-REFERENCE.md):**
+**Input:** DCBRetryOptions -- attempt, onComplete, context
+
+    **Output:** DCBRetryResult -- status, retryKey, scheduledAt
+
+    **Backoff Calculation (standard formula from CONVEX-DURABILITY-REFERENCE.md):**
 
 ```typescript
 // platform-core/src/dcb/backoff.ts
-// Uses DCBRetryConfig which extends Workpool's RetryBehavior
+    // Uses DCBRetryConfig which extends Workpool's RetryBehavior
 
-/**
- * Calculate exponential backoff with jitter.
- *
- * Formula: min(initialMs * base^attempt * jitter, maxMs)
- * Jitter: 50-150% multiplier (prevents thundering herd)
- *
- * This matches the standard Convex Workpool formula exactly.
- * We must calculate it ourselves because Workpool's retry only
- * triggers on exceptions, not successful conflict returns.
- */
-export function calculateBackoff(attempt: number, config: DCBRetryConfig): number {
-  const delay = config.initialBackoffMs * Math.pow(config.base, attempt);
-  const jitter = 0.5 + Math.random(); // 50-150% multiplier
-  return Math.min(delay * jitter, config.maxBackoffMs);
-}
+    /**
+     * Calculate exponential backoff with jitter.
+     *
+     * Formula: min(initialMs * base^attempt * jitter, maxMs)
+     * Jitter: 50-150% multiplier (prevents thundering herd)
+     *
+     * This matches the standard Convex Workpool formula exactly.
+     * We must calculate it ourselves because Workpool's retry only
+     * triggers on exceptions, not successful conflict returns.
+     */
+    export function calculateBackoff(attempt: number, config: DCBRetryConfig): number {
+      const delay = config.initialBackoffMs * Math.pow(config.base, attempt);
+      const jitter = 0.5 + Math.random(); // 50-150% multiplier
+      return Math.min(delay * jitter, config.maxBackoffMs);
+    }
 ```
 
 _Verified by: DCB succeeds on first attempt, DCB conflict triggers automatic retry, Max retries exceeded returns rejected, Backoff increases exponentially with jitter, Partition key ensures scope serialization, DCB retry with onComplete callback, Version advances between retry scheduling and execution_
@@ -410,7 +417,11 @@ _Verified by: DCB succeeds on first attempt, DCB conflict triggers automatic ret
 **Adapters integrate with existing platform infrastructure**
 
 **Invariant:** Adapters must plug into existing platform interfaces without requiring
-changes to middleware pipeline, command configs, or core orchestration logic.
+    changes to middleware pipeline, command configs, or core orchestration logic.
+
+    **Input:** PlatformInterfaces -- RateLimitChecker, DCBExecutor
+
+    **Output:** IntegrationResult -- rateLimiterMounted, dcbRetryPoolMounted
 
     **Rationale:** The platform already has well-defined interfaces (RateLimitChecker,
     DCB execution flow). Adapters bridge these to Convex durable components without
@@ -429,75 +440,75 @@ changes to middleware pipeline, command configs, or core orchestration logic.
 
 ```typescript
 // examples/order-management/convex/rateLimits.ts
-import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
-import { components } from "./_generated/api";
+    import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
+    import { components } from "./_generated/api";
 
-export const rateLimiter = new RateLimiter(components.rateLimiter, {
-  // Command dispatch: 100/min with burst capacity, sharded for scale
-  commandDispatch: {
-    kind: "token bucket",
-    rate: 100,
-    period: MINUTE,
-    capacity: 150,
-    shards: 50, // For ~100 QPS
-  },
-  // Admin operations: strict hourly limit
-  adminOperations: {
-    kind: "fixed window",
-    rate: 10,
-    period: HOUR,
-  },
-});
+    export const rateLimiter = new RateLimiter(components.rateLimiter, {
+      // Command dispatch: 100/min with burst capacity, sharded for scale
+      commandDispatch: {
+        kind: "token bucket",
+        rate: 100,
+        period: MINUTE,
+        capacity: 150,
+        shards: 50,  // For ~100 QPS
+      },
+      // Admin operations: strict hourly limit
+      adminOperations: {
+        kind: "fixed window",
+        rate: 10,
+        period: HOUR,
+      },
+    });
 
-// examples/order-management/convex/middleware.ts
-import { createConvexRateLimitAdapter } from "@libar-dev/platform-core";
-import { rateLimiter } from "./rateLimits";
+    // examples/order-management/convex/middleware.ts
+    import { createConvexRateLimitAdapter } from "@libar-dev/platform-core";
+    import { rateLimiter } from "./rateLimits";
 
-export function createProductionMiddleware(ctx: MutationCtx) {
-  return createRateLimitMiddleware({
-    checker: createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx),
-    getKey: RateLimitKeys.byUserAndCommand(getUserId),
-    skipFor: ["GetSystemHealth"],
-  });
-}
+    export function createProductionMiddleware(ctx: MutationCtx) {
+      return createRateLimitMiddleware({
+        checker: createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx),
+        getKey: RateLimitKeys.byUserAndCommand(getUserId),
+        skipFor: ["GetSystemHealth"],
+      });
+    }
 ```
 
 **DCB Retry Integration in Example App:**
 
 ```typescript
 // examples/order-management/convex/dcb/retryExecution.ts
-import { internalMutation } from "../_generated/server";
-import { withDCBRetry } from "@libar-dev/platform-core";
-import { dcbRetryPool } from "../infrastructure";
+    import { internalMutation } from "../_generated/server";
+    import { withDCBRetry } from "@libar-dev/platform-core";
+    import { dcbRetryPool } from "../infrastructure";
 
-// Internal mutation that Workpool calls for retries
-export const retryDCBExecution = internalMutation({
-  args: {
-    dcbConfig: v.any(), // Serialized DCB config
-    retryConfig: v.any(),
-    attempt: v.number(),
-  },
-  handler: async (ctx, { dcbConfig, retryConfig, attempt }) => {
-    return withDCBRetry(
-      ctx,
-      dcbRetryPool,
-      internal.dcb.retryExecution.retryDCBExecution,
-      dcbConfig,
-      retryConfig,
-      attempt
-    );
-  },
-});
+    // Internal mutation that Workpool calls for retries
+    export const retryDCBExecution = internalMutation({
+      args: {
+        dcbConfig: v.any(),  // Serialized DCB config
+        retryConfig: v.any(),
+        attempt: v.number(),
+      },
+      handler: async (ctx, { dcbConfig, retryConfig, attempt }) => {
+        return withDCBRetry(
+          ctx,
+          dcbRetryPool,
+          internal.dcb.retryExecution.retryDCBExecution,
+          dcbConfig,
+          retryConfig,
+          attempt
+        );
+      },
+    });
 
-// examples/order-management/convex/infrastructure.ts (addition)
-export const dcbRetryPool = new Workpool(components.dcbRetryPool, {
-  maxParallelism: 10,
-  defaultRetryBehavior: {
-    maxAttempts: 1, // withDCBRetry handles retry logic
-    initialBackoffMs: 100,
-    base: 2,
-  },
-});
+    // examples/order-management/convex/infrastructure.ts (addition)
+    export const dcbRetryPool = new Workpool(components.dcbRetryPool, {
+      maxParallelism: 10,
+      defaultRetryBehavior: {
+        maxAttempts: 1,  // withDCBRetry handles retry logic
+        initialBackoffMs: 100,
+        base: 2,
+      },
+    });
 ```
 
 _Verified by: Rate limiter mounts as Convex component, DCB retry pool mounts as separate Workpool, Middleware pipeline order preserved_

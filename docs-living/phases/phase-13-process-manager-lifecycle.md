@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 3/3 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 3     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 3     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 3     |
 
 ---
 
@@ -48,50 +48,43 @@ Follows the Workpool pattern for consistent logging across the platform.
 | Business Value | focused packages for consumers with clear boundaries |
 
 **Problem:**
-The original @convex-es/core package grew to 25+ modules, creating issues:
+  The original @convex-es/core package grew to 25+ modules, creating issues:
+  - Large bundle size for consumers who only need specific patterns
+  - Unclear API surface (what's core vs experimental?)
+  - Testing sprawl (decider tests in example app, not package)
+  - Difficult to release patterns independently
 
-- Large bundle size for consumers who only need specific patterns
-- Unclear API surface (what's core vs experimental?)
-- Testing sprawl (decider tests in example app, not package)
-- Difficult to release patterns independently
+  **Solution:**
+  Extract focused pattern packages under @libar-dev/platform-* namespace
+  with a layered architecture enforcing strict dependency direction.
 
-**Solution:**
-Extract focused pattern packages under @libar-dev/platform-\* namespace
-with a layered architecture enforcing strict dependency direction.
+  Naming rationale:
+  - "Libar" means book/library, repository of knowledge/wisdom
+  - Events ARE the institutional memory - the "libar" of the system
+  - "Platform" indicates infrastructure for building applications
 
-Naming rationale:
+  **Layered Architecture:**
 
-- "Libar" means book/library, repository of knowledge/wisdom
-- Events ARE the institutional memory - the "libar" of the system
-- "Platform" indicates infrastructure for building applications
+  Layer 0 - Foundation (Pure TypeScript, No Convex Dependencies):
+  - @libar-dev/platform-fsm: State machine definitions (defineFSM, canTransition)
+  - @libar-dev/platform-decider: Functional ES pattern (decide, evolve, Decider types)
 
-**Layered Architecture:**
+  Layer 1 - Infrastructure (Convex Components):
+  - @libar-dev/platform-store: Event store component (streams, globalPosition)
+  - @libar-dev/platform-bus: Command bus component (idempotency, correlation)
 
-Layer 0 - Foundation (Pure TypeScript, No Convex Dependencies):
+  Layer 2 - Patterns (Framework Glue):
+  - @libar-dev/platform-core: Events, commands, ids, CMS types, middleware
+    (includes DCB and Orchestrator as internal modules)
 
-- @libar-dev/platform-fsm: State machine definitions (defineFSM, canTransition)
-- @libar-dev/platform-decider: Functional ES pattern (decide, evolve, Decider types)
+  Layer 3 - Bounded Context:
+  - @libar-dev/platform-bc: BC contracts, definitions, cross-context patterns
 
-Layer 1 - Infrastructure (Convex Components):
-
-- @libar-dev/platform-store: Event store component (streams, globalPosition)
-- @libar-dev/platform-bus: Command bus component (idempotency, correlation)
-
-Layer 2 - Patterns (Framework Glue):
-
-- @libar-dev/platform-core: Events, commands, ids, CMS types, middleware
-  (includes DCB and Orchestrator as internal modules)
-
-Layer 3 - Bounded Context:
-
-- @libar-dev/platform-bc: BC contracts, definitions, cross-context patterns
-
-**Known Gaps (deferred):**
-
-- @libar-dev/platform-dcb not extracted (lives in platform-core/src/dcb/)
-- @libar-dev/platform-orchestrator not extracted (lives in platform-core/src/orchestration/)
-- Some duplicate tests remain in platform-core for FSM/Decider
-- Testing-infrastructure feature files still in examples/ (minor)
+  **Known Gaps (deferred):**
+  - @libar-dev/platform-dcb not extracted (lives in platform-core/src/dcb/)
+  - @libar-dev/platform-orchestrator not extracted (lives in platform-core/src/orchestration/)
+  - Some duplicate tests remain in platform-core for FSM/Decider
+  - Testing-infrastructure feature files still in examples/ (minor)
 
 #### Acceptance Criteria
 
@@ -120,7 +113,7 @@ Layer 3 - Bounded Context:
 
 **Packages are independently publishable**
 
-- Given all @libar-dev/platform-\* packages
+- Given all @libar-dev/platform-* packages
 - When publishing to NPM
 - Then each package can be versioned independently
 - And consumers can install individual packages
@@ -143,8 +136,8 @@ Layer 3 - Bounded Context:
 **Platform namespace avoids conflicts**
 
 - Given the @libar-dev namespace
-- Then @libar-dev/platform-\* does not conflict with @libar-dev/core
-- And @libar-dev/platform-_ does not conflict with @libar-dev/convex-_
+- Then @libar-dev/platform-* does not conflict with @libar-dev/core
+- And @libar-dev/platform-* does not conflict with @libar-dev/convex-*
 
 #### Business Rules
 

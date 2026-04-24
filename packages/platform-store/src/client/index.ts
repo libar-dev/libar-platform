@@ -7,15 +7,10 @@ import type {
   GenericQueryCtx,
   GenericDataModel,
 } from "convex/server";
-
-/**
- * Event category (Phase 9 event taxonomy).
- * - domain: Internal facts within bounded context for ES replay
- * - integration: Cross-context communication with versioned contracts
- * - trigger: ID-only notifications for GDPR compliance
- * - fat: Full state snapshots for external systems
- */
-export type EventCategory = "domain" | "integration" | "trigger" | "fat";
+import type { EventCategory } from "@libar-dev/platform-contracts-shared";
+import type { GlobalPositionLike } from "@libar-dev/platform-core/events";
+import { createVerificationProof } from "@libar-dev/platform-core/security";
+export type { EventCategory } from "@libar-dev/platform-contracts-shared";
 
 /**
  * Event input for appending to a stream.
@@ -23,6 +18,7 @@ export type EventCategory = "domain" | "integration" | "trigger" | "fat";
 export interface EventInput {
   eventId: string;
   eventType: string;
+  scopeKey?: string;
   payload: unknown;
   /**
    * Event category (Phase 9). Defaults to "domain" if not specified.
@@ -47,6 +43,7 @@ export interface AppendArgs {
   streamId: string;
   expectedVersion: number;
   boundedContext: string;
+  tenantId?: string;
   events: EventInput[];
   [key: string]: unknown;
 }
@@ -58,11 +55,23 @@ export type AppendResult =
   | {
       status: "success";
       eventIds: string[];
-      globalPositions: number[];
+      globalPositions: GlobalPositionLike[];
+      newVersion: number;
+    }
+  | {
+      status: "duplicate";
+      eventIds: string[];
+      globalPositions: GlobalPositionLike[];
       newVersion: number;
     }
   | {
       status: "conflict";
+      currentVersion: number;
+    }
+  | {
+      status: "idempotency_conflict";
+      existingEventId: string;
+      auditId: string;
       currentVersion: number;
     };
 
@@ -75,8 +84,10 @@ export interface StoredEvent {
   streamType: string;
   streamId: string;
   version: number;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   boundedContext: string;
+  tenantId?: string;
+  scopeKey?: string;
   /**
    * Event category (Phase 9 event taxonomy).
    */
@@ -90,6 +101,24 @@ export interface StoredEvent {
   timestamp: number;
   payload: unknown;
   metadata?: unknown;
+}
+
+export interface IdempotencyConflictAudit {
+  auditId: string;
+  idempotencyKey: string;
+  streamType: string;
+  streamId: string;
+  boundedContext: string;
+  tenantId?: string;
+  incomingEventType: string;
+  existingEventId: string;
+  existingEventType: string;
+  conflictReason: string;
+  incomingFingerprint: string;
+  existingFingerprint: string;
+  incomingPayload: unknown;
+  existingPayload: unknown;
+  attemptedAt: number;
 }
 
 /**
@@ -107,11 +136,17 @@ export interface ReadStreamArgs {
  * Read from position arguments.
  */
 export interface ReadFromPositionArgs {
-  fromPosition?: number;
+  fromPosition?: GlobalPositionLike;
   limit?: number;
   eventTypes?: string[];
   boundedContext?: string;
   [key: string]: unknown;
+}
+
+export interface ReadFromPositionResult {
+  events: StoredEvent[];
+  nextPosition: GlobalPositionLike;
+  hasMore: boolean;
 }
 
 /**
@@ -128,7 +163,32 @@ export interface GetStreamVersionArgs {
  */
 export interface GetByCorrelationArgs {
   correlationId: string;
+  limit?: number;
+  cursor?: GlobalPositionLike;
   [key: string]: unknown;
+}
+
+export interface CorrelatedEventSummary {
+  eventId: string;
+  eventType: string;
+  streamType: string;
+  streamId: string;
+  version: number;
+  globalPosition: GlobalPositionLike;
+  boundedContext: string;
+  tenantId?: string;
+  scopeKey?: string;
+  category: EventCategory;
+  schemaVersion: number;
+  correlationId: string;
+  causationId?: string;
+  timestamp: number;
+}
+
+export interface GetByCorrelationResult {
+  events: CorrelatedEventSummary[];
+  nextCursor: GlobalPositionLike | null;
+  hasMore: boolean;
 }
 
 /**
@@ -151,10 +211,21 @@ export interface EventStoreApi {
   lib: {
     appendToStream: FunctionReference<"mutation", "internal", AppendArgs, AppendResult>;
     readStream: FunctionReference<"query", "internal", ReadStreamArgs, StoredEvent[]>;
-    readFromPosition: FunctionReference<"query", "internal", ReadFromPositionArgs, StoredEvent[]>;
+    readFromPosition: FunctionReference<
+      "query",
+      "internal",
+      ReadFromPositionArgs,
+      ReadFromPositionResult
+    >;
     getStreamVersion: FunctionReference<"query", "internal", GetStreamVersionArgs, number>;
-    getByCorrelation: FunctionReference<"query", "internal", GetByCorrelationArgs, StoredEvent[]>;
-    getGlobalPosition: FunctionReference<"query", "internal", Record<string, never>, number>;
+    getByCorrelation: FunctionReference<"query", "internal", GetByCorrelationArgs, GetByCorrelationResult>;
+    getGlobalPosition: FunctionReference<"query", "internal", Record<string, never>, GlobalPositionLike>;
+    getIdempotencyConflictAudits: FunctionReference<
+      "query",
+      "internal",
+      { idempotencyKey: string },
+      IdempotencyConflictAudit[]
+    >;
   };
 }
 
@@ -229,7 +300,28 @@ export class EventStore<TApi extends EventStoreApi = EventStoreApi> {
    * Append events to a stream with optimistic concurrency control.
    */
   async appendToStream(ctx: MutationCtx, args: AppendArgs): Promise<AppendResult> {
-    return ctx.runMutation(this.component.lib.appendToStream, args);
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-store:EventStore.appendToStream",
+      subjectId: args.boundedContext,
+      subjectType: "boundedContext",
+      boundedContext: args.boundedContext,
+      ...(args.tenantId !== undefined && { tenantId: args.tenantId }),
+    });
+
+    const result = await ctx.runMutation(this.component.lib.appendToStream, {
+      ...args,
+      verificationProof,
+    });
+
+    if (result.status === "idempotency_conflict") {
+      throw new Error(
+        `appendToStream rejected idempotency key reuse with different payload. ` +
+          `existingEventId=${result.existingEventId} auditId=${result.auditId}`
+      );
+    }
+
+    return result;
   }
 
   /**
@@ -242,7 +334,10 @@ export class EventStore<TApi extends EventStoreApi = EventStoreApi> {
   /**
    * Read all events globally in order (for projections).
    */
-  async readFromPosition(ctx: QueryCtx, args: ReadFromPositionArgs): Promise<StoredEvent[]> {
+  async readFromPosition(
+    ctx: QueryCtx,
+    args: ReadFromPositionArgs
+  ): Promise<ReadFromPositionResult> {
     return ctx.runQuery(this.component.lib.readFromPosition, args);
   }
 
@@ -256,14 +351,21 @@ export class EventStore<TApi extends EventStoreApi = EventStoreApi> {
   /**
    * Get events by correlation ID (for tracing).
    */
-  async getByCorrelation(ctx: QueryCtx, args: GetByCorrelationArgs): Promise<StoredEvent[]> {
+  async getByCorrelation(ctx: QueryCtx, args: GetByCorrelationArgs): Promise<GetByCorrelationResult> {
     return ctx.runQuery(this.component.lib.getByCorrelation, args);
   }
 
   /**
    * Get the current global position.
    */
-  async getGlobalPosition(ctx: QueryCtx): Promise<number> {
+  async getGlobalPosition(ctx: QueryCtx): Promise<GlobalPositionLike> {
     return ctx.runQuery(this.component.lib.getGlobalPosition, {});
+  }
+
+  async getIdempotencyConflictAudits(
+    ctx: QueryCtx,
+    idempotencyKey: string
+  ): Promise<IdempotencyConflictAudit[]> {
+    return ctx.runQuery(this.component.lib.getIdempotencyConflictAudits, { idempotencyKey });
   }
 }

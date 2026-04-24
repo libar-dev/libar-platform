@@ -38,6 +38,7 @@ Feature: CommandOrchestrator partition key structure
         | field          | value              |
         | projectionName | orderWithInventory |
       And the workpool call 1 partition is name "orderId" value "ord_456"
+      And the primary projection stays on the projection pool
 
   Rule: Failed projection receives structured partition key
     **Invariant:** The workpool context for a failed projection must contain
@@ -56,3 +57,14 @@ Feature: CommandOrchestrator partition key structure
         | projectionName | reservationFailure |
         | eventId        | evt_fail_1         |
       And the workpool call 0 partition is name "orderId" value "ord_789"
+
+  Rule: Saga routing uses sagaPool
+    **Invariant:** Saga router work must be isolated from projection and fanout traffic.
+
+    Scenario: Routes saga work to sagaPool only
+      Given an orchestrator with mock dependencies
+      And a successful command handler result
+      And a command config with saga routing
+      When I execute the command with orderId "ord_saga_123"
+      Then the saga pool should receive exactly one enqueue call
+      And the fanout pool should remain unused

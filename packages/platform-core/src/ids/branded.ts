@@ -84,6 +84,50 @@ declare const StreamIdBrand: unique symbol;
  */
 export type StreamId = string & { readonly [StreamIdBrand]: void };
 
+/**
+ * Unique symbol for ApprovalId branding.
+ * @internal
+ */
+declare const ApprovalIdBrand: unique symbol;
+
+/**
+ * A branded string type for human approval identifiers.
+ */
+export type ApprovalId = string & { readonly [ApprovalIdBrand]: void };
+
+/**
+ * Unique symbol for DecisionId branding.
+ * @internal
+ */
+declare const DecisionIdBrand: unique symbol;
+
+/**
+ * A branded string type for agent decision identifiers.
+ */
+export type DecisionId = string & { readonly [DecisionIdBrand]: void };
+
+/**
+ * Unique symbol for AgentSubscriptionId branding.
+ * @internal
+ */
+declare const AgentSubscriptionIdBrand: unique symbol;
+
+/**
+ * A branded string type for agent subscription identifiers.
+ */
+export type AgentSubscriptionId = string & { readonly [AgentSubscriptionIdBrand]: void };
+
+/**
+ * Unique symbol for LifecycleDecisionId branding.
+ * @internal
+ */
+declare const LifecycleDecisionIdBrand: unique symbol;
+
+/**
+ * A branded string type for lifecycle audit decision identifiers.
+ */
+export type LifecycleDecisionId = string & { readonly [LifecycleDecisionIdBrand]: void };
+
 // ============================================
 // FACTORY FUNCTIONS
 // ============================================
@@ -166,6 +210,46 @@ export function toStreamId(id: string): StreamId {
     throw new Error("Invalid StreamId: must be a non-empty string");
   }
   return id as StreamId;
+}
+
+/**
+ * Convert a plain string to an ApprovalId.
+ */
+export function toApprovalId(id: string): ApprovalId {
+  if (!isValidIdString(id)) {
+    throw new Error("Invalid ApprovalId: must be a non-empty string");
+  }
+  return id as ApprovalId;
+}
+
+/**
+ * Convert a plain string to a DecisionId.
+ */
+export function toDecisionId(id: string): DecisionId {
+  if (!isValidIdString(id)) {
+    throw new Error("Invalid DecisionId: must be a non-empty string");
+  }
+  return id as DecisionId;
+}
+
+/**
+ * Convert a plain string to an AgentSubscriptionId.
+ */
+export function toAgentSubscriptionId(id: string): AgentSubscriptionId {
+  if (!isValidIdString(id)) {
+    throw new Error("Invalid AgentSubscriptionId: must be a non-empty string");
+  }
+  return id as AgentSubscriptionId;
+}
+
+/**
+ * Convert a plain string to a LifecycleDecisionId.
+ */
+export function toLifecycleDecisionId(id: string): LifecycleDecisionId {
+  if (!isValidIdString(id)) {
+    throw new Error("Invalid LifecycleDecisionId: must be a non-empty string");
+  }
+  return id as LifecycleDecisionId;
 }
 
 // ============================================

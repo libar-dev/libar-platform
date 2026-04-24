@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin/agents/approvals/$approvalId")({
 /**
  * Get the current reviewer ID.
  *
- * TODO(auth): Replace with actual auth integration when implemented.
+ * Backlog: T5-003. Replace with actual auth integration when scheduled.
  *
  * Implementation options:
  * 1. Convex Auth: Use `useConvexAuth()` from `convex/react` with Clerk/Auth0

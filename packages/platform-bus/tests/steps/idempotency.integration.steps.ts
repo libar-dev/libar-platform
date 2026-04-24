@@ -16,7 +16,7 @@
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
-import { api } from "../../../../../examples/order-management/convex/_generated/api";
+import { api } from "../../../../examples/order-management/convex/_generated/api";
 import {
   testRunId,
   generateCommandId,

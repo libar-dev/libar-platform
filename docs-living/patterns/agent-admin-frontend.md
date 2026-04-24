@@ -15,63 +15,62 @@
 ## Description
 
 **Problem:** The admin UI at `/admin/agents` has implementation gaps identified
-in the E2E feature file (`agent-approvals.feature`) and investigation:
+  in the E2E feature file (`agent-approvals.feature`) and investigation:
 
-1. **Only one agent implemented** — The churn-risk agent (22d) is the only backend
-   agent. The admin UI can only show churn-risk data. A second agent that triggers
-   on a different event (no cancellation required) is needed for demo and validation.
-2. **Dead letter management missing** — Backend has full API (`queryDeadLetters`,
-   `replayDeadLetter`, `ignoreDeadLetter`) but no frontend UI.
-3. **Decision history incomplete** — E2E spec describes decision history tab with
-   filtering, but component is not built.
-4. **No action feedback** — Approve/reject has no success/error toast notifications.
-5. **No loading states** — No skeleton UI during Suspense boundaries.
-6. **E2E steps missing** — `agent-approvals.feature` has ~50 scenarios with no step
-   definitions, causing CI failures (179 missing steps including journey scenarios).
-7. **Authentication placeholder** — `useReviewerId()` returns `"reviewer-placeholder"`.
+  1. **Only one agent implemented** — The churn-risk agent (22d) is the only backend
+     agent. The admin UI can only show churn-risk data. A second agent that triggers
+     on a different event (no cancellation required) is needed for demo and validation.
+  2. **Dead letter management missing** — Backend has full API (`queryDeadLetters`,
+     `replayDeadLetter`, `ignoreDeadLetter`) but no frontend UI.
+  3. **Decision history incomplete** — E2E spec describes decision history tab with
+     filtering, but component is not built.
+  4. **No action feedback** — Approve/reject has no success/error toast notifications.
+  5. **No loading states** — No skeleton UI during Suspense boundaries.
+  6. **E2E steps missing** — `agent-approvals.feature` has ~50 scenarios with no step
+     definitions, causing CI failures (179 missing steps including journey scenarios).
+  7. **Authentication placeholder** — `useReviewerId()` returns `"reviewer-placeholder"`.
 
-**Solution:** Complete the agent admin frontend with multi-agent support:
+  **Solution:** Complete the agent admin frontend with multi-agent support:
+  1. **High-value order detection agent** — Second agent backend + frontend integration
+  2. **Dead letter management panel** — List, replay, ignore with feedback for both agents
+  3. **Decision history with filtering** — By agent ID, action type, time range
+  4. **Toast notifications** — Success/error feedback for all mutating actions
+  5. **E2E step definitions** — For churn-risk + high-value-order scenarios
+  6. **Tag unimplemented agents @skip** — Low stock alert, order consolidation agents
 
-1. **High-value order detection agent** — Second agent backend + frontend integration
-2. **Dead letter management panel** — List, replay, ignore with feedback for both agents
-3. **Decision history with filtering** — By agent ID, action type, time range
-4. **Toast notifications** — Success/error feedback for all mutating actions
-5. **E2E step definitions** — For churn-risk + high-value-order scenarios
-6. **Tag unimplemented agents @skip** — Low stock alert, order consolidation agents
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Multi-agent validation | Two different agents prove the platform pattern is reusable |
+  | Operational visibility | Dead letters visible and actionable by operators |
+  | Agent observability | Decision history filterable by agent for analysis and debugging |
+  | User feedback | Toast notifications confirm approve/reject/replay/ignore actions |
+  | Test coverage | E2E tests validate full UI-to-backend agent workflow |
+  | Demo-friendly | High-value order agent triggers without needing 3 cancellations |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Multi-agent validation | Two different agents prove the platform pattern is reusable |
-| Operational visibility | Dead letters visible and actionable by operators |
-| Agent observability | Decision history filterable by agent for analysis and debugging |
-| User feedback | Toast notifications confirm approve/reject/replay/ignore actions |
-| Test coverage | E2E tests validate full UI-to-backend agent workflow |
-| Demo-friendly | High-value order agent triggers without needing 3 cancellations |
+  **Current Admin UI Structure (from Phase 22a-22c):**
+  | Tab | Status | Component |
+  | Dashboard | Implemented | AgentDashboard (3 summary cards) |
+  | Pending Approvals | Implemented | PendingApprovalsList, ApprovalDetail |
+  | Monitoring | Implemented | AgentMonitoring (checkpoint cards) |
+  | Decision History | Not built | (planned — this spec) |
+  | Dead Letters | Not built | (planned — this spec) |
 
-**Current Admin UI Structure (from Phase 22a-22c):**
-| Tab | Status | Component |
-| Dashboard | Implemented | AgentDashboard (3 summary cards) |
-| Pending Approvals | Implemented | PendingApprovalsList, ApprovalDetail |
-| Monitoring | Implemented | AgentMonitoring (checkpoint cards) |
-| Decision History | Not built | (planned — this spec) |
-| Dead Letters | Not built | (planned — this spec) |
+  **Existing Hooks (working):**
+  | Hook | File | Purpose |
+  | usePendingApprovals() | hooks/use-pending-approvals.ts | Pending approvals list |
+  | useApprovalDetail(id) | hooks/use-approval-detail.ts | Single approval with events |
+  | useApprovalActions() | hooks/use-approval-actions.ts | Approve/reject mutations |
+  | useActiveAgents() | hooks/use-active-agents.ts | Active agent checkpoints |
 
-**Existing Hooks (working):**
-| Hook | File | Purpose |
-| usePendingApprovals() | hooks/use-pending-approvals.ts | Pending approvals list |
-| useApprovalDetail(id) | hooks/use-approval-detail.ts | Single approval with events |
-| useApprovalActions() | hooks/use-approval-actions.ts | Approve/reject mutations |
-| useActiveAgents() | hooks/use-active-agents.ts | Active agent checkpoints |
-
-**Backend Queries (ready, from `queries/agent.ts`):**
-| Query | Purpose | Frontend Hook Needed |
-| getDeadLetters | Dead letters by agent/status | useDeadLetters |
-| getDeadLetterStats | Pending counts per agent | useDeadLetterStats |
-| getAuditEvents | Audit events by agent/type | useDecisionHistory |
-| getCheckpoint | Agent checkpoint by ID | (exists via useActiveAgents) |
-| getActiveAgents | All active checkpoints | (exists) |
-| getPendingApprovals | Approvals by agent/status | (exists) |
-| getApprovalById | Single approval lookup | (exists) |
+  **Backend Queries (ready, from `queries/agent.ts`):**
+  | Query | Purpose | Frontend Hook Needed |
+  | getDeadLetters | Dead letters by agent/status | useDeadLetters |
+  | getDeadLetterStats | Pending counts per agent | useDeadLetterStats |
+  | getAuditEvents | Audit events by agent/type | useDecisionHistory |
+  | getCheckpoint | Agent checkpoint by ID | (exists via useActiveAgents) |
+  | getActiveAgents | All active checkpoints | (exists) |
+  | getPendingApprovals | Approvals by agent/status | (exists) |
+  | getApprovalById | Single approval lookup | (exists) |
 
 ## Dependencies
 
@@ -257,8 +256,8 @@ in the E2E feature file (`agent-approvals.feature`) and investigation:
 **Dead letters are visible and actionable**
 
 **Invariant:** Admin UI must display dead letter entries from all agents with
-replay/ignore actions. Each action must provide feedback via toast notification.
-Dead letters are operational concerns for system health monitoring.
+    replay/ignore actions. Each action must provide feedback via toast notification.
+    Dead letters are operational concerns for system health monitoring.
 
     **Rationale:** Without dead letter UI, operators cannot manage failed agent event
     processing. With the removal of rule-based fallback in 22d, LLM failures create
@@ -283,8 +282,8 @@ _Verified by: Dead letter list displays failed events from both agents, Replay a
 **Decision history supports multi-agent filtering**
 
 **Invariant:** Decision history must be filterable by agent ID, action type, and
-time range. The tab displays audit events from all active agents, providing a
-unified view of agent decision-making across the system.
+    time range. The tab displays audit events from all active agents, providing a
+    unified view of agent decision-making across the system.
 
     **Rationale:** With multiple agents producing decisions, the history view must
     let operators quickly narrow to specific agents or action types. This is critical
@@ -316,8 +315,8 @@ _Verified by: View decision history with decisions from both agents, Filter deci
 **Actions provide feedback via toast**
 
 **Invariant:** All mutating actions (approve, reject, replay, ignore) must show
-toast notifications for success and error states. Toasts use accessible ARIA
-attributes and auto-dismiss after a reasonable timeout.
+    toast notifications for success and error states. Toasts use accessible ARIA
+    attributes and auto-dismiss after a reasonable timeout.
 
     **Rationale:** Users need immediate feedback that their action was processed.
     The current implementation performs mutations silently — the user clicks
@@ -341,9 +340,9 @@ _Verified by: Approve action shows success toast, Reject action shows success to
 **High-value order agent functions end-to-end**
 
 **Invariant:** The high-value order detection agent must detect orders above
-the value threshold ($500), analyze via LLM, and surface in the admin UI as
-a FlagForVIPReview approval — demonstrating the full agent infrastructure
-without requiring order cancellations.
+    the value threshold ($500), analyze via LLM, and surface in the admin UI as
+    a FlagForVIPReview approval — demonstrating the full agent infrastructure
+    without requiring order cancellations.
 
     **Rationale:** A single-agent demo requires 3+ order cancellations which is
     cumbersome. The high-value order agent triggers on any expensive order, making
@@ -366,7 +365,7 @@ _Verified by: High-value order detected and surfaces as VIP approval, Low-value 
 **Dashboard reflects multi-agent state**
 
 **Invariant:** The dashboard summary cards must aggregate data across all active
-agents. Individual agent status must be distinguishable.
+    agents. Individual agent status must be distinguishable.
 
     **Rationale:** With two active agents, the dashboard must show which agents are
     active and give a consolidated view of the system's agent-driven activity.

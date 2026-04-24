@@ -11,7 +11,7 @@
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 
-// TODO: Import modules under test when implemented
+// Deferred to T5-008. Import modules under test when this planning stub becomes executable.
 // import { ActionRetrier } from "@convex-dev/action-retrier";
 // import { Workpool } from "@convex-dev/workpool";
 // import { withCircuitBreaker } from "../../../src/monitoring/withCircuitBreaker.js";

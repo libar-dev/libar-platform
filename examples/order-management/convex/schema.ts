@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { compatGlobalPositionValidator } from "./lib/globalPosition";
 
 /**
  * App-level schema.
@@ -54,7 +55,7 @@ export default defineSchema({
     triggerEventId: v.string(),
 
     /** Global position of the trigger event */
-    triggerGlobalPosition: v.number(),
+    triggerGlobalPosition: compatGlobalPositionValidator,
 
     /** When the saga was created */
     createdAt: v.number(),
@@ -94,7 +95,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     /** Last processed event's global position for conflict detection */
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
   })
     .index("by_orderId", ["orderId"])
     .index("by_customerId", ["customerId", "createdAt"])
@@ -113,7 +114,7 @@ export default defineSchema({
       v.object({
         orderId: v.string(),
         eventId: v.string(),
-        globalPosition: v.number(),
+        globalPosition: compatGlobalPositionValidator,
         reason: v.string(),
         timestamp: v.number(),
       })
@@ -122,7 +123,7 @@ export default defineSchema({
     /** Timestamp of oldest cancellation in rolling window */
     oldestCancellationAt: v.number(),
     /** Last processed event's global position for conflict detection */
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
     updatedAt: v.number(),
   })
     .index("by_customerId", ["customerId"])
@@ -284,7 +285,7 @@ export default defineSchema({
   projectionCheckpoints: defineTable({
     projectionName: v.string(),
     partitionKey: v.string(), // Usually orderId, productId, or "global"
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
     lastEventId: v.string(),
     updatedAt: v.number(),
   })
@@ -545,9 +546,9 @@ export default defineSchema({
   replayCheckpoints: defineTable({
     replayId: v.string(), // Unique identifier (for external reference)
     projection: v.string(), // Target projection name
-    startPosition: v.number(), // Original starting globalPosition (for progress calculation)
-    lastPosition: v.number(), // Last successfully processed globalPosition
-    targetPosition: v.optional(v.number()), // End position (null = current max)
+    startPosition: compatGlobalPositionValidator, // Original starting globalPosition (for progress calculation)
+    lastPosition: compatGlobalPositionValidator, // Last successfully processed globalPosition
+    targetPosition: v.optional(compatGlobalPositionValidator), // End position (null = current max)
     status: v.union(
       v.literal("running"),
       v.literal("paused"),

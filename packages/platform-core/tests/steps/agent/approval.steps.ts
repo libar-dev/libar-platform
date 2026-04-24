@@ -104,6 +104,7 @@ interface TestState {
   authContext: ApprovalAuthContext | null;
   config: HumanInLoopConfig | null;
   result: PendingApproval | null;
+  error: Error | null;
   safeResult: { success: boolean; approval?: PendingApproval; code?: string } | null;
   approvalId: string | null;
   approvalIds: Set<string>;
@@ -118,6 +119,7 @@ function createInitialState(): TestState {
     authContext: null,
     config: null,
     result: null,
+    error: null,
     safeResult: null,
     approvalId: null,
     approvalIds: new Set(),
@@ -786,7 +788,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       }
     );
 
-    RuleScenario("Returns true when agentIds is undefined", ({ Given, And, Then }) => {
+    RuleScenario("Returns false when agentIds is undefined", ({ Given, And, Then }) => {
       Given('an approval with agentId "any-agent"', () => {
         state.approval = createTestApproval({ agentId: "any-agent" });
       });
@@ -797,12 +799,12 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         });
       });
 
-      Then("isAuthorizedReviewer returns true", () => {
-        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(true);
+      Then("isAuthorizedReviewer returns false", () => {
+        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(false);
       });
     });
 
-    RuleScenario("Returns true when agentIds is empty", ({ Given, And, Then }) => {
+    RuleScenario("Returns false when agentIds is empty", ({ Given, And, Then }) => {
       Given('an approval with agentId "any-agent"', () => {
         state.approval = createTestApproval({ agentId: "any-agent" });
       });
@@ -811,8 +813,8 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         state.authContext = createTestAuthContext({ agentIds: [] });
       });
 
-      Then("isAuthorizedReviewer returns true", () => {
-        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(true);
+      Then("isAuthorizedReviewer returns false", () => {
+        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(false);
       });
     });
   });
@@ -836,7 +838,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
     });
 
-    RuleScenario("Returns true when roles is undefined", ({ Given, And, Then }) => {
+    RuleScenario("Returns false when roles is undefined", ({ Given, And, Then }) => {
       Given("a default approval", () => {
         state.approval = createTestApproval();
       });
@@ -845,12 +847,12 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         state.authContext = createTestAuthContext({ roles: undefined });
       });
 
-      Then("isAuthorizedReviewer returns true", () => {
-        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(true);
+      Then("isAuthorizedReviewer returns false", () => {
+        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(false);
       });
     });
 
-    RuleScenario("Returns true when roles is empty", ({ Given, And, Then }) => {
+    RuleScenario("Returns false when roles is empty", ({ Given, And, Then }) => {
       Given("a default approval", () => {
         state.approval = createTestApproval();
       });
@@ -859,8 +861,8 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         state.authContext = createTestAuthContext({ roles: [] });
       });
 
-      Then("isAuthorizedReviewer returns true", () => {
-        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(true);
+      Then("isAuthorizedReviewer returns false", () => {
+        expect(isAuthorizedReviewer(state.approval!, state.authContext!)).toBe(false);
       });
     });
   });
@@ -921,16 +923,15 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         expect(state.approvalId!.startsWith("apr_")).toBe(true);
       });
 
-      And("the approval ID has 3 underscore-delimited parts", () => {
+      And("the approval ID has 2 underscore-delimited parts", () => {
         const parts = state.approvalId!.split("_");
-        expect(parts.length).toBe(3);
+        expect(parts.length).toBe(2);
         expect(parts[0]).toBe("apr");
-        expect(Number(parts[1])).not.toBeNaN();
       });
 
-      And("the third part has 8 characters", () => {
+      And("the second part has 36 characters", () => {
         const parts = state.approvalId!.split("_");
-        expect(parts[2].length).toBe(8);
+        expect(parts[1].length).toBe(36);
       });
     });
 
@@ -1202,6 +1203,31 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       );
     });
 
+    RuleScenario("Throws error for expired pending approvals", ({ Given, When, Then }) => {
+      Given('fake time is set to "2024-01-15T12:00:00Z"', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
+        state.fakeTimeActive = true;
+      });
+
+      When('I approve an expired pending approval', () => {
+        const approval = createTestApproval({
+          status: "pending",
+          expiresAt: Date.now() - 1000,
+        });
+        state.error = null;
+        try {
+          approveAction(approval, "reviewer");
+        } catch (error) {
+          state.error = error as Error;
+        }
+      });
+
+      Then('the approval action throws "approval has expired"', () => {
+        expect(state.error?.message).toContain("approval has expired");
+      });
+    });
+
     RuleScenario("Preserves other fields after approval", ({ Given, And, When, Then }) => {
       Given('fake time is set to "2024-01-15T12:00:00Z"', () => {
         vi.useFakeTimers();
@@ -1305,6 +1331,31 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         expect(() => rejectAction(approval, "reviewer", "reason")).toThrow('expected "pending"');
       });
     });
+
+    RuleScenario("Throws error when rejecting expired pending approval", ({ Given, When, Then }) => {
+      Given('fake time is set to "2024-01-15T12:00:00Z"', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
+        state.fakeTimeActive = true;
+      });
+
+      When('I reject an expired pending approval', () => {
+        const approval = createTestApproval({
+          status: "pending",
+          expiresAt: Date.now() - 1000,
+        });
+        state.error = null;
+        try {
+          rejectAction(approval, "reviewer", "reason");
+        } catch (error) {
+          state.error = error as Error;
+        }
+      });
+
+      Then('the rejection action throws "approval has expired"', () => {
+        expect(state.error?.message).toContain("approval has expired");
+      });
+    });
   });
 
   // ===========================================================================
@@ -1376,7 +1427,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
 
       And("a valid auth context", () => {
-        state.authContext = createTestAuthContext();
+        state.authContext = createTestAuthContext({ roles: ["reviewer"] });
       });
 
       When('I safely approve the approval with note "Note"', () => {
@@ -1440,7 +1491,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         });
 
         And("a valid auth context", () => {
-          state.authContext = createTestAuthContext();
+          state.authContext = createTestAuthContext({ roles: ["reviewer"] });
         });
 
         When("I safely approve the approval", () => {
@@ -1478,7 +1529,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
 
       And("a valid auth context", () => {
-        state.authContext = createTestAuthContext();
+        state.authContext = createTestAuthContext({ roles: ["reviewer"] });
       });
 
       When("I safely approve the approval", () => {
@@ -1517,7 +1568,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
 
       And("a valid auth context", () => {
-        state.authContext = createTestAuthContext();
+        state.authContext = createTestAuthContext({ roles: ["reviewer"] });
       });
 
       When('I safely reject the approval with reason "Reason"', () => {
@@ -1587,7 +1638,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
 
       And("a valid auth context", () => {
-        state.authContext = createTestAuthContext();
+        state.authContext = createTestAuthContext({ roles: ["reviewer"] });
       });
 
       When('I safely reject the approval with reason "Reason"', () => {

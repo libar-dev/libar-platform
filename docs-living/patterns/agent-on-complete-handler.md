@@ -17,7 +17,6 @@ Workpool job completion handler for agent BC.
 This is the MUTATION half of the action/mutation split pattern.
 
 Handles:
-
 - Success: audit -> command -> approval -> checkpoint (LAST, AD-7)
 - Failure: dead letter + failure audit (checkpoint NOT advanced)
 - Canceled: log only (checkpoint NOT advanced)

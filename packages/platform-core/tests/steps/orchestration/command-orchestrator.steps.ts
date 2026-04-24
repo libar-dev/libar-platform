@@ -31,10 +31,11 @@ import { getDataTableRows } from "../_helpers/data-table.js";
 // Mocks
 // =============================================================================
 
-function createMockWorkpool(): WorkpoolClient & { calls: unknown[][] } {
+function createMockWorkpool(name: string): WorkpoolClient & { calls: unknown[][]; name: string } {
   const calls: unknown[][] = [];
   return {
     calls,
+    name,
     async enqueueMutation(ctx, handler, args, options) {
       calls.push([ctx, handler, args, options]);
       return null;
@@ -93,6 +94,10 @@ const mockSecondaryProjectionHandler = {
 
 const mockFailedProjectionHandler = {
   name: "mockFailedHandler",
+} as FunctionReference<"mutation", FunctionVisibility, UnknownRecord, unknown>;
+
+const mockSagaRouter = {
+  name: "mockSagaRouter",
 } as FunctionReference<"mutation", FunctionVisibility, UnknownRecord, unknown>;
 
 type TestArgs = { orderId: string };
@@ -176,7 +181,9 @@ function createBaseConfig(): CommandConfig<
 // =============================================================================
 
 interface TestState {
-  mockWorkpool: (WorkpoolClient & { calls: unknown[][] }) | null;
+  projectionPool: (WorkpoolClient & { calls: unknown[][]; name: string }) | null;
+  fanoutPool: (WorkpoolClient & { calls: unknown[][]; name: string }) | null;
+  sagaPool: (WorkpoolClient & { calls: unknown[][]; name: string }) | null;
   orchestrator: CommandOrchestrator | null;
   ctx: MutationCtx | null;
   config: CommandConfig<TestArgs, TestHandlerArgs, CommandHandlerResult, UnknownRecord> | null;
@@ -185,7 +192,9 @@ interface TestState {
 
 function createInitialState(): TestState {
   return {
-    mockWorkpool: null,
+    projectionPool: null,
+    fanoutPool: null,
+    sagaPool: null,
     orchestrator: null,
     ctx: null,
     config: null,
@@ -217,11 +226,15 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       "Wraps partition key in structured field for primary projection",
       ({ Given, And, When, Then }) => {
         Given("an orchestrator with mock dependencies", () => {
-          state.mockWorkpool = createMockWorkpool();
+          state.projectionPool = createMockWorkpool("projectionPool");
+          state.fanoutPool = createMockWorkpool("fanoutPool");
+          state.sagaPool = createMockWorkpool("sagaPool");
           state.orchestrator = new CommandOrchestrator({
             eventStore: createMockEventStore(),
             commandBus: createMockCommandBus(),
-            projectionPool: state.mockWorkpool,
+            projectionPool: state.projectionPool,
+            fanoutPool: state.fanoutPool,
+            sagaPool: state.sagaPool,
             middlewarePipeline: createMiddlewarePipeline(),
           });
         });
@@ -245,12 +258,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then("the workpool was called at least 1 time", () => {
-          expect(state.mockWorkpool!.calls.length).toBeGreaterThanOrEqual(1);
+          expect(state.projectionPool!.calls.length).toBeGreaterThanOrEqual(1);
         });
 
         And("the workpool call 0 context contains:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
-          const [, , , options] = state.mockWorkpool!.calls[0] as [
+          const [, , , options] = state.projectionPool!.calls[0] as [
             unknown,
             unknown,
             unknown,
@@ -262,7 +275,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         And('the workpool call 0 partition is name "orderId" value "ord_123"', () => {
-          const [, , , options] = state.mockWorkpool!.calls[0] as [
+          const [, , , options] = state.projectionPool!.calls[0] as [
             unknown,
             unknown,
             unknown,
@@ -286,11 +299,15 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       "Wraps partition key in structured field for secondary projections",
       ({ Given, And, When, Then }) => {
         Given("an orchestrator with mock dependencies", () => {
-          state.mockWorkpool = createMockWorkpool();
+          state.projectionPool = createMockWorkpool("projectionPool");
+          state.fanoutPool = createMockWorkpool("fanoutPool");
+          state.sagaPool = createMockWorkpool("sagaPool");
           state.orchestrator = new CommandOrchestrator({
             eventStore: createMockEventStore(),
             commandBus: createMockCommandBus(),
-            projectionPool: state.mockWorkpool,
+            projectionPool: state.projectionPool,
+            fanoutPool: state.fanoutPool,
+            sagaPool: state.sagaPool,
             middlewarePipeline: createMiddlewarePipeline(),
           });
         });
@@ -334,12 +351,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then("the workpool was called at least 2 times", () => {
-          expect(state.mockWorkpool!.calls.length).toBeGreaterThanOrEqual(2);
+          expect(state.projectionPool!.calls.length + state.fanoutPool!.calls.length).toBeGreaterThanOrEqual(2);
         });
 
         And("the workpool call 1 context contains:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
-          const [, , , options] = state.mockWorkpool!.calls[1] as [
+          const [, , , options] = state.fanoutPool!.calls[0] as [
             unknown,
             unknown,
             unknown,
@@ -351,7 +368,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         And('the workpool call 1 partition is name "orderId" value "ord_456"', () => {
-          const [, , , options] = state.mockWorkpool!.calls[1] as [
+          const [, , , options] = state.fanoutPool!.calls[0] as [
             unknown,
             unknown,
             unknown,
@@ -361,6 +378,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
             name: "orderId",
             value: "ord_456",
           });
+        });
+
+        And("the primary projection stays on the projection pool", () => {
+          expect(state.projectionPool!.calls).toHaveLength(1);
+          expect(state.fanoutPool!.calls).toHaveLength(1);
+          expect(state.sagaPool!.calls).toHaveLength(0);
         });
       }
     );
@@ -375,11 +398,15 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       "Wraps partition key in structured field for failed projection",
       ({ Given, And, When, Then }) => {
         Given("an orchestrator with mock dependencies", () => {
-          state.mockWorkpool = createMockWorkpool();
+          state.projectionPool = createMockWorkpool("projectionPool");
+          state.fanoutPool = createMockWorkpool("fanoutPool");
+          state.sagaPool = createMockWorkpool("sagaPool");
           state.orchestrator = new CommandOrchestrator({
             eventStore: createMockEventStore(),
             commandBus: createMockCommandBus(),
-            projectionPool: state.mockWorkpool,
+            projectionPool: state.projectionPool,
+            fanoutPool: state.fanoutPool,
+            sagaPool: state.sagaPool,
             middlewarePipeline: createMiddlewarePipeline(),
           });
         });
@@ -417,12 +444,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then("the workpool was called at least 1 time", () => {
-          expect(state.mockWorkpool!.calls.length).toBeGreaterThanOrEqual(1);
+          expect(state.projectionPool!.calls.length).toBeGreaterThanOrEqual(1);
         });
 
         And("the workpool call 0 context contains:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
-          const [, , , options] = state.mockWorkpool!.calls[0] as [
+          const [, , , options] = state.projectionPool!.calls[0] as [
             unknown,
             unknown,
             unknown,
@@ -434,7 +461,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         And('the workpool call 0 partition is name "orderId" value "ord_789"', () => {
-          const [, , , options] = state.mockWorkpool!.calls[0] as [
+          const [, , , options] = state.projectionPool!.calls[0] as [
             unknown,
             unknown,
             unknown,
@@ -447,5 +474,51 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
       }
     );
+  });
+
+  Rule("Saga routing uses sagaPool", ({ RuleScenario }) => {
+    RuleScenario("Routes saga work to sagaPool only", ({ Given, And, When, Then }) => {
+      Given("an orchestrator with mock dependencies", () => {
+        state.projectionPool = createMockWorkpool("projectionPool");
+        state.fanoutPool = createMockWorkpool("fanoutPool");
+        state.sagaPool = createMockWorkpool("sagaPool");
+        state.orchestrator = new CommandOrchestrator({
+          eventStore: createMockEventStore(),
+          commandBus: createMockCommandBus(),
+          projectionPool: state.projectionPool,
+          fanoutPool: state.fanoutPool,
+          sagaPool: state.sagaPool,
+          middlewarePipeline: createMiddlewarePipeline(),
+        });
+      });
+
+      And("a successful command handler result", () => {
+        state.ctx = createMockCtx(createSuccessResult());
+      });
+
+      And("a command config with saga routing", () => {
+        state.config = {
+          ...createBaseConfig(),
+          sagaRoute: {
+            router: mockSagaRouter,
+            getEventType: () => "OrderCreated",
+          },
+        };
+      });
+
+      When('I execute the command with orderId "ord_saga_123"', async () => {
+        await state.orchestrator!.execute(state.ctx!, state.config!, {
+          orderId: "ord_saga_123",
+        });
+      });
+
+      Then("the saga pool should receive exactly one enqueue call", () => {
+        expect(state.sagaPool!.calls).toHaveLength(1);
+      });
+
+      And("the fanout pool should remain unused", () => {
+        expect(state.fanoutPool!.calls).toHaveLength(0);
+      });
+    });
   });
 });

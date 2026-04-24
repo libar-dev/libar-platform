@@ -32,6 +32,13 @@ import type { UnknownRecord } from "../types.js";
 import type { Logger, LogLevel } from "./types.js";
 import { DEFAULT_LOG_LEVEL, shouldLog } from "./types.js";
 
+interface SafeGlobalThis {
+  process?: {
+    env?: Record<string, string | undefined>;
+  };
+  __CONVEX_TEST_MODE__?: boolean;
+}
+
 /**
  * Console interface for Convex runtime.
  * Uses globalThis.console which is available in all JavaScript environments.
@@ -52,6 +59,17 @@ interface ConvexConsole {
  */
 function getRuntimeConsole(): ConvexConsole {
   return (globalThis as unknown as { console: ConvexConsole }).console;
+}
+
+function isTestRuntime(): boolean {
+  const safeGlobal = globalThis as SafeGlobalThis;
+  return safeGlobal.__CONVEX_TEST_MODE__ === true || safeGlobal.process?.env?.["IS_TEST"] === "true";
+}
+
+function stringifyStructuredData(value: unknown): string {
+  return JSON.stringify(value, (_key, nestedValue) =>
+    typeof nestedValue === "bigint" ? nestedValue.toString() : nestedValue
+  );
 }
 
 /**
@@ -94,7 +112,7 @@ export function createScopedLogger(scope: string, level: LogLevel = DEFAULT_LOG_
 
   const formatMessage = (message: string, data?: UnknownRecord): string => {
     if (data && Object.keys(data).length > 0) {
-      return `${prefix} ${message} ${JSON.stringify(data)}`;
+      return `${prefix} ${message} ${stringifyStructuredData(data)}`;
     }
     return `${prefix} ${message}`;
   };
@@ -132,7 +150,7 @@ export function createScopedLogger(scope: string, level: LogLevel = DEFAULT_LOG_
       if (shouldLog("REPORT", level)) {
         // REPORT outputs structured JSON for aggregation systems
         getRuntimeConsole().log(
-          JSON.stringify({
+          stringifyStructuredData({
             scope,
             message,
             ...data,
@@ -185,6 +203,13 @@ export function createPlatformNoOpLogger(): Logger {
     warn: () => {},
     error: () => {},
   };
+}
+
+export function createPlatformDefaultLogger(
+  scope: string,
+  level: LogLevel = DEFAULT_LOG_LEVEL
+): Logger {
+  return isTestRuntime() ? createPlatformNoOpLogger() : createScopedLogger(scope, level);
 }
 
 /**

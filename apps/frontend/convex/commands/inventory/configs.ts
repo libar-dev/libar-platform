@@ -383,7 +383,7 @@ export const confirmReservationConfig: CommandConfig<
  *
  * Note: Projection args include items from the enriched event for proper ES pattern.
  * The event.payload["items"] cast remains because EventData.payload is Record<string, unknown>.
- * TODO: Consider making EventData generic for fully typed event payloads.
+ * Backlog: T5-004. Consider making EventData generic for fully typed event payloads.
  */
 export const releaseReservationConfig: CommandConfig<
   ReleaseReservationArgs,
@@ -421,7 +421,7 @@ export const releaseReservationConfig: CommandConfig<
       reservationId: args.reservationId,
       orderId: result.data.orderId,
       reason: args.reason,
-      // Event payload access remains typed as Record<string, unknown> - see TODO above
+// Event payload access remains typed as Record<string, unknown>. See T5-004 above.
       items: result.event.payload["items"] as Array<{ productId: string; quantity: number }>,
       eventId: result.event.eventId,
       globalPosition,

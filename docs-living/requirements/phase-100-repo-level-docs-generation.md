@@ -17,11 +17,11 @@
 
 As a monorepo maintainer, I want unified documentation generation from multiple sources.
 
-So that specs, platform packages, and example app produce coherent documentation.
+  So that specs, platform packages, and example app produce coherent documentation.
 
-The PoC validated multi-source generation with combined Gherkin feature sources
-and established tag conventions for PRD extraction, roadmap planning, and timeline
-metadata. See session learnings documented in the Gherkin comments below.
+  The PoC validated multi-source generation with combined Gherkin feature sources
+  and established tag conventions for PRD extraction, roadmap planning, and timeline
+  metadata. See session learnings documented in the Gherkin comments below.
 
 ## Acceptance Criteria
 

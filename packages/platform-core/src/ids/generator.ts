@@ -8,12 +8,20 @@
  */
 import { v7 as uuidv7 } from "uuid";
 import {
+  toAgentSubscriptionId,
+  toApprovalId,
   toCommandId,
   toCorrelationId,
+  toDecisionId,
   toEventId,
+  toLifecycleDecisionId,
   type CommandId,
   type CorrelationId,
+  type AgentSubscriptionId,
+  type ApprovalId,
+  type DecisionId,
   type EventId,
+  type LifecycleDecisionId,
 } from "./branded.js";
 
 // Re-export for convenience
@@ -49,6 +57,17 @@ function validateIdPart(part: string, name: string): void {
       `${name} too long: "${part}" (${part.length} chars). Maximum is ${MAX_ID_PART_LENGTH}.`
     );
   }
+}
+
+function generateUuidBackedId(prefix: string): string {
+  return `${prefix}_${uuidv7()}`;
+}
+
+function generateAgentScopedUuidBackedId(prefix: string, agentId: string): string {
+  if (!agentId) {
+    throw new Error("agentId cannot be empty");
+  }
+  return `${prefix}_${agentId}_${uuidv7()}`;
 }
 
 /**
@@ -127,4 +146,32 @@ export function generateEventId(context: string): EventId {
  */
 export function generateIntegrationEventId(): EventId {
   return toEventId(`int_evt_${uuidv7()}`);
+}
+
+/**
+ * Generate an approval ID.
+ */
+export function generateApprovalId(): ApprovalId {
+  return toApprovalId(generateUuidBackedId("apr"));
+}
+
+/**
+ * Generate an agent decision ID.
+ */
+export function generateDecisionId(): DecisionId {
+  return toDecisionId(generateUuidBackedId("dec"));
+}
+
+/**
+ * Generate an agent subscription ID.
+ */
+export function generateAgentSubscriptionId(agentId: string): AgentSubscriptionId {
+  return toAgentSubscriptionId(generateAgentScopedUuidBackedId("sub", agentId));
+}
+
+/**
+ * Generate a lifecycle decision ID.
+ */
+export function generateLifecycleDecisionId(agentId: string): LifecycleDecisionId {
+  return toLifecycleDecisionId(generateAgentScopedUuidBackedId("lifecycle", agentId));
 }

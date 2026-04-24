@@ -17,7 +17,6 @@ Process Manager module for event-reactive coordination.
 
 Process Managers react to events and emit commands.
 They are distinct from:
-
 - **Sagas**: Multi-step orchestration with compensation logic
 - **Projections**: Events → Read model updates
 
@@ -30,12 +29,12 @@ They are distinct from:
 
 ### Key Characteristics
 
-| Aspect           | Process Manager             | Saga                |
-| ---------------- | --------------------------- | ------------------- |
-| **State**        | Minimal (position + custom) | Full workflow state |
-| **Compensation** | None                        | Yes                 |
-| **Trigger**      | Event, Time, or Hybrid      | Event only          |
-| **Pattern**      | Fire-and-forget             | Orchestrated        |
+| Aspect | Process Manager | Saga |
+|--------|-----------------|------|
+| **State** | Minimal (position + custom) | Full workflow state |
+| **Compensation** | None | Yes |
+| **Trigger** | Event, Time, or Hybrid | Event only |
+| **Pattern** | Fire-and-forget | Orchestrated |
 
 ### Components
 

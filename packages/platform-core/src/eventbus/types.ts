@@ -7,6 +7,7 @@
 
 import type { FunctionReference, FunctionVisibility } from "convex/server";
 import type { EventCategory } from "../events/category.js";
+import type { GlobalPosition } from "../events/globalPosition.js";
 import type { CorrelationChain } from "../correlation/types.js";
 import type {
   MutationCtx,
@@ -15,6 +16,7 @@ import type {
 } from "../orchestration/types.js";
 import type { UnknownRecord } from "../types.js";
 import type { Logger } from "../logging/types.js";
+import type { PlatformMetrics } from "../metrics/index.js";
 
 /**
  * Default priority for subscriptions when not explicitly set.
@@ -49,7 +51,7 @@ export interface PublishedEvent<TPayload = unknown> {
   boundedContext: string;
 
   /** Global position in the event store */
-  globalPosition: number;
+  globalPosition: GlobalPosition;
 
   /** Timestamp when the event was created */
   timestamp: number;
@@ -287,4 +289,7 @@ export interface EventBusConfig {
    * - INFO: Event published (eventId, matched count)
    */
   logger?: Logger;
+
+  /** Optional metrics sink for publish/enqueue observability. */
+  metrics?: PlatformMetrics;
 }

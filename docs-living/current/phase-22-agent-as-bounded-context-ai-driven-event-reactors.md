@@ -6,14 +6,14 @@
 
 ## Progress
 
-**Progress:** [█████████░░░░░░░░░░░] 3/7 (43%)
+**Progress:** [████████░░░░░░░░░░░░] 3/8 (38%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 3     |
-| 🚧 Active    | 4     |
-| 📋 Planned   | 0     |
-| **Total**    | 7     |
+| 🚧 Active   | 4     |
+| 📋 Planned  | 1     |
+| **Total**   | 8     |
 
 ---
 
@@ -73,7 +73,6 @@ domain events via EventBus and emit commands based on pattern detection.
 ### Example: Churn Risk Detection
 
 This example implements a churn risk agent that:
-
 1. Subscribes to OrderCancelled events via EventBus
 2. Tracks cancellation patterns per customer (30-day window)
 3. Detects churn risk when a customer cancels 3+ orders
@@ -93,135 +92,132 @@ This example implements a churn risk agent that:
 | Effort   | 1w    |
 
 **Problem:** Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,
-`agentCommands`, `pendingApprovals`) reside in the shared app schema without physical
-BC isolation. Any app mutation can read/write agent tables directly, violating the core
-platform principle that bounded contexts should have isolated databases enforced by
-Convex component boundaries.
+  `agentCommands`, `pendingApprovals`) reside in the shared app schema without physical
+  BC isolation. Any app mutation can read/write agent tables directly, violating the core
+  platform principle that bounded contexts should have isolated databases enforced by
+  Convex component boundaries.
 
-**Solution:** Implement agent as a proper Convex component:
+  **Solution:** Implement agent as a proper Convex component:
+  1. **`defineComponent("agent")`** with isolated schema and private tables
+  2. **Public API handlers** for checkpoint, audit, dead letter, and command operations
+  3. **Cross-component query pattern** for app-level projections like `customerCancellations`
 
-1. **`defineComponent("agent")`** with isolated schema and private tables
-2. **Public API handlers** for checkpoint, audit, dead letter, and command operations
-3. **Cross-component query pattern** for app-level projections like `customerCancellations`
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Physical BC isolation | Component tables are private, accessed only via API boundary |
+  | Schema evolution safety | Component schema evolves independently of app schema |
+  | Clear ownership | Agent component owns its domain data exclusively |
+  | Consistent patterns | Aligns with orders/inventory component architecture |
+  | OCC blast radius reduction | Agent writes isolated from app-level transaction conflicts |
+  | Testing isolation | Component can be tested with `t.registerComponent()` |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Physical BC isolation | Component tables are private, accessed only via API boundary |
-| Schema evolution safety | Component schema evolves independently of app schema |
-| Clear ownership | Agent component owns its domain data exclusively |
-| Consistent patterns | Aligns with orders/inventory component architecture |
-| OCC blast radius reduction | Agent writes isolated from app-level transaction conflicts |
-| Testing isolation | Component can be tested with `t.registerComponent()` |
+  **Current State (app-level tables):**
+  | Table | Current Location | Issue |
+  | agentCheckpoints | Main schema.ts | No access control, OCC blast radius |
+  | agentAuditEvents | Main schema.ts | Any mutation can modify audit trail |
+  | agentDeadLetters | Main schema.ts | No encapsulation |
+  | agentCommands | Main schema.ts | No API boundary |
+  | pendingApprovals | Main schema.ts | Shared transaction scope |
 
-**Current State (app-level tables):**
-| Table | Current Location | Issue |
-| agentCheckpoints | Main schema.ts | No access control, OCC blast radius |
-| agentAuditEvents | Main schema.ts | Any mutation can modify audit trail |
-| agentDeadLetters | Main schema.ts | No encapsulation |
-| agentCommands | Main schema.ts | No API boundary |
-| pendingApprovals | Main schema.ts | Shared transaction scope |
+  **Target State (component isolation):**
+  | Table | Target Location | Access Pattern |
+  | agentCheckpoints | Agent component schema | Via components.agent.checkpoints.* |
+  | agentAuditEvents | Agent component schema | Via components.agent.audit.* |
+  | agentDeadLetters | Agent component schema | Via components.agent.deadLetters.* |
+  | agentCommands | Agent component schema | Via components.agent.commands.* |
+  | pendingApprovals | Agent component schema | Via components.agent.approvals.* |
 
-**Target State (component isolation):**
-| Table | Target Location | Access Pattern |
-| agentCheckpoints | Agent component schema | Via components.agent.checkpoints._ |
-| agentAuditEvents | Agent component schema | Via components.agent.audit._ |
-| agentDeadLetters | Agent component schema | Via components.agent.deadLetters._ |
-| agentCommands | Agent component schema | Via components.agent.commands._ |
-| pendingApprovals | Agent component schema | Via components.agent.approvals.\* |
+  **Design Decision: Projection Ownership (customerCancellations)**
 
-**Design Decision: Projection Ownership (customerCancellations)**
+  The `customerCancellations` projection is updated by CommandOrchestrator (orders BC context)
+  but consumed exclusively by the agent for O(1) pattern detection lookup.
 
-The `customerCancellations` projection is updated by CommandOrchestrator (orders BC context)
-but consumed exclusively by the agent for O(1) pattern detection lookup.
+  | Option | Trade-off |
+  | A: Keep at app level (Recommended) | Agent queries via cross-component query; natural per CLAUDE.md "all projections at app level" |
+  | B: Move into agent component | Faster queries but requires cross-BC event subscription for updates |
+  | C: Duplicate to both locations | Redundant data, consistency challenges |
 
-| Option | Trade-off |
-| A: Keep at app level (Recommended) | Agent queries via cross-component query; natural per CLAUDE.md "all projections at app level" |
-| B: Move into agent component | Faster queries but requires cross-BC event subscription for updates |
-| C: Duplicate to both locations | Redundant data, consistency challenges |
+  **Decision:** Option A. Projections often combine data from multiple BCs and belong at
+  the app level per platform architecture. The agent uses a cross-component query pattern
+  to access `customerCancellations` — the same pattern any component uses to read app data.
 
-**Decision:** Option A. Projections often combine data from multiple BCs and belong at
-the app level per platform architecture. The agent uses a cross-component query pattern
-to access `customerCancellations` — the same pattern any component uses to read app data.
+  **Design Decision: Component API Surface**
 
-**Design Decision: Component API Surface**
+  Expose minimal API that supports all current use cases without over-engineering:
 
-Expose minimal API that supports all current use cases without over-engineering:
+  | API Group | Handlers | Purpose |
+  | Checkpoints | loadCheckpoint, updateCheckpoint | Exactly-once processing |
+  | Audit | recordAuditEvent, queryAuditEvents, getAuditEventsByAgent | Explainability |
+  | Dead Letters | recordDeadLetter, replayDeadLetter, ignoreDeadLetter, queryDeadLetters | Error management |
+  | Commands | recordCommand, updateCommandStatus, queryCommands | Command lifecycle |
+  | Approvals | createApproval, approveAction, rejectAction, queryPendingApprovals | Human-in-loop |
 
-| API Group | Handlers | Purpose |
-| Checkpoints | loadCheckpoint, updateCheckpoint | Exactly-once processing |
-| Audit | recordAuditEvent, queryAuditEvents, getAuditEventsByAgent | Explainability |
-| Dead Letters | recordDeadLetter, replayDeadLetter, ignoreDeadLetter, queryDeadLetters | Error management |
-| Commands | recordCommand, updateCommandStatus, queryCommands | Command lifecycle |
-| Approvals | createApproval, approveAction, rejectAction, queryPendingApprovals | Human-in-loop |
+  **Design Decision: Migration Strategy**
 
-**Design Decision: Migration Strategy**
+  Staged migration from app tables to component tables:
+  1. Create component with new schema (parallel to existing tables)
+  2. Update handlers to use component API
+  3. Migrate existing data (one-time migration script)
+  4. Remove old tables from app schema
 
-Staged migration from app tables to component tables:
+  **Design Decision: Peer Mounting Architecture (AD-6)**
 
-1. Create component with new schema (parallel to existing tables)
-2. Update handlers to use component API
-3. Migrate existing data (one-time migration script)
-4. Remove old tables from app schema
+  `agentBC`, `@convex-dev/agent` (as `llmAgent`), and `agentPool` workpool are all PEER
+  components at the app level — NOT nested (agentBC does NOT `component.use(agent)`).
 
-**Design Decision: Peer Mounting Architecture (AD-6)**
+  | Component | Purpose | Why Peer |
+  | agentBC | BC state: checkpoints, audit, commands, approvals | Owns domain data |
+  | llmAgent (@convex-dev/agent) | LLM: threads, messages, embeddings | Needs process.env for API keys |
+  | agentPool (workpool) | Dedicated pool for agent actions | Separate parallelism from projections |
 
-`agentBC`, `@convex-dev/agent` (as `llmAgent`), and `agentPool` workpool are all PEER
-components at the app level — NOT nested (agentBC does NOT `component.use(agent)`).
+  Components cannot access `process.env` — the app-level action handler coordinates
+  between both components, passing API keys as arguments.
 
-| Component | Purpose | Why Peer |
-| agentBC | BC state: checkpoints, audit, commands, approvals | Owns domain data |
-| llmAgent (@convex-dev/agent) | LLM: threads, messages, embeddings | Needs process.env for API keys |
-| agentPool (workpool) | Dedicated pool for agent actions | Separate parallelism from projections |
+  """typescript
+  // convex.config.ts — all three are app-level peers
+  import agentBC from "@libar-dev/platform-core/agent/convex.config";
+  import { agent } from "@convex-dev/agent/convex.config";
+  import { workpool } from "@convex-dev/workpool/convex.config";
 
-Components cannot access `process.env` — the app-level action handler coordinates
-between both components, passing API keys as arguments.
+  app.use(agentBC);                         // BC: checkpoints, audit, commands, approvals
+  app.use(agent, { name: "llmAgent" });     // LLM: threads, messages, embeddings
+  app.use(workpool, { name: "agentPool" }); // Dedicated pool for agent actions
+  """
 
-"""typescript
-// convex.config.ts — all three are app-level peers
-import agentBC from "@libar-dev/platform-core/agent/convex.config";
-import { agent } from "@convex-dev/agent/convex.config";
-import { workpool } from "@convex-dev/workpool/convex.config";
+  **Data Flow with Peer Components:**
+  """
+  EventBus → agentPool.enqueueAction() → app-level action handler
+    action: ctx.runQuery(agentBC.checkpoints.*) + llmAgent.generateText()
+    onComplete: ctx.runMutation(agentBC.audit.*) + ctx.runMutation(agentBC.checkpoints.*)
+  """
 
-app.use(agentBC); // BC: checkpoints, audit, commands, approvals
-app.use(agent, { name: "llmAgent" }); // LLM: threads, messages, embeddings
-app.use(workpool, { name: "agentPool" }); // Dedicated pool for agent actions
-"""
+  **Schema Evolution Notes (from design stubs):**
 
-**Data Flow with Peer Components:**
-"""
-EventBus → agentPool.enqueueAction() → app-level action handler
-action: ctx.runQuery(agentBC.checkpoints._) + llmAgent.generateText()
-onComplete: ctx.runMutation(agentBC.audit._) + ctx.runMutation(agentBC.checkpoints.\*)
-"""
+  The component schema expands beyond the current app-level definitions:
 
-**Schema Evolution Notes (from design stubs):**
+  | Aspect | Current (app schema) | Target (component schema) |
+  | Checkpoint statuses | 3: active, paused, stopped | 4: adds error_recovery (DS-5 lifecycle) |
+  | Audit event types | 6: Decision, Approved, Rejected, Expired, Completed, Failed | 16: adds DS-4 routing + DS-5 lifecycle types |
+  | Checkpoint indexes | by_agentId only | Adds by_agentId_subscriptionId for O(1) lookup |
+  | Forward declarations | None | configOverrides: v.optional(v.any()) for ReconfigureAgent (DS-5) |
 
-The component schema expands beyond the current app-level definitions:
+  All 16 audit event types declared from day one to avoid schema migration:
+  - DS-1 base (8): PatternDetected, CommandEmitted, ApprovalRequested/Granted/Rejected/Expired, DeadLetterRecorded, CheckpointUpdated
+  - DS-4 routing (2): AgentCommandRouted, AgentCommandRoutingFailed
+  - DS-5 lifecycle (6): AgentStarted, AgentPaused, AgentResumed, AgentStopped, AgentReconfigured, AgentErrorRecoveryStarted
 
-| Aspect | Current (app schema) | Target (component schema) |
-| Checkpoint statuses | 3: active, paused, stopped | 4: adds error_recovery (DS-5 lifecycle) |
-| Audit event types | 6: Decision, Approved, Rejected, Expired, Completed, Failed | 16: adds DS-4 routing + DS-5 lifecycle types |
-| Checkpoint indexes | by_agentId only | Adds by_agentId_subscriptionId for O(1) lookup |
-| Forward declarations | None | configOverrides: v.optional(v.any()) for ReconfigureAgent (DS-5) |
+  **Cron Migration Note:**
 
-All 16 audit event types declared from day one to avoid schema migration:
+  The existing `expirePendingApprovals` cron runs as an `internalMutation` with direct
+  `ctx.db` access. After component isolation, crons cannot call component internals
+  directly — an app-level wrapper mutation must delegate to `components.agent.approvals.expirePending`.
 
-- DS-1 base (8): PatternDetected, CommandEmitted, ApprovalRequested/Granted/Rejected/Expired, DeadLetterRecorded, CheckpointUpdated
-- DS-4 routing (2): AgentCommandRouted, AgentCommandRoutingFailed
-- DS-5 lifecycle (6): AgentStarted, AgentPaused, AgentResumed, AgentStopped, AgentReconfigured, AgentErrorRecoveryStarted
-
-**Cron Migration Note:**
-
-The existing `expirePendingApprovals` cron runs as an `internalMutation` with direct
-`ctx.db` access. After component isolation, crons cannot call component internals
-directly — an app-level wrapper mutation must delegate to `components.agent.approvals.expirePending`.
-
-**Component Isolation Constraints (per platform architecture):**
-| Constraint | Impact on Agent Component |
-| No ctx.auth inside component | Pass userId as argument to all handlers |
-| IDs become strings at boundary | Use business IDs (agentId, eventId) not Convex doc IDs |
-| Sub-transactions | Agent writes commit independently from parent mutations |
-| No process.env | Pass configuration (API keys, model names) as arguments |
+  **Component Isolation Constraints (per platform architecture):**
+  | Constraint | Impact on Agent Component |
+  | No ctx.auth inside component | Pass userId as argument to all handlers |
+  | IDs become strings at boundary | Use business IDs (agentId, eventId) not Convex doc IDs |
+  | Sub-transactions | Agent writes commit independently from parent mutations |
+  | No process.env | Pass configuration (API keys, model names) as arguments |
 
 #### Deliverables
 
@@ -248,7 +244,7 @@ directly — an app-level wrapper mutation must delegate to `components.agent.ap
 - When the app mounts the agent component via app.use
 - Then the agent's tables are isolated from the app schema
 - And the app cannot directly query agentCheckpoints
-- And all access goes through components.agent.\* handlers
+- And all access goes through components.agent.* handlers
 
 **Component API provides full CRUD for checkpoints**
 
@@ -307,8 +303,8 @@ directly — an app-level wrapper mutation must delegate to `components.agent.ap
 **Agent component provides isolated database**
 
 **Invariant:** All agent-specific state (checkpoints, audit events, dead letters,
-commands, pending approvals) must reside in the agent component's isolated database.
-No agent data in the shared app schema.
+    commands, pending approvals) must reside in the agent component's isolated database.
+    No agent data in the shared app schema.
 
     **Rationale:** Physical BC isolation prevents accidental coupling. Parent app mutations
     cannot query agent tables directly — this is enforced by Convex's component architecture,
@@ -322,7 +318,7 @@ _Verified by: Agent component registers with isolated schema, Component API prov
 **Cross-component queries use explicit API**
 
 **Invariant:** Agent BC must access external data (like `customerCancellations` projection)
-through explicit cross-component query patterns, never through direct table access.
+    through explicit cross-component query patterns, never through direct table access.
 
     **Rationale:** Maintains BC isolation while enabling necessary data access. The
     `customerCancellations` projection lives at the app level (owned by CommandOrchestrator),
@@ -349,188 +345,182 @@ _Verified by: Agent handler receives projection data as argument, Missing projec
 | Effort   | 1w    |
 
 **Problem:** The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that
-cannot call external APIs. The LLM runtime (`_llm/runtime.ts`) exists with OpenRouter
-integration but is never invoked because mutations cannot make HTTP calls. Additionally,
-rate limiting config exists as types only — no runtime enforcement protects against
-runaway LLM costs.
+  cannot call external APIs. The LLM runtime (`_llm/runtime.ts`) exists with OpenRouter
+  integration but is never invoked because mutations cannot make HTTP calls. Additionally,
+  rate limiting config exists as types only — no runtime enforcement protects against
+  runaway LLM costs.
 
-**Solution:** Implement hybrid action/mutation handler pattern:
+  **Solution:** Implement hybrid action/mutation handler pattern:
+  1. **Action handler factory** — EventBus delivers to Workpool action (not mutation)
+  2. **onComplete mutation** — Persists state atomically after LLM analysis
+  3. **Rate limiting enforcement** — `@convex-dev/rate-limiter` token bucket per agent
+  4. **Cost budget tracking** — Daily spend limits with automatic pause
+  5. **LLM fallback** — Graceful degradation to rule-based when LLM unavailable
 
-1. **Action handler factory** — EventBus delivers to Workpool action (not mutation)
-2. **onComplete mutation** — Persists state atomically after LLM analysis
-3. **Rate limiting enforcement** — `@convex-dev/rate-limiter` token bucket per agent
-4. **Cost budget tracking** — Daily spend limits with automatic pause
-5. **LLM fallback** — Graceful degradation to rule-based when LLM unavailable
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | LLM integration works | Actions can make external HTTP calls (mutations cannot) |
+  | Atomic persistence | Mutations in onComplete provide transactional guarantees |
+  | Cost control | Rate limiting prevents runaway LLM API costs |
+  | Graceful degradation | Fallback to rules when LLM unavailable or rate-limited |
+  | Conversation context | Thread adapter retains analysis history across events |
+  | Fault isolation | Circuit breaker prevents cascade failures from LLM outages |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| LLM integration works | Actions can make external HTTP calls (mutations cannot) |
-| Atomic persistence | Mutations in onComplete provide transactional guarantees |
-| Cost control | Rate limiting prevents runaway LLM API costs |
-| Graceful degradation | Fallback to rules when LLM unavailable or rate-limited |
-| Conversation context | Thread adapter retains analysis history across events |
-| Fault isolation | Circuit breaker prevents cascade failures from LLM outages |
+  **The Fundamental Constraint:**
 
-**The Fundamental Constraint:**
+  | Function Type | Can Call External APIs | Database Writes | Workpool Retry |
+  | Mutation | No | Yes (atomic) | No (OCC auto-retry) |
+  | Action | Yes (fetch, LLM) | No (must use runMutation) | Yes (if enabled) |
 
-| Function Type | Can Call External APIs | Database Writes | Workpool Retry |
-| Mutation | No | Yes (atomic) | No (OCC auto-retry) |
-| Action | Yes (fetch, LLM) | No (must use runMutation) | Yes (if enabled) |
+  This means the current single-mutation handler architecture fundamentally blocks LLM
+  integration. The solution requires splitting into action (LLM) + mutation (persist).
 
-This means the current single-mutation handler architecture fundamentally blocks LLM
-integration. The solution requires splitting into action (LLM) + mutation (persist).
+  **Action/Mutation Split Architecture:**
+  """
+  EventBus
+     |
+     v
+  Workpool.enqueueAction (agent event handler)
+     |
+     +--- 1. Load checkpoint (via runQuery)
+     +--- 2. Check idempotency (skip if already processed)
+     +--- 3. Load event history (via cross-component query)
+     +--- 4. Evaluate rule trigger (cheap, no LLM)
+     +--- 5. If triggered: call LLM analysis (external API)
+     +--- 6. Return AgentDecision
+     |
+     v
+  onComplete Mutation
+     |
+     +--- 7. Validate decision
+     +--- 8. Record to agent component (audit, command)
+     +--- 9. Create pending approval (if needed)
+     +--- 10. Update checkpoint
+     +--- 11. Handle failure (dead letter)
+  """
 
-**Action/Mutation Split Architecture:**
-"""
-EventBus
-|
-v
-Workpool.enqueueAction (agent event handler)
-|
-+--- 1. Load checkpoint (via runQuery)
-+--- 2. Check idempotency (skip if already processed)
-+--- 3. Load event history (via cross-component query)
-+--- 4. Evaluate rule trigger (cheap, no LLM)
-+--- 5. If triggered: call LLM analysis (external API)
-+--- 6. Return AgentDecision
-|
-v
-onComplete Mutation
-|
-+--- 7. Validate decision
-+--- 8. Record to agent component (audit, command)
-+--- 9. Create pending approval (if needed)
-+--- 10. Update checkpoint
-+--- 11. Handle failure (dead letter)
-"""
+  **Design Decision: @convex-dev/agent Integration**
 
-**Design Decision: @convex-dev/agent Integration**
+  | Option | Trade-off |
+  | A: Full @convex-dev/agent | Thread management, tool execution, but opinionated patterns that may conflict with event-reactive architecture |
+  | B: Vercel AI SDK only (current) | More control, but must implement thread/tool patterns manually |
+  | C: Hybrid (Recommended) | Use @convex-dev/agent for threads and tools, keep custom EventBus subscription and pattern detection |
 
-| Option | Trade-off |
-| A: Full @convex-dev/agent | Thread management, tool execution, but opinionated patterns that may conflict with event-reactive architecture |
-| B: Vercel AI SDK only (current) | More control, but must implement thread/tool patterns manually |
-| C: Hybrid (Recommended) | Use @convex-dev/agent for threads and tools, keep custom EventBus subscription and pattern detection |
+  **Decision:** Option C — Hybrid approach.
+  - **@convex-dev/agent provides:** Thread management (conversation context), tool execution (structured tool calls), model abstraction
+  - **Platform provides:** EventBus subscription, pattern detection triggers, checkpoint/audit infrastructure, rate limiting
+  - **Integration point:** Agent action handler creates/resumes thread per customer, uses @convex-dev/agent for LLM call, returns result to platform's onComplete handler
 
-**Decision:** Option C — Hybrid approach.
+  **Design Decision: Rate Limiting Implementation**
 
-- **@convex-dev/agent provides:** Thread management (conversation context), tool execution (structured tool calls), model abstraction
-- **Platform provides:** EventBus subscription, pattern detection triggers, checkpoint/audit infrastructure, rate limiting
-- **Integration point:** Agent action handler creates/resumes thread per customer, uses @convex-dev/agent for LLM call, returns result to platform's onComplete handler
+  Use `@convex-dev/rate-limiter` component (already installed in example app):
+  - **Token bucket per agent** — configurable maxRequestsPerMinute
+  - **Cost budget** — daily USD limit with alertThreshold and hard pause
+  - **Exceeded behavior** — queue event for later retry, or dead letter if queue full
 
-**Design Decision: Rate Limiting Implementation**
+  | Rate Limit Type | Mechanism | Action When Exceeded |
+  | Requests/minute | Token bucket (@convex-dev/rate-limiter) | Queue for retry |
+  | Concurrent calls | Workpool maxParallelism | Natural backpressure |
+  | Daily cost budget | Custom tracker (agent component table) | Pause agent |
+  | Queue overflow | Workpool queueDepth | Dead letter |
 
-Use `@convex-dev/rate-limiter` component (already installed in example app):
+  **Design Decision: LLM Fallback Strategy**
 
-- **Token bucket per agent** — configurable maxRequestsPerMinute
-- **Cost budget** — daily USD limit with alertThreshold and hard pause
-- **Exceeded behavior** — queue event for later retry, or dead letter if queue full
+  When LLM is unavailable (API key missing, rate limited, circuit breaker open):
+  1. Error propagates from pattern.analyze() through the action handler
+  2. Workpool retries with exponential backoff (maxAttempts: 3)
+  3. After retries exhausted, event goes to dead letter queue
 
-| Rate Limit Type | Mechanism | Action When Exceeded |
-| Requests/minute | Token bucket (@convex-dev/rate-limiter) | Queue for retry |
-| Concurrent calls | Workpool maxParallelism | Natural backpressure |
-| Daily cost budget | Custom tracker (agent component table) | Pause agent |
-| Queue overflow | Workpool queueDepth | Dead letter |
+  This ensures failed events are tracked and can be replayed after the issue is resolved.
 
-**Design Decision: LLM Fallback Strategy**
+  **Dedicated Agent Workpool:**
 
-When LLM is unavailable (API key missing, rate limited, circuit breaker open):
+  A dedicated `agentPool` peer mount exists in `convex.config.ts`, separating LLM
+  work from `projectionPool` to avoid resource contention.
 
-1. Error propagates from pattern.analyze() through the action handler
-2. Workpool retries with exponential backoff (maxAttempts: 3)
-3. After retries exhausted, event goes to dead letter queue
+  | Config | Value | Rationale |
+  | Name | agentPool | Dedicated pool, separate from projectionPool |
+  | maxParallelism | 10 | LLM calls are slow (~1-5s) — limit concurrency to control costs |
+  | retryActionsByDefault | true | LLM APIs have transient failures |
+  | defaultRetryBehavior | 3 attempts, 1s initial, base 2 | Exponential backoff for rate limits |
+  | Partition key | event.streamId | Per-customer ordering (matches PM pattern) |
 
-This ensures failed events are tracked and can be replayed after the issue is resolved.
+  """typescript
+  // convex.config.ts — dedicated agent pool
+  app.use(workpool, { name: "agentPool" });
 
-**Dedicated Agent Workpool:**
+  // Agent pool configuration
+  const agentPool = new Workpool(components.agentPool, {
+    maxParallelism: 10,
+    retryActionsByDefault: true,
+    defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
+  });
+  """
 
-A dedicated `agentPool` peer mount exists in `convex.config.ts`, separating LLM
-work from `projectionPool` to avoid resource contention.
+  Separation of concerns: agent LLM calls don't compete with projection processing
+  in `projectionPool` (which handles high-throughput, low-latency CMS updates).
 
-| Config | Value | Rationale |
-| Name | agentPool | Dedicated pool, separate from projectionPool |
-| maxParallelism | 10 | LLM calls are slow (~1-5s) — limit concurrency to control costs |
-| retryActionsByDefault | true | LLM APIs have transient failures |
-| defaultRetryBehavior | 3 attempts, 1s initial, base 2 | Exponential backoff for rate limits |
-| Partition key | event.streamId | Per-customer ordering (matches PM pattern) |
+  **createAgentActionHandler — Factory:**
 
-"""typescript
-// convex.config.ts — dedicated agent pool
-app.use(workpool, { name: "agentPool" });
+  `createAgentActionHandler` returns an `internalAction` that can call external APIs
+  (LLM). The legacy `createAgentEventHandler` (mutation-based `onEvent` callback) has
+  been removed — all agent event handling now uses the action-based handler.
+  The action handler reuses existing pure logic from the mutation handler:
+  - Pattern window filtering (`filterEventsInWindow`)
+  - Minimum event check (`hasMinimumEvents`)
+  - Approval determination (`shouldRequireApproval`)
 
-// Agent pool configuration
-const agentPool = new Workpool(components.agentPool, {
-maxParallelism: 10,
-retryActionsByDefault: true,
-defaultRetryBehavior: { maxAttempts: 3, initialBackoffMs: 1000, base: 2 },
-});
-"""
+  The new capability is the LLM call between trigger evaluation and decision creation:
+  """typescript
+  // Simplified action handler flow
+  // Steps 1-4: Same as mutation handler (reused pure functions)
+  // Step 5: NEW — LLM analysis (only possible in action context)
+  const analysis = await runtime.analyze(prompt, filteredEvents);
+  // Step 6: Build AgentDecision from analysis (reused pure function)
+  """
 
-Separation of concerns: agent LLM calls don't compete with projection processing
-in `projectionPool` (which handles high-throughput, low-latency CMS updates).
+  **Thread Adapter Design — @convex-dev/agent Integration:**
 
-**createAgentActionHandler — Factory:**
+  One thread per (agentId, customerId) pair enables conversation context across events:
 
-`createAgentActionHandler` returns an `internalAction` that can call external APIs
-(LLM). The legacy `createAgentEventHandler` (mutation-based `onEvent` callback) has
-been removed — all agent event handling now uses the action-based handler.
-The action handler reuses existing pure logic from the mutation handler:
+  | Concern | Mechanism |
+  | Thread identity | Key: `agent:{agentId}:customer:{customerId}` |
+  | First event | Creates new thread, seeds with customer context |
+  | Subsequent events | Resumes existing thread, appends new event context |
+  | History window | Thread retains LLM conversation history for richer analysis |
+  | Thread cleanup | Threads expire naturally via @convex-dev/agent TTL |
 
-- Pattern window filtering (`filterEventsInWindow`)
-- Minimum event check (`hasMinimumEvents`)
-- Approval determination (`shouldRequireApproval`)
+  The adapter translates between platform's `AgentInterface` (analyze/reason methods)
+  and `@convex-dev/agent`'s `Agent.generateText()`:
+  """typescript
+  // Thread adapter bridges platform interface to @convex-dev/agent
+  class ThreadAdapter implements AgentInterface {
+    async analyze(prompt: string, events: FatEvent[]): Promise<LLMAnalysisResult> {
+      const threadId = await this.getOrCreateThread(agentId, customerId);
+      const result = await this.agent.generateText(ctx, { threadId }, {
+        prompt: buildAnalysisPrompt(prompt, events),
+      });
+      return parseAnalysisResult(result);
+    }
+  }
+  """
 
-The new capability is the LLM call between trigger evaluation and decision creation:
-"""typescript
-// Simplified action handler flow
-// Steps 1-4: Same as mutation handler (reused pure functions)
-// Step 5: NEW — LLM analysis (only possible in action context)
-const analysis = await runtime.analyze(prompt, filteredEvents);
-// Step 6: Build AgentDecision from analysis (reused pure function)
-"""
+  **Circuit Breaker Integration — Phase 18 Relationship:**
 
-**Thread Adapter Design — @convex-dev/agent Integration:**
+  Phase 18's circuit breaker (`platform-core/src/infrastructure/circuit-breaker.ts`)
+  provides the failure isolation pattern. Agent LLM calls use a named instance:
 
-One thread per (agentId, customerId) pair enables conversation context across events:
+  | Config | Value |
+  | Circuit name | "llm-provider" (or per-provider: "openrouter", "openai") |
+  | Failure threshold | 5 consecutive failures |
+  | Reset timeout | 60 seconds |
+  | Fallback | Rule-based analysis via existing `createMockAgentRuntime()` pattern |
 
-| Concern | Mechanism |
-| Thread identity | Key: `agent:{agentId}:customer:{customerId}` |
-| First event | Creates new thread, seeds with customer context |
-| Subsequent events | Resumes existing thread, appends new event context |
-| History window | Thread retains LLM conversation history for richer analysis |
-| Thread cleanup | Threads expire naturally via @convex-dev/agent TTL |
-
-The adapter translates between platform's `AgentInterface` (analyze/reason methods)
-and `@convex-dev/agent`'s `Agent.generateText()`:
-"""typescript
-// Thread adapter bridges platform interface to @convex-dev/agent
-class ThreadAdapter implements AgentInterface {
-async analyze(prompt: string, events: FatEvent[]): Promise<LLMAnalysisResult> {
-const threadId = await this.getOrCreateThread(agentId, customerId);
-const result = await this.agent.generateText(ctx, { threadId }, {
-prompt: buildAnalysisPrompt(prompt, events),
-});
-return parseAnalysisResult(result);
-}
-}
-"""
-
-**Circuit Breaker Integration — Phase 18 Relationship:**
-
-Phase 18's circuit breaker (`platform-core/src/infrastructure/circuit-breaker.ts`)
-provides the failure isolation pattern. Agent LLM calls use a named instance:
-
-| Config | Value |
-| Circuit name | "llm-provider" (or per-provider: "openrouter", "openai") |
-| Failure threshold | 5 consecutive failures |
-| Reset timeout | 60 seconds |
-| Fallback | Rule-based analysis via existing `createMockAgentRuntime()` pattern |
-
-When circuit is open:
-
-1. LLM call is skipped (no HTTP request made)
-2. Error propagates to Workpool which retries after backoff
-3. Dead letter records circuit state context if retries exhausted
-4. Circuit half-opens after timeout, allowing one probe request
+  When circuit is open:
+  1. LLM call is skipped (no HTTP request made)
+  2. Error propagates to Workpool which retries after backoff
+  3. Dead letter records circuit state context if retries exhausted
+  4. Circuit half-opens after timeout, allowing one probe request
 
 #### Deliverables
 
@@ -656,8 +646,8 @@ When circuit is open:
 **Agent event handlers are actions for LLM integration**
 
 **Invariant:** Agent event handlers that require LLM analysis must be Convex actions,
-not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete
-mutation handler, never in the action.
+    not mutations. All state changes (checkpoint, audit, commands) happen in the onComplete
+    mutation handler, never in the action.
 
     **Rationale:** Convex mutations cannot make external HTTP calls. The action/mutation
     split enables LLM integration while maintaining atomic state persistence. Actions are
@@ -667,12 +657,12 @@ mutation handler, never in the action.
 
 ```typescript
 // createAgentActionHandler replaces createAgentEventHandler
-// Returns an internalAction (not internalMutation)
-export function createAgentActionHandler(config: {
-  agentConfig: AgentBCConfig;
-  runtime: AgentRuntimeConfig; // LLM runtime (or mock)
-  loadHistory: (ctx: ActionCtx, event: AgentEventHandlerArgs) => Promise<EventHistory>;
-}): RegisteredAction<"internal", AgentEventHandlerArgs, AgentDecision>;
+    // Returns an internalAction (not internalMutation)
+    export function createAgentActionHandler(config: {
+      agentConfig: AgentBCConfig;
+      runtime: AgentRuntimeConfig; // LLM runtime (or mock)
+      loadHistory: (ctx: ActionCtx, event: AgentEventHandlerArgs) => Promise<EventHistory>;
+    }): RegisteredAction<"internal", AgentEventHandlerArgs, AgentDecision>
 ```
 
 **Verified by:** Action calls LLM, onComplete persists, fallback works, timeout handled
@@ -682,7 +672,7 @@ _Verified by: Agent action handler calls LLM and returns decision, onComplete mu
 **Rate limiting is enforced before LLM calls**
 
 **Invariant:** Every LLM call must check rate limits before execution. Exceeded
-limits queue the event for later retry or send to dead letter if queue is full.
+    limits queue the event for later retry or send to dead letter if queue is full.
 
     **Rationale:** LLM API costs can spiral quickly under high event volume. Rate limiting
     protects against runaway costs and external API throttling. The existing `rateLimits`
@@ -698,15 +688,15 @@ Event arrives → Check token bucket → Allowed? → Proceed to LLM
 ```
 
 **Verified by:** Rate limit blocks excess calls, cost budget pauses agent,
-queue overflow creates dead letter
+    queue overflow creates dead letter
 
 _Verified by: Rate limiter allows LLM call within limits, Rate limiter blocks LLM call when exceeded, Cost budget exceeded pauses agent, Queue overflow triggers dead letter_
 
 **Agent subscriptions support onComplete callbacks**
 
 **Invariant:** `CreateAgentSubscriptionOptions` must include an optional `onComplete`
-field that receives Workpool completion callbacks, enabling agent-specific dead letter
-handling and checkpoint updates.
+    field that receives Workpool completion callbacks, enabling agent-specific dead letter
+    handling and checkpoint updates.
 
     **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete`
     field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler),
@@ -743,7 +733,7 @@ handling and checkpoint updates.
 ```
 
 **Verified by:** onComplete receives callbacks, dead letters created on failure,
-checkpoint updated on success
+    checkpoint updated on success
 
 _Verified by: Agent subscription with onComplete receives completion callbacks, Failed agent jobs create dead letters via onComplete, Agent subscription without onComplete uses global default_
 
@@ -756,37 +746,35 @@ _Verified by: Agent subscription with onComplete receives completion callbacks, 
 | Effort   | 2d    |
 
 **Problem:** The Order FSM treats `confirmed` as terminal. Orders cannot be
-cancelled after saga confirmation, blocking the Agent BC demo which requires
-3+ cancellations to trigger churn risk detection. The Reservation FSM already
-supports `confirmed -> released`, but no coordination exists to release
-reservations when confirmed orders are cancelled.
+  cancelled after saga confirmation, blocking the Agent BC demo which requires
+  3+ cancellations to trigger churn risk detection. The Reservation FSM already
+  supports `confirmed -> released`, but no coordination exists to release
+  reservations when confirmed orders are cancelled.
 
-**Solution:** Enable cancellation of confirmed orders with automatic reservation release:
+  **Solution:** Enable cancellation of confirmed orders with automatic reservation release:
+  1. **FSM change:** Add `confirmed -> cancelled` transition to Order FSM
+  2. **Decider change:** Remove `ORDER_ALREADY_CONFIRMED` rejection in CancelOrder
+  3. **Process Manager:** ReservationReleaseOnOrderCancel PM releases reservation
+     when a confirmed order is cancelled
 
-1. **FSM change:** Add `confirmed -> cancelled` transition to Order FSM
-2. **Decider change:** Remove `ORDER_ALREADY_CONFIRMED` rejection in CancelOrder
-3. **Process Manager:** ReservationReleaseOnOrderCancel PM releases reservation
-   when a confirmed order is cancelled
+  **Why It Matters:**
+  | Benefit | How |
+  | Agent BC enablement | 3+ cancellations trigger churn risk pattern detection |
+  | Business flexibility | Customers can cancel even after confirmation |
+  | Stock recovery | Reserved inventory returns to available pool |
+  | Consistency | Order and Reservation states stay synchronized |
 
-**Why It Matters:**
-| Benefit | How |
-| Agent BC enablement | 3+ cancellations trigger churn risk pattern detection |
-| Business flexibility | Customers can cancel even after confirmation |
-| Stock recovery | Reserved inventory returns to available pool |
-| Consistency | Order and Reservation states stay synchronized |
+  **Cross-Context Coordination:**
+  | Event Source | Event | PM Action | Target BC |
+  | Orders BC | OrderCancelled | Trigger | PM |
+  | PM | ReleaseReservation | Command | Inventory BC |
+  | Inventory BC | ReservationReleased | Audit | - |
 
-**Cross-Context Coordination:**
-| Event Source | Event | PM Action | Target BC |
-| Orders BC | OrderCancelled | Trigger | PM |
-| PM | ReleaseReservation | Command | Inventory BC |
-| Inventory BC | ReservationReleased | Audit | - |
-
-**Design Decision: PM vs Saga:**
-
-- No compensation needed (simple event -> command)
-- No multi-step coordination
-- No external event awaits
-- Therefore: **Process Manager** is the correct choice (per ADR-033)
+  **Design Decision: PM vs Saga:**
+  - No compensation needed (simple event -> command)
+  - No multi-step coordination
+  - No external event awaits
+  - Therefore: **Process Manager** is the correct choice (per ADR-033)
 
 #### Deliverables
 
@@ -868,7 +856,7 @@ reservations when confirmed orders are cancelled.
 **Confirmed orders can be cancelled**
 
 The Order FSM must allow transitioning from `confirmed` to `cancelled`.
-The CancelOrder decider must accept cancellation requests for confirmed orders.
+    The CancelOrder decider must accept cancellation requests for confirmed orders.
 
     **FSM Change:**
 
@@ -884,10 +872,10 @@ The CancelOrder decider must accept cancellation requests for confirmed orders.
 
 ```typescript
 // Remove this rejection:
-// if (state.status === "confirmed") {
-//   return rejected("ORDER_ALREADY_CONFIRMED", "...");
-// }
-// Let FSM handle the transition validation
+    // if (state.status === "confirmed") {
+    //   return rejected("ORDER_ALREADY_CONFIRMED", "...");
+    // }
+    // Let FSM handle the transition validation
 ```
 
 _Verified by: Cancel a confirmed order, Cannot cancel already cancelled order (unchanged behavior), OrderCancelled evolves confirmed state to cancelled_
@@ -895,7 +883,7 @@ _Verified by: Cancel a confirmed order, Cannot cancel already cancelled order (u
 **Reservation is released when confirmed order is cancelled**
 
 The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
-When triggered, it checks if the order had a reservation and releases it.
+    When triggered, it checks if the order had a reservation and releases it.
 
     **PM Definition:**
     | Property | Value |
@@ -909,29 +897,28 @@ When triggered, it checks if the order had a reservation and releases it.
 
 ```typescript
 async function handleOrderCancelled(ctx, event) {
-  // Query orderWithInventoryStatus projection for reservationId
-  const orderStatus = await ctx.db
-    .query("orderWithInventoryStatus")
-    .withIndex("by_orderId", (q) => q.eq("orderId", event.payload.orderId))
-    .first();
+      // Query orderWithInventoryStatus projection for reservationId
+      const orderStatus = await ctx.db
+        .query("orderWithInventoryStatus")
+        .withIndex("by_orderId", q => q.eq("orderId", event.payload.orderId))
+        .first();
 
-  // Only release if reservation exists and is not already released
-  if (orderStatus?.reservationId && orderStatus.reservationStatus !== "released") {
-    return [
-      {
-        commandType: "ReleaseReservation",
-        payload: {
-          reservationId: orderStatus.reservationId,
-          reason: `Order ${event.payload.orderId} cancelled: ${event.payload.reason}`,
-        },
-        causationId: event.eventId,
-        correlationId: event.correlationId,
-      },
-    ];
-  }
+      // Only release if reservation exists and is not already released
+      if (orderStatus?.reservationId &&
+          orderStatus.reservationStatus !== "released") {
+        return [{
+          commandType: "ReleaseReservation",
+          payload: {
+            reservationId: orderStatus.reservationId,
+            reason: `Order ${event.payload.orderId} cancelled: ${event.payload.reason}`,
+          },
+          causationId: event.eventId,
+          correlationId: event.correlationId,
+        }];
+      }
 
-  return []; // No command to emit
-}
+      return []; // No command to emit
+    }
 ```
 
 _Verified by: Reservation is released after confirmed order cancellation, Cancelling draft order does not trigger reservation release, Cancelling submitted order with pending reservation releases it, PM is idempotent for duplicate OrderCancelled events_
@@ -946,11 +933,22 @@ _Verified by: Three cancellations trigger churn risk agent_
 
 ## ✅ Recently Completed
 
-| Pattern                         | Description                                                                                                         |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Pattern                        | Description                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | ✅ Agent As Bounded Context     | Problem: AI agents are invoked manually without integration into the event-driven architecture.                     |
 | ✅ Agent Churn Risk Completion  | Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c... |
 | ✅ Agent Command Infrastructure | Problem: Three interconnected gaps in agent command infrastructure: 1.                                              |
+
+---
+
+<details>
+<summary>📋 Upcoming (1)</summary>
+
+| Pattern                 | Effort |
+| ----------------------- | ------ |
+| 📋 Agent Admin Frontend | 2w     |
+
+</details>
 
 ---
 

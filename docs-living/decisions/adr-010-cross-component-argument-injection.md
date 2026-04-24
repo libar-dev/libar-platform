@@ -28,8 +28,8 @@
 | D: Shared database layer         | Simplest queries                                                | Violates BC isolation; defeats purpose of components                         |
 
 Convex components have isolated databases. A component's handlers can only access
-tables defined in that component's schema. This is by design — it enforces bounded
-context isolation at the infrastructure level.
+    tables defined in that component's schema. This is by design — it enforces bounded
+    context isolation at the infrastructure level.
 
     When a component needs data from outside its boundary (e.g., an app-level projection
     or another component's data), it cannot query that data directly:
@@ -50,7 +50,7 @@ context isolation at the infrastructure level.
 | 4    | Component handler | Receives pre-loaded data; processes without external queries |
 
 When a component handler needs data from outside its boundary, the app-level caller
-loads that data and passes it as an argument to the handler.
+    loads that data and passes it as an argument to the handler.
 
     The pattern:
 
@@ -64,7 +64,12 @@ loads that data and passes it as an argument to the handler.
 
 ## Consequences
 
-Positive outcomes: - Component remains truly isolated — no knowledge of external schema - Caller has full control over data loading (can optimize, cache, batch) - Typed InjectedData interface provides compile-time safety - Pattern is testable — inject mock data in tests without projections - Applicable to any BC component, not just Agent
+Positive outcomes:
+    - Component remains truly isolated — no knowledge of external schema
+    - Caller has full control over data loading (can optimize, cache, batch)
+    - Typed InjectedData interface provides compile-time safety
+    - Pattern is testable — inject mock data in tests without projections
+    - Applicable to any BC component, not just Agent
 
     Negative outcomes:
     - Caller must know what data the component needs (coupling at orchestration layer)

@@ -27,7 +27,6 @@ event append fails, the side effect is orphaned. The outbox pattern uses
 The `onComplete` mutation is scheduled atomically when the action completes.
 It will be called regardless of action success/failure/cancel. If the
 `onComplete` mutation itself fails:
-
 - Convex OCC auto-retry handles transient conflicts
 - If OCC exhausted, the failure is logged for manual recovery
 - The `context` parameter preserves all data needed for recovery
@@ -38,14 +37,14 @@ It will be called regardless of action success/failure/cancel. If the
 // Create the onComplete handler
 export const onPaymentComplete = createOutboxHandler({
   getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
+  getCorrelationId: (ctx) => ctx.correlationId,
   buildEvent: (result, ctx) => ({
     streamType: "Order",
     streamId: ctx.orderId,
     eventType: result.kind === "success" ? "PaymentCompleted" : "PaymentFailed",
-    eventData:
-      result.kind === "success"
-        ? { chargeId: result.returnValue.chargeId }
-        : { error: result.error },
+    eventData: result.kind === "success"
+      ? { chargeId: result.returnValue.chargeId }
+      : { error: result.error },
   }),
 });
 

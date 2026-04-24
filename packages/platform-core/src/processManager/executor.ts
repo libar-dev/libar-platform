@@ -57,6 +57,7 @@ import {
   type EmittedCommand,
   type WithPMCheckpointConfig,
 } from "./withPMCheckpoint.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 
@@ -71,7 +72,7 @@ export interface PMDomainEvent {
   eventType: string;
 
   /** Global position for ordering/idempotency */
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
 
   /** Correlation ID for tracing */
   correlationId: string;

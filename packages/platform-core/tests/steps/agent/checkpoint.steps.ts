@@ -39,7 +39,7 @@ function createTestCheckpoint(overrides: Partial<AgentCheckpoint> = {}): AgentCh
   return {
     agentId: "test-agent",
     subscriptionId: "sub-001",
-    lastProcessedPosition: 100,
+    lastProcessedPosition: 100n,
     lastEventId: "evt_test_123",
     status: "active",
     eventsProcessed: 50,
@@ -172,7 +172,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
     RuleScenario("Accepts checkpoint with sentinel position -1", ({ Given, Then }) => {
       Given("a test checkpoint with lastProcessedPosition -1", () => {
         state.checkpoint = createTestCheckpoint({
-          lastProcessedPosition: -1,
+          lastProcessedPosition: -1n,
         });
       });
       Then("the checkpoint passes AgentCheckpointSchema validation", () => {
@@ -280,7 +280,11 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           }>(dataTable);
           for (const row of rows) {
             const actual = state.checkpoint![row.property as keyof AgentCheckpoint];
-            expect(actual).toBe(Number(row.value));
+            if (typeof actual === "bigint") {
+              expect(actual).toBe(BigInt(row.value));
+            } else {
+              expect(actual).toBe(Number(row.value));
+            }
           }
         }
       );
@@ -346,7 +350,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           });
         });
         Then("the checkpoint lastProcessedPosition is 150", () => {
-          expect(state.checkpoint!.lastProcessedPosition).toBe(150);
+          expect(state.checkpoint!.lastProcessedPosition).toBe(150n);
         });
       });
 
@@ -730,7 +734,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       RuleScenario("Returns true for checkpoint with sentinel position", ({ Given, Then }) => {
         Given("a test checkpoint with lastProcessedPosition -1", () => {
           state.checkpoint = createTestCheckpoint({
-            lastProcessedPosition: -1,
+            lastProcessedPosition: -1n,
           });
         });
         Then("isValidAgentCheckpoint returns true", () => {
@@ -829,7 +833,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           }
         );
         Then("the checkpoint lastProcessedPosition is -1", () => {
-          expect(state.checkpoint!.lastProcessedPosition).toBe(-1);
+          expect(state.checkpoint!.lastProcessedPosition).toBe(-1n);
         });
         And("the checkpoint eventsProcessed is 0", () => {
           expect(state.checkpoint!.eventsProcessed).toBe(0);
@@ -846,7 +850,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           });
         });
         Then("the checkpoint lastProcessedPosition is 0", () => {
-          expect(state.checkpoint!.lastProcessedPosition).toBe(0);
+          expect(state.checkpoint!.lastProcessedPosition).toBe(0n);
         });
         And("the checkpoint eventsProcessed is 1", () => {
           expect(state.checkpoint!.eventsProcessed).toBe(1);
@@ -860,7 +864,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           });
         });
         Then("the checkpoint lastProcessedPosition is 1", () => {
-          expect(state.checkpoint!.lastProcessedPosition).toBe(1);
+          expect(state.checkpoint!.lastProcessedPosition).toBe(1n);
         });
         And("the checkpoint eventsProcessed is 2", () => {
           expect(state.checkpoint!.eventsProcessed).toBe(2);

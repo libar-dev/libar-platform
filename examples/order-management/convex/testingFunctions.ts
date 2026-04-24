@@ -9,14 +9,34 @@
  * Docker restart is used for complete state reset when needed.
  */
 
-// Type declarations for Node.js globals that exist at runtime in Convex
-declare const process: { env: Record<string, string | undefined> };
-
 import { mutation, internalQuery, query } from "./_generated/server";
 import { v } from "convex/values";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { components } from "./_generated/api";
+import {
+  createVerificationProof,
+  ensureTestEnvironment,
+  isTestEnvironment,
+} from "@libar-dev/platform-core";
+import { compatGlobalPositionValidator } from "./lib/globalPosition";
+
+const verificationProofValidator = v.object({
+  issuer: v.string(),
+  subjectId: v.string(),
+  subjectType: v.union(
+    v.literal("reviewer"),
+    v.literal("agent"),
+    v.literal("boundedContext"),
+    v.literal("system")
+  ),
+  boundedContext: v.string(),
+  tenantId: v.optional(v.string()),
+  issuedAt: v.number(),
+  expiresAt: v.number(),
+  nonce: v.string(),
+  signature: v.string(),
+});
 
 // =============================================================================
 // Internal Function References (TS2589 Prevention)
@@ -28,44 +48,20 @@ const handleOrderConfirmedRef = makeFunctionReference<"mutation">(
   "processManagers/orderNotification:handleOrderConfirmed"
 ) as unknown as FunctionReference<"mutation", "internal">;
 
-/**
- * Guards test-only functions from production execution.
- *
- * Security model:
- * - Unit tests: __CONVEX_TEST_MODE__ is set by setup.ts
- * - Integration tests: Self-hosted Docker backend (ephemeral, localhost-only)
- * - Production: Cloud Convex with CONVEX_CLOUD_URL env var
- *
- * Note: Self-hosted Convex doesn't reliably expose env vars via process.env,
- * so we use a heuristic: if CONVEX_CLOUD_URL is NOT set, we assume test mode.
- * In production (cloud Convex), this env var is always present.
- */
-function ensureTestEnvironment(): void {
-  // Check for convex-test unit test mode (set by setup.ts)
-  if (typeof globalThis !== "undefined" && globalThis.__CONVEX_TEST_MODE__ === true) {
-    return; // Unit test environment, allow
-  }
+const getCommandBusCorrelationRef = components.commandBus.lib
+  .getByCorrelation as unknown as FunctionReference<"query", "internal">;
 
-  // In convex-test runtime, process may not be defined - which is fine for tests
-  if (typeof process === "undefined") {
-    return; // convex-test environment without globalThis flag, allow
-  }
+const cleanupExpiredCommandsRef = components.commandBus.lib
+  .cleanupExpired as unknown as FunctionReference<"mutation", "internal">;
 
-  // Check for IS_TEST env var (explicit test mode)
-  const env = process.env || {};
-  if (env["IS_TEST"]) {
-    return; // Explicit test mode, allow
-  }
+const getEventStoreCorrelationRef = components.eventStore.lib
+  .getByCorrelation as unknown as FunctionReference<"query", "internal">;
 
-  // In self-hosted Convex (Docker), env vars may not be accessible via process.env.
-  // Cloud Convex always has CONVEX_CLOUD_URL set. If it's absent, we're likely in
-  // a self-hosted test environment.
-  if (!env["CONVEX_CLOUD_URL"]) {
-    return; // Self-hosted (likely Docker test backend), allow
-  }
+const readVirtualStreamRef = components.eventStore.lib
+  .readVirtualStream as unknown as FunctionReference<"query", "internal">;
 
-  throw new Error("SECURITY: Test-only function called without IS_TEST environment variable");
-}
+const commitScopeRef = components.eventStore.lib
+  .commitScope as unknown as FunctionReference<"mutation", "internal">;
 
 /**
  * Check if test environment is properly configured.
@@ -74,11 +70,8 @@ function ensureTestEnvironment(): void {
 export const checkTestEnvironment = internalQuery({
   args: {},
   handler: async () => {
-    // In convex-test runtime, process may not be defined
-    const env = typeof process !== "undefined" && process.env ? process.env : {};
     return {
-      isTestEnvironment: !!env["IS_TEST"],
-      nodeEnv: env["NODE_ENV"],
+      isTestEnvironment: isTestEnvironment(),
     };
   },
 });
@@ -121,7 +114,7 @@ export const createPMState = mutation({
       v.literal("completed"),
       v.literal("failed")
     ),
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     ensureTestEnvironment();
@@ -213,6 +206,55 @@ export const getEventsForStream = query({
     }
 
     return await ctx.runQuery(components.eventStore.lib.readStream, queryArgs);
+  },
+});
+
+export const readEventsFromPosition = query({
+  args: {
+    fromPosition: v.optional(compatGlobalPositionValidator),
+    limit: v.optional(v.number()),
+    eventTypes: v.optional(v.array(v.string())),
+    boundedContext: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runQuery(components.eventStore.lib.readFromPosition, args);
+  },
+});
+
+export const getEventsByCorrelation = query({
+  args: {
+    correlationId: v.string(),
+    limit: v.optional(v.number()),
+    cursor: v.optional(compatGlobalPositionValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runQuery(getEventStoreCorrelationRef, args);
+  },
+});
+
+export const readEventsForScope = query({
+  args: {
+    scopeKey: v.string(),
+    fromGlobalPosition: v.optional(compatGlobalPositionValidator),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runQuery(readVirtualStreamRef, args);
+  },
+});
+
+export const commitTestScope = mutation({
+  args: {
+    scopeKey: v.string(),
+    expectedVersion: v.number(),
+    streamIds: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runMutation(commitScopeRef, args);
   },
 });
 
@@ -326,6 +368,42 @@ export const getCommandStatus = query({
   },
 });
 
+export const getCommandsByCorrelation = query({
+  args: {
+    correlationId: v.string(),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runQuery(getCommandBusCorrelationRef, args);
+  },
+});
+
+export const cleanupExpiredCommandBusEntries = mutation({
+  args: {
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runMutation(cleanupExpiredCommandsRef, args);
+  },
+});
+
+export const recordCommandEventCorrelationForTest = mutation({
+  args: {
+    commandId: v.string(),
+    eventIds: v.array(v.string()),
+    commandType: v.string(),
+    boundedContext: v.string(),
+    ttl: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runMutation(components.commandBus.lib.recordCommandEventCorrelation, args);
+  },
+});
+
 /**
  * Invoke the orderNotification PM handler directly, bypassing EventBus and Workpool.
  *
@@ -343,7 +421,7 @@ export const invokeOrderNotificationPMDirectly = mutation({
   args: {
     eventId: v.string(),
     eventType: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
     correlationId: v.string(),
     streamType: v.string(),
     streamId: v.string(),
@@ -523,9 +601,8 @@ export const testExpirePendingApprovals = mutation({
  * Unlike testApproveAgentAction, this mutation includes authorization
  * validation - the reviewer must be authorized for the agent's agentId.
  *
- * @param authorizedAgentIds - Optional list of agent IDs this reviewer can approve.
- *                             If empty/undefined, reviewer can approve any agent.
- *                             If specified, approval.agentId must be in this list.
+ * @param authorizedAgentIds - Explicit list of agent IDs this reviewer can approve.
+ *                             Empty or undefined lists fail closed.
  */
 export const testApproveAgentActionWithAuth = mutation({
   args: {
@@ -556,11 +633,12 @@ export const testApproveAgentActionWithAuth = mutation({
       return { success: false, error: "APPROVAL_NOT_FOUND" };
     }
 
-    // Check authorization if authorizedAgentIds is specified
-    if (args.authorizedAgentIds && args.authorizedAgentIds.length > 0) {
-      if (!args.authorizedAgentIds.includes(approval.agentId)) {
-        return { success: false, error: "UNAUTHORIZED_REVIEWER" };
-      }
+    if (!args.authorizedAgentIds || args.authorizedAgentIds.length === 0) {
+      return { success: false, error: "UNAUTHORIZED_REVIEWER" };
+    }
+
+    if (!args.authorizedAgentIds.includes(approval.agentId)) {
+      return { success: false, error: "UNAUTHORIZED_REVIEWER" };
     }
 
     // Proceed with the normal approval flow
@@ -588,7 +666,7 @@ export const testCreateAgentDeadLetter = mutation({
     agentId: v.string(),
     subscriptionId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
     error: v.string(),
     attemptCount: v.optional(v.number()),
     workId: v.optional(v.string()),
@@ -629,5 +707,227 @@ export const testCreateAgentDeadLetter = mutation({
       created: result.created,
       ...(result.deadLetterId && { deadLetterId: result.deadLetterId }),
     };
+  },
+});
+
+// ============================================================================
+// COMPONENT-BOUNDARY AUTH TESTING
+// ============================================================================
+
+export const testComponentApproveWithProof = mutation({
+  args: {
+    approvalId: v.string(),
+    reviewerId: v.string(),
+    reviewNote: v.optional(v.string()),
+    verificationProof: v.optional(verificationProofValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    try {
+      const result = await ctx.runMutation(components.agentBC.approvals.approve, {
+        approvalId: args.approvalId,
+        reviewerId: args.reviewerId,
+        ...(args.reviewNote !== undefined && { reviewNote: args.reviewNote }),
+        ...(args.verificationProof !== undefined && { verificationProof: args.verificationProof }),
+      });
+
+      return { success: true as const, result };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+export const testComponentRejectWithProof = mutation({
+  args: {
+    approvalId: v.string(),
+    reviewerId: v.string(),
+    reviewNote: v.optional(v.string()),
+    verificationProof: v.optional(verificationProofValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    try {
+      const result = await ctx.runMutation(components.agentBC.approvals.reject, {
+        approvalId: args.approvalId,
+        reviewerId: args.reviewerId,
+        ...(args.reviewNote !== undefined && { reviewNote: args.reviewNote }),
+        ...(args.verificationProof !== undefined && { verificationProof: args.verificationProof }),
+      });
+
+      return { success: true as const, result };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+export const testComponentAuditRecordWithProof = mutation({
+  args: {
+    eventType: v.string(),
+    agentId: v.string(),
+    decisionId: v.string(),
+    timestamp: v.number(),
+    payload: v.any(),
+    verificationProof: v.optional(verificationProofValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    try {
+      const result = await ctx.runMutation(components.agentBC.audit.record, {
+        eventType: args.eventType as never,
+        agentId: args.agentId,
+        decisionId: args.decisionId,
+        timestamp: args.timestamp,
+        payload: args.payload,
+        ...(args.verificationProof !== undefined && { verificationProof: args.verificationProof }),
+      });
+
+      return { success: true as const, result };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+export const testComponentCommandRecordWithProof = mutation({
+  args: {
+    agentId: v.string(),
+    type: v.string(),
+    payload: v.any(),
+    confidence: v.number(),
+    reason: v.string(),
+    triggeringEventIds: v.array(v.string()),
+    decisionId: v.string(),
+    patternId: v.optional(v.string()),
+    correlationId: v.optional(v.string()),
+    routingAttempts: v.optional(v.number()),
+    verificationProof: v.optional(verificationProofValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    try {
+      const result = await ctx.runMutation(components.agentBC.commands.record, {
+        agentId: args.agentId,
+        type: args.type,
+        payload: args.payload,
+        confidence: args.confidence,
+        reason: args.reason,
+        triggeringEventIds: args.triggeringEventIds,
+        decisionId: args.decisionId,
+        ...(args.patternId !== undefined && { patternId: args.patternId }),
+        ...(args.correlationId !== undefined && { correlationId: args.correlationId }),
+        ...(args.routingAttempts !== undefined && { routingAttempts: args.routingAttempts }),
+        ...(args.verificationProof !== undefined && { verificationProof: args.verificationProof }),
+      });
+
+      return { success: true as const, result };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+export const testComponentAppendToStreamWithProof = mutation({
+  args: {
+    streamType: v.string(),
+    streamId: v.string(),
+    expectedVersion: v.number(),
+    boundedContext: v.string(),
+    tenantId: v.optional(v.string()),
+    events: v.array(
+      v.object({
+        eventId: v.string(),
+        eventType: v.string(),
+        scopeKey: v.optional(v.string()),
+        category: v.optional(
+          v.union(
+            v.literal("domain"),
+            v.literal("integration"),
+            v.literal("trigger"),
+            v.literal("fat")
+          )
+        ),
+        schemaVersion: v.optional(v.number()),
+        payload: v.any(),
+        metadata: v.object({
+          correlationId: v.string(),
+          causationId: v.optional(v.string()),
+          userId: v.optional(v.string()),
+          schemaVersion: v.optional(v.number()),
+        }),
+        idempotencyKey: v.optional(v.string()),
+      })
+    ),
+    verificationProof: v.optional(verificationProofValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    try {
+      const verificationProof =
+        args.verificationProof ??
+        (await createVerificationProof({
+          target: "eventStore",
+          issuer: "order-management:testingFunctions:testComponentAppendToStreamWithProof",
+          subjectId: args.boundedContext,
+          subjectType: "boundedContext",
+          boundedContext: args.boundedContext,
+          ...(args.tenantId !== undefined && { tenantId: args.tenantId }),
+        }));
+
+      const result = await ctx.runMutation(components.eventStore.lib.appendToStream, {
+        streamType: args.streamType,
+        streamId: args.streamId,
+        expectedVersion: args.expectedVersion,
+        boundedContext: args.boundedContext,
+        ...(args.tenantId !== undefined && { tenantId: args.tenantId }),
+        events: args.events,
+        verificationProof,
+      });
+
+      return { success: true as const, result };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+export const getAgentAuditEventByDecisionId = query({
+  args: {
+    decisionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return ctx.runQuery(components.agentBC.audit.getByDecisionId, args);
+  },
+});
+
+export const getAgentCommandByDecisionId = query({
+  args: {
+    decisionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return ctx.runQuery(components.agentBC.commands.getByDecisionId, args);
   },
 });

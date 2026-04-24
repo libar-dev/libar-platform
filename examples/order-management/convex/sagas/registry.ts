@@ -17,6 +17,7 @@ import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
 import { createScopedLogger } from "@libar-dev/platform-core";
 import { workflowManager, PLATFORM_LOG_LEVEL } from "../infrastructure";
+import { compatGlobalPositionValidator } from "../lib/globalPosition";
 import { SAGA_TYPE as ORDER_FULFILLMENT_SAGA } from "./orderFulfillment";
 
 // =============================================================================
@@ -73,7 +74,7 @@ export const startSagaIfNotExists = internalMutation({
     sagaType: v.string(),
     sagaId: v.string(),
     triggerEventId: v.string(),
-    triggerGlobalPosition: v.number(),
+    triggerGlobalPosition: compatGlobalPositionValidator,
     /**
      * Event payload - intentionally uses v.any() for flexibility.
      * Validated at runtime by saga-specific Zod schema (e.g., OrderFulfillmentPayloadSchema).

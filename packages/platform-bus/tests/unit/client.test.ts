@@ -9,7 +9,7 @@
  * Note: Actual mutation/query behavior is tested in integration tests
  * since they require Convex runtime.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { CommandBus } from "../../src/client/index";
 import type {
   RecordCommandArgs,
@@ -17,7 +17,9 @@ import type {
   UpdateCommandResultArgs,
   GetCommandStatusArgs,
   GetByCorrelationArgs,
+  GetByCorrelationResult,
   CleanupExpiredArgs,
+  CleanupExpiredResult,
   CommandStatusInfo,
   CommandByCorrelationInfo,
   CommandBusApi,
@@ -41,6 +43,115 @@ describe("CommandBus Client", () => {
 
       expect(commandBus).toBeInstanceOf(CommandBus);
       expect(commandBus.component).toBe(mockApi);
+    });
+
+    it("delegates mutation and query methods to the component API", async () => {
+      const recordCommand = {} as CommandBusApi["lib"]["recordCommand"];
+      const updateCommandResult = {} as CommandBusApi["lib"]["updateCommandResult"];
+      const getCommandStatus = {} as CommandBusApi["lib"]["getCommandStatus"];
+      const getByCorrelation = {} as CommandBusApi["lib"]["getByCorrelation"];
+      const cleanupExpired = {} as CommandBusApi["lib"]["cleanupExpired"];
+      const mockApi = {
+        lib: {
+          recordCommand,
+          updateCommandResult,
+          getCommandStatus,
+          getByCorrelation,
+          cleanupExpired,
+        },
+      };
+
+      const mutationCtx = {
+        runMutation: vi
+          .fn()
+          .mockResolvedValueOnce({ status: "new" })
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce({ commands: 1, correlations: 2, hasMore: false }),
+      };
+      const queryCtx = {
+        runQuery: vi
+          .fn()
+          .mockResolvedValueOnce({
+            commandId: "cmd_123",
+            commandType: "CreateOrder",
+            targetContext: "orders",
+            status: "executed",
+          })
+          .mockResolvedValueOnce({
+            commands: [],
+            nextCursor: null,
+            hasMore: false,
+          }),
+      };
+      const commandBus = new CommandBus(mockApi);
+      const recordArgs: RecordCommandArgs = {
+        commandId: "cmd_123",
+        commandType: "CreateOrder",
+        targetContext: "orders",
+        payload: { orderId: "ord_123" },
+        metadata: { correlationId: "corr_123", timestamp: 123 },
+      };
+      const updateArgs: UpdateCommandResultArgs = {
+        commandId: "cmd_123",
+        status: "executed",
+        result: { ok: true },
+      };
+      const statusArgs: GetCommandStatusArgs = { commandId: "cmd_123" };
+      const correlationArgs: GetByCorrelationArgs = { correlationId: "corr_123", limit: 10 };
+      const cleanupArgs: CleanupExpiredArgs = { batchSize: 20 };
+
+      await expect(commandBus.recordCommand(mutationCtx as never, recordArgs)).resolves.toEqual({
+        status: "new",
+      });
+      await expect(
+        commandBus.updateCommandResult(mutationCtx as never, updateArgs)
+      ).resolves.toBe(true);
+      await expect(commandBus.getCommandStatus(queryCtx as never, statusArgs)).resolves.toEqual({
+        commandId: "cmd_123",
+        commandType: "CreateOrder",
+        targetContext: "orders",
+        status: "executed",
+      });
+      await expect(commandBus.getByCorrelation(queryCtx as never, correlationArgs)).resolves.toEqual({
+        commands: [],
+        nextCursor: null,
+        hasMore: false,
+      });
+      await expect(commandBus.cleanupExpired(mutationCtx as never, cleanupArgs)).resolves.toEqual({
+        commands: 1,
+        correlations: 2,
+        hasMore: false,
+      });
+
+      expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(1, recordCommand, recordArgs);
+      expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(
+        2,
+        updateCommandResult,
+        updateArgs
+      );
+      expect(queryCtx.runQuery).toHaveBeenNthCalledWith(1, getCommandStatus, statusArgs);
+      expect(queryCtx.runQuery).toHaveBeenNthCalledWith(2, getByCorrelation, correlationArgs);
+      expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(3, cleanupExpired, cleanupArgs);
+    });
+
+    it("uses an empty cleanup payload by default", async () => {
+      const cleanupExpired = {} as CommandBusApi["lib"]["cleanupExpired"];
+      const commandBus = new CommandBus({
+        lib: {
+          recordCommand: {} as CommandBusApi["lib"]["recordCommand"],
+          updateCommandResult: {} as CommandBusApi["lib"]["updateCommandResult"],
+          getCommandStatus: {} as CommandBusApi["lib"]["getCommandStatus"],
+          getByCorrelation: {} as CommandBusApi["lib"]["getByCorrelation"],
+          cleanupExpired,
+        },
+      });
+      const mutationCtx = {
+        runMutation: vi.fn().mockResolvedValue({ commands: 0, correlations: 0, hasMore: false }),
+      };
+
+      await commandBus.cleanupExpired(mutationCtx as never);
+
+      expect(mutationCtx.runMutation).toHaveBeenCalledWith(cleanupExpired, {});
     });
   });
 
@@ -264,9 +375,13 @@ describe("CommandBus Client", () => {
     it("GetByCorrelationArgs requires correlationId", () => {
       const args: GetByCorrelationArgs = {
         correlationId: "corr_789",
+        limit: 25,
+        cursor: "0000000000001234:cmd_1",
       };
 
       expect(args.correlationId).toBe("corr_789");
+      expect(args.limit).toBe(25);
+      expect(args.cursor).toBe("0000000000001234:cmd_1");
     });
 
     it("CleanupExpiredArgs supports optional batchSize", () => {
@@ -298,6 +413,41 @@ describe("CommandBus Client", () => {
 
       expect(info.timestamp).toBeDefined();
       expect(info.timestamp).toBeLessThan(info.executedAt!);
+    });
+  });
+
+  describe("GetByCorrelationResult interface", () => {
+    it("supports paginated correlation responses", () => {
+      const result: GetByCorrelationResult = {
+        commands: [
+          {
+            commandId: "cmd_123",
+            commandType: "CreateOrder",
+            targetContext: "orders",
+            status: "executed",
+            executedAt: Date.now(),
+            timestamp: Date.now() - 1000,
+          },
+        ],
+        nextCursor: "0000000000001234:cmd_123",
+        hasMore: true,
+      };
+
+      expect(result.commands).toHaveLength(1);
+      expect(result.nextCursor).toBe("0000000000001234:cmd_123");
+      expect(result.hasMore).toBe(true);
+    });
+  });
+
+  describe("CleanupExpiredResult interface", () => {
+    it("tracks pagination state", () => {
+      const result: CleanupExpiredResult = {
+        commands: 2,
+        correlations: 1,
+        hasMore: true,
+      };
+
+      expect(result.hasMore).toBe(true);
     });
   });
 });

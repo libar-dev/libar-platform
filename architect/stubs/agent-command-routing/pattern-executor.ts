@@ -200,7 +200,7 @@ export function buildDecisionFromAnalysis(
   let payload: unknown = resultCommand?.payload ?? result.data;
 
   // Deprecated fallback: extract from result.data.suggestedAction
-  // TODO: Remove once all patterns migrate to result.command
+  // Deferred cleanup: remove once all patterns migrate to result.command.
   if (!command) {
     const suggestedAction = (result.data as Record<string, unknown> | undefined)
       ?.suggestedAction as { type?: string; payload?: unknown } | undefined;

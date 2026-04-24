@@ -26,33 +26,33 @@ enabling unit testing without database dependencies.
 
 ### Core Types
 
-| Type              | Purpose                                                 |
-| ----------------- | ------------------------------------------------------- |
-| `DeciderOutput`   | Union of success, rejected, or failed                   |
-| `DeciderSuccess`  | Successful decision with event and state update         |
-| `DeciderRejected` | Validation failure, no event emitted                    |
-| `DeciderFailed`   | Business failure WITH event (e.g., `ReservationFailed`) |
-| `DeciderContext`  | Timestamp, commandId, correlationId                     |
+| Type | Purpose |
+|------|---------|
+| `DeciderOutput` | Union of success, rejected, or failed |
+| `DeciderSuccess` | Successful decision with event and state update |
+| `DeciderRejected` | Validation failure, no event emitted |
+| `DeciderFailed` | Business failure WITH event (e.g., `ReservationFailed`) |
+| `DeciderContext` | Timestamp, commandId, correlationId |
 
 ### Helper Functions
 
-| Function       | Returns           | Purpose                           |
-| -------------- | ----------------- | --------------------------------- |
-| `success()`    | `DeciderSuccess`  | Build successful output           |
-| `rejected()`   | `DeciderRejected` | Build validation failure          |
-| `failed()`     | `DeciderFailed`   | Build business failure with event |
-| `isSuccess()`  | `boolean`         | Type guard for success            |
-| `isRejected()` | `boolean`         | Type guard for rejection          |
-| `isFailed()`   | `boolean`         | Type guard for failure            |
+| Function | Returns | Purpose |
+|----------|---------|---------|
+| `success()` | `DeciderSuccess` | Build successful output |
+| `rejected()` | `DeciderRejected` | Build validation failure |
+| `failed()` | `DeciderFailed` | Build business failure with event |
+| `isSuccess()` | `boolean` | Type guard for success |
+| `isRejected()` | `boolean` | Type guard for rejection |
+| `isFailed()` | `boolean` | Type guard for failure |
 
 ### Decider vs Handler
 
-| Concern      | Decider (**Pure**) | Handler (Effectful)        |
-| ------------ | ------------------ | -------------------------- |
-| I/O          | None               | Load CMS, persist, enqueue |
-| Testability  | Unit tests         | Integration tests          |
-| Side effects | Never              | Always                     |
-| Returns      | `DeciderOutput`    | `CommandHandlerResult`     |
+| Concern | Decider (**Pure**) | Handler (Effectful) |
+|---------|-------------------|---------------------|
+| I/O | None | Load CMS, persist, enqueue |
+| Testability | Unit tests | Integration tests |
+| Side effects | Never | Always |
+| Returns | `DeciderOutput` | `CommandHandlerResult` |
 
 ### Relationship to Other Patterns
 

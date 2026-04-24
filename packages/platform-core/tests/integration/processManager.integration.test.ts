@@ -120,7 +120,7 @@ describe("Process Manager Integration", () => {
         if (order?.status !== "confirmed") {
           throw new Error(
             `Order ${orderId} was cancelled by saga. PM requires confirmed orders. ` +
-              `Original confirmOrder error: ${confirmResult.message || confirmResult.code}`
+              `Original confirmOrder result: ${JSON.stringify(confirmResult)}`
           );
         }
         // Saga confirmed the order - OrderConfirmed event exists
@@ -233,7 +233,7 @@ describe("Process Manager Integration", () => {
           // Since saga cancelled, there's no OrderConfirmed event for PM.
           throw new Error(
             `Order ${orderId} was cancelled by saga. PM requires confirmed orders. ` +
-              `Original confirmOrder error: ${confirmResult.message || confirmResult.code}`
+              `Original confirmOrder result: ${JSON.stringify(confirmResult)}`
           );
         }
         // Saga confirmed the order - OrderConfirmed event exists
@@ -377,7 +377,7 @@ describe("Process Manager Integration", () => {
             // Since saga cancelled, there's no OrderConfirmed event for PM.
             throw new Error(
               `Order ${orderId} was cancelled by saga. PM requires confirmed orders. ` +
-                `Original confirmOrder error: ${confirmResult.message || confirmResult.code}`
+                `Original confirmOrder result: ${JSON.stringify(confirmResult)}`
             );
           }
           // Saga confirmed the order - OrderConfirmed event exists
@@ -534,7 +534,7 @@ describe("Process Manager Integration", () => {
       const result = await testMutation(t, api.testingFunctions.invokeOrderNotificationPMDirectly, {
         eventId: generateTestId("evt"), // Synthetic event ID
         eventType: "OrderConfirmed",
-        globalPosition: confirmedEvent.globalPosition + 100, // Higher position to avoid conflict
+        globalPosition: confirmedEvent.globalPosition + 100n, // Higher position to avoid conflict
         correlationId: "direct-test-correlation",
         streamType: "Order",
         streamId: syntheticOrderId,
@@ -584,7 +584,7 @@ describe("Process Manager Integration", () => {
       const syntheticOrderId = generateTestId("dup-test-ord");
       const customerId = generateTestId("cust");
       const eventId = generateTestId("evt");
-      const globalPosition = 12345678; // Fixed position for both deliveries
+      const globalPosition = 12345678n; // Fixed position for both deliveries
 
       // First delivery - should process
       const result1 = await testMutation(
@@ -674,14 +674,14 @@ describe("Process Manager Integration", () => {
         processManagerName: "orderNotification",
         instanceId: syntheticOrderId,
         status: "idle",
-        lastGlobalPosition: 50000, // High checkpoint
+        lastGlobalPosition: 50000, // High checkpoint via compat input path
       });
 
       // Try to deliver an "older" event with lower globalPosition
       const result = await testMutation(t, api.testingFunctions.invokeOrderNotificationPMDirectly, {
         eventId: generateTestId("evt"),
         eventType: "OrderConfirmed",
-        globalPosition: 10000, // Lower than checkpoint (50000)
+        globalPosition: 10000n, // Lower than checkpoint (50000)
         correlationId: "ooo-test-correlation",
         streamType: "Order",
         streamId: syntheticOrderId,
@@ -749,7 +749,7 @@ describe("Process Manager Integration", () => {
         instanceId: orderId,
       });
       expect(initialPMState?.status).toBe("processing");
-      expect(initialPMState?.lastGlobalPosition).toBe(0);
+      expect(initialPMState?.lastGlobalPosition).toBe(0n);
 
       // Step 2: Execute normal order flow to trigger OrderConfirmed event
       // Due to dual-write, events exist immediately after mutations succeed.

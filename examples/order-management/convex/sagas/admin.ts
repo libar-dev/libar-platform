@@ -11,6 +11,7 @@ import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import { workflowManager } from "../infrastructure";
 import type { WorkflowId } from "@convex-dev/workflow";
+import { compatGlobalPositionValidator } from "../lib/globalPosition";
 
 // =============================================================================
 // Query Operations (Monitoring)
@@ -36,7 +37,7 @@ export const getSagaDetails = query({
         workflowId: v.string(),
         status: v.string(),
         triggerEventId: v.string(),
-        triggerGlobalPosition: v.number(),
+        triggerGlobalPosition: compatGlobalPositionValidator,
         createdAt: v.number(),
         updatedAt: v.number(),
         completedAt: v.optional(v.number()),

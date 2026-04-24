@@ -14,7 +14,10 @@
 
 ## Context
 
-The example app needs clear guidelines about its purpose. It was unclear whether: - Features should mirror production requirements - Implementation should prioritize completeness vs demonstration value - New functionality should be added based on business needs or platform needs
+The example app needs clear guidelines about its purpose. It was unclear whether:
+    - Features should mirror production requirements
+    - Implementation should prioritize completeness vs demonstration value
+    - New functionality should be added based on business needs or platform needs
 
     The previous "freeze policy" approach was overly prescriptive, defining explicit
     allowed/prohibited change categories. A better approach is to articulate the
@@ -58,7 +61,11 @@ The example app exists to **serve platform development**, not as a standalone pr
 
 ## Consequences
 
-Positive outcomes: - Clear decision criteria for example app changes - Focus remains on platform value, not example app features - Prevents scope creep into business logic unrelated to platform - Simpler than explicit allowed/prohibited lists
+Positive outcomes:
+    - Clear decision criteria for example app changes
+    - Focus remains on platform value, not example app features
+    - Prevents scope creep into business logic unrelated to platform
+    - Simpler than explicit allowed/prohibited lists
 
     Negative outcomes:
     - Example app may not represent a "complete" order management system

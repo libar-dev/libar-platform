@@ -1,4 +1,4 @@
-# Intent Admin Functions - CRUD operations for commandIntents table.
+#  Intent Admin Functions - CRUD operations for commandIntents table.
 
 **Purpose:** Detailed documentation for the Intent Admin Functions - CRUD operations for commandIntents table. pattern
 

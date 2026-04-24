@@ -13,13 +13,13 @@
 
 ## Context
 
-Historical tag prefixes created confusion: libar-docs-_ (TypeScript) vs libar-process-_ (Gherkin).
-Overlapping tags (pattern, phase, status) had unclear ownership. Two mental models to maintain.
+Historical tag prefixes created confusion: libar-docs-* (TypeScript) vs libar-process-* (Gherkin).
+    Overlapping tags (pattern, phase, status) had unclear ownership. Two mental models to maintain.
 
 ## Decision
 
-All tags use unified @architect-_ prefix. The libar-process-_ prefix is deprecated.
-BDD standard tags (acceptance-criteria, happy-path, etc.) remain unprefixed.
+All tags use unified @architect-* prefix. The libar-process-* prefix is deprecated.
+    BDD standard tags (acceptance-criteria, happy-path, etc.) remain unprefixed.
 
     Key Locations:
     - Repo taxonomy reference: libar-platform/architect/docs/tag-taxonomy.md
@@ -38,7 +38,10 @@ BDD standard tags (acceptance-criteria, happy-path, etc.) remain unprefixed.
 
 ## Consequences
 
-Positive outcomes: - Single mental model: "Everything uses @architect-\*" - Consistent grep/search patterns across codebase - Simpler onboarding for contributors
+Positive outcomes:
+    - Single mental model: "Everything uses @architect-*"
+    - Consistent grep/search patterns across codebase
+    - Simpler onboarding for contributors
 
     Negative outcomes:
     - Migration of existing libar-process-* tags (scanner accepts both during transition)

@@ -19,6 +19,7 @@
  */
 
 import type { PublishedEvent } from "../eventbus/types.js";
+import { normalizeGlobalPosition } from "../events/globalPosition.js";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 import type {
@@ -294,7 +295,7 @@ export function createAgentActionHandler<TCtx = unknown>(
     const event: PublishedEvent = {
       eventId: args.eventId,
       eventType: args.eventType,
-      globalPosition: args.globalPosition,
+      globalPosition: normalizeGlobalPosition(args.globalPosition),
       streamType: args.streamType,
       streamId: args.streamId,
       payload: args.payload,

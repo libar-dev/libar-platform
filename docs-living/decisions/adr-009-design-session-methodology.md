@@ -15,8 +15,8 @@
 ## Context
 
 Plan-level specs (Gherkin feature files) capture WHAT to build: rules, acceptance criteria,
-deliverables. But design sessions also need to produce HOW decisions and interface contracts
-that bridge planning to implementation.
+    deliverables. But design sessions also need to produce HOW decisions and interface contracts
+    that bridge planning to implementation.
 
     Without a defined methodology:
     - Design documents (markdown) were created that duplicated spec content
@@ -38,19 +38,20 @@ that bridge planning to implementation.
 
 Design sessions produce two types of outputs:
 
+
     Design sessions do NOT produce:
 
-| Problem                    | Example                                                   |
-| -------------------------- | --------------------------------------------------------- |
-| Missing \_generated/server | Convex component handler stubs import from generated code |
-| Unused variables           | Handler args in stub bodies trigger eslint                |
-| Progressive compilation    | Cannot selectively enable parts of stub files             |
+| Problem                   | Example                                                   |
+| ------------------------- | --------------------------------------------------------- |
+| Missing _generated/server | Convex component handler stubs import from generated code |
+| Unused variables          | Handler args in stub bodies trigger eslint                |
+| Progressive compilation   | Cannot selectively enable parts of stub files             |
 
 | Rule                         | Description                                                                    |
 | ---------------------------- | ------------------------------------------------------------------------------ |
 | @architect-implements        | Each stub uses @architect-implements to link to the parent pattern             |
 | @architect-target annotation | Each stub has an @architect-target tag indicating its real destination path    |
-| @architect-\* tags first     | All @architect-\* tags MUST appear first in the JSDoc block                    |
+| @architect-* tags first      | All @architect-* tags MUST appear first in the JSDoc block                     |
 | Pattern-based naming         | Folder names use the pattern/feature name, not session numbers                 |
 | Implementation moves stubs   | During implementation, stubs move from stubs/ to @architect-target locations   |
 | Step definition stubs        | Use existing tests/planning-stubs/ pattern (already excluded from test runner) |
@@ -62,7 +63,8 @@ Design sessions produce two types of outputs:
 | agent-llm-integration/      | ds-3-llm-integration/      |
 
 Code stubs created during design sessions would break compilation and linting if
-placed in real source folders:
+    placed in real source folders:
+
 
     Solution: All stubs live in libar-platform/architect/stubs/{pattern-name}/ which is outside
     all package tsconfig and eslint scopes. Zero configuration changes needed.
@@ -82,8 +84,8 @@ placed in real source folders:
 | design       | Design-session scoped  | API shape, handler patterns, schema decisions |
 
 The existing @architect-adr-category values (process, architecture) do not cover
-design-session scoped decisions about API shapes, schema strategies, and interface
-contracts that are specific to a feature but have lasting reference value.
+    design-session scoped decisions about API shapes, schema strategies, and interface
+    contracts that are specific to a feature but have lasting reference value.
 
     Updated category taxonomy:
 
@@ -97,7 +99,12 @@ contracts that are specific to a feature but have lasting reference value.
 
 ## Consequences
 
-Positive outcomes: - Stubs never break compilation or linting - Zero tsconfig/eslint configuration changes for design sessions - Decision specs provide structured traceability with tags - Pattern-based naming is stable across planning cycles - @architect-implements + @architect-target annotations create clear link from design to implementation
+Positive outcomes:
+    - Stubs never break compilation or linting
+    - Zero tsconfig/eslint configuration changes for design sessions
+    - Decision specs provide structured traceability with tags
+    - Pattern-based naming is stable across planning cycles
+    - @architect-implements + @architect-target annotations create clear link from design to implementation
 
     Negative outcomes:
     - Stubs are not type-checked until implementation moves them to target locations

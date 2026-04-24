@@ -47,6 +47,7 @@ import type * as integration_index from "../integration/index.js";
 import type * as integration_routes from "../integration/routes.js";
 import type * as inventory from "../inventory.js";
 import type * as inventoryInternal from "../inventoryInternal.js";
+import type * as lib_globalPosition from "../lib/globalPosition.js";
 import type * as orders from "../orders.js";
 import type * as pools from "../pools.js";
 import type * as processManagers_index from "../processManagers/index.js";
@@ -134,6 +135,7 @@ declare const fullApi: ApiFromModules<{
   "integration/routes": typeof integration_routes;
   inventory: typeof inventory;
   inventoryInternal: typeof inventoryInternal;
+  "lib/globalPosition": typeof lib_globalPosition;
   orders: typeof orders;
   pools: typeof pools;
   "processManagers/index": typeof processManagers_index;
@@ -206,6 +208,8 @@ export declare const components: {
   eventStore: import("@libar-dev/platform-store/_generated/component.js").ComponentApi<"eventStore">;
   commandBus: import("@libar-dev/platform-bus/_generated/component.js").ComponentApi<"commandBus">;
   projectionPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"projectionPool">;
+  sagaPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"sagaPool">;
+  fanoutPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"fanoutPool">;
   dcbRetryPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"dcbRetryPool">;
   eventReplayPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"eventReplayPool">;
   durableAppendPool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"durableAppendPool">;

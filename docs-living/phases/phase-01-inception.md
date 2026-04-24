@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 2/2 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 2     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 2     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 2     |
 
 ---
 
@@ -51,16 +51,16 @@ Consolidates old roadmap phases 0-13 into a single completed milestone.
 
 ### Included Components
 
-| Component    | Package        | Description                            |
-| ------------ | -------------- | -------------------------------------- |
-| Event Store  | platform-store | Central event storage with OCC         |
-| Command Bus  | platform-bus   | Command idempotency infrastructure     |
-| CMS Patterns | platform-core  | Command Model State dual-write         |
-| Projections  | platform-core  | Checkpoint-based read model updates    |
-| Correlation  | platform-core  | Request tracing via correlation chains |
-| EventBus     | platform-core  | Publish/subscribe event delivery       |
-| Middleware   | platform-core  | Command pipeline with hooks            |
-| Invariants   | platform-core  | Domain rule enforcement                |
+| Component | Package | Description |
+|-----------|---------|-------------|
+| Event Store | platform-store | Central event storage with OCC |
+| Command Bus | platform-bus | Command idempotency infrastructure |
+| CMS Patterns | platform-core | Command Model State dual-write |
+| Projections | platform-core | Checkpoint-based read model updates |
+| Correlation | platform-core | Request tracing via correlation chains |
+| EventBus | platform-core | Publish/subscribe event delivery |
+| Middleware | platform-core | Command pipeline with hooks |
+| Invariants | platform-core | Domain rule enforcement |
 
 ### Key Patterns Established
 

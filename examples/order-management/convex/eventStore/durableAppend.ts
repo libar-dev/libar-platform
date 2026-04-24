@@ -77,7 +77,8 @@ const vEventData = v.object({
   eventType: v.string(),
   eventData: v.any(),
   boundedContext: v.string(),
-  correlationId: v.optional(v.string()),
+  tenantId: v.optional(v.string()),
+  correlationId: v.string(),
   causationId: v.optional(v.string()),
   expectedVersion: v.optional(v.number()),
 });

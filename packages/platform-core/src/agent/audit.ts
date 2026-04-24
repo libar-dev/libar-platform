@@ -12,7 +12,10 @@
  */
 
 import { z } from "zod";
-import { v7 as uuidv7 } from "uuid";
+import {
+  generateDecisionId as generateDecisionIdValue,
+  generateLifecycleDecisionId as generateLifecycleDecisionIdValue,
+} from "../ids/generator.js";
 import type { LLMContext } from "./types.js";
 import type { AgentLifecycleState } from "./lifecycle-fsm.js";
 import type { AgentConfigOverrides } from "./lifecycle-commands.js";
@@ -426,9 +429,7 @@ export type AgentAuditEvent =
  * ```
  */
 export function generateDecisionId(): string {
-  const timestamp = Date.now();
-  const random = uuidv7().slice(0, 8);
-  return `dec_${timestamp}_${random}`;
+  return generateDecisionIdValue();
 }
 
 // ============================================================================
@@ -679,9 +680,11 @@ export function createGenericAuditEvent(
  * @returns Unique lifecycle decision ID
  */
 export function createLifecycleDecisionId(agentId: string, timestamp?: number): string {
-  const ts = timestamp ?? Date.now();
-  const suffix = uuidv7().slice(0, 8);
-  return `lifecycle_${agentId}_${ts}_${suffix}`;
+  if (timestamp !== undefined) {
+    return `lifecycle_${agentId}_${timestamp}_${generateDecisionIdValue()}`;
+  }
+
+  return generateLifecycleDecisionIdValue(agentId);
 }
 
 // ============================================================================

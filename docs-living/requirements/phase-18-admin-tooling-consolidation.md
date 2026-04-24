@@ -16,31 +16,29 @@
 ## Description
 
 **Problem:** Admin functionality is scattered across the codebase:
-
-- Dead letter queue at `convex/projections/deadLetters.ts`
-- Saga admin at `convex/sagas/admin.ts`
-- No centralized diagnostics or event flow tracing
-- No unified interface for durable function inspection
+  - Dead letter queue at `convex/projections/deadLetters.ts`
+  - Saga admin at `convex/sagas/admin.ts`
+  - No centralized diagnostics or event flow tracing
+  - No unified interface for durable function inspection
   This fragmentation makes operational tasks difficult and error-prone.
 
-**Solution:** Consolidate admin functionality into `convex/admin/` directory:
+  **Solution:** Consolidate admin functionality into `convex/admin/` directory:
+  - **projections.ts** - Rebuild triggers, status, checkpoint management
+  - **deadLetters.ts** - DLQ inspection, retry, ignore (refactored from current location)
+  - **diagnostics.ts** - Event flow trace, system state snapshot
+  - **durableFunctions.ts** - Workpool/Workflow run inspection
 
-- **projections.ts** - Rebuild triggers, status, checkpoint management
-- **deadLetters.ts** - DLQ inspection, retry, ignore (refactored from current location)
-- **diagnostics.ts** - Event flow trace, system state snapshot
-- **durableFunctions.ts** - Workpool/Workflow run inspection
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Discoverability | All admin operations in one directory |
+  | Consistency | Uniform patterns for all admin endpoints |
+  | Security | Single authorization wrapper for admin access |
+  | Onboarding | New team members find operations easily |
+  | Documentation | Admin API becomes self-documenting location |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Discoverability | All admin operations in one directory |
-| Consistency | Uniform patterns for all admin endpoints |
-| Security | Single authorization wrapper for admin access |
-| Onboarding | New team members find operations easily |
-| Documentation | Admin API becomes self-documenting location |
-
-**Design Principle:** Saga admin remains at `convex/sagas/admin.ts` because sagas
-are domain-specific and tightly coupled to saga definitions. The `admin/` directory
-is for cross-cutting operational concerns.
+  **Design Principle:** Saga admin remains at `convex/sagas/admin.ts` because sagas
+  are domain-specific and tightly coupled to saga definitions. The `admin/` directory
+  is for cross-cutting operational concerns.
 
 ## Acceptance Criteria
 
@@ -50,7 +48,7 @@ is for cross-cutting operational concerns.
 - When admin tooling consolidation is implemented
 - Then convex/admin/ directory should exist
 - And it should contain projections.ts, deadLetters.ts, diagnostics.ts, durableFunctions.ts
-- And \_auth.ts should provide authorization wrapper
+- And _auth.ts should provide authorization wrapper
 
 **Backward compatibility for DLQ imports**
 
@@ -156,7 +154,7 @@ is for cross-cutting operational concerns.
 **Admin directory provides unified location for operational endpoints**
 
 All cross-cutting admin operations live in `convex/admin/`. Domain-specific
-admin (sagas) remains with domain code.
+    admin (sagas) remains with domain code.
 
     **Directory Structure:**
 
@@ -176,13 +174,21 @@ convex/
         └── admin.ts           # Saga-specific admin (stays here)
 ```
 
-**Migration Strategy:** 1. Create `convex/admin/` directory 2. Move DLQ endpoints to `admin/deadLetters.ts` 3. Add re-exports at old location for backward compatibility 4. Update imports in calling code 5. Remove deprecated re-exports in future release
+**Migration Strategy:**
+    1. Create `convex/admin/` directory
+    2. Move DLQ endpoints to `admin/deadLetters.ts`
+    3. Add re-exports at old location for backward compatibility
+    4. Update imports in calling code
+    5. Remove deprecated re-exports in future release
 
 _Verified by: Admin directory is created with correct structure, Backward compatibility for DLQ imports_
 
 **DLQ endpoints provide inspection, retry, and ignore operations**
 
-Dead letter queue management enables operations teams to: - View failed projection updates - Retry individual or bulk items - Ignore items that cannot be processed
+Dead letter queue management enables operations teams to:
+    - View failed projection updates
+    - Retry individual or bulk items
+    - Ignore items that cannot be processed
 
     **Existing Operations (to be moved):**
     | Operation | Current Location | New Location |
@@ -203,237 +209,253 @@ Dead letter queue management enables operations teams to: - View failed projecti
 
 ```typescript
 // admin/deadLetters.ts
-export const getDeadLetterStats = internalQuery({
-  handler: async (ctx) => {
-    const deadLetters = await ctx.db.query("projectionDeadLetters").collect();
+    export const getDeadLetterStats = internalQuery({
+      handler: async (ctx) => {
+        const deadLetters = await ctx.db.query("projectionDeadLetters").collect();
 
-    const stats = deadLetters.reduce(
-      (acc, dl) => {
-        const key = `${dl.projectionName}:${dl.status}`;
-        acc[key] = (acc[key] ?? 0) + 1;
-        return acc;
+        const stats = deadLetters.reduce((acc, dl) => {
+          const key = `${dl.projectionName}:${dl.status}`;
+          acc[key] = (acc[key] ?? 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        return {
+          total: deadLetters.length,
+          byProjectionAndStatus: stats,
+          oldestPending: deadLetters
+            .filter((dl) => dl.status === "pending")
+            .sort((a, b) => a.failedAt - b.failedAt)[0]?.failedAt,
+        };
       },
-      {} as Record<string, number>
-    );
+    });
 
-    return {
-      total: deadLetters.length,
-      byProjectionAndStatus: stats,
-      oldestPending: deadLetters
-        .filter((dl) => dl.status === "pending")
-        .sort((a, b) => a.failedAt - b.failedAt)[0]?.failedAt,
-    };
-  },
-});
+    export const bulkRetry = internalMutation({
+      args: {
+        projectionName: v.string(),
+        limit: v.optional(v.number()),
+      },
+      handler: async (ctx, { projectionName, limit = 100 }) => {
+        const pending = await ctx.db
+          .query("projectionDeadLetters")
+          .withIndex("by_projection_status", (q) =>
+            q.eq("projectionName", projectionName).eq("status", "pending")
+          )
+          .take(limit);
 
-export const bulkRetry = internalMutation({
-  args: {
-    projectionName: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { projectionName, limit = 100 }) => {
-    const pending = await ctx.db
-      .query("projectionDeadLetters")
-      .withIndex("by_projection_status", (q) =>
-        q.eq("projectionName", projectionName).eq("status", "pending")
-      )
-      .take(limit);
+        for (const dl of pending) {
+          await ctx.db.patch(dl._id, { status: "retrying", retryStartedAt: Date.now() });
+          // Enqueue retry via workpool
+          await projectionPool.enqueueMutation(ctx, getProjectionHandler(projectionName), {
+            eventId: dl.eventId,
+            // ... other args from dead letter
+          });
+        }
 
-    for (const dl of pending) {
-      await ctx.db.patch(dl._id, { status: "retrying", retryStartedAt: Date.now() });
-      // Enqueue retry via workpool
-      await projectionPool.enqueueMutation(ctx, getProjectionHandler(projectionName), {
-        eventId: dl.eventId,
-        // ... other args from dead letter
-      });
-    }
-
-    return { retriedCount: pending.length };
-  },
-});
+        return { retriedCount: pending.length };
+      },
+    });
 ```
 
 _Verified by: Get dead letter statistics, Bulk retry pending dead letters_
 
 **Event flow trace enables debugging across the command-event-projection chain**
 
-When issues occur, operators need to trace: - Which command created an event - Which projections processed the event - Where in the chain a failure occurred
+When issues occur, operators need to trace:
+    - Which command created an event
+    - Which projections processed the event
+    - Where in the chain a failure occurred
 
     **Trace Query:**
 
 ```typescript
 // admin/diagnostics.ts
-export const getEventFlowTrace = internalQuery({
-  args: { correlationId: v.string() },
-  handler: async (ctx, { correlationId }) => {
-    // Find command
-    const command = await ctx.db
-      .query("commandBusCommands")
-      .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
-      .unique();
+    export const getEventFlowTrace = internalQuery({
+      args: { correlationId: v.string() },
+      handler: async (ctx, { correlationId }) => {
+        // Find command
+        const command = await ctx.db
+          .query("commandBusCommands")
+          .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
+          .unique();
 
-    // Find events
-    const events = await eventStore.getByCorrelation(ctx, { correlationId });
+        // Find events
+        const events = await eventStore.getByCorrelation(ctx, { correlationId });
 
-    // Find projection updates (via checkpoints with matching eventIds)
-    const projectionUpdates = await ctx.db
-      .query("projectionCheckpoints")
-      .filter((q) => events.some((e) => q.eq(q.field("lastEventId"), e.eventId)))
-      .collect();
+        // Find projection updates (via checkpoints with matching eventIds)
+        const projectionUpdates = await ctx.db
+          .query("projectionCheckpoints")
+          .filter((q) =>
+            events.some((e) => q.eq(q.field("lastEventId"), e.eventId))
+          )
+          .collect();
 
-    // Find dead letters
-    const deadLetters = await ctx.db
-      .query("projectionDeadLetters")
-      .filter((q) => events.some((e) => q.eq(q.field("eventId"), e.eventId)))
-      .collect();
+        // Find dead letters
+        const deadLetters = await ctx.db
+          .query("projectionDeadLetters")
+          .filter((q) =>
+            events.some((e) => q.eq(q.field("eventId"), e.eventId))
+          )
+          .collect();
 
-    // Find saga executions
-    const sagas = await ctx.db
-      .query("sagaRegistry")
-      .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
-      .collect();
+        // Find saga executions
+        const sagas = await ctx.db
+          .query("sagaRegistry")
+          .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
+          .collect();
 
-    return {
-      correlationId,
-      command: command
-        ? {
+        return {
+          correlationId,
+          command: command ? {
             commandType: command.commandType,
             status: command.status,
             createdAt: command.createdAt,
             completedAt: command.completedAt,
-          }
-        : null,
-      events: events.map((e) => ({
-        eventId: e.eventId,
-        eventType: e.eventType,
-        streamId: e.streamId,
-        globalPosition: e.globalPosition,
-        timestamp: e.timestamp,
-      })),
-      projectionUpdates: projectionUpdates.map((p) => ({
-        projectionName: p.projectionName,
-        lastGlobalPosition: p.lastGlobalPosition,
-        updatedAt: p.updatedAt,
-      })),
-      deadLetters: deadLetters.map((dl) => ({
-        projectionName: dl.projectionName,
-        status: dl.status,
-        error: dl.error,
-        failedAt: dl.failedAt,
-      })),
-      sagas: sagas.map((s) => ({
-        sagaType: s.sagaType,
-        status: s.status,
-        startedAt: s.startedAt,
-        completedAt: s.completedAt,
-      })),
-    };
-  },
-});
+          } : null,
+          events: events.map((e) => ({
+            eventId: e.eventId,
+            eventType: e.eventType,
+            streamId: e.streamId,
+            globalPosition: e.globalPosition,
+            timestamp: e.timestamp,
+          })),
+          projectionUpdates: projectionUpdates.map((p) => ({
+            projectionName: p.projectionName,
+            lastGlobalPosition: p.lastGlobalPosition,
+            updatedAt: p.updatedAt,
+          })),
+          deadLetters: deadLetters.map((dl) => ({
+            projectionName: dl.projectionName,
+            status: dl.status,
+            error: dl.error,
+            failedAt: dl.failedAt,
+          })),
+          sagas: sagas.map((s) => ({
+            sagaType: s.sagaType,
+            status: s.status,
+            startedAt: s.startedAt,
+            completedAt: s.completedAt,
+          })),
+        };
+      },
+    });
 ```
 
 _Verified by: Trace complete event flow, Trace shows failure point_
 
 **System state snapshot provides full health picture**
 
-Operators need a single query to understand overall system state, combining: - Component health (Event Store, projections, Workpools) - Projection lag across all projections - DLQ statistics - Active rebuilds - Circuit breaker states
+Operators need a single query to understand overall system state, combining:
+    - Component health (Event Store, projections, Workpools)
+    - Projection lag across all projections
+    - DLQ statistics
+    - Active rebuilds
+    - Circuit breaker states
 
     **Snapshot Query:**
 
 ```typescript
 // admin/diagnostics.ts
-export const getSystemState = internalQuery({
-  handler: async (ctx) => {
-    const [health, projectionLags, dlqStats, activeRebuilds, circuitStates] = await Promise.all([
-      aggregateSystemHealth(ctx),
-      getAllProjectionLags(ctx),
-      getDeadLetterStats(ctx),
-      listActiveRebuilds(ctx),
-      getAllCircuitStates(ctx),
-    ]);
+    export const getSystemState = internalQuery({
+      handler: async (ctx) => {
+        const [
+          health,
+          projectionLags,
+          dlqStats,
+          activeRebuilds,
+          circuitStates,
+        ] = await Promise.all([
+          aggregateSystemHealth(ctx),
+          getAllProjectionLags(ctx),
+          getDeadLetterStats(ctx),
+          listActiveRebuilds(ctx),
+          getAllCircuitStates(ctx),
+        ]);
 
-    return {
-      timestamp: Date.now(),
-      health,
-      projections: {
-        lags: projectionLags,
-        activeRebuilds,
+        return {
+          timestamp: Date.now(),
+          health,
+          projections: {
+            lags: projectionLags,
+            activeRebuilds,
+          },
+          deadLetters: dlqStats,
+          circuitBreakers: circuitStates,
+          summary: {
+            status: health.status,
+            projectionsWithLag: Object.values(projectionLags).filter((l) => l > 100).length,
+            pendingDeadLetters: dlqStats.total,
+            openCircuits: circuitStates.filter((c) => c.state === "open").length,
+          },
+        };
       },
-      deadLetters: dlqStats,
-      circuitBreakers: circuitStates,
-      summary: {
-        status: health.status,
-        projectionsWithLag: Object.values(projectionLags).filter((l) => l > 100).length,
-        pendingDeadLetters: dlqStats.total,
-        openCircuits: circuitStates.filter((c) => c.state === "open").length,
-      },
-    };
-  },
-});
+    });
 ```
 
 _Verified by: System state provides complete overview_
 
 **Durable function queries enable Workpool and Workflow debugging**
 
-When background work fails or stalls, operators need visibility into: - Workpool queue contents and status - Workflow execution history - Action Retrier run status
+When background work fails or stalls, operators need visibility into:
+    - Workpool queue contents and status
+    - Workflow execution history
+    - Action Retrier run status
 
     **Durable Function Queries:**
 
 ```typescript
 // admin/durableFunctions.ts
 
-// Query Workpool item status
-export const getWorkpoolItem = internalQuery({
-  args: { workId: v.string() },
-  handler: async (ctx, { workId }) => {
-    const status = await projectionPool.status(ctx, workId);
-    return {
-      workId,
-      ...status,
-    };
-  },
-});
+    // Query Workpool item status
+    export const getWorkpoolItem = internalQuery({
+      args: { workId: v.string() },
+      handler: async (ctx, { workId }) => {
+        const status = await projectionPool.status(ctx, workId);
+        return {
+          workId,
+          ...status,
+        };
+      },
+    });
 
-// Query Workflow status and steps
-export const getWorkflowExecution = internalQuery({
-  args: { workflowId: v.string() },
-  handler: async (ctx, { workflowId }) => {
-    const status = await workflowManager.status(ctx, workflowId);
-    const steps = await workflowManager.listSteps(ctx, workflowId);
-    return {
-      workflowId,
-      status,
-      steps,
-    };
-  },
-});
+    // Query Workflow status and steps
+    export const getWorkflowExecution = internalQuery({
+      args: { workflowId: v.string() },
+      handler: async (ctx, { workflowId }) => {
+        const status = await workflowManager.status(ctx, workflowId);
+        const steps = await workflowManager.listSteps(ctx, workflowId);
+        return {
+          workflowId,
+          status,
+          steps,
+        };
+      },
+    });
 
-// List pending Workpool items for a pool
-export const listPendingWorkpoolItems = internalQuery({
-  args: {
-    poolName: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { poolName, limit = 50 }) => {
-    // Implementation depends on Workpool internals
-    // May need to query component tables directly
-    const pool = getPoolByName(poolName);
-    // ...
-  },
-});
+    // List pending Workpool items for a pool
+    export const listPendingWorkpoolItems = internalQuery({
+      args: {
+        poolName: v.string(),
+        limit: v.optional(v.number()),
+      },
+      handler: async (ctx, { poolName, limit = 50 }) => {
+        // Implementation depends on Workpool internals
+        // May need to query component tables directly
+        const pool = getPoolByName(poolName);
+        // ...
+      },
+    });
 
-// Get Action Retrier run status
-export const getRetrierRun = internalQuery({
-  args: { runId: v.string() },
-  handler: async (ctx, { runId }) => {
-    const status = await retrier.status(ctx, runId);
-    return {
-      runId,
-      ...status,
-    };
-  },
-});
+    // Get Action Retrier run status
+    export const getRetrierRun = internalQuery({
+      args: { runId: v.string() },
+      handler: async (ctx, { runId }) => {
+        const status = await retrier.status(ctx, runId);
+        return {
+          runId,
+          ...status,
+        };
+      },
+    });
 ```
 
 _Verified by: Query Workpool item status, Query Workflow execution with steps, Query non-existent durable function_
@@ -441,64 +463,66 @@ _Verified by: Query Workpool item status, Query Workflow execution with steps, Q
 **Admin endpoints require authorization**
 
 Admin operations are powerful and should be protected. All admin endpoints
-use an authorization wrapper that: - Validates caller has admin role - Logs all admin actions for audit - Rate limits admin operations
+    use an authorization wrapper that:
+    - Validates caller has admin role
+    - Logs all admin actions for audit
+    - Rate limits admin operations
 
     **Authorization Wrapper:**
 
 ```typescript
 // admin/_auth.ts
-import { ConvexError } from "convex/values";
+    import { ConvexError } from "convex/values";
 
-export function requireAdminRole(ctx: QueryCtx | MutationCtx) {
-  const identity = ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new ConvexError("UNAUTHENTICATED");
-  }
+    export function requireAdminRole(ctx: QueryCtx | MutationCtx) {
+      const identity = ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new ConvexError("UNAUTHENTICATED");
+      }
 
-  // Check for admin role in token claims or user record
-  const isAdmin =
-    identity.tokenIdentifier.includes("admin") ||
-    // Or check custom claims
-    (identity as any).customClaims?.role === "admin";
+      // Check for admin role in token claims or user record
+      const isAdmin = identity.tokenIdentifier.includes("admin") ||
+        // Or check custom claims
+        (identity as any).customClaims?.role === "admin";
 
-  if (!isAdmin) {
-    throw new ConvexError("UNAUTHORIZED: Admin role required");
-  }
+      if (!isAdmin) {
+        throw new ConvexError("UNAUTHORIZED: Admin role required");
+      }
 
-  return identity;
-}
+      return identity;
+    }
 
-export function withAdminAuth<T>(
-  handler: (ctx: MutationCtx, args: T, identity: UserIdentity) => Promise<any>
-) {
-  return async (ctx: MutationCtx, args: T) => {
-    const identity = requireAdminRole(ctx);
+    export function withAdminAuth<T>(
+      handler: (ctx: MutationCtx, args: T, identity: UserIdentity) => Promise<any>
+    ) {
+      return async (ctx: MutationCtx, args: T) => {
+        const identity = requireAdminRole(ctx);
 
-    // Log admin action
-    await ctx.db.insert("adminAuditLog", {
-      action: handler.name,
-      args: JSON.stringify(args),
-      userId: identity.subject,
-      timestamp: Date.now(),
-    });
+        // Log admin action
+        await ctx.db.insert("adminAuditLog", {
+          action: handler.name,
+          args: JSON.stringify(args),
+          userId: identity.subject,
+          timestamp: Date.now(),
+        });
 
-    return handler(ctx, args, identity);
-  };
-}
+        return handler(ctx, args, identity);
+      };
+    }
 ```
 
 **Usage:**
 
 ```typescript
 // admin/projections.ts
-export const triggerRebuild = internalMutation({
-  args: { projectionName: v.string() },
-  handler: withAdminAuth(async (ctx, args, identity) => {
-    // Only reached if caller has admin role
-    // Action is logged to audit trail
-    return triggerRebuildImpl(ctx, args);
-  }),
-});
+    export const triggerRebuild = internalMutation({
+      args: { projectionName: v.string() },
+      handler: withAdminAuth(async (ctx, args, identity) => {
+        // Only reached if caller has admin role
+        // Action is logged to audit trail
+        return triggerRebuildImpl(ctx, args);
+      }),
+    });
 ```
 
 _Verified by: Unauthenticated request is rejected, Non-admin user is rejected, Admin action is logged_

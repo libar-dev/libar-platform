@@ -12,8 +12,27 @@ export type {
   ExtractEnhancedEventPayload,
 } from "./types.js";
 
+export type { GlobalPosition, GlobalPositionLike, GlobalPositionAllocatorState } from "./globalPosition.js";
+
 // Category
 export type { EventCategory } from "./category.js";
+
+export {
+  GLOBAL_POSITION_SEQUENCE_MODULO,
+  INITIAL_GLOBAL_POSITION,
+  NO_GLOBAL_POSITION,
+  allocateGlobalPositions,
+  compareGlobalPositions,
+  decomposeGlobalPosition,
+  isGlobalPositionAfter,
+  isGlobalPositionAtOrAfter,
+  isGlobalPositionAtOrBefore,
+  maxGlobalPosition,
+  normalizeGlobalPosition,
+  normalizeOptionalGlobalPosition,
+  serializeGlobalPosition,
+  subtractGlobalPositions,
+} from "./globalPosition.js";
 
 export {
   EVENT_CATEGORIES,

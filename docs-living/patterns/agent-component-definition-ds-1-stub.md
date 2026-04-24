@@ -30,7 +30,6 @@ Projections (e.g., customerCancellations) remain at app level per platform archi
 NOT nested (agentBC does NOT `component.use(agent)`).
 
 Why peer, not nested:
-
 - Convex components cannot access `process.env` for LLM API keys
 - The app-level action handler coordinates between both components
 - `@convex-dev/agent` provides LLM threads/messages/embeddings
@@ -38,20 +37,18 @@ Why peer, not nested:
 - App-level action reads from both, onComplete writes to agentBC
 
 Installation (all three are app-level peers):
-
 ```typescript
 import agentBC from "@libar-dev/platform-core/agent/convex.config";
 import { agent } from "@convex-dev/agent/convex.config";
 import { workpool } from "@convex-dev/workpool/convex.config";
 
 const app = defineApp();
-app.use(agentBC); // BC: checkpoints, audit, commands, approvals
-app.use(agent, { name: "llmAgent" }); // LLM: threads, messages, embeddings
+app.use(agentBC);                         // BC: checkpoints, audit, commands, approvals
+app.use(agent, { name: "llmAgent" });     // LLM: threads, messages, embeddings
 app.use(workpool, { name: "agentPool" }); // Dedicated pool for agent actions (F-6)
 ```
 
 Data flow:
-
 ```
 EventBus → agentPool.enqueueAction() → app-level action handler
   action: ctx.runQuery(agentBC.checkpoints.*) + ctx.runQuery(llmAgent.*)

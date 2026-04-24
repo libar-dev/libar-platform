@@ -4,7 +4,7 @@
 
 ---
 
-**141 rules** from 30 features. 50 rules have explicit invariants.
+**151 rules** from 35 features. 65 rules have explicit invariants.
 
 ---
 
@@ -12,39 +12,33 @@
 
 ### Event Store Foundation
 
-_Event Sourcing requires centralized storage for domain events with_
+*Event Sourcing requires centralized storage for domain events with*
 
 ---
 
 #### Events are immutable once appended
 
-Once an event is appended to a stream, it cannot be modified or deleted.
+> **Invariant:** Events are permanently immutable after append — no update or delete operations exist. Once an event is appended to a stream, it cannot be modified or deleted. Events form a permanent audit trail that serves as the source of truth for both CMS state and projection data. This immutability is enforced at the API level - the Event Store provides no update or delete operations for events.
 
 ---
 
 #### Streams provide per-entity ordering via version numbers
 
-Each stream represents a single entity (aggregate) and maintains its own
-version sequence starting at 1.
+> **Invariant:** Each stream version starts at 1 and increments monotonically per entity. Each stream represents a single entity (aggregate) and maintains its own version sequence starting at 1. Events within a stream are ordered by their version number, ensuring deterministic replay if ever needed. The stream is identified by (streamType, streamId) pair: - streamType: The entity type (e.g., "Order", "Product") - streamId: The unique identifier within that type
 
 ---
 
 #### globalPosition enables total ordering across all streams
 
-While version provides per-stream ordering, globalPosition provides a
-monotonically increasing counter across ALL events from ALL streams.
+> **Invariant:** globalPosition is monotonically increasing and globally unique across all streams. While version provides per-stream ordering, globalPosition provides a monotonically increasing counter across ALL events from ALL streams. This is critical for projections that need to process events in causal order. The globalPosition formula ensures: - Globally unique positions (stream identity hash included) - Monotonically increasing within a stream - Time-ordered across streams (timestamp is primary sort key) Formula: timestamp * 1,000,000 + streamHash * 1,000 + (version % 1000)
 
 ---
 
 #### OCC prevents concurrent modification conflicts
 
-When appending events, callers must provide an expectedVersion: - If expectedVersion matches the stream's currentVersion, append succeeds - If expectedVersion mismatches, append returns a conflict result - For new streams, expectedVersion = 0
-
-    This enables safe concurrent access without locks while ensuring
-    business invariants are validated against consistent state.
+> **Invariant:** Append succeeds only when expectedVersion matches currentVersion. When appending events, callers must provide an expectedVersion: - If expectedVersion matches the stream's currentVersion, append succeeds - If expectedVersion mismatches, append returns a conflict result - For new streams, expectedVersion = 0 This enables safe concurrent access without locks while ensuring business invariants are validated against consistent state.
 
 **Verified by:**
-
 - Successful append with matching version
 - Conflict on version mismatch
 
@@ -52,13 +46,12 @@ When appending events, callers must provide an expectedVersion: - If expectedVer
 
 #### Checkpoints enable projection resumption with exactly-once semantics
 
-Projections track their lastProcessedPosition (a globalPosition value).
+> **Invariant:** Projections resume from lastProcessedPosition with no missed or duplicated events. Projections track their lastProcessedPosition (a globalPosition value). On restart, projections query events starting from their checkpoint, ensuring no events are missed and no events are processed twice. The readFromPosition API supports this pattern by accepting a starting globalPosition and returning events in order.
 
 **Verified by:**
-
 - Projection resumes from checkpoint
 
-_event-store-foundation.feature_
+*event-store-foundation.feature*
 
 ---
 
@@ -66,16 +59,15 @@ _event-store-foundation.feature_
 
 ### Command Bus Foundation
 
-_Command execution requires idempotency (same command = same result),_
+*Command execution requires idempotency (same command = same result),*
 
 ---
 
 #### Commands are idempotent via commandId deduplication
 
-Every command has a unique commandId.
+> **Invariant:** Same commandId always returns same result without re-execution. Every command has a unique commandId. When a command is recorded, the Command Bus checks if that commandId already exists: - If new: Record command with status "pending", proceed to execution - If duplicate: Return cached result without re-execution This ensures retries are safe - network failures don't cause duplicate domain state changes.
 
 **Verified by:**
-
 - First command execution is recorded
 - Duplicate command returns cached result
 
@@ -83,13 +75,9 @@ Every command has a unique commandId.
 
 #### Status tracks the complete command lifecycle
 
-Commands progress through well-defined states: - **pending**: Command received, execution in progress - **executed**: Command succeeded, event(s) emitted - **rejected**: Business rule violation, no event emitted - **failed**: Unexpected error during execution
-
-    The status is updated atomically with the command result, ensuring
-    consistent state even under concurrent access.
+> **Invariant:** Status transitions are atomic with result — pending to executed, rejected, or failed. Commands progress through well-defined states: -
 
 **Verified by:**
-
 - Successful command transitions to executed
 - Business rejection transitions to rejected
 - Unexpected error transitions to failed
@@ -98,12 +86,7 @@ Commands progress through well-defined states: - **pending**: Command received, 
 
 #### The CommandOrchestrator is the only command execution path
 
-Every command in the system flows through the same 7-step orchestration:
-
-    This standardized flow ensures:
-    - Consistent dual-write semantics (CMS + Event in same transaction)
-    - Automatic projection triggering
-    - Consistent error handling and status reporting
+> **Invariant:** Every command flows through the same 7-step orchestration — no bypass allowed. Every command in the system flows through the same 7-step orchestration: This standardized flow ensures: - Consistent dual-write semantics (CMS + Event in same transaction) - Automatic projection triggering - Consistent error handling and status reporting
 
 | Step | Action             | Component       | Purpose                              |
 | ---- | ------------------ | --------------- | ------------------------------------ |
@@ -119,27 +102,15 @@ Every command in the system flows through the same 7-step orchestration:
 
 #### correlationId links commands, events, and projections
 
-Every command carries a correlationId that flows through the entire
-execution path: - Command -> Handler -> Event metadata -> Projection processing - Enables tracing a user action through all system components - Supports debugging and audit trail reconstruction
-
-    The commandEventCorrelations table tracks which events were produced
-    by each command, enabling forward (command -> events) lookups.
+> **Invariant:** correlationId flows from command through handler to event metadata to projection. Every command carries a correlationId that flows through the entire execution path: - Command -> Handler -> Event metadata -> Projection processing - Enables tracing a user action through all system components - Supports debugging and audit trail reconstruction The commandEventCorrelations table tracks which events were produced by each command, enabling forward (command -> events) lookups.
 
 ---
 
 #### Middleware provides composable cross-cutting concerns
 
-The CommandOrchestrator supports a middleware pipeline that wraps
-command execution with before/after hooks:
+> **Invariant:** Middleware executes in registration order with early exit on failure. The CommandOrchestrator supports a middleware pipeline that wraps command execution with before/after hooks: -
 
-    - **Validation middleware**: Schema validation before handler
-    - **Authorization middleware**: Permission checks
-    - **Logging middleware**: Structured command logging
-    - **Rate limiting**: Throttling by user/context
-
-    Middleware executes in registration order, with early exit on failure.
-
-_command-bus-foundation.feature_
+*command-bus-foundation.feature*
 
 ---
 
@@ -147,19 +118,15 @@ _command-bus-foundation.feature_
 
 ### Saga Orchestration
 
-_Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot_
+*Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot*
 
 ---
 
 #### Sagas orchestrate operations across multiple bounded contexts
 
-When a business process spans multiple bounded contexts (e.g., Orders,
-Inventory, Shipping), a Saga coordinates the steps:
-
-    1.
+> **Invariant:** Each saga step uses the CommandOrchestrator for dual-write semantics within target BC. When a business process spans multiple bounded contexts (e.g., Orders, Inventory, Shipping), a Saga coordinates the steps: 1. Receive trigger event (e.g., OrderSubmitted) 2. Call Inventory BC to reserve stock 3. On success: Confirm reservation and update order 4. On failure: Execute compensation (cancel order) Each step uses the CommandOrchestrator to maintain dual-write semantics within the target bounded context.
 
 **Verified by:**
-
 - Successful cross-context coordination
 - Compensation on step failure
 
@@ -167,19 +134,13 @@ Inventory, Shipping), a Saga coordinates the steps:
 
 #### @convex-dev/workflow provides durability across server restarts
 
-Sagas use Convex Workflow for durable execution: - Workflow state is persisted automatically - Server restarts resume from the last completed step - External events (awaitEvent) allow pausing for external input
-
-    This durability is critical for long-running processes that may span
-    minutes or hours (e.g., waiting for payment confirmation).
+> **Invariant:** Workflow state persists automatically — server restarts resume from last completed step. Sagas use Convex Workflow for durable execution: - Workflow state is persisted automatically - Server restarts resume from the last completed step - External events (awaitEvent) allow pausing for external input This durability is critical for long-running processes that may span minutes or hours (e.g., waiting for payment confirmation).
 
 ---
 
 #### Compensation reverses partial operations on failure
 
-If step N fails after steps 1..N-1 succeeded, compensation logic
-must undo the effects of the completed steps:
-
-    Compensation runs in reverse order of the original steps.
+> **Invariant:** Compensation runs in reverse order of completed steps on failure. If step N fails after steps 1..N-1 succeeded, compensation logic must undo the effects of the completed steps: Compensation runs in reverse order of the original steps.
 
 | Step              | Success Action   | Compensation        |
 | ----------------- | ---------------- | ------------------- |
@@ -191,10 +152,9 @@ must undo the effects of the completed steps:
 
 #### Saga idempotency prevents duplicate workflows via sagaId
 
-Each saga has a unique sagaId (typically the entity ID triggering it).
+> **Invariant:** Same sagaId never starts duplicate workflows — registry returns existing info. Each saga has a unique sagaId (typically the entity ID triggering it). The registry checks for existing sagas before starting: - If saga exists: Return existing saga info, do not start duplicate - If new: Create saga record, start workflow This ensures network retries and event redelivery don't create multiple workflows for the same business operation.
 
 **Verified by:**
-
 - First trigger starts saga
 - Duplicate trigger returns existing saga
 
@@ -202,10 +162,9 @@ Each saga has a unique sagaId (typically the entity ID triggering it).
 
 #### Saga status is updated via onComplete callback, not inside workflow
 
-The workflow's onComplete handler updates the saga's status in the
-sagas table.
+> **Invariant:** Workflow code has no database access — status updates are external via onComplete. The workflow's onComplete handler updates the saga's status in the sagas table. This separation ensures: - Workflow code remains pure (no database access) - Status updates are atomic with workflow completion - Failed status updates can be retried independently Status values: pending -> running -> completed | failed | compensating
 
-_saga-orchestration.feature_
+*saga-orchestration.feature*
 
 ---
 
@@ -213,7 +172,7 @@ _saga-orchestration.feature_
 
 ### Bounded Context Foundation
 
-_DDD Bounded Contexts need clear boundaries with physical enforcement,_
+*DDD Bounded Contexts need clear boundaries with physical enforcement,*
 
 ---
 
@@ -222,7 +181,6 @@ _DDD Bounded Contexts need clear boundaries with physical enforcement,_
 Each Convex component (bounded context) has its own isolated database.
 
 **Verified by:**
-
 - Direct table query fails across component boundary
 - Component API access succeeds
 
@@ -231,7 +189,7 @@ Each Convex component (bounded context) has its own isolated database.
 #### Sub-transactions are atomic within components
 
 When a component handler is called, all writes within that handler
-commit atomically.
+    commit atomically.
 
 ---
 
@@ -240,7 +198,6 @@ commit atomically.
 Authentication context (ctx.auth) is NOT passed to component handlers.
 
 **Verified by:**
-
 - User ID passed explicitly to component
 
 ---
@@ -250,22 +207,26 @@ Authentication context (ctx.auth) is NOT passed to component handlers.
 Convex typed IDs (Id<"table">) are scoped to their database.
 
 **Verified by:**
-
 - ID conversion at boundary
 
 ---
 
 #### DualWriteContextContract formalizes the bounded context API
 
-Each bounded context should define a contract that specifies: - **identity**: Name, description, version, streamTypePrefix - **executionMode**: "dual-write" for CMS + Event pattern - **commandTypes**: List of commands the context handles - **eventTypes**: List of events the context produces - **cmsTypes**: CMS tables with schema versions - **errorCodes**: Domain errors that can be returned
+Each bounded context should define a contract that specifies:
+    - **identity**: Name, description, version, streamTypePrefix
+    - **executionMode**: "dual-write" for CMS + Event pattern
+    - **commandTypes**: List of commands the context handles
+    - **eventTypes**: List of events the context produces
+    - **cmsTypes**: CMS tables with schema versions
+    - **errorCodes**: Domain errors that can be returned
 
     This contract serves as documentation and enables type-safe integration.
 
 **Verified by:**
-
 - Contract provides type safety for commands
 
-_bounded-context-foundation.feature_
+*bounded-context-foundation.feature*
 
 ---
 
@@ -273,14 +234,13 @@ _bounded-context-foundation.feature_
 
 ### Package Architecture
 
-_The original @convex-es/core package grew to 25+ modules, creating issues:_
+*The original @convex-es/core package grew to 25+ modules, creating issues:*
 
 ---
 
 #### Layer 0 packages have no framework dependencies
 
 **Verified by:**
-
 - platform-fsm has no dependencies
 - platform-decider depends only on platform-fsm
 
@@ -289,7 +249,6 @@ _The original @convex-es/core package grew to 25+ modules, creating issues:_
 #### Consumers can install individual packages
 
 **Verified by:**
-
 - Decider package is independently usable
 - Packages are independently publishable
 
@@ -298,7 +257,6 @@ _The original @convex-es/core package grew to 25+ modules, creating issues:_
 #### Tests ship with framework packages
 
 **Verified by:**
-
 - Framework tests live in framework packages
 
 ---
@@ -306,7 +264,6 @@ _The original @convex-es/core package grew to 25+ modules, creating issues:_
 #### Backward compatibility is maintained
 
 **Verified by:**
-
 - Existing imports continue to work
 
 ---
@@ -314,10 +271,9 @@ _The original @convex-es/core package grew to 25+ modules, creating issues:_
 #### No naming conflicts with libar-ai project
 
 **Verified by:**
-
 - Platform namespace avoids conflicts
 
-_package-architecture.feature_
+*package-architecture.feature*
 
 ---
 
@@ -325,7 +281,7 @@ _package-architecture.feature_
 
 ### Decider Pattern
 
-_Domain logic embedded in handlers makes testing require infrastructure._
+*Domain logic embedded in handlers makes testing require infrastructure.*
 
 ---
 
@@ -338,13 +294,13 @@ Pure functions have no I/O, no ctx access, no side effects.
 #### DeciderOutput encodes three outcomes
 
 - **Success:** Command executed, event emitted, state updated
-  - **Rejected:** Business rule violation, no event, clear error code
-  - **Failed:** Unexpected failure, audit event, context preserved
+    - **Rejected:** Business rule violation, no event, clear error code
+    - **Failed:** Unexpected failure, audit event, context preserved
 
-  **Executable tests:** platform-decider/tests/features/behavior/decider-outputs.feature
-  - Scenarios covering success, rejected, failed outputs
-  - Type guard tests (isSuccess, isRejected, isFailed)
-  - Edge cases for mutually exclusive outcomes
+    **Executable tests:** platform-decider/tests/features/behavior/decider-outputs.feature
+    - Scenarios covering success, rejected, failed outputs
+    - Type guard tests (isSuccess, isRejected, isFailed)
+    - Edge cases for mutually exclusive outcomes
 
 ---
 
@@ -363,9 +319,9 @@ Evolve must not recalculate values - events are immutable source of truth.
 #### Handler factories wrap deciders with infrastructure
 
 - `createDeciderHandler()` for modifications (loads existing state)
-  - `createEntityDeciderHandler()` for creation (handles null state)
+    - `createEntityDeciderHandler()` for creation (handles null state)
 
-_decider-pattern.feature_
+*decider-pattern.feature*
 
 ---
 
@@ -373,7 +329,7 @@ _decider-pattern.feature_
 
 ### Projection Categories
 
-_Projections exist but categories are implicit._
+*Projections exist but categories are implicit.*
 
 ---
 
@@ -391,7 +347,6 @@ _Projections exist but categories are implicit._
 | Integration | Cross-context synchronization       | EventBus       | orderStatusForShipping |
 
 **Verified by:**
-
 - Projection definition includes category
 - Invalid category is rejected
 
@@ -411,7 +366,6 @@ _Projections exist but categories are implicit._
 | Integration | Contract-defined | Event-driven   | No (EventBus)  |
 
 **Verified by:**
-
 - Category determines client exposure
 - Logic projections have minimal fields
 
@@ -424,7 +378,6 @@ _Projections exist but categories are implicit._
 > **Rationale:** Implicit categories (guessed from naming or usage) lead to inconsistent behavior. Explicit declaration forces developers to think about the projection's purpose and enables compile-time validation.
 
 **Verified by:**
-
 - Projection without category fails registration
 - Type system enforces category at compile time
 
@@ -437,7 +390,6 @@ _Projections exist but categories are implicit._
 > **Rationale:** Security and performance concerns require clear boundaries. Logic projections contain internal validation state that shouldn't leak. Integration projections are for cross-BC communication, not direct queries.
 
 **Verified by:**
-
 - Logic projections are not client-exposed
 - View projections are client-exposed
 - Reporting projections have restricted access
@@ -452,12 +404,11 @@ _Projections exist but categories are implicit._
 > **Rationale:** Reactive infrastructure is expensive (WebSocket connections, change detection, client memory). Limiting reactivity to View projections ensures resources are used only where instant UI feedback is needed.
 
 **Verified by:**
-
 - View projections enable reactive subscriptions
 - Logic projections do not support subscriptions
 - Reporting projections use polling or batch refresh
 
-_projection-categories.feature_
+*projection-categories.feature*
 
 ---
 
@@ -465,14 +416,14 @@ _projection-categories.feature_
 
 ### Dynamic Consistency Boundaries
 
-_Cross-entity invariants within a bounded context currently require_
+*Cross-entity invariants within a bounded context currently require*
 
 ---
 
 #### DCB defines four core concepts for scope-based coordination
 
 These concepts work together to enable multi-entity invariants within
-a bounded context.
+    a bounded context.
 
 | Concept        | Description                                                                                     |
 | -------------- | ----------------------------------------------------------------------------------------------- |
@@ -482,7 +433,6 @@ a bounded context.
 | Scope OCC      | expectedVersion checked on commit to prevent concurrent modifications                           |
 
 **Verified by:**
-
 - Scope key follows tenant-prefixed format
 - Invalid scope key format is rejected
 
@@ -493,7 +443,6 @@ a bounded context.
 All entities within a scope are validated together with scope-level OCC.
 
 **Verified by:**
-
 - Scope-level OCC prevents concurrent modifications
 - Scope version increments on successful commit
 - New scope starts at version 0
@@ -503,10 +452,9 @@ All entities within a scope are validated together with scope-level OCC.
 #### Virtual streams compose events across scope
 
 Virtual streams provide a logical view of all events within a scope,
-regardless of which physical stream (entity) they belong to.
+    regardless of which physical stream (entity) they belong to.
 
 **Verified by:**
-
 - Query events across scope
 - Virtual stream supports scope-based replay
 - Virtual stream excludes events outside scope
@@ -524,7 +472,6 @@ These constraints ensure DCB operates safely within the Convex-Native ES model.
 | Decider required | Pure validation logic via Decider pattern           |
 
 **Verified by:**
-
 - DCB constraint validation
 - DCB rejects cross-BC scope
 - Scope includes tenant isolation
@@ -536,11 +483,10 @@ These constraints ensure DCB operates safely within the Convex-Native ES model.
 DCB builds on pure deciders for validation logic.
 
 **Verified by:**
-
 - DCB execution requires decider
 - Decider result determines operation outcome
 
-_dynamic-consistency-boundaries.feature_
+*dynamic-consistency-boundaries.feature*
 
 ---
 
@@ -548,7 +494,7 @@ _dynamic-consistency-boundaries.feature_
 
 ### Reactive Projections
 
-_Workpool-based projections have 100-500ms latency._
+*Workpool-based projections have 100-500ms latency.*
 
 ---
 
@@ -563,7 +509,6 @@ Workpool handles persistence, reactive layer handles instant feedback.
 | No optimistic UI                 | Full optimistic UI with rollback              |
 
 **Verified by:**
-
 - Client receives instant update then durable confirmation
 - Optimistic update works during Workpool backlog
 - Durable state takes precedence after convergence
@@ -579,7 +524,6 @@ Same evolve() function ensures consistent state transformation.
 | (state: ProjectionState, event: DomainEvent) | ProjectionState |
 
 **Verified by:**
-
 - Evolve produces identical results on client and server
 - Evolve handles unknown event types gracefully
 - Multiple events evolve in sequence
@@ -597,7 +541,6 @@ Optimistic updates are discarded if they conflict with durable state.
 | Stale optimistic            | Age exceeds stale threshold (30s default)  | Rollback to durable     |
 
 **Verified by:**
-
 - Conflicting optimistic update is rolled back
 - Conflict detection handles network partition
 - No conflict when optimistic is ahead of durable
@@ -617,7 +560,6 @@ Logic, Reporting, and Integration projections use Workpool only.
 | integration | No                | Cross-BC sync via EventBus            |
 
 **Verified by:**
-
 - Category determines reactive eligibility
 - Non-view projection rejects reactive subscription
 - View projection enables full reactive functionality
@@ -636,13 +578,12 @@ The hook provides a unified interface for hybrid reactive projections.
 | pendingEvents   | number    | Count of optimistic events          |
 
 **Verified by:**
-
 - Hook returns merged state
 - Hook handles missing durable state
 - Hook updates reactively on new events
 - Hook clears optimistic state after durable catches up
 
-_reactive-projections.feature_
+*reactive-projections.feature*
 
 ---
 
@@ -650,7 +591,7 @@ _reactive-projections.feature_
 
 ### Admin Tooling Consolidation
 
-_Admin functionality is scattered across the codebase:_
+*Admin functionality is scattered across the codebase:*
 
 ---
 
@@ -659,7 +600,6 @@ _Admin functionality is scattered across the codebase:_
 All cross-cutting admin operations live in `convex/admin/`.
 
 **Verified by:**
-
 - Admin directory is created with correct structure
 - Backward compatibility for DLQ imports
 
@@ -667,7 +607,10 @@ All cross-cutting admin operations live in `convex/admin/`.
 
 #### DLQ endpoints provide inspection, retry, and ignore operations
 
-Dead letter queue management enables operations teams to: - View failed projection updates - Retry individual or bulk items - Ignore items that cannot be processed
+Dead letter queue management enables operations teams to:
+    - View failed projection updates
+    - Retry individual or bulk items
+    - Ignore items that cannot be processed
 
     **Existing Operations (to be moved):**
 
@@ -691,7 +634,6 @@ Dead letter queue management enables operations teams to: - View failed projecti
 | purgeResolved      | Delete resolved items older than N days  |
 
 **Verified by:**
-
 - Get dead letter statistics
 - Bulk retry pending dead letters
 
@@ -699,12 +641,14 @@ Dead letter queue management enables operations teams to: - View failed projecti
 
 #### Event flow trace enables debugging across the command-event-projection chain
 
-When issues occur, operators need to trace: - Which command created an event - Which projections processed the event - Where in the chain a failure occurred
+When issues occur, operators need to trace:
+    - Which command created an event
+    - Which projections processed the event
+    - Where in the chain a failure occurred
 
     **Trace Query:**
 
 **Verified by:**
-
 - Trace complete event flow
 - Trace shows failure point
 
@@ -712,24 +656,30 @@ When issues occur, operators need to trace: - Which command created an event - W
 
 #### System state snapshot provides full health picture
 
-Operators need a single query to understand overall system state, combining: - Component health (Event Store, projections, Workpools) - Projection lag across all projections - DLQ statistics - Active rebuilds - Circuit breaker states
+Operators need a single query to understand overall system state, combining:
+    - Component health (Event Store, projections, Workpools)
+    - Projection lag across all projections
+    - DLQ statistics
+    - Active rebuilds
+    - Circuit breaker states
 
     **Snapshot Query:**
 
 **Verified by:**
-
 - System state provides complete overview
 
 ---
 
 #### Durable function queries enable Workpool and Workflow debugging
 
-When background work fails or stalls, operators need visibility into: - Workpool queue contents and status - Workflow execution history - Action Retrier run status
+When background work fails or stalls, operators need visibility into:
+    - Workpool queue contents and status
+    - Workflow execution history
+    - Action Retrier run status
 
     **Durable Function Queries:**
 
 **Verified by:**
-
 - Query Workpool item status
 - Query Workflow execution with steps
 - Query non-existent durable function
@@ -741,16 +691,15 @@ When background work fails or stalls, operators need visibility into: - Workpool
 Admin operations are powerful and should be protected.
 
 **Verified by:**
-
 - Unauthenticated request is rejected
 - Non-admin user is rejected
 - Admin action is logged
 
-_admin-tooling-consolidation.feature_
+*admin-tooling-consolidation.feature*
 
 ### Circuit Breaker Pattern
 
-_External API failures (Stripe, SendGrid, webhooks) cascade through the system._
+*External API failures (Stripe, SendGrid, webhooks) cascade through the system.*
 
 ---
 
@@ -759,7 +708,7 @@ _External API failures (Stripe, SendGrid, webhooks) cascade through the system._
 The circuit breaker is a state machine with well-defined transitions:
 
     **State Diagram:**
-
+    
 
     **State Behaviors:**
 
@@ -772,7 +721,6 @@ The circuit breaker is a state machine with well-defined transitions:
 | HALF_OPEN | Allow single probe request       | → CLOSED on success, → OPEN on failure |
 
 **Verified by:**
-
 - Circuit remains closed on success
 - Circuit opens after threshold failures
 - Circuit transitions to half-open after timeout
@@ -786,7 +734,6 @@ The circuit breaker is a state machine with well-defined transitions:
 Convex functions are stateless across invocations.
 
 **Verified by:**
-
 - Circuit state persists across function calls
 - Non-existent circuit defaults to closed
 
@@ -797,7 +744,6 @@ Convex functions are stateless across invocations.
 The OPEN → HALF_OPEN transition happens after `resetTimeoutMs` elapses.
 
 **Verified by:**
-
 - Timeout transitions open to half-open
 - Stale timeout is ignored
 
@@ -808,7 +754,6 @@ The OPEN → HALF_OPEN transition happens after `resetTimeoutMs` elapses.
 When circuit enters HALF_OPEN, we need to test if the service recovered.
 
 **Verified by:**
-
 - Half-open probe closes circuit on success
 - Half-open probe reopens circuit on failure
 - Open circuit returns fast failure
@@ -826,16 +771,15 @@ Different services have different failure characteristics.
 | successThreshold | 1       | Successes in half-open before closing |
 
 **Verified by:**
-
 - Payment circuit opens after 3 failures
 - Email circuit tolerates more failures
 - Different services have independent circuits
 
-_circuit-breaker-pattern.feature_
+*circuit-breaker-pattern.feature*
 
 ### Durable Events Integration
 
-_Phase 18 delivered durability primitives to `platform-core`, but the example app's_
+*Phase 18 delivered durability primitives to `platform-core`, but the example app's*
 
 ---
 
@@ -846,12 +790,11 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Commands may be retried due to network partitions, client timeouts, or infrastructure failures. Without idempotency, retries would create duplicate events, corrupting projections and triggering duplicate side effects.
 
 **Verified by:**
-
 - First command creates event normally
 - Retry with same commandId returns existing event
 - Different commandId is rejected for already-submitted order
 - Retry with same commandId returns
-  existing event
+    existing event
 - Different commandId creates new event
 
 ---
@@ -863,13 +806,12 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Distributed systems fail in subtle ways - network partitions, process crashes, deadlocks. Intent bracketing creates an audit trail that enables detection of commands that started but never finished, enabling automated recovery or human intervention.
 
 **Verified by:**
-
 - Successful command records intent and completion
 - Failed command records intent and failure
 - Orphaned intent detected by scheduled job
 - Intent already exists for commandId
 - Failed command records
-  intent and failure
+    intent and failure
 
 ---
 
@@ -886,13 +828,12 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 | ReservationConfirmed | Inventory commitment               |
 
 **Verified by:**
-
 - Durable append succeeds on first try
 - Durable append retries on transient failure
 - Exhausted retries create dead letter
 - Multiple events for same entity maintain order
 - Durable append retries on transient
-  failure
+    failure
 
 ---
 
@@ -903,12 +844,11 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Actions calling external APIs (Stripe, email services, etc.) are at-most-once by default. If the action succeeds but subsequent processing fails, the side effect is orphaned. The outbox pattern uses the guaranteed `onComplete` callback to capture results as domain events, ensuring audit trail and enabling downstream processing.
 
 **Verified by:**
-
 - Successful payment creates PaymentCompleted event
 - Failed payment creates PaymentFailed event
 - Duplicate completion is deduplicated
 - Failed payment creates
-  PaymentFailed event
+    PaymentFailed event
 
 ---
 
@@ -919,13 +859,12 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Malformed events (schema violations, missing references, data corruption) should not block all projection processing indefinitely. Quarantining allows the system to continue while preserving the problematic events for investigation and potential replay after code fixes are deployed.
 
 **Verified by:**
-
 - Valid event processed normally
 - Malformed event quarantined after max attempts
 - Quarantined event can be replayed after fix
 - Quarantined event can be ignored
 - Malformed event quarantined after max
-  attempts
+    attempts
 
 ---
 
@@ -936,14 +875,13 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Projection data can become corrupted (bugs, schema migrations gone wrong, manual data fixes). The event stream is the source of truth - projections are derived views that can be reconstructed at any time. This is a key benefit of event sourcing.
 
 **Verified by:**
-
 - Rebuild from position 0 re-processes all events
 - Rebuild progress is trackable
 - Running rebuild can be cancelled
 - Concurrent rebuilds are prevented
 - Rebuild from specific position
 - Rebuild progress is
-  trackable
+    trackable
 
 ---
 
@@ -954,13 +892,12 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Network partitions, process crashes, and deadlocks can leave commands in an incomplete state. Automated detection ensures these don't go unnoticed, enabling timely investigation and potential data recovery.
 
 **Verified by:**
-
 - Orphan detected after threshold exceeded
 - Recent pending intent not flagged
 - Completed intents are ignored
 - Orphan detection reports metrics
 - Recent pending intent not
-  flagged
+    flagged
 
 ---
 
@@ -971,16 +908,15 @@ _Phase 18 delivered durability primitives to `platform-core`, but the example ap
 > **Rationale:** Unit tests with mocks cannot verify the integration of multiple durability patterns working together. Integration tests ensure the patterns compose correctly and handle real-world scenarios like OCC conflicts and concurrent operations.
 
 **Verified by:**
-
 - Full durable command flow
 - Command retry produces same result
 - Projection rebuild restores correct state
 
-_durable-events-integration.feature_
+*durable-events-integration.feature*
 
 ### Durable Function Adapters
 
-_Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses_
+*Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses*
 
 ---
 
@@ -998,20 +934,18 @@ _Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) 
 | > 1000       | 50+                |
 
 **Verified by:**
-
 - Adapter allows request within rate limit
 - Adapter rejects request exceeding rate limit
 - Adapter isolates limits by key
 - Adapter integrates with existing middleware pipeline
 - Adapter rejects request
-  exceeding rate limit
+    exceeding rate limit
 - Adapter integrates with
-  existing middleware pipeline
+    existing middleware pipeline
 
-  The adapter implements the existing `RateLimitChecker` interface
-
+    The adapter implements the existing `RateLimitChecker` interface
 - allowing the current
-  middleware pipeline to use `@convex-dev/rate-limiter` without any changes to middleware code.
+    middleware pipeline to use `@convex-dev/rate-limiter` without any changes to middleware code.
 
 **Implementation:** `@libar-dev/platform-core/src/middleware/rateLimitAdapter.ts`
 
@@ -1024,7 +958,6 @@ _Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) 
 > **Rationale:** Manual retry leads to inconsistent patterns, missing jitter (thundering herd), and no partition ordering (OCC storms). Workpool provides durable retry with partition keys that serialize retries per scope, preventing concurrent attempts.
 
 **Verified by:**
-
 - DCB succeeds on first attempt
 - DCB conflict triggers automatic retry
 - Max retries exceeded returns rejected
@@ -1034,8 +967,8 @@ _Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) 
 - Version advances between retry scheduling and execution
 - Version advances between retry scheduling and execution
 
-  The `withDCBRetry` helper wraps `executeWithDCB` and uses Workpool to automatically
-  retry on OCC conflicts with exponential backoff and jitter.
+    The `withDCBRetry` helper wraps `executeWithDCB` and uses Workpool to automatically
+    retry on OCC conflicts with exponential backoff and jitter.
 
 **Implementation:** `@libar-dev/platform-core/src/dcb/withRetry.ts`
 
@@ -1048,24 +981,23 @@ _Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) 
 > **Rationale:** The platform already has well-defined interfaces (RateLimitChecker, DCB execution flow). Adapters bridge these to Convex durable components without disrupting working code—minimizing risk and maximizing adoption.
 
 **Verified by:**
-
 - Rate limiter mounts as Convex component
 - DCB retry pool mounts as separate Workpool
 - Middleware pipeline order preserved
 - DCB retry pool mounts as
-  separate Workpool
+    separate Workpool
 - Middleware pipeline order preserved
 
-  Both adapters plug into existing platform code without requiring changes to
-  core interfaces or middleware pipeline structure.
+    Both adapters plug into existing platform code without requiring changes to
+    core interfaces or middleware pipeline structure.
 
 **Implementation:** `examples/order-management/convex/rateLimits.ts`
 
-_durable-function-adapters.feature_
+*durable-function-adapters.feature*
 
 ### Event Replay Infrastructure
 
-_When projections become corrupted, require schema migration, or drift from_
+*When projections become corrupted, require schema migration, or drift from*
 
 ---
 
@@ -1090,20 +1022,18 @@ _When projections become corrupted, require schema migration, or drift from_
 | completedAt     | number (optional) | Timestamp when completed                      |
 
 **Verified by:**
-
 - Replay resumes after failure
 - Checkpoint updates atomically with chunk completion
 - Replay handles empty event range
 - Checkpoint updates atomically with
-  chunk completion
+    chunk completion
 - Replay handles empty event range
 
-  Replay state is persisted in the `replayCheckpoints` table. If a replay fails or is
-  interrupted
-
+    Replay state is persisted in the `replayCheckpoints` table. If a replay fails or is
+    interrupted
 - it resumes from the last successfully processed globalPosition
 - not
-  from the beginning. This saves compute and enables reliable long-running rebuilds.
+    from the beginning. This saves compute and enables reliable long-running rebuilds.
 
 **Implementation:** `@libar-dev/platform-core/src/projections/replay/types.ts`
 
@@ -1124,19 +1054,18 @@ _When projections become corrupted, require schema migration, or drift from_
 | logLevel                              | INFO  | Production observability                         |
 
 **Verified by:**
-
 - Replay does not starve live projections
 - Only one replay per projection
 - Different projections can rebuild concurrently
 - Only one replay per
-  projection
+    projection
 - Different projections can rebuild concurrently
 
-  Event replay is background work that should not compete with live projection updates.
-  A dedicated `eventReplayPool` with low parallelism (5) ensures:
-  - Live projections maintain priority (projectionPool: 10)
-  - Replay doesn't exhaust the action/mutation budget
-  - Backpressure is controlled via Workpool queue depth
+    Event replay is background work that should not compete with live projection updates.
+    A dedicated `eventReplayPool` with low parallelism (5) ensures:
+    - Live projections maintain priority (projectionPool: 10)
+    - Replay doesn't exhaust the action/mutation budget
+    - Backpressure is controlled via Workpool queue depth
 
 **Implementation:** `examples/order-management/convex/infrastructure.ts`
 
@@ -1156,20 +1085,19 @@ _When projections become corrupted, require schema migration, or drift from_
 | Very complex (external lookups) | 10         | Maximum safety margin            |
 
 **Verified by:**
-
 - Chunk processes correct number of events
 - Final chunk handles remainder
 - Chunk size respects projection complexity
 - Final chunk handles
-  remainder
+    remainder
 - Chunk size respects projection complexity
 
-  Processing all events in a single mutation would timeout for large event stores.
-  Chunked processing:
-  - Fetches N events per chunk (default: 100)
-  - Applies projection logic to each event
-  - Updates checkpoint atomically
-  - Schedules next chunk if more events exist
+    Processing all events in a single mutation would timeout for large event stores.
+    Chunked processing:
+    - Fetches N events per chunk (default: 100)
+    - Applies projection logic to each event
+    - Updates checkpoint atomically
+    - Schedules next chunk if more events exist
 
 **Implementation:** `processReplayChunk`
 
@@ -1182,23 +1110,21 @@ _When projections become corrupted, require schema migration, or drift from_
 > **Rationale:** Long-running rebuilds (hours for large projections) need visibility. Without progress tracking, operators cannot estimate completion, detect stuck replays, or plan maintenance windows.
 
 **Verified by:**
-
 - Query replay progress
 - List all active rebuilds
 - Progress handles completed replay
 - Progress handles
-  completed replay
+    completed replay
 
-  Operations teams need visibility into long-running rebuilds. Progress queries provide:
-  - Current status (running
-
+    Operations teams need visibility into long-running rebuilds. Progress queries provide:
+    - Current status (running
 - paused
 - completed
 - failed
 - cancelled)
-  - Events processed vs total (with percentage)
-  - Estimated time remaining (based on throughput)
-  - Error details if failed
+    - Events processed vs total (with percentage)
+    - Estimated time remaining (based on throughput)
+    - Error details if failed
 
 **Implementation:** `@libar-dev/platform-core/src/projections/replay/progress.ts`
 
@@ -1220,26 +1146,24 @@ _When projections become corrupted, require schema migration, or drift from_
 | Resume rebuild  | resumeRebuild      | Resume paused rebuild (future)  |
 
 **Verified by:**
-
 - Trigger rebuild creates checkpoint and schedules first chunk
 - Cancel rebuild stops processing
 - Cannot trigger duplicate rebuild
 - Cannot trigger duplicate rebuild
 
-  Operations teams need to trigger
-
+    Operations teams need to trigger
 - monitor
 - cancel
 - and manage rebuilds.
-  All admin operations use internal mutations for security.
+    All admin operations use internal mutations for security.
 
 **Implementation:** `examples/order-management/convex/admin/projections.ts`
 
-_event-replay-infrastructure.feature_
+*event-replay-infrastructure.feature*
 
 ### Event Store Durability
 
-_The dual-write pattern (CMS + Event) works when both operations are in the_
+*The dual-write pattern (CMS + Event) works when both operations are in the*
 
 ---
 
@@ -1250,7 +1174,6 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 > **Rationale:** Actions are at-most-once by default. If an action succeeds but the subsequent event append fails, the side effect is orphaned. The outbox pattern uses `onComplete` callbacks which are guaranteed to be called after the action finishes.
 
 **Verified by:**
-
 - External API success is captured as event
 - External API failure is captured as event
 - onComplete mutation failure is retried
@@ -1274,7 +1197,6 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 | Scheduled job  | `{jobType}:{scheduleId}:{runTimestamp}` | `expireReservations:job-001:1704067200`  |
 
 **Verified by:**
-
 - First append with idempotency key succeeds
 - Duplicate append returns existing event
 - Different idempotency keys create separate events
@@ -1290,7 +1212,6 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 > **Rationale:** Fire-and-forget publication loses events when subscribers fail. For event-driven architectures to be reliable, cross-context communication must be durable with guaranteed delivery or explicit failure tracking.
 
 **Verified by:**
-
 - Event is delivered to all target contexts
 - Failed delivery is retried
 - Max retries exceeded creates dead letter
@@ -1313,7 +1234,6 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 | Stock reservation  | ReservationRequested     | StockReserved, ReservationFailed                                |
 
 **Verified by:**
-
 - Intent and completion events bracket operation
 - Timeout detects incomplete operation
 - Idempotent timeout handler
@@ -1337,7 +1257,6 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 | Scheduled job               | Yes                     | Job completion must be recorded          |
 
 **Verified by:**
-
 - Append succeeds on first attempt
 - Append retried after transient failure
 - Exhausted retries create dead letter
@@ -1360,7 +1279,6 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 | 3       | Quarantine event, skip in future processing, alert |
 
 **Verified by:**
-
 - Event quarantined after repeated failures
 - Quarantined events skipped in processing
 - Recovered event can be reprocessed
@@ -1383,22 +1301,23 @@ _The dual-write pattern (CMS + Event) works when both operations are in the_
 | getPublicationDeadLetterStats | Count by target context and status       |
 
 **Verified by:**
-
 - Dead letter created after max retries
 - Admin can retry dead letter
 - Dead letter stats show context-specific issues
 
-_event-store-durability.feature_
+*event-store-durability.feature*
 
 ### Health Observability
 
-_No Kubernetes integration (readiness/liveness probes), no metrics for_
+*No Kubernetes integration (readiness/liveness probes), no metrics for*
 
 ---
 
 #### Health endpoints support Kubernetes probes
 
-Kubernetes requires HTTP endpoints for orchestration: - **Readiness probe** (`/health/ready`) - Is the service ready to receive traffic? - **Liveness probe** (`/health/live`) - Is the process alive and responsive?
+Kubernetes requires HTTP endpoints for orchestration:
+    - **Readiness probe** (`/health/ready`) - Is the service ready to receive traffic?
+    - **Liveness probe** (`/health/live`) - Is the process alive and responsive?
 
     **Endpoint Specifications:**
 
@@ -1410,7 +1329,6 @@ Kubernetes requires HTTP endpoints for orchestration: - **Readiness probe** (`/h
 | /health/live  | GET         | 200 OK  | (always 200)            | Process responsive                       |
 
 **Verified by:**
-
 - Readiness probe returns healthy when all components OK
 - Readiness probe returns unhealthy on projection lag
 - Liveness probe always returns alive
@@ -1422,7 +1340,6 @@ Kubernetes requires HTTP endpoints for orchestration: - **Readiness probe** (`/h
 When Workpool queue depth exceeds threshold, the system is under stress.
 
 **Verified by:**
-
 - Workpool backlog fails readiness
 - Normal queue depth passes readiness
 
@@ -1442,7 +1359,6 @@ Projection lag = (Event Store max globalPosition) - (Projection checkpoint posit
 | 1000+     | critical | Alert, projection may be stuck |
 
 **Verified by:**
-
 - Projection lag is calculated correctly
 - Missing checkpoint treated as maximum lag
 - Zero lag is healthy
@@ -1462,7 +1378,6 @@ Convex doesn't support OpenTelemetry SDK directly.
 | workpool.queue_depth  | pool_name            | count        | Pending items                |
 
 **Verified by:**
-
 - Metrics collection gathers all dimensions
 - Metrics emitted as JSON for Log Streams
 - Metrics collection handles empty state
@@ -1480,16 +1395,15 @@ Overall system health is derived from individual component health.
 | Any unhealthy   | System unhealthy (503)             |
 
 **Verified by:**
-
 - All components healthy yields healthy system
 - Single unhealthy component makes system unhealthy
 - Degraded component yields degraded system
 
-_health-observability.feature_
+*health-observability.feature*
 
 ### Production Hardening
 
-_Structured logging (Phase 13) exists but no metrics collection, distributed tracing,_
+*Structured logging (Phase 13) exists but no metrics collection, distributed tracing,*
 
 ---
 
@@ -1509,7 +1423,6 @@ Projection lag, event throughput, command latency, and DLQ size are the core met
 | workflow.step_failures | workflow_name, step            | count        | Saga compensation triggers        |
 
 **Verified by:**
-
 - Projection lag is tracked
 - Metrics collection handles missing checkpoints
 
@@ -1520,7 +1433,6 @@ Projection lag, event throughput, command latency, and DLQ size are the core met
 Trace context propagates from command through events to projections using correlation IDs.
 
 **Verified by:**
-
 - Trace spans command-to-projection flow
 - Missing trace context uses default
 
@@ -1536,7 +1448,6 @@ Trace context propagates from command through events to projections using correl
 | /health/live  | Liveness probe  | Process alive                            | 200 OK always |
 
 **Verified by:**
-
 - Readiness probe checks dependencies
 - Unhealthy dependency fails readiness
 - Liveness probe always succeeds
@@ -1555,7 +1466,6 @@ Open circuit after threshold failures, half-open for recovery testing.
 | HALF_OPEN | Allow one test request           | → CLOSED on success, → OPEN on failure |
 
 **Verified by:**
-
 - Circuit opens after repeated failures
 - Circuit transitions to half-open after timeout
 - Successful half-open request closes circuit
@@ -1580,7 +1490,6 @@ Projection rebuild, DLQ inspection/retry, event flow tracing, system diagnostics
 | Durable function run | admin.diagnostics.getDurableFunctionRun | Query Retrier/Workflow run by ID |
 
 **Verified by:**
-
 - Projection rebuild re-processes events
 - Dead letter retry re-enqueues event
 - Event flow trace returns full history
@@ -1599,18 +1508,17 @@ Production systems use @convex-dev durable function components for reliability.
 | Workflow       | Multi-step sagas      | Compensation + awaitEvent        | Cross-BC coordination           |
 
 **Verified by:**
-
 - Circuit breaker uses action retrier for half-open probe
 - Failed half-open probe reopens circuit via action retrier
 - Dead letter retry uses action retrier for external calls
 - Failed DLQ retry returns to pending status
 - Durable function calls propagate trace context
 
-_production-hardening.feature_
+*production-hardening.feature*
 
 ### Workpool Partitioning Strategy
 
-_ADR-018 defines critical partition key strategies for preventing OCC conflicts_
+*ADR-018 defines critical partition key strategies for preventing OCC conflicts*
 
 ---
 
@@ -1627,22 +1535,20 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 | Entity lookup (productLookup) | productId     | High (10+)  | Single entity consistency        |
 
 **Verified by:**
-
 - Entity projection processes events in order
 - Different entities process in parallel
 - Entity partition key helper generates correct format
 - Different entities
-  process in parallel
+    process in parallel
 - Entity partition key helper generates correct format
 
-  Entity-scoped projections (orderSummary
-
+    Entity-scoped projections (orderSummary
 - productCatalog
 - etc.) must process events
-  in the order they occurred for each entity. Using `streamId` as the partition key
-  ensures all events for entity X are processed sequentially
+    in the order they occurred for each entity. Using `streamId` as the partition key
+    ensures all events for entity X are processed sequentially
 - even if events for
-  entity Y process in parallel.
+    entity Y process in parallel.
 
 **Implementation:** `@libar-dev/platform-core/src/workpool/partitioning/helpers.ts`
 
@@ -1661,18 +1567,16 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 | Customer preferences | customerId    | Medium (5)  | Single customer state       |
 
 **Verified by:**
-
 - Customer projection aggregates across orders
 - Customer partition key helper validates required field
 - Customer partition
-  key helper validates required field
+    key helper validates required field
 
-  Some projections aggregate data per customer (customerOrderHistory
-
+    Some projections aggregate data per customer (customerOrderHistory
 - customerMetrics).
-  These need all events for a customer to process in order
+    These need all events for a customer to process in order
 - regardless of which
-  specific entity (order
+    specific entity (order
 - product) the event affects.
 
 **Implementation:** `@libar-dev/platform-core/src/workpool/partitioning/helpers.ts`
@@ -1692,19 +1596,18 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 | Inventory totals   | key: "global"     | Cross-product aggregation     |
 
 **Verified by:**
-
 - Global rollup processes sequentially
 - Global rollup avoids OCC conflicts
 - Dedicated Workpool alternative
 - Global rollup avoids OCC
-  conflicts
+    conflicts
 - Dedicated Workpool alternative
 
-  Aggregate projections that summarize across all entities (dailySalesSummary
-
+    Aggregate projections that summarize across all entities (dailySalesSummary
 - globalInventoryLevels) have a single write target. Concurrent updates cause
-  OCC conflicts. Solutions:
-  1.
+    OCC conflicts. Solutions:
+
+    1.
 
 **Implementation:** `GLOBAL_PARTITION_KEY`
 
@@ -1723,15 +1626,14 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 | Event chain view   | correlationId | Medium (5)  | Causal ordering             |
 
 **Verified by:**
-
 - Cross-context projection maintains saga ordering
 - Different sagas process in parallel
 - Different sagas
-  process in parallel
+    process in parallel
 
-  Cross-context projections (orderWithInventory) combine data from multiple BCs.
-  These need all events within a saga/workflow to process in order to maintain
-  consistency across the joined view.
+    Cross-context projections (orderWithInventory) combine data from multiple BCs.
+    These need all events within a saga/workflow to process in order to maintain
+    consistency across the joined view.
 
 **Implementation:** `@libar-dev/platform-core/src/workpool/partitioning/helpers.ts`
 
@@ -1744,15 +1646,15 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 > **Rationale:** Wrong partition keys cause subtle bugs: too fine-grained wastes throughput, too coarse-grained causes out-of-order processing, missing keys serialize everything. Mandatory explicit selection forces intentional design.
 
 **Verified by:**
-
 - Missing partition key fails validation
 - Invalid partition key shape fails validation
 - Decision tree guides correct partition choice
 - Invalid partition key
-  shape fails validation
+    shape fails validation
 - Decision tree guides correct partition choice
 
-  ## Choosing the wrong partition key causes either:
+    Choosing the wrong partition key causes either:
+    -
 
 **Implementation:** `@libar-dev/platform-core/src/orchestration/validation.ts`
 
@@ -1771,21 +1673,19 @@ _ADR-018 defines critical partition key strategies for preventing OCC conflicts_
 | Customer operation       | `tenant:T:customer:cust-789`    | `cust-789` (customerId)    |
 
 **Verified by:**
-
 - DCB retry partition aligns with scope
 - Aligned partition prevents interleaving
 - Aligned partition prevents
-  interleaving
+    interleaving
 
-  When using `withDCBRetry` (Phase 18a)
-
+    When using `withDCBRetry` (Phase 18a)
 - the DCB scope key and projection partition
-  key should align to ensure retries don't interleave with new events for the same
-  scope.
+    key should align to ensure retries don't interleave with new events for the same
+    scope.
 
 **Implementation:** `withDCBRetry`
 
-_workpool-partitioning-strategy.feature_
+*workpool-partitioning-strategy.feature*
 
 ---
 
@@ -1793,7 +1693,7 @@ _workpool-partitioning-strategy.feature_
 
 ### Bdd Testing Infrastructure
 
-_Domain logic tests require infrastructure (Docker, database)._
+*Domain logic tests require infrastructure (Docker, database).*
 
 ---
 
@@ -1802,7 +1702,6 @@ _Domain logic tests require infrastructure (Docker, database)._
 Deciders, FSM, invariants use Given/When/Then format exclusively.
 
 **Verified by:**
-
 - Decider test follows BDD pattern
 
 ---
@@ -1812,7 +1711,6 @@ Deciders, FSM, invariants use Given/When/Then format exclusively.
 Pure functions = no mocking, no ctx, no database.
 
 **Verified by:**
-
 - Decider test requires no infrastructure
 
 ---
@@ -1822,7 +1720,6 @@ Pure functions = no mocking, no ctx, no database.
 Separate step files per domain area, namespaced patterns.
 
 **Verified by:**
-
 - Step definitions are domain-scoped
 - Duplicate step patterns cause conflict error
 
@@ -1833,20 +1730,18 @@ Separate step files per domain area, namespaced patterns.
 Command lifecycle tests validate full flow with assertions.
 
 **Verified by:**
-
 - Integration test validates command lifecycle
 
 ---
 
 #### Platform packages must have feature coverage
 
-libar-dev/platform-\* packages need BDD tests for public APIs.
+libar-dev/platform-* packages need BDD tests for public APIs.
 
 **Verified by:**
-
 - Platform package has feature tests
 
-_bdd-testing-infrastructure.feature_
+*bdd-testing-infrastructure.feature*
 
 ---
 
@@ -1854,7 +1749,7 @@ _bdd-testing-infrastructure.feature_
 
 ### Deterministic Id Hashing
 
-_TTL-based reservations work well for multi-step flows (registration wizards),_
+*TTL-based reservations work well for multi-step flows (registration wizards),*
 
 ---
 
@@ -1865,7 +1760,6 @@ Same business key always produces the same stream ID.
     **API:**
 
 **Verified by:**
-
 - Same email produces same stream ID
 - Composite key produces consistent hash
 - Different emails produce different stream IDs
@@ -1879,7 +1773,6 @@ First writer wins; second gets conflict error.
     **Conflict Handling:**
 
 **Verified by:**
-
 - First create succeeds
 - Second create fails with conflict
 - Concurrent creates - exactly one succeeds
@@ -1896,7 +1789,6 @@ Hash should be cryptographically strong to prevent collisions.
     - URL-safe: can be used in stream IDs without encoding
 
 **Verified by:**
-
 - Hash output is URL-safe
 - Hash is not reversible
 
@@ -1909,14 +1801,13 @@ Choose based on use case; both are valid uniqueness strategies.
     **Decision Tree:**
 
 **Verified by:**
-
 - Pattern selection by use case
 
-_deterministic-id-hashing.feature_
+*deterministic-id-hashing.feature*
 
 ### Ecst Fat Events
 
-_Thin events require consumers to query back to the source BC,_
+*Thin events require consumers to query back to the source BC,*
 
 ---
 
@@ -1925,12 +1816,11 @@ _Thin events require consumers to query back to the source BC,_
 Consumers don't need to query source BC for context.
 
     **Current State (thin event - requires back-query):**
-
+    
 
     **Target State (fat event - self-contained):**
 
 **Verified by:**
-
 - Consumer processes event without back-query
 
 ---
@@ -1940,7 +1830,6 @@ Consumers don't need to query source BC for context.
 Fat events include schema version for upcasting support.
 
 **Verified by:**
-
 - Fat event includes schema version
 
 ---
@@ -1950,7 +1839,6 @@ Fat events include schema version for upcasting support.
 GDPR compliance requires marking personal data for deletion.
 
 **Verified by:**
-
 - PII fields are marked for shredding
 
 ---
@@ -1960,14 +1848,13 @@ GDPR compliance requires marking personal data for deletion.
 Same-context projections can use thin events for efficiency.
 
 **Verified by:**
-
 - Event type selection by use case
 
-_ecst-fat-events.feature_
+*ecst-fat-events.feature*
 
 ### Reservation Pattern
 
-_Uniqueness constraints before entity creation require check-then-create_
+*Uniqueness constraints before entity creation require check-then-create*
 
 ---
 
@@ -1978,7 +1865,6 @@ _Uniqueness constraints before entity creation require check-then-create_
 > **Rationale:** Check-then-create patterns have a TOCTOU vulnerability where two requests may both see "not exists" and proceed to create, violating uniqueness. Atomic reservation eliminates this window.
 
 **Verified by:**
-
 - Concurrent reservations for same value
 
 ---
@@ -1990,7 +1876,6 @@ _Uniqueness constraints before entity creation require check-then-create_
 > **Rationale:** Without TTL, abandoned reservations (user closes browser, network failure) would permanently block values. TTL ensures eventual availability.
 
 **Verified by:**
-
 - Reservation expires after TTL
 
 ---
@@ -2002,7 +1887,6 @@ _Uniqueness constraints before entity creation require check-then-create_
 > **Rationale:** The two-phase reservation→confirmation ensures the unique value is guaranteed available before the expensive entity creation occurs.
 
 **Verified by:**
-
 - Confirm links reservation to entity
 
 ---
@@ -2014,7 +1898,6 @@ _Uniqueness constraints before entity creation require check-then-create_
 > **Rationale:** Good UX requires immediate availability when users cancel. Waiting for TTL (potentially minutes) creates unnecessary blocking.
 
 **Verified by:**
-
 - User cancels registration
 
 ---
@@ -2026,10 +1909,9 @@ _Uniqueness constraints before entity creation require check-then-create_
 > **Rationale:** A single value like "alice" may need uniqueness in multiple contexts (username, display name, etc.). Type-scoped keys allow independent reservations.
 
 **Verified by:**
-
 - Reservation key is type-scoped
 
-_reservation-pattern.feature_
+*reservation-pattern.feature*
 
 ---
 
@@ -2037,7 +1919,7 @@ _reservation-pattern.feature_
 
 ### Integration Patterns21a
 
-_Cross-context communication is ad-hoc._
+*Cross-context communication is ad-hoc.*
 
 ---
 
@@ -2058,7 +1940,6 @@ _Cross-context communication is ad-hoc._
 | open-host-service     | ProducerContext | External                         | Producer exposes public integration API          |
 
 **Verified by:**
-
 - Context Map shows BC topology
 - Register Partnership relationship
 - Register Shared Kernel relationship
@@ -2075,7 +1956,6 @@ _Cross-context communication is ad-hoc._
 > **Rationale:** Ad-hoc event formats create tight coupling and break consumers on change. Versioned schemas with compatibility contracts enable safe evolution.
 
 **Verified by:**
-
 - Integration event uses Published Language
 - Event tagging for routing and DCB
 - Schema compatibility mode is enforced
@@ -2092,17 +1972,16 @@ _Cross-context communication is ad-hoc._
 > **Rationale:** Direct use of external models leaks foreign concepts into the domain, creating coupling and making the domain vocabulary impure. ACL enforces boundaries.
 
 **Verified by:**
-
 - ACL translates external system response
 - ACL handles bidirectional translation
 - ACL validates external input
 - ACL rejects unmapped values
 
-_integration-patterns-21a.feature_
+*integration-patterns-21a.feature*
 
 ### Integration Patterns21b
 
-_Schema evolution breaks consumers._
+*Schema evolution breaks consumers.*
 
 ---
 
@@ -2111,12 +1990,11 @@ _Schema evolution breaks consumers._
 Old consumers continue working when schemas evolve through upcasting and downcasting.
 
     **Version Migration (Upcasting):**
-
+    
 
     **Chain Migration:**
 
 **Verified by:**
-
 - V1 consumer receives V2 event
 - Upcast historical events
 - Chain upcasters for multi-version migration
@@ -2131,7 +2009,6 @@ Old consumers continue working when schemas evolve through upcasting and downcas
 Producer and consumer contracts are tested independently.
 
 **Verified by:**
-
 - Contract test validates schema compatibility
 - Contract sample generation
 - Generate multiple unique samples
@@ -2143,7 +2020,7 @@ Producer and consumer contracts are tested independently.
 - Contract violation is recorded
 - Contract violations are queryable
 
-_integration-patterns-21b.feature_
+*integration-patterns-21b.feature*
 
 ---
 
@@ -2151,7 +2028,7 @@ _integration-patterns-21b.feature_
 
 ### Agent As Bounded Context
 
-_AI agents are invoked manually without integration into the_
+*AI agents are invoked manually without integration into the*
 
 ---
 
@@ -2162,7 +2039,6 @@ EventBus delivers events to agent BC like any other subscriber.
     **Subscription API:**
 
 **Verified by:**
-
 - Agent receives subscribed events
 - Agent receives filtered events only
 - Agent receives events in order
@@ -2178,7 +2054,6 @@ Pattern window groups events for analysis (LLM or rule-based).
     **Pattern Detection API:**
 
 **Verified by:**
-
 - Agent detects multiple cancellations pattern
 - Agent uses LLM for pattern analysis
 - Pattern window respects time boundary
@@ -2189,19 +2064,16 @@ Pattern window groups events for analysis (LLM or rule-based).
 
 #### Agent emits commands with explainability
 
-Commands include reasoning and suggested action.
-
-    **Command Emission API:**
-
+**Command Emission API:**
+    
 
     **LLM Fault Isolation (Optional Enhancement):**
     For production deployments, wrap LLM calls with Phase 18's circuit breaker:
-
+    
     This triggers fallback to rule-based analysis when LLM is unavailable,
     preventing cascade failures during LLM provider outages.
 
 **Verified by:**
-
 - Agent emits recommendation command
 - Command includes triggering event references
 - Command requires minimum metadata
@@ -2213,17 +2085,14 @@ Commands include reasoning and suggested action.
 
 #### Human-in-loop controls automatic execution
 
-High-confidence actions can auto-execute; low-confidence require approval.
-
-    **Human-in-Loop Configuration:**
-
+**Human-in-Loop Configuration:**
+    
 
     **Approval Timeout Implementation (Cron-based expiration):**
     Approval expiration uses a periodic cron job that queries pending approvals
     past their timeout.
 
 **Verified by:**
-
 - Action based on confidence threshold
 - High-risk actions always require approval
 - Pending approval expires after timeout
@@ -2233,7 +2102,7 @@ High-confidence actions can auto-execute; low-confidence require approval.
 #### LLM calls are rate-limited
 
 Rate limiting behavior including token bucket throttling, queue overflow handling,
-and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
+    and cost budget enforcement is specified in AgentLLMIntegration (Phase 22b).
 
 ---
 
@@ -2244,17 +2113,16 @@ Audit trail captures pattern detection, reasoning, and outcomes.
     **Audit Event Structure:**
 
 **Verified by:**
-
 - Agent decision creates audit event
 - Audit includes LLM metadata
 - Query agent decision history
 - Audit captures rejected actions
 
-_agent-as-bounded-context.feature_
+*agent-as-bounded-context.feature*
 
 ### Agent BC Component Isolation
 
-_Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,_
+*Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,*
 
 ---
 
@@ -2265,7 +2133,6 @@ _Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,_
 > **Rationale:** Physical BC isolation prevents accidental coupling. Parent app mutations cannot query agent tables directly — this is enforced by Convex's component architecture, not just convention. This matches the orders/inventory pattern where each BC owns its tables via `defineComponent()`.
 
 **Verified by:**
-
 - Agent component registers with isolated schema
 - Component API provides full CRUD for checkpoints
 - Direct table access is not possible from parent
@@ -2289,7 +2156,6 @@ _Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,_
 | Agent decisions       | Agent component  | Admin UI queries   | Via component API             |
 
 **Verified by:**
-
 - Agent handler receives projection data as argument
 - Missing projection data returns empty result
 - Agent handler cannot directly access app-level projection tables
@@ -2298,11 +2164,11 @@ _Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,_
 - missing data handled gracefully
 - no direct table coupling between agent and app
 
-_agent-bc-component-isolation.feature_
+*agent-bc-component-isolation.feature*
 
 ### Agent Command Infrastructure
 
-_Three interconnected gaps in agent command infrastructure:_
+*Three interconnected gaps in agent command infrastructure:*
 
 ---
 
@@ -2321,7 +2187,6 @@ _Three interconnected gaps in agent command infrastructure:_
 | 5    | Command status updated              | Agent component       |
 
 **Verified by:**
-
 - Agent command routes through CommandOrchestrator to handler
 - Unknown command type is rejected with validation error
 - Command idempotency prevents duplicate processing
@@ -2338,7 +2203,6 @@ _Three interconnected gaps in agent command infrastructure:_
 > **Rationale:** Commands provide audit trail, FSM validation, and consistent state transitions. Direct DB manipulation bypasses these safeguards. The lifecycle FSM prevents invalid transitions (e.g., pausing an already-stopped agent).
 
 **Verified by:**
-
 - PauseAgent transitions active agent to paused
 - ResumeAgent resumes from checkpoint position
 - Invalid lifecycle transition is rejected
@@ -2356,7 +2220,6 @@ _Three interconnected gaps in agent command infrastructure:_
 > **Rationale:** The current codebase has two disconnected pattern implementations: `_config.ts` with inline rule-based detection and `_patterns/churnRisk.ts` with formal `PatternDefinition` including LLM analysis. This creates confusion about which code path runs in production and makes the LLM analysis unreachable.
 
 **Verified by:**
-
 - Agent config references patterns from registry
 - Handler uses pattern trigger for cheap detection
 - Handler uses pattern analyze for LLM analysis
@@ -2365,11 +2228,11 @@ _Three interconnected gaps in agent command infrastructure:_
 - handler uses pattern methods
 - inline onEvent removed
 
-_agent-command-infrastructure.feature_
+*agent-command-infrastructure.feature*
 
 ### Agent LLM Integration
 
-_The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
+*The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that*
 
 ---
 
@@ -2380,7 +2243,6 @@ _The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
 > **Rationale:** Convex mutations cannot make external HTTP calls. The action/mutation split enables LLM integration while maintaining atomic state persistence. Actions are retryable by Workpool (mutations are not — they rely on OCC auto-retry).
 
 **Verified by:**
-
 - Agent action handler calls LLM and returns decision
 - onComplete mutation persists decision atomically
 - Action handler rejects invalid agent configuration
@@ -2400,7 +2262,6 @@ _The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
 > **Rationale:** LLM API costs can spiral quickly under high event volume. Rate limiting protects against runaway costs and external API throttling. The existing `rateLimits` config in `AgentBCConfig` defines the limits — this rule enforces them at runtime.
 
 **Verified by:**
-
 - Rate limiter allows LLM call within limits
 - Rate limiter blocks LLM call when exceeded
 - Cost budget exceeded pauses agent
@@ -2418,7 +2279,6 @@ _The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
 > **Rationale:** The current `CreateAgentSubscriptionOptions` type lacks the `onComplete` field. While the EventBus falls back to the global `defaultOnComplete` (dead letter handler), agents need custom completion logic: checkpoint updates, agent-specific audit events, and rate limit tracking. Without this field, the agent-specific `handleChurnRiskOnComplete` handler is orphaned — defined but never wired.
 
 **Verified by:**
-
 - Agent subscription with onComplete receives completion callbacks
 - Failed agent jobs create dead letters via onComplete
 - Agent subscription without onComplete uses global default
@@ -2426,11 +2286,11 @@ _The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that_
 - dead letters created on failure
 - checkpoint updated on success
 
-_agent-llm-integration.feature_
+*agent-llm-integration.feature*
 
 ### Confirmed Order Cancellation
 
-_The Order FSM treats `confirmed` as terminal._
+*The Order FSM treats `confirmed` as terminal.*
 
 ---
 
@@ -2439,7 +2299,6 @@ _The Order FSM treats `confirmed` as terminal._
 The Order FSM must allow transitioning from `confirmed` to `cancelled`.
 
 **Verified by:**
-
 - Cancel a confirmed order
 - Cannot cancel already cancelled order (unchanged behavior)
 - OrderCancelled evolves confirmed state to cancelled
@@ -2459,7 +2318,6 @@ The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
 | correlationStrategy | orderId                         |
 
 **Verified by:**
-
 - Reservation is released after confirmed order cancellation
 - Cancelling draft order does not trigger reservation release
 - Cancelling submitted order with pending reservation releases it
@@ -2472,10 +2330,152 @@ The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
 The primary use case is enabling the Agent BC churn risk detection demo.
 
 **Verified by:**
-
 - Three cancellations trigger churn risk agent
 
-_confirmed-order-cancellation.feature_
+*confirmed-order-cancellation.feature*
+
+---
+
+## Phase 24
+
+### Tranche0 Readiness Harness
+
+*The remediation program cannot safely begin security or correctness migrations*
+
+---
+
+#### Tranche 0 readiness is a hard gate
+
+The readiness packet completes before any wave-3 runtime packet starts.
+
+**Verified by:**
+- Store and bus readiness harnesses exist before tranche 1 implementation
+
+---
+
+#### Validation posture must fail closed
+
+This packet aligns typecheck, Vitest, and linting surfaces so no package can present a false-green
+    readiness state.
+
+**Verified by:**
+- Readiness validation remains machine-verifiable
+
+*tranche-0-readiness-harness-and-dependency-hardening.feature*
+
+---
+
+## Phase 25
+
+### Tranche0 Release Ci Docs Process Guardrails
+
+*`test.yml` ignores markdown and docs-only changes, release automation is not yet*
+
+---
+
+#### PDR-002 is the only release authority
+
+Release tooling mirrors architect metadata and does not replace it.
+
+**Verified by:**
+- Release governance points to PDR-002
+
+---
+
+#### Docs and process changes must have a non-skipped CI lane
+
+The dedicated docs/process workflow exists because `.github/workflows/test.yml` skips markdown
+    and docs-only changes.
+
+**Verified by:**
+- Docs-only changes still run architect guard and docs generation
+
+*tranche-0-release-ci-and-docs-process-guardrails.feature*
+
+---
+
+## Phase 26
+
+### Component Boundary Authentication Convention
+
+*Identity-bearing component mutations still trust caller-provided actor fields*
+
+---
+
+#### P11 ships as one atomic packet
+
+The auth convention is the tranche-1 keystone.
+
+**Verified by:**
+- Auth remediation is not split by mutation family
+
+---
+
+#### Verification is component-side and defaults to deny
+
+The proof contract is checked inside the component mutation boundary, not by parent-app trust alone.
+
+**Verified by:**
+- Missing or forged proof is rejected by default
+
+*component-boundary-authentication-convention.feature*
+
+---
+
+## Phase 27
+
+### Event Correctness Migration
+
+*`appendToStream` idempotency semantics, `globalPosition` precision, and process-manager*
+
+---
+
+#### P14, P17, and P18 remain one correctness packet
+
+Idempotency, `globalPosition`, and PM transition parity are reviewed as one correctness surface.
+
+**Verified by:**
+- Event correctness packet starts from decisions and inventory
+
+---
+
+#### Compatibility and ordering remain explicit
+
+The packet carries its own compatibility reader, parity tests, and evidence trail.
+
+**Verified by:**
+- Old and new checkpoint formats are handled explicitly
+
+*event-correctness-migration.feature*
+
+---
+
+## Phase 28
+
+### Tranche1 Supporting Security Contract Sweep
+
+*Several tranche-1 gaps remain after the auth keystone: test-mode checks fail open,*
+
+---
+
+#### Supporting tranche-1 work follows the auth convention
+
+This packet does not redefine the proof model from P11.
+
+**Verified by:**
+- Supporting cleanup does not bypass the auth keystone
+
+---
+
+#### Legacy shortcuts are removed, not documented as acceptable debt
+
+Default-allow reviewer logic, fabricated correlation IDs, truncated UUID helpers, and earlier no-op hardening debt
+    lifecycle stubs are all remediation targets.
+
+**Verified by:**
+- Supporting contract gaps fail closed after remediation
+
+*tranche-1-supporting-security-and-contract-sweep.feature*
 
 ---
 
@@ -2483,7 +2483,7 @@ _confirmed-order-cancellation.feature_
 
 ### Themed Decision Architecture
 
-_Current state: Decisions are listed chronologically or alphabetically in flat files._
+*Current state: Decisions are listed chronologically or alphabetically in flat files.*
 
 ---
 
@@ -2502,7 +2502,6 @@ The 7 themes identified during codebase synthesis:
 | Testing      | 013, 022, 031           | BDD, inverted pyramid, namespace      |
 
 **Verified by:**
-
 - Generate themed decision document
 - Theme tag in decision file
 
@@ -2511,7 +2510,6 @@ The 7 themes identified during codebase synthesis:
 #### Decisions declare dependencies
 
 **Verified by:**
-
 - ADR with dependency declaration
 - Generate dependency graph
 
@@ -2528,7 +2526,6 @@ The 33 ADRs fall into 3 evolutionary layers:
 | Refinement     | 021-033   | 13    | Optimizations, clarifications  |
 
 **Verified by:**
-
 - Layer information in generated docs
 
 ---
@@ -2536,7 +2533,6 @@ The 33 ADRs fall into 3 evolutionary layers:
 #### Existing ADRs are migrated with review
 
 **Verified by:**
-
 - Port ADR from old format to feature file
 - Review for validity during migration
 
@@ -2545,10 +2541,9 @@ The 33 ADRs fall into 3 evolutionary layers:
 #### Multiple output formats are generated
 
 **Verified by:**
-
 - Generate all decision artifacts
 
-_themed-decision-architecture.feature_
+*themed-decision-architecture.feature*
 
 ---
 

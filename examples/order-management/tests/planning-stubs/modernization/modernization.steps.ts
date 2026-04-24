@@ -13,7 +13,7 @@
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 
-// TODO: Import modules under test when implemented
+// Deferred to T5-008. Import modules under test when this planning stub becomes executable.
 // import { executeWithDCB, createScopeKey } from "@libar-dev/platform-core";
 // import { useReactiveProjection } from "@libar-dev/platform-core";
 

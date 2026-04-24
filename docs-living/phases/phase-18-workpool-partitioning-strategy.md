@@ -8,12 +8,12 @@
 
 **Progress:** [███████████░░░░░░░░░] 5/9 (56%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 5     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 4     |
-| **Total**    | 9     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 4     |
+| **Total**   | 9     |
 
 ---
 
@@ -28,31 +28,29 @@
 | Business Value | unified operations interface |
 
 **Problem:** Admin functionality is scattered across the codebase:
-
-- Dead letter queue at `convex/projections/deadLetters.ts`
-- Saga admin at `convex/sagas/admin.ts`
-- No centralized diagnostics or event flow tracing
-- No unified interface for durable function inspection
+  - Dead letter queue at `convex/projections/deadLetters.ts`
+  - Saga admin at `convex/sagas/admin.ts`
+  - No centralized diagnostics or event flow tracing
+  - No unified interface for durable function inspection
   This fragmentation makes operational tasks difficult and error-prone.
 
-**Solution:** Consolidate admin functionality into `convex/admin/` directory:
+  **Solution:** Consolidate admin functionality into `convex/admin/` directory:
+  - **projections.ts** - Rebuild triggers, status, checkpoint management
+  - **deadLetters.ts** - DLQ inspection, retry, ignore (refactored from current location)
+  - **diagnostics.ts** - Event flow trace, system state snapshot
+  - **durableFunctions.ts** - Workpool/Workflow run inspection
 
-- **projections.ts** - Rebuild triggers, status, checkpoint management
-- **deadLetters.ts** - DLQ inspection, retry, ignore (refactored from current location)
-- **diagnostics.ts** - Event flow trace, system state snapshot
-- **durableFunctions.ts** - Workpool/Workflow run inspection
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Discoverability | All admin operations in one directory |
+  | Consistency | Uniform patterns for all admin endpoints |
+  | Security | Single authorization wrapper for admin access |
+  | Onboarding | New team members find operations easily |
+  | Documentation | Admin API becomes self-documenting location |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Discoverability | All admin operations in one directory |
-| Consistency | Uniform patterns for all admin endpoints |
-| Security | Single authorization wrapper for admin access |
-| Onboarding | New team members find operations easily |
-| Documentation | Admin API becomes self-documenting location |
-
-**Design Principle:** Saga admin remains at `convex/sagas/admin.ts` because sagas
-are domain-specific and tightly coupled to saga definitions. The `admin/` directory
-is for cross-cutting operational concerns.
+  **Design Principle:** Saga admin remains at `convex/sagas/admin.ts` because sagas
+  are domain-specific and tightly coupled to saga definitions. The `admin/` directory
+  is for cross-cutting operational concerns.
 
 #### Dependencies
 
@@ -68,7 +66,7 @@ is for cross-cutting operational concerns.
 - When admin tooling consolidation is implemented
 - Then convex/admin/ directory should exist
 - And it should contain projections.ts, deadLetters.ts, diagnostics.ts, durableFunctions.ts
-- And \_auth.ts should provide authorization wrapper
+- And _auth.ts should provide authorization wrapper
 
 **Backward compatibility for DLQ imports**
 
@@ -174,7 +172,7 @@ is for cross-cutting operational concerns.
 **Admin directory provides unified location for operational endpoints**
 
 All cross-cutting admin operations live in `convex/admin/`. Domain-specific
-admin (sagas) remains with domain code.
+    admin (sagas) remains with domain code.
 
     **Directory Structure:**
 
@@ -194,13 +192,21 @@ convex/
         └── admin.ts           # Saga-specific admin (stays here)
 ```
 
-**Migration Strategy:** 1. Create `convex/admin/` directory 2. Move DLQ endpoints to `admin/deadLetters.ts` 3. Add re-exports at old location for backward compatibility 4. Update imports in calling code 5. Remove deprecated re-exports in future release
+**Migration Strategy:**
+    1. Create `convex/admin/` directory
+    2. Move DLQ endpoints to `admin/deadLetters.ts`
+    3. Add re-exports at old location for backward compatibility
+    4. Update imports in calling code
+    5. Remove deprecated re-exports in future release
 
 _Verified by: Admin directory is created with correct structure, Backward compatibility for DLQ imports_
 
 **DLQ endpoints provide inspection, retry, and ignore operations**
 
-Dead letter queue management enables operations teams to: - View failed projection updates - Retry individual or bulk items - Ignore items that cannot be processed
+Dead letter queue management enables operations teams to:
+    - View failed projection updates
+    - Retry individual or bulk items
+    - Ignore items that cannot be processed
 
     **Existing Operations (to be moved):**
     | Operation | Current Location | New Location |
@@ -221,237 +227,253 @@ Dead letter queue management enables operations teams to: - View failed projecti
 
 ```typescript
 // admin/deadLetters.ts
-export const getDeadLetterStats = internalQuery({
-  handler: async (ctx) => {
-    const deadLetters = await ctx.db.query("projectionDeadLetters").collect();
+    export const getDeadLetterStats = internalQuery({
+      handler: async (ctx) => {
+        const deadLetters = await ctx.db.query("projectionDeadLetters").collect();
 
-    const stats = deadLetters.reduce(
-      (acc, dl) => {
-        const key = `${dl.projectionName}:${dl.status}`;
-        acc[key] = (acc[key] ?? 0) + 1;
-        return acc;
+        const stats = deadLetters.reduce((acc, dl) => {
+          const key = `${dl.projectionName}:${dl.status}`;
+          acc[key] = (acc[key] ?? 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        return {
+          total: deadLetters.length,
+          byProjectionAndStatus: stats,
+          oldestPending: deadLetters
+            .filter((dl) => dl.status === "pending")
+            .sort((a, b) => a.failedAt - b.failedAt)[0]?.failedAt,
+        };
       },
-      {} as Record<string, number>
-    );
+    });
 
-    return {
-      total: deadLetters.length,
-      byProjectionAndStatus: stats,
-      oldestPending: deadLetters
-        .filter((dl) => dl.status === "pending")
-        .sort((a, b) => a.failedAt - b.failedAt)[0]?.failedAt,
-    };
-  },
-});
+    export const bulkRetry = internalMutation({
+      args: {
+        projectionName: v.string(),
+        limit: v.optional(v.number()),
+      },
+      handler: async (ctx, { projectionName, limit = 100 }) => {
+        const pending = await ctx.db
+          .query("projectionDeadLetters")
+          .withIndex("by_projection_status", (q) =>
+            q.eq("projectionName", projectionName).eq("status", "pending")
+          )
+          .take(limit);
 
-export const bulkRetry = internalMutation({
-  args: {
-    projectionName: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { projectionName, limit = 100 }) => {
-    const pending = await ctx.db
-      .query("projectionDeadLetters")
-      .withIndex("by_projection_status", (q) =>
-        q.eq("projectionName", projectionName).eq("status", "pending")
-      )
-      .take(limit);
+        for (const dl of pending) {
+          await ctx.db.patch(dl._id, { status: "retrying", retryStartedAt: Date.now() });
+          // Enqueue retry via workpool
+          await projectionPool.enqueueMutation(ctx, getProjectionHandler(projectionName), {
+            eventId: dl.eventId,
+            // ... other args from dead letter
+          });
+        }
 
-    for (const dl of pending) {
-      await ctx.db.patch(dl._id, { status: "retrying", retryStartedAt: Date.now() });
-      // Enqueue retry via workpool
-      await projectionPool.enqueueMutation(ctx, getProjectionHandler(projectionName), {
-        eventId: dl.eventId,
-        // ... other args from dead letter
-      });
-    }
-
-    return { retriedCount: pending.length };
-  },
-});
+        return { retriedCount: pending.length };
+      },
+    });
 ```
 
 _Verified by: Get dead letter statistics, Bulk retry pending dead letters_
 
 **Event flow trace enables debugging across the command-event-projection chain**
 
-When issues occur, operators need to trace: - Which command created an event - Which projections processed the event - Where in the chain a failure occurred
+When issues occur, operators need to trace:
+    - Which command created an event
+    - Which projections processed the event
+    - Where in the chain a failure occurred
 
     **Trace Query:**
 
 ```typescript
 // admin/diagnostics.ts
-export const getEventFlowTrace = internalQuery({
-  args: { correlationId: v.string() },
-  handler: async (ctx, { correlationId }) => {
-    // Find command
-    const command = await ctx.db
-      .query("commandBusCommands")
-      .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
-      .unique();
+    export const getEventFlowTrace = internalQuery({
+      args: { correlationId: v.string() },
+      handler: async (ctx, { correlationId }) => {
+        // Find command
+        const command = await ctx.db
+          .query("commandBusCommands")
+          .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
+          .unique();
 
-    // Find events
-    const events = await eventStore.getByCorrelation(ctx, { correlationId });
+        // Find events
+        const events = await eventStore.getByCorrelation(ctx, { correlationId });
 
-    // Find projection updates (via checkpoints with matching eventIds)
-    const projectionUpdates = await ctx.db
-      .query("projectionCheckpoints")
-      .filter((q) => events.some((e) => q.eq(q.field("lastEventId"), e.eventId)))
-      .collect();
+        // Find projection updates (via checkpoints with matching eventIds)
+        const projectionUpdates = await ctx.db
+          .query("projectionCheckpoints")
+          .filter((q) =>
+            events.some((e) => q.eq(q.field("lastEventId"), e.eventId))
+          )
+          .collect();
 
-    // Find dead letters
-    const deadLetters = await ctx.db
-      .query("projectionDeadLetters")
-      .filter((q) => events.some((e) => q.eq(q.field("eventId"), e.eventId)))
-      .collect();
+        // Find dead letters
+        const deadLetters = await ctx.db
+          .query("projectionDeadLetters")
+          .filter((q) =>
+            events.some((e) => q.eq(q.field("eventId"), e.eventId))
+          )
+          .collect();
 
-    // Find saga executions
-    const sagas = await ctx.db
-      .query("sagaRegistry")
-      .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
-      .collect();
+        // Find saga executions
+        const sagas = await ctx.db
+          .query("sagaRegistry")
+          .withIndex("by_correlationId", (q) => q.eq("correlationId", correlationId))
+          .collect();
 
-    return {
-      correlationId,
-      command: command
-        ? {
+        return {
+          correlationId,
+          command: command ? {
             commandType: command.commandType,
             status: command.status,
             createdAt: command.createdAt,
             completedAt: command.completedAt,
-          }
-        : null,
-      events: events.map((e) => ({
-        eventId: e.eventId,
-        eventType: e.eventType,
-        streamId: e.streamId,
-        globalPosition: e.globalPosition,
-        timestamp: e.timestamp,
-      })),
-      projectionUpdates: projectionUpdates.map((p) => ({
-        projectionName: p.projectionName,
-        lastGlobalPosition: p.lastGlobalPosition,
-        updatedAt: p.updatedAt,
-      })),
-      deadLetters: deadLetters.map((dl) => ({
-        projectionName: dl.projectionName,
-        status: dl.status,
-        error: dl.error,
-        failedAt: dl.failedAt,
-      })),
-      sagas: sagas.map((s) => ({
-        sagaType: s.sagaType,
-        status: s.status,
-        startedAt: s.startedAt,
-        completedAt: s.completedAt,
-      })),
-    };
-  },
-});
+          } : null,
+          events: events.map((e) => ({
+            eventId: e.eventId,
+            eventType: e.eventType,
+            streamId: e.streamId,
+            globalPosition: e.globalPosition,
+            timestamp: e.timestamp,
+          })),
+          projectionUpdates: projectionUpdates.map((p) => ({
+            projectionName: p.projectionName,
+            lastGlobalPosition: p.lastGlobalPosition,
+            updatedAt: p.updatedAt,
+          })),
+          deadLetters: deadLetters.map((dl) => ({
+            projectionName: dl.projectionName,
+            status: dl.status,
+            error: dl.error,
+            failedAt: dl.failedAt,
+          })),
+          sagas: sagas.map((s) => ({
+            sagaType: s.sagaType,
+            status: s.status,
+            startedAt: s.startedAt,
+            completedAt: s.completedAt,
+          })),
+        };
+      },
+    });
 ```
 
 _Verified by: Trace complete event flow, Trace shows failure point_
 
 **System state snapshot provides full health picture**
 
-Operators need a single query to understand overall system state, combining: - Component health (Event Store, projections, Workpools) - Projection lag across all projections - DLQ statistics - Active rebuilds - Circuit breaker states
+Operators need a single query to understand overall system state, combining:
+    - Component health (Event Store, projections, Workpools)
+    - Projection lag across all projections
+    - DLQ statistics
+    - Active rebuilds
+    - Circuit breaker states
 
     **Snapshot Query:**
 
 ```typescript
 // admin/diagnostics.ts
-export const getSystemState = internalQuery({
-  handler: async (ctx) => {
-    const [health, projectionLags, dlqStats, activeRebuilds, circuitStates] = await Promise.all([
-      aggregateSystemHealth(ctx),
-      getAllProjectionLags(ctx),
-      getDeadLetterStats(ctx),
-      listActiveRebuilds(ctx),
-      getAllCircuitStates(ctx),
-    ]);
+    export const getSystemState = internalQuery({
+      handler: async (ctx) => {
+        const [
+          health,
+          projectionLags,
+          dlqStats,
+          activeRebuilds,
+          circuitStates,
+        ] = await Promise.all([
+          aggregateSystemHealth(ctx),
+          getAllProjectionLags(ctx),
+          getDeadLetterStats(ctx),
+          listActiveRebuilds(ctx),
+          getAllCircuitStates(ctx),
+        ]);
 
-    return {
-      timestamp: Date.now(),
-      health,
-      projections: {
-        lags: projectionLags,
-        activeRebuilds,
+        return {
+          timestamp: Date.now(),
+          health,
+          projections: {
+            lags: projectionLags,
+            activeRebuilds,
+          },
+          deadLetters: dlqStats,
+          circuitBreakers: circuitStates,
+          summary: {
+            status: health.status,
+            projectionsWithLag: Object.values(projectionLags).filter((l) => l > 100).length,
+            pendingDeadLetters: dlqStats.total,
+            openCircuits: circuitStates.filter((c) => c.state === "open").length,
+          },
+        };
       },
-      deadLetters: dlqStats,
-      circuitBreakers: circuitStates,
-      summary: {
-        status: health.status,
-        projectionsWithLag: Object.values(projectionLags).filter((l) => l > 100).length,
-        pendingDeadLetters: dlqStats.total,
-        openCircuits: circuitStates.filter((c) => c.state === "open").length,
-      },
-    };
-  },
-});
+    });
 ```
 
 _Verified by: System state provides complete overview_
 
 **Durable function queries enable Workpool and Workflow debugging**
 
-When background work fails or stalls, operators need visibility into: - Workpool queue contents and status - Workflow execution history - Action Retrier run status
+When background work fails or stalls, operators need visibility into:
+    - Workpool queue contents and status
+    - Workflow execution history
+    - Action Retrier run status
 
     **Durable Function Queries:**
 
 ```typescript
 // admin/durableFunctions.ts
 
-// Query Workpool item status
-export const getWorkpoolItem = internalQuery({
-  args: { workId: v.string() },
-  handler: async (ctx, { workId }) => {
-    const status = await projectionPool.status(ctx, workId);
-    return {
-      workId,
-      ...status,
-    };
-  },
-});
+    // Query Workpool item status
+    export const getWorkpoolItem = internalQuery({
+      args: { workId: v.string() },
+      handler: async (ctx, { workId }) => {
+        const status = await projectionPool.status(ctx, workId);
+        return {
+          workId,
+          ...status,
+        };
+      },
+    });
 
-// Query Workflow status and steps
-export const getWorkflowExecution = internalQuery({
-  args: { workflowId: v.string() },
-  handler: async (ctx, { workflowId }) => {
-    const status = await workflowManager.status(ctx, workflowId);
-    const steps = await workflowManager.listSteps(ctx, workflowId);
-    return {
-      workflowId,
-      status,
-      steps,
-    };
-  },
-});
+    // Query Workflow status and steps
+    export const getWorkflowExecution = internalQuery({
+      args: { workflowId: v.string() },
+      handler: async (ctx, { workflowId }) => {
+        const status = await workflowManager.status(ctx, workflowId);
+        const steps = await workflowManager.listSteps(ctx, workflowId);
+        return {
+          workflowId,
+          status,
+          steps,
+        };
+      },
+    });
 
-// List pending Workpool items for a pool
-export const listPendingWorkpoolItems = internalQuery({
-  args: {
-    poolName: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { poolName, limit = 50 }) => {
-    // Implementation depends on Workpool internals
-    // May need to query component tables directly
-    const pool = getPoolByName(poolName);
-    // ...
-  },
-});
+    // List pending Workpool items for a pool
+    export const listPendingWorkpoolItems = internalQuery({
+      args: {
+        poolName: v.string(),
+        limit: v.optional(v.number()),
+      },
+      handler: async (ctx, { poolName, limit = 50 }) => {
+        // Implementation depends on Workpool internals
+        // May need to query component tables directly
+        const pool = getPoolByName(poolName);
+        // ...
+      },
+    });
 
-// Get Action Retrier run status
-export const getRetrierRun = internalQuery({
-  args: { runId: v.string() },
-  handler: async (ctx, { runId }) => {
-    const status = await retrier.status(ctx, runId);
-    return {
-      runId,
-      ...status,
-    };
-  },
-});
+    // Get Action Retrier run status
+    export const getRetrierRun = internalQuery({
+      args: { runId: v.string() },
+      handler: async (ctx, { runId }) => {
+        const status = await retrier.status(ctx, runId);
+        return {
+          runId,
+          ...status,
+        };
+      },
+    });
 ```
 
 _Verified by: Query Workpool item status, Query Workflow execution with steps, Query non-existent durable function_
@@ -459,64 +481,66 @@ _Verified by: Query Workpool item status, Query Workflow execution with steps, Q
 **Admin endpoints require authorization**
 
 Admin operations are powerful and should be protected. All admin endpoints
-use an authorization wrapper that: - Validates caller has admin role - Logs all admin actions for audit - Rate limits admin operations
+    use an authorization wrapper that:
+    - Validates caller has admin role
+    - Logs all admin actions for audit
+    - Rate limits admin operations
 
     **Authorization Wrapper:**
 
 ```typescript
 // admin/_auth.ts
-import { ConvexError } from "convex/values";
+    import { ConvexError } from "convex/values";
 
-export function requireAdminRole(ctx: QueryCtx | MutationCtx) {
-  const identity = ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new ConvexError("UNAUTHENTICATED");
-  }
+    export function requireAdminRole(ctx: QueryCtx | MutationCtx) {
+      const identity = ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new ConvexError("UNAUTHENTICATED");
+      }
 
-  // Check for admin role in token claims or user record
-  const isAdmin =
-    identity.tokenIdentifier.includes("admin") ||
-    // Or check custom claims
-    (identity as any).customClaims?.role === "admin";
+      // Check for admin role in token claims or user record
+      const isAdmin = identity.tokenIdentifier.includes("admin") ||
+        // Or check custom claims
+        (identity as any).customClaims?.role === "admin";
 
-  if (!isAdmin) {
-    throw new ConvexError("UNAUTHORIZED: Admin role required");
-  }
+      if (!isAdmin) {
+        throw new ConvexError("UNAUTHORIZED: Admin role required");
+      }
 
-  return identity;
-}
+      return identity;
+    }
 
-export function withAdminAuth<T>(
-  handler: (ctx: MutationCtx, args: T, identity: UserIdentity) => Promise<any>
-) {
-  return async (ctx: MutationCtx, args: T) => {
-    const identity = requireAdminRole(ctx);
+    export function withAdminAuth<T>(
+      handler: (ctx: MutationCtx, args: T, identity: UserIdentity) => Promise<any>
+    ) {
+      return async (ctx: MutationCtx, args: T) => {
+        const identity = requireAdminRole(ctx);
 
-    // Log admin action
-    await ctx.db.insert("adminAuditLog", {
-      action: handler.name,
-      args: JSON.stringify(args),
-      userId: identity.subject,
-      timestamp: Date.now(),
-    });
+        // Log admin action
+        await ctx.db.insert("adminAuditLog", {
+          action: handler.name,
+          args: JSON.stringify(args),
+          userId: identity.subject,
+          timestamp: Date.now(),
+        });
 
-    return handler(ctx, args, identity);
-  };
-}
+        return handler(ctx, args, identity);
+      };
+    }
 ```
 
 **Usage:**
 
 ```typescript
 // admin/projections.ts
-export const triggerRebuild = internalMutation({
-  args: { projectionName: v.string() },
-  handler: withAdminAuth(async (ctx, args, identity) => {
-    // Only reached if caller has admin role
-    // Action is logged to audit trail
-    return triggerRebuildImpl(ctx, args);
-  }),
-});
+    export const triggerRebuild = internalMutation({
+      args: { projectionName: v.string() },
+      handler: withAdminAuth(async (ctx, args, identity) => {
+        // Only reached if caller has admin role
+        // Action is logged to audit trail
+        return triggerRebuildImpl(ctx, args);
+      }),
+    });
 ```
 
 _Verified by: Unauthenticated request is rejected, Non-admin user is rejected, Admin action is logged_
@@ -532,31 +556,29 @@ _Verified by: Unauthenticated request is rejected, Non-admin user is rejected, A
 | Business Value | external service resilience and budget preservation |
 
 **Problem:** External API failures (Stripe, SendGrid, webhooks) cascade through the system.
-Without automatic isolation:
+  Without automatic isolation:
+  - Action budget is wasted on calls destined to fail
+  - Users experience long timeouts instead of fast failures
+  - Partial outages become full outages via resource exhaustion
+  - No automatic recovery testing when service comes back
 
-- Action budget is wasted on calls destined to fail
-- Users experience long timeouts instead of fast failures
-- Partial outages become full outages via resource exhaustion
-- No automatic recovery testing when service comes back
+  **Solution:** Database-backed circuit breaker with state machine:
+  - **CLOSED** - Normal operation, track failure count
+  - **OPEN** - Fail fast, no requests sent to failing service
+  - **HALF_OPEN** - Allow one test request to check recovery
+  - **Scheduled transitions** - `ctx.scheduler.runAfter` for timeout-based state changes
+  - **Action Retrier integration** - Half-open probe uses Retrier with maxFailures: 0
 
-**Solution:** Database-backed circuit breaker with state machine:
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Budget preservation | OPEN state prevents wasting actions on failing services |
+  | Fast failure | Users get immediate error instead of timeout |
+  | Automatic recovery | Half-open probe tests service without manual intervention |
+  | Observability | Circuit state changes are logged for alerting |
+  | Per-service isolation | Each external service has independent circuit |
 
-- **CLOSED** - Normal operation, track failure count
-- **OPEN** - Fail fast, no requests sent to failing service
-- **HALF_OPEN** - Allow one test request to check recovery
-- **Scheduled transitions** - `ctx.scheduler.runAfter` for timeout-based state changes
-- **Action Retrier integration** - Half-open probe uses Retrier with maxFailures: 0
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Budget preservation | OPEN state prevents wasting actions on failing services |
-| Fast failure | Users get immediate error instead of timeout |
-| Automatic recovery | Half-open probe tests service without manual intervention |
-| Observability | Circuit state changes are logged for alerting |
-| Per-service isolation | Each external service has independent circuit |
-
-**Convex Constraint:** No in-memory state across function invocations. Circuit state must
-persist in Convex table. Timeout transitions use `ctx.scheduler.runAfter`, not in-memory timers.
+  **Convex Constraint:** No in-memory state across function invocations. Circuit state must
+  persist in Convex table. Timeout transitions use `ctx.scheduler.runAfter`, not in-memory timers.
 
 #### Dependencies
 
@@ -707,77 +729,77 @@ The circuit breaker is a state machine with well-defined transitions:
 ```
 
 **State Behaviors:**
-| State | Request Handling | Transitions |
-| CLOSED | Execute normally, track failures | → OPEN after threshold failures |
-| OPEN | Reject immediately (fail fast) | → HALF_OPEN after timeout |
-| HALF_OPEN | Allow single probe request | → CLOSED on success, → OPEN on failure |
+    | State | Request Handling | Transitions |
+    | CLOSED | Execute normally, track failures | → OPEN after threshold failures |
+    | OPEN | Reject immediately (fail fast) | → HALF_OPEN after timeout |
+    | HALF_OPEN | Allow single probe request | → CLOSED on success, → OPEN on failure |
 
     **Pure State Machine:**
 
 ```typescript
 // stateMachine.ts - Pure function, no I/O
-export type CircuitState = "closed" | "open" | "half_open";
-export type CircuitEvent = "success" | "failure" | "timeout" | "probe_success" | "probe_failure";
+    export type CircuitState = "closed" | "open" | "half_open";
+    export type CircuitEvent = "success" | "failure" | "timeout" | "probe_success" | "probe_failure";
 
-export interface CircuitBreakerState {
-  state: CircuitState;
-  failureCount: number;
-  lastFailureAt?: number;
-  openedAt?: number;
-  probeRunId?: string;
-}
+    export interface CircuitBreakerState {
+      state: CircuitState;
+      failureCount: number;
+      lastFailureAt?: number;
+      openedAt?: number;
+      probeRunId?: string;
+    }
 
-export interface CircuitBreakerConfig {
-  failureThreshold: number; // Failures before opening (default: 5)
-  resetTimeoutMs: number; // Time in OPEN before half-open (default: 30000)
-  successThreshold: number; // Successes in half-open to close (default: 1)
-}
+    export interface CircuitBreakerConfig {
+      failureThreshold: number;      // Failures before opening (default: 5)
+      resetTimeoutMs: number;        // Time in OPEN before half-open (default: 30000)
+      successThreshold: number;      // Successes in half-open to close (default: 1)
+    }
 
-export function computeNextState(
-  current: CircuitBreakerState,
-  event: CircuitEvent,
-  config: CircuitBreakerConfig,
-  now: number
-): { nextState: CircuitBreakerState; sideEffect?: "schedule_timeout" | "probe_started" } {
-  switch (current.state) {
-    case "closed":
-      if (event === "success") {
-        return { nextState: { ...current, failureCount: 0 } };
+    export function computeNextState(
+      current: CircuitBreakerState,
+      event: CircuitEvent,
+      config: CircuitBreakerConfig,
+      now: number
+    ): { nextState: CircuitBreakerState; sideEffect?: "schedule_timeout" | "probe_started" } {
+      switch (current.state) {
+        case "closed":
+          if (event === "success") {
+            return { nextState: { ...current, failureCount: 0 } };
+          }
+          if (event === "failure") {
+            const newCount = current.failureCount + 1;
+            if (newCount >= config.failureThreshold) {
+              return {
+                nextState: { state: "open", failureCount: newCount, openedAt: now },
+                sideEffect: "schedule_timeout",
+              };
+            }
+            return { nextState: { ...current, failureCount: newCount, lastFailureAt: now } };
+          }
+          break;
+
+        case "open":
+          if (event === "timeout") {
+            return { nextState: { ...current, state: "half_open" } };
+          }
+          // Ignore success/failure in open state (requests are rejected)
+          break;
+
+        case "half_open":
+          if (event === "probe_success") {
+            return { nextState: { state: "closed", failureCount: 0 } };
+          }
+          if (event === "probe_failure") {
+            return {
+              nextState: { state: "open", failureCount: current.failureCount, openedAt: now },
+              sideEffect: "schedule_timeout",
+            };
+          }
+          break;
       }
-      if (event === "failure") {
-        const newCount = current.failureCount + 1;
-        if (newCount >= config.failureThreshold) {
-          return {
-            nextState: { state: "open", failureCount: newCount, openedAt: now },
-            sideEffect: "schedule_timeout",
-          };
-        }
-        return { nextState: { ...current, failureCount: newCount, lastFailureAt: now } };
-      }
-      break;
 
-    case "open":
-      if (event === "timeout") {
-        return { nextState: { ...current, state: "half_open" } };
-      }
-      // Ignore success/failure in open state (requests are rejected)
-      break;
-
-    case "half_open":
-      if (event === "probe_success") {
-        return { nextState: { state: "closed", failureCount: 0 } };
-      }
-      if (event === "probe_failure") {
-        return {
-          nextState: { state: "open", failureCount: current.failureCount, openedAt: now },
-          sideEffect: "schedule_timeout",
-        };
-      }
-      break;
-  }
-
-  return { nextState: current };
-}
+      return { nextState: current };
+    }
 ```
 
 _Verified by: Circuit remains closed on success, Circuit opens after threshold failures, Circuit transitions to half-open after timeout, Successful probe closes circuit, Failed probe reopens circuit_
@@ -785,7 +807,7 @@ _Verified by: Circuit remains closed on success, Circuit opens after threshold f
 **Circuit state persists in Convex table**
 
 Convex functions are stateless across invocations. Circuit state must persist
-in a table to survive function restarts and be consistent across workers.
+    in a table to survive function restarts and be consistent across workers.
 
     **Schema:**
 
@@ -812,61 +834,66 @@ in a table to survive function restarts and be consistent across workers.
 
 ```typescript
 // monitoring/circuitBreakers.ts
-export const loadCircuitState = internalQuery({
-  args: { name: v.string() },
-  handler: async (ctx, { name }) => {
-    const circuit = await ctx.db
-      .query("circuitBreakers")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .unique();
+    export const loadCircuitState = internalQuery({
+      args: { name: v.string() },
+      handler: async (ctx, { name }) => {
+        const circuit = await ctx.db
+          .query("circuitBreakers")
+          .withIndex("by_name", (q) => q.eq("name", name))
+          .unique();
 
-    if (!circuit) {
-      // Default to closed with default config
-      return {
-        name,
-        state: "closed" as const,
-        failureCount: 0,
-        config: DEFAULT_CIRCUIT_CONFIG,
-      };
-    }
+        if (!circuit) {
+          // Default to closed with default config
+          return {
+            name,
+            state: "closed" as const,
+            failureCount: 0,
+            config: DEFAULT_CIRCUIT_CONFIG,
+          };
+        }
 
-    return circuit;
-  },
-});
+        return circuit;
+      },
+    });
 
-export const updateCircuitState = internalMutation({
-  args: {
-    name: v.string(),
-    event: v.union(v.literal("success"), v.literal("failure") /* ... */),
-  },
-  handler: async (ctx, { name, event }) => {
-    const current = await loadCircuitState(ctx, { name });
-    const { nextState, sideEffect } = computeNextState(current, event, current.config, Date.now());
+    export const updateCircuitState = internalMutation({
+      args: {
+        name: v.string(),
+        event: v.union(v.literal("success"), v.literal("failure"), /* ... */),
+      },
+      handler: async (ctx, { name, event }) => {
+        const current = await loadCircuitState(ctx, { name });
+        const { nextState, sideEffect } = computeNextState(
+          current,
+          event,
+          current.config,
+          Date.now()
+        );
 
-    // Upsert circuit state
-    if (current._id) {
-      await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
-    } else {
-      await ctx.db.insert("circuitBreakers", {
-        name,
-        ...nextState,
-        config: current.config,
-        updatedAt: Date.now(),
-      });
-    }
+        // Upsert circuit state
+        if (current._id) {
+          await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
+        } else {
+          await ctx.db.insert("circuitBreakers", {
+            name,
+            ...nextState,
+            config: current.config,
+            updatedAt: Date.now(),
+          });
+        }
 
-    // Handle side effects
-    if (sideEffect === "schedule_timeout") {
-      await ctx.scheduler.runAfter(
-        current.config.resetTimeoutMs,
-        internal.monitoring.circuitBreakers.onTimeout,
-        { name, openedAt: nextState.openedAt }
-      );
-    }
+        // Handle side effects
+        if (sideEffect === "schedule_timeout") {
+          await ctx.scheduler.runAfter(
+            current.config.resetTimeoutMs,
+            internal.monitoring.circuitBreakers.onTimeout,
+            { name, openedAt: nextState.openedAt }
+          );
+        }
 
-    return nextState;
-  },
-});
+        return nextState;
+      },
+    });
 ```
 
 _Verified by: Circuit state persists across function calls, Non-existent circuit defaults to closed_
@@ -874,7 +901,7 @@ _Verified by: Circuit state persists across function calls, Non-existent circuit
 **Open-to-half-open transition uses scheduler**
 
 The OPEN → HALF_OPEN transition happens after `resetTimeoutMs` elapses.
-Since Convex has no in-memory timers, use `ctx.scheduler.runAfter`.
+    Since Convex has no in-memory timers, use `ctx.scheduler.runAfter`.
 
     **Important:** Schedule is a one-shot, not a recurring cron. Each circuit-open
     event schedules its own timeout.
@@ -883,34 +910,38 @@ Since Convex has no in-memory timers, use `ctx.scheduler.runAfter`.
 
 ```typescript
 export const onTimeout = internalMutation({
-  args: {
-    name: v.string(),
-    openedAt: v.number(), // Guard against stale timeouts
-  },
-  handler: async (ctx, { name, openedAt }) => {
-    const current = await ctx.db
-      .query("circuitBreakers")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .unique();
+      args: {
+        name: v.string(),
+        openedAt: v.number(),  // Guard against stale timeouts
+      },
+      handler: async (ctx, { name, openedAt }) => {
+        const current = await ctx.db
+          .query("circuitBreakers")
+          .withIndex("by_name", (q) => q.eq("name", name))
+          .unique();
 
-    if (!current) return;
+        if (!current) return;
 
-    // Guard: only transition if still open AND openedAt matches
-    // (prevents stale timeout from older open-close-open cycle)
-    if (current.state !== "open" || current.openedAt !== openedAt) {
-      return { skipped: true, reason: "circuit state changed" };
-    }
+        // Guard: only transition if still open AND openedAt matches
+        // (prevents stale timeout from older open-close-open cycle)
+        if (current.state !== "open" || current.openedAt !== openedAt) {
+          return { skipped: true, reason: "circuit state changed" };
+        }
 
-    const { nextState } = computeNextState(current, "timeout", current.config, Date.now());
-    await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
+        const { nextState } = computeNextState(current, "timeout", current.config, Date.now());
+        await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
 
-    return { transitioned: true, newState: nextState.state };
-  },
-});
+        return { transitioned: true, newState: nextState.state };
+      },
+    });
 ```
 
 **Why Guard with openedAt:**
-Without the guard, this could happen: 1. Circuit opens at T=0, schedules timeout for T=30s 2. Manual intervention closes circuit at T=10s 3. Circuit opens again at T=20s, schedules timeout for T=50s 4. Stale timeout fires at T=30s, transitions to half-open unexpectedly
+    Without the guard, this could happen:
+    1. Circuit opens at T=0, schedules timeout for T=30s
+    2. Manual intervention closes circuit at T=10s
+    3. Circuit opens again at T=20s, schedules timeout for T=50s
+    4. Stale timeout fires at T=30s, transitions to half-open unexpectedly
 
     The `openedAt` guard ensures only the timeout from the current open cycle fires.
 
@@ -919,7 +950,7 @@ _Verified by: Timeout transitions open to half-open, Stale timeout is ignored_
 **Half-open probes use Action Retrier with zero retries**
 
 When circuit enters HALF_OPEN, we need to test if the service recovered.
-Use Action Retrier with `maxFailures: 0` (no retries) for a controlled probe.
+    Use Action Retrier with `maxFailures: 0` (no retries) for a controlled probe.
 
     **Why Action Retrier:**
     - Provides `onComplete` callback for probe result handling
@@ -931,74 +962,74 @@ Use Action Retrier with `maxFailures: 0` (no retries) for a controlled probe.
 ```typescript
 import { ActionRetrier } from "@convex-dev/action-retrier";
 
-export async function executeWithCircuitBreaker<T>(
-  ctx: ActionCtx,
-  circuitName: string,
-  operation: FunctionReference<"action">,
-  args: Record<string, unknown>
-): Promise<{ result: T } | { error: string; retryAfterMs?: number }> {
-  const circuit = await loadCircuitState(ctx, { name: circuitName });
+    export async function executeWithCircuitBreaker<T>(
+      ctx: ActionCtx,
+      circuitName: string,
+      operation: FunctionReference<"action">,
+      args: Record<string, unknown>
+    ): Promise<{ result: T } | { error: string; retryAfterMs?: number }> {
+      const circuit = await loadCircuitState(ctx, { name: circuitName });
 
-  if (circuit.state === "open") {
-    const retryAfterMs =
-      circuit.config.resetTimeoutMs - (Date.now() - (circuit.openedAt ?? Date.now()));
-    return { error: `CIRCUIT_OPEN:${circuitName}`, retryAfterMs };
-  }
+      if (circuit.state === "open") {
+        const retryAfterMs = circuit.config.resetTimeoutMs -
+          (Date.now() - (circuit.openedAt ?? Date.now()));
+        return { error: `CIRCUIT_OPEN:${circuitName}`, retryAfterMs };
+      }
 
-  if (circuit.state === "half_open") {
-    // Probe mode: single attempt, no retries
-    const runId = await retrier.run(ctx, operation, args, {
-      maxFailures: 0, // No retries
-      onComplete: internal.monitoring.circuitBreakers.onProbeComplete,
-    });
+      if (circuit.state === "half_open") {
+        // Probe mode: single attempt, no retries
+        const runId = await retrier.run(ctx, operation, args, {
+          maxFailures: 0,  // No retries
+          onComplete: internal.monitoring.circuitBreakers.onProbeComplete,
+        });
 
-    // Track probe run ID
-    await ctx.runMutation(internal.monitoring.circuitBreakers.setProbeRunId, {
-      name: circuitName,
-      runId,
-    });
+        // Track probe run ID
+        await ctx.runMutation(internal.monitoring.circuitBreakers.setProbeRunId, {
+          name: circuitName,
+          runId,
+        });
 
-    return { result: "PROBE_STARTED" as T, probeRunId: runId };
-  }
+        return { result: "PROBE_STARTED" as T, probeRunId: runId };
+      }
 
-  // Closed state: normal execution with failure tracking
-  try {
-    const result = await ctx.runAction(operation, args);
-    await ctx.runMutation(internal.monitoring.circuitBreakers.recordSuccess, {
-      name: circuitName,
-    });
-    return { result };
-  } catch (error) {
-    await ctx.runMutation(internal.monitoring.circuitBreakers.recordFailure, {
-      name: circuitName,
-      error: String(error),
-    });
-    throw error;
-  }
-}
-
-// Probe completion handler
-export const onProbeComplete = internalMutation({
-  args: { result: runResultValidator },
-  handler: async (ctx, { result }) => {
-    // Find circuit by probeRunId
-    const circuit = await ctx.db
-      .query("circuitBreakers")
-      .filter((q) => q.eq(q.field("probeRunId"), result.runId))
-      .unique();
-
-    if (!circuit) return;
-
-    if (result.type === "success") {
-      await updateCircuitState(ctx, { name: circuit.name, event: "probe_success" });
-    } else {
-      await updateCircuitState(ctx, { name: circuit.name, event: "probe_failure" });
+      // Closed state: normal execution with failure tracking
+      try {
+        const result = await ctx.runAction(operation, args);
+        await ctx.runMutation(internal.monitoring.circuitBreakers.recordSuccess, {
+          name: circuitName,
+        });
+        return { result };
+      } catch (error) {
+        await ctx.runMutation(internal.monitoring.circuitBreakers.recordFailure, {
+          name: circuitName,
+          error: String(error),
+        });
+        throw error;
+      }
     }
 
-    // Clear probe run ID
-    await ctx.db.patch(circuit._id, { probeRunId: undefined });
-  },
-});
+    // Probe completion handler
+    export const onProbeComplete = internalMutation({
+      args: { result: runResultValidator },
+      handler: async (ctx, { result }) => {
+        // Find circuit by probeRunId
+        const circuit = await ctx.db
+          .query("circuitBreakers")
+          .filter((q) => q.eq(q.field("probeRunId"), result.runId))
+          .unique();
+
+        if (!circuit) return;
+
+        if (result.type === "success") {
+          await updateCircuitState(ctx, { name: circuit.name, event: "probe_success" });
+        } else {
+          await updateCircuitState(ctx, { name: circuit.name, event: "probe_failure" });
+        }
+
+        // Clear probe run ID
+        await ctx.db.patch(circuit._id, { probeRunId: undefined });
+      },
+    });
 ```
 
 _Verified by: Half-open probe closes circuit on success, Half-open probe reopens circuit on failure, Open circuit returns fast failure_
@@ -1006,7 +1037,7 @@ _Verified by: Half-open probe closes circuit on success, Half-open probe reopens
 **Each external service has independent circuit configuration**
 
 Different services have different failure characteristics. A payment API
-might need a higher threshold than a notification service.
+    might need a higher threshold than a notification service.
 
     **Configuration Options:**
     | Option | Default | Description |
@@ -1018,23 +1049,23 @@ might need a higher threshold than a notification service.
 
 ```typescript
 // Infrastructure setup
-const circuitConfigs: Record<string, CircuitBreakerConfig> = {
-  "stripe-api": {
-    failureThreshold: 3, // Payment is critical, open quickly
-    resetTimeoutMs: 60000, // Wait longer before retrying payments
-    successThreshold: 1,
-  },
-  sendgrid: {
-    failureThreshold: 10, // Email is less critical
-    resetTimeoutMs: 30000,
-    successThreshold: 1,
-  },
-  "webhook-delivery": {
-    failureThreshold: 5,
-    resetTimeoutMs: 15000, // Retry webhooks more frequently
-    successThreshold: 2, // Require 2 successes to fully close
-  },
-};
+    const circuitConfigs: Record<string, CircuitBreakerConfig> = {
+      "stripe-api": {
+        failureThreshold: 3,    // Payment is critical, open quickly
+        resetTimeoutMs: 60000,  // Wait longer before retrying payments
+        successThreshold: 1,
+      },
+      "sendgrid": {
+        failureThreshold: 10,   // Email is less critical
+        resetTimeoutMs: 30000,
+        successThreshold: 1,
+      },
+      "webhook-delivery": {
+        failureThreshold: 5,
+        resetTimeoutMs: 15000,  // Retry webhooks more frequently
+        successThreshold: 2,    // Require 2 successes to fully close
+      },
+    };
 ```
 
 _Verified by: Payment circuit opens after 3 failures, Email circuit tolerates more failures, Different services have independent circuits_
@@ -1050,31 +1081,29 @@ _Verified by: Payment circuit opens after 3 failures, Email circuit tolerates mo
 | Business Value | production monitoring and k8s integration |
 
 **Problem:** No Kubernetes integration (readiness/liveness probes), no metrics for
-projection lag, event throughput, or system health. Operations team has no visibility
-into system state, cannot detect degradation before it becomes an outage, and cannot
-integrate with standard orchestration platforms.
+  projection lag, event throughput, or system health. Operations team has no visibility
+  into system state, cannot detect degradation before it becomes an outage, and cannot
+  integrate with standard orchestration platforms.
 
-**Solution:** Production-ready observability infrastructure:
+  **Solution:** Production-ready observability infrastructure:
+  - **HTTP health endpoints** - `/health/ready` and `/health/live` via Convex httpAction
+  - **Metrics collection** - Structured JSON for Log Streams export to Prometheus/Datadog
+  - **Projection lag tracking** - Checkpoint position vs Event Store max position
+  - **Workpool queue depth** - Backpressure detection for load shedding
+  - **Component health aggregation** - Event Store, projections, Workpools, external deps
 
-- **HTTP health endpoints** - `/health/ready` and `/health/live` via Convex httpAction
-- **Metrics collection** - Structured JSON for Log Streams export to Prometheus/Datadog
-- **Projection lag tracking** - Checkpoint position vs Event Store max position
-- **Workpool queue depth** - Backpressure detection for load shedding
-- **Component health aggregation** - Event Store, projections, Workpools, external deps
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | K8s integration | httpAction endpoints for readiness/liveness probes |
+  | Proactive monitoring | Projection lag alerts before users notice stale data |
+  | Load shedding | Workpool queue depth signals when to reject new work |
+  | External observability | Log Streams integration enables Grafana dashboards |
+  | Incident response | System state snapshot for rapid diagnosis |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| K8s integration | httpAction endpoints for readiness/liveness probes |
-| Proactive monitoring | Projection lag alerts before users notice stale data |
-| Load shedding | Workpool queue depth signals when to reject new work |
-| External observability | Log Streams integration enables Grafana dashboards |
-| Incident response | System state snapshot for rapid diagnosis |
-
-**Convex Constraints:**
-
-- No OpenTelemetry SDK inside Convex functions
-- No persistent connections (WebSocket, long-polling)
-- Metrics export via Log Streams (Axiom, Datadog) with REPORT-level JSON
+  **Convex Constraints:**
+  - No OpenTelemetry SDK inside Convex functions
+  - No persistent connections (WebSocket, long-polling)
+  - Metrics export via Log Streams (Axiom, Datadog) with REPORT-level JSON
 
 #### Dependencies
 
@@ -1218,7 +1247,9 @@ integrate with standard orchestration platforms.
 
 **Health endpoints support Kubernetes probes**
 
-Kubernetes requires HTTP endpoints for orchestration: - **Readiness probe** (`/health/ready`) - Is the service ready to receive traffic? - **Liveness probe** (`/health/live`) - Is the process alive and responsive?
+Kubernetes requires HTTP endpoints for orchestration:
+    - **Readiness probe** (`/health/ready`) - Is the service ready to receive traffic?
+    - **Liveness probe** (`/health/live`) - Is the process alive and responsive?
 
     **Endpoint Specifications:**
     | Endpoint | HTTP Method | Success | Failure | Checks |
@@ -1229,37 +1260,37 @@ Kubernetes requires HTTP endpoints for orchestration: - **Readiness probe** (`/h
 
 ```typescript
 // convex/http.ts
-import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+    import { httpRouter } from "convex/server";
+    import { httpAction } from "./_generated/server";
+    import { internal } from "./_generated/api";
 
-const http = httpRouter();
+    const http = httpRouter();
 
-http.route({
-  path: "/health/ready",
-  method: "GET",
-  handler: httpAction(async (ctx) => {
-    const health = await ctx.runQuery(internal.health.checkReadiness);
-    return new Response(JSON.stringify(health), {
-      status: health.status === "healthy" ? 200 : 503,
-      headers: { "Content-Type": "application/json" },
+    http.route({
+      path: "/health/ready",
+      method: "GET",
+      handler: httpAction(async (ctx) => {
+        const health = await ctx.runQuery(internal.health.checkReadiness);
+        return new Response(JSON.stringify(health), {
+          status: health.status === "healthy" ? 200 : 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
     });
-  }),
-});
 
-http.route({
-  path: "/health/live",
-  method: "GET",
-  handler: httpAction(async () => {
-    // Liveness just confirms the function can execute
-    return new Response(JSON.stringify({ status: "alive", timestamp: Date.now() }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    http.route({
+      path: "/health/live",
+      method: "GET",
+      handler: httpAction(async () => {
+        // Liveness just confirms the function can execute
+        return new Response(JSON.stringify({ status: "alive", timestamp: Date.now() }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
     });
-  }),
-});
 
-export default http;
+    export default http;
 ```
 
 _Verified by: Readiness probe returns healthy when all components OK, Readiness probe returns unhealthy on projection lag, Liveness probe always returns alive_
@@ -1267,7 +1298,7 @@ _Verified by: Readiness probe returns healthy when all components OK, Readiness 
 **Workpool queue depth signals backpressure**
 
 When Workpool queue depth exceeds threshold, the system is under stress.
-Readiness should fail to trigger load shedding (K8s stops routing traffic).
+    Readiness should fail to trigger load shedding (K8s stops routing traffic).
 
     **Threshold Calculation:**
     Default threshold = maxParallelism * 2
@@ -1284,21 +1315,21 @@ Readiness should fail to trigger load shedding (K8s stops routing traffic).
 
 ```typescript
 // health.ts
-export const getWorkpoolDepths = internalQuery({
-  handler: async (ctx) => {
-    // Query Workpool internal tables (component-specific)
-    // This requires Workpool to expose a status query
-    const projectionDepth = await projectionPool.getQueueDepth(ctx);
-    const dcbRetryDepth = await dcbRetryPool.getQueueDepth(ctx);
-    const replayDepth = await eventReplayPool.getQueueDepth(ctx);
+    export const getWorkpoolDepths = internalQuery({
+      handler: async (ctx) => {
+        // Query Workpool internal tables (component-specific)
+        // This requires Workpool to expose a status query
+        const projectionDepth = await projectionPool.getQueueDepth(ctx);
+        const dcbRetryDepth = await dcbRetryPool.getQueueDepth(ctx);
+        const replayDepth = await eventReplayPool.getQueueDepth(ctx);
 
-    return {
-      projectionPool: { depth: projectionDepth, threshold: 20 },
-      dcbRetryPool: { depth: dcbRetryDepth, threshold: 20 },
-      eventReplayPool: { depth: replayDepth, threshold: 10 },
-    };
-  },
-});
+        return {
+          projectionPool: { depth: projectionDepth, threshold: 20 },
+          dcbRetryPool: { depth: dcbRetryDepth, threshold: 20 },
+          eventReplayPool: { depth: replayDepth, threshold: 10 },
+        };
+      },
+    });
 ```
 
 _Verified by: Workpool backlog fails readiness, Normal queue depth passes readiness_
@@ -1314,34 +1345,37 @@ Projection lag = (Event Store max globalPosition) - (Projection checkpoint posit
 
 ```typescript
 export async function calculateProjectionLag(
-  ctx: QueryCtx,
-  projectionName: string
-): Promise<{ lag: number; checkpointPosition: number; maxPosition: number }> {
-  const maxPosition = await eventStore.getMaxGlobalPosition(ctx);
-  const checkpoint = await ctx.db
-    .query("projectionCheckpoints")
-    .withIndex("by_projection", (q) => q.eq("projectionName", projectionName))
-    .first();
+      ctx: QueryCtx,
+      projectionName: string
+    ): Promise<{ lag: number; checkpointPosition: number; maxPosition: number }> {
+      const maxPosition = await eventStore.getMaxGlobalPosition(ctx);
+      const checkpoint = await ctx.db
+        .query("projectionCheckpoints")
+        .withIndex("by_projection", (q) => q.eq("projectionName", projectionName))
+        .first();
 
-  const checkpointPosition = checkpoint?.lastGlobalPosition ?? 0;
-  const lag = maxPosition - checkpointPosition;
+      const checkpointPosition = checkpoint?.lastGlobalPosition ?? 0;
+      const lag = maxPosition - checkpointPosition;
 
-  return { lag, checkpointPosition, maxPosition };
-}
+      return { lag, checkpointPosition, maxPosition };
+    }
 ```
 
 **Lag Thresholds:**
-| Threshold | Status | Action |
-| 0-10 | healthy | Normal operation |
-| 11-100 | warning | Monitor, may indicate burst |
-| 101-1000 | degraded | Investigate, consider scaling |
-| 1000+ | critical | Alert, projection may be stuck |
+    | Threshold | Status | Action |
+    | 0-10 | healthy | Normal operation |
+    | 11-100 | warning | Monitor, may indicate burst |
+    | 101-1000 | degraded | Investigate, consider scaling |
+    | 1000+ | critical | Alert, projection may be stuck |
 
 _Verified by: Projection lag is calculated correctly, Missing checkpoint treated as maximum lag, Zero lag is healthy_
 
 **Metrics are collected as structured JSON for Log Streams export**
 
-Convex doesn't support OpenTelemetry SDK directly. Instead: 1. Collect metrics as structured data 2. Log at REPORT level as JSON 3. Log Streams (Axiom/Datadog) parses and indexes
+Convex doesn't support OpenTelemetry SDK directly. Instead:
+    1. Collect metrics as structured data
+    2. Log at REPORT level as JSON
+    3. Log Streams (Axiom/Datadog) parses and indexes
 
     **Core Metrics:**
     | Metric | Labels | Unit | Purpose |
@@ -1355,47 +1389,51 @@ Convex doesn't support OpenTelemetry SDK directly. Instead: 1. Collect metrics a
 
 ```typescript
 // monitoring/metrics/collector.ts
-export async function collectSystemMetrics(ctx: QueryCtx): Promise<SystemMetrics> {
-  const [projectionLags, dlqSizes, workpoolDepths, eventThroughput] = await Promise.all([
-    collectProjectionLags(ctx),
-    collectDLQSizes(ctx),
-    collectWorkpoolDepths(ctx),
-    collectEventThroughput(ctx),
-  ]);
+    export async function collectSystemMetrics(ctx: QueryCtx): Promise<SystemMetrics> {
+      const [projectionLags, dlqSizes, workpoolDepths, eventThroughput] = await Promise.all([
+        collectProjectionLags(ctx),
+        collectDLQSizes(ctx),
+        collectWorkpoolDepths(ctx),
+        collectEventThroughput(ctx),
+      ]);
 
-  return {
-    timestamp: Date.now(),
-    projectionLags,
-    dlqSizes,
-    workpoolDepths,
-    eventThroughput,
-  };
-}
+      return {
+        timestamp: Date.now(),
+        projectionLags,
+        dlqSizes,
+        workpoolDepths,
+        eventThroughput,
+      };
+    }
 
-// Export via REPORT-level log
-export const emitMetrics = internalMutation({
-  handler: async (ctx) => {
-    const metrics = await collectSystemMetrics(ctx);
-    // REPORT level ensures Log Streams captures it
-    console.log(JSON.stringify({ type: "METRICS", ...metrics }));
-    return metrics;
-  },
-});
+    // Export via REPORT-level log
+    export const emitMetrics = internalMutation({
+      handler: async (ctx) => {
+        const metrics = await collectSystemMetrics(ctx);
+        // REPORT level ensures Log Streams captures it
+        console.log(JSON.stringify({ type: "METRICS", ...metrics }));
+        return metrics;
+      },
+    });
 ```
 
 **Scheduled Collection:**
-Use static cron (convex/crons.ts) to emit metrics every minute:
+    Use static cron (convex/crons.ts) to emit metrics every minute:
 
 ```typescript
 // convex/crons.ts
-import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
+    import { cronJobs } from "convex/server";
+    import { internal } from "./_generated/api";
 
-const crons = cronJobs();
+    const crons = cronJobs();
 
-crons.interval("emit-system-metrics", { minutes: 1 }, internal.monitoring.emitMetrics);
+    crons.interval(
+      "emit-system-metrics",
+      { minutes: 1 },
+      internal.monitoring.emitMetrics
+    );
 
-export default crons;
+    export default crons;
 ```
 
 _Verified by: Metrics collection gathers all dimensions, Metrics emitted as JSON for Log Streams, Metrics collection handles empty state_
@@ -1403,7 +1441,7 @@ _Verified by: Metrics collection gathers all dimensions, Metrics emitted as JSON
 **System health aggregates component statuses**
 
 Overall system health is derived from individual component health.
-Any critical component failure makes the system unhealthy.
+    Any critical component failure makes the system unhealthy.
 
     **Aggregation Rules:**
     | Component State | System Impact |
@@ -1415,42 +1453,48 @@ Any critical component failure makes the system unhealthy.
 
 ```typescript
 interface ComponentHealth {
-  name: string;
-  status: "healthy" | "degraded" | "unhealthy";
-  details?: Record<string, unknown>;
-  error?: string;
-}
+      name: string;
+      status: "healthy" | "degraded" | "unhealthy";
+      details?: Record<string, unknown>;
+      error?: string;
+    }
 
-interface SystemHealth {
-  status: "healthy" | "degraded" | "unhealthy";
-  timestamp: number;
-  components: ComponentHealth[];
-  summary: {
-    healthy: number;
-    degraded: number;
-    unhealthy: number;
-  };
-}
+    interface SystemHealth {
+      status: "healthy" | "degraded" | "unhealthy";
+      timestamp: number;
+      components: ComponentHealth[];
+      summary: {
+        healthy: number;
+        degraded: number;
+        unhealthy: number;
+      };
+    }
 
-export async function aggregateSystemHealth(ctx: QueryCtx): Promise<SystemHealth> {
-  const components = await Promise.all([
-    checkEventStoreHealth(ctx),
-    checkProjectionsHealth(ctx),
-    checkWorkpoolHealth(ctx),
-    checkDLQHealth(ctx),
-  ]);
+    export async function aggregateSystemHealth(
+      ctx: QueryCtx
+    ): Promise<SystemHealth> {
+      const components = await Promise.all([
+        checkEventStoreHealth(ctx),
+        checkProjectionsHealth(ctx),
+        checkWorkpoolHealth(ctx),
+        checkDLQHealth(ctx),
+      ]);
 
-  const summary = {
-    healthy: components.filter((c) => c.status === "healthy").length,
-    degraded: components.filter((c) => c.status === "degraded").length,
-    unhealthy: components.filter((c) => c.status === "unhealthy").length,
-  };
+      const summary = {
+        healthy: components.filter((c) => c.status === "healthy").length,
+        degraded: components.filter((c) => c.status === "degraded").length,
+        unhealthy: components.filter((c) => c.status === "unhealthy").length,
+      };
 
-  const status =
-    summary.unhealthy > 0 ? "unhealthy" : summary.degraded > 0 ? "degraded" : "healthy";
+      const status =
+        summary.unhealthy > 0
+          ? "unhealthy"
+          : summary.degraded > 0
+          ? "degraded"
+          : "healthy";
 
-  return { status, timestamp: Date.now(), components, summary };
-}
+      return { status, timestamp: Date.now(), components, summary };
+    }
 ```
 
 _Verified by: All components healthy yields healthy system, Single unhealthy component makes system unhealthy, Degraded component yields degraded system_
@@ -1466,28 +1510,27 @@ _Verified by: All components healthy yields healthy system, Single unhealthy com
 | Business Value | operational reliability and system observability |
 
 **Problem:** Structured logging (Phase 13) exists but no metrics collection, distributed tracing,
-or admin tooling for production operations. Teams cannot monitor system health, trace event flows,
-or perform operational tasks like projection rebuilds without direct database access.
+  or admin tooling for production operations. Teams cannot monitor system health, trace event flows,
+  or perform operational tasks like projection rebuilds without direct database access.
 
-**Solution:** Comprehensive production-ready infrastructure:
+  **Solution:** Comprehensive production-ready infrastructure:
+  - **Metrics collection** - System health, throughput, latency tracking via Log Streams
+  - **Distributed tracing** - Event flow visualization with correlation IDs and trace context
+  - **Health checks** - Kubernetes readiness/liveness probes via httpAction
+  - **Circuit breakers** - Fault isolation and graceful degradation for external dependencies
+  - **Admin tooling** - Projection rebuilds, dead letter queue management, diagnostics
+  - **Durable function integration** - Reliable execution with Action Retrier, Workpool coordination
 
-- **Metrics collection** - System health, throughput, latency tracking via Log Streams
-- **Distributed tracing** - Event flow visualization with correlation IDs and trace context
-- **Health checks** - Kubernetes readiness/liveness probes via httpAction
-- **Circuit breakers** - Fault isolation and graceful degradation for external dependencies
-- **Admin tooling** - Projection rebuilds, dead letter queue management, diagnostics
-- **Durable function integration** - Reliable execution with Action Retrier, Workpool coordination
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Production visibility | Log Streams integration for metrics export to Prometheus/Datadog |
+  | Proactive monitoring | Projection lag and event throughput dashboards |
+  | Fast incident response | Health endpoints and circuit breakers for graceful degradation |
+  | Operational efficiency | Admin tools for common tasks (rebuild projections, manage DLQ) |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Production visibility | Log Streams integration for metrics export to Prometheus/Datadog |
-| Proactive monitoring | Projection lag and event throughput dashboards |
-| Fast incident response | Health endpoints and circuit breakers for graceful degradation |
-| Operational efficiency | Admin tools for common tasks (rebuild projections, manage DLQ) |
-
-**Note:** This is Phase 18b (WIP). Phase 18a (DurableFunctionAdapters) covers rate limiting
-adapter and DCB conflict retry patterns. This spec will be further refined and may be split
-into additional focused specs.
+  **Note:** This is Phase 18b (WIP). Phase 18a (DurableFunctionAdapters) covers rate limiting
+  adapter and DCB conflict retry patterns. This spec will be further refined and may be split
+  into additional focused specs.
 
 #### Dependencies
 
@@ -1660,7 +1703,7 @@ into additional focused specs.
 **Metrics track system health indicators**
 
 Projection lag, event throughput, command latency, and DLQ size are the core metrics.
-Metrics are collected as structured JSON for export via Convex Log Streams.
+    Metrics are collected as structured JSON for export via Convex Log Streams.
 
     | Metric | Labels | Unit | Purpose |
     | projection.lag_events | projection_name, partition_key | count | Projection processing delay |
@@ -1679,21 +1722,21 @@ Metrics are collected as structured JSON for export via Convex Log Streams.
 
 ```typescript
 // Current: Structured logging without metrics aggregation
-logger.debug("OrderConfirmed event processed", { orderId, timestamp });
+    logger.debug("OrderConfirmed event processed", { orderId, timestamp });
 ```
 
 **Target State (metrics collection):**
 
 ```typescript
 // Target: Metrics collection with Log Streams export
-const metrics = createMetricsCollector(ctx, {
-  projectionNames: ["orderSummaries", "inventoryLevels"],
-});
+    const metrics = createMetricsCollector(ctx, {
+      projectionNames: ["orderSummaries", "inventoryLevels"],
+    });
 
-// Collect and export as REPORT-level JSON
-const systemMetrics = await metrics.collect();
-logger.report("System metrics", systemMetrics);
-// Output: {"projectionLag":{"orderSummaries":0},"eventThroughput":{"eventsPerMinute":42},...}
+    // Collect and export as REPORT-level JSON
+    const systemMetrics = await metrics.collect();
+    logger.report("System metrics", systemMetrics);
+    // Output: {"projectionLag":{"orderSummaries":0},"eventThroughput":{"eventsPerMinute":42},...}
 ```
 
 _Verified by: Projection lag is tracked, Metrics collection handles missing checkpoints_
@@ -1701,7 +1744,7 @@ _Verified by: Projection lag is tracked, Metrics collection handles missing chec
 **Distributed tracing visualizes event flow**
 
 Trace context propagates from command through events to projections using correlation IDs.
-Within Convex, this is conceptual tracing via metadata - external visualization via Log Streams.
+    Within Convex, this is conceptual tracing via metadata - external visualization via Log Streams.
 
     **Convex Constraint:** No OpenTelemetry spans inside Convex functions. Instead, correlate
     logs via correlationId and traceContext metadata, then export to Jaeger/Zipkin via Log Streams.
@@ -1710,31 +1753,31 @@ Within Convex, this is conceptual tracing via metadata - external visualization 
 
 ```typescript
 // Current: Commands have correlationId but no trace context
-const result = await orchestrator.dispatch({
-  commandType: "SubmitOrder",
-  payload: { items },
-  correlationId: "corr-123",
-});
+    const result = await orchestrator.dispatch({
+      commandType: "SubmitOrder",
+      payload: { items },
+      correlationId: "corr-123",
+    });
 ```
 
 **Target State (full trace context):**
 
 ```typescript
 // Target: Trace context propagates through the flow
-const result = await orchestrator.dispatch({
-  commandType: "SubmitOrder",
-  payload: { items },
-  correlationId: "corr-123",
-  traceContext: {
-    traceId: "trace-abc",
-    spanId: "span-001",
-    parentSpanId: undefined,
-  },
-});
+    const result = await orchestrator.dispatch({
+      commandType: "SubmitOrder",
+      payload: { items },
+      correlationId: "corr-123",
+      traceContext: {
+        traceId: "trace-abc",
+        spanId: "span-001",
+        parentSpanId: undefined,
+      },
+    });
 
-// Events carry trace context in metadata
-// Projections log with same traceId
-// Log Streams export enables Jaeger visualization
+    // Events carry trace context in metadata
+    // Projections log with same traceId
+    // Log Streams export enables Jaeger visualization
 ```
 
 _Verified by: Trace spans command-to-projection flow, Missing trace context uses default_
@@ -1742,7 +1785,7 @@ _Verified by: Trace spans command-to-projection flow, Missing trace context uses
 **Health endpoints support Kubernetes probes**
 
 /health/ready for readiness (dependencies OK), /health/live for liveness (process running).
-Implemented via Convex httpAction for HTTP access.
+    Implemented via Convex httpAction for HTTP access.
 
     | Endpoint | Purpose | Checks | Response |
     | /health/ready | Readiness probe | Event store, projections, workpool depth | 200 OK or 503 |
@@ -1755,25 +1798,25 @@ Implemented via Convex httpAction for HTTP access.
 
 ```typescript
 // convex/http.ts
-import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+    import { httpRouter } from "convex/server";
+    import { httpAction } from "./_generated/server";
+    import { internal } from "./_generated/api";
 
-const http = httpRouter();
+    const http = httpRouter();
 
-http.route({
-  path: "/health/ready",
-  method: "GET",
-  handler: httpAction(async (ctx) => {
-    const health = await ctx.runQuery(internal.health.checkReadiness);
-    return new Response(JSON.stringify(health), {
-      status: health.status === "healthy" ? 200 : 503,
-      headers: { "Content-Type": "application/json" },
+    http.route({
+      path: "/health/ready",
+      method: "GET",
+      handler: httpAction(async (ctx) => {
+        const health = await ctx.runQuery(internal.health.checkReadiness);
+        return new Response(JSON.stringify(health), {
+          status: health.status === "healthy" ? 200 : 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
     });
-  }),
-});
 
-export default http;
+    export default http;
 ```
 
 _Verified by: Readiness probe checks dependencies, Unhealthy dependency fails readiness, Liveness probe always succeeds, Workpool backlog fails readiness_
@@ -1781,7 +1824,7 @@ _Verified by: Readiness probe checks dependencies, Unhealthy dependency fails re
 **Circuit breakers prevent cascade failures**
 
 Open circuit after threshold failures, half-open for recovery testing.
-State persists in Convex table (not memory) for durability across function invocations.
+    State persists in Convex table (not memory) for durability across function invocations.
 
     | State | Behavior | Transition |
     | CLOSED | Normal operation, track failures | → OPEN after threshold failures |
@@ -1795,42 +1838,42 @@ State persists in Convex table (not memory) for durability across function invoc
 
 ```typescript
 // When circuit opens, schedule half-open check
-if (newState === "OPEN") {
-  await ctx.scheduler.runAfter(
-    config.resetTimeoutMs,
-    internal.monitoring.circuitBreakers.checkHalfOpen,
-    { breakerName, openedAt: Date.now() }
-  );
-}
+    if (newState === "OPEN") {
+      await ctx.scheduler.runAfter(
+        config.resetTimeoutMs,
+        internal.monitoring.circuitBreakers.checkHalfOpen,
+        { breakerName, openedAt: Date.now() }
+      );
+    }
 ```
 
 Note: Use one-off scheduler, not @convex-dev/crons, because timeout is a single
-transition per circuit-open event.
+    transition per circuit-open event.
 
     **Implementation pattern:**
 
 ```typescript
 // Pure state machine (no I/O)
-function computeNextState(
-  current: CircuitBreakerState,
-  event: "success" | "failure" | "timeout",
-  config: CircuitBreakerConfig,
-  now: number
-): CircuitBreakerState;
+    function computeNextState(
+      current: CircuitBreakerState,
+      event: "success" | "failure" | "timeout",
+      config: CircuitBreakerConfig,
+      now: number
+    ): CircuitBreakerState;
 
-// App-level wrapper
-async function withCircuitBreaker<T>(
-  ctx: MutationCtx,
-  name: string,
-  operation: () => Promise<T>,
-  config?: CircuitBreakerConfig
-): Promise<T> {
-  const state = await loadCircuitState(ctx, name);
-  if (state.state === "open") {
-    throw new CircuitBreakerOpenError(name);
-  }
-  // ... execute and update state
-}
+    // App-level wrapper
+    async function withCircuitBreaker<T>(
+      ctx: MutationCtx,
+      name: string,
+      operation: () => Promise<T>,
+      config?: CircuitBreakerConfig
+    ): Promise<T> {
+      const state = await loadCircuitState(ctx, name);
+      if (state.state === "open") {
+        throw new CircuitBreakerOpenError(name);
+      }
+      // ... execute and update state
+    }
 ```
 
 _Verified by: Circuit opens after repeated failures, Circuit transitions to half-open after timeout, Successful half-open request closes circuit, Failed half-open request reopens circuit_
@@ -1838,7 +1881,7 @@ _Verified by: Circuit opens after repeated failures, Circuit transitions to half
 **Admin tooling enables operational tasks**
 
 Projection rebuild, DLQ inspection/retry, event flow tracing, system diagnostics.
-Build on existing patterns from sagas/admin.ts and projections/deadLetters.ts.
+    Build on existing patterns from sagas/admin.ts and projections/deadLetters.ts.
 
     | Operation | Endpoint | Purpose |
     | Trigger rebuild | admin.projections.triggerRebuild | Re-process events from position |
@@ -1855,64 +1898,59 @@ Build on existing patterns from sagas/admin.ts and projections/deadLetters.ts.
 
 ```typescript
 // admin/projections.ts
-export const triggerRebuild = internalMutation({
-  args: {
-    projectionName: v.string(),
-    fromGlobalPosition: v.optional(v.number()),
-  },
-  handler: async (ctx, { projectionName, fromGlobalPosition }) => {
-    // Reset checkpoint to target position
-    await ctx.db.patch(checkpoint._id, {
-      lastGlobalPosition: fromGlobalPosition ?? 0,
-      status: "rebuilding",
-    });
+    export const triggerRebuild = internalMutation({
+      args: {
+        projectionName: v.string(),
+        fromGlobalPosition: v.optional(v.number()),
+      },
+      handler: async (ctx, { projectionName, fromGlobalPosition }) => {
+        // Reset checkpoint to target position
+        await ctx.db.patch(checkpoint._id, {
+          lastGlobalPosition: fromGlobalPosition ?? 0,
+          status: "rebuilding",
+        });
 
-    // Workpool will pick up and re-process events
-    return { rebuildId: generateId(), startedAt: Date.now() };
-  },
-});
+        // Workpool will pick up and re-process events
+        return { rebuildId: generateId(), startedAt: Date.now() };
+      },
+    });
 ```
 
 **DLQ Population via Workpool onComplete:**
 
 ```typescript
 // Projection processing with onComplete for automatic DLQ population
-await projectionPool.enqueue(
-  ctx,
-  internal.projections.process,
-  { event },
-  {
-    key: event.streamId, // Partition for entity ordering
-    onComplete: internal.projections.handleResult,
-    context: { eventId: event.id, projectionName },
-  }
-);
+    await projectionPool.enqueue(ctx, internal.projections.process, { event }, {
+      key: event.streamId,  // Partition for entity ordering
+      onComplete: internal.projections.handleResult,
+      context: { eventId: event.id, projectionName },
+    });
 
-// Dead letter handler (reference: deadLetters.ts)
-export const handleResult = internalMutation({
-  args: vOnCompleteArgs(v.object({ eventId: v.string(), projectionName: v.string() })),
-  handler: async (ctx, { result, context }) => {
-    if (result.kind === "failed") {
-      await ctx.db.insert("deadLetters", {
-        ...context,
-        error: result.error,
-        status: "pending",
-        timestamp: Date.now(),
-      });
-    }
-  },
-});
+    // Dead letter handler (reference: deadLetters.ts)
+    export const handleResult = internalMutation({
+      args: vOnCompleteArgs(v.object({ eventId: v.string(), projectionName: v.string() })),
+      handler: async (ctx, { result, context }) => {
+        if (result.kind === "failed") {
+          await ctx.db.insert("deadLetters", {
+            ...context,
+            error: result.error,
+            status: "pending",
+            timestamp: Date.now(),
+          });
+        }
+      },
+    });
 ```
 
 Note: This pattern is already implemented in `examples/order-management/convex/projections/deadLetters.ts`.
-The onComplete handler ensures failed projections are automatically recorded for later retry.
+    The onComplete handler ensures failed projections are automatically recorded for later retry.
 
 _Verified by: Projection rebuild re-processes events, Dead letter retry re-enqueues event, Event flow trace returns full history, Durable function run diagnostics_
 
 **Durable functions provide reliable execution patterns**
 
 Production systems use @convex-dev durable function components for reliability.
-Each component serves a specific purpose - choosing the right one is critical.
+    Each component serves a specific purpose - choosing the right one is critical.
 
     | Component | Use Case | Key Feature | Platform Integration Point |
     | Action Retrier | External API calls | Exponential backoff + onComplete | Circuit breaker half-open probe |
@@ -1940,138 +1978,127 @@ External API call with retry? ──────────► Action Retrier
 ```
 
 Note: For rate limiting and DCB conflict retry, see Phase 18a (DurableFunctionAdapters).
-Action Retrier only supports actions, not mutations.
+    Action Retrier only supports actions, not mutations.
 
     **Circuit Breaker + Action Retrier Integration:**
 
 ```typescript
 // withCircuitBreaker.ts - Enhanced pattern with action retrier
-import { ActionRetrier } from "@convex-dev/action-retrier";
-import { retrier } from "./index";
+    import { ActionRetrier } from "@convex-dev/action-retrier";
+    import { retrier } from "./index";
 
-export async function withCircuitBreaker<T>(
-  ctx: ActionCtx,
-  name: string,
-  operation: FunctionReference<"action">,
-  args: { traceContext: TraceContext; [key: string]: unknown },
-  config?: CircuitBreakerConfig
-): Promise<{ runId: string; probeMode?: true } | { error: string; retryAfterMs?: number }> {
-  const circuitState = await loadCircuitState(ctx, name);
-  const { traceContext, ...rest } = args;
+    export async function withCircuitBreaker<T>(
+      ctx: ActionCtx,
+      name: string,
+      operation: FunctionReference<"action">,
+      args: { traceContext: TraceContext; [key: string]: unknown },
+      config?: CircuitBreakerConfig
+    ): Promise<
+      | { runId: string; probeMode?: true }
+      | { error: string; retryAfterMs?: number }
+    > {
+      const circuitState = await loadCircuitState(ctx, name);
+      const { traceContext, ...rest } = args;
 
-  if (circuitState.state === "open") {
-    return { error: `CIRCUIT_OPEN:${name}`, retryAfterMs: circuitState.retryAfterMs };
-  }
-
-  if (circuitState.state === "half_open") {
-    // Controlled probe - single attempt, no retries
-    // IMPORTANT: Always pass traceContext for distributed tracing continuity
-    const runId = await retrier.run(
-      ctx,
-      operation,
-      { ...rest, traceContext },
-      {
-        maxFailures: 0, // No retries for half-open probe
-        onComplete: internal.monitoring.onCircuitProbeComplete,
+      if (circuitState.state === "open") {
+        return { error: `CIRCUIT_OPEN:${name}`, retryAfterMs: circuitState.retryAfterMs };
       }
-    );
-    return { runId, probeMode: true };
-  }
 
-  // Closed state - normal operation with configured retries
-  // IMPORTANT: Always pass traceContext for distributed tracing continuity
-  const runId = await retrier.run(
-    ctx,
-    operation,
-    { ...rest, traceContext },
-    {
-      maxFailures: config?.maxRetries ?? 3,
-      initialBackoffMs: config?.initialBackoffMs ?? 250,
-      onComplete: internal.monitoring.onOperationComplete,
+      if (circuitState.state === "half_open") {
+        // Controlled probe - single attempt, no retries
+        // IMPORTANT: Always pass traceContext for distributed tracing continuity
+        const runId = await retrier.run(ctx, operation, { ...rest, traceContext }, {
+          maxFailures: 0,  // No retries for half-open probe
+          onComplete: internal.monitoring.onCircuitProbeComplete,
+        });
+        return { runId, probeMode: true };
+      }
+
+      // Closed state - normal operation with configured retries
+      // IMPORTANT: Always pass traceContext for distributed tracing continuity
+      const runId = await retrier.run(ctx, operation, { ...rest, traceContext }, {
+        maxFailures: config?.maxRetries ?? 3,
+        initialBackoffMs: config?.initialBackoffMs ?? 250,
+        onComplete: internal.monitoring.onOperationComplete,
+      });
+      return { runId };
     }
-  );
-  return { runId };
-}
 
-// Probe completion handler updates circuit state
-export const onCircuitProbeComplete = internalMutation({
-  args: { runId: runIdValidator, result: runResultValidator },
-  handler: async (ctx, { runId, result }) => {
-    const circuit = await findCircuitByProbeRunId(ctx, runId);
-    if (!circuit) return;
+    // Probe completion handler updates circuit state
+    export const onCircuitProbeComplete = internalMutation({
+      args: { runId: runIdValidator, result: runResultValidator },
+      handler: async (ctx, { runId, result }) => {
+        const circuit = await findCircuitByProbeRunId(ctx, runId);
+        if (!circuit) return;
 
-    if (result.type === "success") {
-      await transitionCircuit(ctx, circuit.name, "closed");
-    } else {
-      await transitionCircuit(ctx, circuit.name, "open");
-    }
-  },
-});
+        if (result.type === "success") {
+          await transitionCircuit(ctx, circuit.name, "closed");
+        } else {
+          await transitionCircuit(ctx, circuit.name, "open");
+        }
+      },
+    });
 ```
 
 **Dead Letter Queue Retry with Action Retrier:**
 
 ```typescript
 // dlqRetrier.ts - Action retrier for external service DLQ items
-export const retryDeadLetter = mutation({
-  args: { deadLetterId: v.id("deadLetters") },
-  handler: async (ctx, { deadLetterId }) => {
-    const deadLetter = await ctx.db.get(deadLetterId);
-    if (!deadLetter) throw new Error("Dead letter not found");
+    export const retryDeadLetter = mutation({
+      args: { deadLetterId: v.id("deadLetters") },
+      handler: async (ctx, { deadLetterId }) => {
+        const deadLetter = await ctx.db.get(deadLetterId);
+        if (!deadLetter) throw new Error("Dead letter not found");
 
-    // Use action retrier for external calls with exponential backoff
-    // IMPORTANT: Propagate traceContext to maintain distributed tracing through retries
-    const runId = await retrier.run(
-      ctx,
-      internal.external.processEvent,
-      {
-        eventId: deadLetter.eventId,
-        payload: deadLetter.payload,
-        traceContext: deadLetter.traceContext,
+        // Use action retrier for external calls with exponential backoff
+        // IMPORTANT: Propagate traceContext to maintain distributed tracing through retries
+        const runId = await retrier.run(
+          ctx,
+          internal.external.processEvent,
+          { eventId: deadLetter.eventId, payload: deadLetter.payload, traceContext: deadLetter.traceContext },
+          {
+            initialBackoffMs: 1000,  // Start cautiously
+            base: 2,
+            maxFailures: 5,  // More attempts for manual retry
+            onComplete: internal.admin.onDLQRetryComplete,
+          }
+        );
+
+        await ctx.db.patch(deadLetterId, {
+          status: "retrying",
+          retryRunId: runId,
+          lastRetryAt: Date.now(),
+          retryCount: (deadLetter.retryCount ?? 0) + 1,
+        });
+
+        return { runId };
       },
-      {
-        initialBackoffMs: 1000, // Start cautiously
-        base: 2,
-        maxFailures: 5, // More attempts for manual retry
-        onComplete: internal.admin.onDLQRetryComplete,
-      }
-    );
-
-    await ctx.db.patch(deadLetterId, {
-      status: "retrying",
-      retryRunId: runId,
-      lastRetryAt: Date.now(),
-      retryCount: (deadLetter.retryCount ?? 0) + 1,
     });
 
-    return { runId };
-  },
-});
+    export const onDLQRetryComplete = internalMutation({
+      args: { runId: runIdValidator, result: runResultValidator },
+      handler: async (ctx, { runId, result }) => {
+        const deadLetter = await ctx.db
+          .query("deadLetters")
+          .withIndex("by_retryRunId", (q) => q.eq("retryRunId", runId))
+          .unique();
 
-export const onDLQRetryComplete = internalMutation({
-  args: { runId: runIdValidator, result: runResultValidator },
-  handler: async (ctx, { runId, result }) => {
-    const deadLetter = await ctx.db
-      .query("deadLetters")
-      .withIndex("by_retryRunId", (q) => q.eq("retryRunId", runId))
-      .unique();
+        if (!deadLetter) return;
 
-    if (!deadLetter) return;
-
-    if (result.type === "success") {
-      await ctx.db.patch(deadLetter._id, {
-        status: "resolved",
-        resolvedAt: Date.now(),
-      });
-    } else if (result.type === "failed") {
-      await ctx.db.patch(deadLetter._id, {
-        status: "pending", // Back to pending for manual review
-        lastError: result.error,
-        failedAt: Date.now(),
-      });
-    }
-  },
-});
+        if (result.type === "success") {
+          await ctx.db.patch(deadLetter._id, {
+            status: "resolved",
+            resolvedAt: Date.now(),
+          });
+        } else if (result.type === "failed") {
+          await ctx.db.patch(deadLetter._id, {
+            status: "pending",  // Back to pending for manual review
+            lastError: result.error,
+            failedAt: Date.now(),
+          });
+        }
+      },
+    });
 ```
 
 _Verified by: Circuit breaker uses action retrier for half-open probe, Failed half-open probe reopens circuit via action retrier, Dead letter retry uses action retrier for external calls, Failed DLQ retry returns to pending status, Durable function calls propagate trace context_
@@ -2089,70 +2116,68 @@ _Verified by: Circuit breaker uses action retrier for half-open probe, Failed ha
 | Business Value | production reliability and failure recovery |
 
 **Problem:** Phase 18 delivered durability primitives to `platform-core`, but the example app's
-main command flow still uses direct event append. Durability patterns exist only in test harnesses
-(`testing/*.ts`), not in the production order/inventory flows. Users cannot see how to integrate
-these patterns in realistic scenarios.
+  main command flow still uses direct event append. Durability patterns exist only in test harnesses
+  (`testing/*.ts`), not in the production order/inventory flows. Users cannot see how to integrate
+  these patterns in realistic scenarios.
 
-**Solution:** Integrate all Phase 18 durability patterns into the main order management flow:
+  **Solution:** Integrate all Phase 18 durability patterns into the main order management flow:
+  - **Idempotent event append** with command-derived deduplication keys
+  - **Intent/completion bracketing** for failure recovery and orphan detection
+  - **Durable event publication** with Workpool-backed retry semantics
+  - **Outbox handler** for capturing external action results as events
+  - **Poison event handling** in production projection handlers
+  - **Projection rebuild demonstration** with realistic corruption recovery scenario
 
-- **Idempotent event append** with command-derived deduplication keys
-- **Intent/completion bracketing** for failure recovery and orphan detection
-- **Durable event publication** with Workpool-backed retry semantics
-- **Outbox handler** for capturing external action results as events
-- **Poison event handling** in production projection handlers
-- **Projection rebuild demonstration** with realistic corruption recovery scenario
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Exactly-once event delivery | Idempotency keys prevent duplicate events on retry |
+  | Failure recovery | Intent bracketing detects stuck commands |
+  | Guaranteed action capture | Outbox pattern captures external API results as events |
+  | Operational visibility | Poison events quarantined with alerting |
+  | Data recovery | Projection rebuild from any position |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Exactly-once event delivery | Idempotency keys prevent duplicate events on retry |
-| Failure recovery | Intent bracketing detects stuck commands |
-| Guaranteed action capture | Outbox pattern captures external API results as events |
-| Operational visibility | Poison events quarantined with alerting |
-| Data recovery | Projection rebuild from any position |
+  **Architecture Overview:**
+  ```
+  Command Flow with Durability
+  ────────────────────────────
 
-**Architecture Overview:**
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ CommandOrchestrator                                                       │
+  │                                                                           │
+  │  1. recordIntent()     ──► Intent event (timeout scheduled)              │
+  │         │                                                                 │
+  │  2. BC Handler         ──► CMS update + event via idempotentAppendEvent  │
+  │         │                   (deduplication via commandId:eventType)       │
+  │         │                                                                 │
+  │  3. recordCompletion() ──► Completion event (cancels timeout)            │
+  │         │                                                                 │
+  │  4. Projection         ──► Workpool.enqueue() with onComplete            │
+  │         │                   (deadLetterOnComplete for failures)           │
+  │         │                                                                 │
+  │  5. Saga (if needed)   ──► durableAppendEvent for critical events        │
+  └──────────────────────────────────────────────────────────────────────────┘
 
-```
-Command Flow with Durability
-────────────────────────────
+  External Actions with Outbox
+  ────────────────────────────
 
-┌──────────────────────────────────────────────────────────────────────────┐
-│ CommandOrchestrator                                                       │
-│                                                                           │
-│  1. recordIntent()     ──► Intent event (timeout scheduled)              │
-│         │                                                                 │
-│  2. BC Handler         ──► CMS update + event via idempotentAppendEvent  │
-│         │                   (deduplication via commandId:eventType)       │
-│         │                                                                 │
-│  3. recordCompletion() ──► Completion event (cancels timeout)            │
-│         │                                                                 │
-│  4. Projection         ──► Workpool.enqueue() with onComplete            │
-│         │                   (deadLetterOnComplete for failures)           │
-│         │                                                                 │
-│  5. Saga (if needed)   ──► durableAppendEvent for critical events        │
-└──────────────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ actionRetrier.run(ctx, chargeStripeAction, args, {                       │
+  │   onComplete: onPaymentComplete,  ◄── createOutboxHandler()              │
+  │   context: { orderId, amount }                                           │
+  │ })                                                                        │
+  │                                                                           │
+  │ onComplete receives:                                                      │
+  │   { kind: "success", returnValue: { chargeId } }                         │
+  │   { kind: "failed", error: "..." }                                       │
+  │   { kind: "canceled" }                                                   │
+  │                                                                           │
+  │ Outbox handler appends event:                                            │
+  │   PaymentCompleted or PaymentFailed                                      │
+  └──────────────────────────────────────────────────────────────────────────┘
+  ```
 
-External Actions with Outbox
-────────────────────────────
-
-┌──────────────────────────────────────────────────────────────────────────┐
-│ actionRetrier.run(ctx, chargeStripeAction, args, {                       │
-│   onComplete: onPaymentComplete,  ◄── createOutboxHandler()              │
-│   context: { orderId, amount }                                           │
-│ })                                                                        │
-│                                                                           │
-│ onComplete receives:                                                      │
-│   { kind: "success", returnValue: { chargeId } }                         │
-│   { kind: "failed", error: "..." }                                       │
-│   { kind: "canceled" }                                                   │
-│                                                                           │
-│ Outbox handler appends event:                                            │
-│   PaymentCompleted or PaymentFailed                                      │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-**PDR-008 Alignment:** This demonstrates platform capabilities in realistic scenarios,
-serves as reference implementation, and validates durability patterns work end-to-end.
+  **PDR-008 Alignment:** This demonstrates platform capabilities in realistic scenarios,
+  serves as reference implementation, and validates durability patterns work end-to-end.
 
 #### Dependencies
 
@@ -2238,7 +2263,7 @@ serves as reference implementation, and validates durability patterns work end-t
 - Given the event store experiences a transient error
 - When durableAppendEvent is called for OrderSubmitted
 - Then the Workpool should retry with exponential backoff
-- And retry intervals should follow initialMs \* base^attempt
+- And retry intervals should follow initialMs * base^attempt
 - And the event should eventually be persisted
 - And onComplete callback should receive kind "success"
 
@@ -2437,7 +2462,7 @@ serves as reference implementation, and validates durability patterns work end-t
 **Events are appended idempotently using command-derived keys**
 
 **Invariant:** For any (commandId, eventType) tuple, at most one event can exist in the
-event store. Duplicate append attempts return the existing event without modification.
+    event store. Duplicate append attempts return the existing event without modification.
 
     **Rationale:** Commands may be retried due to network partitions, client timeouts, or
     infrastructure failures. Without idempotency, retries would create duplicate events,
@@ -2452,13 +2477,13 @@ event store. Duplicate append attempts return the existing event without modific
 
 ```typescript
 // CommandOrchestrator uses direct append - no deduplication
-await ctx.runMutation(eventStore.appendToStream, {
-  streamType: "Order",
-  streamId: orderId,
-  eventType: "OrderSubmitted",
-  eventData: { orderId, customerId },
-  boundedContext: "orders",
-});
+    await ctx.runMutation(eventStore.appendToStream, {
+      streamType: "Order",
+      streamId: orderId,
+      eventType: "OrderSubmitted",
+      eventData: { orderId, customerId },
+      boundedContext: "orders",
+    });
 ```
 
 **Target State (idempotent append via platform-core):**
@@ -2466,51 +2491,51 @@ await ctx.runMutation(eventStore.appendToStream, {
 ```typescript
 import { idempotentAppendEvent, buildCommandIdempotencyKey } from "@libar-dev/platform-core";
 
-// Build command-derived idempotency key
-const idempotencyKey = buildCommandIdempotencyKey(
-  "SubmitOrder", // commandType
-  orderId, // entityId
-  commandId // unique command instance ID
-);
-// Result: "cmd:SubmitOrder:ord-123:cmd-456"
+    // Build command-derived idempotency key
+    const idempotencyKey = buildCommandIdempotencyKey(
+      "SubmitOrder",  // commandType
+      orderId,        // entityId
+      commandId       // unique command instance ID
+    );
+    // Result: "cmd:SubmitOrder:ord-123:cmd-456"
 
-// Idempotent append with deduplication
-const result = await idempotentAppendEvent(ctx, {
-  event: {
-    idempotencyKey,
-    streamType: "Order",
-    streamId: orderId,
-    eventType: "OrderSubmitted",
-    eventData: { orderId, customerId },
-    boundedContext: "orders",
-    correlationId,
-  },
-  dependencies: {
-    getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
-    appendToStream: components.eventStore.lib.appendToStream,
-  },
-});
+    // Idempotent append with deduplication
+    const result = await idempotentAppendEvent(ctx, {
+      event: {
+        idempotencyKey,
+        streamType: "Order",
+        streamId: orderId,
+        eventType: "OrderSubmitted",
+        eventData: { orderId, customerId },
+        boundedContext: "orders",
+        correlationId,
+      },
+      dependencies: {
+        getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
+        appendToStream: components.eventStore.lib.appendToStream,
+      },
+    });
 
-// Handle deduplication transparently
-if (result.status === "duplicate") {
-  // Event already exists - command was already processed
-  return { eventId: result.eventId, alreadyProcessed: true };
-}
-// result.status === "appended" - new event created
-return { eventId: result.eventId, version: result.version };
+    // Handle deduplication transparently
+    if (result.status === "duplicate") {
+      // Event already exists - command was already processed
+      return { eventId: result.eventId, alreadyProcessed: true };
+    }
+    // result.status === "appended" - new event created
+    return { eventId: result.eventId, version: result.version };
 ```
 
 **Integration Location:**
-The idempotent append will be integrated into a new `DurableCommandOrchestrator` that
-wraps the existing `CommandOrchestrator`. This preserves backward compatibility while
-adding durability features opt-in per command.
+    The idempotent append will be integrated into a new `DurableCommandOrchestrator` that
+    wraps the existing `CommandOrchestrator`. This preserves backward compatibility while
+    adding durability features opt-in per command.
 
 _Verified by: First command creates event normally, Retry with same commandId returns existing event, Different commandId is rejected for already-submitted order_
 
 **Commands record intent before execution and completion after success**
 
 **Invariant:** Every command execution must have exactly one matching completion event.
-An intent without completion after timeout indicates a stuck or crashed command.
+    An intent without completion after timeout indicates a stuck or crashed command.
 
     **Rationale:** Distributed systems fail in subtle ways - network partitions, process crashes,
     deadlocks. Intent bracketing creates an audit trail that enables detection of commands that
@@ -2525,57 +2550,57 @@ An intent without completion after timeout indicates a stuck or crashed command.
 
 ```typescript
 import {
-  recordIntent,
-  recordCompletion,
-  buildIntentKey,
-  type RecordIntentArgs,
-  type CompletionStatus,
-} from "@libar-dev/platform-core";
+      recordIntent,
+      recordCompletion,
+      buildIntentKey,
+      type RecordIntentArgs,
+      type CompletionStatus,
+    } from "@libar-dev/platform-core";
 
-// Step 1: Record intent BEFORE command execution
-const { intentKey, intentEventId } = await recordIntent(ctx, {
-  operationType: "SubmitOrder",
-  streamType: "Order",
-  streamId: orderId,
-  boundedContext: "orders",
-  timeoutMs: 5 * 60 * 1000, // 5 minutes
-  onTimeout: internal.admin.intents.handleTimeout,
-  dependencies: intentDependencies,
-  metadata: { customerId, itemCount },
-  correlationId,
-});
+    // Step 1: Record intent BEFORE command execution
+    const { intentKey, intentEventId } = await recordIntent(ctx, {
+      operationType: "SubmitOrder",
+      streamType: "Order",
+      streamId: orderId,
+      boundedContext: "orders",
+      timeoutMs: 5 * 60 * 1000, // 5 minutes
+      onTimeout: internal.admin.intents.handleTimeout,
+      dependencies: intentDependencies,
+      metadata: { customerId, itemCount },
+      correlationId,
+    });
 
-try {
-  // Step 2: Execute command (CMS update + event append)
-  const result = await executeCommand(ctx, command, args);
+    try {
+      // Step 2: Execute command (CMS update + event append)
+      const result = await executeCommand(ctx, command, args);
 
-  // Step 3: Record successful completion
-  await recordCompletion(ctx, {
-    intentKey,
-    status: "success",
-    streamType: "Order",
-    streamId: orderId,
-    boundedContext: "orders",
-    dependencies: intentDependencies,
-    result: { eventId: result.eventId },
-    correlationId,
-  });
+      // Step 3: Record successful completion
+      await recordCompletion(ctx, {
+        intentKey,
+        status: "success",
+        streamType: "Order",
+        streamId: orderId,
+        boundedContext: "orders",
+        dependencies: intentDependencies,
+        result: { eventId: result.eventId },
+        correlationId,
+      });
 
-  return result;
-} catch (error) {
-  // Step 3 (failure path): Record failed completion
-  await recordCompletion(ctx, {
-    intentKey,
-    status: "failure",
-    streamType: "Order",
-    streamId: orderId,
-    boundedContext: "orders",
-    dependencies: intentDependencies,
-    error: error.message,
-    correlationId,
-  });
-  throw error;
-}
+      return result;
+    } catch (error) {
+      // Step 3 (failure path): Record failed completion
+      await recordCompletion(ctx, {
+        intentKey,
+        status: "failure",
+        streamType: "Order",
+        streamId: orderId,
+        boundedContext: "orders",
+        dependencies: intentDependencies,
+        error: error.message,
+        correlationId,
+      });
+      throw error;
+    }
 ```
 
 **Schema Addition (commandIntents table):**
@@ -2609,7 +2634,7 @@ _Verified by: Successful command records intent and completion, Failed command r
 **Critical events use Workpool-backed durable append**
 
 **Invariant:** A durably-enqueued event will eventually be persisted or moved to dead letter.
-The Workpool guarantees at-least-once execution with automatic retry and backoff.
+    The Workpool guarantees at-least-once execution with automatic retry and backoff.
 
     **Rationale:** Some events are too important to lose - payment confirmations, order submissions
     that trigger sagas, inventory reservations. These must survive transient failures (network
@@ -2630,87 +2655,83 @@ The Workpool guarantees at-least-once execution with automatic retry and backoff
 
 ```typescript
 import {
-  durableAppendEvent,
-  createAppendPartitionKey,
-  createDurableAppendActionHandler,
-} from "@libar-dev/platform-core";
+      durableAppendEvent,
+      createAppendPartitionKey,
+      createDurableAppendActionHandler,
+    } from "@libar-dev/platform-core";
 
-// infrastructure.ts - Create durable append pool
-export const durableAppendPool = new Workpool(components.workpool, {
-  maxParallelism: 10,
-  retryBackoff: {
-    initialMs: 100,
-    base: 2,
-    maxMs: 30000,
-  },
-});
+    // infrastructure.ts - Create durable append pool
+    export const durableAppendPool = new Workpool(components.workpool, {
+      maxParallelism: 10,
+      retryBackoff: {
+        initialMs: 100,
+        base: 2,
+        maxMs: 30000,
+      },
+    });
 
-// Durable append action handler
-export const durableAppendAction = createDurableAppendActionHandler();
+    // Durable append action handler
+    export const durableAppendAction = createDurableAppendActionHandler();
 
-// Usage in command handler
-const partitionKey = createAppendPartitionKey("Order", orderId);
-// Result: { name: "append", value: "Order:ord-123" }
+    // Usage in command handler
+    const partitionKey = createAppendPartitionKey("Order", orderId);
+    // Result: { name: "append", value: "Order:ord-123" }
 
-const result = await durableAppendEvent(ctx, {
-  workpool: durableAppendPool,
-  actionRef: internal.eventStore.durableAppendAction,
-  append: {
-    event: {
-      idempotencyKey: buildCommandIdempotencyKey("SubmitOrder", orderId, commandId),
-      streamType: "Order",
-      streamId: orderId,
-      eventType: "OrderSubmitted",
-      eventData: { orderId, customerId },
-      boundedContext: "orders",
-      correlationId,
-    },
-    dependencies: eventStoreDependencies,
-  },
-  options: {
-    onComplete: internal.eventStore.onDurableAppendComplete,
-    context: { orderId, commandId },
-  },
-});
-// Result: { status: "enqueued", workId: "work-xyz" }
+    const result = await durableAppendEvent(ctx, {
+      workpool: durableAppendPool,
+      actionRef: internal.eventStore.durableAppendAction,
+      append: {
+        event: {
+          idempotencyKey: buildCommandIdempotencyKey("SubmitOrder", orderId, commandId),
+          streamType: "Order",
+          streamId: orderId,
+          eventType: "OrderSubmitted",
+          eventData: { orderId, customerId },
+          boundedContext: "orders",
+          correlationId,
+        },
+        dependencies: eventStoreDependencies,
+      },
+      options: {
+        onComplete: internal.eventStore.onDurableAppendComplete,
+        context: { orderId, commandId },
+      },
+    });
+    // Result: { status: "enqueued", workId: "work-xyz" }
 ```
 
 **Dead Letter Handling:**
 
 ```typescript
 // eventStore/durableAppend.ts
-export const onDurableAppendComplete = internalMutation({
-  args: {
-    result: v.union(
-      v.object({ kind: v.literal("success"), returnValue: v.any() }),
-      v.object({ kind: v.literal("failed"), error: v.string() }),
-      v.object({ kind: v.literal("canceled") })
-    ),
-    context: v.object({
-      orderId: v.string(),
-      commandId: v.string(),
-    }),
-  },
-  handler: async (ctx, { result, context }) => {
-    if (result.kind === "failed") {
-      // Record dead letter for manual recovery
-      await ctx.db.insert("eventAppendDeadLetters", {
-        idempotencyKey: buildCommandIdempotencyKey(
-          "OrderSubmitted",
-          context.orderId,
-          context.commandId
+    export const onDurableAppendComplete = internalMutation({
+      args: {
+        result: v.union(
+          v.object({ kind: v.literal("success"), returnValue: v.any() }),
+          v.object({ kind: v.literal("failed"), error: v.string() }),
+          v.object({ kind: v.literal("canceled") })
         ),
-        streamType: "Order",
-        streamId: context.orderId,
-        error: result.error,
-        status: "pending",
-        createdAt: Date.now(),
-      });
-      // Alert operator
-      console.error(`[DURABLE_APPEND_FAILED] orderId=${context.orderId} error=${result.error}`);
-    }
-  },
-});
+        context: v.object({
+          orderId: v.string(),
+          commandId: v.string(),
+        }),
+      },
+      handler: async (ctx, { result, context }) => {
+        if (result.kind === "failed") {
+          // Record dead letter for manual recovery
+          await ctx.db.insert("eventAppendDeadLetters", {
+            idempotencyKey: buildCommandIdempotencyKey("OrderSubmitted", context.orderId, context.commandId),
+            streamType: "Order",
+            streamId: context.orderId,
+            error: result.error,
+            status: "pending",
+            createdAt: Date.now(),
+          });
+          // Alert operator
+          console.error(`[DURABLE_APPEND_FAILED] orderId=${context.orderId} error=${result.error}`);
+        }
+      },
+    });
 ```
 
 _Verified by: Durable append succeeds on first try, Durable append retries on transient failure, Exhausted retries create dead letter, Multiple events for same entity maintain order_
@@ -2718,7 +2739,7 @@ _Verified by: Durable append succeeds on first try, Durable append retries on tr
 **External action results are captured as events using outbox pattern**
 
 **Invariant:** Every external action completion (success or failure) results in exactly one
-corresponding event. The outbox handler uses idempotent append to prevent duplicate events.
+    corresponding event. The outbox handler uses idempotent append to prevent duplicate events.
 
     **Rationale:** Actions calling external APIs (Stripe, email services, etc.) are at-most-once
     by default. If the action succeeds but subsequent processing fails, the side effect is
@@ -2739,71 +2760,66 @@ corresponding event. The outbox handler uses idempotent append to prevent duplic
 ```typescript
 import { createOutboxHandler, type ActionResult } from "@libar-dev/platform-core";
 
-// sagas/payments/outbox.ts
-interface PaymentContext {
-  orderId: string;
-  customerId: string;
-  amount: number;
-}
+    // sagas/payments/outbox.ts
+    interface PaymentContext {
+      orderId: string;
+      customerId: string;
+      amount: number;
+    }
 
-interface StripeChargeResult {
-  chargeId: string;
-  receiptUrl: string;
-}
+    interface StripeChargeResult {
+      chargeId: string;
+      receiptUrl: string;
+    }
 
-export const onPaymentComplete = internalMutation({
-  args: {
-    result: v.union(
-      v.object({ kind: v.literal("success"), returnValue: v.any() }),
-      v.object({ kind: v.literal("failed"), error: v.string() }),
-      v.object({ kind: v.literal("canceled") })
-    ),
-    context: v.object({
-      orderId: v.string(),
-      customerId: v.string(),
-      amount: v.number(),
-    }),
-  },
-  handler: createOutboxHandler<PaymentContext, StripeChargeResult>({
-    getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
-    buildEvent: (result, ctx) => ({
-      streamType: "Order",
-      streamId: ctx.orderId,
-      eventType: result.kind === "success" ? "PaymentCompleted" : "PaymentFailed",
-      eventData:
-        result.kind === "success"
-          ? {
-              chargeId: result.returnValue.chargeId,
-              receiptUrl: result.returnValue.receiptUrl,
-              amount: ctx.amount,
-            }
-          : {
-              error: result.kind === "failed" ? result.error : "canceled",
-              amount: ctx.amount,
-            },
-    }),
-    boundedContext: "orders",
-    dependencies: {
-      getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
-      appendToStream: components.eventStore.lib.appendToStream,
-    },
-  }),
-});
+    export const onPaymentComplete = internalMutation({
+      args: {
+        result: v.union(
+          v.object({ kind: v.literal("success"), returnValue: v.any() }),
+          v.object({ kind: v.literal("failed"), error: v.string() }),
+          v.object({ kind: v.literal("canceled") })
+        ),
+        context: v.object({
+          orderId: v.string(),
+          customerId: v.string(),
+          amount: v.number(),
+        }),
+      },
+      handler: createOutboxHandler<PaymentContext, StripeChargeResult>({
+        getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
+        buildEvent: (result, ctx) => ({
+          streamType: "Order",
+          streamId: ctx.orderId,
+          eventType: result.kind === "success" ? "PaymentCompleted" : "PaymentFailed",
+          eventData:
+            result.kind === "success"
+              ? {
+                  chargeId: result.returnValue.chargeId,
+                  receiptUrl: result.returnValue.receiptUrl,
+                  amount: ctx.amount,
+                }
+              : {
+                  error: result.kind === "failed" ? result.error : "canceled",
+                  amount: ctx.amount,
+                },
+        }),
+        boundedContext: "orders",
+        dependencies: {
+          getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
+          appendToStream: components.eventStore.lib.appendToStream,
+        },
+      }),
+    });
 
-// Usage in saga
-await actionRetrier.run(
-  ctx,
-  internal.payments.chargeStripe,
-  {
-    customerId,
-    amount,
-    orderId,
-  },
-  {
-    onComplete: internal.sagas.payments.onPaymentComplete,
-    context: { orderId, customerId, amount },
-  }
-);
+    // Usage in saga
+    await actionRetrier.run(ctx, internal.payments.chargeStripe, {
+      customerId,
+      amount,
+      orderId,
+    }, {
+      onComplete: internal.sagas.payments.onPaymentComplete,
+      context: { orderId, customerId, amount },
+    });
 ```
 
 _Verified by: Successful payment creates PaymentCompleted event, Failed payment creates PaymentFailed event, Duplicate completion is deduplicated_
@@ -2811,7 +2827,7 @@ _Verified by: Successful payment creates PaymentCompleted event, Failed payment 
 **Projection handlers quarantine malformed events**
 
 **Invariant:** A malformed event that fails processing N times will be quarantined
-and excluded from further processing. The projection will continue with remaining events.
+    and excluded from further processing. The projection will continue with remaining events.
 
     **Rationale:** Malformed events (schema violations, missing references, data corruption)
     should not block all projection processing indefinitely. Quarantining allows the system
@@ -2826,96 +2842,95 @@ and excluded from further processing. The projection will continue with remainin
     **Implementation:**
 
 ```typescript
-import { withPoisonEventHandling, type PoisonEventFullConfig } from "@libar-dev/platform-core";
+import {
+      withPoisonEventHandling,
+      type PoisonEventFullConfig,
+    } from "@libar-dev/platform-core";
 
-// projections/orders/orderSummary.ts
-const actualHandler = async (ctx: MutationCtx, args: OrderCreatedArgs) => {
-  // Actual projection logic - may throw on malformed data
-  const existing = await ctx.db
-    .query("orderSummaries")
-    .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
-    .first();
+    // projections/orders/orderSummary.ts
+    const actualHandler = async (ctx: MutationCtx, args: OrderCreatedArgs) => {
+      // Actual projection logic - may throw on malformed data
+      const existing = await ctx.db
+        .query("orderSummaries")
+        .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+        .first();
 
-  if (existing) {
-    // Idempotent - already processed
-    return;
-  }
+      if (existing) {
+        // Idempotent - already processed
+        return;
+      }
 
-  await ctx.db.insert("orderSummaries", {
-    orderId: args.orderId,
-    customerId: args.customerId,
-    status: "draft",
-    itemCount: 0,
-    totalAmount: 0,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-};
+      await ctx.db.insert("orderSummaries", {
+        orderId: args.orderId,
+        customerId: args.customerId,
+        status: "draft",
+        itemCount: 0,
+        totalAmount: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    };
 
-export const onOrderCreated = internalMutation({
-  args: {
-    /* ... */
-  },
-  handler: withPoisonEventHandling(actualHandler, {
-    projectionName: "orderSummary",
-    maxAttempts: 3,
-    alertOnQuarantine: true,
-    dependencies: {
-      getPoisonRecord: internal.admin.poison.getRecord,
-      upsertPoisonRecord: internal.admin.poison.upsertRecord,
-      listQuarantinedRecords: internal.admin.poison.listQuarantined,
-      getPoisonStats: internal.admin.poison.getStats,
-    },
-    onQuarantine: ({ eventId, projectionName, attempts, error }) => {
-      console.error(
-        `[POISON_EVENT] eventId=${eventId} projection=${projectionName} ` +
-          `attempts=${attempts} error=${error}`
-      );
-    },
-  }),
-});
+    export const onOrderCreated = internalMutation({
+      args: { /* ... */ },
+      handler: withPoisonEventHandling(actualHandler, {
+        projectionName: "orderSummary",
+        maxAttempts: 3,
+        alertOnQuarantine: true,
+        dependencies: {
+          getPoisonRecord: internal.admin.poison.getRecord,
+          upsertPoisonRecord: internal.admin.poison.upsertRecord,
+          listQuarantinedRecords: internal.admin.poison.listQuarantined,
+          getPoisonStats: internal.admin.poison.getStats,
+        },
+        onQuarantine: ({ eventId, projectionName, attempts, error }) => {
+          console.error(`[POISON_EVENT] eventId=${eventId} projection=${projectionName} ` +
+            `attempts=${attempts} error=${error}`);
+        },
+      }),
+    });
 ```
 
 **Admin Mutations:**
 
 ```typescript
 // admin/poison.ts
-export const replayEvent = internalMutation({
-  args: { eventId: v.string(), projectionName: v.string() },
-  handler: async (ctx, { eventId, projectionName }) => {
-    const record = await ctx.db
-      .query("poisonEvents")
-      .withIndex("by_eventId_projection", (q) =>
-        q.eq("eventId", eventId).eq("projectionName", projectionName)
-      )
-      .first();
+    export const replayEvent = internalMutation({
+      args: { eventId: v.string(), projectionName: v.string() },
+      handler: async (ctx, { eventId, projectionName }) => {
+        const record = await ctx.db
+          .query("poisonEvents")
+          .withIndex("by_eventId_projection", (q) =>
+            q.eq("eventId", eventId).eq("projectionName", projectionName)
+          )
+          .first();
 
-    if (!record) {
-      return { status: "not_found" };
-    }
-    if (record.status !== "quarantined") {
-      return { status: "not_quarantined" };
-    }
+        if (!record) {
+          return { status: "not_found" };
+        }
+        if (record.status !== "quarantined") {
+          return { status: "not_quarantined" };
+        }
 
-    // Reset for replay
-    await ctx.db.patch(record._id, {
-      status: "pending",
-      attempts: 0,
-      updatedAt: Date.now(),
+        // Reset for replay
+        await ctx.db.patch(record._id, {
+          status: "pending",
+          attempts: 0,
+          updatedAt: Date.now(),
+        });
+
+        // Re-enqueue to projection pool
+        // (caller must trigger re-processing)
+        return { status: "ready_for_replay" };
+      },
     });
 
-    // Re-enqueue to projection pool
-    // (caller must trigger re-processing)
-    return { status: "ready_for_replay" };
-  },
-});
-
-export const ignoreEvent = internalMutation({
-  args: { eventId: v.string(), projectionName: v.string(), reason: v.string() },
-  handler: async (ctx, { eventId, projectionName, reason }) => {
-    // ... update status to "ignored" with reason
-  },
-});
+    export const ignoreEvent = internalMutation({
+      args: { eventId: v.string(), projectionName: v.string(), reason: v.string() },
+      handler: async (ctx, { eventId, projectionName, reason }) => {
+        // ... update status to "ignored" with reason
+      },
+    });
 ```
 
 _Verified by: Valid event processed normally, Malformed event quarantined after max attempts, Quarantined event can be replayed after fix, Quarantined event can be ignored_
@@ -2923,7 +2938,7 @@ _Verified by: Valid event processed normally, Malformed event quarantined after 
 **Projections can be rebuilt from the event stream**
 
 **Invariant:** A projection can be rebuilt from any starting position in the event stream.
-The rebuilt projection will eventually converge to the same state as if built incrementally.
+    The rebuilt projection will eventually converge to the same state as if built incrementally.
 
     **Rationale:** Projection data can become corrupted (bugs, schema migrations gone wrong,
     manual data fixes). The event stream is the source of truth - projections are derived views
@@ -2943,66 +2958,66 @@ The rebuilt projection will eventually converge to the same state as if built in
 
 ```typescript
 // admin/rebuildDemo.ts
-export const demonstrateRebuild = internalMutation({
-  args: { projectionName: v.string() },
-  handler: async (ctx, { projectionName }) => {
-    // Step 1: Get current projection state (for comparison)
-    const beforeStats = await getProjectionStats(ctx, projectionName);
+    export const demonstrateRebuild = internalMutation({
+      args: { projectionName: v.string() },
+      handler: async (ctx, { projectionName }) => {
+        // Step 1: Get current projection state (for comparison)
+        const beforeStats = await getProjectionStats(ctx, projectionName);
 
-    // Step 2: Clear projection data
-    await clearProjection(ctx, projectionName);
+        // Step 2: Clear projection data
+        await clearProjection(ctx, projectionName);
 
-    // Step 3: Trigger rebuild from position 0
-    const replayId = await triggerRebuild(ctx, {
-      projectionName,
-      fromPosition: 0,
-      chunkSize: 100, // Process 100 events per batch
+        // Step 3: Trigger rebuild from position 0
+        const replayId = await triggerRebuild(ctx, {
+          projectionName,
+          fromPosition: 0,
+          chunkSize: 100, // Process 100 events per batch
+        });
+
+        return {
+          replayId,
+          beforeStats,
+          message: `Rebuild started. Monitor with getRebuildStatus("${replayId}")`,
+        };
+      },
     });
 
-    return {
-      replayId,
-      beforeStats,
-      message: `Rebuild started. Monitor with getRebuildStatus("${replayId}")`,
-    };
-  },
-});
+    export const verifyRebuild = internalQuery({
+      args: { projectionName: v.string(), replayId: v.string() },
+      handler: async (ctx, { projectionName, replayId }) => {
+        const status = await getRebuildStatus(ctx, replayId);
+        const currentStats = await getProjectionStats(ctx, projectionName);
 
-export const verifyRebuild = internalQuery({
-  args: { projectionName: v.string(), replayId: v.string() },
-  handler: async (ctx, { projectionName, replayId }) => {
-    const status = await getRebuildStatus(ctx, replayId);
-    const currentStats = await getProjectionStats(ctx, projectionName);
-
-    return {
-      rebuildStatus: status,
-      currentStats,
-      isComplete: status.status === "completed",
-      eventsProcessed: status.eventsProcessed,
-      duration: status.completedAt ? status.completedAt - status.startedAt : null,
-    };
-  },
-});
+        return {
+          rebuildStatus: status,
+          currentStats,
+          isComplete: status.status === "completed",
+          eventsProcessed: status.eventsProcessed,
+          duration: status.completedAt ? status.completedAt - status.startedAt : null,
+        };
+      },
+    });
 ```
 
 **Progress Tracking Structure:**
 
 ```typescript
 interface RebuildStatus {
-  replayId: string;
-  projectionName: string;
-  status: "running" | "completed" | "cancelled" | "failed";
-  fromPosition: number;
-  currentPosition: number;
-  eventsProcessed: number;
-  totalEvents: number; // If known
-  startedAt: number;
-  completedAt?: number;
-  lastError?: string;
-  // Computed
-  percentComplete: number;
-  eventsPerSecond: number;
-  estimatedRemainingMs?: number;
-}
+      replayId: string;
+      projectionName: string;
+      status: "running" | "completed" | "cancelled" | "failed";
+      fromPosition: number;
+      currentPosition: number;
+      eventsProcessed: number;
+      totalEvents: number; // If known
+      startedAt: number;
+      completedAt?: number;
+      lastError?: string;
+      // Computed
+      percentComplete: number;
+      eventsPerSecond: number;
+      estimatedRemainingMs?: number;
+    }
 ```
 
 _Verified by: Rebuild from position 0 re-processes all events, Rebuild progress is trackable, Running rebuild can be cancelled, Concurrent rebuilds are prevented, Rebuild from specific position_
@@ -3010,7 +3025,7 @@ _Verified by: Rebuild from position 0 re-processes all events, Rebuild progress 
 **Scheduled job detects and alerts on orphaned command intents**
 
 **Invariant:** Any intent in "pending" status for longer than timeoutMs will be detected
-and transitioned to "abandoned" status. Operators are alerted for investigation.
+    and transitioned to "abandoned" status. Operators are alerted for investigation.
 
     **Rationale:** Network partitions, process crashes, and deadlocks can leave commands
     in an incomplete state. Automated detection ensures these don't go unnoticed, enabling
@@ -3023,88 +3038,89 @@ and transitioned to "abandoned" status. Operators are alerted for investigation.
 
 ```typescript
 // crons.ts
-import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
+    import { cronJobs } from "convex/server";
+    import { internal } from "./_generated/api";
 
-const crons = cronJobs();
+    const crons = cronJobs();
 
-// Detect orphaned intents every 5 minutes
-crons.interval("detectOrphanedIntents", { minutes: 5 }, internal.admin.intents.detectOrphans);
+    // Detect orphaned intents every 5 minutes
+    crons.interval(
+      "detectOrphanedIntents",
+      { minutes: 5 },
+      internal.admin.intents.detectOrphans
+    );
 
-export default crons;
+    export default crons;
 ```
 
 **Detection Logic:**
 
 ```typescript
 // admin/intents.ts
-import { queryOrphanedIntents } from "@libar-dev/platform-core";
+    import { queryOrphanedIntents } from "@libar-dev/platform-core";
 
-export const detectOrphans = internalMutation({
-  handler: async (ctx) => {
-    const now = Date.now();
+    export const detectOrphans = internalMutation({
+      handler: async (ctx) => {
+        const now = Date.now();
 
-    // Find pending intents older than their timeout
-    const orphans = await queryOrphanedIntents(ctx, {
-      dependencies: intentDependencies,
-      now,
-    });
+        // Find pending intents older than their timeout
+        const orphans = await queryOrphanedIntents(ctx, {
+          dependencies: intentDependencies,
+          now,
+        });
 
-    if (orphans.length === 0) {
-      console.info("[ORPHAN_DETECTION] No orphans found");
-      return { orphanCount: 0 };
-    }
+        if (orphans.length === 0) {
+          console.info("[ORPHAN_DETECTION] No orphans found");
+          return { orphanCount: 0 };
+        }
 
-    // Transition each orphan to abandoned
-    const abandoned: string[] = [];
-    for (const orphan of orphans) {
-      await recordCompletion(ctx, {
-        intentKey: orphan.intentKey,
-        status: "abandoned",
-        streamType: orphan.streamType,
-        streamId: orphan.streamId,
-        boundedContext: orphan.boundedContext,
-        dependencies: intentDependencies,
-        error: `Timeout exceeded (${orphan.timeoutMs}ms). Time since intent: ${orphan.timeSinceIntent}ms`,
-      });
-      abandoned.push(orphan.intentKey);
-    }
+        // Transition each orphan to abandoned
+        const abandoned: string[] = [];
+        for (const orphan of orphans) {
+          await recordCompletion(ctx, {
+            intentKey: orphan.intentKey,
+            status: "abandoned",
+            streamType: orphan.streamType,
+            streamId: orphan.streamId,
+            boundedContext: orphan.boundedContext,
+            dependencies: intentDependencies,
+            error: `Timeout exceeded (${orphan.timeoutMs}ms). Time since intent: ${orphan.timeSinceIntent}ms`,
+          });
+          abandoned.push(orphan.intentKey);
+        }
 
-    // Report metrics
-    const byType = orphans.reduce(
-      (acc, o) => {
-        acc[o.operationType] = (acc[o.operationType] || 0) + 1;
-        return acc;
+        // Report metrics
+        const byType = orphans.reduce((acc, o) => {
+          acc[o.operationType] = (acc[o.operationType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        console.warn(
+          `[ORPHAN_DETECTION] Found ${orphans.length} orphans`,
+          { orphanCount: orphans.length, byOperationType: byType }
+        );
+
+        return {
+          orphanCount: orphans.length,
+          byOperationType: byType,
+          abandoned,
+        };
       },
-      {} as Record<string, number>
-    );
-
-    console.warn(`[ORPHAN_DETECTION] Found ${orphans.length} orphans`, {
-      orphanCount: orphans.length,
-      byOperationType: byType,
     });
 
-    return {
-      orphanCount: orphans.length,
-      byOperationType: byType,
-      abandoned,
-    };
-  },
-});
+    // Admin query for manual investigation
+    export const listOrphanedIntents = internalQuery({
+      args: { limit: v.optional(v.number()) },
+      handler: async (ctx, { limit = 100 }) => {
+        const orphans = await ctx.db
+          .query("commandIntents")
+          .withIndex("by_status_createdAt", (q) => q.eq("status", "abandoned"))
+          .order("desc")
+          .take(limit);
 
-// Admin query for manual investigation
-export const listOrphanedIntents = internalQuery({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 100 }) => {
-    const orphans = await ctx.db
-      .query("commandIntents")
-      .withIndex("by_status_createdAt", (q) => q.eq("status", "abandoned"))
-      .order("desc")
-      .take(limit);
-
-    return orphans;
-  },
-});
+        return orphans;
+      },
+    });
 ```
 
 _Verified by: Orphan detected after threshold exceeded, Recent pending intent not flagged, Completed intents are ignored, Orphan detection reports metrics_
@@ -3112,7 +3128,7 @@ _Verified by: Orphan detected after threshold exceeded, Recent pending intent no
 **End-to-end durability is verified via integration tests**
 
 **Invariant:** Integration tests must exercise the complete durability stack in a real
-Convex environment with actual database operations, Workpool execution, and event store.
+    Convex environment with actual database operations, Workpool execution, and event store.
 
     **Rationale:** Unit tests with mocks cannot verify the integration of multiple durability
     patterns working together. Integration tests ensure the patterns compose correctly and
@@ -3125,16 +3141,16 @@ Convex environment with actual database operations, Workpool execution, and even
 
 ```typescript
 // examples/order-management/tests/integration-steps/durability.integration.steps.ts
-import {
-  generateTestRunId,
-  waitUntil,
-  testMutation,
-  testQuery,
-} from "@libar-dev/platform-core/testing";
+    import {
+      generateTestRunId,
+      waitUntil,
+      testMutation,
+      testQuery,
+    } from "@libar-dev/platform-core/testing";
 
-// Each test run gets isolated IDs
-const testRunId = generateTestRunId();
-const testOrderId = `${testRunId}_ord_001`;
+    // Each test run gets isolated IDs
+    const testRunId = generateTestRunId();
+    const testOrderId = `${testRunId}_ord_001`;
 ```
 
 _Verified by: Full durable command flow, Command retry produces same result, Projection rebuild restores correct state_
@@ -3150,42 +3166,41 @@ _Verified by: Full durable command flow, Command retry produces same result, Pro
 | Business Value | production grade reliability with minimal code |
 
 **Problem:** Platform has well-defined interfaces (RateLimitChecker, DCB conflict handling) but uses
-in-memory implementations not suitable for production. DCB returns `conflict` status but callers must
-implement manual retry logic, leading to boilerplate and inconsistent patterns.
+  in-memory implementations not suitable for production. DCB returns `conflict` status but callers must
+  implement manual retry logic, leading to boilerplate and inconsistent patterns.
 
-**Solution:** Minimal adapters that bridge existing platform interfaces to production-grade
-Convex durable function components:
+  **Solution:** Minimal adapters that bridge existing platform interfaces to production-grade
+  Convex durable function components:
+  - **RateLimitAdapter** - Connects `RateLimitChecker` interface to `@convex-dev/rate-limiter`
+  - **withDCBRetry** - Wraps `executeWithDCB` with Workpool-based OCC retry and backoff
+  - **Delete in-memory implementations** - Single production-grade option (no fallbacks)
 
-- **RateLimitAdapter** - Connects `RateLimitChecker` interface to `@convex-dev/rate-limiter`
-- **withDCBRetry** - Wraps `executeWithDCB` with Workpool-based OCC retry and backoff
-- **Delete in-memory implementations** - Single production-grade option (no fallbacks)
+  **Reference:** See `docs/architecture/CONVEX-DURABILITY-REFERENCE.md` for component selection,
+  retry strategies, and the standard backoff formula used in this implementation.
 
-**Reference:** See `docs/architecture/CONVEX-DURABILITY-REFERENCE.md` for component selection,
-retry strategies, and the standard backoff formula used in this implementation.
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Production-grade rate limiting | Sharding, persistence, reservation patterns via component |
+  | Automatic OCC retry | Workpool handles backoff, jitter, partition ordering |
+  | Zero middleware changes | Adapter implements existing `RateLimitChecker` interface |
+  | Consistent retry patterns | Centralized backoff config, prevents boilerplate |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Production-grade rate limiting | Sharding, persistence, reservation patterns via component |
-| Automatic OCC retry | Workpool handles backoff, jitter, partition ordering |
-| Zero middleware changes | Adapter implements existing `RateLimitChecker` interface |
-| Consistent retry patterns | Centralized backoff config, prevents boilerplate |
+  **Architectural Context:**
+  """
+  Current State                           After Adapters
+  ─────────────                           ──────────────
+  Middleware Pipeline                     Middleware Pipeline
+       │                                       │
+       ▼                                       ▼
+  RateLimitChecker ──→ In-memory         RateLimitChecker ──→ ConvexRateLimitAdapter
+  (lost on cold start)                   (persisted, sharded)  ──→ @convex-dev/rate-limiter
 
-**Architectural Context:**
-"""
-Current State After Adapters
-───────────── ──────────────
-Middleware Pipeline Middleware Pipeline
-│ │
-▼ ▼
-RateLimitChecker ──→ In-memory RateLimitChecker ──→ ConvexRateLimitAdapter
-(lost on cold start) (persisted, sharded) ──→ @convex-dev/rate-limiter
-
-DCB executeWithDCB DCB withDCBRetry
-│ │
-▼ ▼
-Returns { status: "conflict" } Auto-retry via Workpool
-(caller handles retry) (backoff, jitter, partition key)
-"""
+  DCB executeWithDCB                     DCB withDCBRetry
+       │                                       │
+       ▼                                       ▼
+  Returns { status: "conflict" }         Auto-retry via Workpool
+  (caller handles retry)                 (backoff, jitter, partition key)
+  """
 
 #### Dependencies
 
@@ -3255,7 +3270,7 @@ Returns { status: "conflict" } Auto-retry via Workpool
 
 - Given a backoff config with initialMs=100, base=2, maxMs=30000
 - When calculating backoff for attempt 3
-- Then the base delay should be 800ms (100 \* 2^3)
+- Then the base delay should be 800ms (100 * 2^3)
 - And jitter should multiply by 0.5-1.5 (result: 400-1200ms)
 - And total should not exceed 30000ms
 
@@ -3314,7 +3329,7 @@ Returns { status: "conflict" } Auto-retry via Workpool
 **Rate limit adapter bridges middleware to component**
 
 **Invariant:** Rate limiting decisions must persist across server restarts and scale
-horizontally via sharding—no in-memory implementations in production.
+    horizontally via sharding—no in-memory implementations in production.
 
     **Rationale:** In-memory rate limiters lose state on cold starts and cannot enforce
     consistent limits across multiple server instances. The `@convex-dev/rate-limiter`
@@ -3330,65 +3345,69 @@ horizontally via sharding—no in-memory implementations in production.
     The adapter implements the existing `RateLimitChecker` interface, allowing the current
     middleware pipeline to use `@convex-dev/rate-limiter` without any changes to middleware code.
 
+    **Input:** RateLimitCheckArgs -- key
+
+    **Output:** RateLimitResult -- allowed, retryAfterMs
+
     **Interface Contract (existing):**
 
 ```typescript
 // platform-core/src/middleware/types.ts - EXISTING interface
-export type RateLimitChecker = (key: string) => Promise<RateLimitResult>;
+    export type RateLimitChecker = (key: string) => Promise<RateLimitResult>;
 
-export interface RateLimitResult {
-  allowed: boolean;
-  retryAfterMs?: number;
-}
+    export interface RateLimitResult {
+      allowed: boolean;
+      retryAfterMs?: number;
+    }
 ```
 
 **Adapter Implementation:**
 
 ```typescript
 // platform-core/src/middleware/rateLimitAdapter.ts - NEW
-import type { RateLimiter } from "@convex-dev/rate-limiter";
-import type { MutationCtx } from "convex/server";
-import type { RateLimitChecker, RateLimitResult } from "./types.js";
+    import type { RateLimiter } from "@convex-dev/rate-limiter";
+    import type { MutationCtx } from "convex/server";
+    import type { RateLimitChecker, RateLimitResult } from "./types.js";
 
-/**
- * Create a RateLimitChecker that delegates to @convex-dev/rate-limiter.
- *
- * @param rateLimiter - Instance from the mounted component
- * @param limitName - Named limit from rateLimiter config
- * @returns Factory that creates RateLimitChecker for a given ctx
- *
- * @example
- * // In convex/rateLimits.ts
- * export const rateLimiter = new RateLimiter(components.rateLimiter, {
- *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
- * });
- *
- * // In middleware setup
- * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
- * const result = await checker("user:" + userId);
- */
-export function createConvexRateLimitAdapter(
-  rateLimiter: RateLimiter,
-  limitName: string
-): (ctx: MutationCtx) => RateLimitChecker {
-  return (ctx: MutationCtx): RateLimitChecker => {
-    return async (key: string): Promise<RateLimitResult> => {
-      const status = await rateLimiter.limit(ctx, limitName, { key });
-      return {
-        allowed: status.ok,
-        retryAfterMs: status.retryAfter,
+    /**
+     * Create a RateLimitChecker that delegates to @convex-dev/rate-limiter.
+     *
+     * @param rateLimiter - Instance from the mounted component
+     * @param limitName - Named limit from rateLimiter config
+     * @returns Factory that creates RateLimitChecker for a given ctx
+     *
+     * @example
+     * // In convex/rateLimits.ts
+     * export const rateLimiter = new RateLimiter(components.rateLimiter, {
+     *   commandDispatch: { kind: "token bucket", rate: 100, period: MINUTE, shards: 50 },
+     * });
+     *
+     * // In middleware setup
+     * const checker = createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx);
+     * const result = await checker("user:" + userId);
+     */
+    export function createConvexRateLimitAdapter(
+      rateLimiter: RateLimiter,
+      limitName: string
+    ): (ctx: MutationCtx) => RateLimitChecker {
+      return (ctx: MutationCtx): RateLimitChecker => {
+        return async (key: string): Promise<RateLimitResult> => {
+          const status = await rateLimiter.limit(ctx, limitName, { key });
+          return {
+            allowed: status.ok,
+            retryAfterMs: status.retryAfter,
+          };
+        };
       };
-    };
-  };
-}
+    }
 ```
 
 **Sharding Guidelines (from CONVEX-DURABILITY-REFERENCE.md Section 7):**
-| Expected QPS | Recommended Shards |
-| < 50 | None (default) |
-| 50-200 | 5-10 |
-| 200-1000 | 10-50 |
-| > 1000 | 50+ |
+    | Expected QPS | Recommended Shards |
+    | < 50 | None (default) |
+    | 50-200 | 5-10 |
+    | 200-1000 | 10-50 |
+    | > 1000 | 50+ |
 
     **Formula:** `shards ≈ QPS / 2`
 
@@ -3397,7 +3416,7 @@ _Verified by: Adapter allows request within rate limit, Adapter rejects request 
 **DCB retry helper automatically handles OCC conflicts**
 
 **Invariant:** OCC conflicts from DCB operations must be retried automatically with
-exponential backoff and scope-based serialization—callers must not implement retry logic.
+    exponential backoff and scope-based serialization—callers must not implement retry logic.
 
     **Rationale:** Manual retry leads to inconsistent patterns, missing jitter (thundering
     herd), and no partition ordering (OCC storms). Workpool provides durable retry with
@@ -3417,11 +3436,11 @@ exponential backoff and scope-based serialization—callers must not implement r
 
 ```typescript
 // Caller must implement retry manually
-const result = await executeWithDCB(ctx, config);
-if (result.status === "conflict") {
-  // Manual retry logic required - inconsistent across codebase
-  // No backoff, no jitter, no partition ordering
-}
+    const result = await executeWithDCB(ctx, config);
+    if (result.status === "conflict") {
+      // Manual retry logic required - inconsistent across codebase
+      // No backoff, no jitter, no partition ordering
+    }
 ```
 
 **Solution with withDCBRetry:**
@@ -3520,27 +3539,31 @@ if (result.status === "conflict") {
     }
 ```
 
-**Backoff Calculation (standard formula from CONVEX-DURABILITY-REFERENCE.md):**
+**Input:** DCBRetryOptions -- attempt, onComplete, context
+
+    **Output:** DCBRetryResult -- status, retryKey, scheduledAt
+
+    **Backoff Calculation (standard formula from CONVEX-DURABILITY-REFERENCE.md):**
 
 ```typescript
 // platform-core/src/dcb/backoff.ts
-// Uses DCBRetryConfig which extends Workpool's RetryBehavior
+    // Uses DCBRetryConfig which extends Workpool's RetryBehavior
 
-/**
- * Calculate exponential backoff with jitter.
- *
- * Formula: min(initialMs * base^attempt * jitter, maxMs)
- * Jitter: 50-150% multiplier (prevents thundering herd)
- *
- * This matches the standard Convex Workpool formula exactly.
- * We must calculate it ourselves because Workpool's retry only
- * triggers on exceptions, not successful conflict returns.
- */
-export function calculateBackoff(attempt: number, config: DCBRetryConfig): number {
-  const delay = config.initialBackoffMs * Math.pow(config.base, attempt);
-  const jitter = 0.5 + Math.random(); // 50-150% multiplier
-  return Math.min(delay * jitter, config.maxBackoffMs);
-}
+    /**
+     * Calculate exponential backoff with jitter.
+     *
+     * Formula: min(initialMs * base^attempt * jitter, maxMs)
+     * Jitter: 50-150% multiplier (prevents thundering herd)
+     *
+     * This matches the standard Convex Workpool formula exactly.
+     * We must calculate it ourselves because Workpool's retry only
+     * triggers on exceptions, not successful conflict returns.
+     */
+    export function calculateBackoff(attempt: number, config: DCBRetryConfig): number {
+      const delay = config.initialBackoffMs * Math.pow(config.base, attempt);
+      const jitter = 0.5 + Math.random(); // 50-150% multiplier
+      return Math.min(delay * jitter, config.maxBackoffMs);
+    }
 ```
 
 _Verified by: DCB succeeds on first attempt, DCB conflict triggers automatic retry, Max retries exceeded returns rejected, Backoff increases exponentially with jitter, Partition key ensures scope serialization, DCB retry with onComplete callback, Version advances between retry scheduling and execution_
@@ -3548,7 +3571,11 @@ _Verified by: DCB succeeds on first attempt, DCB conflict triggers automatic ret
 **Adapters integrate with existing platform infrastructure**
 
 **Invariant:** Adapters must plug into existing platform interfaces without requiring
-changes to middleware pipeline, command configs, or core orchestration logic.
+    changes to middleware pipeline, command configs, or core orchestration logic.
+
+    **Input:** PlatformInterfaces -- RateLimitChecker, DCBExecutor
+
+    **Output:** IntegrationResult -- rateLimiterMounted, dcbRetryPoolMounted
 
     **Rationale:** The platform already has well-defined interfaces (RateLimitChecker,
     DCB execution flow). Adapters bridge these to Convex durable components without
@@ -3567,75 +3594,75 @@ changes to middleware pipeline, command configs, or core orchestration logic.
 
 ```typescript
 // examples/order-management/convex/rateLimits.ts
-import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
-import { components } from "./_generated/api";
+    import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
+    import { components } from "./_generated/api";
 
-export const rateLimiter = new RateLimiter(components.rateLimiter, {
-  // Command dispatch: 100/min with burst capacity, sharded for scale
-  commandDispatch: {
-    kind: "token bucket",
-    rate: 100,
-    period: MINUTE,
-    capacity: 150,
-    shards: 50, // For ~100 QPS
-  },
-  // Admin operations: strict hourly limit
-  adminOperations: {
-    kind: "fixed window",
-    rate: 10,
-    period: HOUR,
-  },
-});
+    export const rateLimiter = new RateLimiter(components.rateLimiter, {
+      // Command dispatch: 100/min with burst capacity, sharded for scale
+      commandDispatch: {
+        kind: "token bucket",
+        rate: 100,
+        period: MINUTE,
+        capacity: 150,
+        shards: 50,  // For ~100 QPS
+      },
+      // Admin operations: strict hourly limit
+      adminOperations: {
+        kind: "fixed window",
+        rate: 10,
+        period: HOUR,
+      },
+    });
 
-// examples/order-management/convex/middleware.ts
-import { createConvexRateLimitAdapter } from "@libar-dev/platform-core";
-import { rateLimiter } from "./rateLimits";
+    // examples/order-management/convex/middleware.ts
+    import { createConvexRateLimitAdapter } from "@libar-dev/platform-core";
+    import { rateLimiter } from "./rateLimits";
 
-export function createProductionMiddleware(ctx: MutationCtx) {
-  return createRateLimitMiddleware({
-    checker: createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx),
-    getKey: RateLimitKeys.byUserAndCommand(getUserId),
-    skipFor: ["GetSystemHealth"],
-  });
-}
+    export function createProductionMiddleware(ctx: MutationCtx) {
+      return createRateLimitMiddleware({
+        checker: createConvexRateLimitAdapter(rateLimiter, "commandDispatch")(ctx),
+        getKey: RateLimitKeys.byUserAndCommand(getUserId),
+        skipFor: ["GetSystemHealth"],
+      });
+    }
 ```
 
 **DCB Retry Integration in Example App:**
 
 ```typescript
 // examples/order-management/convex/dcb/retryExecution.ts
-import { internalMutation } from "../_generated/server";
-import { withDCBRetry } from "@libar-dev/platform-core";
-import { dcbRetryPool } from "../infrastructure";
+    import { internalMutation } from "../_generated/server";
+    import { withDCBRetry } from "@libar-dev/platform-core";
+    import { dcbRetryPool } from "../infrastructure";
 
-// Internal mutation that Workpool calls for retries
-export const retryDCBExecution = internalMutation({
-  args: {
-    dcbConfig: v.any(), // Serialized DCB config
-    retryConfig: v.any(),
-    attempt: v.number(),
-  },
-  handler: async (ctx, { dcbConfig, retryConfig, attempt }) => {
-    return withDCBRetry(
-      ctx,
-      dcbRetryPool,
-      internal.dcb.retryExecution.retryDCBExecution,
-      dcbConfig,
-      retryConfig,
-      attempt
-    );
-  },
-});
+    // Internal mutation that Workpool calls for retries
+    export const retryDCBExecution = internalMutation({
+      args: {
+        dcbConfig: v.any(),  // Serialized DCB config
+        retryConfig: v.any(),
+        attempt: v.number(),
+      },
+      handler: async (ctx, { dcbConfig, retryConfig, attempt }) => {
+        return withDCBRetry(
+          ctx,
+          dcbRetryPool,
+          internal.dcb.retryExecution.retryDCBExecution,
+          dcbConfig,
+          retryConfig,
+          attempt
+        );
+      },
+    });
 
-// examples/order-management/convex/infrastructure.ts (addition)
-export const dcbRetryPool = new Workpool(components.dcbRetryPool, {
-  maxParallelism: 10,
-  defaultRetryBehavior: {
-    maxAttempts: 1, // withDCBRetry handles retry logic
-    initialBackoffMs: 100,
-    base: 2,
-  },
-});
+    // examples/order-management/convex/infrastructure.ts (addition)
+    export const dcbRetryPool = new Workpool(components.dcbRetryPool, {
+      maxParallelism: 10,
+      defaultRetryBehavior: {
+        maxAttempts: 1,  // withDCBRetry handles retry logic
+        initialBackoffMs: 100,
+        base: 2,
+      },
+    });
 ```
 
 _Verified by: Rate limiter mounts as Convex component, DCB retry pool mounts as separate Workpool, Middleware pipeline order preserved_
@@ -3651,32 +3678,30 @@ _Verified by: Rate limiter mounts as Convex component, DCB retry pool mounts as 
 | Business Value | projection recovery and schema migration |
 
 **Problem:** When projections become corrupted, require schema migration, or drift from
-the Event Store due to bugs, there is no infrastructure to replay events and rebuild them.
-Manual intervention requires direct database access and risks data inconsistency. Failed
-rebuilds cannot resume from where they left off, wasting compute and time.
+  the Event Store due to bugs, there is no infrastructure to replay events and rebuild them.
+  Manual intervention requires direct database access and risks data inconsistency. Failed
+  rebuilds cannot resume from where they left off, wasting compute and time.
 
-**Solution:** Checkpoint-based replay system with durable Workpool processing:
+  **Solution:** Checkpoint-based replay system with durable Workpool processing:
+  - **Replay checkpoints** - Track progress per projection with resume capability
+  - **Dedicated Workpool** - Low-priority pool (maxParallelism: 5) preserves live operation budget
+  - **Chunked processing** - Events processed in batches to avoid timeout/memory limits
+  - **Admin mutations** - Trigger, cancel, and monitor rebuilds via admin API
+  - **Atomic scheduling** - Next chunk scheduled atomically with checkpoint update
 
-- **Replay checkpoints** - Track progress per projection with resume capability
-- **Dedicated Workpool** - Low-priority pool (maxParallelism: 5) preserves live operation budget
-- **Chunked processing** - Events processed in batches to avoid timeout/memory limits
-- **Admin mutations** - Trigger, cancel, and monitor rebuilds via admin API
-- **Atomic scheduling** - Next chunk scheduled atomically with checkpoint update
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Projection recovery | Rebuild corrupted projections from Event Store source of truth |
+  | Schema migration | Replay events through new projection logic after schema changes |
+  | Resume capability | Failed rebuilds continue from last checkpoint, not from scratch |
+  | Budget preservation | Dedicated low-priority Workpool doesn't starve live projections |
+  | Operational visibility | Real-time progress tracking for long-running rebuilds |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Projection recovery | Rebuild corrupted projections from Event Store source of truth |
-| Schema migration | Replay events through new projection logic after schema changes |
-| Resume capability | Failed rebuilds continue from last checkpoint, not from scratch |
-| Budget preservation | Dedicated low-priority Workpool doesn't starve live projections |
-| Operational visibility | Real-time progress tracking for long-running rebuilds |
-
-**Relationship to Existing Patterns:**
-
-- Uses `withCheckpoint` from EventStoreFoundation for idempotent chunk processing
-- Uses Workpool from DurableFunctionAdapters for durable execution
-- Integrates with projection registry from ProjectionCategories for rebuild ordering
-- Admin endpoints follow patterns from existing saga admin tooling
+  **Relationship to Existing Patterns:**
+  - Uses `withCheckpoint` from EventStoreFoundation for idempotent chunk processing
+  - Uses Workpool from DurableFunctionAdapters for durable execution
+  - Integrates with projection registry from ProjectionCategories for rebuild ordering
+  - Admin endpoints follow patterns from existing saga admin tooling
 
 #### Dependencies
 
@@ -3834,7 +3859,7 @@ rebuilds cannot resume from where they left off, wasting compute and time.
 **Replay must resume from last successful checkpoint**
 
 **Invariant:** A replay operation must never reprocess events that have already been
-successfully applied to the projection—resume from last checkpoint, not from scratch.
+    successfully applied to the projection—resume from last checkpoint, not from scratch.
 
     **Rationale:** Replaying millions of events wastes compute, risks projection corruption
     if handlers aren't idempotent, and extends recovery time. Checkpoints enable reliable
@@ -3867,27 +3892,30 @@ successfully applied to the projection—resume from last checkpoint, not from s
 
 ```typescript
 // Current: No way to rebuild a projection
-// If orderSummaries gets corrupted, only option is:
-// 1. Delete all records manually
-// 2. Hope live events eventually rebuild it
-// 3. Or write ad-hoc scripts with no progress tracking
+    // If orderSummaries gets corrupted, only option is:
+    // 1. Delete all records manually
+    // 2. Hope live events eventually rebuild it
+    // 3. Or write ad-hoc scripts with no progress tracking
 ```
 
 **Target State (checkpoint-based replay):**
 
 ```typescript
 // Target: Durable replay with progress tracking
-const { replayId } = await ctx.runMutation(admin.projections.triggerRebuild, {
-  projectionName: "orderSummaries",
-  fromGlobalPosition: 0, // Start from beginning
-});
+    const { replayId } = await ctx.runMutation(
+      admin.projections.triggerRebuild,
+      {
+        projectionName: "orderSummaries",
+        fromGlobalPosition: 0,  // Start from beginning
+      }
+    );
 
-// Check progress
-const status = await ctx.runQuery(admin.projections.getRebuildStatus, { replayId });
-// { status: "running", eventsProcessed: 4500, totalEvents: 10000, percentComplete: 45 }
+    // Check progress
+    const status = await ctx.runQuery(admin.projections.getRebuildStatus, { replayId });
+    // { status: "running", eventsProcessed: 4500, totalEvents: 10000, percentComplete: 45 }
 
-// If interrupted, restart continues from checkpoint
-// eventsProcessed will be 4500, not 0
+    // If interrupted, restart continues from checkpoint
+    // eventsProcessed will be 4500, not 0
 ```
 
 _Verified by: Replay resumes after failure, Checkpoint updates atomically with chunk completion, Replay handles empty event range_
@@ -3895,7 +3923,7 @@ _Verified by: Replay resumes after failure, Checkpoint updates atomically with c
 **Replay uses dedicated low-priority Workpool**
 
 **Invariant:** Replay operations must not starve live projection updates—dedicated
-low-priority pool with maxParallelism ≤ 50% of projectionPool.
+    low-priority pool with maxParallelism ≤ 50% of projectionPool.
 
     **Rationale:** Live user-facing projections must maintain low latency. Replay is
     background recovery work that can tolerate higher latency. Separate Workpool with
@@ -3930,23 +3958,23 @@ low-priority pool with maxParallelism ≤ 50% of projectionPool.
 
 ```typescript
 // infrastructure.ts
-export const eventReplayPool = new Workpool(components.eventReplayPool, {
-  maxParallelism: 5, // Low priority
-  defaultRetryBehavior: {
-    maxAttempts: 5,
-    initialBackoffMs: 1000,
-    base: 2,
-  },
-  logLevel: "INFO",
-});
+    export const eventReplayPool = new Workpool(components.eventReplayPool, {
+      maxParallelism: 5,  // Low priority
+      defaultRetryBehavior: {
+        maxAttempts: 5,
+        initialBackoffMs: 1000,
+        base: 2,
+      },
+      logLevel: "INFO",
+    });
 
-// In triggerRebuild mutation
-await eventReplayPool.enqueueMutation(
-  ctx,
-  internal.admin.projections.processReplayChunk,
-  { replayId, projectionName, fromPosition: 0, chunkSize: 100 },
-  { key: `replay:${projectionName}` } // Partition key
-);
+    // In triggerRebuild mutation
+    await eventReplayPool.enqueueMutation(
+      ctx,
+      internal.admin.projections.processReplayChunk,
+      { replayId, projectionName, fromPosition: 0, chunkSize: 100 },
+      { key: `replay:${projectionName}` }  // Partition key
+    );
 ```
 
 _Verified by: Replay does not starve live projections, Only one replay per projection, Different projections can rebuild concurrently_
@@ -3954,7 +3982,7 @@ _Verified by: Replay does not starve live projections, Only one replay per proje
 **Events are processed in configurable chunks**
 
 **Invariant:** Each replay chunk must complete within Convex mutation timeout limits
-(10s)—chunk size must be configurable based on projection complexity.
+    (10s)—chunk size must be configurable based on projection complexity.
 
     **Rationale:** Large event stores have millions of events. Processing all in one
     mutation would timeout. Chunked processing with complexity-aware sizing ensures
@@ -4002,70 +4030,70 @@ processReplayChunk(replayId, projectionName, fromPosition, chunkSize)
 
 ```typescript
 export const processReplayChunk = internalMutation({
-  args: {
-    replayId: v.id("replayCheckpoints"),
-    projectionName: v.string(),
-    fromPosition: v.number(),
-    chunkSize: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const { replayId, projectionName, fromPosition, chunkSize } = args;
+      args: {
+        replayId: v.id("replayCheckpoints"),
+        projectionName: v.string(),
+        fromPosition: v.number(),
+        chunkSize: v.number(),
+      },
+      handler: async (ctx, args) => {
+        const { replayId, projectionName, fromPosition, chunkSize } = args;
 
-    // 1. Fetch events from Event Store
-    const events = await eventStore.readFromPosition(ctx, {
-      fromPosition,
-      limit: chunkSize,
+        // 1. Fetch events from Event Store
+        const events = await eventStore.readFromPosition(ctx, {
+          fromPosition,
+          limit: chunkSize,
+        });
+
+        if (events.length === 0) {
+          // Replay complete
+          await ctx.db.patch(replayId, {
+            status: "completed",
+            completedAt: Date.now(),
+          });
+          return { status: "completed" };
+        }
+
+        // 2. Apply projection logic to each event
+        const handler = getProjectionHandler(projectionName);
+        for (const event of events) {
+          await handler(ctx, event);
+        }
+
+        // 3. Update checkpoint
+        const lastEvent = events[events.length - 1];
+        const checkpoint = await ctx.db.get(replayId);
+        await ctx.db.patch(replayId, {
+          lastPosition: lastEvent.globalPosition,
+          eventsProcessed: (checkpoint?.eventsProcessed ?? 0) + events.length,
+          chunksCompleted: (checkpoint?.chunksCompleted ?? 0) + 1,
+          updatedAt: Date.now(),
+        });
+
+        // 4. Schedule next chunk (atomic with checkpoint update)
+        if (events.length === chunkSize) {
+          await eventReplayPool.enqueueMutation(
+            ctx,
+            internal.admin.projections.processReplayChunk,
+            {
+              replayId,
+              projectionName,
+              fromPosition: lastEvent.globalPosition + 1,
+              chunkSize,
+            },
+            { key: `replay:${projectionName}` }
+          );
+        } else {
+          // No more events
+          await ctx.db.patch(replayId, {
+            status: "completed",
+            completedAt: Date.now(),
+          });
+        }
+
+        return { status: "processing", eventsProcessed: events.length };
+      },
     });
-
-    if (events.length === 0) {
-      // Replay complete
-      await ctx.db.patch(replayId, {
-        status: "completed",
-        completedAt: Date.now(),
-      });
-      return { status: "completed" };
-    }
-
-    // 2. Apply projection logic to each event
-    const handler = getProjectionHandler(projectionName);
-    for (const event of events) {
-      await handler(ctx, event);
-    }
-
-    // 3. Update checkpoint
-    const lastEvent = events[events.length - 1];
-    const checkpoint = await ctx.db.get(replayId);
-    await ctx.db.patch(replayId, {
-      lastPosition: lastEvent.globalPosition,
-      eventsProcessed: (checkpoint?.eventsProcessed ?? 0) + events.length,
-      chunksCompleted: (checkpoint?.chunksCompleted ?? 0) + 1,
-      updatedAt: Date.now(),
-    });
-
-    // 4. Schedule next chunk (atomic with checkpoint update)
-    if (events.length === chunkSize) {
-      await eventReplayPool.enqueueMutation(
-        ctx,
-        internal.admin.projections.processReplayChunk,
-        {
-          replayId,
-          projectionName,
-          fromPosition: lastEvent.globalPosition + 1,
-          chunkSize,
-        },
-        { key: `replay:${projectionName}` }
-      );
-    } else {
-      // No more events
-      await ctx.db.patch(replayId, {
-        status: "completed",
-        completedAt: Date.now(),
-      });
-    }
-
-    return { status: "processing", eventsProcessed: events.length };
-  },
-});
 ```
 
 _Verified by: Chunk processes correct number of events, Final chunk handles remainder, Chunk size respects projection complexity_
@@ -4073,7 +4101,7 @@ _Verified by: Chunk processes correct number of events, Final chunk handles rema
 **Replay progress is queryable in real-time**
 
 **Invariant:** Operations teams must be able to query replay progress at any time—
-status, percentage complete, and estimated remaining time.
+    status, percentage complete, and estimated remaining time.
 
     **Rationale:** Long-running rebuilds (hours for large projections) need visibility.
     Without progress tracking, operators cannot estimate completion, detect stuck
@@ -4094,25 +4122,25 @@ status, percentage complete, and estimated remaining time.
 
 ```typescript
 interface ReplayProgress {
-  replayId: string;
-  projectionName: string;
-  status: "running" | "paused" | "completed" | "failed" | "cancelled";
-  eventsProcessed: number;
-  totalEvents: number; // Current max globalPosition - startPosition
-  percentComplete: number;
-  chunksCompleted: number;
-  startedAt: number;
-  updatedAt: number;
-  completedAt?: number;
-  estimatedRemainingMs?: number;
-  error?: string;
-}
+      replayId: string;
+      projectionName: string;
+      status: "running" | "paused" | "completed" | "failed" | "cancelled";
+      eventsProcessed: number;
+      totalEvents: number;  // Current max globalPosition - startPosition
+      percentComplete: number;
+      chunksCompleted: number;
+      startedAt: number;
+      updatedAt: number;
+      completedAt?: number;
+      estimatedRemainingMs?: number;
+      error?: string;
+    }
 
-// Estimated remaining calculation
-const elapsedMs = Date.now() - startedAt;
-const eventsPerMs = eventsProcessed / elapsedMs;
-const remainingEvents = totalEvents - eventsProcessed;
-const estimatedRemainingMs = remainingEvents / eventsPerMs;
+    // Estimated remaining calculation
+    const elapsedMs = Date.now() - startedAt;
+    const eventsPerMs = eventsProcessed / elapsedMs;
+    const remainingEvents = totalEvents - eventsProcessed;
+    const estimatedRemainingMs = remainingEvents / eventsPerMs;
 ```
 
 _Verified by: Query replay progress, List all active rebuilds, Progress handles completed replay_
@@ -4120,7 +4148,7 @@ _Verified by: Query replay progress, List all active rebuilds, Progress handles 
 **Admin mutations enable operational control**
 
 **Invariant:** Replay operations must only be triggerable via internal mutations—
-no public API exposure for admin operations.
+    no public API exposure for admin operations.
 
     **Rationale:** Replay can be expensive (compute, time) and disruptive if misused.
     Internal mutations ensure only authorized code paths can trigger rebuilds,
@@ -4147,77 +4175,77 @@ no public API exposure for admin operations.
 
 ```typescript
 // admin/projections.ts
-export const triggerRebuild = internalMutation({
-  args: {
-    projectionName: v.string(),
-    fromGlobalPosition: v.optional(v.number()),
-    chunkSize: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const { projectionName, fromGlobalPosition = 0, chunkSize = 100 } = args;
+    export const triggerRebuild = internalMutation({
+      args: {
+        projectionName: v.string(),
+        fromGlobalPosition: v.optional(v.number()),
+        chunkSize: v.optional(v.number()),
+      },
+      handler: async (ctx, args) => {
+        const { projectionName, fromGlobalPosition = 0, chunkSize = 100 } = args;
 
-    // Check no active replay exists
-    const existing = await ctx.db
-      .query("replayCheckpoints")
-      .withIndex("by_projection_status", (q) =>
-        q.eq("projection", projectionName).eq("status", "running")
-      )
-      .first();
+        // Check no active replay exists
+        const existing = await ctx.db
+          .query("replayCheckpoints")
+          .withIndex("by_projection_status", (q) =>
+            q.eq("projection", projectionName).eq("status", "running")
+          )
+          .first();
 
-    if (existing) {
-      return { error: "REPLAY_ALREADY_ACTIVE", existingReplayId: existing._id };
-    }
+        if (existing) {
+          return { error: "REPLAY_ALREADY_ACTIVE", existingReplayId: existing._id };
+        }
 
-    // Get total events for progress calculation
-    const maxPosition = await eventStore.getMaxGlobalPosition(ctx);
-    const totalEvents = maxPosition - fromGlobalPosition;
+        // Get total events for progress calculation
+        const maxPosition = await eventStore.getMaxGlobalPosition(ctx);
+        const totalEvents = maxPosition - fromGlobalPosition;
 
-    // Create checkpoint
-    const replayId = await ctx.db.insert("replayCheckpoints", {
-      projection: projectionName,
-      lastPosition: fromGlobalPosition,
-      targetPosition: maxPosition,
-      status: "running",
-      eventsProcessed: 0,
-      chunksCompleted: 0,
-      startedAt: Date.now(),
-      updatedAt: Date.now(),
+        // Create checkpoint
+        const replayId = await ctx.db.insert("replayCheckpoints", {
+          projection: projectionName,
+          lastPosition: fromGlobalPosition,
+          targetPosition: maxPosition,
+          status: "running",
+          eventsProcessed: 0,
+          chunksCompleted: 0,
+          startedAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+
+        // Schedule first chunk
+        await eventReplayPool.enqueueMutation(
+          ctx,
+          internal.admin.projections.processReplayChunk,
+          { replayId, projectionName, fromPosition: fromGlobalPosition, chunkSize },
+          { key: `replay:${projectionName}` }
+        );
+
+        return { replayId, totalEvents };
+      },
     });
 
-    // Schedule first chunk
-    await eventReplayPool.enqueueMutation(
-      ctx,
-      internal.admin.projections.processReplayChunk,
-      { replayId, projectionName, fromPosition: fromGlobalPosition, chunkSize },
-      { key: `replay:${projectionName}` }
-    );
+    export const cancelRebuild = internalMutation({
+      args: { replayId: v.id("replayCheckpoints") },
+      handler: async (ctx, { replayId }) => {
+        const checkpoint = await ctx.db.get(replayId);
+        if (!checkpoint) {
+          return { error: "REPLAY_NOT_FOUND" };
+        }
+        if (checkpoint.status !== "running") {
+          return { error: "REPLAY_NOT_RUNNING", currentStatus: checkpoint.status };
+        }
 
-    return { replayId, totalEvents };
-  },
-});
+        await ctx.db.patch(replayId, {
+          status: "cancelled",
+          updatedAt: Date.now(),
+        });
 
-export const cancelRebuild = internalMutation({
-  args: { replayId: v.id("replayCheckpoints") },
-  handler: async (ctx, { replayId }) => {
-    const checkpoint = await ctx.db.get(replayId);
-    if (!checkpoint) {
-      return { error: "REPLAY_NOT_FOUND" };
-    }
-    if (checkpoint.status !== "running") {
-      return { error: "REPLAY_NOT_RUNNING", currentStatus: checkpoint.status };
-    }
+        // Note: In-flight chunks will complete but no new chunks scheduled
+        // because status check happens at chunk start
 
-    await ctx.db.patch(replayId, {
-      status: "cancelled",
-      updatedAt: Date.now(),
+        return { success: true, eventsProcessedBeforeCancel: checkpoint.eventsProcessed };
+      },
     });
-
-    // Note: In-flight chunks will complete but no new chunks scheduled
-    // because status check happens at chunk start
-
-    return { success: true, eventsProcessedBeforeCancel: checkpoint.eventsProcessed };
-  },
-});
 ```
 
 _Verified by: Trigger rebuild creates checkpoint and schedules first chunk, Cancel rebuild stops processing, Cannot trigger duplicate rebuild_
@@ -4233,41 +4261,39 @@ _Verified by: Trigger rebuild creates checkpoint and schedules first chunk, Canc
 | Business Value | guaranteed event capture and audit trail |
 
 **Problem:** The dual-write pattern (CMS + Event) works when both operations are in the
-same mutation, but several scenarios can result in lost events:
+  same mutation, but several scenarios can result in lost events:
 
-1. **External API success, event capture failure** - Customer charged but PaymentCompleted
-   event never recorded. Projection stale, saga stuck, no audit trail.
-2. **Cross-context event publication failure** - OrderSubmitted published but inventory
-   context never receives it. Fire-and-forget EventBus loses events.
-3. **Long-running BC operations** - Multi-step processes (validation, enrichment, external
-   calls) fail partway through with no record of what happened.
-4. **Action result capture** - Actions are at-most-once. If the mutation that records
-   the result fails, the action's side effect is orphaned.
+  1. **External API success, event capture failure** - Customer charged but PaymentCompleted
+     event never recorded. Projection stale, saga stuck, no audit trail.
+  2. **Cross-context event publication failure** - OrderSubmitted published but inventory
+     context never receives it. Fire-and-forget EventBus loses events.
+  3. **Long-running BC operations** - Multi-step processes (validation, enrichment, external
+     calls) fail partway through with no record of what happened.
+  4. **Action result capture** - Actions are at-most-once. If the mutation that records
+     the result fails, the action's side effect is orphaned.
 
-**Solution:** Durable event persistence patterns:
+  **Solution:** Durable event persistence patterns:
+  - **Outbox pattern** - Action results captured via onComplete mutation with idempotency
+  - **Durable publication** - Cross-context events use Workpool with retry and dead letters
+  - **Intent/Completion events** - Long-running operations bracket with intent -> completion
+  - **Idempotent append** - Event append checks for existing event by idempotency key
+  - **Durable append via actions** - Failed appends retried via Workpool actions (not mutations)
+  - **Poison event handling** - Malformed events quarantined after repeated failures
 
-- **Outbox pattern** - Action results captured via onComplete mutation with idempotency
-- **Durable publication** - Cross-context events use Workpool with retry and dead letters
-- **Intent/Completion events** - Long-running operations bracket with intent -> completion
-- **Idempotent append** - Event append checks for existing event by idempotency key
-- **Durable append via actions** - Failed appends retried via Workpool actions (not mutations)
-- **Poison event handling** - Malformed events quarantined after repeated failures
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | No lost events | Outbox pattern ensures action results become events |
+  | Complete audit trail | Every external side effect has corresponding event |
+  | Cross-context reliability | Workpool-backed publication with retry |
+  | Saga advancement | Events that trigger saga steps are guaranteed to persist |
+  | Reconciliation support | Intent events enable detection of incomplete operations |
+  | Projection resilience | Poison events quarantined, don't block processing |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| No lost events | Outbox pattern ensures action results become events |
-| Complete audit trail | Every external side effect has corresponding event |
-| Cross-context reliability | Workpool-backed publication with retry |
-| Saga advancement | Events that trigger saga steps are guaranteed to persist |
-| Reconciliation support | Intent events enable detection of incomplete operations |
-| Projection resilience | Poison events quarantined, don't block processing |
-
-**Relationship to Other Specs:**
-
-- **EventStoreFoundation** - Provides append API with OCC; this spec ensures appends succeed
-- **DurableFunctionAdapters** - Provides Workpool/Retrier; this spec uses them for event durability
-- **EventReplayInfrastructure** - Replays events; this spec ensures events exist to replay
-- **WorkpoolPartitioningStrategy** - Partition key patterns; this spec uses for publication ordering
+  **Relationship to Other Specs:**
+  - **EventStoreFoundation** - Provides append API with OCC; this spec ensures appends succeed
+  - **DurableFunctionAdapters** - Provides Workpool/Retrier; this spec uses them for event durability
+  - **EventReplayInfrastructure** - Replays events; this spec ensures events exist to replay
+  - **WorkpoolPartitioningStrategy** - Partition key patterns; this spec uses for publication ordering
 
 #### Dependencies
 
@@ -4483,7 +4509,7 @@ same mutation, but several scenarios can result in lost events:
 **Action results are captured as events via onComplete mutation**
 
 **Invariant:** Every external API result (success or failure) must be captured as a
-domain event within the bounded context's event stream.
+    domain event within the bounded context's event stream.
 
     **Rationale:** Actions are at-most-once by default. If an action succeeds but the
     subsequent event append fails, the side effect is orphaned. The outbox pattern uses
@@ -4508,7 +4534,7 @@ _Verified by: External API success is captured as event, External API failure is
 **Event append is idempotent using idempotency keys**
 
 **Invariant:** Each logical event is stored exactly once in the event store, regardless
-of how many times the append operation is retried.
+    of how many times the append operation is retried.
 
     **Rationale:** Retries (Workpool, manual, saga compensation) can cause duplicate append
     attempts. Without idempotency keys, the same business event could be stored multiple times,
@@ -4533,7 +4559,7 @@ _Verified by: First append with idempotency key succeeds, Duplicate append retur
 **Cross-context events use Workpool-backed publication with tracking**
 
 **Invariant:** Every cross-context event publication must be tracked, retried on failure,
-and dead-lettered if undeliverable after maximum attempts.
+    and dead-lettered if undeliverable after maximum attempts.
 
     **Rationale:** Fire-and-forget publication loses events when subscribers fail. For event-driven
     architectures to be reliable, cross-context communication must be durable with guaranteed
@@ -4555,7 +4581,7 @@ _Verified by: Event is delivered to all target contexts, Failed delivery is retr
 **Long-running operations bracket with intent and completion events**
 
 **Invariant:** Operations that span multiple steps, external calls, or significant time
-must record an "intent" event at start and "completion" event at end.
+    must record an "intent" event at start and "completion" event at end.
 
     **Rationale:** Without bracketing, partially-completed operations are invisible to
     monitoring, undetectable by reconciliation, and create audit trail gaps. Intent events
@@ -4580,7 +4606,7 @@ _Verified by: Intent and completion events bracket operation, Timeout detects in
 **Failed event appends are recovered via Workpool actions**
 
 **Invariant:** Event append failures from async contexts (scheduled jobs, saga steps)
-are retried with exponential backoff until success or dead letter.
+    are retried with exponential backoff until success or dead letter.
 
     **Rationale:** Workpool only retries actions, not mutations. By wrapping the idempotent
     append mutation in an action, we get Workpool retry semantics while the underlying
@@ -4609,7 +4635,7 @@ _Verified by: Append succeeds on first attempt, Append retried after transient f
 **Malformed events are quarantined after repeated failures**
 
 **Invariant:** Events that cause projection processing failures are tracked; after N
-failures, they are quarantined and skipped to prevent infinite retry loops.
+    failures, they are quarantined and skipped to prevent infinite retry loops.
 
     **Rationale:** A single malformed event should not block all downstream projections
     indefinitely. Quarantine allows progress while alerting operators for manual investigation.
@@ -4634,7 +4660,7 @@ _Verified by: Event quarantined after repeated failures, Quarantined events skip
 **Failed publications are tracked and recoverable**
 
 **Invariant:** When cross-context event delivery fails after all retries, a dead letter
-record is created. Operations teams can investigate and retry manually or automatically.
+    record is created. Operations teams can investigate and retry manually or automatically.
 
     **Rationale:** Dead letters provide visibility into integration failures and enable
     recovery without data loss. Context-specific stats help identify systemic issues
@@ -4667,30 +4693,28 @@ _Verified by: Dead letter created after max retries, Admin can retry dead letter
 | Business Value | projection ordering and occ prevention |
 
 **Problem:** ADR-018 defines critical partition key strategies for preventing OCC conflicts
-and ensuring per-entity event ordering, but this knowledge is not formalized in a spec
-or implemented consistently. Without proper partitioning:
+  and ensuring per-entity event ordering, but this knowledge is not formalized in a spec
+  or implemented consistently. Without proper partitioning:
+  - Events for the same entity may process out-of-order
+  - Global rollup projections cause OCC conflicts under load
+  - Cross-context projections lack saga-scoped consistency
 
-- Events for the same entity may process out-of-order
-- Global rollup projections cause OCC conflicts under load
-- Cross-context projections lack saga-scoped consistency
+  **Solution:** Formalize partition key patterns from ADR-018 with:
+  - **Per-entity partitioning** - streamId ensures entity-scoped ordering
+  - **Per-customer partitioning** - customerId for customer-scoped consistency
+  - **Global partitioning** - Single key or maxParallelism:1 for aggregate rollups
+  - **Saga-scoped partitioning** - correlationId for cross-context coordination
+  - **Helper functions** - Type-safe partition key generation
 
-**Solution:** Formalize partition key patterns from ADR-018 with:
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Event ordering | Partition key ensures FIFO processing per entity |
+  | OCC prevention | Same-key work serializes, reducing write conflicts |
+  | Throughput scaling | Different keys parallelize across maxParallelism slots |
+  | Consistency boundaries | Partition scope = consistency scope |
+  | DCB alignment | Partition keys can match DCB scope keys for coherent retry |
 
-- **Per-entity partitioning** - streamId ensures entity-scoped ordering
-- **Per-customer partitioning** - customerId for customer-scoped consistency
-- **Global partitioning** - Single key or maxParallelism:1 for aggregate rollups
-- **Saga-scoped partitioning** - correlationId for cross-context coordination
-- **Helper functions** - Type-safe partition key generation
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Event ordering | Partition key ensures FIFO processing per entity |
-| OCC prevention | Same-key work serializes, reducing write conflicts |
-| Throughput scaling | Different keys parallelize across maxParallelism slots |
-| Consistency boundaries | Partition scope = consistency scope |
-| DCB alignment | Partition keys can match DCB scope keys for coherent retry |
-
-**Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to architect)
+  **Source:** ADR-018 Workpool Partitioning Strategy (not previously ported to architect)
 
 #### Dependencies
 
@@ -4813,7 +4837,11 @@ or implemented consistently. Without proper partitioning:
 **Per-entity projections use streamId as partition key**
 
 **Invariant:** Events for the same entity must process in the exact order they
-occurred in the Event Store—no out-of-order processing per entity.
+    occurred in the Event Store—no out-of-order processing per entity.
+
+    **Input:** EntityPartitionArgs -- streamId, streamType
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Out-of-order event processing causes projection corruption. An
     ItemRemoved event processed before ItemAdded results in invalid state. Using
@@ -4878,7 +4906,11 @@ _Verified by: Entity projection processes events in order, Different entities pr
 **Customer-scoped projections use customerId as partition key**
 
 **Invariant:** All events affecting a customer's aggregate view must process in
-FIFO order for that customer—regardless of which entity generated the event.
+    FIFO order for that customer—regardless of which entity generated the event.
+
+    **Input:** CustomerPartitionArgs -- customerId
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Customer-scoped projections (order history, metrics, preferences)
     combine data from multiple entities. Processing order-123's event before order-122's
@@ -4927,7 +4959,11 @@ _Verified by: Customer projection aggregates across orders, Customer partition k
 **Global rollup projections use single partition key or maxParallelism 1**
 
 **Invariant:** Global aggregate projections must serialize all updates—no concurrent
-writes to the same aggregate document.
+    writes to the same aggregate document.
+
+    **Input:** RollupCharacteristics -- singleWriter, globalAggregate
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Global rollups (daily sales, inventory totals) write to a single
     document. Concurrent workers cause read-modify-write races: Worker A reads 100,
@@ -4994,7 +5030,11 @@ _Verified by: Global rollup processes sequentially, Global rollup avoids OCC con
 **Cross-context projections use correlationId or sagaId as partition key**
 
 **Invariant:** Events within a saga/workflow must process in causal order across
-all bounded contexts—saga step N+1 must not process before step N.
+    all bounded contexts—saga step N+1 must not process before step N.
+
+    **Input:** SagaPartitionArgs -- correlationId
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Cross-context projections join data from multiple BCs coordinated
     by a saga. Processing OrderConfirmed before StockReserved shows "confirmed" status
@@ -5054,7 +5094,11 @@ _Verified by: Cross-context projection maintains saga ordering, Different sagas 
 **Partition key selection follows decision tree**
 
 **Invariant:** Every projection config must have an explicit `getPartitionKey`
-function—implicit or missing partition keys are rejected at validation time.
+    function—implicit or missing partition keys are rejected at validation time.
+
+    **Input:** ProjectionConfig -- projectionName, getPartitionKey
+
+    **Output:** ValidationResult -- valid, strategy, rationale
 
     **Rationale:** Wrong partition keys cause subtle bugs: too fine-grained wastes
     throughput, too coarse-grained causes out-of-order processing, missing keys
@@ -5089,33 +5133,32 @@ What does this projection aggregate?
 ```
 
 **Partition Key Validation:**
-CommandOrchestrator should validate that: 1. Every projection config has `getPartitionKey` defined 2. Partition key function returns valid `{ name, value }` shape 3. Value is non-empty string
+    CommandOrchestrator should validate that:
+    1. Every projection config has `getPartitionKey` defined
+    2. Partition key function returns valid `{ name, value }` shape
+    3. Value is non-empty string
 
     **Target Implementation:**
 
 ```typescript
 // orchestration/validation.ts
-export function validateProjectionConfig(config: ProjectionConfig): void {
-  if (!config.getPartitionKey) {
-    throw new Error(
-      `Projection "${config.projectionName}" missing getPartitionKey. ` +
-        `Use createEntityPartitionKey, createCustomerPartitionKey, ` +
-        `createSagaPartitionKey, or GLOBAL_PARTITION_KEY.`
-    );
-  }
+    export function validateProjectionConfig(config: ProjectionConfig): void {
+      if (!config.getPartitionKey) {
+        throw new Error(
+          `Projection "${config.projectionName}" missing getPartitionKey. ` +
+          `Use createEntityPartitionKey, createCustomerPartitionKey, ` +
+          `createSagaPartitionKey, or GLOBAL_PARTITION_KEY.`
+        );
+      }
 
-  // Test with sample args
-  const testKey = config.getPartitionKey({
-    orderId: "test",
-    customerId: "test",
-    correlationId: "test",
-  });
-  if (!testKey?.name || !testKey?.value) {
-    throw new Error(
-      `Projection "${config.projectionName}" getPartitionKey must return { name, value }.`
-    );
-  }
-}
+      // Test with sample args
+      const testKey = config.getPartitionKey({ orderId: "test", customerId: "test", correlationId: "test" });
+      if (!testKey?.name || !testKey?.value) {
+        throw new Error(
+          `Projection "${config.projectionName}" getPartitionKey must return { name, value }.`
+        );
+      }
+    }
 ```
 
 _Verified by: Missing partition key fails validation, Invalid partition key shape fails validation, Decision tree guides correct partition choice_
@@ -5123,7 +5166,11 @@ _Verified by: Missing partition key fails validation, Invalid partition key shap
 **DCB retry partition keys align with scope keys for coherent retry**
 
 **Invariant:** DCB retry partition keys must derive from scope keys so retries
-serialize with new operations on the same scope—no interleaving.
+    serialize with new operations on the same scope—no interleaving.
+
+    **Input:** DCBScopeKey -- scopeKey
+
+    **Output:** PartitionKey -- name, value
 
     **Rationale:** Misaligned partition keys allow retry attempt 2 for scope X to
     interleave with new operation for scope X, causing the retry to read stale state.
@@ -5164,16 +5211,16 @@ Without alignment:
 
 ```typescript
 // DCB retry uses aligned partition key
-const handler = withDCBRetry(ctx, {
-  workpool: dcbRetryPool,
-  retryMutation: internal.inventory.reserveWithRetry,
-  scopeKey: createScopeKey(tenantId, "reservation", reservationId),
-  // Partition key for retry derived from scope key
-  getRetryPartitionKey: (scopeKey) => ({
-    name: "dcb",
-    value: scopeKey, // Same as DCB scope for serialization
-  }),
-});
+    const handler = withDCBRetry(ctx, {
+      workpool: dcbRetryPool,
+      retryMutation: internal.inventory.reserveWithRetry,
+      scopeKey: createScopeKey(tenantId, "reservation", reservationId),
+      // Partition key for retry derived from scope key
+      getRetryPartitionKey: (scopeKey) => ({
+        name: "dcb",
+        value: scopeKey,  // Same as DCB scope for serialization
+      }),
+    });
 ```
 
 _Verified by: DCB retry partition aligns with scope, Aligned partition prevents interleaving_

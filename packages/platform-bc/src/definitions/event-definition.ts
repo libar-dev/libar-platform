@@ -1,3 +1,9 @@
+import {
+  EVENT_CATEGORIES,
+  isEventCategory,
+  type EventCategory,
+} from "@libar-dev/platform-contracts-shared";
+
 /**
  * Event Definition Interface
  *
@@ -20,38 +26,8 @@
  * ```
  */
 
-/**
- * All valid event category values.
- *
- * - `domain`: Internal facts within a bounded context for event sourcing
- * - `integration`: Cross-context communication (Published Language)
- * - `trigger`: Minimal payload events (ID only, GDPR-compliant)
- * - `fat`: Full state snapshot events for external systems
- */
-export const EVENT_CATEGORIES = ["domain", "integration", "trigger", "fat"] as const;
-
-/**
- * Event category type derived from the EVENT_CATEGORIES tuple.
- */
-export type EventCategory = (typeof EVENT_CATEGORIES)[number];
-
-/**
- * Type guard to check if a value is a valid EventCategory.
- *
- * @param value - Value to check
- * @returns True if value is a valid EventCategory
- *
- * @example
- * ```typescript
- * const category: unknown = "domain";
- * if (isEventCategory(category)) {
- *   // category is now typed as EventCategory
- * }
- * ```
- */
-export function isEventCategory(value: unknown): value is EventCategory {
-  return typeof value === "string" && (EVENT_CATEGORIES as readonly string[]).includes(value);
-}
+export { EVENT_CATEGORIES, isEventCategory };
+export type { EventCategory };
 
 /**
  * Metadata for an event type.

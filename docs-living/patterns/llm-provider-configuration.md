@@ -1,4 +1,4 @@
-# LLM Provider Configuration
+#  LLM Provider Configuration
 
 **Purpose:** Detailed documentation for the LLM Provider Configuration pattern
 
@@ -21,7 +21,6 @@ Uses OpenRouter as the provider with Google Gemini as the model.
 ## Environment Variables
 
 Set the OpenRouter API key in your Convex deployment:
-
 ```bash
 npx convex env set OPENROUTER_API_KEY "sk-or-v1-xxx..."
 ```

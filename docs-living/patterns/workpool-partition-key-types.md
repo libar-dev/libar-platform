@@ -18,10 +18,10 @@ per-entity event ordering and prevent OCC conflicts.
 
 ### Key Concepts
 
-| Type                  | Purpose                                          |
-| --------------------- | ------------------------------------------------ |
-| PartitionKey          | Base type for partition key structure            |
-| PartitionStrategy     | Category of partition approach                   |
+| Type | Purpose |
+|------|---------|
+| PartitionKey | Base type for partition key structure |
+| PartitionStrategy | Category of partition approach |
 | PartitionKeyExtractor | Function that generates partition keys from args |
 
 ## Use Cases

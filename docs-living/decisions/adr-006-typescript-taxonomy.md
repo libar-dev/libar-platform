@@ -14,7 +14,10 @@
 
 ## Context
 
-The architect package used tag-registry.json files to define taxonomy: - Categories (scanner, extractor, generator, etc.) - Metadata tags (status, phase, effort, etc.) - Aggregation tags (overview, decision, etc.)
+The architect package used tag-registry.json files to define taxonomy:
+    - Categories (scanner, extractor, generator, etc.)
+    - Metadata tags (status, phase, effort, etc.)
+    - Aggregation tags (overview, decision, etc.)
 
     Previously:
     - JSON files were the source of truth
@@ -66,7 +69,11 @@ Adopt TypeScript as the source of truth for taxonomy:
 
 ## Consequences
 
-Positive outcomes: - Compile-time safety for all taxonomy values - IDE autocomplete and refactoring support - Single source of truth (TypeScript) - Zod validation remains for runtime boundary protection
+Positive outcomes:
+    - Compile-time safety for all taxonomy values
+    - IDE autocomplete and refactoring support
+    - Single source of truth (TypeScript)
+    - Zod validation remains for runtime boundary protection
 
     Negative outcomes:
     - External tools expecting JSON need generated output (mitigated by registry-builder.ts)

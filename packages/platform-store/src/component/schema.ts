@@ -1,5 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { vUnknown } from "@libar-dev/platform-core/validation";
+
+const compatGlobalPositionValidator = v.union(v.number(), v.int64());
 
 export default defineSchema({
   /**
@@ -18,10 +21,12 @@ export default defineSchema({
     version: v.number(),
 
     // Global ordering
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
 
     // Context
     boundedContext: v.string(),
+    tenantId: v.optional(v.string()),
+    scopeKey: v.optional(v.string()),
 
     // Event taxonomy (Phase 9)
     // Category: domain, integration, trigger, fat
@@ -48,13 +53,13 @@ export default defineSchema({
      * Each bounded context defines its own event schemas with Zod validation.
      * The Event Store acts as a generic event log, not a typed repository.
      */
-    payload: v.any(),
+    payload: vUnknown(),
 
     /**
      * Event metadata - extensible for correlation, tracing, and custom fields.
      * Intentionally untyped to allow context-specific metadata additions.
      */
-    metadata: v.optional(v.any()),
+    metadata: v.optional(vUnknown()),
 
     /**
      * Idempotency key for duplicate detection (Phase 18b - EventStoreDurability).
@@ -75,15 +80,11 @@ export default defineSchema({
     // For reading all events in global order (projections)
     .index("by_global_position", ["globalPosition"])
     // For filtering by event type
-    .index("by_event_type", ["eventType", "timestamp"])
-    // For filtering by bounded context
-    .index("by_bounded_context", ["boundedContext", "timestamp"])
+    .index("by_event_type_and_global_position", ["eventType", "globalPosition"])
     // For correlation tracing
     .index("by_correlation", ["correlationId"])
-    // For direct event lookups by eventId
-    .index("by_event_id", ["eventId"])
-    // For category-based filtering (Phase 9)
-    .index("by_category", ["category", "globalPosition"])
+    .index("by_correlation_and_global_position", ["correlationId", "globalPosition"])
+    .index("by_scope_key_and_global_position", ["scopeKey", "globalPosition"])
     // For idempotent append duplicate detection (Phase 18b)
     .index("by_idempotency_key", ["idempotencyKey"]),
 
@@ -100,14 +101,44 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_stream", ["streamType", "streamId"]),
 
-  // Note: Global positions are generated using the formula:
-  // timestamp * 1_000_000 + streamHash * 1_000 + (version % 1000)
-  //
-  // This ensures:
-  // - Globally unique positions (stream identity hash included)
-  // - Time-ordered across streams
-  // - Monotonically increasing within each stream
-  // - No collisions when multiple streams append at the same millisecond
+  /**
+   * Global position allocator state.
+   *
+   * Tracks the last millisecond bucket and within-bucket sequence so new event
+   * positions stay strictly monotonic at real `Date.now()` scales.
+   */
+  globalPositionAllocators: defineTable({
+    name: v.string(),
+    lastTimestamp: v.number(),
+    lastSequence: v.number(),
+    updatedAt: v.number(),
+  }).index("by_name", ["name"]),
+
+  /**
+   * Idempotency conflict audit trail.
+   *
+   * Persists rejected same-key/different-payload append attempts so they remain
+   * queryable after the mutation returns a rejection result.
+   */
+  idempotencyConflictAudits: defineTable({
+    auditId: v.string(),
+    idempotencyKey: v.string(),
+    streamType: v.string(),
+    streamId: v.string(),
+    boundedContext: v.string(),
+    tenantId: v.optional(v.string()),
+    incomingEventType: v.string(),
+    existingEventId: v.string(),
+    existingEventType: v.string(),
+    conflictReason: v.string(),
+    incomingFingerprint: v.string(),
+    existingFingerprint: v.string(),
+    incomingPayload: vUnknown(),
+    existingPayload: vUnknown(),
+    attemptedAt: v.number(),
+  })
+    .index("by_idempotency_key", ["idempotencyKey", "attemptedAt"])
+    .index("by_audit_id", ["auditId"]),
 
   /**
    * Projection Status table - tracks projection lifecycle state.
@@ -130,7 +161,7 @@ export default defineSchema({
     ),
 
     // Progress tracking
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
     eventsProcessed: v.number(),
     eventsFailed: v.number(),
 
@@ -174,12 +205,12 @@ export default defineSchema({
     ),
 
     // Progress tracking
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
     commandsEmitted: v.number(),
     commandsFailed: v.number(),
 
     // Custom state for hybrid PMs
-    customState: v.optional(v.any()),
+    customState: v.optional(vUnknown()),
     stateVersion: v.number(),
 
     // Event correlation
@@ -276,12 +307,12 @@ export default defineSchema({
     failedCommand: v.optional(
       v.object({
         commandType: v.string(),
-        payload: v.any(),
+        payload: vUnknown(),
       })
     ),
 
     // Additional context for debugging
-    context: v.optional(v.any()),
+    context: v.optional(vUnknown()),
 
     // Timestamp
     failedAt: v.number(),

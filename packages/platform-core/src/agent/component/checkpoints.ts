@@ -2,6 +2,11 @@ import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { AGENT_AUDIT_EVENT_TYPES } from "./schema.js";
+import {
+  assertBoundaryValuesSize,
+  DEFAULT_BOUNDARY_VALUE_MAX_BYTES,
+} from "../../validation/boundary.js";
+import { vUnknown } from "../../validation/convexUnknown.js";
 
 // ============================================================================
 // Shared Validators
@@ -17,6 +22,7 @@ const checkpointStatusValidator = v.union(
 const auditEventTypeValidator = v.union(
   ...AGENT_AUDIT_EVENT_TYPES.map((t) => v.literal(t))
 ) as ReturnType<typeof v.union>;
+const AGENT_CHECKPOINT_VALUE_MAX_BYTES = DEFAULT_BOUNDARY_VALUE_MAX_BYTES;
 
 function toCheckpointDTO(cp: Doc<"agentCheckpoints">) {
   return {
@@ -150,9 +156,7 @@ export const updateStatus = mutation({
       .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
       .collect();
 
-    for (const checkpoint of checkpoints) {
-      await ctx.db.patch(checkpoint._id, { status, updatedAt: now });
-    }
+    await Promise.all(checkpoints.map((checkpoint) => ctx.db.patch(checkpoint._id, { status, updatedAt: now })));
 
     return { updatedCount: checkpoints.length };
   },
@@ -165,9 +169,17 @@ export const updateStatus = mutation({
 export const patchConfigOverrides = mutation({
   args: {
     agentId: v.string(),
-    configOverrides: v.any(),
+    configOverrides: vUnknown(),
   },
   handler: async (ctx, args) => {
+    assertBoundaryValuesSize([
+      {
+        fieldName: "agentCheckpoints.patchConfigOverrides.configOverrides",
+        value: args.configOverrides,
+        maxBytes: AGENT_CHECKPOINT_VALUE_MAX_BYTES,
+      },
+    ]);
+
     const { agentId, configOverrides } = args;
     const now = Date.now();
 
@@ -176,12 +188,14 @@ export const patchConfigOverrides = mutation({
       .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
       .collect();
 
-    for (const checkpoint of checkpoints) {
-      await ctx.db.patch(checkpoint._id, {
-        configOverrides,
-        updatedAt: now,
-      });
-    }
+    await Promise.all(
+      checkpoints.map((checkpoint) =>
+        ctx.db.patch(checkpoint._id, {
+          configOverrides,
+          updatedAt: now,
+        })
+      )
+    );
 
     return { patchedCount: checkpoints.length };
   },
@@ -202,19 +216,29 @@ export const transitionLifecycle = mutation({
       eventType: auditEventTypeValidator,
       decisionId: v.string(),
       timestamp: v.number(),
-      payload: v.any(),
+      payload: vUnknown(),
     }),
   },
   handler: async (ctx, args) => {
+    assertBoundaryValuesSize([
+      {
+        fieldName: "agentCheckpoints.transitionLifecycle.auditEvent.payload",
+        value: args.auditEvent.payload,
+        maxBytes: AGENT_CHECKPOINT_VALUE_MAX_BYTES,
+      },
+    ]);
+
     const { agentId, status, auditEvent } = args;
     const now = Date.now();
 
-    const existingAudits = await ctx.db
+    const existingAudit = await ctx.db
       .query("agentAuditEvents")
-      .withIndex("by_decisionId", (q) => q.eq("decisionId", auditEvent.decisionId))
-      .collect();
+      .withIndex("by_decision_eventtype", (q) =>
+        q.eq("decisionId", auditEvent.decisionId).eq("eventType", auditEvent.eventType)
+      )
+      .first();
 
-    if (existingAudits.some((a) => a.eventType === auditEvent.eventType)) {
+    if (existingAudit) {
       return { updatedCount: 0 };
     }
 
@@ -224,9 +248,7 @@ export const transitionLifecycle = mutation({
       .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
       .collect();
 
-    for (const checkpoint of checkpoints) {
-      await ctx.db.patch(checkpoint._id, { status, updatedAt: now });
-    }
+    await Promise.all(checkpoints.map((checkpoint) => ctx.db.patch(checkpoint._id, { status, updatedAt: now })));
 
     // Insert audit event in the same transaction
     await ctx.db.insert("agentAuditEvents", {

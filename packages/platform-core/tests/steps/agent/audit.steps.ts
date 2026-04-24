@@ -673,21 +673,17 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       When("I generate a decision ID", () => {
         state.decisionId = generateDecisionId();
       });
-      Then("the decision ID has three underscore-separated parts", () => {
+      Then("the decision ID has two underscore-separated parts", () => {
         const parts = state.decisionId!.split("_");
-        expect(parts.length).toBe(3);
+        expect(parts.length).toBe(2);
       });
       And('the first part is "dec"', () => {
         const parts = state.decisionId!.split("_");
         expect(parts[0]).toBe("dec");
       });
-      And("the second part is a numeric timestamp", () => {
+      And("the second part is a UUIDv7 string", () => {
         const parts = state.decisionId!.split("_");
-        expect(Number(parts[1])).not.toBeNaN();
-      });
-      And("the third part is an 8-character hex suffix", () => {
-        const parts = state.decisionId!.split("_");
-        expect(parts[2].length).toBe(8);
+        expect(parts[1]).toMatch(/^[0-9a-f-]{36}$/);
       });
     });
 
@@ -705,15 +701,15 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
     });
 
-    RuleScenario("Includes timestamp in ID", ({ When, Then }) => {
+    RuleScenario("Uses a UUIDv7 payload in the ID", ({ When, Then }) => {
       When('I generate a decision ID at fixed time "2024-01-15T12:00:00Z"', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
         state.decisionId = generateDecisionId();
       });
-      Then("the timestamp part equals the fixed time epoch", () => {
-        const timestamp = state.decisionId!.split("_")[1];
-        expect(Number(timestamp)).toBe(new Date("2024-01-15T12:00:00Z").getTime());
+      Then("the UUID payload matches UUIDv7 format", () => {
+        const uuid = state.decisionId!.split("_")[1];
+        expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/);
       });
     });
   });
@@ -758,7 +754,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         }
       });
       And("the decisionId matches the dec_ format", () => {
-        expect(state.event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+        expect(state.event.decisionId).toMatch(/^dec_[0-9a-f-]{36}$/);
       });
       And("the timestamp equals current time", () => {
         expect(state.event.timestamp).toBe(state.fakeNow);
@@ -889,7 +885,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         }
       });
       And("the decisionId matches the dec_ format", () => {
-        expect(state.event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+        expect(state.event.decisionId).toMatch(/^dec_[0-9a-f-]{36}$/);
       });
       And("the timestamp equals current time", () => {
         expect(state.event.timestamp).toBe(state.fakeNow);
@@ -973,7 +969,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         }
       });
       And("the decisionId matches the dec_ format", () => {
-        expect(state.event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+        expect(state.event.decisionId).toMatch(/^dec_[0-9a-f-]{36}$/);
       });
       And("the timestamp equals current time", () => {
         expect(state.event.timestamp).toBe(state.fakeNow);
@@ -1020,7 +1016,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         }
       });
       And("the decisionId matches the dec_ format", () => {
-        expect(state.event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+        expect(state.event.decisionId).toMatch(/^dec_[0-9a-f-]{36}$/);
       });
       And("the timestamp equals current time", () => {
         expect(state.event.timestamp).toBe(state.fakeNow);
@@ -1067,7 +1063,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         }
       });
       And("the decisionId matches the dec_ format", () => {
-        expect(state.event.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+        expect(state.event.decisionId).toMatch(/^dec_[0-9a-f-]{36}$/);
       });
       And("the timestamp equals current time", () => {
         expect(state.event.timestamp).toBe(state.fakeNow);

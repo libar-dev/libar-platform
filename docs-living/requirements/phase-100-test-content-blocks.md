@@ -16,20 +16,19 @@
 ## Description
 
 This feature demonstrates what content blocks are captured and rendered
-by the PRD generator. Use this as a reference for writing rich specs.
+  by the PRD generator. Use this as a reference for writing rich specs.
 
-**Overview**
+  **Overview**
 
-The delivery process supports **rich Markdown** in descriptions:
+  The delivery process supports **rich Markdown** in descriptions:
+  - Bullet points work
+  - *Italics* and **bold** work
+  - `inline code` works
 
-- Bullet points work
-- _Italics_ and **bold** work
-- `inline code` works
+  **Custom Section**
 
-**Custom Section**
-
-You can create any section you want using bold headers.
-This content will appear in the PRD Description section.
+  You can create any section you want using bold headers.
+  This content will appear in the PRD Description section.
 
 ## Acceptance Criteria
 
@@ -80,7 +79,7 @@ Use DocStrings when you need multi-line content blocks.
 **Business rules appear as a separate section**
 
 Rule descriptions provide context for why this business rule exists.
-You can include multiple paragraphs here.
+    You can include multiple paragraphs here.
 
     This is a second paragraph explaining edge cases or exceptions.
 
@@ -89,7 +88,7 @@ _Verified by: Scenario with DocString for rich content, Scenario with DataTable 
 **Multiple rules create multiple Business Rule entries**
 
 Each Rule keyword creates a separate entry in the Business Rules section.
-This helps organize complex features into logical business domains.
+    This helps organize complex features into logical business domains.
 
 _Verified by: Simple scenario under second rule, Scenario with examples table_
 

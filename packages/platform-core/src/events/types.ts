@@ -3,6 +3,7 @@
  */
 
 import type { EventCategory } from "./category.js";
+import type { GlobalPosition, GlobalPositionLike } from "./globalPosition.js";
 import type { UnknownRecord } from "../types.js";
 
 /**
@@ -25,7 +26,7 @@ export interface EventMetadata {
   version: number;
 
   /** Global position across all events (for projections) */
-  globalPosition: number;
+  globalPosition: GlobalPosition;
 
   /** Timestamp when the event was created */
   timestamp: number;
@@ -116,7 +117,7 @@ export interface AppendResult {
   eventIds?: string[];
 
   /** The global positions assigned (if success) */
-  globalPositions?: number[];
+  globalPositions?: GlobalPosition[];
 
   /** The new stream version (if success) */
   newVersion?: number;
@@ -141,7 +142,7 @@ export interface ReadStreamOptions {
  */
 export interface ReadAllOptions {
   /** Start reading from this global position (exclusive) */
-  fromPosition?: number;
+  fromPosition?: GlobalPositionLike;
 
   /** Maximum number of events to return */
   limit?: number;

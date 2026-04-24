@@ -17,30 +17,29 @@
 
 **Vision:** Transform the delivery process from a documentation tool into a delivery operating system.
 
-Enable code-driven, multi-workflow documentation where code + .feature
-files are authoritative sources, and all artifacts are generated projections.
+  Enable code-driven, multi-workflow documentation where code + .feature
+  files are authoritative sources, and all artifacts are generated projections.
 
-**Problem:** Current delivery process capabilities are limited to document generation.
-The convergence roadmap identified 8 opportunities: Process Views as Projections,
-DoD as Machine-Checkable, Earned-Value Tracking, Requirements-Tests Traceability,
-Architecture Change Control, Progressive Governance, and Living Roadmap.
+  **Problem:** Current delivery process capabilities are limited to document generation.
+  The convergence roadmap identified 8 opportunities: Process Views as Projections,
+  DoD as Machine-Checkable, Earned-Value Tracking, Requirements-Tests Traceability,
+  Architecture Change Control, Progressive Governance, and Living Roadmap.
 
-**Solution:** Incrementally implement convergence opportunities, starting with foundation
-work (metadata tags) and progressing to validators, generators, and eventually
-Convex-native live projections.
+  **Solution:** Incrementally implement convergence opportunities, starting with foundation
+  work (metadata tags) and progressing to validators, generators, and eventually
+  Convex-native live projections.
 
-**Strategic Direction:**
+  **Strategic Direction:**
+  - Package (@libar-dev/architect): Document generation capabilities
+  - Monorepo: Eventually leverage Convex projections for live queryable views
 
-- Package (@libar-dev/architect): Document generation capabilities
-- Monorepo: Eventually leverage Convex projections for live queryable views
+  **Architecture Decision (PDR-002):**
+  Specs (this file) capture requirements that can evolve independently.
+  TypeScript phase files link deliverables to phases/releases centrally.
+  This separation enables specs to be combined, split, or refined without
+  affecting release association.
 
-**Architecture Decision (PDR-002):**
-Specs (this file) capture requirements that can evolve independently.
-TypeScript phase files link deliverables to phases/releases centrally.
-This separation enables specs to be combined, split, or refined without
-affecting release association.
-
-See: deps/libar-dev-packages/packages/tooling/architect/docs/ideation-convergence/
+  See: deps/libar-dev-packages/packages/tooling/architect/docs/ideation-convergence/
 
 ## Acceptance Criteria
 

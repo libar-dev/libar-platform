@@ -76,6 +76,11 @@ export {
   buildSagaStepIdempotencyKey,
   buildScheduledJobIdempotencyKey,
 } from "./idempotentAppend.js";
+export {
+  createIdempotencyFingerprint,
+  stableStringify,
+} from "./idempotencyFingerprint.js";
+export type { IdempotencyFingerprintInput } from "./idempotencyFingerprint.js";
 
 // Outbox Pattern
 export type { OutboxHandlerContext, OutboxHandlerFullConfig } from "./outbox.js";

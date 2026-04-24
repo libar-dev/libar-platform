@@ -22,7 +22,7 @@ the action/mutation split.
 ## Design Decisions
 
 - AD-5: onComplete data contract — action returns AgentActionResult,
-  context carries AgentWorkpoolContext
+        context carries AgentWorkpoolContext
 - AD-6: Idempotency — onComplete checks checkpoint position via OCC
 - AD-7: Persistence ordering — checkpoint updated LAST
 - AD-8: Separate factory from action handler

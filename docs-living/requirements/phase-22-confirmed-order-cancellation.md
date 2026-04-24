@@ -15,37 +15,35 @@
 ## Description
 
 **Problem:** The Order FSM treats `confirmed` as terminal. Orders cannot be
-cancelled after saga confirmation, blocking the Agent BC demo which requires
-3+ cancellations to trigger churn risk detection. The Reservation FSM already
-supports `confirmed -> released`, but no coordination exists to release
-reservations when confirmed orders are cancelled.
+  cancelled after saga confirmation, blocking the Agent BC demo which requires
+  3+ cancellations to trigger churn risk detection. The Reservation FSM already
+  supports `confirmed -> released`, but no coordination exists to release
+  reservations when confirmed orders are cancelled.
 
-**Solution:** Enable cancellation of confirmed orders with automatic reservation release:
+  **Solution:** Enable cancellation of confirmed orders with automatic reservation release:
+  1. **FSM change:** Add `confirmed -> cancelled` transition to Order FSM
+  2. **Decider change:** Remove `ORDER_ALREADY_CONFIRMED` rejection in CancelOrder
+  3. **Process Manager:** ReservationReleaseOnOrderCancel PM releases reservation
+     when a confirmed order is cancelled
 
-1. **FSM change:** Add `confirmed -> cancelled` transition to Order FSM
-2. **Decider change:** Remove `ORDER_ALREADY_CONFIRMED` rejection in CancelOrder
-3. **Process Manager:** ReservationReleaseOnOrderCancel PM releases reservation
-   when a confirmed order is cancelled
+  **Why It Matters:**
+  | Benefit | How |
+  | Agent BC enablement | 3+ cancellations trigger churn risk pattern detection |
+  | Business flexibility | Customers can cancel even after confirmation |
+  | Stock recovery | Reserved inventory returns to available pool |
+  | Consistency | Order and Reservation states stay synchronized |
 
-**Why It Matters:**
-| Benefit | How |
-| Agent BC enablement | 3+ cancellations trigger churn risk pattern detection |
-| Business flexibility | Customers can cancel even after confirmation |
-| Stock recovery | Reserved inventory returns to available pool |
-| Consistency | Order and Reservation states stay synchronized |
+  **Cross-Context Coordination:**
+  | Event Source | Event | PM Action | Target BC |
+  | Orders BC | OrderCancelled | Trigger | PM |
+  | PM | ReleaseReservation | Command | Inventory BC |
+  | Inventory BC | ReservationReleased | Audit | - |
 
-**Cross-Context Coordination:**
-| Event Source | Event | PM Action | Target BC |
-| Orders BC | OrderCancelled | Trigger | PM |
-| PM | ReleaseReservation | Command | Inventory BC |
-| Inventory BC | ReservationReleased | Audit | - |
-
-**Design Decision: PM vs Saga:**
-
-- No compensation needed (simple event -> command)
-- No multi-step coordination
-- No external event awaits
-- Therefore: **Process Manager** is the correct choice (per ADR-033)
+  **Design Decision: PM vs Saga:**
+  - No compensation needed (simple event -> command)
+  - No multi-step coordination
+  - No external event awaits
+  - Therefore: **Process Manager** is the correct choice (per ADR-033)
 
 ## Acceptance Criteria
 
@@ -111,7 +109,7 @@ reservations when confirmed orders are cancelled.
 **Confirmed orders can be cancelled**
 
 The Order FSM must allow transitioning from `confirmed` to `cancelled`.
-The CancelOrder decider must accept cancellation requests for confirmed orders.
+    The CancelOrder decider must accept cancellation requests for confirmed orders.
 
     **FSM Change:**
 
@@ -127,10 +125,10 @@ The CancelOrder decider must accept cancellation requests for confirmed orders.
 
 ```typescript
 // Remove this rejection:
-// if (state.status === "confirmed") {
-//   return rejected("ORDER_ALREADY_CONFIRMED", "...");
-// }
-// Let FSM handle the transition validation
+    // if (state.status === "confirmed") {
+    //   return rejected("ORDER_ALREADY_CONFIRMED", "...");
+    // }
+    // Let FSM handle the transition validation
 ```
 
 _Verified by: Cancel a confirmed order, Cannot cancel already cancelled order (unchanged behavior), OrderCancelled evolves confirmed state to cancelled_
@@ -138,7 +136,7 @@ _Verified by: Cancel a confirmed order, Cannot cancel already cancelled order (u
 **Reservation is released when confirmed order is cancelled**
 
 The ReservationReleaseOnOrderCancel PM subscribes to OrderCancelled events.
-When triggered, it checks if the order had a reservation and releases it.
+    When triggered, it checks if the order had a reservation and releases it.
 
     **PM Definition:**
     | Property | Value |
@@ -152,29 +150,28 @@ When triggered, it checks if the order had a reservation and releases it.
 
 ```typescript
 async function handleOrderCancelled(ctx, event) {
-  // Query orderWithInventoryStatus projection for reservationId
-  const orderStatus = await ctx.db
-    .query("orderWithInventoryStatus")
-    .withIndex("by_orderId", (q) => q.eq("orderId", event.payload.orderId))
-    .first();
+      // Query orderWithInventoryStatus projection for reservationId
+      const orderStatus = await ctx.db
+        .query("orderWithInventoryStatus")
+        .withIndex("by_orderId", q => q.eq("orderId", event.payload.orderId))
+        .first();
 
-  // Only release if reservation exists and is not already released
-  if (orderStatus?.reservationId && orderStatus.reservationStatus !== "released") {
-    return [
-      {
-        commandType: "ReleaseReservation",
-        payload: {
-          reservationId: orderStatus.reservationId,
-          reason: `Order ${event.payload.orderId} cancelled: ${event.payload.reason}`,
-        },
-        causationId: event.eventId,
-        correlationId: event.correlationId,
-      },
-    ];
-  }
+      // Only release if reservation exists and is not already released
+      if (orderStatus?.reservationId &&
+          orderStatus.reservationStatus !== "released") {
+        return [{
+          commandType: "ReleaseReservation",
+          payload: {
+            reservationId: orderStatus.reservationId,
+            reason: `Order ${event.payload.orderId} cancelled: ${event.payload.reason}`,
+          },
+          causationId: event.eventId,
+          correlationId: event.correlationId,
+        }];
+      }
 
-  return []; // No command to emit
-}
+      return []; // No command to emit
+    }
 ```
 
 _Verified by: Reservation is released after confirmed order cancellation, Cancelling draft order does not trigger reservation release, Cancelling submitted order with pending reservation releases it, PM is idempotent for duplicate OrderCancelled events_

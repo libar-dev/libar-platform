@@ -15,41 +15,39 @@
 ## Description
 
 **Problem:** The dual-write pattern (CMS + Event) works when both operations are in the
-same mutation, but several scenarios can result in lost events:
+  same mutation, but several scenarios can result in lost events:
 
-1. **External API success, event capture failure** - Customer charged but PaymentCompleted
-   event never recorded. Projection stale, saga stuck, no audit trail.
-2. **Cross-context event publication failure** - OrderSubmitted published but inventory
-   context never receives it. Fire-and-forget EventBus loses events.
-3. **Long-running BC operations** - Multi-step processes (validation, enrichment, external
-   calls) fail partway through with no record of what happened.
-4. **Action result capture** - Actions are at-most-once. If the mutation that records
-   the result fails, the action's side effect is orphaned.
+  1. **External API success, event capture failure** - Customer charged but PaymentCompleted
+     event never recorded. Projection stale, saga stuck, no audit trail.
+  2. **Cross-context event publication failure** - OrderSubmitted published but inventory
+     context never receives it. Fire-and-forget EventBus loses events.
+  3. **Long-running BC operations** - Multi-step processes (validation, enrichment, external
+     calls) fail partway through with no record of what happened.
+  4. **Action result capture** - Actions are at-most-once. If the mutation that records
+     the result fails, the action's side effect is orphaned.
 
-**Solution:** Durable event persistence patterns:
+  **Solution:** Durable event persistence patterns:
+  - **Outbox pattern** - Action results captured via onComplete mutation with idempotency
+  - **Durable publication** - Cross-context events use Workpool with retry and dead letters
+  - **Intent/Completion events** - Long-running operations bracket with intent -> completion
+  - **Idempotent append** - Event append checks for existing event by idempotency key
+  - **Durable append via actions** - Failed appends retried via Workpool actions (not mutations)
+  - **Poison event handling** - Malformed events quarantined after repeated failures
 
-- **Outbox pattern** - Action results captured via onComplete mutation with idempotency
-- **Durable publication** - Cross-context events use Workpool with retry and dead letters
-- **Intent/Completion events** - Long-running operations bracket with intent -> completion
-- **Idempotent append** - Event append checks for existing event by idempotency key
-- **Durable append via actions** - Failed appends retried via Workpool actions (not mutations)
-- **Poison event handling** - Malformed events quarantined after repeated failures
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | No lost events | Outbox pattern ensures action results become events |
+  | Complete audit trail | Every external side effect has corresponding event |
+  | Cross-context reliability | Workpool-backed publication with retry |
+  | Saga advancement | Events that trigger saga steps are guaranteed to persist |
+  | Reconciliation support | Intent events enable detection of incomplete operations |
+  | Projection resilience | Poison events quarantined, don't block processing |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| No lost events | Outbox pattern ensures action results become events |
-| Complete audit trail | Every external side effect has corresponding event |
-| Cross-context reliability | Workpool-backed publication with retry |
-| Saga advancement | Events that trigger saga steps are guaranteed to persist |
-| Reconciliation support | Intent events enable detection of incomplete operations |
-| Projection resilience | Poison events quarantined, don't block processing |
-
-**Relationship to Other Specs:**
-
-- **EventStoreFoundation** - Provides append API with OCC; this spec ensures appends succeed
-- **DurableFunctionAdapters** - Provides Workpool/Retrier; this spec uses them for event durability
-- **EventReplayInfrastructure** - Replays events; this spec ensures events exist to replay
-- **WorkpoolPartitioningStrategy** - Partition key patterns; this spec uses for publication ordering
+  **Relationship to Other Specs:**
+  - **EventStoreFoundation** - Provides append API with OCC; this spec ensures appends succeed
+  - **DurableFunctionAdapters** - Provides Workpool/Retrier; this spec uses them for event durability
+  - **EventReplayInfrastructure** - Replays events; this spec ensures events exist to replay
+  - **WorkpoolPartitioningStrategy** - Partition key patterns; this spec uses for publication ordering
 
 ## Dependencies
 
@@ -276,7 +274,7 @@ Files that implement this pattern:
 **Action results are captured as events via onComplete mutation**
 
 **Invariant:** Every external API result (success or failure) must be captured as a
-domain event within the bounded context's event stream.
+    domain event within the bounded context's event stream.
 
     **Rationale:** Actions are at-most-once by default. If an action succeeds but the
     subsequent event append fails, the side effect is orphaned. The outbox pattern uses
@@ -301,7 +299,7 @@ _Verified by: External API success is captured as event, External API failure is
 **Event append is idempotent using idempotency keys**
 
 **Invariant:** Each logical event is stored exactly once in the event store, regardless
-of how many times the append operation is retried.
+    of how many times the append operation is retried.
 
     **Rationale:** Retries (Workpool, manual, saga compensation) can cause duplicate append
     attempts. Without idempotency keys, the same business event could be stored multiple times,
@@ -326,7 +324,7 @@ _Verified by: First append with idempotency key succeeds, Duplicate append retur
 **Cross-context events use Workpool-backed publication with tracking**
 
 **Invariant:** Every cross-context event publication must be tracked, retried on failure,
-and dead-lettered if undeliverable after maximum attempts.
+    and dead-lettered if undeliverable after maximum attempts.
 
     **Rationale:** Fire-and-forget publication loses events when subscribers fail. For event-driven
     architectures to be reliable, cross-context communication must be durable with guaranteed
@@ -348,7 +346,7 @@ _Verified by: Event is delivered to all target contexts, Failed delivery is retr
 **Long-running operations bracket with intent and completion events**
 
 **Invariant:** Operations that span multiple steps, external calls, or significant time
-must record an "intent" event at start and "completion" event at end.
+    must record an "intent" event at start and "completion" event at end.
 
     **Rationale:** Without bracketing, partially-completed operations are invisible to
     monitoring, undetectable by reconciliation, and create audit trail gaps. Intent events
@@ -373,7 +371,7 @@ _Verified by: Intent and completion events bracket operation, Timeout detects in
 **Failed event appends are recovered via Workpool actions**
 
 **Invariant:** Event append failures from async contexts (scheduled jobs, saga steps)
-are retried with exponential backoff until success or dead letter.
+    are retried with exponential backoff until success or dead letter.
 
     **Rationale:** Workpool only retries actions, not mutations. By wrapping the idempotent
     append mutation in an action, we get Workpool retry semantics while the underlying
@@ -402,7 +400,7 @@ _Verified by: Append succeeds on first attempt, Append retried after transient f
 **Malformed events are quarantined after repeated failures**
 
 **Invariant:** Events that cause projection processing failures are tracked; after N
-failures, they are quarantined and skipped to prevent infinite retry loops.
+    failures, they are quarantined and skipped to prevent infinite retry loops.
 
     **Rationale:** A single malformed event should not block all downstream projections
     indefinitely. Quarantine allows progress while alerting operators for manual investigation.
@@ -427,7 +425,7 @@ _Verified by: Event quarantined after repeated failures, Quarantined events skip
 **Failed publications are tracked and recoverable**
 
 **Invariant:** When cross-context event delivery fails after all retries, a dead letter
-record is created. Operations teams can investigate and retry manually or automatically.
+    record is created. Operations teams can investigate and retry manually or automatically.
 
     **Rationale:** Dead letters provide visibility into integration failures and enable
     recovery without data loss. Context-specific stats help identify systemic issues

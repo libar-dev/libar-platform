@@ -12,6 +12,7 @@ import {
 import { createCorrelationChain } from "../correlation/index.js";
 import type { CorrelationChain } from "../correlation/index.js";
 import { DEFAULT_EVENT_CATEGORY, DEFAULT_SCHEMA_VERSION } from "../events/category.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { MiddlewareCommandInfo } from "../middleware/types.js";
 import type {
   CommandConfig,
@@ -24,7 +25,11 @@ import type {
 } from "./types.js";
 import type { UnknownRecord } from "../types.js";
 import type { Logger } from "../logging/types.js";
-import { createPlatformNoOpLogger } from "../logging/scoped.js";
+import { createPlatformDefaultLogger } from "../logging/scoped.js";
+import type { PlatformMetrics } from "../metrics/index.js";
+import { createDefaultPlatformMetrics } from "../metrics/index.js";
+
+const MAX_SECONDARY_PROJECTIONS = 50;
 
 /**
  * @architect
@@ -87,9 +92,12 @@ import { createPlatformNoOpLogger } from "../logging/scoped.js";
  */
 export class CommandOrchestrator {
   private readonly logger: Logger;
+  private readonly metrics: PlatformMetrics;
+  private readonly pendingQueueDepth = new Map<string, number>();
 
   constructor(private readonly deps: OrchestratorDependencies) {
-    this.logger = deps.logger ?? createPlatformNoOpLogger();
+    this.logger = deps.logger ?? createPlatformDefaultLogger("Orchestrator");
+    this.metrics = deps.metrics ?? createDefaultPlatformMetrics("OrchestratorMetrics");
   }
 
   /**
@@ -114,114 +122,102 @@ export class CommandOrchestrator {
     config: CommandConfig<Omit<TArgs, "commandId">, THandlerArgs, TResult, TProjectionArgs, TData>,
     args: TArgs
   ): Promise<CommandMutationResult<TData>> {
-    // Extract commandId from args, rest is the command payload
-    const { commandId: providedCommandId, ...commandArgs } = args;
-    // Convert string to branded type at API boundary
-    const commandId = providedCommandId ? toCommandId(providedCommandId) : generateCommandId();
+    const startedAt = Date.now();
+    let finalStatus = "unknown";
 
-    // Create correlation chain for request tracing
-    // The chain bundles commandId, correlationId, and causationId together
-    const chain: CorrelationChain = createCorrelationChain(commandId);
-    const { correlationId } = chain;
+    try {
+      // Extract commandId from args, rest is the command payload
+      const { commandId: providedCommandId, ...commandArgs } = args;
+      // Convert string to branded type at API boundary
+      const commandId = providedCommandId ? toCommandId(providedCommandId) : generateCommandId();
 
-    this.logger.debug("Command received", {
-      commandType: config.commandType,
-      commandId,
-      correlationId,
-      boundedContext: config.boundedContext,
-    });
+      // Create correlation chain for request tracing
+      // The chain bundles commandId, correlationId, and causationId together
+      const chain: CorrelationChain = createCorrelationChain(commandId);
+      const { correlationId } = chain;
 
-    // 1. Check idempotency BEFORE middleware pipeline
-    // This ensures duplicate commands return immediately without running middleware hooks
-    const cmdResult = await this.deps.commandBus.recordCommand(ctx, {
-      commandId,
-      commandType: config.commandType,
-      targetContext: config.boundedContext,
-      payload: commandArgs as UnknownRecord,
-      metadata: { correlationId, timestamp: Date.now() },
-    });
-
-    if (cmdResult.status === "duplicate") {
-      this.logger.info("Command duplicate detected", {
+      this.logger.debug("Command received", {
         commandType: config.commandType,
         commandId,
         correlationId,
+        boundedContext: config.boundedContext,
       });
-      // Return cached result for idempotency - no middleware needed
-      return cmdResult;
-    }
 
-    // Execute with middleware pipeline (always configured, required dependency)
-    // Look up command metadata from registry if available
-    const registration = this.deps.registry?.getRegistration(config.commandType);
-    const category = registration?.metadata.category ?? "aggregate";
-    const targetAggregate = registration?.metadata.targetAggregate;
+      const cmdResult = await this.deps.commandBus.recordCommand(ctx, {
+        commandId,
+        commandType: config.commandType,
+        targetContext: config.boundedContext,
+        payload: commandArgs as UnknownRecord,
+        metadata: { correlationId, timestamp: Date.now() },
+      });
 
-    const middlewareCommandInfo: MiddlewareCommandInfo = {
-      type: config.commandType,
-      boundedContext: config.boundedContext,
-      category,
-      args: commandArgs as UnknownRecord,
-      commandId,
-      correlationId,
-    };
-
-    // Add target aggregate if available from registry
-    if (targetAggregate) {
-      middlewareCommandInfo.targetAggregate = targetAggregate;
-    }
-
-    // Pipeline.execute wraps the handler with before/after hooks
-    // The handler receives the command info and returns a CommandHandlerResult
-    // We need to adapt this to CommandMutationResult
-    //
-    // Capture globalPosition outside the callback scope so it survives the
-    // middleware type translation. The CommandHandlerResult type doesn't have
-    // globalPosition, but we need to return it in the final CommandMutationResult.
-    let capturedGlobalPosition: number | undefined;
-
-    const pipelineResult = await this.deps.middlewarePipeline.execute(
-      middlewareCommandInfo,
-      {}, // Empty custom context - can be extended in future
-      async () => {
-        // Execute the core orchestration flow (skipping idempotency check)
-        const coreResult = await this.executeCoreAfterIdempotency(
-          ctx,
-          config,
-          commandArgs as Omit<TArgs, "commandId">,
+      if (cmdResult.status === "duplicate") {
+        finalStatus = "duplicate";
+        this.logger.info("Command duplicate detected", {
+          commandType: config.commandType,
           commandId,
-          chain
-        );
+          correlationId,
+        });
+        return cmdResult;
+      }
 
-        // Adapt CommandMutationResult to CommandHandlerResult for middleware
-        // Middleware expects status of "success", "rejected", or "failed"
-        if (coreResult.status === "success") {
-          // Capture globalPosition for restoration after middleware translation
-          capturedGlobalPosition = coreResult.globalPosition;
-          // Note: streamId and payload are placeholders for middleware compatibility.
-          // Actual values are available in coreResult but middleware hooks don't need them.
-          return {
-            status: "success" as const,
-            data: coreResult.data,
-            version: coreResult.version,
-            event: {
-              eventId: coreResult.eventId,
-              eventType: config.commandType,
-              streamType: config.boundedContext,
-              streamId: "",
-              payload: {},
-              metadata: { correlationId, causationId: chain.causationId },
-            },
-          } as CommandHandlerResult<TData>;
-        } else if (coreResult.status === "rejected") {
-          return {
-            status: "rejected" as const,
-            code: coreResult.code,
-            reason: coreResult.reason,
-            context: coreResult.context,
-          } as CommandHandlerResult<TData>;
-        } else {
-          // "failed" status
+      const registration = this.deps.registry?.getRegistration(config.commandType);
+      const category = registration?.metadata.category ?? "aggregate";
+      const targetAggregate = registration?.metadata.targetAggregate;
+
+      const middlewareCommandInfo: MiddlewareCommandInfo = {
+        type: config.commandType,
+        boundedContext: config.boundedContext,
+        category,
+        args: commandArgs as UnknownRecord,
+        commandId,
+        correlationId,
+      };
+
+      if (targetAggregate) {
+        middlewareCommandInfo.targetAggregate = targetAggregate;
+      }
+
+      let capturedGlobalPosition: GlobalPositionLike | undefined;
+
+      const pipelineResult = await this.deps.middlewarePipeline.execute(
+        middlewareCommandInfo,
+        {},
+        async () => {
+          const coreResult = await this.executeCoreAfterIdempotency(
+            ctx,
+            config,
+            commandArgs as Omit<TArgs, "commandId">,
+            commandId,
+            chain
+          );
+
+          if (coreResult.status === "success") {
+            capturedGlobalPosition = coreResult.globalPosition;
+            return {
+              status: "success" as const,
+              data: coreResult.data,
+              version: coreResult.version,
+              event: {
+                eventId: coreResult.eventId,
+                eventType: config.commandType,
+                streamType: config.boundedContext,
+                streamId: "",
+                payload: {},
+                metadata: { correlationId, causationId: chain.causationId },
+              },
+            } as CommandHandlerResult<TData>;
+          }
+
+          if (coreResult.status === "rejected") {
+            return {
+              status: "rejected" as const,
+              code: coreResult.code,
+              reason: coreResult.reason,
+              context: coreResult.context,
+            } as CommandHandlerResult<TData>;
+          }
+
           return {
             status: "failed" as const,
             reason: coreResult.reason,
@@ -234,41 +230,49 @@ export class CommandOrchestrator {
               metadata: { correlationId, causationId: chain.causationId },
             },
           } as CommandHandlerResult<TData>;
-        }
-      },
-      ctx // Pass raw Convex context for middlewares that need it (e.g., rate limiting)
-    );
+        },
+        ctx
+      );
 
-    // Convert pipeline result back to CommandMutationResult
-    if (pipelineResult.status === "success") {
-      const successResult = pipelineResult as CommandHandlerSuccess<TData>;
-      return {
-        status: "success" as const,
-        data: successResult.data,
-        version: successResult.version,
-        eventId: successResult.event.eventId,
-        globalPosition: capturedGlobalPosition, // Restored from capture
-      };
-    } else if (pipelineResult.status === "rejected") {
-      const rejectedResult = pipelineResult as {
-        code: string;
-        reason: string;
-        context?: UnknownRecord;
-      };
-      return {
-        status: "rejected" as const,
-        code: rejectedResult.code,
-        reason: rejectedResult.reason,
-        // Only include context if defined (exactOptionalPropertyTypes compliance)
-        ...(rejectedResult.context ? { context: rejectedResult.context } : {}),
-      };
-    } else {
-      // "failed" status
+      if (pipelineResult.status === "success") {
+        finalStatus = "success";
+        const successResult = pipelineResult as CommandHandlerSuccess<TData>;
+        return {
+          status: "success" as const,
+          data: successResult.data,
+          version: successResult.version,
+          eventId: successResult.event.eventId,
+          globalPosition: capturedGlobalPosition,
+        };
+      }
+
+      if (pipelineResult.status === "rejected") {
+        finalStatus = "rejected";
+        const rejectedResult = pipelineResult as {
+          code: string;
+          reason: string;
+          context?: UnknownRecord;
+        };
+        return {
+          status: "rejected" as const,
+          code: rejectedResult.code,
+          reason: rejectedResult.reason,
+          ...(rejectedResult.context ? { context: rejectedResult.context } : {}),
+        };
+      }
+
+      finalStatus = "failed";
       return {
         status: "failed" as const,
         reason: (pipelineResult as { reason: string }).reason,
         eventId: toEventId((pipelineResult as { event: { eventId: string } }).event.eventId),
       };
+    } finally {
+      this.metrics.histogram("command.duration", Date.now() - startedAt, {
+        commandType: config.commandType,
+        boundedContext: config.boundedContext,
+        status: finalStatus,
+      });
     }
   }
 
@@ -290,7 +294,13 @@ export class CommandOrchestrator {
     commandId: CommandId,
     chain: CorrelationChain
   ): Promise<
-    | { status: "success"; data: TData; version: number; eventId: EventId; globalPosition: number }
+    | {
+        status: "success";
+        data: TData;
+        version: number;
+        eventId: EventId;
+        globalPosition: GlobalPositionLike;
+      }
     | { status: "rejected"; code: string; reason: string; context?: UnknownRecord }
     | { status: "failed"; reason: string; eventId: EventId; context?: UnknownRecord }
   > {
@@ -372,6 +382,9 @@ export class CommandOrchestrator {
           {
             eventId: failedResult.event.eventId,
             eventType: failedResult.event.eventType,
+            ...(failedResult.event.scopeKey !== undefined
+              ? { scopeKey: failedResult.event.scopeKey }
+              : {}),
             payload: failedResult.event.payload,
             metadata: failedResult.event.metadata,
           },
@@ -408,7 +421,9 @@ export class CommandOrchestrator {
         // Use projection-specific onComplete, fall back to orchestrator default
         const failedOnComplete = config.failedProjection.onComplete ?? this.deps.defaultOnComplete;
 
-        await this.deps.projectionPool.enqueueMutation(
+        await this.enqueueMutationWithMetrics(
+          "projectionPool",
+          this.deps.projectionPool,
           ctx,
           config.failedProjection.handler,
           failedProjectionArgs,
@@ -462,6 +477,9 @@ export class CommandOrchestrator {
         {
           eventId: successResult.event.eventId,
           eventType: successResult.event.eventType,
+          ...(successResult.event.scopeKey !== undefined
+            ? { scopeKey: successResult.event.scopeKey }
+            : {}),
           payload: successResult.event.payload,
           metadata: successResult.event.metadata,
         },
@@ -539,7 +557,13 @@ export class CommandOrchestrator {
     // Use projection-specific onComplete, fall back to orchestrator default
     const onComplete = config.projection.onComplete ?? this.deps.defaultOnComplete;
 
-    await this.deps.projectionPool.enqueueMutation(ctx, config.projection.handler, projectionArgs, {
+    await this.enqueueMutationWithMetrics(
+      "projectionPool",
+      this.deps.projectionPool,
+      ctx,
+      config.projection.handler,
+      projectionArgs,
+      {
       // Note: key-based partitioning not yet available in workpool
       // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
       ...(onComplete ? { onComplete } : {}),
@@ -552,7 +576,8 @@ export class CommandOrchestrator {
         correlationId: chain.correlationId,
         causationId: chain.causationId,
       },
-    });
+      }
+    );
 
     this.logger.debug("Projection triggered", {
       commandType: config.commandType,
@@ -572,6 +597,12 @@ export class CommandOrchestrator {
     // The WorkpoolClient.enqueueMutationBatch method is available for future use
     // if Workpool adds support for per-item context.
     if (config.secondaryProjections) {
+      if (config.secondaryProjections.length > MAX_SECONDARY_PROJECTIONS) {
+        throw new Error(
+          `Command ${config.commandType} configured ${config.secondaryProjections.length} secondary projections. Maximum supported fan-out is ${MAX_SECONDARY_PROJECTIONS}.`
+        );
+      }
+
       await Promise.all(
         config.secondaryProjections.map(async (secondary) => {
           const secondaryArgs = secondary.toProjectionArgs(
@@ -584,7 +615,13 @@ export class CommandOrchestrator {
           // Use secondary-specific onComplete, fall back to orchestrator default
           const secondaryOnComplete = secondary.onComplete ?? this.deps.defaultOnComplete;
 
-          return this.deps.projectionPool.enqueueMutation(ctx, secondary.handler, secondaryArgs, {
+          return this.enqueueMutationWithMetrics(
+            "fanoutPool",
+            this.deps.fanoutPool,
+            ctx,
+            secondary.handler,
+            secondaryArgs,
+            {
             // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
             ...(secondaryOnComplete ? { onComplete: secondaryOnComplete } : {}),
             context: {
@@ -596,7 +633,8 @@ export class CommandOrchestrator {
               correlationId: chain.correlationId,
               causationId: chain.causationId,
             },
-          });
+            }
+          );
         })
       );
     }
@@ -610,7 +648,9 @@ export class CommandOrchestrator {
       // Use saga-specific onComplete, fall back to orchestrator default
       const sagaOnComplete = config.sagaRoute.onComplete ?? this.deps.defaultOnComplete;
 
-      await this.deps.projectionPool.enqueueMutation(
+      await this.enqueueMutationWithMetrics(
+        "sagaPool",
+        this.deps.sagaPool,
         ctx,
         config.sagaRoute.router,
         {
@@ -648,7 +688,7 @@ export class CommandOrchestrator {
           eventType: successResult.event.eventType,
           streamType: successResult.event.streamType,
           streamId: successResult.event.streamId,
-          // TODO: Make category and schemaVersion configurable via CommandConfig
+    // Backlog: T5-006. Make category and schemaVersion configurable via CommandConfig.
           category: DEFAULT_EVENT_CATEGORY,
           schemaVersion: DEFAULT_SCHEMA_VERSION,
           boundedContext: config.boundedContext,
@@ -691,5 +731,26 @@ export class CommandOrchestrator {
       eventId: toEventId(successResult.event.eventId),
       globalPosition,
     };
+  }
+
+  private async enqueueMutationWithMetrics(
+    poolName: string,
+    pool: OrchestratorDependencies["projectionPool"],
+    ctx: MutationCtx,
+    handler: FunctionReference<"mutation", "internal" | "public", UnknownRecord, unknown>,
+    args: UnknownRecord,
+    options?: Parameters<OrchestratorDependencies["projectionPool"]["enqueueMutation"]>[3]
+  ): Promise<unknown> {
+    const depth = (this.pendingQueueDepth.get(poolName) ?? 0) + 1;
+    this.pendingQueueDepth.set(poolName, depth);
+    this.metrics.gauge("queue.depth", depth, { pool: poolName });
+
+    try {
+      return await pool.enqueueMutation(ctx, handler, args, options);
+    } finally {
+      const nextDepth = Math.max((this.pendingQueueDepth.get(poolName) ?? 1) - 1, 0);
+      this.pendingQueueDepth.set(poolName, nextDepth);
+      this.metrics.gauge("queue.depth", nextDepth, { pool: poolName });
+    }
   }
 }

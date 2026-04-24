@@ -26,7 +26,11 @@ import { internalMutation } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
-import { createPlatformNoOpLogger, type SafeMutationRef } from "@libar-dev/platform-core";
+import { createVerificationProof } from "../../../../../../packages/platform-core/src/security/verificationProof.js";
+import {
+  createPlatformNoOpLogger,
+  type SafeMutationRef,
+} from "@libar-dev/platform-core";
 import { APPROVAL_ERROR_CODES } from "@libar-dev/platform-core/agent";
 
 /**
@@ -91,6 +95,13 @@ export const recordPendingApproval = internalMutation({
   },
   handler: async (ctx, args) => {
     const logger = createPlatformNoOpLogger();
+    const agentVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/approval:recordPendingApproval",
+      subjectId: args.agentId,
+      subjectType: "agent",
+      boundedContext: "agent",
+    });
 
     // Create approval via component (idempotent by approvalId)
     const result = await ctx.runMutation(components.agentBC.approvals.create, {
@@ -117,6 +128,7 @@ export const recordPendingApproval = internalMutation({
       agentId: args.agentId,
       decisionId: args.decisionId,
       timestamp: Date.now(),
+      verificationProof: agentVerificationProof,
       payload: {
         approvalId: args.approvalId,
         actionType: args.action.type,
@@ -168,11 +180,19 @@ export const approveAgentAction = internalMutation({
   },
   handler: async (ctx, args) => {
     const logger = createPlatformNoOpLogger();
+    const reviewerVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/approval:approveAgentAction",
+      subjectId: args.reviewerId,
+      subjectType: "reviewer",
+      boundedContext: "agent",
+    });
 
     // Approve via component - returns action details or error
     const result = await ctx.runMutation(components.agentBC.approvals.approve, {
       approvalId: args.approvalId,
       reviewerId: args.reviewerId,
+      verificationProof: reviewerVerificationProof,
       ...(args.reviewNote !== undefined && { reviewNote: args.reviewNote }),
     });
 
@@ -194,6 +214,13 @@ export const approveAgentAction = internalMutation({
     }
 
     const approved = result;
+    const agentVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/approval:approveAgentAction:audit",
+      subjectId: approved.agentId,
+      subjectType: "agent",
+      boundedContext: "agent",
+    });
 
     // Emit the command
     await ctx.runMutation(emitAgentCommandRef, {
@@ -211,6 +238,7 @@ export const approveAgentAction = internalMutation({
       agentId: approved.agentId,
       decisionId: approved.decisionId,
       timestamp: Date.now(),
+      verificationProof: agentVerificationProof,
       payload: {
         approvalId: args.approvalId,
         reviewerId: args.reviewerId,
@@ -260,11 +288,19 @@ export const rejectAgentAction = internalMutation({
   },
   handler: async (ctx, args) => {
     const logger = createPlatformNoOpLogger();
+    const reviewerVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/approval:rejectAgentAction",
+      subjectId: args.reviewerId,
+      subjectType: "reviewer",
+      boundedContext: "agent",
+    });
 
     // Reject via component
     const result = await ctx.runMutation(components.agentBC.approvals.reject, {
       approvalId: args.approvalId,
       reviewerId: args.reviewerId,
+      verificationProof: reviewerVerificationProof,
       ...(args.reviewNote !== undefined && { reviewNote: args.reviewNote }),
     });
 
@@ -286,6 +322,13 @@ export const rejectAgentAction = internalMutation({
     }
 
     const rejected = result;
+    const agentVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/approval:rejectAgentAction:audit",
+      subjectId: rejected.agentId,
+      subjectType: "agent",
+      boundedContext: "agent",
+    });
 
     // Record audit event via component
     await ctx.runMutation(components.agentBC.audit.record, {
@@ -293,6 +336,7 @@ export const rejectAgentAction = internalMutation({
       agentId: rejected.agentId,
       decisionId: rejected.decisionId,
       timestamp: Date.now(),
+      verificationProof: agentVerificationProof,
       payload: {
         approvalId: args.approvalId,
         reviewerId: args.reviewerId,
@@ -349,11 +393,19 @@ export const expirePendingApprovals = internalMutation({
           }
         ).expiredDetails ?? [];
       for (const detail of expiredDetails) {
+        const agentVerificationProof = await createVerificationProof({
+          target: "agentBC",
+          issuer: "order-management:contexts/agent/tools/approval:expirePendingApprovals",
+          subjectId: detail.agentId,
+          subjectType: "agent",
+          boundedContext: "agent",
+        });
         await ctx.runMutation(components.agentBC.audit.record, {
           eventType: "ApprovalExpired",
           agentId: detail.agentId,
           decisionId: detail.decisionId,
           timestamp: Date.now(),
+          verificationProof: agentVerificationProof,
           payload: { approvalId: detail.approvalId },
         });
       }

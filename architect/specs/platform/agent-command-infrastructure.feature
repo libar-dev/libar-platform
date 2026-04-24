@@ -13,7 +13,7 @@ Feature: Agent Command Infrastructure - Routing, Lifecycle, and Pattern Unificat
   1. **Commands go nowhere** — Agent emits commands to `agentCommands` table but nothing
      consumes or routes them to target BC handlers
   2. **No lifecycle control** — Agent cannot be paused, resumed, or reconfigured.
-     The `pause()`, `resume()` stubs in `init.ts` are TODO(Phase-23) placeholders
+The `pause()`, `resume()` lifecycle hooks in `init.ts` are explicit deferred backlog items, not silent placeholders
   3. **Parallel pattern systems** — `_patterns/churnRisk.ts` defines formal `PatternDefinition`
      with `analyze()` that calls LLM, while `_config.ts` has inline `onEvent` that reimplements
      trigger logic without LLM. These are disconnected implementations

@@ -1,4 +1,4 @@
-# Agent Command Emission Tool
+#  Agent Command Emission Tool
 
 **Purpose:** Detailed documentation for the Agent Command Emission Tool pattern
 

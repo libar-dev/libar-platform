@@ -19,7 +19,9 @@ import type {
 import type { SafeMutationRef } from "../function-refs/types.js";
 import type { UnknownRecord } from "../types.js";
 import type { Logger } from "../logging/types.js";
-import { createPlatformNoOpLogger } from "../logging/scoped.js";
+import { createPlatformDefaultLogger } from "../logging/scoped.js";
+import type { PlatformMetrics } from "../metrics/index.js";
+import { createDefaultPlatformMetrics } from "../metrics/index.js";
 
 /**
  * Error codes for integration route validation failures.
@@ -82,6 +84,8 @@ export class IntegrationEventPublisher implements IIntegrationEventPublisher {
   private readonly routes: Map<string, IntegrationEventRoute>;
   private readonly config: IntegrationPublisherConfig;
   private readonly logger: Logger;
+  private readonly metrics: PlatformMetrics;
+  private pendingQueueDepth = 0;
 
   /**
    * @throws IntegrationRouteError if duplicate sourceEventType routes are provided
@@ -93,7 +97,8 @@ export class IntegrationEventPublisher implements IIntegrationEventPublisher {
   ) {
     this.workpool = workpool;
     this.config = config;
-    this.logger = config.logger ?? createPlatformNoOpLogger();
+    this.logger = config.logger ?? createPlatformDefaultLogger("IntegrationPublisher");
+    this.metrics = config.metrics ?? createDefaultPlatformMetrics("IntegrationPublisherMetrics");
 
     // Build routes map with duplicate detection
     this.routes = new Map();
@@ -169,7 +174,7 @@ export class IntegrationEventPublisher implements IIntegrationEventPublisher {
     let handlersInvoked = 0;
 
     for (const handler of route.handlers) {
-      await this.workpool.enqueueMutation(ctx, handler, integrationEvent, {
+      await this.enqueueMutationWithMetrics(ctx, handler, integrationEvent, {
         ...(this.config.onComplete ? { onComplete: this.config.onComplete } : {}),
         context: {
           integrationEventId,
@@ -196,6 +201,11 @@ export class IntegrationEventPublisher implements IIntegrationEventPublisher {
       correlationId: chain.correlationId,
     });
 
+    this.metrics.counter("event.dispatched", handlersInvoked, {
+      eventType: route.targetEventType,
+      boundedContext: sourceEvent.boundedContext,
+    });
+
     return {
       integrationEventId,
       handlersInvoked,
@@ -208,6 +218,23 @@ export class IntegrationEventPublisher implements IIntegrationEventPublisher {
    */
   getRoutes(): IntegrationEventRoute[] {
     return Array.from(this.routes.values());
+  }
+
+  private async enqueueMutationWithMetrics(
+    ctx: MutationCtx,
+    handler: IntegrationEventRoute["handlers"][number],
+    args: IntegrationEvent,
+    options: Parameters<WorkpoolClient["enqueueMutation"]>[3]
+  ): Promise<unknown> {
+    this.pendingQueueDepth += 1;
+    this.metrics.gauge("queue.depth", this.pendingQueueDepth, { pool: "integrationPublisher" });
+
+    try {
+      return await this.workpool.enqueueMutation(ctx, handler, args, options);
+    } finally {
+      this.pendingQueueDepth = Math.max(this.pendingQueueDepth - 1, 0);
+      this.metrics.gauge("queue.depth", this.pendingQueueDepth, { pool: "integrationPublisher" });
+    }
   }
 }
 

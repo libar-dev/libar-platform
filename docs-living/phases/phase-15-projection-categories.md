@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 1/1 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 1     |
 
 ---
 
@@ -27,21 +27,20 @@
 | Effort   | 1w        |
 
 **Problem:** Projections exist but categories are implicit. Developers must know
-which projection to query for which use case, leading to misuse and performance issues.
+  which projection to query for which use case, leading to misuse and performance issues.
 
-**Solution:** A taxonomy that categorizes projections by purpose and query pattern:
+  **Solution:** A taxonomy that categorizes projections by purpose and query pattern:
+  - **Logic:** Minimal data for command validation (internal only)
+  - **View:** Denormalized for UI queries (client-exposed)
+  - **Reporting:** Analytics and aggregations (async/batch)
+  - **Integration:** Cross-context synchronization (EventBus)
 
-- **Logic:** Minimal data for command validation (internal only)
-- **View:** Denormalized for UI queries (client-exposed)
-- **Reporting:** Analytics and aggregations (async/batch)
-- **Integration:** Cross-context synchronization (EventBus)
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Reactive targeting | Only View projections need reactive layer |
-| Performance optimization | Logic projections stay minimal |
-| Clear boundaries | Integration projections define cross-context contracts |
-| Query routing | Right projection for right use case |
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Reactive targeting | Only View projections need reactive layer |
+  | Performance optimization | Logic projections stay minimal |
+  | Clear boundaries | Integration projections define cross-context contracts |
+  | Query routing | Right projection for right use case |
 
 #### Dependencies
 
@@ -143,7 +142,7 @@ which projection to query for which use case, leading to misuse and performance 
 **Projections are classified into four distinct categories**
 
 **Invariant:** Every projection must belong to exactly one of four categories:
-Logic, View, Reporting, or Integration. Categories are mutually exclusive.
+    Logic, View, Reporting, or Integration. Categories are mutually exclusive.
 
     **Rationale:** Without explicit categories, developers must guess which projection
     to use for which purpose, leading to misuse (e.g., using Logic projections for UI)
@@ -162,8 +161,8 @@ _Verified by: Projection definition includes category, Invalid category is rejec
 **Categories determine projection characteristics**
 
 **Invariant:** Each category prescribes specific characteristics for cardinality,
-freshness requirements, and client exposure. These are not suggestions but enforced
-at registration time.
+    freshness requirements, and client exposure. These are not suggestions but enforced
+    at registration time.
 
     **Rationale:** Consistent characteristics per category enable infrastructure
     optimizations (e.g., reactive subscriptions only for View) and security enforcement
@@ -182,7 +181,7 @@ _Verified by: Category determines client exposure, Logic projections have minima
 **Projections must declare explicit category**
 
 **Invariant:** Category must be specified at projection definition time.
-Projections without explicit category fail registration with CATEGORY_REQUIRED.
+    Projections without explicit category fail registration with CATEGORY_REQUIRED.
 
     **Rationale:** Implicit categories (guessed from naming or usage) lead to
     inconsistent behavior. Explicit declaration forces developers to think about
@@ -192,27 +191,27 @@ Projections without explicit category fail registration with CATEGORY_REQUIRED.
 
 ```typescript
 // Current: No category metadata
-defineProjection({
-  name: "orderSummaries",
-  subscribes: ["OrderCreated", "OrderSubmitted"],
-  handler: async (ctx, event) => {
-    // Category is implied but not enforced
-  },
-});
+    defineProjection({
+      name: 'orderSummaries',
+      subscribes: ['OrderCreated', 'OrderSubmitted'],
+      handler: async (ctx, event) => {
+        // Category is implied but not enforced
+      }
+    });
 ```
 
 **Target State (explicit):**
 
 ```typescript
 // Target: Explicit category with type safety
-defineProjection({
-  name: "orderSummaries",
-  category: "view", // <-- Explicit, validated at registration
-  subscribes: ["OrderCreated", "OrderSubmitted"],
-  handler: async (ctx, event) => {
-    // Category enables correct query routing
-  },
-});
+    defineProjection({
+      name: 'orderSummaries',
+      category: 'view',  // <-- Explicit, validated at registration
+      subscribes: ['OrderCreated', 'OrderSubmitted'],
+      handler: async (ctx, event) => {
+        // Category enables correct query routing
+      }
+    });
 ```
 
 **Verified by:** Projection without category fails registration, Type system enforces category at compile time
@@ -222,8 +221,8 @@ _Verified by: Projection without category fails registration, Type system enforc
 **Category determines client exposure**
 
 **Invariant:** Client exposure is determined solely by category. Logic and
-Integration projections are never client-accessible. View projections are
-always client-accessible. Reporting projections require admin role.
+    Integration projections are never client-accessible. View projections are
+    always client-accessible. Reporting projections require admin role.
 
     **Rationale:** Security and performance concerns require clear boundaries.
     Logic projections contain internal validation state that shouldn't leak.
@@ -237,8 +236,8 @@ _Verified by: Logic projections are not client-exposed, View projections are cli
 **Only View projections require reactive subscriptions**
 
 **Invariant:** Reactive subscriptions (real-time push updates) are only
-supported for View category projections. Other categories reject subscription
-attempts with SUBSCRIPTIONS_NOT_SUPPORTED.
+    supported for View category projections. Other categories reject subscription
+    attempts with SUBSCRIPTIONS_NOT_SUPPORTED.
 
     **Rationale:** Reactive infrastructure is expensive (WebSocket connections,
     change detection, client memory). Limiting reactivity to View projections

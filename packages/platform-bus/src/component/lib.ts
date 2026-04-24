@@ -1,8 +1,20 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import {
+  assertBoundaryValuesSize,
+  DEFAULT_BOUNDARY_VALUE_MAX_BYTES,
+} from "../../../platform-core/src/validation/boundary.js";
+import { vUnknown } from "../../../platform-core/src/validation/convexUnknown.js";
 
 // Default TTL: 7 days in milliseconds
 const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000;
+const COMMAND_BUS_VALUE_MAX_BYTES = DEFAULT_BOUNDARY_VALUE_MAX_BYTES;
+const MAX_CORRELATION_LIMIT = 1000;
+const MAX_CLEANUP_BATCH_SIZE = 500;
+
+function buildCorrelationCursor(timestamp: number, commandId: string): string {
+  return `${String(timestamp).padStart(16, "0")}:${commandId}`;
+}
 
 /**
  * Record a command for idempotency tracking.
@@ -21,7 +33,7 @@ export const recordCommand = mutation({
     commandId: v.string(),
     commandType: v.string(),
     targetContext: v.string(),
-    payload: v.any(),
+    payload: vUnknown(),
     metadata: v.object({
       userId: v.optional(v.string()),
       correlationId: v.string(),
@@ -41,10 +53,14 @@ export const recordCommand = mutation({
         v.literal("rejected"),
         v.literal("failed")
       ),
-      result: v.optional(v.any()),
+      result: v.optional(vUnknown()),
     })
   ),
   handler: async (ctx, args) => {
+    assertBoundaryValuesSize([
+      { fieldName: "recordCommand.payload", value: args.payload, maxBytes: COMMAND_BUS_VALUE_MAX_BYTES },
+    ]);
+
     // Check for existing command with same ID
     const existing = await ctx.db
       .query("commands")
@@ -63,39 +79,22 @@ export const recordCommand = mutation({
     const ttl = args.ttl ?? DEFAULT_TTL;
     const expiresAt = args.metadata.timestamp + ttl;
 
-    // Insert the command
-    // Note: Convex indexes are not unique constraints, so concurrent inserts
-    // can both succeed. We use post-insert verification to handle this.
-    const insertedId = await ctx.db.insert("commands", {
+    // Insert the command.
+    // Convex mutations are serializable, so a concurrent write with the same
+    // commandId cannot interleave between the existence check above and this
+    // insert. The later mutation will observe the committed row and return the
+    // duplicate result without needing post-insert dedup cleanup.
+    await ctx.db.insert("commands", {
       commandId: args.commandId,
       commandType: args.commandType,
       targetContext: args.targetContext,
       payload: args.payload,
       metadata: args.metadata,
+      correlationCursor: buildCorrelationCursor(args.metadata.timestamp, args.commandId),
       status: "pending",
       ttl,
       expiresAt,
     });
-
-    // Verify we won the race - check if another document with same commandId exists
-    const allWithSameId = await ctx.db
-      .query("commands")
-      .withIndex("by_commandId", (q) => q.eq("commandId", args.commandId))
-      .collect();
-
-    if (allWithSameId.length > 1) {
-      // Race condition: another insert happened concurrently.
-      // Delete ours and return the existing one as duplicate.
-      await ctx.db.delete(insertedId);
-      const winner = allWithSameId.find((c) => c._id !== insertedId);
-      if (winner) {
-        return {
-          status: "duplicate" as const,
-          commandStatus: winner.status,
-          result: winner.result,
-        };
-      }
-    }
 
     return { status: "new" as const };
   },
@@ -108,10 +107,18 @@ export const updateCommandResult = mutation({
   args: {
     commandId: v.string(),
     status: v.union(v.literal("executed"), v.literal("rejected"), v.literal("failed")),
-    result: v.optional(v.any()),
+    result: v.optional(vUnknown()),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    assertBoundaryValuesSize([
+      {
+        fieldName: "updateCommandResult.result",
+        value: args.result,
+        maxBytes: COMMAND_BUS_VALUE_MAX_BYTES,
+      },
+    ]);
+
     const command = await ctx.db
       .query("commands")
       .withIndex("by_commandId", (q) => q.eq("commandId", args.commandId))
@@ -155,7 +162,7 @@ export const getCommandStatus = query({
         v.literal("rejected"),
         v.literal("failed")
       ),
-      result: v.optional(v.any()),
+      result: v.optional(vUnknown()),
       executedAt: v.optional(v.number()),
     })
   ),
@@ -186,38 +193,53 @@ export const getCommandStatus = query({
 export const getByCorrelation = query({
   args: {
     correlationId: v.string(),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
   },
-  returns: v.array(
-    v.object({
-      commandId: v.string(),
-      commandType: v.string(),
-      targetContext: v.string(),
-      status: v.union(
-        v.literal("pending"),
-        v.literal("executed"),
-        v.literal("rejected"),
-        v.literal("failed")
-      ),
-      result: v.optional(v.any()),
-      executedAt: v.optional(v.number()),
-      timestamp: v.number(),
-    })
-  ),
+  returns: v.object({
+    commands: v.array(
+      v.object({
+        commandId: v.string(),
+        commandType: v.string(),
+        targetContext: v.string(),
+        status: v.union(
+          v.literal("pending"),
+          v.literal("executed"),
+          v.literal("rejected"),
+          v.literal("failed")
+        ),
+        executedAt: v.optional(v.number()),
+        timestamp: v.number(),
+      })
+    ),
+    nextCursor: v.union(v.string(), v.null()),
+    hasMore: v.boolean(),
+  }),
   handler: async (ctx, args) => {
+    const effectiveLimit = Math.min(args.limit ?? 100, MAX_CORRELATION_LIMIT);
     const commands = await ctx.db
       .query("commands")
-      .withIndex("by_correlationId", (q) => q.eq("metadata.correlationId", args.correlationId))
-      .collect();
+      .withIndex("by_correlation_cursor", (q) => {
+        const range = q.eq("metadata.correlationId", args.correlationId);
+        return args.cursor ? range.gt("correlationCursor", args.cursor) : range;
+      })
+      .take(effectiveLimit + 1);
 
-    return commands.map((c) => ({
-      commandId: c.commandId,
-      commandType: c.commandType,
-      targetContext: c.targetContext,
-      status: c.status,
-      timestamp: c.metadata.timestamp,
-      ...(c.result !== undefined && { result: c.result }),
-      ...(c.executedAt !== undefined && { executedAt: c.executedAt }),
-    }));
+    const hasMore = commands.length > effectiveLimit;
+    const page = commands.slice(0, effectiveLimit);
+
+    return {
+      commands: page.map((c) => ({
+        commandId: c.commandId,
+        commandType: c.commandType,
+        targetContext: c.targetContext,
+        status: c.status,
+        timestamp: c.metadata.timestamp,
+        ...(c.executedAt !== undefined && { executedAt: c.executedAt }),
+      })),
+      nextCursor: hasMore ? page[page.length - 1]?.correlationCursor ?? null : null,
+      hasMore,
+    };
   },
 });
 
@@ -236,9 +258,10 @@ export const cleanupExpired = mutation({
   returns: v.object({
     commands: v.number(),
     correlations: v.number(),
+    hasMore: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    const batchSize = args.batchSize ?? 100;
+    const batchSize = Math.min(args.batchSize ?? 100, MAX_CLEANUP_BATCH_SIZE);
     const now = Date.now();
 
     // Find expired commands using the by_expiresAt index
@@ -247,25 +270,27 @@ export const cleanupExpired = mutation({
       .query("commands")
       .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
       .filter((q) => q.neq(q.field("status"), "pending"))
-      .take(batchSize);
+      .take(batchSize + 1);
 
-    for (const command of expiredCommands) {
-      await ctx.db.delete(command._id);
-    }
+    const commandBatch = expiredCommands.slice(0, batchSize);
 
     // Find expired correlations using the by_expiresAt index
     const expiredCorrelations = await ctx.db
       .query("commandEventCorrelations")
       .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
-      .take(batchSize);
+      .take(batchSize + 1);
 
-    for (const correlation of expiredCorrelations) {
-      await ctx.db.delete(correlation._id);
-    }
+    const correlationBatch = expiredCorrelations.slice(0, batchSize);
+
+    await Promise.all([
+      ...commandBatch.map((command) => ctx.db.delete(command._id)),
+      ...correlationBatch.map((correlation) => ctx.db.delete(correlation._id)),
+    ]);
 
     return {
-      commands: expiredCommands.length,
-      correlations: expiredCorrelations.length,
+      commands: commandBatch.length,
+      correlations: correlationBatch.length,
+      hasMore: expiredCommands.length > batchSize || expiredCorrelations.length > batchSize,
     };
   },
 });

@@ -15,31 +15,29 @@
 ## Description
 
 **Problem:** External API failures (Stripe, SendGrid, webhooks) cascade through the system.
-Without automatic isolation:
+  Without automatic isolation:
+  - Action budget is wasted on calls destined to fail
+  - Users experience long timeouts instead of fast failures
+  - Partial outages become full outages via resource exhaustion
+  - No automatic recovery testing when service comes back
 
-- Action budget is wasted on calls destined to fail
-- Users experience long timeouts instead of fast failures
-- Partial outages become full outages via resource exhaustion
-- No automatic recovery testing when service comes back
+  **Solution:** Database-backed circuit breaker with state machine:
+  - **CLOSED** - Normal operation, track failure count
+  - **OPEN** - Fail fast, no requests sent to failing service
+  - **HALF_OPEN** - Allow one test request to check recovery
+  - **Scheduled transitions** - `ctx.scheduler.runAfter` for timeout-based state changes
+  - **Action Retrier integration** - Half-open probe uses Retrier with maxFailures: 0
 
-**Solution:** Database-backed circuit breaker with state machine:
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Budget preservation | OPEN state prevents wasting actions on failing services |
+  | Fast failure | Users get immediate error instead of timeout |
+  | Automatic recovery | Half-open probe tests service without manual intervention |
+  | Observability | Circuit state changes are logged for alerting |
+  | Per-service isolation | Each external service has independent circuit |
 
-- **CLOSED** - Normal operation, track failure count
-- **OPEN** - Fail fast, no requests sent to failing service
-- **HALF_OPEN** - Allow one test request to check recovery
-- **Scheduled transitions** - `ctx.scheduler.runAfter` for timeout-based state changes
-- **Action Retrier integration** - Half-open probe uses Retrier with maxFailures: 0
-
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Budget preservation | OPEN state prevents wasting actions on failing services |
-| Fast failure | Users get immediate error instead of timeout |
-| Automatic recovery | Half-open probe tests service without manual intervention |
-| Observability | Circuit state changes are logged for alerting |
-| Per-service isolation | Each external service has independent circuit |
-
-**Convex Constraint:** No in-memory state across function invocations. Circuit state must
-persist in Convex table. Timeout transitions use `ctx.scheduler.runAfter`, not in-memory timers.
+  **Convex Constraint:** No in-memory state across function invocations. Circuit state must
+  persist in Convex table. Timeout transitions use `ctx.scheduler.runAfter`, not in-memory timers.
 
 ## Dependencies
 
@@ -190,77 +188,77 @@ The circuit breaker is a state machine with well-defined transitions:
 ```
 
 **State Behaviors:**
-| State | Request Handling | Transitions |
-| CLOSED | Execute normally, track failures | → OPEN after threshold failures |
-| OPEN | Reject immediately (fail fast) | → HALF_OPEN after timeout |
-| HALF_OPEN | Allow single probe request | → CLOSED on success, → OPEN on failure |
+    | State | Request Handling | Transitions |
+    | CLOSED | Execute normally, track failures | → OPEN after threshold failures |
+    | OPEN | Reject immediately (fail fast) | → HALF_OPEN after timeout |
+    | HALF_OPEN | Allow single probe request | → CLOSED on success, → OPEN on failure |
 
     **Pure State Machine:**
 
 ```typescript
 // stateMachine.ts - Pure function, no I/O
-export type CircuitState = "closed" | "open" | "half_open";
-export type CircuitEvent = "success" | "failure" | "timeout" | "probe_success" | "probe_failure";
+    export type CircuitState = "closed" | "open" | "half_open";
+    export type CircuitEvent = "success" | "failure" | "timeout" | "probe_success" | "probe_failure";
 
-export interface CircuitBreakerState {
-  state: CircuitState;
-  failureCount: number;
-  lastFailureAt?: number;
-  openedAt?: number;
-  probeRunId?: string;
-}
+    export interface CircuitBreakerState {
+      state: CircuitState;
+      failureCount: number;
+      lastFailureAt?: number;
+      openedAt?: number;
+      probeRunId?: string;
+    }
 
-export interface CircuitBreakerConfig {
-  failureThreshold: number; // Failures before opening (default: 5)
-  resetTimeoutMs: number; // Time in OPEN before half-open (default: 30000)
-  successThreshold: number; // Successes in half-open to close (default: 1)
-}
+    export interface CircuitBreakerConfig {
+      failureThreshold: number;      // Failures before opening (default: 5)
+      resetTimeoutMs: number;        // Time in OPEN before half-open (default: 30000)
+      successThreshold: number;      // Successes in half-open to close (default: 1)
+    }
 
-export function computeNextState(
-  current: CircuitBreakerState,
-  event: CircuitEvent,
-  config: CircuitBreakerConfig,
-  now: number
-): { nextState: CircuitBreakerState; sideEffect?: "schedule_timeout" | "probe_started" } {
-  switch (current.state) {
-    case "closed":
-      if (event === "success") {
-        return { nextState: { ...current, failureCount: 0 } };
+    export function computeNextState(
+      current: CircuitBreakerState,
+      event: CircuitEvent,
+      config: CircuitBreakerConfig,
+      now: number
+    ): { nextState: CircuitBreakerState; sideEffect?: "schedule_timeout" | "probe_started" } {
+      switch (current.state) {
+        case "closed":
+          if (event === "success") {
+            return { nextState: { ...current, failureCount: 0 } };
+          }
+          if (event === "failure") {
+            const newCount = current.failureCount + 1;
+            if (newCount >= config.failureThreshold) {
+              return {
+                nextState: { state: "open", failureCount: newCount, openedAt: now },
+                sideEffect: "schedule_timeout",
+              };
+            }
+            return { nextState: { ...current, failureCount: newCount, lastFailureAt: now } };
+          }
+          break;
+
+        case "open":
+          if (event === "timeout") {
+            return { nextState: { ...current, state: "half_open" } };
+          }
+          // Ignore success/failure in open state (requests are rejected)
+          break;
+
+        case "half_open":
+          if (event === "probe_success") {
+            return { nextState: { state: "closed", failureCount: 0 } };
+          }
+          if (event === "probe_failure") {
+            return {
+              nextState: { state: "open", failureCount: current.failureCount, openedAt: now },
+              sideEffect: "schedule_timeout",
+            };
+          }
+          break;
       }
-      if (event === "failure") {
-        const newCount = current.failureCount + 1;
-        if (newCount >= config.failureThreshold) {
-          return {
-            nextState: { state: "open", failureCount: newCount, openedAt: now },
-            sideEffect: "schedule_timeout",
-          };
-        }
-        return { nextState: { ...current, failureCount: newCount, lastFailureAt: now } };
-      }
-      break;
 
-    case "open":
-      if (event === "timeout") {
-        return { nextState: { ...current, state: "half_open" } };
-      }
-      // Ignore success/failure in open state (requests are rejected)
-      break;
-
-    case "half_open":
-      if (event === "probe_success") {
-        return { nextState: { state: "closed", failureCount: 0 } };
-      }
-      if (event === "probe_failure") {
-        return {
-          nextState: { state: "open", failureCount: current.failureCount, openedAt: now },
-          sideEffect: "schedule_timeout",
-        };
-      }
-      break;
-  }
-
-  return { nextState: current };
-}
+      return { nextState: current };
+    }
 ```
 
 _Verified by: Circuit remains closed on success, Circuit opens after threshold failures, Circuit transitions to half-open after timeout, Successful probe closes circuit, Failed probe reopens circuit_
@@ -268,7 +266,7 @@ _Verified by: Circuit remains closed on success, Circuit opens after threshold f
 **Circuit state persists in Convex table**
 
 Convex functions are stateless across invocations. Circuit state must persist
-in a table to survive function restarts and be consistent across workers.
+    in a table to survive function restarts and be consistent across workers.
 
     **Schema:**
 
@@ -295,61 +293,66 @@ in a table to survive function restarts and be consistent across workers.
 
 ```typescript
 // monitoring/circuitBreakers.ts
-export const loadCircuitState = internalQuery({
-  args: { name: v.string() },
-  handler: async (ctx, { name }) => {
-    const circuit = await ctx.db
-      .query("circuitBreakers")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .unique();
+    export const loadCircuitState = internalQuery({
+      args: { name: v.string() },
+      handler: async (ctx, { name }) => {
+        const circuit = await ctx.db
+          .query("circuitBreakers")
+          .withIndex("by_name", (q) => q.eq("name", name))
+          .unique();
 
-    if (!circuit) {
-      // Default to closed with default config
-      return {
-        name,
-        state: "closed" as const,
-        failureCount: 0,
-        config: DEFAULT_CIRCUIT_CONFIG,
-      };
-    }
+        if (!circuit) {
+          // Default to closed with default config
+          return {
+            name,
+            state: "closed" as const,
+            failureCount: 0,
+            config: DEFAULT_CIRCUIT_CONFIG,
+          };
+        }
 
-    return circuit;
-  },
-});
+        return circuit;
+      },
+    });
 
-export const updateCircuitState = internalMutation({
-  args: {
-    name: v.string(),
-    event: v.union(v.literal("success"), v.literal("failure") /* ... */),
-  },
-  handler: async (ctx, { name, event }) => {
-    const current = await loadCircuitState(ctx, { name });
-    const { nextState, sideEffect } = computeNextState(current, event, current.config, Date.now());
+    export const updateCircuitState = internalMutation({
+      args: {
+        name: v.string(),
+        event: v.union(v.literal("success"), v.literal("failure"), /* ... */),
+      },
+      handler: async (ctx, { name, event }) => {
+        const current = await loadCircuitState(ctx, { name });
+        const { nextState, sideEffect } = computeNextState(
+          current,
+          event,
+          current.config,
+          Date.now()
+        );
 
-    // Upsert circuit state
-    if (current._id) {
-      await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
-    } else {
-      await ctx.db.insert("circuitBreakers", {
-        name,
-        ...nextState,
-        config: current.config,
-        updatedAt: Date.now(),
-      });
-    }
+        // Upsert circuit state
+        if (current._id) {
+          await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
+        } else {
+          await ctx.db.insert("circuitBreakers", {
+            name,
+            ...nextState,
+            config: current.config,
+            updatedAt: Date.now(),
+          });
+        }
 
-    // Handle side effects
-    if (sideEffect === "schedule_timeout") {
-      await ctx.scheduler.runAfter(
-        current.config.resetTimeoutMs,
-        internal.monitoring.circuitBreakers.onTimeout,
-        { name, openedAt: nextState.openedAt }
-      );
-    }
+        // Handle side effects
+        if (sideEffect === "schedule_timeout") {
+          await ctx.scheduler.runAfter(
+            current.config.resetTimeoutMs,
+            internal.monitoring.circuitBreakers.onTimeout,
+            { name, openedAt: nextState.openedAt }
+          );
+        }
 
-    return nextState;
-  },
-});
+        return nextState;
+      },
+    });
 ```
 
 _Verified by: Circuit state persists across function calls, Non-existent circuit defaults to closed_
@@ -357,7 +360,7 @@ _Verified by: Circuit state persists across function calls, Non-existent circuit
 **Open-to-half-open transition uses scheduler**
 
 The OPEN → HALF_OPEN transition happens after `resetTimeoutMs` elapses.
-Since Convex has no in-memory timers, use `ctx.scheduler.runAfter`.
+    Since Convex has no in-memory timers, use `ctx.scheduler.runAfter`.
 
     **Important:** Schedule is a one-shot, not a recurring cron. Each circuit-open
     event schedules its own timeout.
@@ -366,34 +369,38 @@ Since Convex has no in-memory timers, use `ctx.scheduler.runAfter`.
 
 ```typescript
 export const onTimeout = internalMutation({
-  args: {
-    name: v.string(),
-    openedAt: v.number(), // Guard against stale timeouts
-  },
-  handler: async (ctx, { name, openedAt }) => {
-    const current = await ctx.db
-      .query("circuitBreakers")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .unique();
+      args: {
+        name: v.string(),
+        openedAt: v.number(),  // Guard against stale timeouts
+      },
+      handler: async (ctx, { name, openedAt }) => {
+        const current = await ctx.db
+          .query("circuitBreakers")
+          .withIndex("by_name", (q) => q.eq("name", name))
+          .unique();
 
-    if (!current) return;
+        if (!current) return;
 
-    // Guard: only transition if still open AND openedAt matches
-    // (prevents stale timeout from older open-close-open cycle)
-    if (current.state !== "open" || current.openedAt !== openedAt) {
-      return { skipped: true, reason: "circuit state changed" };
-    }
+        // Guard: only transition if still open AND openedAt matches
+        // (prevents stale timeout from older open-close-open cycle)
+        if (current.state !== "open" || current.openedAt !== openedAt) {
+          return { skipped: true, reason: "circuit state changed" };
+        }
 
-    const { nextState } = computeNextState(current, "timeout", current.config, Date.now());
-    await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
+        const { nextState } = computeNextState(current, "timeout", current.config, Date.now());
+        await ctx.db.patch(current._id, { ...nextState, updatedAt: Date.now() });
 
-    return { transitioned: true, newState: nextState.state };
-  },
-});
+        return { transitioned: true, newState: nextState.state };
+      },
+    });
 ```
 
 **Why Guard with openedAt:**
-Without the guard, this could happen: 1. Circuit opens at T=0, schedules timeout for T=30s 2. Manual intervention closes circuit at T=10s 3. Circuit opens again at T=20s, schedules timeout for T=50s 4. Stale timeout fires at T=30s, transitions to half-open unexpectedly
+    Without the guard, this could happen:
+    1. Circuit opens at T=0, schedules timeout for T=30s
+    2. Manual intervention closes circuit at T=10s
+    3. Circuit opens again at T=20s, schedules timeout for T=50s
+    4. Stale timeout fires at T=30s, transitions to half-open unexpectedly
 
     The `openedAt` guard ensures only the timeout from the current open cycle fires.
 
@@ -402,7 +409,7 @@ _Verified by: Timeout transitions open to half-open, Stale timeout is ignored_
 **Half-open probes use Action Retrier with zero retries**
 
 When circuit enters HALF_OPEN, we need to test if the service recovered.
-Use Action Retrier with `maxFailures: 0` (no retries) for a controlled probe.
+    Use Action Retrier with `maxFailures: 0` (no retries) for a controlled probe.
 
     **Why Action Retrier:**
     - Provides `onComplete` callback for probe result handling
@@ -414,74 +421,74 @@ Use Action Retrier with `maxFailures: 0` (no retries) for a controlled probe.
 ```typescript
 import { ActionRetrier } from "@convex-dev/action-retrier";
 
-export async function executeWithCircuitBreaker<T>(
-  ctx: ActionCtx,
-  circuitName: string,
-  operation: FunctionReference<"action">,
-  args: Record<string, unknown>
-): Promise<{ result: T } | { error: string; retryAfterMs?: number }> {
-  const circuit = await loadCircuitState(ctx, { name: circuitName });
+    export async function executeWithCircuitBreaker<T>(
+      ctx: ActionCtx,
+      circuitName: string,
+      operation: FunctionReference<"action">,
+      args: Record<string, unknown>
+    ): Promise<{ result: T } | { error: string; retryAfterMs?: number }> {
+      const circuit = await loadCircuitState(ctx, { name: circuitName });
 
-  if (circuit.state === "open") {
-    const retryAfterMs =
-      circuit.config.resetTimeoutMs - (Date.now() - (circuit.openedAt ?? Date.now()));
-    return { error: `CIRCUIT_OPEN:${circuitName}`, retryAfterMs };
-  }
+      if (circuit.state === "open") {
+        const retryAfterMs = circuit.config.resetTimeoutMs -
+          (Date.now() - (circuit.openedAt ?? Date.now()));
+        return { error: `CIRCUIT_OPEN:${circuitName}`, retryAfterMs };
+      }
 
-  if (circuit.state === "half_open") {
-    // Probe mode: single attempt, no retries
-    const runId = await retrier.run(ctx, operation, args, {
-      maxFailures: 0, // No retries
-      onComplete: internal.monitoring.circuitBreakers.onProbeComplete,
-    });
+      if (circuit.state === "half_open") {
+        // Probe mode: single attempt, no retries
+        const runId = await retrier.run(ctx, operation, args, {
+          maxFailures: 0,  // No retries
+          onComplete: internal.monitoring.circuitBreakers.onProbeComplete,
+        });
 
-    // Track probe run ID
-    await ctx.runMutation(internal.monitoring.circuitBreakers.setProbeRunId, {
-      name: circuitName,
-      runId,
-    });
+        // Track probe run ID
+        await ctx.runMutation(internal.monitoring.circuitBreakers.setProbeRunId, {
+          name: circuitName,
+          runId,
+        });
 
-    return { result: "PROBE_STARTED" as T, probeRunId: runId };
-  }
+        return { result: "PROBE_STARTED" as T, probeRunId: runId };
+      }
 
-  // Closed state: normal execution with failure tracking
-  try {
-    const result = await ctx.runAction(operation, args);
-    await ctx.runMutation(internal.monitoring.circuitBreakers.recordSuccess, {
-      name: circuitName,
-    });
-    return { result };
-  } catch (error) {
-    await ctx.runMutation(internal.monitoring.circuitBreakers.recordFailure, {
-      name: circuitName,
-      error: String(error),
-    });
-    throw error;
-  }
-}
-
-// Probe completion handler
-export const onProbeComplete = internalMutation({
-  args: { result: runResultValidator },
-  handler: async (ctx, { result }) => {
-    // Find circuit by probeRunId
-    const circuit = await ctx.db
-      .query("circuitBreakers")
-      .filter((q) => q.eq(q.field("probeRunId"), result.runId))
-      .unique();
-
-    if (!circuit) return;
-
-    if (result.type === "success") {
-      await updateCircuitState(ctx, { name: circuit.name, event: "probe_success" });
-    } else {
-      await updateCircuitState(ctx, { name: circuit.name, event: "probe_failure" });
+      // Closed state: normal execution with failure tracking
+      try {
+        const result = await ctx.runAction(operation, args);
+        await ctx.runMutation(internal.monitoring.circuitBreakers.recordSuccess, {
+          name: circuitName,
+        });
+        return { result };
+      } catch (error) {
+        await ctx.runMutation(internal.monitoring.circuitBreakers.recordFailure, {
+          name: circuitName,
+          error: String(error),
+        });
+        throw error;
+      }
     }
 
-    // Clear probe run ID
-    await ctx.db.patch(circuit._id, { probeRunId: undefined });
-  },
-});
+    // Probe completion handler
+    export const onProbeComplete = internalMutation({
+      args: { result: runResultValidator },
+      handler: async (ctx, { result }) => {
+        // Find circuit by probeRunId
+        const circuit = await ctx.db
+          .query("circuitBreakers")
+          .filter((q) => q.eq(q.field("probeRunId"), result.runId))
+          .unique();
+
+        if (!circuit) return;
+
+        if (result.type === "success") {
+          await updateCircuitState(ctx, { name: circuit.name, event: "probe_success" });
+        } else {
+          await updateCircuitState(ctx, { name: circuit.name, event: "probe_failure" });
+        }
+
+        // Clear probe run ID
+        await ctx.db.patch(circuit._id, { probeRunId: undefined });
+      },
+    });
 ```
 
 _Verified by: Half-open probe closes circuit on success, Half-open probe reopens circuit on failure, Open circuit returns fast failure_
@@ -489,7 +496,7 @@ _Verified by: Half-open probe closes circuit on success, Half-open probe reopens
 **Each external service has independent circuit configuration**
 
 Different services have different failure characteristics. A payment API
-might need a higher threshold than a notification service.
+    might need a higher threshold than a notification service.
 
     **Configuration Options:**
     | Option | Default | Description |
@@ -501,23 +508,23 @@ might need a higher threshold than a notification service.
 
 ```typescript
 // Infrastructure setup
-const circuitConfigs: Record<string, CircuitBreakerConfig> = {
-  "stripe-api": {
-    failureThreshold: 3, // Payment is critical, open quickly
-    resetTimeoutMs: 60000, // Wait longer before retrying payments
-    successThreshold: 1,
-  },
-  sendgrid: {
-    failureThreshold: 10, // Email is less critical
-    resetTimeoutMs: 30000,
-    successThreshold: 1,
-  },
-  "webhook-delivery": {
-    failureThreshold: 5,
-    resetTimeoutMs: 15000, // Retry webhooks more frequently
-    successThreshold: 2, // Require 2 successes to fully close
-  },
-};
+    const circuitConfigs: Record<string, CircuitBreakerConfig> = {
+      "stripe-api": {
+        failureThreshold: 3,    // Payment is critical, open quickly
+        resetTimeoutMs: 60000,  // Wait longer before retrying payments
+        successThreshold: 1,
+      },
+      "sendgrid": {
+        failureThreshold: 10,   // Email is less critical
+        resetTimeoutMs: 30000,
+        successThreshold: 1,
+      },
+      "webhook-delivery": {
+        failureThreshold: 5,
+        resetTimeoutMs: 15000,  // Retry webhooks more frequently
+        successThreshold: 2,    // Require 2 successes to fully close
+      },
+    };
 ```
 
 _Verified by: Payment circuit opens after 3 failures, Email circuit tolerates more failures, Different services have independent circuits_

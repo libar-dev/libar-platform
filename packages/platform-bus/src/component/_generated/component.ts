@@ -28,22 +28,25 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         { batchSize?: number },
-        { commands: number; correlations: number },
+        { commands: number; correlations: number; hasMore: boolean },
         Name
       >;
       getByCorrelation: FunctionReference<
         "query",
         "internal",
-        { correlationId: string },
-        Array<{
-          commandId: string;
-          commandType: string;
-          executedAt?: number;
-          result?: any;
-          status: "pending" | "executed" | "rejected" | "failed";
-          targetContext: string;
-          timestamp: number;
-        }>,
+        { correlationId: string; cursor?: string; limit?: number },
+        {
+          commands: Array<{
+            commandId: string;
+            commandType: string;
+            executedAt?: number;
+            status: "pending" | "executed" | "rejected" | "failed";
+            targetContext: string;
+            timestamp: number;
+          }>;
+          hasMore: boolean;
+          nextCursor: string | null;
+        },
         Name
       >;
       getCommandStatus: FunctionReference<

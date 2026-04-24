@@ -1,48 +1,123 @@
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { v7 as uuidv7 } from "uuid";
+import {
+  allocateGlobalPositions,
+  compareGlobalPositions,
+  isGlobalPositionAfter,
+  maxGlobalPosition,
+  normalizeGlobalPosition,
+  type GlobalPosition,
+  type GlobalPositionLike,
+} from "@libar-dev/platform-core/events";
+import { createIdempotencyFingerprint, stableStringify } from "@libar-dev/platform-core/durability";
+import {
+  assertBoundaryValuesSize,
+  DEFAULT_BOUNDARY_VALUE_MAX_BYTES,
+  vUnknown,
+} from "@libar-dev/platform-core/validation";
+import {
+  assertPMValidTransition,
+  getPMValidEventsFrom,
+  type ProcessManagerLifecycleEvent,
+} from "@libar-dev/platform-core/processManager";
+import { verificationProofValidator, verifyActor } from "./verification.js";
 
-/**
- * GlobalPosition formula constants.
- *
- * Formula: timestamp * TIMESTAMP_MULTIPLIER + streamHash * HASH_MULTIPLIER + (version % VERSION_MODULO)
- *
- * This formula ensures:
- * - Globally unique positions (stream identity included via hash)
- * - Monotonically increasing within a stream
- * - Time-ordered across streams (timestamp is primary sort key)
- *
- * ## Precision Trade-off (Documented Limitation)
- *
- * With real timestamps (~1.7×10^12 ms since epoch), the formula result exceeds
- * Number.MAX_SAFE_INTEGER (~9×10^15). This is accepted because:
- *
- * 1. **Uniqueness maintained**: Stream hash differentiation prevents collisions
- * 2. **Ordering sufficient**: Approximate ordering is adequate for checkpointing
- * 3. **Collision probability**: Effectively zero in practice (requires same ms,
- *    same hash bucket, same version % 1000)
- *
- * See ADR-024 in docs/architecture/DECISIONS.md for full trade-off analysis.
- */
-const GLOBAL_POSITION_CONSTANTS = {
-  /** Multiplier for timestamp - makes time the primary sort key (1 million) */
-  TIMESTAMP_MULTIPLIER: 1_000_000,
-  /** Multiplier for stream hash - provides 1000 buckets for stream differentiation */
-  HASH_MULTIPLIER: 1_000,
-  /** Modulo for version - handles version tiebreaker within same millisecond (0-999) */
-  VERSION_MODULO: 1_000,
-  /** Modulo for stream hash (djb2 output) - 1000 buckets balances collision vs distribution */
-  HASH_MODULO: 1_000,
-} as const;
+const compatGlobalPositionValidator = v.union(v.number(), v.int64());
+const GLOBAL_POSITION_ALLOCATOR_NAME = "event-store";
+const EVENT_STORE_VALUE_MAX_BYTES = DEFAULT_BOUNDARY_VALUE_MAX_BYTES;
+const MAX_APPEND_BATCH_SIZE = 100;
+const MAX_CORRELATION_LIMIT = 1000;
+const MAX_VIRTUAL_STREAM_LIMIT = 1000;
+
+const storedUnknownValueValidator = vUnknown();
+const storedMetadataValidator = v.optional(vUnknown());
+
+const storedEventValidator = v.object({
+  eventId: v.string(),
+  eventType: v.string(),
+  streamType: v.string(),
+  streamId: v.string(),
+  version: v.number(),
+  globalPosition: compatGlobalPositionValidator,
+  boundedContext: v.string(),
+  tenantId: v.optional(v.string()),
+  scopeKey: v.optional(v.string()),
+  category: v.union(
+    v.literal("domain"),
+    v.literal("integration"),
+    v.literal("trigger"),
+    v.literal("fat")
+  ),
+  schemaVersion: v.number(),
+  correlationId: v.string(),
+  causationId: v.optional(v.string()),
+  timestamp: v.number(),
+  payload: storedUnknownValueValidator,
+  metadata: storedMetadataValidator,
+});
+
+const readFromPositionResultValidator = v.object({
+  events: v.array(storedEventValidator),
+  nextPosition: compatGlobalPositionValidator,
+  hasMore: v.boolean(),
+});
+
+const correlatedEventSummaryValidator = v.object({
+  eventId: v.string(),
+  eventType: v.string(),
+  streamType: v.string(),
+  streamId: v.string(),
+  version: v.number(),
+  globalPosition: compatGlobalPositionValidator,
+  boundedContext: v.string(),
+  tenantId: v.optional(v.string()),
+  scopeKey: v.optional(v.string()),
+  category: v.union(
+    v.literal("domain"),
+    v.literal("integration"),
+    v.literal("trigger"),
+    v.literal("fat")
+  ),
+  schemaVersion: v.number(),
+  correlationId: v.string(),
+  causationId: v.optional(v.string()),
+  timestamp: v.number(),
+});
+
+const getByCorrelationResultValidator = v.object({
+  events: v.array(correlatedEventSummaryValidator),
+  nextCursor: v.union(compatGlobalPositionValidator, v.null()),
+  hasMore: v.boolean(),
+});
+
+function buildDuplicateAppendResult(events: Array<Doc<"events">>): {
+  status: "duplicate";
+  eventIds: string[];
+  globalPositions: GlobalPosition[];
+  newVersion: number;
+} {
+  const sortedEvents = [...events].sort((left, right) => left.version - right.version);
+
+  return {
+    status: "duplicate",
+    eventIds: sortedEvents.map((event) => event.eventId),
+    globalPositions: sortedEvents.map((event) => normalizeGlobalPosition(event.globalPosition)),
+    newVersion: sortedEvents[sortedEvents.length - 1]?.version ?? 0,
+  };
+}
 
 /**
  * Append events to a stream with optimistic concurrency control.
+ *
+ * @contract-status: Enforced
  *
  * @param streamType - Type of the stream (e.g., "Order")
  * @param streamId - ID of the stream instance
  * @param expectedVersion - Expected current version (0 for new streams)
  * @param events - Array of events to append
- * @returns Success with event IDs and positions, or conflict with current version
+ * @returns Success, duplicate replay, OCC conflict, or audited idempotency conflict.
  */
 export const appendToStream = mutation({
   args: {
@@ -50,10 +125,13 @@ export const appendToStream = mutation({
     streamId: v.string(),
     expectedVersion: v.number(),
     boundedContext: v.string(),
+    tenantId: v.optional(v.string()),
+    verificationProof: verificationProofValidator,
     events: v.array(
       v.object({
         eventId: v.string(),
         eventType: v.string(),
+        scopeKey: v.optional(v.string()),
         /**
          * Event taxonomy (Phase 9)
          * - domain: Internal facts within bounded context for ES replay
@@ -79,7 +157,7 @@ export const appendToStream = mutation({
          * Each bounded context defines its own event schemas with Zod validation.
          * The Event Store acts as a generic log, not a typed repository.
          */
-        payload: v.any(),
+         payload: vUnknown(),
         metadata: v.optional(
           v.object({
             correlationId: v.string(),
@@ -99,24 +177,174 @@ export const appendToStream = mutation({
     v.object({
       status: v.literal("success"),
       eventIds: v.array(v.string()),
-      globalPositions: v.array(v.number()),
+      globalPositions: v.array(compatGlobalPositionValidator),
+      newVersion: v.number(),
+    }),
+    v.object({
+      status: v.literal("duplicate"),
+      eventIds: v.array(v.string()),
+      globalPositions: v.array(compatGlobalPositionValidator),
       newVersion: v.number(),
     }),
     v.object({
       status: v.literal("conflict"),
       currentVersion: v.number(),
+    }),
+    v.object({
+      status: v.literal("idempotency_conflict"),
+      existingEventId: v.string(),
+      auditId: v.string(),
+      currentVersion: v.number(),
     })
   ),
   handler: async (ctx, args) => {
-    const { streamType, streamId, expectedVersion, boundedContext, events } = args;
+    const { streamType, streamId, expectedVersion, tenantId, events } = args;
+    if (events.length > MAX_APPEND_BATCH_SIZE) {
+      throw new Error(
+        `appendToStream supports at most ${MAX_APPEND_BATCH_SIZE} events per batch. Received ${events.length}.`
+      );
+    }
 
-    // Get or create stream record
+    const verifiedActor = await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: args.boundedContext,
+      expectedSubjectType: "boundedContext",
+      expectedBoundedContext: args.boundedContext,
+      ...(tenantId !== undefined && { expectedTenantId: tenantId }),
+    });
+    const boundedContext = verifiedActor.boundedContext;
+
+    assertBoundaryValuesSize(
+      args.events.flatMap((event, index) => [
+        {
+          fieldName: `appendToStream.events[${index}].payload`,
+          value: event.payload,
+          maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+        },
+        {
+          fieldName: `appendToStream.events[${index}].metadata`,
+          value: event.metadata,
+          maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+        },
+      ])
+    );
+
     const existingStream = await ctx.db
       .query("streams")
       .withIndex("by_stream", (q) => q.eq("streamType", streamType).eq("streamId", streamId))
       .first();
 
     const currentVersion = existingStream?.currentVersion ?? 0;
+
+    const duplicateEvents: Array<Doc<"events">> = [];
+
+    for (const event of events) {
+      if (event.idempotencyKey === undefined) {
+        continue;
+      }
+
+      const existingEvent = await ctx.db
+        .query("events")
+        .withIndex("by_idempotency_key", (q) => q.eq("idempotencyKey", event.idempotencyKey))
+        .first();
+
+      if (!existingEvent) {
+        continue;
+      }
+
+      const incomingFingerprint = createIdempotencyFingerprint({
+        streamType,
+        streamId,
+        boundedContext,
+        ...(tenantId !== undefined && { tenantId }),
+        eventType: event.eventType,
+        category: event.category ?? "domain",
+        schemaVersion: event.schemaVersion ?? 1,
+        payload: event.payload,
+      });
+
+      const existingFingerprint = createIdempotencyFingerprint({
+        streamType: existingEvent.streamType,
+        streamId: existingEvent.streamId,
+        boundedContext: existingEvent.boundedContext,
+        ...(existingEvent.tenantId !== undefined && { tenantId: existingEvent.tenantId }),
+        eventType: existingEvent.eventType,
+        category: existingEvent.category,
+        schemaVersion: existingEvent.schemaVersion,
+        payload: existingEvent.payload,
+      });
+
+      if (existingFingerprint !== incomingFingerprint) {
+        const auditId = `ida_${uuidv7()}`;
+        await ctx.db.insert("idempotencyConflictAudits", {
+          auditId,
+          idempotencyKey: event.idempotencyKey,
+          streamType,
+          streamId,
+          boundedContext,
+          ...(tenantId !== undefined && { tenantId }),
+          incomingEventType: event.eventType,
+          existingEventId: existingEvent.eventId,
+          existingEventType: existingEvent.eventType,
+          conflictReason: "same_key_different_payload",
+          incomingFingerprint,
+          existingFingerprint,
+          incomingPayload: event.payload,
+          existingPayload: existingEvent.payload,
+          attemptedAt: Date.now(),
+        });
+
+        return {
+          status: "idempotency_conflict" as const,
+          existingEventId: existingEvent.eventId,
+          auditId,
+          currentVersion,
+        };
+      }
+
+      duplicateEvents.push(existingEvent);
+    }
+
+    if (duplicateEvents.length > 0) {
+      if (duplicateEvents.length !== events.length || duplicateEvents.length !== new Set(duplicateEvents.map((event) => event.eventId)).size) {
+        const firstDuplicate = duplicateEvents[0]!;
+        const incomingEvent = events.find((event) => event.idempotencyKey !== undefined) ?? events[0]!;
+        const auditId = `ida_${uuidv7()}`;
+
+        await ctx.db.insert("idempotencyConflictAudits", {
+          auditId,
+          idempotencyKey: incomingEvent.idempotencyKey ?? "<mixed-batch>",
+          streamType,
+          streamId,
+          boundedContext,
+          ...(tenantId !== undefined && { tenantId }),
+          incomingEventType: incomingEvent.eventType,
+          existingEventId: firstDuplicate.eventId,
+          existingEventType: firstDuplicate.eventType,
+          conflictReason: "partial_duplicate_batch",
+          incomingFingerprint: stableStringify(events),
+          existingFingerprint: stableStringify(
+            duplicateEvents.map((event) => ({
+              eventId: event.eventId,
+              eventType: event.eventType,
+              version: event.version,
+            }))
+          ),
+          incomingPayload: events,
+          existingPayload: duplicateEvents.map((event) => event.payload),
+          attemptedAt: Date.now(),
+        });
+
+        return {
+          status: "idempotency_conflict" as const,
+          existingEventId: firstDuplicate.eventId,
+          auditId,
+          currentVersion,
+        };
+      }
+
+      return buildDuplicateAppendResult(duplicateEvents);
+    }
 
     // Check for concurrency conflict
     if (currentVersion !== expectedVersion) {
@@ -126,44 +354,35 @@ export const appendToStream = mutation({
       };
     }
 
-    // Generate timestamp-based global positions that are globally unique.
-    // Formula: timestamp * 1_000_000 + streamHash * 1_000 + (version % 1000)
-    //
-    // This ensures:
-    // - Globally unique positions (stream identity included in calculation)
-    // - Monotonically increasing within a stream
-    // - Time-ordered across streams (timestamp is primary sort key)
-    //
-    // Why this matters:
-    // - Without streamHash, two streams appending at the same millisecond with
-    //   the same version % 1000 would get identical globalPositions (collision!)
-    // - Projection checkpoints rely on globalPosition uniqueness for idempotency
     const timestamp = Date.now();
-
-    // Simple hash function for stream identity (djb2 algorithm)
-    // This provides good distribution with minimal collision risk
-    const streamIdentity = `${streamType}:${streamId}`;
-    let hash = 5381;
-    for (let i = 0; i < streamIdentity.length; i++) {
-      hash = (hash * 33) ^ streamIdentity.charCodeAt(i);
-    }
-    const streamHash = Math.abs(hash % GLOBAL_POSITION_CONSTANTS.HASH_MODULO);
+    const allocator = await ctx.db
+      .query("globalPositionAllocators")
+      .withIndex("by_name", (q) => q.eq("name", GLOBAL_POSITION_ALLOCATOR_NAME))
+      .first();
+    const allocated = allocateGlobalPositions(
+      allocator
+        ? {
+            lastTimestamp: allocator.lastTimestamp,
+            lastSequence: allocator.lastSequence,
+          }
+        : null,
+      events.length,
+      timestamp
+    );
 
     // Prepare event records
     const eventIds: string[] = [];
-    const globalPositions: number[] = [];
+    const globalPositions: GlobalPosition[] = [];
     let nextVersion = currentVersion;
 
-    for (const event of events) {
+    for (const [index, event] of events.entries()) {
       nextVersion++;
-      // Combine timestamp, stream hash, and version for globally unique position
-      // - timestamp * 1M: primary time ordering
-      // - streamHash * 1K: stream identity offset (0-999)
-      // - version % 1K: version tiebreaker within stream (0-999)
-      const globalPosition =
-        timestamp * GLOBAL_POSITION_CONSTANTS.TIMESTAMP_MULTIPLIER +
-        streamHash * GLOBAL_POSITION_CONSTANTS.HASH_MULTIPLIER +
-        (nextVersion % GLOBAL_POSITION_CONSTANTS.VERSION_MODULO);
+      const globalPosition = allocated.positions[index]!;
+      const metadata = event.metadata;
+
+      if (!metadata) {
+        throw new Error("appendToStream requires events[*].metadata.correlationId");
+      }
 
       await ctx.db.insert("events", {
         eventId: event.eventId,
@@ -173,22 +392,39 @@ export const appendToStream = mutation({
         version: nextVersion,
         globalPosition,
         boundedContext,
+        ...(tenantId !== undefined && { tenantId }),
+        ...(event.scopeKey !== undefined && { scopeKey: event.scopeKey }),
         // Phase 9: Event taxonomy and schema versioning (required fields with defaults)
         category: event.category ?? "domain",
         schemaVersion: event.schemaVersion ?? 1,
-        correlationId: event.metadata?.correlationId ?? `corr_${uuidv7()}`,
+        correlationId: metadata.correlationId,
         timestamp,
         payload: event.payload,
-        ...(event.metadata?.causationId !== undefined && {
-          causationId: event.metadata.causationId,
+        ...(metadata.causationId !== undefined && {
+          causationId: metadata.causationId,
         }),
-        ...(event.metadata !== undefined && { metadata: event.metadata }),
+        metadata,
         // Phase 18b: Idempotency key for duplicate detection
         ...(event.idempotencyKey !== undefined && { idempotencyKey: event.idempotencyKey }),
       });
 
       eventIds.push(event.eventId);
       globalPositions.push(globalPosition);
+    }
+
+    if (allocator) {
+      await ctx.db.patch(allocator._id, {
+        lastTimestamp: allocated.lastTimestamp,
+        lastSequence: allocated.lastSequence,
+        updatedAt: timestamp,
+      });
+    } else {
+      await ctx.db.insert("globalPositionAllocators", {
+        name: GLOBAL_POSITION_ALLOCATOR_NAME,
+        lastTimestamp: allocated.lastTimestamp,
+        lastSequence: allocated.lastSequence,
+        updatedAt: timestamp,
+      });
     }
 
     // Update or create stream record
@@ -226,30 +462,7 @@ export const readStream = query({
     fromVersion: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
-  returns: v.array(
-    v.object({
-      eventId: v.string(),
-      eventType: v.string(),
-      streamType: v.string(),
-      streamId: v.string(),
-      version: v.number(),
-      globalPosition: v.number(),
-      boundedContext: v.string(),
-      // Phase 9: Event taxonomy and schema versioning (required)
-      category: v.union(
-        v.literal("domain"),
-        v.literal("integration"),
-        v.literal("trigger"),
-        v.literal("fat")
-      ),
-      schemaVersion: v.number(),
-      correlationId: v.string(),
-      causationId: v.optional(v.string()),
-      timestamp: v.number(),
-      payload: v.any(),
-      metadata: v.optional(v.any()),
-    })
-  ),
+  returns: v.array(storedEventValidator),
   handler: async (ctx, args) => {
     const { streamType, streamId, fromVersion = 0, limit = 1000 } = args;
 
@@ -267,6 +480,8 @@ export const readStream = query({
       version: e.version,
       globalPosition: e.globalPosition,
       boundedContext: e.boundedContext,
+      ...(e.tenantId !== undefined && { tenantId: e.tenantId }),
+      ...(e.scopeKey !== undefined && { scopeKey: e.scopeKey }),
       category: e.category,
       schemaVersion: e.schemaVersion,
       correlationId: e.correlationId,
@@ -281,17 +496,11 @@ export const readStream = query({
 /**
  * Read all events globally in order (for projections).
  *
- * ## Event Type Filtering Limitation
+ * ## Event Type Filtering
  *
- * When using the `eventTypes` filter:
- * - Filtering happens IN-MEMORY after fetching from the database
- * - The function fetches 3x the requested limit to compensate for filtering
- * - This works well when your event types are common (>30% of all events)
- *
- * **For sparse event distributions** (e.g., if your event type is <10% of events):
- * - You may receive fewer results than the requested limit
- * - Consider querying the `by_event_type` index directly for better performance
- * - Or use the `getByEventType` query (if available) for specific event types
+ * When using the `eventTypes` filter, the function fans out across the
+ * `by_event_type_and_global_position` compound index and merges the results back
+ * into global-position order.
  *
  * ## Recommended Usage
  *
@@ -300,71 +509,95 @@ export const readStream = query({
  *
  * @param fromPosition - Start reading from this global position (exclusive)
  * @param limit - Maximum number of events to return (default: 100)
- * @param eventTypes - Optional filter for specific event types (in-memory filter)
+ * @param eventTypes - Optional filter for specific event types
  * @param boundedContext - Optional filter for specific bounded context
- * @returns Array of events ordered by globalPosition
+ * @returns Events ordered by globalPosition plus pagination metadata
  */
 export const readFromPosition = query({
   args: {
-    fromPosition: v.optional(v.number()),
+    fromPosition: v.optional(compatGlobalPositionValidator),
     limit: v.optional(v.number()),
     eventTypes: v.optional(v.array(v.string())),
     boundedContext: v.optional(v.string()),
   },
-  returns: v.array(
-    v.object({
-      eventId: v.string(),
-      eventType: v.string(),
-      streamType: v.string(),
-      streamId: v.string(),
-      version: v.number(),
-      globalPosition: v.number(),
-      boundedContext: v.string(),
-      // Phase 9: Event taxonomy and schema versioning (required)
-      category: v.union(
-        v.literal("domain"),
-        v.literal("integration"),
-        v.literal("trigger"),
-        v.literal("fat")
-      ),
-      schemaVersion: v.number(),
-      correlationId: v.string(),
-      causationId: v.optional(v.string()),
-      timestamp: v.number(),
-      payload: v.any(),
-      metadata: v.optional(v.any()),
-    })
-  ),
+  returns: readFromPositionResultValidator,
   handler: async (ctx, args) => {
-    const { fromPosition = -1, limit = 100, eventTypes, boundedContext } = args;
+    const { limit = 100, eventTypes, boundedContext } = args;
+    const fromPosition = normalizeGlobalPosition(args.fromPosition ?? -1, "fromPosition");
 
-    // When filtering by eventTypes, fetch more to compensate for filtering
-    // This is a tradeoff - we may fetch more than needed but ensure we return enough
-    const fetchLimit = eventTypes ? limit * 3 : limit;
+    const uniqueEventTypes = eventTypes ? [...new Set(eventTypes)] : undefined;
+    let candidateEvents: Array<Doc<"events">>;
 
-    let query = ctx.db
-      .query("events")
-      .withIndex("by_global_position")
-      .filter((q) => q.gt(q.field("globalPosition"), fromPosition));
+    if (uniqueEventTypes && uniqueEventTypes.length > 0) {
+      const cursors = new Map(uniqueEventTypes.map((eventType) => [eventType, fromPosition]));
+      const mergedEvents = new Map<string, Doc<"events">>();
+      const exhaustedEventTypes = new Set<string>();
 
-    // Apply bounded context filter at query level
-    if (boundedContext) {
-      query = query.filter((q) => q.eq(q.field("boundedContext"), boundedContext));
+      while (exhaustedEventTypes.size < uniqueEventTypes.length) {
+        let fetchedAny = false;
+
+        for (const eventType of uniqueEventTypes) {
+          if (exhaustedEventTypes.has(eventType)) {
+            continue;
+          }
+
+          const page = await ctx.db
+            .query("events")
+            .withIndex("by_event_type_and_global_position", (q) =>
+              q.eq("eventType", eventType).gt("globalPosition", cursors.get(eventType) ?? fromPosition)
+            )
+            .take(limit + 1);
+
+          if (page.length === 0) {
+            exhaustedEventTypes.add(eventType);
+            continue;
+          }
+
+          fetchedAny = true;
+
+          for (const event of page) {
+            mergedEvents.set(event.eventId, event);
+          }
+
+          cursors.set(
+            eventType,
+            normalizeGlobalPosition(page[page.length - 1]!.globalPosition, `${eventType}.cursor`)
+          );
+
+          if (page.length <= limit) {
+            exhaustedEventTypes.add(eventType);
+          }
+        }
+
+        candidateEvents = Array.from(mergedEvents.values())
+          .filter((event) => !boundedContext || event.boundedContext === boundedContext)
+          .sort((left, right) => compareGlobalPositions(left.globalPosition, right.globalPosition));
+
+        if (candidateEvents.length > limit || !fetchedAny) {
+          break;
+        }
+      }
+
+      candidateEvents ??= [];
+    } else {
+      let query = ctx.db
+        .query("events")
+        .withIndex("by_global_position", (q) => q.gt("globalPosition", fromPosition));
+
+      if (boundedContext) {
+        query = query.filter((q) => q.eq(q.field("boundedContext"), boundedContext));
+      }
+
+      candidateEvents = await query.take(limit + 1);
     }
 
-    const events = await query.take(fetchLimit);
+    const filteredEvents = boundedContext
+      ? candidateEvents.filter((event) => event.boundedContext === boundedContext)
+      : candidateEvents;
 
-    // Filter by event types in memory if specified, then apply limit
-    let filteredEvents = eventTypes
-      ? events.filter((e) => eventTypes.includes(e.eventType))
-      : events;
-
-    // Apply limit after filtering
-    if (eventTypes && filteredEvents.length > limit) {
-      filteredEvents = filteredEvents.slice(0, limit);
-    }
-
-    return filteredEvents.map((e) => ({
+    const limitedEvents = filteredEvents.slice(0, limit);
+    const hasMore = filteredEvents.length > limit;
+    const events = limitedEvents.map((e) => ({
       eventId: e.eventId,
       eventType: e.eventType,
       streamType: e.streamType,
@@ -372,6 +605,8 @@ export const readFromPosition = query({
       version: e.version,
       globalPosition: e.globalPosition,
       boundedContext: e.boundedContext,
+      ...(e.tenantId !== undefined && { tenantId: e.tenantId }),
+      ...(e.scopeKey !== undefined && { scopeKey: e.scopeKey }),
       category: e.category,
       schemaVersion: e.schemaVersion,
       correlationId: e.correlationId,
@@ -380,6 +615,12 @@ export const readFromPosition = query({
       ...(e.causationId !== undefined && { causationId: e.causationId }),
       ...(e.metadata !== undefined && { metadata: e.metadata }),
     }));
+
+    return {
+      events,
+      nextPosition: limitedEvents[limitedEvents.length - 1]?.globalPosition ?? fromPosition,
+      hasMore,
+    };
   },
 });
 
@@ -410,53 +651,43 @@ export const getStreamVersion = query({
 export const getByCorrelation = query({
   args: {
     correlationId: v.string(),
+    limit: v.optional(v.number()),
+    cursor: v.optional(compatGlobalPositionValidator),
   },
-  returns: v.array(
-    v.object({
-      eventId: v.string(),
-      eventType: v.string(),
-      streamType: v.string(),
-      streamId: v.string(),
-      version: v.number(),
-      globalPosition: v.number(),
-      boundedContext: v.string(),
-      // Phase 9: Event taxonomy and schema versioning (required)
-      category: v.union(
-        v.literal("domain"),
-        v.literal("integration"),
-        v.literal("trigger"),
-        v.literal("fat")
-      ),
-      schemaVersion: v.number(),
-      correlationId: v.string(),
-      causationId: v.optional(v.string()),
-      timestamp: v.number(),
-      payload: v.any(),
-      metadata: v.optional(v.any()),
-    })
-  ),
+  returns: getByCorrelationResultValidator,
   handler: async (ctx, args) => {
+    const effectiveLimit = Math.min(args.limit ?? 100, MAX_CORRELATION_LIMIT);
     const events = await ctx.db
       .query("events")
-      .withIndex("by_correlation", (q) => q.eq("correlationId", args.correlationId))
-      .collect();
+      .withIndex("by_correlation_and_global_position", (q) => {
+        const range = q.eq("correlationId", args.correlationId);
+        return args.cursor !== undefined ? range.gt("globalPosition", args.cursor) : range;
+      })
+      .take(effectiveLimit + 1);
 
-    return events.map((e) => ({
-      eventId: e.eventId,
-      eventType: e.eventType,
-      streamType: e.streamType,
-      streamId: e.streamId,
-      version: e.version,
-      globalPosition: e.globalPosition,
-      boundedContext: e.boundedContext,
-      category: e.category,
-      schemaVersion: e.schemaVersion,
-      correlationId: e.correlationId,
-      timestamp: e.timestamp,
-      payload: e.payload,
-      ...(e.causationId !== undefined && { causationId: e.causationId }),
-      ...(e.metadata !== undefined && { metadata: e.metadata }),
-    }));
+    const hasMore = events.length > effectiveLimit;
+    const page = events.slice(0, effectiveLimit);
+
+    return {
+      events: page.map((e) => ({
+        eventId: e.eventId,
+        eventType: e.eventType,
+        streamType: e.streamType,
+        streamId: e.streamId,
+        version: e.version,
+        globalPosition: e.globalPosition,
+        boundedContext: e.boundedContext,
+        ...(e.tenantId !== undefined && { tenantId: e.tenantId }),
+        ...(e.scopeKey !== undefined && { scopeKey: e.scopeKey }),
+        category: e.category,
+        schemaVersion: e.schemaVersion,
+        correlationId: e.correlationId,
+        timestamp: e.timestamp,
+        ...(e.causationId !== undefined && { causationId: e.causationId }),
+      })),
+      nextCursor: hasMore ? page[page.length - 1]?.globalPosition ?? null : null,
+      hasMore,
+    };
   },
 });
 
@@ -468,7 +699,7 @@ export const getByCorrelation = query({
  */
 export const getGlobalPosition = query({
   args: {},
-  returns: v.number(),
+  returns: compatGlobalPositionValidator,
   handler: async (ctx) => {
     // Query events in descending order by globalPosition, take first
     const latestEvent = await ctx.db
@@ -477,7 +708,7 @@ export const getGlobalPosition = query({
       .order("desc")
       .first();
 
-    return latestEvent?.globalPosition ?? 0;
+    return latestEvent?.globalPosition ?? 0n;
   },
 });
 
@@ -504,8 +735,10 @@ export const getByIdempotencyKey = query({
       streamType: v.string(),
       streamId: v.string(),
       version: v.number(),
-      globalPosition: v.number(),
+      globalPosition: compatGlobalPositionValidator,
       boundedContext: v.string(),
+      tenantId: v.optional(v.string()),
+      scopeKey: v.optional(v.string()),
       category: v.union(
         v.literal("domain"),
         v.literal("integration"),
@@ -516,8 +749,8 @@ export const getByIdempotencyKey = query({
       correlationId: v.string(),
       causationId: v.optional(v.string()),
       timestamp: v.number(),
-      payload: v.any(),
-      metadata: v.optional(v.any()),
+      payload: storedUnknownValueValidator,
+      metadata: storedMetadataValidator,
       idempotencyKey: v.optional(v.string()),
     }),
     v.null()
@@ -542,6 +775,7 @@ export const getByIdempotencyKey = query({
       version: event.version,
       globalPosition: event.globalPosition,
       boundedContext: event.boundedContext,
+      ...(event.tenantId !== undefined && { tenantId: event.tenantId }),
       category: event.category,
       schemaVersion: event.schemaVersion,
       correlationId: event.correlationId,
@@ -551,6 +785,55 @@ export const getByIdempotencyKey = query({
       ...(event.metadata !== undefined && { metadata: event.metadata }),
       ...(event.idempotencyKey !== undefined && { idempotencyKey: event.idempotencyKey }),
     };
+  },
+});
+
+export const getIdempotencyConflictAudits = query({
+  args: {
+    idempotencyKey: v.string(),
+  },
+  returns: v.array(
+    v.object({
+      auditId: v.string(),
+      idempotencyKey: v.string(),
+      streamType: v.string(),
+      streamId: v.string(),
+      boundedContext: v.string(),
+      tenantId: v.optional(v.string()),
+      incomingEventType: v.string(),
+      existingEventId: v.string(),
+      existingEventType: v.string(),
+      conflictReason: v.string(),
+      incomingFingerprint: v.string(),
+      existingFingerprint: v.string(),
+      incomingPayload: storedUnknownValueValidator,
+      existingPayload: storedUnknownValueValidator,
+      attemptedAt: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const audits = await ctx.db
+      .query("idempotencyConflictAudits")
+      .withIndex("by_idempotency_key", (q) => q.eq("idempotencyKey", args.idempotencyKey))
+      .collect();
+
+    return audits.map((audit) => ({
+      auditId: audit.auditId,
+      idempotencyKey: audit.idempotencyKey,
+      streamType: audit.streamType,
+      streamId: audit.streamId,
+      boundedContext: audit.boundedContext,
+      ...(audit.tenantId !== undefined && { tenantId: audit.tenantId }),
+      incomingEventType: audit.incomingEventType,
+      existingEventId: audit.existingEventId,
+      existingEventType: audit.existingEventType,
+      conflictReason: audit.conflictReason,
+      incomingFingerprint: audit.incomingFingerprint,
+      existingFingerprint: audit.existingFingerprint,
+      incomingPayload: audit.incomingPayload,
+      existingPayload: audit.existingPayload,
+      attemptedAt: audit.attemptedAt,
+    }));
   },
 });
 
@@ -577,6 +860,19 @@ const deadLetterStatusValidator = v.union(
   v.literal("replayed"),
   v.literal("ignored")
 );
+
+function assertTransitionOrNull(
+  from: Doc<"processManagerStates">["status"],
+  event: ProcessManagerLifecycleEvent,
+  processManagerName: string,
+  instanceId: string
+): Doc<"processManagerStates">["status"] | null {
+  try {
+    return assertPMValidTransition(from, event, processManagerName, instanceId);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Get or create a process manager state instance.
@@ -608,7 +904,7 @@ export const getOrCreatePMState = mutation({
     options: v.optional(
       v.object({
         /** Custom state for hybrid PMs */
-        customState: v.optional(v.any()),
+        customState: v.optional(vUnknown()),
         /** State version for schema evolution */
         stateVersion: v.optional(v.number()),
         /** Trigger event ID for causation tracking */
@@ -624,10 +920,10 @@ export const getOrCreatePMState = mutation({
     processManagerName: v.string(),
     instanceId: v.string(),
     status: pmStatusValidator,
-    lastGlobalPosition: v.number(),
+    lastGlobalPosition: compatGlobalPositionValidator,
     commandsEmitted: v.number(),
     commandsFailed: v.number(),
-    customState: v.optional(v.any()),
+    customState: v.optional(vUnknown()),
     stateVersion: v.number(),
     triggerEventId: v.optional(v.string()),
     correlationId: v.optional(v.string()),
@@ -639,6 +935,14 @@ export const getOrCreatePMState = mutation({
   handler: async (ctx, args) => {
     const { processManagerName, instanceId, options = {} } = args;
     const now = Date.now();
+
+    assertBoundaryValuesSize([
+      {
+        fieldName: "getOrCreatePMState.options.customState",
+        value: options.customState,
+        maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+      },
+    ]);
 
     // Check if instance already exists
     const existing = await ctx.db
@@ -698,7 +1002,7 @@ export const getOrCreatePMState = mutation({
       processManagerName,
       instanceId,
       status: "idle",
-      lastGlobalPosition: 0,
+      lastGlobalPosition: 0n,
       commandsEmitted: 0,
       commandsFailed: 0,
       stateVersion: options.stateVersion ?? 1,
@@ -713,7 +1017,7 @@ export const getOrCreatePMState = mutation({
       processManagerName,
       instanceId,
       status: "idle" as const,
-      lastGlobalPosition: 0,
+      lastGlobalPosition: 0n,
       commandsEmitted: 0,
       commandsFailed: 0,
       stateVersion: options.stateVersion ?? 1,
@@ -744,10 +1048,10 @@ export const getPMState = query({
       processManagerName: v.string(),
       instanceId: v.string(),
       status: pmStatusValidator,
-      lastGlobalPosition: v.number(),
+      lastGlobalPosition: compatGlobalPositionValidator,
       commandsEmitted: v.number(),
       commandsFailed: v.number(),
-      customState: v.optional(v.any()),
+      customState: v.optional(vUnknown()),
       stateVersion: v.number(),
       triggerEventId: v.optional(v.string()),
       correlationId: v.optional(v.string()),
@@ -806,8 +1110,8 @@ export const updatePMState = mutation({
     instanceId: v.string(),
     updates: v.object({
       status: v.optional(pmStatusValidator),
-      lastGlobalPosition: v.optional(v.number()),
-      customState: v.optional(v.any()),
+      lastGlobalPosition: v.optional(compatGlobalPositionValidator),
+      customState: v.optional(vUnknown()),
       stateVersion: v.optional(v.number()),
       commandsEmitted: v.optional(v.number()),
       commandsFailed: v.optional(v.number()),
@@ -822,7 +1126,7 @@ export const updatePMState = mutation({
       processManagerName: v.string(),
       instanceId: v.string(),
       newStatus: pmStatusValidator,
-      lastGlobalPosition: v.number(),
+      lastGlobalPosition: compatGlobalPositionValidator,
     }),
     v.object({
       status: v.literal("not_found"),
@@ -831,6 +1135,17 @@ export const updatePMState = mutation({
   handler: async (ctx, args) => {
     const { processManagerName, instanceId, updates } = args;
     const now = Date.now();
+    assertBoundaryValuesSize([
+      {
+        fieldName: "updatePMState.updates.customState",
+        value: updates.customState,
+        maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+      },
+    ]);
+    const normalizedLastGlobalPosition =
+      updates.lastGlobalPosition !== undefined
+        ? normalizeGlobalPosition(updates.lastGlobalPosition, "updates.lastGlobalPosition")
+        : undefined;
 
     const existing = await ctx.db
       .query("processManagerStates")
@@ -847,8 +1162,8 @@ export const updatePMState = mutation({
     const updateFields = {
       lastUpdatedAt: now,
       ...(updates.status !== undefined && { status: updates.status }),
-      ...(updates.lastGlobalPosition !== undefined && {
-        lastGlobalPosition: updates.lastGlobalPosition,
+      ...(normalizedLastGlobalPosition !== undefined && {
+        lastGlobalPosition: normalizedLastGlobalPosition,
       }),
       ...(updates.customState !== undefined && { customState: updates.customState }),
       ...(updates.stateVersion !== undefined && { stateVersion: updates.stateVersion }),
@@ -866,7 +1181,7 @@ export const updatePMState = mutation({
       processManagerName,
       instanceId,
       newStatus: updates.status ?? existing.status,
-      lastGlobalPosition: updates.lastGlobalPosition ?? existing.lastGlobalPosition,
+      lastGlobalPosition: normalizedLastGlobalPosition ?? existing.lastGlobalPosition,
     };
   },
 });
@@ -901,13 +1216,13 @@ export const transitionPMState = mutation({
     ),
     options: v.optional(
       v.object({
-        lastGlobalPosition: v.optional(v.number()),
+        lastGlobalPosition: v.optional(compatGlobalPositionValidator),
         triggerEventId: v.optional(v.string()),
         correlationId: v.optional(v.string()),
         errorMessage: v.optional(v.string()),
         commandsEmitted: v.optional(v.number()),
         commandsFailed: v.optional(v.number()),
-        customState: v.optional(v.any()),
+        customState: v.optional(vUnknown()),
       })
     ),
   },
@@ -931,6 +1246,17 @@ export const transitionPMState = mutation({
   handler: async (ctx, args) => {
     const { processManagerName, instanceId, event, options = {} } = args;
     const now = Date.now();
+    assertBoundaryValuesSize([
+      {
+        fieldName: "transitionPMState.options.customState",
+        value: options.customState,
+        maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+      },
+    ]);
+    const normalizedLastGlobalPosition =
+      options.lastGlobalPosition !== undefined
+        ? normalizeGlobalPosition(options.lastGlobalPosition, "options.lastGlobalPosition")
+        : undefined;
 
     const existing = await ctx.db
       .query("processManagerStates")
@@ -943,23 +1269,14 @@ export const transitionPMState = mutation({
       return { status: "not_found" as const };
     }
 
-    // State transition lookup table
-    const transitions: Record<string, Record<string, string>> = {
-      idle: { START: "processing" },
-      processing: { SUCCESS: "completed", FAIL: "failed" },
-      completed: { RESET: "idle" },
-      failed: { RETRY: "processing", RESET: "idle" },
-    };
+    const newStatus = assertTransitionOrNull(existing.status, event, processManagerName, instanceId);
 
-    const validTransitions = transitions[existing.status] ?? {};
-    const newStatus = validTransitions[event];
-
-    if (!newStatus) {
+    if (newStatus === null) {
       return {
         status: "invalid_transition" as const,
         currentStatus: existing.status,
         event,
-        validEvents: Object.keys(validTransitions),
+        validEvents: getPMValidEventsFrom(existing.status),
       };
     }
 
@@ -967,15 +1284,13 @@ export const transitionPMState = mutation({
     // Note: We use empty string to "clear" errorMessage since Convex patch()
     // treats undefined as a no-op. Empty string is our sentinel for "no error".
     const clearError = event === "RESET" || event === "RETRY";
-    const typedNewStatus = newStatus as "idle" | "processing" | "completed" | "failed";
-
     const updateFields = {
-      status: typedNewStatus,
+      status: newStatus,
       lastUpdatedAt: now,
       // Clear error by setting to empty string (undefined is no-op in Convex patch)
       ...(clearError && existing.errorMessage && { errorMessage: "" }),
-      ...(options.lastGlobalPosition !== undefined && {
-        lastGlobalPosition: options.lastGlobalPosition,
+      ...(normalizedLastGlobalPosition !== undefined && {
+        lastGlobalPosition: normalizedLastGlobalPosition,
       }),
       ...(options.triggerEventId !== undefined && { triggerEventId: options.triggerEventId }),
       ...(options.correlationId !== undefined && { correlationId: options.correlationId }),
@@ -991,7 +1306,7 @@ export const transitionPMState = mutation({
     return {
       status: "transitioned" as const,
       fromStatus: existing.status,
-      toStatus: newStatus as "idle" | "processing" | "completed" | "failed",
+      toStatus: newStatus,
       event,
     };
   },
@@ -1015,10 +1330,10 @@ export const listPMStates = query({
       processManagerName: v.string(),
       instanceId: v.string(),
       status: pmStatusValidator,
-      lastGlobalPosition: v.number(),
+      lastGlobalPosition: compatGlobalPositionValidator,
       commandsEmitted: v.number(),
       commandsFailed: v.number(),
-      customState: v.optional(v.any()),
+      customState: v.optional(vUnknown()),
       stateVersion: v.number(),
       triggerEventId: v.optional(v.string()),
       correlationId: v.optional(v.string()),
@@ -1033,7 +1348,7 @@ export const listPMStates = query({
     // Cap limit at 1000
     const effectiveLimit = Math.min(limit, 1000);
 
-    let results;
+    let results: Doc<"processManagerStates">[];
 
     // Priority: name > status > correlation index; additional filters applied in-memory
     if (processManagerName) {
@@ -1106,10 +1421,10 @@ export const recordPMDeadLetter = mutation({
     failedCommand: v.optional(
       v.object({
         commandType: v.string(),
-        payload: v.any(),
+        payload: vUnknown(),
       })
     ),
-    context: v.optional(v.any()),
+    context: v.optional(vUnknown()),
   },
   returns: v.union(
     v.object({
@@ -1125,6 +1440,19 @@ export const recordPMDeadLetter = mutation({
     const { processManagerName, instanceId, eventId, error, attemptCount, failedCommand, context } =
       args;
     const now = Date.now();
+
+    assertBoundaryValuesSize([
+      {
+        fieldName: "recordPMDeadLetter.failedCommand.payload",
+        value: failedCommand?.payload,
+        maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+      },
+      {
+        fieldName: "recordPMDeadLetter.context",
+        value: context,
+        maxBytes: EVENT_STORE_VALUE_MAX_BYTES,
+      },
+    ]);
 
     // Check for existing dead letter (idempotency)
     // Use the new by_pm_instance index for efficient lookup
@@ -1250,10 +1578,10 @@ export const listPMDeadLetters = query({
       failedCommand: v.optional(
         v.object({
           commandType: v.string(),
-          payload: v.any(),
+          payload: vUnknown(),
         })
       ),
-      context: v.optional(v.any()),
+      context: v.optional(vUnknown()),
       failedAt: v.number(),
     })
   ),
@@ -1261,7 +1589,7 @@ export const listPMDeadLetters = query({
     const { processManagerName, status, limit = 100 } = args;
     const effectiveLimit = Math.min(limit, 1000);
 
-    let results;
+    let results: Doc<"processManagerDeadLetters">[];
 
     if (processManagerName) {
       results = await ctx.db
@@ -1625,7 +1953,7 @@ export const listScopesByTenant = query({
     const { tenantId, scopeType, limit = 100 } = args;
     const effectiveLimit = Math.min(limit, 1000);
 
-    let results;
+    let results: Doc<"dcbScopes">[];
 
     if (scopeType) {
       results = await ctx.db
@@ -1670,7 +1998,7 @@ export const listScopesByTenant = query({
 export const readVirtualStream = query({
   args: {
     scopeKey: v.string(),
-    fromGlobalPosition: v.optional(v.number()),
+    fromGlobalPosition: v.optional(compatGlobalPositionValidator),
     limit: v.optional(v.number()),
   },
   returns: v.array(
@@ -1680,8 +2008,10 @@ export const readVirtualStream = query({
       streamType: v.string(),
       streamId: v.string(),
       version: v.number(),
-      globalPosition: v.number(),
+      globalPosition: compatGlobalPositionValidator,
       boundedContext: v.string(),
+      tenantId: v.optional(v.string()),
+      scopeKey: v.optional(v.string()),
       category: v.union(
         v.literal("domain"),
         v.literal("integration"),
@@ -1692,12 +2022,17 @@ export const readVirtualStream = query({
       correlationId: v.string(),
       causationId: v.optional(v.string()),
       timestamp: v.number(),
-      payload: v.any(),
-      metadata: v.optional(v.any()),
+      payload: storedUnknownValueValidator,
+      metadata: storedMetadataValidator,
     })
   ),
   handler: async (ctx, args) => {
-    const { scopeKey, fromGlobalPosition = -1, limit = 100 } = args;
+    const { scopeKey, limit = 100 } = args;
+    const effectiveLimit = Math.min(limit, MAX_VIRTUAL_STREAM_LIMIT);
+    const fromGlobalPosition = normalizeGlobalPosition(
+      args.fromGlobalPosition ?? -1,
+      "fromGlobalPosition"
+    );
 
     // Get scope to find associated stream IDs
     const scope = await ctx.db
@@ -1705,33 +2040,45 @@ export const readVirtualStream = query({
       .withIndex("by_scope_key", (q) => q.eq("scopeKey", scopeKey))
       .first();
 
-    if (!scope || !scope.streamIds || scope.streamIds.length === 0) {
+    if (!scope) {
       return [];
     }
 
-    // Query events from all streams in the scope
-    // Note: This is an in-memory aggregation approach. For large scopes,
-    // consider adding a dcbScopeKey field to events table with an index.
-    const allEvents = [];
+    const indexedEvents = await ctx.db
+      .query("events")
+      .withIndex("by_scope_key_and_global_position", (q) =>
+        q.eq("scopeKey", scopeKey).gt("globalPosition", fromGlobalPosition)
+      )
+      .take(effectiveLimit);
 
-    for (const streamId of scope.streamIds) {
-      const events = await ctx.db
-        .query("events")
-        .withIndex("by_global_position")
-        .filter((q) =>
-          q.and(
-            q.gt(q.field("globalPosition"), fromGlobalPosition),
-            q.eq(q.field("streamId"), streamId)
-          )
+    const streamIds = scope.streamIds ?? [];
+    let legacyEvents: Array<Doc<"events">> = [];
+
+    if (streamIds.length > 0) {
+      const legacyCandidates = await Promise.all(
+        streamIds.map((streamId) =>
+          ctx.db
+            .query("events")
+            .withIndex("by_global_position", (q) => q.gt("globalPosition", fromGlobalPosition))
+            .filter((q) =>
+              q.and(q.eq(q.field("streamId"), streamId), q.eq(q.field("scopeKey"), undefined))
+            )
+            .take(effectiveLimit)
         )
-        .take(limit);
-
-      allEvents.push(...events);
+      );
+      legacyEvents = legacyCandidates.flat();
     }
 
-    // Sort by global position and apply limit
-    allEvents.sort((a, b) => a.globalPosition - b.globalPosition);
-    const limitedEvents = allEvents.slice(0, limit);
+    const mergedEvents = [...indexedEvents, ...legacyEvents]
+      .reduce<Array<Doc<"events">>>((unique, event) => {
+        if (!unique.some((existing) => existing.eventId === event.eventId)) {
+          unique.push(event);
+        }
+        return unique;
+      }, [])
+      .sort((a, b) => compareGlobalPositions(a.globalPosition, b.globalPosition));
+
+    const limitedEvents = mergedEvents.slice(0, effectiveLimit);
 
     return limitedEvents.map((e) => ({
       eventId: e.eventId,
@@ -1741,6 +2088,8 @@ export const readVirtualStream = query({
       version: e.version,
       globalPosition: e.globalPosition,
       boundedContext: e.boundedContext,
+      ...(e.tenantId !== undefined && { tenantId: e.tenantId }),
+      ...(e.scopeKey !== undefined ? { scopeKey: e.scopeKey } : {}),
       category: e.category,
       schemaVersion: e.schemaVersion,
       correlationId: e.correlationId,
@@ -1762,7 +2111,7 @@ export const getScopeLatestPosition = query({
   args: {
     scopeKey: v.string(),
   },
-  returns: v.number(),
+  returns: compatGlobalPositionValidator,
   handler: async (ctx, args) => {
     const { scopeKey } = args;
 
@@ -1772,10 +2121,10 @@ export const getScopeLatestPosition = query({
       .first();
 
     if (!scope || !scope.streamIds || scope.streamIds.length === 0) {
-      return 0;
+      return 0n;
     }
 
-    let maxPosition = 0;
+    const positions: GlobalPositionLike[] = [];
     for (const streamId of scope.streamIds) {
       const latestEvent = await ctx.db
         .query("events")
@@ -1783,11 +2132,11 @@ export const getScopeLatestPosition = query({
         .order("desc")
         .first();
 
-      if (latestEvent && latestEvent.globalPosition > maxPosition) {
-        maxPosition = latestEvent.globalPosition;
+      if (latestEvent && isGlobalPositionAfter(latestEvent.globalPosition, -1)) {
+        positions.push(latestEvent.globalPosition);
       }
     }
 
-    return maxPosition;
+    return maxGlobalPosition(positions, 0n);
   },
 });

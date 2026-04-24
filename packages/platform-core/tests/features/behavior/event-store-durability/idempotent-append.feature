@@ -49,6 +49,13 @@ Feature: Idempotent Event Append
     Then the append result status should be "duplicate"
     And the result event ID should be "evt-456"
 
+  @edge-case
+  Scenario: Same key with different payload is rejected
+    Given an existing event with idempotency key "payment:ord-123" and payload chargeId "ch-legacy"
+    And appendToStream reports an audited idempotency conflict for existing event "evt-456"
+    When calling idempotentAppendEvent with key "payment:ord-123" and payload chargeId "ch-new"
+    Then an idempotency conflict error should be thrown
+
   @happy-path
   Scenario: Different idempotency keys create separate events
     Given no existing event for idempotency key "payment:ord-456"

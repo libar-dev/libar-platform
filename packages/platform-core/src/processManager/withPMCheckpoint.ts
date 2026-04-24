@@ -12,7 +12,13 @@
  */
 
 import type { ProcessManagerState } from "./types.js";
-import { pmTransitionState } from "./lifecycle.js";
+import { assertPMValidTransition, planPMProcessingEntry } from "./lifecycle.js";
+import {
+  NO_GLOBAL_POSITION,
+  normalizeGlobalPosition,
+  type GlobalPositionLike,
+  isGlobalPositionAtOrBefore,
+} from "../events/globalPosition.js";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 
@@ -62,7 +68,7 @@ export interface WithPMCheckpointConfig<TCtx> {
   instanceId: string;
 
   /** Global position of the event being processed */
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
 
   /** Event ID (for causation tracking) */
   eventId: string;
@@ -133,9 +139,9 @@ export interface WithPMCheckpointConfig<TCtx> {
     error: string,
     attemptCount: number,
     context?: {
-      eventId?: string;
-      globalPosition?: number;
-      correlationId?: string;
+        eventId?: string;
+        globalPosition?: GlobalPositionLike;
+        correlationId?: string;
       streamType?: string;
       streamId?: string;
       failedCommand?: { commandType: string; payload: Record<string, unknown> };
@@ -248,7 +254,7 @@ export async function withPMCheckpoint<TCtx>(
   const {
     pmName,
     instanceId,
-    globalPosition,
+    globalPosition: rawGlobalPosition,
     eventId,
     correlationId,
     getPMState,
@@ -262,10 +268,11 @@ export async function withPMCheckpoint<TCtx>(
 
   // Use provided logger or fall back to no-op
   const logger = configLogger ?? createPlatformNoOpLogger();
+  const globalPosition = normalizeGlobalPosition(rawGlobalPosition);
 
   // Validate globalPosition to prevent idempotency bypass
   // A negative globalPosition would incorrectly pass the "already processed" check
-  if (globalPosition < 0) {
+  if (globalPosition < INITIAL_BIGINT_ZERO()) {
     logger.error("Invalid globalPosition", {
       pmName,
       instanceId,
@@ -304,7 +311,7 @@ export async function withPMCheckpoint<TCtx>(
   // Allow retry if PM is in "processing" or "failed" state, even with same globalPosition,
   // because those states indicate an incomplete previous attempt.
   const isPMIncomplete = pmState.status === "processing" || pmState.status === "failed";
-  if (globalPosition <= pmState.lastGlobalPosition && !isPMIncomplete) {
+  if (isGlobalPositionAtOrBefore(globalPosition, pmState.lastGlobalPosition) && !isPMIncomplete) {
     logger.debug("Skipped: already processed", {
       pmName,
       instanceId,
@@ -329,12 +336,9 @@ export async function withPMCheckpoint<TCtx>(
   // - "idle" → "processing" (normal start via START event)
   // - "processing" → stay in processing (retry from crashed handler)
   // - "failed" → "processing" (retry after failure via RETRY event)
-  const isRetryFromFailed = pmState.status === "failed";
-  const isRetryFromProcessing = pmState.status === "processing";
-  const canStart = pmTransitionState(pmState.status, "START") !== null;
-  const canRetry = isRetryFromFailed && pmTransitionState(pmState.status, "RETRY") !== null;
+  const entryPlan = planPMProcessingEntry(pmState.status);
 
-  if (!canStart && !canRetry && !isRetryFromProcessing) {
+  if (entryPlan === null) {
     logger.warn("Invalid state transition", {
       pmName,
       instanceId,
@@ -347,9 +351,9 @@ export async function withPMCheckpoint<TCtx>(
     };
   }
 
-  if (pmState.status !== "processing") {
+  if (entryPlan.mode === "transition") {
     await updatePMState(ctx, pmName, instanceId, {
-      status: "processing",
+      status: assertPMValidTransition(pmState.status, entryPlan.event!, pmName, instanceId),
       // Note: lastGlobalPosition is only updated on successful completion (line ~335)
       // to allow retries when emitCommands() fails or handler crashes mid-processing.
       // See: tests/unit/processManager/withPMCheckpoint.test.ts "retry after failure"
@@ -361,7 +365,7 @@ export async function withPMCheckpoint<TCtx>(
     instanceId,
     eventId,
     globalPosition,
-    isRetry: isRetryFromFailed || isRetryFromProcessing,
+    isRetry: entryPlan.mode === "resume" || entryPlan.event === "RETRY",
   });
 
   // 5. Execute PM logic - pass pmState to avoid redundant read in handler
@@ -383,7 +387,7 @@ export async function withPMCheckpoint<TCtx>(
 
     // Transition to failed
     await updatePMState(ctx, pmName, instanceId, {
-      status: "failed",
+      status: assertPMValidTransition("processing", "FAIL", pmName, instanceId),
       errorMessage,
       commandsFailed: attemptCount,
     });
@@ -428,7 +432,7 @@ export async function withPMCheckpoint<TCtx>(
     // Use spread pattern for optional property to satisfy exactOptionalPropertyTypes
     const deadLetterContext: {
       eventId?: string;
-      globalPosition?: number;
+      globalPosition?: GlobalPositionLike;
       correlationId?: string;
       failedCommand?: { commandType: string; payload: Record<string, unknown> };
     } = {
@@ -459,7 +463,7 @@ export async function withPMCheckpoint<TCtx>(
 
   // 7. Transition to completed
   await updatePMState(ctx, pmName, instanceId, {
-    status: "completed",
+    status: assertPMValidTransition("processing", "SUCCESS", pmName, instanceId),
     lastGlobalPosition: globalPosition,
     commandsEmitted: pmState.commandsEmitted + emittedCommands.length,
   });
@@ -476,6 +480,10 @@ export async function withPMCheckpoint<TCtx>(
     status: "processed",
     commandsEmitted: emittedCommands.map((c) => c.commandType),
   };
+}
+
+function INITIAL_BIGINT_ZERO(): bigint {
+  return NO_GLOBAL_POSITION + 1n;
 }
 
 /**

@@ -16,7 +16,6 @@
 Inventory command handlers implementing the dual-write pattern.
 
 CRITICAL: Every handler follows this pattern:
-
 1. Load CMS (O(1), no rehydration)
 2. Lazy upcast if needed
 3. Validate business invariants
@@ -29,7 +28,6 @@ not in these handlers. This is because components can't directly access
 other components - the app layer orchestrates between them.
 
 FACTORY PATTERN: Handlers use decider factories where appropriate:
-
 - createEntityDeciderHandler() for entity creation (CreateProduct)
 - createDeciderHandler() for simple modifications (AddStock, ConfirmReservation)
 - Hybrid pattern for multi-entity commands (ReserveStock, Release, Expire)

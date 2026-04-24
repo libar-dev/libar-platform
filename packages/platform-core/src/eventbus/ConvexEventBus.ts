@@ -18,6 +18,7 @@
  * - Building projections, process managers, or sagas that react to events
  */
 
+import type { FunctionReference } from "convex/server";
 import type { CorrelationChain } from "../correlation/types.js";
 import type { WorkpoolClient, MutationCtx } from "../orchestration/types.js";
 import {
@@ -32,7 +33,9 @@ import {
 } from "./types.js";
 import { matchesEvent } from "./registry.js";
 import type { Logger } from "../logging/types.js";
-import { createPlatformNoOpLogger } from "../logging/scoped.js";
+import { createPlatformDefaultLogger } from "../logging/scoped.js";
+import type { PlatformMetrics } from "../metrics/index.js";
+import { createDefaultPlatformMetrics } from "../metrics/index.js";
 
 /**
  * Index for fast subscription lookup by event type.
@@ -123,6 +126,8 @@ export class ConvexEventBus implements EventBus {
   private readonly index: SubscriptionIndex;
   private readonly config: EventBusConfig;
   private readonly logger: Logger;
+  private readonly metrics: PlatformMetrics;
+  private readonly pendingQueueDepth = new Map<string, number>();
 
   constructor(
     workpool: WorkpoolClient,
@@ -132,7 +137,8 @@ export class ConvexEventBus implements EventBus {
     this.workpool = workpool;
     this.index = buildIndex(subscriptions);
     this.config = config;
-    this.logger = config.logger ?? createPlatformNoOpLogger();
+    this.logger = config.logger ?? createPlatformDefaultLogger("EventBus");
+    this.metrics = config.metrics ?? createDefaultPlatformMetrics("EventBusMetrics");
   }
 
   /**
@@ -181,7 +187,7 @@ export class ConvexEventBus implements EventBus {
       // is not yet supported by Workpool. Events for the same entity may process
       // out of order under concurrent load. This is acceptable for most projections
       // which are idempotent via globalPosition checkpointing.
-      // TODO: Add key: partitionKey.value when Workpool adds key-based ordering support.
+    // Backlog: T5-007. Add key: partitionKey.value when Workpool adds key-based ordering support.
       try {
         if (isActionSubscription(subscription)) {
           // ACTION path — agent LLM handlers (Phase 22b)
@@ -195,7 +201,13 @@ export class ConvexEventBus implements EventBus {
         } else {
           // MUTATION path — existing behavior, unchanged
           const pool = subscription.pool ?? this.workpool;
-          await pool.enqueueMutation(ctx, subscription.handler, handlerArgs, {
+          await this.enqueueMutationWithMetrics(
+            subscription.pool ? subscription.name : "eventBus.default",
+            pool,
+            ctx,
+            subscription.handler,
+            handlerArgs,
+            {
             // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
             ...(onComplete ? { onComplete } : {}),
             context: {
@@ -208,7 +220,8 @@ export class ConvexEventBus implements EventBus {
               correlationId: chain.correlationId,
               causationId: chain.causationId,
             },
-          });
+            }
+          );
         }
       } catch (error) {
         this.logger.error("Failed to enqueue subscription", {
@@ -223,6 +236,11 @@ export class ConvexEventBus implements EventBus {
 
       triggeredSubscriptions.push(subscription.name);
     }
+
+    this.metrics.counter("event.dispatched", matching.length, {
+      eventType: event.eventType,
+      boundedContext: event.boundedContext,
+    });
 
     this.logger.info("Event published", {
       eventType: event.eventType,
@@ -256,7 +274,7 @@ export class ConvexEventBus implements EventBus {
       category: filter.categories?.[0] ?? "domain",
       schemaVersion: 1,
       boundedContext: filter.boundedContexts?.[0] ?? "",
-      globalPosition: 0,
+      globalPosition: 0n,
       timestamp: 0,
       payload: {},
       correlation: { correlationId: "", causationId: "" },
@@ -321,6 +339,27 @@ export class ConvexEventBus implements EventBus {
           (a.priority ?? DEFAULT_SUBSCRIPTION_PRIORITY) -
           (b.priority ?? DEFAULT_SUBSCRIPTION_PRIORITY)
       );
+  }
+
+  private async enqueueMutationWithMetrics(
+    poolName: string,
+    pool: WorkpoolClient,
+    ctx: MutationCtx,
+    handler: FunctionReference<"mutation", "internal" | "public", Record<string, unknown>, unknown>,
+    args: Record<string, unknown>,
+    options?: Parameters<WorkpoolClient["enqueueMutation"]>[3]
+  ): Promise<unknown> {
+    const depth = (this.pendingQueueDepth.get(poolName) ?? 0) + 1;
+    this.pendingQueueDepth.set(poolName, depth);
+    this.metrics.gauge("queue.depth", depth, { pool: poolName });
+
+    try {
+      return await pool.enqueueMutation(ctx, handler, args, options);
+    } finally {
+      const nextDepth = Math.max((this.pendingQueueDepth.get(poolName) ?? 1) - 1, 0);
+      this.pendingQueueDepth.set(poolName, nextDepth);
+      this.metrics.gauge("queue.depth", nextDepth, { pool: poolName });
+    }
   }
 }
 

@@ -24,12 +24,12 @@ underlying idempotent check prevents duplicates.
 
 ### When to Use
 
-| Scenario                    | Use durableAppendEvent? | Why                                      |
-| --------------------------- | ----------------------- | ---------------------------------------- |
-| Synchronous command handler | No                      | Atomic dual-write handles this           |
-| Action onComplete           | Recommended             | Mutation can fail after action succeeded |
-| Saga step                   | Yes                     | Step result must be captured             |
-| Scheduled job               | Yes                     | Job completion must be recorded          |
+| Scenario | Use durableAppendEvent? | Why |
+|----------|-------------------------|-----|
+| Synchronous command handler | No | Atomic dual-write handles this |
+| Action onComplete | Recommended | Mutation can fail after action succeeded |
+| Saga step | Yes | Step result must be captured |
+| Scheduled job | Yes | Job completion must be recorded |
 
 ### Architecture
 
@@ -43,22 +43,17 @@ durableAppendEvent (action)
 ### Usage
 
 ```typescript
-await durableAppendEvent(
-  ctx,
-  eventAppendPool,
-  {
-    idempotencyKey: `saga:${sagaId}:step3`,
-    streamType: "Order",
-    streamId: orderId,
-    eventType: "ShipmentScheduled",
-    eventData: { trackingNumber },
-  },
-  {
-    retry: { maxAttempts: 5, initialBackoffMs: 100, base: 2 },
-    onComplete: internal.saga.onAppendComplete,
-    context: { sagaId, step: "step3" },
-  }
-);
+await durableAppendEvent(ctx, eventAppendPool, {
+  idempotencyKey: `saga:${sagaId}:step3`,
+  streamType: "Order",
+  streamId: orderId,
+  eventType: "ShipmentScheduled",
+  eventData: { trackingNumber },
+}, {
+  retry: { maxAttempts: 5, initialBackoffMs: 100, base: 2 },
+  onComplete: internal.saga.onAppendComplete,
+  context: { sagaId, step: "step3" },
+});
 ```
 
 ## Use Cases

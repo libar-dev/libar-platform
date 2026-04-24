@@ -12,10 +12,12 @@ import type {
 import type { MiddlewarePipeline } from "../middleware/MiddlewarePipeline.js";
 import type { MiddlewareCommandInfo } from "../middleware/types.js";
 import type { CommandCategory, AggregateTarget } from "../commands/categories.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { UnknownRecord } from "../types.js";
 import type { CommandId, CorrelationId, CausationId, EventId, StreamId } from "../ids/branded.js";
 import type { Logger } from "../logging/types.js";
 import type { EventCategory } from "../events/category.js";
+import type { PlatformMetrics } from "../metrics/index.js";
 
 /**
  * Mutation context type using generic data model for flexibility.
@@ -52,6 +54,7 @@ export interface EventData {
   eventType: string;
   streamType: string;
   streamId: StreamId;
+  scopeKey?: string;
   /**
    * Schema version for upcasting pipeline (Phase 9).
    * Optional - defaults to 1 when not specified.
@@ -175,7 +178,7 @@ export type CommandMutationResult<TData = UnknownRecord> =
       data: TData;
       version: number;
       eventId: EventId;
-      globalPosition: number | undefined;
+      globalPosition: GlobalPositionLike | undefined;
     }
   | {
       status: "rejected";
@@ -226,7 +229,11 @@ export interface ProjectionConfig<
    * Transform handler result to projection args.
    * Called after successful event append to construct projection handler arguments.
    */
-  toProjectionArgs: (args: TArgs, result: TResult, globalPosition: number) => TProjectionArgs;
+  toProjectionArgs: (
+    args: TArgs,
+    result: TResult,
+    globalPosition: GlobalPositionLike
+  ) => TProjectionArgs;
 
   /**
    * Extract the partition key for projection context.
@@ -271,7 +278,11 @@ export interface FailedProjectionConfig<
    * Transform args and failed result to projection args.
    * Called after failure event append to construct projection handler arguments.
    */
-  toProjectionArgs: (args: TArgs, failedResult: TFailed, globalPosition: number) => TProjectionArgs;
+  toProjectionArgs: (
+    args: TArgs,
+    failedResult: TFailed,
+    globalPosition: GlobalPositionLike
+  ) => TProjectionArgs;
 
   /**
    * Extract the partition key for projection context.
@@ -313,7 +324,7 @@ export interface SagaRouteArgs {
   eventType: string;
   eventId: string;
   streamId: string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   payload: unknown;
   /** Correlation ID for deriving correlation chains in saga commands */
   correlationId: string;
@@ -423,9 +434,13 @@ export interface EventStoreClient {
       }>;
     }
   ) => Promise<{
-    status: "success" | "conflict";
-    globalPositions?: number[];
+    status: "success" | "duplicate" | "conflict" | "idempotency_conflict";
+    globalPositions?: GlobalPositionLike[];
     currentVersion?: number;
+    eventIds?: string[];
+    newVersion?: number;
+    existingEventId?: string;
+    auditId?: string;
   }>;
 }
 
@@ -593,10 +608,10 @@ export interface EventBusClient {
       eventType: string;
       streamType: string;
       streamId: string;
-      category: string;
+      category: EventCategory;
       schemaVersion: number;
       boundedContext: string;
-      globalPosition: number;
+      globalPosition: GlobalPositionLike;
       timestamp: number;
       payload: unknown;
       correlation: {
@@ -658,6 +673,9 @@ export interface OrchestratorDependencies {
   eventStore: EventStoreClient;
   commandBus: CommandBusClient;
   projectionPool: WorkpoolClient;
+  sagaPool: WorkpoolClient;
+  fanoutPool: WorkpoolClient;
+  metrics?: PlatformMetrics;
   /**
    * Default onComplete handler for projection dead letter tracking.
    * Used when projection configs don't specify their own onComplete.

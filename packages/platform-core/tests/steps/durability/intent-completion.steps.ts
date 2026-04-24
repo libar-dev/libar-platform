@@ -171,6 +171,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
         boundedContext: "orders",
         timeoutMs: 300000,
         onTimeout: "mockTimeoutHandler",
+        correlationId: "corr-intent-order-submission",
         dependencies: {
           getByIdempotencyKey: "mock",
           appendToStream: "mock",
@@ -203,6 +204,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
         boundedContext: "orders",
         timeoutMs: 60000,
         onTimeout: "mockTimeoutHandler",
+        correlationId: "corr-intent-order-submission",
         dependencies: {
           getByIdempotencyKey: "mock",
           appendToStream: "mock",
@@ -230,6 +232,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
         boundedContext: "orders",
         timeoutMs: 60000,
         onTimeout: "mockTimeoutHandler",
+        correlationId: "corr-intent-order-submission",
         dependencies: {
           getByIdempotencyKey: "mock",
           appendToStream: "mock",
@@ -262,6 +265,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
           streamType: "Order",
           streamId: "ord-123",
           boundedContext: "orders",
+          correlationId: "corr-intent-order-submission",
           dependencies: {
             getByIdempotencyKey: "mock",
             appendToStream: "mock",
@@ -289,6 +293,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
         streamType: "Order",
         streamId: "ord-123",
         boundedContext: "orders",
+        correlationId: "corr-intent-order-submission",
         dependencies: {
           getByIdempotencyKey: "mock",
           appendToStream: "mock",
@@ -322,6 +327,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
           streamType: "Order",
           streamId: "ord-123",
           boundedContext: "orders",
+          correlationId: "corr-intent-order-submission",
           dependencies: {
             getByIdempotencyKey: "mock",
             appendToStream: "mock",
@@ -354,6 +360,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
           streamType: "Order",
           streamId: "ord-123",
           boundedContext: "orders",
+          correlationId: "corr-intent-order-submission",
           dependencies: {
             getByIdempotencyKey: "mock",
             appendToStream: "mock",
@@ -385,6 +392,7 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
           streamType: "Order",
           streamId: "ord-123",
           boundedContext: "orders",
+          correlationId: "corr-intent-order-submission",
           dependencies: {
             getByIdempotencyKey: "mock",
             appendToStream: "mock",
@@ -411,11 +419,12 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
     When("calling checkIntentTimeout again", async () => {
       const ctx = createMockContext();
       state.checkTimeoutResult = await checkIntentTimeout(ctx, {
-        intentKey: "OrderSubmission:Order:ord-123:1704067200000",
-        streamType: "Order",
-        streamId: "ord-123",
-        boundedContext: "orders",
-        dependencies: {
+          intentKey: "OrderSubmission:Order:ord-123:1704067200000",
+          streamType: "Order",
+          streamId: "ord-123",
+          boundedContext: "orders",
+          correlationId: "corr-intent-order-submission",
+          dependencies: {
           getByIdempotencyKey: "mock",
           appendToStream: "mock",
         },

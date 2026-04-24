@@ -3,6 +3,7 @@
  * @architect-implements WorkpoolPartitioningStrategy
  * @architect-status active
  * @architect-command
+ * @contract-status: Planned
  *
  * @architect-uses WorkpoolPartitioningStrategy
  * @architect-used-by CommandOrchestrator
@@ -13,6 +14,10 @@
  * Validates that all projection configurations in a command config
  * have explicit partition keys defined. This prevents runtime errors
  * and ensures intentional partition key selection.
+ *
+ * Known limitation: this validates partition-key selection and shape, but does not
+ * make Workpool enforce FIFO ordering via a native `key:` option yet. That runtime
+ * ordering contract remains planned/documented until upstream support exists.
  *
  * ### Validation Rules
  *

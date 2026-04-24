@@ -15,32 +15,30 @@
 ## Description
 
 **Problem:** When projections become corrupted, require schema migration, or drift from
-the Event Store due to bugs, there is no infrastructure to replay events and rebuild them.
-Manual intervention requires direct database access and risks data inconsistency. Failed
-rebuilds cannot resume from where they left off, wasting compute and time.
+  the Event Store due to bugs, there is no infrastructure to replay events and rebuild them.
+  Manual intervention requires direct database access and risks data inconsistency. Failed
+  rebuilds cannot resume from where they left off, wasting compute and time.
 
-**Solution:** Checkpoint-based replay system with durable Workpool processing:
+  **Solution:** Checkpoint-based replay system with durable Workpool processing:
+  - **Replay checkpoints** - Track progress per projection with resume capability
+  - **Dedicated Workpool** - Low-priority pool (maxParallelism: 5) preserves live operation budget
+  - **Chunked processing** - Events processed in batches to avoid timeout/memory limits
+  - **Admin mutations** - Trigger, cancel, and monitor rebuilds via admin API
+  - **Atomic scheduling** - Next chunk scheduled atomically with checkpoint update
 
-- **Replay checkpoints** - Track progress per projection with resume capability
-- **Dedicated Workpool** - Low-priority pool (maxParallelism: 5) preserves live operation budget
-- **Chunked processing** - Events processed in batches to avoid timeout/memory limits
-- **Admin mutations** - Trigger, cancel, and monitor rebuilds via admin API
-- **Atomic scheduling** - Next chunk scheduled atomically with checkpoint update
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Projection recovery | Rebuild corrupted projections from Event Store source of truth |
+  | Schema migration | Replay events through new projection logic after schema changes |
+  | Resume capability | Failed rebuilds continue from last checkpoint, not from scratch |
+  | Budget preservation | Dedicated low-priority Workpool doesn't starve live projections |
+  | Operational visibility | Real-time progress tracking for long-running rebuilds |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Projection recovery | Rebuild corrupted projections from Event Store source of truth |
-| Schema migration | Replay events through new projection logic after schema changes |
-| Resume capability | Failed rebuilds continue from last checkpoint, not from scratch |
-| Budget preservation | Dedicated low-priority Workpool doesn't starve live projections |
-| Operational visibility | Real-time progress tracking for long-running rebuilds |
-
-**Relationship to Existing Patterns:**
-
-- Uses `withCheckpoint` from EventStoreFoundation for idempotent chunk processing
-- Uses Workpool from DurableFunctionAdapters for durable execution
-- Integrates with projection registry from ProjectionCategories for rebuild ordering
-- Admin endpoints follow patterns from existing saga admin tooling
+  **Relationship to Existing Patterns:**
+  - Uses `withCheckpoint` from EventStoreFoundation for idempotent chunk processing
+  - Uses Workpool from DurableFunctionAdapters for durable execution
+  - Integrates with projection registry from ProjectionCategories for rebuild ordering
+  - Admin endpoints follow patterns from existing saga admin tooling
 
 ## Dependencies
 
@@ -203,7 +201,7 @@ Files that implement this pattern:
 **Replay must resume from last successful checkpoint**
 
 **Invariant:** A replay operation must never reprocess events that have already been
-successfully applied to the projection—resume from last checkpoint, not from scratch.
+    successfully applied to the projection—resume from last checkpoint, not from scratch.
 
     **Rationale:** Replaying millions of events wastes compute, risks projection corruption
     if handlers aren't idempotent, and extends recovery time. Checkpoints enable reliable
@@ -236,27 +234,30 @@ successfully applied to the projection—resume from last checkpoint, not from s
 
 ```typescript
 // Current: No way to rebuild a projection
-// If orderSummaries gets corrupted, only option is:
-// 1. Delete all records manually
-// 2. Hope live events eventually rebuild it
-// 3. Or write ad-hoc scripts with no progress tracking
+    // If orderSummaries gets corrupted, only option is:
+    // 1. Delete all records manually
+    // 2. Hope live events eventually rebuild it
+    // 3. Or write ad-hoc scripts with no progress tracking
 ```
 
 **Target State (checkpoint-based replay):**
 
 ```typescript
 // Target: Durable replay with progress tracking
-const { replayId } = await ctx.runMutation(admin.projections.triggerRebuild, {
-  projectionName: "orderSummaries",
-  fromGlobalPosition: 0, // Start from beginning
-});
+    const { replayId } = await ctx.runMutation(
+      admin.projections.triggerRebuild,
+      {
+        projectionName: "orderSummaries",
+        fromGlobalPosition: 0,  // Start from beginning
+      }
+    );
 
-// Check progress
-const status = await ctx.runQuery(admin.projections.getRebuildStatus, { replayId });
-// { status: "running", eventsProcessed: 4500, totalEvents: 10000, percentComplete: 45 }
+    // Check progress
+    const status = await ctx.runQuery(admin.projections.getRebuildStatus, { replayId });
+    // { status: "running", eventsProcessed: 4500, totalEvents: 10000, percentComplete: 45 }
 
-// If interrupted, restart continues from checkpoint
-// eventsProcessed will be 4500, not 0
+    // If interrupted, restart continues from checkpoint
+    // eventsProcessed will be 4500, not 0
 ```
 
 _Verified by: Replay resumes after failure, Checkpoint updates atomically with chunk completion, Replay handles empty event range_
@@ -264,7 +265,7 @@ _Verified by: Replay resumes after failure, Checkpoint updates atomically with c
 **Replay uses dedicated low-priority Workpool**
 
 **Invariant:** Replay operations must not starve live projection updates—dedicated
-low-priority pool with maxParallelism ≤ 50% of projectionPool.
+    low-priority pool with maxParallelism ≤ 50% of projectionPool.
 
     **Rationale:** Live user-facing projections must maintain low latency. Replay is
     background recovery work that can tolerate higher latency. Separate Workpool with
@@ -299,23 +300,23 @@ low-priority pool with maxParallelism ≤ 50% of projectionPool.
 
 ```typescript
 // infrastructure.ts
-export const eventReplayPool = new Workpool(components.eventReplayPool, {
-  maxParallelism: 5, // Low priority
-  defaultRetryBehavior: {
-    maxAttempts: 5,
-    initialBackoffMs: 1000,
-    base: 2,
-  },
-  logLevel: "INFO",
-});
+    export const eventReplayPool = new Workpool(components.eventReplayPool, {
+      maxParallelism: 5,  // Low priority
+      defaultRetryBehavior: {
+        maxAttempts: 5,
+        initialBackoffMs: 1000,
+        base: 2,
+      },
+      logLevel: "INFO",
+    });
 
-// In triggerRebuild mutation
-await eventReplayPool.enqueueMutation(
-  ctx,
-  internal.admin.projections.processReplayChunk,
-  { replayId, projectionName, fromPosition: 0, chunkSize: 100 },
-  { key: `replay:${projectionName}` } // Partition key
-);
+    // In triggerRebuild mutation
+    await eventReplayPool.enqueueMutation(
+      ctx,
+      internal.admin.projections.processReplayChunk,
+      { replayId, projectionName, fromPosition: 0, chunkSize: 100 },
+      { key: `replay:${projectionName}` }  // Partition key
+    );
 ```
 
 _Verified by: Replay does not starve live projections, Only one replay per projection, Different projections can rebuild concurrently_
@@ -323,7 +324,7 @@ _Verified by: Replay does not starve live projections, Only one replay per proje
 **Events are processed in configurable chunks**
 
 **Invariant:** Each replay chunk must complete within Convex mutation timeout limits
-(10s)—chunk size must be configurable based on projection complexity.
+    (10s)—chunk size must be configurable based on projection complexity.
 
     **Rationale:** Large event stores have millions of events. Processing all in one
     mutation would timeout. Chunked processing with complexity-aware sizing ensures
@@ -371,70 +372,70 @@ processReplayChunk(replayId, projectionName, fromPosition, chunkSize)
 
 ```typescript
 export const processReplayChunk = internalMutation({
-  args: {
-    replayId: v.id("replayCheckpoints"),
-    projectionName: v.string(),
-    fromPosition: v.number(),
-    chunkSize: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const { replayId, projectionName, fromPosition, chunkSize } = args;
+      args: {
+        replayId: v.id("replayCheckpoints"),
+        projectionName: v.string(),
+        fromPosition: v.number(),
+        chunkSize: v.number(),
+      },
+      handler: async (ctx, args) => {
+        const { replayId, projectionName, fromPosition, chunkSize } = args;
 
-    // 1. Fetch events from Event Store
-    const events = await eventStore.readFromPosition(ctx, {
-      fromPosition,
-      limit: chunkSize,
+        // 1. Fetch events from Event Store
+        const events = await eventStore.readFromPosition(ctx, {
+          fromPosition,
+          limit: chunkSize,
+        });
+
+        if (events.length === 0) {
+          // Replay complete
+          await ctx.db.patch(replayId, {
+            status: "completed",
+            completedAt: Date.now(),
+          });
+          return { status: "completed" };
+        }
+
+        // 2. Apply projection logic to each event
+        const handler = getProjectionHandler(projectionName);
+        for (const event of events) {
+          await handler(ctx, event);
+        }
+
+        // 3. Update checkpoint
+        const lastEvent = events[events.length - 1];
+        const checkpoint = await ctx.db.get(replayId);
+        await ctx.db.patch(replayId, {
+          lastPosition: lastEvent.globalPosition,
+          eventsProcessed: (checkpoint?.eventsProcessed ?? 0) + events.length,
+          chunksCompleted: (checkpoint?.chunksCompleted ?? 0) + 1,
+          updatedAt: Date.now(),
+        });
+
+        // 4. Schedule next chunk (atomic with checkpoint update)
+        if (events.length === chunkSize) {
+          await eventReplayPool.enqueueMutation(
+            ctx,
+            internal.admin.projections.processReplayChunk,
+            {
+              replayId,
+              projectionName,
+              fromPosition: lastEvent.globalPosition + 1,
+              chunkSize,
+            },
+            { key: `replay:${projectionName}` }
+          );
+        } else {
+          // No more events
+          await ctx.db.patch(replayId, {
+            status: "completed",
+            completedAt: Date.now(),
+          });
+        }
+
+        return { status: "processing", eventsProcessed: events.length };
+      },
     });
-
-    if (events.length === 0) {
-      // Replay complete
-      await ctx.db.patch(replayId, {
-        status: "completed",
-        completedAt: Date.now(),
-      });
-      return { status: "completed" };
-    }
-
-    // 2. Apply projection logic to each event
-    const handler = getProjectionHandler(projectionName);
-    for (const event of events) {
-      await handler(ctx, event);
-    }
-
-    // 3. Update checkpoint
-    const lastEvent = events[events.length - 1];
-    const checkpoint = await ctx.db.get(replayId);
-    await ctx.db.patch(replayId, {
-      lastPosition: lastEvent.globalPosition,
-      eventsProcessed: (checkpoint?.eventsProcessed ?? 0) + events.length,
-      chunksCompleted: (checkpoint?.chunksCompleted ?? 0) + 1,
-      updatedAt: Date.now(),
-    });
-
-    // 4. Schedule next chunk (atomic with checkpoint update)
-    if (events.length === chunkSize) {
-      await eventReplayPool.enqueueMutation(
-        ctx,
-        internal.admin.projections.processReplayChunk,
-        {
-          replayId,
-          projectionName,
-          fromPosition: lastEvent.globalPosition + 1,
-          chunkSize,
-        },
-        { key: `replay:${projectionName}` }
-      );
-    } else {
-      // No more events
-      await ctx.db.patch(replayId, {
-        status: "completed",
-        completedAt: Date.now(),
-      });
-    }
-
-    return { status: "processing", eventsProcessed: events.length };
-  },
-});
 ```
 
 _Verified by: Chunk processes correct number of events, Final chunk handles remainder, Chunk size respects projection complexity_
@@ -442,7 +443,7 @@ _Verified by: Chunk processes correct number of events, Final chunk handles rema
 **Replay progress is queryable in real-time**
 
 **Invariant:** Operations teams must be able to query replay progress at any time—
-status, percentage complete, and estimated remaining time.
+    status, percentage complete, and estimated remaining time.
 
     **Rationale:** Long-running rebuilds (hours for large projections) need visibility.
     Without progress tracking, operators cannot estimate completion, detect stuck
@@ -463,25 +464,25 @@ status, percentage complete, and estimated remaining time.
 
 ```typescript
 interface ReplayProgress {
-  replayId: string;
-  projectionName: string;
-  status: "running" | "paused" | "completed" | "failed" | "cancelled";
-  eventsProcessed: number;
-  totalEvents: number; // Current max globalPosition - startPosition
-  percentComplete: number;
-  chunksCompleted: number;
-  startedAt: number;
-  updatedAt: number;
-  completedAt?: number;
-  estimatedRemainingMs?: number;
-  error?: string;
-}
+      replayId: string;
+      projectionName: string;
+      status: "running" | "paused" | "completed" | "failed" | "cancelled";
+      eventsProcessed: number;
+      totalEvents: number;  // Current max globalPosition - startPosition
+      percentComplete: number;
+      chunksCompleted: number;
+      startedAt: number;
+      updatedAt: number;
+      completedAt?: number;
+      estimatedRemainingMs?: number;
+      error?: string;
+    }
 
-// Estimated remaining calculation
-const elapsedMs = Date.now() - startedAt;
-const eventsPerMs = eventsProcessed / elapsedMs;
-const remainingEvents = totalEvents - eventsProcessed;
-const estimatedRemainingMs = remainingEvents / eventsPerMs;
+    // Estimated remaining calculation
+    const elapsedMs = Date.now() - startedAt;
+    const eventsPerMs = eventsProcessed / elapsedMs;
+    const remainingEvents = totalEvents - eventsProcessed;
+    const estimatedRemainingMs = remainingEvents / eventsPerMs;
 ```
 
 _Verified by: Query replay progress, List all active rebuilds, Progress handles completed replay_
@@ -489,7 +490,7 @@ _Verified by: Query replay progress, List all active rebuilds, Progress handles 
 **Admin mutations enable operational control**
 
 **Invariant:** Replay operations must only be triggerable via internal mutations—
-no public API exposure for admin operations.
+    no public API exposure for admin operations.
 
     **Rationale:** Replay can be expensive (compute, time) and disruptive if misused.
     Internal mutations ensure only authorized code paths can trigger rebuilds,
@@ -516,77 +517,77 @@ no public API exposure for admin operations.
 
 ```typescript
 // admin/projections.ts
-export const triggerRebuild = internalMutation({
-  args: {
-    projectionName: v.string(),
-    fromGlobalPosition: v.optional(v.number()),
-    chunkSize: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const { projectionName, fromGlobalPosition = 0, chunkSize = 100 } = args;
+    export const triggerRebuild = internalMutation({
+      args: {
+        projectionName: v.string(),
+        fromGlobalPosition: v.optional(v.number()),
+        chunkSize: v.optional(v.number()),
+      },
+      handler: async (ctx, args) => {
+        const { projectionName, fromGlobalPosition = 0, chunkSize = 100 } = args;
 
-    // Check no active replay exists
-    const existing = await ctx.db
-      .query("replayCheckpoints")
-      .withIndex("by_projection_status", (q) =>
-        q.eq("projection", projectionName).eq("status", "running")
-      )
-      .first();
+        // Check no active replay exists
+        const existing = await ctx.db
+          .query("replayCheckpoints")
+          .withIndex("by_projection_status", (q) =>
+            q.eq("projection", projectionName).eq("status", "running")
+          )
+          .first();
 
-    if (existing) {
-      return { error: "REPLAY_ALREADY_ACTIVE", existingReplayId: existing._id };
-    }
+        if (existing) {
+          return { error: "REPLAY_ALREADY_ACTIVE", existingReplayId: existing._id };
+        }
 
-    // Get total events for progress calculation
-    const maxPosition = await eventStore.getMaxGlobalPosition(ctx);
-    const totalEvents = maxPosition - fromGlobalPosition;
+        // Get total events for progress calculation
+        const maxPosition = await eventStore.getMaxGlobalPosition(ctx);
+        const totalEvents = maxPosition - fromGlobalPosition;
 
-    // Create checkpoint
-    const replayId = await ctx.db.insert("replayCheckpoints", {
-      projection: projectionName,
-      lastPosition: fromGlobalPosition,
-      targetPosition: maxPosition,
-      status: "running",
-      eventsProcessed: 0,
-      chunksCompleted: 0,
-      startedAt: Date.now(),
-      updatedAt: Date.now(),
+        // Create checkpoint
+        const replayId = await ctx.db.insert("replayCheckpoints", {
+          projection: projectionName,
+          lastPosition: fromGlobalPosition,
+          targetPosition: maxPosition,
+          status: "running",
+          eventsProcessed: 0,
+          chunksCompleted: 0,
+          startedAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+
+        // Schedule first chunk
+        await eventReplayPool.enqueueMutation(
+          ctx,
+          internal.admin.projections.processReplayChunk,
+          { replayId, projectionName, fromPosition: fromGlobalPosition, chunkSize },
+          { key: `replay:${projectionName}` }
+        );
+
+        return { replayId, totalEvents };
+      },
     });
 
-    // Schedule first chunk
-    await eventReplayPool.enqueueMutation(
-      ctx,
-      internal.admin.projections.processReplayChunk,
-      { replayId, projectionName, fromPosition: fromGlobalPosition, chunkSize },
-      { key: `replay:${projectionName}` }
-    );
+    export const cancelRebuild = internalMutation({
+      args: { replayId: v.id("replayCheckpoints") },
+      handler: async (ctx, { replayId }) => {
+        const checkpoint = await ctx.db.get(replayId);
+        if (!checkpoint) {
+          return { error: "REPLAY_NOT_FOUND" };
+        }
+        if (checkpoint.status !== "running") {
+          return { error: "REPLAY_NOT_RUNNING", currentStatus: checkpoint.status };
+        }
 
-    return { replayId, totalEvents };
-  },
-});
+        await ctx.db.patch(replayId, {
+          status: "cancelled",
+          updatedAt: Date.now(),
+        });
 
-export const cancelRebuild = internalMutation({
-  args: { replayId: v.id("replayCheckpoints") },
-  handler: async (ctx, { replayId }) => {
-    const checkpoint = await ctx.db.get(replayId);
-    if (!checkpoint) {
-      return { error: "REPLAY_NOT_FOUND" };
-    }
-    if (checkpoint.status !== "running") {
-      return { error: "REPLAY_NOT_RUNNING", currentStatus: checkpoint.status };
-    }
+        // Note: In-flight chunks will complete but no new chunks scheduled
+        // because status check happens at chunk start
 
-    await ctx.db.patch(replayId, {
-      status: "cancelled",
-      updatedAt: Date.now(),
+        return { success: true, eventsProcessedBeforeCancel: checkpoint.eventsProcessed };
+      },
     });
-
-    // Note: In-flight chunks will complete but no new chunks scheduled
-    // because status check happens at chunk start
-
-    return { success: true, eventsProcessedBeforeCancel: checkpoint.eventsProcessed };
-  },
-});
 ```
 
 _Verified by: Trigger rebuild creates checkpoint and schedules first chunk, Cancel rebuild stops processing, Cannot trigger duplicate rebuild_

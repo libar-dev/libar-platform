@@ -21,6 +21,8 @@
 // Types for documentation purposes - the evolve function implements EvolveFunction pattern
 // import type { EvolveFunction, ReactiveDomainEvent } from "@libar-dev/platform-core";
 
+import type { GlobalPositionLike } from "../../lib/globalPosition";
+
 // ============================================================================
 // State Type
 // ============================================================================
@@ -46,7 +48,7 @@ export interface OrderSummaryState {
   /** When the order was last updated */
   updatedAt: number;
   /** Last processed event's global position for conflict detection */
-  lastGlobalPosition: number;
+  lastGlobalPosition: GlobalPositionLike;
 }
 
 // ============================================================================
@@ -60,7 +62,7 @@ export interface OrderSummaryState {
  */
 export interface OrderProjectionEvent {
   eventType: OrderEventType | string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   payload: Record<string, unknown>;
 }
 

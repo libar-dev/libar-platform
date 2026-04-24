@@ -2,18 +2,19 @@
  * Agent LLM Integration Tests
  *
  * Verifies the full LLM analysis path: EventBus → Workpool action → OpenRouter
- * (Gemini Flash) → audit persistence. These tests are skipped when no API key
- * is configured, preserving the existing rule-based-only test behavior.
+ * (Gemini Flash) → audit persistence. These tests are explicit opt-in because
+ * the real LLM round-trip can exceed the default local integration budget.
  *
  * Environment:
+ * - RUN_LLM_INTEGRATION_TESTS=1: opt-in flag for the vitest runner
  * - OPENROUTER_INTEGRATION_TEST_API_KEY: must be set on the vitest runner
- *   (Justfile exports it from .env.local or shell env)
+ *   when RUN_LLM_INTEGRATION_TESTS=1
  * - OPENROUTER_API_KEY: must be set on the Convex backend via `convex env set`
  *   (Justfile `set-openrouter-key` recipe handles this)
  *
- * CI note: Skipped in CI due to workpool runStatus OCC hot-spotting on
- * Docker backend (615 OCC errors on single document). See #154
- * for workpool partitioning fix. Runs locally where OCC resolves fast.
+ * CI note: Skipped in CI and skipped by default locally due to workpool
+ * runStatus OCC hot-spotting and external LLM latency. Set
+ * RUN_LLM_INTEGRATION_TESTS=1 for the dedicated opt-in run.
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
@@ -36,7 +37,10 @@ const LLM_TEST_TIMEOUT = DEFAULT_TIMEOUT_MS * 4.5; // 90s
 // Skip in CI: workpool runStatus OCC hot-spotting causes beforeAll timeout (#154).
 // Re-enable after workpool partitioning fix.
 const isCI = !!process.env.CI;
-const shouldSkip = isCI || !process.env.OPENROUTER_INTEGRATION_TEST_API_KEY;
+const shouldSkip =
+  isCI ||
+  process.env.RUN_LLM_INTEGRATION_TESTS !== "1" ||
+  !process.env.OPENROUTER_INTEGRATION_TEST_API_KEY;
 
 describe.skipIf(shouldSkip)("Agent LLM Integration Tests", () => {
   let t: ConvexTestingHelper;

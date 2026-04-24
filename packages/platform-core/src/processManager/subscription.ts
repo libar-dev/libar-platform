@@ -29,6 +29,7 @@
  */
 
 import type { FunctionReference, FunctionVisibility } from "convex/server";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 import type { EventSubscription, PublishedEvent, PartitionKey } from "../eventbus/types.js";
@@ -67,7 +68,7 @@ export interface PMEventHandlerArgs {
   eventType: string;
 
   /** Global position for idempotency */
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
 
   /** Correlation ID */
   correlationId: string;

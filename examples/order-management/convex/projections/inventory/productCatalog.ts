@@ -16,6 +16,7 @@ import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";
 import { withCheckpoint, type MutationCtx } from "../_helpers";
 import type { Doc } from "../../_generated/dataModel";
+import { compatGlobalPositionValidator } from "../../lib/globalPosition";
 
 const PROJECTION_NAME = "productCatalog";
 
@@ -49,7 +50,7 @@ export const onProductCreated = internalMutation({
     sku: v.string(),
     unitPrice: v.number(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { productId, productName, sku, unitPrice } = args;
@@ -89,7 +90,7 @@ export const onStockAdded = internalMutation({
     productId: v.string(),
     newAvailableQuantity: v.number(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { productId, newAvailableQuantity } = args;

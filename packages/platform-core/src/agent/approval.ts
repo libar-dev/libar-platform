@@ -11,7 +11,7 @@
  */
 
 import { z } from "zod";
-import { v7 as uuidv7 } from "uuid";
+import { generateApprovalId as generateApprovalIdValue } from "../ids/generator.js";
 import type { HumanInLoopConfig } from "./types.js";
 import { parseDuration } from "./patterns.js";
 
@@ -315,9 +315,7 @@ export function shouldRequireApproval(
  * @returns Unique approval ID
  */
 export function generateApprovalId(): string {
-  const timestamp = Date.now();
-  const random = uuidv7().slice(0, 8);
-  return `apr_${timestamp}_${random}`;
+  return generateApprovalIdValue();
 }
 
 // ============================================================================
@@ -399,6 +397,10 @@ export function approveAction(
     throw new Error(`Cannot approve: current status is "${approval.status}", expected "pending"`);
   }
 
+  if (Date.now() >= approval.expiresAt) {
+    throw new Error("Cannot approve: approval has expired");
+  }
+
   const now = Date.now();
   const base: PendingApproval = {
     ...approval,
@@ -438,6 +440,10 @@ export function rejectAction(
 ): PendingApproval {
   if (approval.status !== "pending") {
     throw new Error(`Cannot reject: current status is "${approval.status}", expected "pending"`);
+  }
+
+  if (Date.now() >= approval.expiresAt) {
+    throw new Error("Cannot reject: approval has expired");
   }
 
   return {
@@ -690,10 +696,12 @@ export const ApprovalAuthContextSchema = z.object({
 /**
  * Check if a user is authorized to review an approval.
  *
+ * @contract-status: Advertised-Only
+ *
  * Authorization logic:
  * 1. If authContext.agentIds is specified, the approval's agentId must be in the list
  * 2. If authContext.roles is specified, user must have at least one role
- * 3. If neither is specified, authorization passes (caller must implement their own checks)
+ * 3. If neither is specified, authorization fails closed
  *
  * Note: This is a helper function for use at the handler level.
  * The approveAction/rejectAction functions are pure state transformers
@@ -710,26 +718,34 @@ export const ApprovalAuthContextSchema = z.object({
  *   return { success: false, code: APPROVAL_ERROR_CODES.UNAUTHORIZED_REVIEWER };
  * }
  * ```
+ *
  */
 export function isAuthorizedReviewer(
   approval: PendingApproval,
   authContext: ApprovalAuthContext
 ): boolean {
-  // If agentIds are restricted, check the approval's agent
-  if (authContext.agentIds && authContext.agentIds.length > 0) {
+  const hasAgentRestriction = authContext.agentIds !== undefined;
+  if (hasAgentRestriction) {
+    if (!authContext.agentIds || authContext.agentIds.length === 0) {
+      return false;
+    }
+
     if (!authContext.agentIds.includes(approval.agentId)) {
       return false;
     }
   }
 
-  // If roles are specified, user must have at least one
-  if (authContext.roles && authContext.roles.length > 0) {
-    // At least one role means they're a valid reviewer
-    return true;
+  const hasRoleRestriction = authContext.roles !== undefined;
+  if (hasRoleRestriction) {
+    if (!authContext.roles || authContext.roles.length === 0) {
+      return false;
+    }
   }
 
-  // If no restrictions specified, defer to caller
-  // (they should implement their own checks or this is an open approval)
+  if (!hasAgentRestriction && !hasRoleRestriction) {
+    return false;
+  }
+
   return true;
 }
 
@@ -745,6 +761,8 @@ export type ApprovalOperationResult =
 
 /**
  * Safely approve an action with authorization check.
+ *
+ * @contract-status: Advertised-Only
  *
  * Unlike approveAction, this returns a result object instead of throwing.
  * Includes authorization validation.
@@ -763,6 +781,7 @@ export type ApprovalOperationResult =
  *   console.error(result.message);
  * }
  * ```
+ *
  */
 export function safeApproveAction(
   approval: PendingApproval,
@@ -787,8 +806,7 @@ export function safeApproveAction(
     };
   }
 
-  // Check expiration
-  if (Date.now() >= approval.expiresAt) {
+  if (isApprovalExpired(approval)) {
     return {
       success: false,
       code: APPROVAL_ERROR_CODES.APPROVAL_EXPIRED,
@@ -803,6 +821,8 @@ export function safeApproveAction(
 
 /**
  * Safely reject an action with authorization check.
+ *
+ * @contract-status: Advertised-Only
  *
  * Unlike rejectAction, this returns a result object instead of throwing.
  * Includes authorization validation.
@@ -821,6 +841,7 @@ export function safeApproveAction(
  *   console.error(result.message);
  * }
  * ```
+ *
  */
 export function safeRejectAction(
   approval: PendingApproval,
@@ -845,8 +866,7 @@ export function safeRejectAction(
     };
   }
 
-  // Check expiration
-  if (Date.now() >= approval.expiresAt) {
+  if (isApprovalExpired(approval)) {
     return {
       success: false,
       code: APPROVAL_ERROR_CODES.APPROVAL_EXPIRED,

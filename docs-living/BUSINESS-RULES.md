@@ -5,7 +5,7 @@
 
 ---
 
-**Domain constraints and invariants extracted from feature specifications. 157 rules from 34 features across 3 product areas.**
+**Domain constraints and invariants extracted from feature specifications. 172 rules from 40 features across 3 product areas.**
 
 ---
 
@@ -14,7 +14,7 @@
 | Product Area                                           | Features | Rules | With Invariants |
 | ------------------------------------------------------ | -------- | ----- | --------------- |
 | [Delivery Process](business-rules/delivery-process.md) | 2        | 9     | 7               |
-| [Example App](business-rules/example-app.md)           | 2        | 7     | 3               |
-| [Platform](business-rules/platform.md)                 | 30       | 141   | 50              |
+| [Example App](business-rules/example-app.md)           | 3        | 12    | 8               |
+| [Platform](business-rules/platform.md)                 | 35       | 151   | 65              |
 
 ---

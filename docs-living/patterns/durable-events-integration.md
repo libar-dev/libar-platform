@@ -15,70 +15,68 @@
 ## Description
 
 **Problem:** Phase 18 delivered durability primitives to `platform-core`, but the example app's
-main command flow still uses direct event append. Durability patterns exist only in test harnesses
-(`testing/*.ts`), not in the production order/inventory flows. Users cannot see how to integrate
-these patterns in realistic scenarios.
+  main command flow still uses direct event append. Durability patterns exist only in test harnesses
+  (`testing/*.ts`), not in the production order/inventory flows. Users cannot see how to integrate
+  these patterns in realistic scenarios.
 
-**Solution:** Integrate all Phase 18 durability patterns into the main order management flow:
+  **Solution:** Integrate all Phase 18 durability patterns into the main order management flow:
+  - **Idempotent event append** with command-derived deduplication keys
+  - **Intent/completion bracketing** for failure recovery and orphan detection
+  - **Durable event publication** with Workpool-backed retry semantics
+  - **Outbox handler** for capturing external action results as events
+  - **Poison event handling** in production projection handlers
+  - **Projection rebuild demonstration** with realistic corruption recovery scenario
 
-- **Idempotent event append** with command-derived deduplication keys
-- **Intent/completion bracketing** for failure recovery and orphan detection
-- **Durable event publication** with Workpool-backed retry semantics
-- **Outbox handler** for capturing external action results as events
-- **Poison event handling** in production projection handlers
-- **Projection rebuild demonstration** with realistic corruption recovery scenario
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Exactly-once event delivery | Idempotency keys prevent duplicate events on retry |
+  | Failure recovery | Intent bracketing detects stuck commands |
+  | Guaranteed action capture | Outbox pattern captures external API results as events |
+  | Operational visibility | Poison events quarantined with alerting |
+  | Data recovery | Projection rebuild from any position |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Exactly-once event delivery | Idempotency keys prevent duplicate events on retry |
-| Failure recovery | Intent bracketing detects stuck commands |
-| Guaranteed action capture | Outbox pattern captures external API results as events |
-| Operational visibility | Poison events quarantined with alerting |
-| Data recovery | Projection rebuild from any position |
+  **Architecture Overview:**
+  ```
+  Command Flow with Durability
+  ────────────────────────────
 
-**Architecture Overview:**
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ CommandOrchestrator                                                       │
+  │                                                                           │
+  │  1. recordIntent()     ──► Intent event (timeout scheduled)              │
+  │         │                                                                 │
+  │  2. BC Handler         ──► CMS update + event via idempotentAppendEvent  │
+  │         │                   (deduplication via commandId:eventType)       │
+  │         │                                                                 │
+  │  3. recordCompletion() ──► Completion event (cancels timeout)            │
+  │         │                                                                 │
+  │  4. Projection         ──► Workpool.enqueue() with onComplete            │
+  │         │                   (deadLetterOnComplete for failures)           │
+  │         │                                                                 │
+  │  5. Saga (if needed)   ──► durableAppendEvent for critical events        │
+  └──────────────────────────────────────────────────────────────────────────┘
 
-```
-Command Flow with Durability
-────────────────────────────
+  External Actions with Outbox
+  ────────────────────────────
 
-┌──────────────────────────────────────────────────────────────────────────┐
-│ CommandOrchestrator                                                       │
-│                                                                           │
-│  1. recordIntent()     ──► Intent event (timeout scheduled)              │
-│         │                                                                 │
-│  2. BC Handler         ──► CMS update + event via idempotentAppendEvent  │
-│         │                   (deduplication via commandId:eventType)       │
-│         │                                                                 │
-│  3. recordCompletion() ──► Completion event (cancels timeout)            │
-│         │                                                                 │
-│  4. Projection         ──► Workpool.enqueue() with onComplete            │
-│         │                   (deadLetterOnComplete for failures)           │
-│         │                                                                 │
-│  5. Saga (if needed)   ──► durableAppendEvent for critical events        │
-└──────────────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ actionRetrier.run(ctx, chargeStripeAction, args, {                       │
+  │   onComplete: onPaymentComplete,  ◄── createOutboxHandler()              │
+  │   context: { orderId, amount }                                           │
+  │ })                                                                        │
+  │                                                                           │
+  │ onComplete receives:                                                      │
+  │   { kind: "success", returnValue: { chargeId } }                         │
+  │   { kind: "failed", error: "..." }                                       │
+  │   { kind: "canceled" }                                                   │
+  │                                                                           │
+  │ Outbox handler appends event:                                            │
+  │   PaymentCompleted or PaymentFailed                                      │
+  └──────────────────────────────────────────────────────────────────────────┘
+  ```
 
-External Actions with Outbox
-────────────────────────────
-
-┌──────────────────────────────────────────────────────────────────────────┐
-│ actionRetrier.run(ctx, chargeStripeAction, args, {                       │
-│   onComplete: onPaymentComplete,  ◄── createOutboxHandler()              │
-│   context: { orderId, amount }                                           │
-│ })                                                                        │
-│                                                                           │
-│ onComplete receives:                                                      │
-│   { kind: "success", returnValue: { chargeId } }                         │
-│   { kind: "failed", error: "..." }                                       │
-│   { kind: "canceled" }                                                   │
-│                                                                           │
-│ Outbox handler appends event:                                            │
-│   PaymentCompleted or PaymentFailed                                      │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-**PDR-008 Alignment:** This demonstrates platform capabilities in realistic scenarios,
-serves as reference implementation, and validates durability patterns work end-to-end.
+  **PDR-008 Alignment:** This demonstrates platform capabilities in realistic scenarios,
+  serves as reference implementation, and validates durability patterns work end-to-end.
 
 ## Dependencies
 
@@ -176,7 +174,7 @@ Files that implement this pattern:
 - Given the event store experiences a transient error
 - When durableAppendEvent is called for OrderSubmitted
 - Then the Workpool should retry with exponential backoff
-- And retry intervals should follow initialMs \* base^attempt
+- And retry intervals should follow initialMs * base^attempt
 - And the event should eventually be persisted
 - And onComplete callback should receive kind "success"
 
@@ -375,7 +373,7 @@ Files that implement this pattern:
 **Events are appended idempotently using command-derived keys**
 
 **Invariant:** For any (commandId, eventType) tuple, at most one event can exist in the
-event store. Duplicate append attempts return the existing event without modification.
+    event store. Duplicate append attempts return the existing event without modification.
 
     **Rationale:** Commands may be retried due to network partitions, client timeouts, or
     infrastructure failures. Without idempotency, retries would create duplicate events,
@@ -390,13 +388,13 @@ event store. Duplicate append attempts return the existing event without modific
 
 ```typescript
 // CommandOrchestrator uses direct append - no deduplication
-await ctx.runMutation(eventStore.appendToStream, {
-  streamType: "Order",
-  streamId: orderId,
-  eventType: "OrderSubmitted",
-  eventData: { orderId, customerId },
-  boundedContext: "orders",
-});
+    await ctx.runMutation(eventStore.appendToStream, {
+      streamType: "Order",
+      streamId: orderId,
+      eventType: "OrderSubmitted",
+      eventData: { orderId, customerId },
+      boundedContext: "orders",
+    });
 ```
 
 **Target State (idempotent append via platform-core):**
@@ -404,51 +402,51 @@ await ctx.runMutation(eventStore.appendToStream, {
 ```typescript
 import { idempotentAppendEvent, buildCommandIdempotencyKey } from "@libar-dev/platform-core";
 
-// Build command-derived idempotency key
-const idempotencyKey = buildCommandIdempotencyKey(
-  "SubmitOrder", // commandType
-  orderId, // entityId
-  commandId // unique command instance ID
-);
-// Result: "cmd:SubmitOrder:ord-123:cmd-456"
+    // Build command-derived idempotency key
+    const idempotencyKey = buildCommandIdempotencyKey(
+      "SubmitOrder",  // commandType
+      orderId,        // entityId
+      commandId       // unique command instance ID
+    );
+    // Result: "cmd:SubmitOrder:ord-123:cmd-456"
 
-// Idempotent append with deduplication
-const result = await idempotentAppendEvent(ctx, {
-  event: {
-    idempotencyKey,
-    streamType: "Order",
-    streamId: orderId,
-    eventType: "OrderSubmitted",
-    eventData: { orderId, customerId },
-    boundedContext: "orders",
-    correlationId,
-  },
-  dependencies: {
-    getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
-    appendToStream: components.eventStore.lib.appendToStream,
-  },
-});
+    // Idempotent append with deduplication
+    const result = await idempotentAppendEvent(ctx, {
+      event: {
+        idempotencyKey,
+        streamType: "Order",
+        streamId: orderId,
+        eventType: "OrderSubmitted",
+        eventData: { orderId, customerId },
+        boundedContext: "orders",
+        correlationId,
+      },
+      dependencies: {
+        getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
+        appendToStream: components.eventStore.lib.appendToStream,
+      },
+    });
 
-// Handle deduplication transparently
-if (result.status === "duplicate") {
-  // Event already exists - command was already processed
-  return { eventId: result.eventId, alreadyProcessed: true };
-}
-// result.status === "appended" - new event created
-return { eventId: result.eventId, version: result.version };
+    // Handle deduplication transparently
+    if (result.status === "duplicate") {
+      // Event already exists - command was already processed
+      return { eventId: result.eventId, alreadyProcessed: true };
+    }
+    // result.status === "appended" - new event created
+    return { eventId: result.eventId, version: result.version };
 ```
 
 **Integration Location:**
-The idempotent append will be integrated into a new `DurableCommandOrchestrator` that
-wraps the existing `CommandOrchestrator`. This preserves backward compatibility while
-adding durability features opt-in per command.
+    The idempotent append will be integrated into a new `DurableCommandOrchestrator` that
+    wraps the existing `CommandOrchestrator`. This preserves backward compatibility while
+    adding durability features opt-in per command.
 
 _Verified by: First command creates event normally, Retry with same commandId returns existing event, Different commandId is rejected for already-submitted order_
 
 **Commands record intent before execution and completion after success**
 
 **Invariant:** Every command execution must have exactly one matching completion event.
-An intent without completion after timeout indicates a stuck or crashed command.
+    An intent without completion after timeout indicates a stuck or crashed command.
 
     **Rationale:** Distributed systems fail in subtle ways - network partitions, process crashes,
     deadlocks. Intent bracketing creates an audit trail that enables detection of commands that
@@ -463,57 +461,57 @@ An intent without completion after timeout indicates a stuck or crashed command.
 
 ```typescript
 import {
-  recordIntent,
-  recordCompletion,
-  buildIntentKey,
-  type RecordIntentArgs,
-  type CompletionStatus,
-} from "@libar-dev/platform-core";
+      recordIntent,
+      recordCompletion,
+      buildIntentKey,
+      type RecordIntentArgs,
+      type CompletionStatus,
+    } from "@libar-dev/platform-core";
 
-// Step 1: Record intent BEFORE command execution
-const { intentKey, intentEventId } = await recordIntent(ctx, {
-  operationType: "SubmitOrder",
-  streamType: "Order",
-  streamId: orderId,
-  boundedContext: "orders",
-  timeoutMs: 5 * 60 * 1000, // 5 minutes
-  onTimeout: internal.admin.intents.handleTimeout,
-  dependencies: intentDependencies,
-  metadata: { customerId, itemCount },
-  correlationId,
-});
+    // Step 1: Record intent BEFORE command execution
+    const { intentKey, intentEventId } = await recordIntent(ctx, {
+      operationType: "SubmitOrder",
+      streamType: "Order",
+      streamId: orderId,
+      boundedContext: "orders",
+      timeoutMs: 5 * 60 * 1000, // 5 minutes
+      onTimeout: internal.admin.intents.handleTimeout,
+      dependencies: intentDependencies,
+      metadata: { customerId, itemCount },
+      correlationId,
+    });
 
-try {
-  // Step 2: Execute command (CMS update + event append)
-  const result = await executeCommand(ctx, command, args);
+    try {
+      // Step 2: Execute command (CMS update + event append)
+      const result = await executeCommand(ctx, command, args);
 
-  // Step 3: Record successful completion
-  await recordCompletion(ctx, {
-    intentKey,
-    status: "success",
-    streamType: "Order",
-    streamId: orderId,
-    boundedContext: "orders",
-    dependencies: intentDependencies,
-    result: { eventId: result.eventId },
-    correlationId,
-  });
+      // Step 3: Record successful completion
+      await recordCompletion(ctx, {
+        intentKey,
+        status: "success",
+        streamType: "Order",
+        streamId: orderId,
+        boundedContext: "orders",
+        dependencies: intentDependencies,
+        result: { eventId: result.eventId },
+        correlationId,
+      });
 
-  return result;
-} catch (error) {
-  // Step 3 (failure path): Record failed completion
-  await recordCompletion(ctx, {
-    intentKey,
-    status: "failure",
-    streamType: "Order",
-    streamId: orderId,
-    boundedContext: "orders",
-    dependencies: intentDependencies,
-    error: error.message,
-    correlationId,
-  });
-  throw error;
-}
+      return result;
+    } catch (error) {
+      // Step 3 (failure path): Record failed completion
+      await recordCompletion(ctx, {
+        intentKey,
+        status: "failure",
+        streamType: "Order",
+        streamId: orderId,
+        boundedContext: "orders",
+        dependencies: intentDependencies,
+        error: error.message,
+        correlationId,
+      });
+      throw error;
+    }
 ```
 
 **Schema Addition (commandIntents table):**
@@ -547,7 +545,7 @@ _Verified by: Successful command records intent and completion, Failed command r
 **Critical events use Workpool-backed durable append**
 
 **Invariant:** A durably-enqueued event will eventually be persisted or moved to dead letter.
-The Workpool guarantees at-least-once execution with automatic retry and backoff.
+    The Workpool guarantees at-least-once execution with automatic retry and backoff.
 
     **Rationale:** Some events are too important to lose - payment confirmations, order submissions
     that trigger sagas, inventory reservations. These must survive transient failures (network
@@ -568,87 +566,83 @@ The Workpool guarantees at-least-once execution with automatic retry and backoff
 
 ```typescript
 import {
-  durableAppendEvent,
-  createAppendPartitionKey,
-  createDurableAppendActionHandler,
-} from "@libar-dev/platform-core";
+      durableAppendEvent,
+      createAppendPartitionKey,
+      createDurableAppendActionHandler,
+    } from "@libar-dev/platform-core";
 
-// infrastructure.ts - Create durable append pool
-export const durableAppendPool = new Workpool(components.workpool, {
-  maxParallelism: 10,
-  retryBackoff: {
-    initialMs: 100,
-    base: 2,
-    maxMs: 30000,
-  },
-});
+    // infrastructure.ts - Create durable append pool
+    export const durableAppendPool = new Workpool(components.workpool, {
+      maxParallelism: 10,
+      retryBackoff: {
+        initialMs: 100,
+        base: 2,
+        maxMs: 30000,
+      },
+    });
 
-// Durable append action handler
-export const durableAppendAction = createDurableAppendActionHandler();
+    // Durable append action handler
+    export const durableAppendAction = createDurableAppendActionHandler();
 
-// Usage in command handler
-const partitionKey = createAppendPartitionKey("Order", orderId);
-// Result: { name: "append", value: "Order:ord-123" }
+    // Usage in command handler
+    const partitionKey = createAppendPartitionKey("Order", orderId);
+    // Result: { name: "append", value: "Order:ord-123" }
 
-const result = await durableAppendEvent(ctx, {
-  workpool: durableAppendPool,
-  actionRef: internal.eventStore.durableAppendAction,
-  append: {
-    event: {
-      idempotencyKey: buildCommandIdempotencyKey("SubmitOrder", orderId, commandId),
-      streamType: "Order",
-      streamId: orderId,
-      eventType: "OrderSubmitted",
-      eventData: { orderId, customerId },
-      boundedContext: "orders",
-      correlationId,
-    },
-    dependencies: eventStoreDependencies,
-  },
-  options: {
-    onComplete: internal.eventStore.onDurableAppendComplete,
-    context: { orderId, commandId },
-  },
-});
-// Result: { status: "enqueued", workId: "work-xyz" }
+    const result = await durableAppendEvent(ctx, {
+      workpool: durableAppendPool,
+      actionRef: internal.eventStore.durableAppendAction,
+      append: {
+        event: {
+          idempotencyKey: buildCommandIdempotencyKey("SubmitOrder", orderId, commandId),
+          streamType: "Order",
+          streamId: orderId,
+          eventType: "OrderSubmitted",
+          eventData: { orderId, customerId },
+          boundedContext: "orders",
+          correlationId,
+        },
+        dependencies: eventStoreDependencies,
+      },
+      options: {
+        onComplete: internal.eventStore.onDurableAppendComplete,
+        context: { orderId, commandId },
+      },
+    });
+    // Result: { status: "enqueued", workId: "work-xyz" }
 ```
 
 **Dead Letter Handling:**
 
 ```typescript
 // eventStore/durableAppend.ts
-export const onDurableAppendComplete = internalMutation({
-  args: {
-    result: v.union(
-      v.object({ kind: v.literal("success"), returnValue: v.any() }),
-      v.object({ kind: v.literal("failed"), error: v.string() }),
-      v.object({ kind: v.literal("canceled") })
-    ),
-    context: v.object({
-      orderId: v.string(),
-      commandId: v.string(),
-    }),
-  },
-  handler: async (ctx, { result, context }) => {
-    if (result.kind === "failed") {
-      // Record dead letter for manual recovery
-      await ctx.db.insert("eventAppendDeadLetters", {
-        idempotencyKey: buildCommandIdempotencyKey(
-          "OrderSubmitted",
-          context.orderId,
-          context.commandId
+    export const onDurableAppendComplete = internalMutation({
+      args: {
+        result: v.union(
+          v.object({ kind: v.literal("success"), returnValue: v.any() }),
+          v.object({ kind: v.literal("failed"), error: v.string() }),
+          v.object({ kind: v.literal("canceled") })
         ),
-        streamType: "Order",
-        streamId: context.orderId,
-        error: result.error,
-        status: "pending",
-        createdAt: Date.now(),
-      });
-      // Alert operator
-      console.error(`[DURABLE_APPEND_FAILED] orderId=${context.orderId} error=${result.error}`);
-    }
-  },
-});
+        context: v.object({
+          orderId: v.string(),
+          commandId: v.string(),
+        }),
+      },
+      handler: async (ctx, { result, context }) => {
+        if (result.kind === "failed") {
+          // Record dead letter for manual recovery
+          await ctx.db.insert("eventAppendDeadLetters", {
+            idempotencyKey: buildCommandIdempotencyKey("OrderSubmitted", context.orderId, context.commandId),
+            streamType: "Order",
+            streamId: context.orderId,
+            error: result.error,
+            status: "pending",
+            createdAt: Date.now(),
+          });
+          // Alert operator
+          console.error(`[DURABLE_APPEND_FAILED] orderId=${context.orderId} error=${result.error}`);
+        }
+      },
+    });
 ```
 
 _Verified by: Durable append succeeds on first try, Durable append retries on transient failure, Exhausted retries create dead letter, Multiple events for same entity maintain order_
@@ -656,7 +650,7 @@ _Verified by: Durable append succeeds on first try, Durable append retries on tr
 **External action results are captured as events using outbox pattern**
 
 **Invariant:** Every external action completion (success or failure) results in exactly one
-corresponding event. The outbox handler uses idempotent append to prevent duplicate events.
+    corresponding event. The outbox handler uses idempotent append to prevent duplicate events.
 
     **Rationale:** Actions calling external APIs (Stripe, email services, etc.) are at-most-once
     by default. If the action succeeds but subsequent processing fails, the side effect is
@@ -677,71 +671,66 @@ corresponding event. The outbox handler uses idempotent append to prevent duplic
 ```typescript
 import { createOutboxHandler, type ActionResult } from "@libar-dev/platform-core";
 
-// sagas/payments/outbox.ts
-interface PaymentContext {
-  orderId: string;
-  customerId: string;
-  amount: number;
-}
+    // sagas/payments/outbox.ts
+    interface PaymentContext {
+      orderId: string;
+      customerId: string;
+      amount: number;
+    }
 
-interface StripeChargeResult {
-  chargeId: string;
-  receiptUrl: string;
-}
+    interface StripeChargeResult {
+      chargeId: string;
+      receiptUrl: string;
+    }
 
-export const onPaymentComplete = internalMutation({
-  args: {
-    result: v.union(
-      v.object({ kind: v.literal("success"), returnValue: v.any() }),
-      v.object({ kind: v.literal("failed"), error: v.string() }),
-      v.object({ kind: v.literal("canceled") })
-    ),
-    context: v.object({
-      orderId: v.string(),
-      customerId: v.string(),
-      amount: v.number(),
-    }),
-  },
-  handler: createOutboxHandler<PaymentContext, StripeChargeResult>({
-    getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
-    buildEvent: (result, ctx) => ({
-      streamType: "Order",
-      streamId: ctx.orderId,
-      eventType: result.kind === "success" ? "PaymentCompleted" : "PaymentFailed",
-      eventData:
-        result.kind === "success"
-          ? {
-              chargeId: result.returnValue.chargeId,
-              receiptUrl: result.returnValue.receiptUrl,
-              amount: ctx.amount,
-            }
-          : {
-              error: result.kind === "failed" ? result.error : "canceled",
-              amount: ctx.amount,
-            },
-    }),
-    boundedContext: "orders",
-    dependencies: {
-      getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
-      appendToStream: components.eventStore.lib.appendToStream,
-    },
-  }),
-});
+    export const onPaymentComplete = internalMutation({
+      args: {
+        result: v.union(
+          v.object({ kind: v.literal("success"), returnValue: v.any() }),
+          v.object({ kind: v.literal("failed"), error: v.string() }),
+          v.object({ kind: v.literal("canceled") })
+        ),
+        context: v.object({
+          orderId: v.string(),
+          customerId: v.string(),
+          amount: v.number(),
+        }),
+      },
+      handler: createOutboxHandler<PaymentContext, StripeChargeResult>({
+        getIdempotencyKey: (ctx) => `payment:${ctx.orderId}`,
+        buildEvent: (result, ctx) => ({
+          streamType: "Order",
+          streamId: ctx.orderId,
+          eventType: result.kind === "success" ? "PaymentCompleted" : "PaymentFailed",
+          eventData:
+            result.kind === "success"
+              ? {
+                  chargeId: result.returnValue.chargeId,
+                  receiptUrl: result.returnValue.receiptUrl,
+                  amount: ctx.amount,
+                }
+              : {
+                  error: result.kind === "failed" ? result.error : "canceled",
+                  amount: ctx.amount,
+                },
+        }),
+        boundedContext: "orders",
+        dependencies: {
+          getByIdempotencyKey: components.eventStore.lib.getByIdempotencyKey,
+          appendToStream: components.eventStore.lib.appendToStream,
+        },
+      }),
+    });
 
-// Usage in saga
-await actionRetrier.run(
-  ctx,
-  internal.payments.chargeStripe,
-  {
-    customerId,
-    amount,
-    orderId,
-  },
-  {
-    onComplete: internal.sagas.payments.onPaymentComplete,
-    context: { orderId, customerId, amount },
-  }
-);
+    // Usage in saga
+    await actionRetrier.run(ctx, internal.payments.chargeStripe, {
+      customerId,
+      amount,
+      orderId,
+    }, {
+      onComplete: internal.sagas.payments.onPaymentComplete,
+      context: { orderId, customerId, amount },
+    });
 ```
 
 _Verified by: Successful payment creates PaymentCompleted event, Failed payment creates PaymentFailed event, Duplicate completion is deduplicated_
@@ -749,7 +738,7 @@ _Verified by: Successful payment creates PaymentCompleted event, Failed payment 
 **Projection handlers quarantine malformed events**
 
 **Invariant:** A malformed event that fails processing N times will be quarantined
-and excluded from further processing. The projection will continue with remaining events.
+    and excluded from further processing. The projection will continue with remaining events.
 
     **Rationale:** Malformed events (schema violations, missing references, data corruption)
     should not block all projection processing indefinitely. Quarantining allows the system
@@ -764,96 +753,95 @@ and excluded from further processing. The projection will continue with remainin
     **Implementation:**
 
 ```typescript
-import { withPoisonEventHandling, type PoisonEventFullConfig } from "@libar-dev/platform-core";
+import {
+      withPoisonEventHandling,
+      type PoisonEventFullConfig,
+    } from "@libar-dev/platform-core";
 
-// projections/orders/orderSummary.ts
-const actualHandler = async (ctx: MutationCtx, args: OrderCreatedArgs) => {
-  // Actual projection logic - may throw on malformed data
-  const existing = await ctx.db
-    .query("orderSummaries")
-    .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
-    .first();
+    // projections/orders/orderSummary.ts
+    const actualHandler = async (ctx: MutationCtx, args: OrderCreatedArgs) => {
+      // Actual projection logic - may throw on malformed data
+      const existing = await ctx.db
+        .query("orderSummaries")
+        .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+        .first();
 
-  if (existing) {
-    // Idempotent - already processed
-    return;
-  }
+      if (existing) {
+        // Idempotent - already processed
+        return;
+      }
 
-  await ctx.db.insert("orderSummaries", {
-    orderId: args.orderId,
-    customerId: args.customerId,
-    status: "draft",
-    itemCount: 0,
-    totalAmount: 0,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-};
+      await ctx.db.insert("orderSummaries", {
+        orderId: args.orderId,
+        customerId: args.customerId,
+        status: "draft",
+        itemCount: 0,
+        totalAmount: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    };
 
-export const onOrderCreated = internalMutation({
-  args: {
-    /* ... */
-  },
-  handler: withPoisonEventHandling(actualHandler, {
-    projectionName: "orderSummary",
-    maxAttempts: 3,
-    alertOnQuarantine: true,
-    dependencies: {
-      getPoisonRecord: internal.admin.poison.getRecord,
-      upsertPoisonRecord: internal.admin.poison.upsertRecord,
-      listQuarantinedRecords: internal.admin.poison.listQuarantined,
-      getPoisonStats: internal.admin.poison.getStats,
-    },
-    onQuarantine: ({ eventId, projectionName, attempts, error }) => {
-      console.error(
-        `[POISON_EVENT] eventId=${eventId} projection=${projectionName} ` +
-          `attempts=${attempts} error=${error}`
-      );
-    },
-  }),
-});
+    export const onOrderCreated = internalMutation({
+      args: { /* ... */ },
+      handler: withPoisonEventHandling(actualHandler, {
+        projectionName: "orderSummary",
+        maxAttempts: 3,
+        alertOnQuarantine: true,
+        dependencies: {
+          getPoisonRecord: internal.admin.poison.getRecord,
+          upsertPoisonRecord: internal.admin.poison.upsertRecord,
+          listQuarantinedRecords: internal.admin.poison.listQuarantined,
+          getPoisonStats: internal.admin.poison.getStats,
+        },
+        onQuarantine: ({ eventId, projectionName, attempts, error }) => {
+          console.error(`[POISON_EVENT] eventId=${eventId} projection=${projectionName} ` +
+            `attempts=${attempts} error=${error}`);
+        },
+      }),
+    });
 ```
 
 **Admin Mutations:**
 
 ```typescript
 // admin/poison.ts
-export const replayEvent = internalMutation({
-  args: { eventId: v.string(), projectionName: v.string() },
-  handler: async (ctx, { eventId, projectionName }) => {
-    const record = await ctx.db
-      .query("poisonEvents")
-      .withIndex("by_eventId_projection", (q) =>
-        q.eq("eventId", eventId).eq("projectionName", projectionName)
-      )
-      .first();
+    export const replayEvent = internalMutation({
+      args: { eventId: v.string(), projectionName: v.string() },
+      handler: async (ctx, { eventId, projectionName }) => {
+        const record = await ctx.db
+          .query("poisonEvents")
+          .withIndex("by_eventId_projection", (q) =>
+            q.eq("eventId", eventId).eq("projectionName", projectionName)
+          )
+          .first();
 
-    if (!record) {
-      return { status: "not_found" };
-    }
-    if (record.status !== "quarantined") {
-      return { status: "not_quarantined" };
-    }
+        if (!record) {
+          return { status: "not_found" };
+        }
+        if (record.status !== "quarantined") {
+          return { status: "not_quarantined" };
+        }
 
-    // Reset for replay
-    await ctx.db.patch(record._id, {
-      status: "pending",
-      attempts: 0,
-      updatedAt: Date.now(),
+        // Reset for replay
+        await ctx.db.patch(record._id, {
+          status: "pending",
+          attempts: 0,
+          updatedAt: Date.now(),
+        });
+
+        // Re-enqueue to projection pool
+        // (caller must trigger re-processing)
+        return { status: "ready_for_replay" };
+      },
     });
 
-    // Re-enqueue to projection pool
-    // (caller must trigger re-processing)
-    return { status: "ready_for_replay" };
-  },
-});
-
-export const ignoreEvent = internalMutation({
-  args: { eventId: v.string(), projectionName: v.string(), reason: v.string() },
-  handler: async (ctx, { eventId, projectionName, reason }) => {
-    // ... update status to "ignored" with reason
-  },
-});
+    export const ignoreEvent = internalMutation({
+      args: { eventId: v.string(), projectionName: v.string(), reason: v.string() },
+      handler: async (ctx, { eventId, projectionName, reason }) => {
+        // ... update status to "ignored" with reason
+      },
+    });
 ```
 
 _Verified by: Valid event processed normally, Malformed event quarantined after max attempts, Quarantined event can be replayed after fix, Quarantined event can be ignored_
@@ -861,7 +849,7 @@ _Verified by: Valid event processed normally, Malformed event quarantined after 
 **Projections can be rebuilt from the event stream**
 
 **Invariant:** A projection can be rebuilt from any starting position in the event stream.
-The rebuilt projection will eventually converge to the same state as if built incrementally.
+    The rebuilt projection will eventually converge to the same state as if built incrementally.
 
     **Rationale:** Projection data can become corrupted (bugs, schema migrations gone wrong,
     manual data fixes). The event stream is the source of truth - projections are derived views
@@ -881,66 +869,66 @@ The rebuilt projection will eventually converge to the same state as if built in
 
 ```typescript
 // admin/rebuildDemo.ts
-export const demonstrateRebuild = internalMutation({
-  args: { projectionName: v.string() },
-  handler: async (ctx, { projectionName }) => {
-    // Step 1: Get current projection state (for comparison)
-    const beforeStats = await getProjectionStats(ctx, projectionName);
+    export const demonstrateRebuild = internalMutation({
+      args: { projectionName: v.string() },
+      handler: async (ctx, { projectionName }) => {
+        // Step 1: Get current projection state (for comparison)
+        const beforeStats = await getProjectionStats(ctx, projectionName);
 
-    // Step 2: Clear projection data
-    await clearProjection(ctx, projectionName);
+        // Step 2: Clear projection data
+        await clearProjection(ctx, projectionName);
 
-    // Step 3: Trigger rebuild from position 0
-    const replayId = await triggerRebuild(ctx, {
-      projectionName,
-      fromPosition: 0,
-      chunkSize: 100, // Process 100 events per batch
+        // Step 3: Trigger rebuild from position 0
+        const replayId = await triggerRebuild(ctx, {
+          projectionName,
+          fromPosition: 0,
+          chunkSize: 100, // Process 100 events per batch
+        });
+
+        return {
+          replayId,
+          beforeStats,
+          message: `Rebuild started. Monitor with getRebuildStatus("${replayId}")`,
+        };
+      },
     });
 
-    return {
-      replayId,
-      beforeStats,
-      message: `Rebuild started. Monitor with getRebuildStatus("${replayId}")`,
-    };
-  },
-});
+    export const verifyRebuild = internalQuery({
+      args: { projectionName: v.string(), replayId: v.string() },
+      handler: async (ctx, { projectionName, replayId }) => {
+        const status = await getRebuildStatus(ctx, replayId);
+        const currentStats = await getProjectionStats(ctx, projectionName);
 
-export const verifyRebuild = internalQuery({
-  args: { projectionName: v.string(), replayId: v.string() },
-  handler: async (ctx, { projectionName, replayId }) => {
-    const status = await getRebuildStatus(ctx, replayId);
-    const currentStats = await getProjectionStats(ctx, projectionName);
-
-    return {
-      rebuildStatus: status,
-      currentStats,
-      isComplete: status.status === "completed",
-      eventsProcessed: status.eventsProcessed,
-      duration: status.completedAt ? status.completedAt - status.startedAt : null,
-    };
-  },
-});
+        return {
+          rebuildStatus: status,
+          currentStats,
+          isComplete: status.status === "completed",
+          eventsProcessed: status.eventsProcessed,
+          duration: status.completedAt ? status.completedAt - status.startedAt : null,
+        };
+      },
+    });
 ```
 
 **Progress Tracking Structure:**
 
 ```typescript
 interface RebuildStatus {
-  replayId: string;
-  projectionName: string;
-  status: "running" | "completed" | "cancelled" | "failed";
-  fromPosition: number;
-  currentPosition: number;
-  eventsProcessed: number;
-  totalEvents: number; // If known
-  startedAt: number;
-  completedAt?: number;
-  lastError?: string;
-  // Computed
-  percentComplete: number;
-  eventsPerSecond: number;
-  estimatedRemainingMs?: number;
-}
+      replayId: string;
+      projectionName: string;
+      status: "running" | "completed" | "cancelled" | "failed";
+      fromPosition: number;
+      currentPosition: number;
+      eventsProcessed: number;
+      totalEvents: number; // If known
+      startedAt: number;
+      completedAt?: number;
+      lastError?: string;
+      // Computed
+      percentComplete: number;
+      eventsPerSecond: number;
+      estimatedRemainingMs?: number;
+    }
 ```
 
 _Verified by: Rebuild from position 0 re-processes all events, Rebuild progress is trackable, Running rebuild can be cancelled, Concurrent rebuilds are prevented, Rebuild from specific position_
@@ -948,7 +936,7 @@ _Verified by: Rebuild from position 0 re-processes all events, Rebuild progress 
 **Scheduled job detects and alerts on orphaned command intents**
 
 **Invariant:** Any intent in "pending" status for longer than timeoutMs will be detected
-and transitioned to "abandoned" status. Operators are alerted for investigation.
+    and transitioned to "abandoned" status. Operators are alerted for investigation.
 
     **Rationale:** Network partitions, process crashes, and deadlocks can leave commands
     in an incomplete state. Automated detection ensures these don't go unnoticed, enabling
@@ -961,88 +949,89 @@ and transitioned to "abandoned" status. Operators are alerted for investigation.
 
 ```typescript
 // crons.ts
-import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
+    import { cronJobs } from "convex/server";
+    import { internal } from "./_generated/api";
 
-const crons = cronJobs();
+    const crons = cronJobs();
 
-// Detect orphaned intents every 5 minutes
-crons.interval("detectOrphanedIntents", { minutes: 5 }, internal.admin.intents.detectOrphans);
+    // Detect orphaned intents every 5 minutes
+    crons.interval(
+      "detectOrphanedIntents",
+      { minutes: 5 },
+      internal.admin.intents.detectOrphans
+    );
 
-export default crons;
+    export default crons;
 ```
 
 **Detection Logic:**
 
 ```typescript
 // admin/intents.ts
-import { queryOrphanedIntents } from "@libar-dev/platform-core";
+    import { queryOrphanedIntents } from "@libar-dev/platform-core";
 
-export const detectOrphans = internalMutation({
-  handler: async (ctx) => {
-    const now = Date.now();
+    export const detectOrphans = internalMutation({
+      handler: async (ctx) => {
+        const now = Date.now();
 
-    // Find pending intents older than their timeout
-    const orphans = await queryOrphanedIntents(ctx, {
-      dependencies: intentDependencies,
-      now,
-    });
+        // Find pending intents older than their timeout
+        const orphans = await queryOrphanedIntents(ctx, {
+          dependencies: intentDependencies,
+          now,
+        });
 
-    if (orphans.length === 0) {
-      console.info("[ORPHAN_DETECTION] No orphans found");
-      return { orphanCount: 0 };
-    }
+        if (orphans.length === 0) {
+          console.info("[ORPHAN_DETECTION] No orphans found");
+          return { orphanCount: 0 };
+        }
 
-    // Transition each orphan to abandoned
-    const abandoned: string[] = [];
-    for (const orphan of orphans) {
-      await recordCompletion(ctx, {
-        intentKey: orphan.intentKey,
-        status: "abandoned",
-        streamType: orphan.streamType,
-        streamId: orphan.streamId,
-        boundedContext: orphan.boundedContext,
-        dependencies: intentDependencies,
-        error: `Timeout exceeded (${orphan.timeoutMs}ms). Time since intent: ${orphan.timeSinceIntent}ms`,
-      });
-      abandoned.push(orphan.intentKey);
-    }
+        // Transition each orphan to abandoned
+        const abandoned: string[] = [];
+        for (const orphan of orphans) {
+          await recordCompletion(ctx, {
+            intentKey: orphan.intentKey,
+            status: "abandoned",
+            streamType: orphan.streamType,
+            streamId: orphan.streamId,
+            boundedContext: orphan.boundedContext,
+            dependencies: intentDependencies,
+            error: `Timeout exceeded (${orphan.timeoutMs}ms). Time since intent: ${orphan.timeSinceIntent}ms`,
+          });
+          abandoned.push(orphan.intentKey);
+        }
 
-    // Report metrics
-    const byType = orphans.reduce(
-      (acc, o) => {
-        acc[o.operationType] = (acc[o.operationType] || 0) + 1;
-        return acc;
+        // Report metrics
+        const byType = orphans.reduce((acc, o) => {
+          acc[o.operationType] = (acc[o.operationType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        console.warn(
+          `[ORPHAN_DETECTION] Found ${orphans.length} orphans`,
+          { orphanCount: orphans.length, byOperationType: byType }
+        );
+
+        return {
+          orphanCount: orphans.length,
+          byOperationType: byType,
+          abandoned,
+        };
       },
-      {} as Record<string, number>
-    );
-
-    console.warn(`[ORPHAN_DETECTION] Found ${orphans.length} orphans`, {
-      orphanCount: orphans.length,
-      byOperationType: byType,
     });
 
-    return {
-      orphanCount: orphans.length,
-      byOperationType: byType,
-      abandoned,
-    };
-  },
-});
+    // Admin query for manual investigation
+    export const listOrphanedIntents = internalQuery({
+      args: { limit: v.optional(v.number()) },
+      handler: async (ctx, { limit = 100 }) => {
+        const orphans = await ctx.db
+          .query("commandIntents")
+          .withIndex("by_status_createdAt", (q) => q.eq("status", "abandoned"))
+          .order("desc")
+          .take(limit);
 
-// Admin query for manual investigation
-export const listOrphanedIntents = internalQuery({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 100 }) => {
-    const orphans = await ctx.db
-      .query("commandIntents")
-      .withIndex("by_status_createdAt", (q) => q.eq("status", "abandoned"))
-      .order("desc")
-      .take(limit);
-
-    return orphans;
-  },
-});
+        return orphans;
+      },
+    });
 ```
 
 _Verified by: Orphan detected after threshold exceeded, Recent pending intent not flagged, Completed intents are ignored, Orphan detection reports metrics_
@@ -1050,7 +1039,7 @@ _Verified by: Orphan detected after threshold exceeded, Recent pending intent no
 **End-to-end durability is verified via integration tests**
 
 **Invariant:** Integration tests must exercise the complete durability stack in a real
-Convex environment with actual database operations, Workpool execution, and event store.
+    Convex environment with actual database operations, Workpool execution, and event store.
 
     **Rationale:** Unit tests with mocks cannot verify the integration of multiple durability
     patterns working together. Integration tests ensure the patterns compose correctly and
@@ -1063,16 +1052,16 @@ Convex environment with actual database operations, Workpool execution, and even
 
 ```typescript
 // examples/order-management/tests/integration-steps/durability.integration.steps.ts
-import {
-  generateTestRunId,
-  waitUntil,
-  testMutation,
-  testQuery,
-} from "@libar-dev/platform-core/testing";
+    import {
+      generateTestRunId,
+      waitUntil,
+      testMutation,
+      testQuery,
+    } from "@libar-dev/platform-core/testing";
 
-// Each test run gets isolated IDs
-const testRunId = generateTestRunId();
-const testOrderId = `${testRunId}_ord_001`;
+    // Each test run gets isolated IDs
+    const testRunId = generateTestRunId();
+    const testOrderId = `${testRunId}_ord_001`;
 ```
 
 _Verified by: Full durable command flow, Command retry produces same result, Projection rebuild restores correct state_

@@ -1,4 +1,4 @@
-# Agent Approval Workflow Tools
+#  Agent Approval Workflow Tools
 
 **Purpose:** Detailed documentation for the Agent Approval Workflow Tools pattern
 

@@ -14,5 +14,15 @@ export default defineConfig({
     ],
     testTimeout: 30000,
     hookTimeout: 15000,
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary"],
+      thresholds: {
+        statements: 76,
+        branches: 57,
+        functions: 54,
+        lines: 84,
+      },
+    },
   },
 });

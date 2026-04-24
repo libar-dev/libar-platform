@@ -59,6 +59,8 @@ export interface GetCommandStatusArgs {
  */
 export interface GetByCorrelationArgs {
   correlationId: string;
+  limit?: number;
+  cursor?: string;
   [key: string]: unknown;
 }
 
@@ -76,6 +78,7 @@ export interface CleanupExpiredArgs {
 export interface CleanupExpiredResult {
   commands: number;
   correlations: number;
+  hasMore: boolean;
 }
 
 /**
@@ -98,9 +101,14 @@ export interface CommandByCorrelationInfo {
   commandType: string;
   targetContext: string;
   status: "pending" | "executed" | "rejected" | "failed";
-  result?: unknown;
   executedAt?: number;
   timestamp: number;
+}
+
+export interface GetByCorrelationResult {
+  commands: CommandByCorrelationInfo[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 /**
@@ -143,7 +151,7 @@ export interface CommandBusApi {
       "query",
       "internal",
       GetByCorrelationArgs,
-      CommandByCorrelationInfo[]
+      GetByCorrelationResult
     >;
     cleanupExpired: FunctionReference<
       "mutation",
@@ -259,7 +267,7 @@ export class CommandBus<TApi extends CommandBusApi = CommandBusApi> {
   async getByCorrelation(
     ctx: QueryCtx,
     args: GetByCorrelationArgs
-  ): Promise<CommandByCorrelationInfo[]> {
+  ): Promise<GetByCorrelationResult> {
     return ctx.runQuery(this.component.lib.getByCorrelation, args);
   }
 

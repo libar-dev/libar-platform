@@ -16,31 +16,29 @@
 ## Description
 
 **Problem:**
-The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
-Missing tag categories included:
+  The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
+  Missing tag categories included:
+  - Variance tracking (planned vs actual effort)
+  - Progressive governance (risk-based filtering)
+  - Backlog ordering (priority)
+  - Time distribution analysis (workflow types)
+  - Hierarchical roadmap views (epic→phase→task)
 
-- Variance tracking (planned vs actual effort)
-- Progressive governance (risk-based filtering)
-- Backlog ordering (priority)
-- Time distribution analysis (workflow types)
-- Hierarchical roadmap views (epic→phase→task)
+  Without these tags, opportunities 2-8 from the convergence roadmap could not
+  be implemented. The tag registry needed expansion to enable future capabilities.
 
-Without these tags, opportunities 2-8 from the convergence roadmap could not
-be implemented. The tag registry needed expansion to enable future capabilities.
+  **Solution:**
+  Added 6 new metadata tags to architect/tag-registry.json:
+  - @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
+  - @architect-effort-actual:Nw - Variance tracking (Opp 3)
+  - @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
+  - @architect-priority:{high|medium|low} - Backlog ordering
+  - @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
+  - @architect-parent:PatternName - Hierarchy linking (Opp 8)
 
-**Solution:**
-Added 6 new metadata tags to architect/tag-registry.json:
+  Updated PDR-003 with new tag conventions and acceptance criteria.
 
-- @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
-- @architect-effort-actual:Nw - Variance tracking (Opp 3)
-- @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
-- @architect-priority:{high|medium|low} - Backlog ordering
-- @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
-- @architect-parent:PatternName - Hierarchy linking (Opp 8)
-
-Updated PDR-003 with new tag conventions and acceptance criteria.
-
-This work is foundation for Setup A (Framework Roadmap OS) from convergence docs.
+  This work is foundation for Setup A (Framework Roadmap OS) from convergence docs.
 
 ## Acceptance Criteria
 

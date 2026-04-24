@@ -313,13 +313,15 @@ export interface AgentInterface {
   readonly reason: (event: PublishedEvent) => Promise<unknown>;
 }
 
+import type { GlobalPositionLike } from "../events/globalPosition.js";
+
 /**
  * Checkpoint state accessible during event handling.
  * Read-only view of the agent's position in the event stream.
  */
 export interface AgentCheckpointState {
   /** Last processed global position */
-  readonly lastProcessedPosition: number;
+  readonly lastProcessedPosition: GlobalPositionLike;
   /** Last processed event ID */
   readonly lastEventId: string;
   /** Total events processed by this agent */

@@ -1,0 +1,52 @@
+{
+  "name": "@libar-dev/platform-contracts-shared",
+  "version": "0.1.0",
+  "description": "Zero-dependency shared platform contracts for event categories, process-manager statuses, and DCB scope keys",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./event-category": {
+      "types": "./dist/event-category.d.ts",
+      "default": "./dist/event-category.js"
+    },
+    "./process-manager-status": {
+      "types": "./dist/process-manager-status.d.ts",
+      "default": "./dist/process-manager-status.js"
+    },
+    "./scope-key": {
+      "types": "./dist/scope-key.d.ts",
+      "default": "./dist/scope-key.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libar-dev/libar-dev-packages.git",
+    "directory": "packages/platform/contracts-shared"
+  },
+  "homepage": "https://github.com/libar-dev/convex-event-sourcing#readme",
+  "bugs": {
+    "url": "https://github.com/libar-dev/convex-event-sourcing/issues"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

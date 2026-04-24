@@ -12,7 +12,7 @@
 
 ### Codec Driven Reference Generation
 
-_Reference documentation is specified via 11 recipe `.feature` files in_
+*Reference documentation is specified via 11 recipe `.feature` files in*
 
 ---
 
@@ -23,7 +23,6 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 > **Rationale:** 11 separate codec classes would just be reimplementing recipes in TypeScript. A parameterized codec keeps the configuration declarative while the composition logic is shared.
 
 **Verified by:**
-
 - Generate process guard reference at standard detail level
 - Generate process guard reference at summary detail level
 
@@ -36,7 +35,6 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 > **Rationale:** Recipe Rule blocks contain durable knowledge (tables, context, rationale) that belongs in decision records — permanent, queryable, tagged. Decision records are already extracted as patterns in MasterDataset.
 
 **Verified by:**
-
 - Extract conventions by tag value
 - Convention content preserves Rule block structure
 
@@ -49,7 +47,6 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 > **Rationale:** Not all reference configs will have all three source types populated. Some references have no shapes (Session Guides), others have no conventions yet (before migration). Graceful degradation is required.
 
 **Verified by:**
-
 - No conventions found for requested tag values
 - No shape sources match any pattern file paths
 - Convention tag matches multiple decision records
@@ -58,12 +55,11 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 
 #### Each reference generator produces dual output via DetailLevel
 
-> **Invariant:** A single ReferenceDocConfig drives both the detailed human reference (docs/) and the compact AI context (\_claude-md/). The ReferenceDocGenerator invokes the codec factory twice with different DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
+> **Invariant:** A single ReferenceDocConfig drives both the detailed human reference (docs/) and the compact AI context (_claude-md/). The ReferenceDocGenerator invokes the codec factory twice with different DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
 >
 > **Rationale:** The recipe system declared dual targets in its Target Documents table. The generator approach achieves the same by running the same codec with different options. No separate configuration needed.
 
 **Verified by:**
-
 - Dual output generation
 - Summary compaction quality
 
@@ -76,7 +72,6 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 > **Rationale:** DecisionDocGeneratorImpl already demonstrates this pattern: direct DocumentGenerator implementation, dual output, factory function registration. No changes needed to generate.ts, codec-based.ts, or registry.ts.
 
 **Verified by:**
-
 - Reference generators appear in available generators list
 - CLI invocation generates reference docs
 
@@ -103,7 +98,6 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 | doc-generation        | Recipes, generators, dual output           | IndexReference                                |
 
 **Verified by:**
-
 - Convention tag is registered in taxonomy
 
 ---
@@ -115,14 +109,13 @@ _Reference documentation is specified via 11 recipe `.feature` files in_
 > **Rationale:** Recipe Rule blocks contain tables, rationale, and context that are the authoritative reference for the delivery process. Migration must be lossless.
 
 **Verified by:**
-
 - Recipe Rule block content preserved in decision record
 
-_codec-driven-reference-generation.feature_
+*codec-driven-reference-generation.feature*
 
 ### Test Content Blocks
 
-_This feature demonstrates what content blocks are captured and rendered_
+*This feature demonstrates what content blocks are captured and rendered*
 
 ---
 
@@ -131,7 +124,6 @@ _This feature demonstrates what content blocks are captured and rendered_
 Rule descriptions provide context for why this business rule exists.
 
 **Verified by:**
-
 - Scenario with DocString for rich content
 - Scenario with DataTable for structured data
 
@@ -142,11 +134,10 @@ Rule descriptions provide context for why this business rule exists.
 Each Rule keyword creates a separate entry in the Business Rules section.
 
 **Verified by:**
-
 - Simple scenario under second rule
 - Scenario with examples table
 
-_test-content-blocks.feature_
+*test-content-blocks.feature*
 
 ---
 

@@ -15,6 +15,8 @@
  * @module agent/cross-bc-query
  */
 
+import type { GlobalPositionLike } from "../events/globalPosition.js";
+
 // ============================================================================
 // Customer Cancellation History (from customerCancellations projection)
 // ============================================================================
@@ -30,7 +32,7 @@ export interface CancellationRecord {
   readonly eventId: string;
 
   /** Global position for ordering */
-  readonly globalPosition: number;
+  readonly globalPosition: GlobalPositionLike;
 
   /** Cancellation reason */
   readonly reason: string;

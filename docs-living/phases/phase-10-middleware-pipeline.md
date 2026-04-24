@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 1/1 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 1     |
 
 ---
 

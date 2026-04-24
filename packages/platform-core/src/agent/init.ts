@@ -11,7 +11,7 @@
  */
 
 import type { FunctionReference, FunctionVisibility } from "convex/server";
-import { v7 as uuidv7 } from "uuid";
+import { generateAgentSubscriptionId } from "../ids/generator.js";
 import type { Logger } from "../logging/types.js";
 import { createPlatformNoOpLogger } from "../logging/scoped.js";
 import type {
@@ -21,6 +21,7 @@ import type {
   PartitionKey,
 } from "../eventbus/types.js";
 import type { CorrelationChain } from "../correlation/types.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { UnknownRecord } from "../types.js";
 import type { AgentBCConfig, AgentInterface, LLMAnalysisResult } from "./types.js";
 import { validateAgentBCConfig } from "./types.js";
@@ -264,7 +265,7 @@ export interface AgentEventHandlerArgs {
   readonly eventType: string;
 
   /** Global position for idempotency */
-  readonly globalPosition: number;
+  readonly globalPosition: GlobalPositionLike;
 
   /** Correlation ID */
   readonly correlationId: string;
@@ -460,9 +461,13 @@ export function createAgentSubscription<THandlerArgs extends UnknownRecord = Age
  * @returns Unique subscription ID
  */
 export function generateSubscriptionId(agentId: string): string {
-  const timestamp = Date.now();
-  const random = uuidv7().slice(0, 8);
-  return `sub_${agentId}_${timestamp}_${random}`;
+  return generateAgentSubscriptionId(agentId);
+}
+
+function notImplementedLifecycleAction(action: "pause" | "resume" | "unsubscribe"): Error {
+  return new Error(
+    `Agent subscription ${action}() is not implemented. Use lifecycle handlers/infrastructure integration instead of the placeholder AgentBC handle.`
+  );
 }
 
 /**
@@ -514,29 +519,30 @@ export function initializeAgentBC(
   const checkpoint =
     options.existingCheckpoint ?? createInitialAgentCheckpoint(config.id, subscriptionId);
 
-  // Create subscription handle
-  // Note: pause/resume/unsubscribe are stubs that should be implemented
-  // at the infrastructure layer (e.g., with Workpool pause functionality)
-  // TODO(Phase-23): Implement pause/resume with Workpool subscription management
-  // TODO(Phase-23): Implement unsubscribe with EventBus unregistration
   const subscription: AgentSubscription = {
     subscriptionId,
     agentId: config.id,
     subscriptionName: `agent:${config.id}`,
     pause: async () => {
-      log.info("Pausing agent subscription", { agentId: config.id, subscriptionId });
-      // TODO(Phase-23): Integrate with Workpool.pause() for durable pause
-      // This should update checkpoint status to "paused" and stop event processing
+      log.warn("Agent subscription pause() called before implementation", {
+        agentId: config.id,
+        subscriptionId,
+      });
+      throw notImplementedLifecycleAction("pause");
     },
     resume: async () => {
-      log.info("Resuming agent subscription", { agentId: config.id, subscriptionId });
-      // TODO(Phase-23): Integrate with Workpool.resume() for durable resume
-      // This should update checkpoint status to "active" and resume event processing
+      log.warn("Agent subscription resume() called before implementation", {
+        agentId: config.id,
+        subscriptionId,
+      });
+      throw notImplementedLifecycleAction("resume");
     },
     unsubscribe: async () => {
-      log.info("Unsubscribing agent", { agentId: config.id, subscriptionId });
-      // TODO(Phase-23): Integrate with EventBus unregister and Workpool cleanup
-      // This should update checkpoint status to "stopped" and remove subscription
+      log.warn("Agent subscription unsubscribe() called before implementation", {
+        agentId: config.id,
+        subscriptionId,
+      });
+      throw notImplementedLifecycleAction("unsubscribe");
     },
   };
 

@@ -15,32 +15,31 @@
 ## Description
 
 **Problem:** Cross-context communication is ad-hoc. Domain events are used directly
-for integration without explicit contracts, leading to tight coupling.
+  for integration without explicit contracts, leading to tight coupling.
 
-**Solution:** Foundational patterns for cross-context communication:
+  **Solution:** Foundational patterns for cross-context communication:
+  - **Context Map** — Document relationships between BCs (including Partnership, Shared Kernel, Open Host Service)
+  - **Published Language** — Stable schema for integration events with event tagging and compatibility modes
+  - **Anti-Corruption Layer (ACL)** — Translate external models to internal with validation
 
-- **Context Map** — Document relationships between BCs (including Partnership, Shared Kernel, Open Host Service)
-- **Published Language** — Stable schema for integration events with event tagging and compatibility modes
-- **Anti-Corruption Layer (ACL)** — Translate external models to internal with validation
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Clear contracts | Published Language defines integration API |
+  | Protected domain | ACL prevents external model leakage |
+  | Documented topology | Context Map shows BC relationships |
+  | DCB integration | Event tags enable consistency queries (Phase 16) |
+  | Evolution safety | Compatibility modes control schema evolution |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Clear contracts | Published Language defines integration API |
-| Protected domain | ACL prevents external model leakage |
-| Documented topology | Context Map shows BC relationships |
-| DCB integration | Event tags enable consistency queries (Phase 16) |
-| Evolution safety | Compatibility modes control schema evolution |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | Context Map | Documents BC relationships | ProducerContext→ConsumerContext: Upstream/Downstream |
+  | Published Language | Stable versioned schema for integration | EntityCreatedV1 schema |
+  | Event Tagging | Tags for routing and DCB scoping | tags: { principalId: "456" } |
+  | Compatibility Mode | Schema evolution contract | backward / forward / full / none |
+  | ACL | Translates external models to domain | ExternalSystem {ext_ref} → Domain {referenceId} |
 
-**Key Concepts:**
-| Concept | Description | Example |
-| Context Map | Documents BC relationships | ProducerContext→ConsumerContext: Upstream/Downstream |
-| Published Language | Stable versioned schema for integration | EntityCreatedV1 schema |
-| Event Tagging | Tags for routing and DCB scoping | tags: { principalId: "456" } |
-| Compatibility Mode | Schema evolution contract | backward / forward / full / none |
-| ACL | Translates external models to domain | ExternalSystem {ext_ref} → Domain {referenceId} |
-
-**Relationship to Phase 21b:** This spec provides foundational registry infrastructure.
-Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and contract testing.
+  **Relationship to Phase 21b:** This spec provides foundational registry infrastructure.
+  Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and contract testing.
 
 ## Dependencies
 
@@ -164,7 +163,7 @@ Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and con
 **Context Map documents BC relationships**
 
 **Invariant:** All BC relationships must be explicitly documented with relationship type,
-upstream/downstream direction, and no duplicate or self-referential entries.
+    upstream/downstream direction, and no duplicate or self-referential entries.
 
     **Rationale:** Implicit relationships lead to accidental coupling and unclear ownership.
     Explicit documentation enables architecture governance and dependency analysis.
@@ -188,7 +187,7 @@ _Verified by: Context Map shows BC topology, Register Partnership relationship, 
 **Published Language defines stable contracts**
 
 **Invariant:** Integration events must use registered schemas with explicit versioning
-and compatibility modes. Unregistered event types and invalid payloads are rejected.
+    and compatibility modes. Unregistered event types and invalid payloads are rejected.
 
     **Rationale:** Ad-hoc event formats create tight coupling and break consumers on change.
     Versioned schemas with compatibility contracts enable safe evolution.
@@ -197,53 +196,49 @@ and compatibility modes. Unregistered event types and invalid payloads are rejec
 
 ```typescript
 // Register integration event schema with compatibility mode
-registerIntegrationSchema({
-  eventType: "EntityCreated",
-  version: "2.0.0",
-  schema: EntityCreatedV2Schema,
-  compatibility: "backward", // backward | forward | full | none
-  backwardCompatible: ["1.0.0"],
-  migrate: (payload, fromVersion) => {
-    if (fromVersion === "1.0.0") {
-      return { ...payload, unit: "USD" };
-    }
-    return payload;
-  },
-});
+    registerIntegrationSchema({
+      eventType: 'EntityCreated',
+      version: '2.0.0',
+      schema: EntityCreatedV2Schema,
+      compatibility: 'backward',  // backward | forward | full | none
+      backwardCompatible: ['1.0.0'],
+      migrate: (payload, fromVersion) => {
+        if (fromVersion === '1.0.0') {
+          return { ...payload, unit: 'USD' };
+        }
+        return payload;
+      }
+    });
 ```
 
 **toPublishedLanguage() API with Event Tagging:**
 
 ```typescript
 // Convert domain event to integration event with tags for routing/DCB
-const integrationEvent = toPublishedLanguage(
-  "EntityCreated",
-  {
-    entityId: entity.id,
-    principalId: entity.principalId,
-    entries: entity.entries.map(toIntegrationEntry),
-    createdAt: entity.createdAt,
-  },
-  {
-    tags: {
-      principalId: entity.principalId, // For DCB consistency queries
-      region: entity.region, // For routing
-    },
-  }
-);
-// Returns: { type, payload, metadata: { schemaVersion, timestamp, tags } }
+    const integrationEvent = toPublishedLanguage('EntityCreated', {
+      entityId: entity.id,
+      principalId: entity.principalId,
+      entries: entity.entries.map(toIntegrationEntry),
+      createdAt: entity.createdAt,
+    }, {
+      tags: {
+        principalId: entity.principalId,  // For DCB consistency queries
+        region: entity.region,            // For routing
+      }
+    });
+    // Returns: { type, payload, metadata: { schemaVersion, timestamp, tags } }
 ```
 
 **Verified by:** Integration event uses Published Language, Event tagging for routing and DCB,
-Schema compatibility mode is enforced, Register schema with compatibility mode,
-Unregistered event type fails conversion, Invalid payload fails schema validation
+    Schema compatibility mode is enforced, Register schema with compatibility mode,
+    Unregistered event type fails conversion, Invalid payload fails schema validation
 
 _Verified by: Integration event uses Published Language, Event tagging for routing and DCB, Schema compatibility mode is enforced, Register schema with compatibility mode, Unregistered event type fails conversion, Invalid payload fails schema validation_
 
 **ACL translates external models**
 
 **Invariant:** External system data must pass through ACL translation with schema
-validation before entering the domain. Unmapped values and invalid inputs are rejected.
+    validation before entering the domain. Unmapped values and invalid inputs are rejected.
 
     **Rationale:** Direct use of external models leaks foreign concepts into the domain,
     creating coupling and making the domain vocabulary impure. ACL enforces boundaries.
@@ -252,36 +247,36 @@ validation before entering the domain. Unmapped values and invalid inputs are re
 
 ```typescript
 // External system response (foreign model)
-const externalResponse = {
-  ext_ref: "ext_abc123",
-  amount: 15000, // cents
-  unit: "USD",
-  status: "completed",
-};
+    const externalResponse = {
+      ext_ref: 'ext_abc123',
+      amount: 15000,        // cents
+      unit: 'USD',
+      status: 'completed'
+    };
 
-// ACL translates to domain model with validation
-const externalACL = createACL<ExternalResponse, DomainConfirmation>({
-  toInternal: (external) => ({
-    referenceId: external.ext_ref,
-    value: { amount: external.amount / 100, unit: external.unit },
-    status: mapExternalStatus(external.status),
-  }),
-  toExternal: (internal) => ({
-    ext_ref: internal.referenceId,
-    amount: internal.value.amount * 100,
-    unit: internal.value.unit,
-    status: reverseMapStatus(internal.status),
-  }),
-  externalSchema: ExternalResponseSchema, // Zod validation
-});
+    // ACL translates to domain model with validation
+    const externalACL = createACL<ExternalResponse, DomainConfirmation>({
+      toInternal: (external) => ({
+        referenceId: external.ext_ref,
+        value: { amount: external.amount / 100, unit: external.unit },
+        status: mapExternalStatus(external.status),
+      }),
+      toExternal: (internal) => ({
+        ext_ref: internal.referenceId,
+        amount: internal.value.amount * 100,
+        unit: internal.value.unit,
+        status: reverseMapStatus(internal.status),
+      }),
+      externalSchema: ExternalResponseSchema,  // Zod validation
+    });
 
-const domainConfirmation = externalACL.fromExternal(externalResponse);
-// Domain remains clean of external concepts
-await commands.confirmExternal(domainConfirmation);
+    const domainConfirmation = externalACL.fromExternal(externalResponse);
+    // Domain remains clean of external concepts
+    await commands.confirmExternal(domainConfirmation);
 ```
 
 **Verified by:** ACL translates external system response, ACL handles bidirectional translation,
-ACL validates external input, ACL rejects unmapped values
+    ACL validates external input, ACL rejects unmapped values
 
 _Verified by: ACL translates external system response, ACL handles bidirectional translation, ACL validates external input, ACL rejects unmapped values_
 

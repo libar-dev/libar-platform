@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 import type { SafeMutationRef } from "../../function-refs/types.js";
+import type { GlobalPositionLike } from "../../events/globalPosition.js";
 
 // Replay status values
 export const ReplayStatusSchema = z.enum(["running", "paused", "completed", "failed", "cancelled"]);
@@ -18,9 +19,9 @@ export interface ReplayCheckpoint {
   _id: string;
   replayId: string;
   projection: string;
-  startPosition: number; // Original starting globalPosition (for progress calculation)
-  lastPosition: number;
-  targetPosition?: number;
+  startPosition: GlobalPositionLike; // Original starting globalPosition (for progress calculation)
+  lastPosition: GlobalPositionLike;
+  targetPosition?: GlobalPositionLike;
   status: ReplayStatus;
   eventsProcessed: number;
   chunksCompleted: number;
@@ -49,7 +50,7 @@ export interface ReplayProgress {
 // Arguments for triggering a rebuild
 export interface TriggerRebuildArgs {
   projectionName: string;
-  fromGlobalPosition?: number;
+  fromGlobalPosition?: GlobalPositionLike;
   chunkSize?: number;
 }
 
@@ -57,7 +58,7 @@ export interface TriggerRebuildArgs {
 export interface ProcessChunkArgs {
   replayId: string;
   projectionName: string;
-  fromPosition: number;
+  fromPosition: GlobalPositionLike;
   chunkSize: number;
 }
 
@@ -106,7 +107,7 @@ export interface StoredEventForReplay {
   payload: Record<string, unknown>;
   streamType: string;
   streamId: string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   version: number;
   timestamp: number;
   correlationId?: string | undefined;

@@ -37,8 +37,17 @@ app.use(eventStore);
 app.use(commandBus);
 
 // Mount workpool for projection processing
-// Note: Sagas use workflow's internal workpool for step execution
+// Note: Primary projection updates stay on this dedicated pool.
 app.use(workpool, { name: "projectionPool" });
+
+// Mount workpool for saga router dispatch
+// Separate from projectionPool so workflow routing does not compete with
+// projection latency-sensitive updates.
+app.use(workpool, { name: "sagaPool" });
+
+// Mount workpool for secondary projection and event-bus fanout dispatch
+// Separate from projectionPool and sagaPool to isolate wide fanout bursts.
+app.use(workpool, { name: "fanoutPool" });
 
 // Mount workpool for DCB retry scheduling (Phase 18a)
 // Separate from projectionPool to:

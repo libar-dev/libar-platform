@@ -330,6 +330,8 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
             const actual = saved![row.field as keyof ProcessManagerState];
             if (typeof actual === "number") {
               expect(actual).toBe(Number(row.value));
+            } else if (typeof actual === "bigint") {
+              expect(actual).toBe(BigInt(row.value));
             } else {
               expect(actual).toBe(row.value);
             }
@@ -585,7 +587,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
         () => {
           const saved = state.pmStateStore.get("orderNotification:ord_001");
           expect(saved).toBeDefined();
-          expect(saved!.lastGlobalPosition).toBe(1000);
+          expect(saved!.lastGlobalPosition).toBe(1000n);
         }
       );
 
@@ -594,7 +596,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
         () => {
           const saved = state.pmStateStore.get("orderNotification:ord_002");
           expect(saved).toBeDefined();
-          expect(saved!.lastGlobalPosition).toBe(500);
+          expect(saved!.lastGlobalPosition).toBe(500n);
         }
       );
     });
@@ -1294,7 +1296,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, AfterEachScenario }) => {
           () => {
             const saved = state.helperPMStateStore.get("orderNotification:ord_123");
             expect(saved).toBeDefined();
-            expect(saved!.lastGlobalPosition).toBe(1000);
+            expect(saved!.lastGlobalPosition).toBe(1000n);
           }
         );
       });

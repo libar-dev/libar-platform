@@ -18,12 +18,12 @@ including parallelism recommendations based on partition strategy.
 
 ### Parallelism Guidelines
 
-| Strategy | Recommended | Rationale                             |
-| -------- | ----------- | ------------------------------------- |
-| entity   | 10+         | High parallelism, per-entity ordering |
-| customer | 5           | Medium, per-customer ordering         |
-| saga     | 5           | Medium, per-saga causal ordering      |
-| global   | 1           | Single worker, no parallelism         |
+| Strategy | Recommended | Rationale |
+|----------|-------------|-----------|
+| entity | 10+ | High parallelism, per-entity ordering |
+| customer | 5 | Medium, per-customer ordering |
+| saga | 5 | Medium, per-saga causal ordering |
+| global | 1 | Single worker, no parallelism |
 
 ---
 

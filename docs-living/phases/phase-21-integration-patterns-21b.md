@@ -8,12 +8,12 @@
 
 **Progress:** [░░░░░░░░░░░░░░░░░░░░] 0/2 (0%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 0     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 2     |
-| **Total**    | 2     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 2     |
+| **Total**   | 2     |
 
 ---
 
@@ -27,32 +27,31 @@
 | Effort   | 1w      |
 
 **Problem:** Cross-context communication is ad-hoc. Domain events are used directly
-for integration without explicit contracts, leading to tight coupling.
+  for integration without explicit contracts, leading to tight coupling.
 
-**Solution:** Foundational patterns for cross-context communication:
+  **Solution:** Foundational patterns for cross-context communication:
+  - **Context Map** — Document relationships between BCs (including Partnership, Shared Kernel, Open Host Service)
+  - **Published Language** — Stable schema for integration events with event tagging and compatibility modes
+  - **Anti-Corruption Layer (ACL)** — Translate external models to internal with validation
 
-- **Context Map** — Document relationships between BCs (including Partnership, Shared Kernel, Open Host Service)
-- **Published Language** — Stable schema for integration events with event tagging and compatibility modes
-- **Anti-Corruption Layer (ACL)** — Translate external models to internal with validation
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Clear contracts | Published Language defines integration API |
+  | Protected domain | ACL prevents external model leakage |
+  | Documented topology | Context Map shows BC relationships |
+  | DCB integration | Event tags enable consistency queries (Phase 16) |
+  | Evolution safety | Compatibility modes control schema evolution |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Clear contracts | Published Language defines integration API |
-| Protected domain | ACL prevents external model leakage |
-| Documented topology | Context Map shows BC relationships |
-| DCB integration | Event tags enable consistency queries (Phase 16) |
-| Evolution safety | Compatibility modes control schema evolution |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | Context Map | Documents BC relationships | ProducerContext→ConsumerContext: Upstream/Downstream |
+  | Published Language | Stable versioned schema for integration | EntityCreatedV1 schema |
+  | Event Tagging | Tags for routing and DCB scoping | tags: { principalId: "456" } |
+  | Compatibility Mode | Schema evolution contract | backward / forward / full / none |
+  | ACL | Translates external models to domain | ExternalSystem {ext_ref} → Domain {referenceId} |
 
-**Key Concepts:**
-| Concept | Description | Example |
-| Context Map | Documents BC relationships | ProducerContext→ConsumerContext: Upstream/Downstream |
-| Published Language | Stable versioned schema for integration | EntityCreatedV1 schema |
-| Event Tagging | Tags for routing and DCB scoping | tags: { principalId: "456" } |
-| Compatibility Mode | Schema evolution contract | backward / forward / full / none |
-| ACL | Translates external models to domain | ExternalSystem {ext_ref} → Domain {referenceId} |
-
-**Relationship to Phase 21b:** This spec provides foundational registry infrastructure.
-Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and contract testing.
+  **Relationship to Phase 21b:** This spec provides foundational registry infrastructure.
+  Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and contract testing.
 
 #### Dependencies
 
@@ -176,7 +175,7 @@ Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and con
 **Context Map documents BC relationships**
 
 **Invariant:** All BC relationships must be explicitly documented with relationship type,
-upstream/downstream direction, and no duplicate or self-referential entries.
+    upstream/downstream direction, and no duplicate or self-referential entries.
 
     **Rationale:** Implicit relationships lead to accidental coupling and unclear ownership.
     Explicit documentation enables architecture governance and dependency analysis.
@@ -200,7 +199,7 @@ _Verified by: Context Map shows BC topology, Register Partnership relationship, 
 **Published Language defines stable contracts**
 
 **Invariant:** Integration events must use registered schemas with explicit versioning
-and compatibility modes. Unregistered event types and invalid payloads are rejected.
+    and compatibility modes. Unregistered event types and invalid payloads are rejected.
 
     **Rationale:** Ad-hoc event formats create tight coupling and break consumers on change.
     Versioned schemas with compatibility contracts enable safe evolution.
@@ -209,53 +208,49 @@ and compatibility modes. Unregistered event types and invalid payloads are rejec
 
 ```typescript
 // Register integration event schema with compatibility mode
-registerIntegrationSchema({
-  eventType: "EntityCreated",
-  version: "2.0.0",
-  schema: EntityCreatedV2Schema,
-  compatibility: "backward", // backward | forward | full | none
-  backwardCompatible: ["1.0.0"],
-  migrate: (payload, fromVersion) => {
-    if (fromVersion === "1.0.0") {
-      return { ...payload, unit: "USD" };
-    }
-    return payload;
-  },
-});
+    registerIntegrationSchema({
+      eventType: 'EntityCreated',
+      version: '2.0.0',
+      schema: EntityCreatedV2Schema,
+      compatibility: 'backward',  // backward | forward | full | none
+      backwardCompatible: ['1.0.0'],
+      migrate: (payload, fromVersion) => {
+        if (fromVersion === '1.0.0') {
+          return { ...payload, unit: 'USD' };
+        }
+        return payload;
+      }
+    });
 ```
 
 **toPublishedLanguage() API with Event Tagging:**
 
 ```typescript
 // Convert domain event to integration event with tags for routing/DCB
-const integrationEvent = toPublishedLanguage(
-  "EntityCreated",
-  {
-    entityId: entity.id,
-    principalId: entity.principalId,
-    entries: entity.entries.map(toIntegrationEntry),
-    createdAt: entity.createdAt,
-  },
-  {
-    tags: {
-      principalId: entity.principalId, // For DCB consistency queries
-      region: entity.region, // For routing
-    },
-  }
-);
-// Returns: { type, payload, metadata: { schemaVersion, timestamp, tags } }
+    const integrationEvent = toPublishedLanguage('EntityCreated', {
+      entityId: entity.id,
+      principalId: entity.principalId,
+      entries: entity.entries.map(toIntegrationEntry),
+      createdAt: entity.createdAt,
+    }, {
+      tags: {
+        principalId: entity.principalId,  // For DCB consistency queries
+        region: entity.region,            // For routing
+      }
+    });
+    // Returns: { type, payload, metadata: { schemaVersion, timestamp, tags } }
 ```
 
 **Verified by:** Integration event uses Published Language, Event tagging for routing and DCB,
-Schema compatibility mode is enforced, Register schema with compatibility mode,
-Unregistered event type fails conversion, Invalid payload fails schema validation
+    Schema compatibility mode is enforced, Register schema with compatibility mode,
+    Unregistered event type fails conversion, Invalid payload fails schema validation
 
 _Verified by: Integration event uses Published Language, Event tagging for routing and DCB, Schema compatibility mode is enforced, Register schema with compatibility mode, Unregistered event type fails conversion, Invalid payload fails schema validation_
 
 **ACL translates external models**
 
 **Invariant:** External system data must pass through ACL translation with schema
-validation before entering the domain. Unmapped values and invalid inputs are rejected.
+    validation before entering the domain. Unmapped values and invalid inputs are rejected.
 
     **Rationale:** Direct use of external models leaks foreign concepts into the domain,
     creating coupling and making the domain vocabulary impure. ACL enforces boundaries.
@@ -264,36 +259,36 @@ validation before entering the domain. Unmapped values and invalid inputs are re
 
 ```typescript
 // External system response (foreign model)
-const externalResponse = {
-  ext_ref: "ext_abc123",
-  amount: 15000, // cents
-  unit: "USD",
-  status: "completed",
-};
+    const externalResponse = {
+      ext_ref: 'ext_abc123',
+      amount: 15000,        // cents
+      unit: 'USD',
+      status: 'completed'
+    };
 
-// ACL translates to domain model with validation
-const externalACL = createACL<ExternalResponse, DomainConfirmation>({
-  toInternal: (external) => ({
-    referenceId: external.ext_ref,
-    value: { amount: external.amount / 100, unit: external.unit },
-    status: mapExternalStatus(external.status),
-  }),
-  toExternal: (internal) => ({
-    ext_ref: internal.referenceId,
-    amount: internal.value.amount * 100,
-    unit: internal.value.unit,
-    status: reverseMapStatus(internal.status),
-  }),
-  externalSchema: ExternalResponseSchema, // Zod validation
-});
+    // ACL translates to domain model with validation
+    const externalACL = createACL<ExternalResponse, DomainConfirmation>({
+      toInternal: (external) => ({
+        referenceId: external.ext_ref,
+        value: { amount: external.amount / 100, unit: external.unit },
+        status: mapExternalStatus(external.status),
+      }),
+      toExternal: (internal) => ({
+        ext_ref: internal.referenceId,
+        amount: internal.value.amount * 100,
+        unit: internal.value.unit,
+        status: reverseMapStatus(internal.status),
+      }),
+      externalSchema: ExternalResponseSchema,  // Zod validation
+    });
 
-const domainConfirmation = externalACL.fromExternal(externalResponse);
-// Domain remains clean of external concepts
-await commands.confirmExternal(domainConfirmation);
+    const domainConfirmation = externalACL.fromExternal(externalResponse);
+    // Domain remains clean of external concepts
+    await commands.confirmExternal(domainConfirmation);
 ```
 
 **Verified by:** ACL translates external system response, ACL handles bidirectional translation,
-ACL validates external input, ACL rejects unmapped values
+    ACL validates external input, ACL rejects unmapped values
 
 _Verified by: ACL translates external system response, ACL handles bidirectional translation, ACL validates external input, ACL rejects unmapped values_
 
@@ -307,33 +302,32 @@ _Verified by: ACL translates external system response, ACL handles bidirectional
 | Effort   | 1w      |
 
 **Problem:** Schema evolution breaks consumers. No tooling validates producer-consumer
-compatibility, leading to runtime failures and integration bugs.
+  compatibility, leading to runtime failures and integration bugs.
 
-**Solution:** Schema evolution and contract testing patterns:
+  **Solution:** Schema evolution and contract testing patterns:
+  - **Upcasters/Downcasters** — Migrate events between schema versions
+  - **Contract Testing** — Validate producer-consumer compatibility
+  - **Violation Detection** — Detect and report contract violations (ties to Phase 18)
 
-- **Upcasters/Downcasters** — Migrate events between schema versions
-- **Contract Testing** — Validate producer-consumer compatibility
-- **Violation Detection** — Detect and report contract violations (ties to Phase 18)
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Evolution safety | Upcasters migrate historical events automatically |
+  | Consumer protection | Downcasters support old consumers with new events |
+  | Early detection | Contract tests catch mismatches before production |
+  | Observability | Violation detection integrates with Phase 18 metrics |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Evolution safety | Upcasters migrate historical events automatically |
-| Consumer protection | Downcasters support old consumers with new events |
-| Early detection | Contract tests catch mismatches before production |
-| Observability | Violation detection integrates with Phase 18 metrics |
+  **Key Concepts:**
+  | Concept | Description | Example |
+  | Upcaster | Migrates old schema to new | V1→V2 adds default unit |
+  | Downcaster | Transforms new schema for old consumers | V2→V1 strips new fields |
+  | Contract Test | Validates schema compatibility | Producer emits valid V1 |
+  | Contract Sample | Generated test data from schema | createContractSample('EntityCreatedV1') |
+  | Violation Detection | Detects mismatches at runtime | Schema mismatch metrics |
 
-**Key Concepts:**
-| Concept | Description | Example |
-| Upcaster | Migrates old schema to new | V1→V2 adds default unit |
-| Downcaster | Transforms new schema for old consumers | V2→V1 strips new fields |
-| Contract Test | Validates schema compatibility | Producer emits valid V1 |
-| Contract Sample | Generated test data from schema | createContractSample('EntityCreatedV1') |
-| Violation Detection | Detects mismatches at runtime | Schema mismatch metrics |
+  **Relationship to Phase 21a:** Depends on IntegrationPatterns21a for Published Language registry.
 
-**Relationship to Phase 21a:** Depends on IntegrationPatterns21a for Published Language registry.
-
-**Relationship to Phase 18:** Contract violation detection uses Phase 18 metrics infrastructure.
-Interface is stubbed until Phase 18 provides implementation.
+  **Relationship to Phase 18:** Contract violation detection uses Phase 18 metrics infrastructure.
+  Interface is stubbed until Phase 18 provides implementation.
 
 #### Dependencies
 
@@ -466,33 +460,33 @@ Old consumers continue working when schemas evolve through upcasting and downcas
 
 ```typescript
 // V1 schema (original)
-const EntityCreatedV1 = { entityId, principalId, entries };
+    const EntityCreatedV1 = { entityId, principalId, entries };
 
-// V2 schema (added unit)
-const EntityCreatedV2 = { entityId, principalId, entries, unit };
+    // V2 schema (added unit)
+    const EntityCreatedV2 = { entityId, principalId, entries, unit };
 
-// Upcaster: V1 → V2 (add default)
-const upcastV1toV2 = (v1) => ({
-  ...v1,
-  unit: "USD", // Default for legacy events
-});
+    // Upcaster: V1 → V2 (add default)
+    const upcastV1toV2 = (v1) => ({
+      ...v1,
+      unit: 'USD',  // Default for legacy events
+    });
 
-// Downcaster: V2 → V1 (for old consumers)
-const downcastV2toV1 = (v2) => {
-  const { unit, ...rest } = v2;
-  return rest; // Strip new field
-};
+    // Downcaster: V2 → V1 (for old consumers)
+    const downcastV2toV1 = (v2) => {
+      const { unit, ...rest } = v2;
+      return rest;  // Strip new field
+    };
 ```
 
 **Chain Migration:**
 
 ```typescript
 // For V1 → V3, chain through V2
-const migrationPath = getMigrationPath("EntityCreated", "1.0.0", "3.0.0");
-// Returns: ['1.0.0', '2.0.0', '3.0.0']
+    const migrationPath = getMigrationPath('EntityCreated', '1.0.0', '3.0.0');
+    // Returns: ['1.0.0', '2.0.0', '3.0.0']
 
-const v3Event = upcast("EntityCreated", v1Event, "1.0.0", "3.0.0");
-// Automatically chains V1→V2→V3 upcasters
+    const v3Event = upcast('EntityCreated', v1Event, '1.0.0', '3.0.0');
+    // Automatically chains V1→V2→V3 upcasters
 ```
 
 _Verified by: V1 consumer receives V2 event, Upcast historical events, Chain upcasters for multi-version migration, Upcast adds computed field, Incompatible schema change is rejected, Breaking change without migration_
@@ -500,46 +494,46 @@ _Verified by: V1 consumer receives V2 event, Upcast historical events, Chain upc
 **Contract tests validate integration**
 
 Producer and consumer contracts are tested independently.
-Violation detection integrates with Phase 18 metrics.
+    Violation detection integrates with Phase 18 metrics.
 
     **Contract Testing Pattern:**
 
 ```typescript
 // Producer contract test
-describe("ProducerContext BC - Producer Contract", () => {
-  it("emits valid EntityCreatedV1 events", async () => {
-    const event = await produceEntityCreatedEvent();
-    const result = EntityCreatedV1.safeParse(event.payload);
-    expect(result.success).toBe(true);
-  });
-});
+    describe('ProducerContext BC - Producer Contract', () => {
+      it('emits valid EntityCreatedV1 events', async () => {
+        const event = await produceEntityCreatedEvent();
+        const result = EntityCreatedV1.safeParse(event.payload);
+        expect(result.success).toBe(true);
+      });
+    });
 
-// Consumer contract test
-describe("DownstreamContext BC - Consumer Contract", () => {
-  it("accepts valid EntityCreatedV1 events", async () => {
-    const event = createContractSample("EntityCreatedV1");
-    const result = await downstreamHandler.handle(event);
-    expect(result.status).toBe("processed");
-  });
-});
+    // Consumer contract test
+    describe('DownstreamContext BC - Consumer Contract', () => {
+      it('accepts valid EntityCreatedV1 events', async () => {
+        const event = createContractSample('EntityCreatedV1');
+        const result = await downstreamHandler.handle(event);
+        expect(result.status).toBe('processed');
+      });
+    });
 ```
 
 **Violation Detection (Phase 18 integration):**
 
 ```typescript
 // ContractMetrics interface (stubbed until Phase 18)
-interface ContractMetrics {
-  recordViolation(violation: ContractViolation): void;
-  getViolations(since?: number): ContractViolation[];
-}
+    interface ContractMetrics {
+      recordViolation(violation: ContractViolation): void;
+      getViolations(since?: number): ContractViolation[];
+    }
 
-interface ContractViolation {
-  eventType: string;
-  producerVersion: string;
-  consumerExpectedVersion: string;
-  timestamp: number;
-  details: string;
-}
+    interface ContractViolation {
+      eventType: string;
+      producerVersion: string;
+      consumerExpectedVersion: string;
+      timestamp: number;
+      details: string;
+    }
 ```
 
 _Verified by: Contract test validates schema compatibility, Contract sample generation, Generate multiple unique samples, Producer contract test utility, Consumer contract test utility, Compatible producer and consumer verified, Compatible with downcaster, Detect producer-consumer mismatch, Contract violation is recorded, Contract violations are queryable_

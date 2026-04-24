@@ -31,11 +31,12 @@ import type { ActionCtx } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
+import { compatGlobalPositionValidator, normalizeGlobalPosition } from "../../../lib/globalPosition";
 import {
   createAgentActionHandler,
   type AgentActionResult,
-  type AgentEventHandlerArgs,
-} from "@libar-dev/platform-core/agent";
+} from "../../../../../../packages/platform-core/src/agent/action-handler.js";
+import type { AgentEventHandlerArgs } from "../../../../../../packages/platform-core/src/agent/init.js";
 import { createOpenRouterAgentRuntime } from "../_llm/index.js";
 import { churnRiskAgentConfig } from "../_config.js";
 import {
@@ -81,7 +82,7 @@ export const analyzeChurnRiskEvent = internalAction({
   args: {
     eventId: v.string(),
     eventType: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
     correlationId: v.string(),
     streamType: v.string(),
     streamId: v.string(),
@@ -133,7 +134,7 @@ export const analyzeChurnRiskEvent = internalAction({
               cancellations: Array<{
                 orderId: string;
                 eventId: string;
-                globalPosition: number;
+                globalPosition: bigint | number;
                 reason: string;
                 timestamp: number;
               }>;
@@ -146,7 +147,7 @@ export const analyzeChurnRiskEvent = internalAction({
                 streamType: "Order",
                 streamId: c.orderId,
                 eventId: c.eventId,
-                globalPosition: c.globalPosition,
+                  globalPosition: normalizeGlobalPosition(c.globalPosition),
                 timestamp: c.timestamp,
                 payload: {
                   orderId: c.orderId,

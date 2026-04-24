@@ -9,6 +9,7 @@
  */
 
 import type * as lib from "../lib.js";
+import type * as verification from "../verification.js";
 
 import type {
   ApiFromModules,
@@ -19,6 +20,7 @@ import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
   lib: typeof lib;
+  verification: typeof verification;
 }> = anyApi as any;
 
 /**

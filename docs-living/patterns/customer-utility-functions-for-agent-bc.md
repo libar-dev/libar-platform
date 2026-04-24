@@ -1,4 +1,4 @@
-# Customer Utility Functions for Agent BC
+#  Customer Utility Functions for Agent BC
 
 **Purpose:** Detailed documentation for the Customer Utility Functions for Agent BC pattern
 

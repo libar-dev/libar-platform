@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 1/1 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 1     |
 
 ---
 
@@ -27,37 +27,36 @@
 | Effort   | 2w        |
 
 **Problem:** Domain logic tests require infrastructure (Docker, database).
-Duplicate step definitions cause conflicts. Platform packages lack BDD tests.
+  Duplicate step definitions cause conflicts. Platform packages lack BDD tests.
 
-**Solution:** Behavior-Driven Development using Gherkin as exclusive testing approach:
+  **Solution:** Behavior-Driven Development using Gherkin as exclusive testing approach:
+  - Pure deciders map perfectly to Given/When/Then
+  - No Docker needed for domain logic tests
+  - Living documentation for domain experts
+  - Step definition organization prevents conflicts
 
-- Pure deciders map perfectly to Given/When/Then
-- No Docker needed for domain logic tests
-- Living documentation for domain experts
-- Step definition organization prevents conflicts
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Living documentation | Feature files describe behavior in business terms |
+  | No infrastructure overhead | Pure deciders test without Docker/database |
+  | Domain expert readability | Gherkin scenarios are human-readable specs |
+  | Step reuse | Organized step definitions prevent conflicts |
+  | Fast feedback | Unit-level BDD tests run in milliseconds |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Living documentation | Feature files describe behavior in business terms |
-| No infrastructure overhead | Pure deciders test without Docker/database |
-| Domain expert readability | Gherkin scenarios are human-readable specs |
-| Step reuse | Organized step definitions prevent conflicts |
-| Fast feedback | Unit-level BDD tests run in milliseconds |
+  **Key Concepts:**
+  | Concept | Description |
+  | Pure Deciders | Business logic in pure functions enables infrastructure-free testing |
+  | Step Organization | Separate files per domain prevent pattern conflicts |
+  | Docker Restart | Clean state pattern for integration tests |
+  | Test Namespace | Unique prefix per test prevents entity collisions |
+  | Given/When/Then | State → Command → Outcome mapping for deciders |
 
-**Key Concepts:**
-| Concept | Description |
-| Pure Deciders | Business logic in pure functions enables infrastructure-free testing |
-| Step Organization | Separate files per domain prevent pattern conflicts |
-| Docker Restart | Clean state pattern for integration tests |
-| Test Namespace | Unique prefix per test prevents entity collisions |
-| Given/When/Then | State → Command → Outcome mapping for deciders |
-
-**Migration from .test.ts to .feature:**
-| From | To |
-| describe/it blocks with expect assertions | Scenario with Given/When/Then steps |
-| decideSubmitOrder(null, command, context) | Given no existing order, When SubmitOrder command |
-| expect(result.isSuccess).toBe(true) | Then the result should be success |
-| expect(result.event.type).toBe(...) | And OrderSubmitted event should be emitted |
+  **Migration from .test.ts to .feature:**
+  | From | To |
+  | describe/it blocks with expect assertions | Scenario with Given/When/Then steps |
+  | decideSubmitOrder(null, command, context) | Given no existing order, When SubmitOrder command |
+  | expect(result.isSuccess).toBe(true) | Then the result should be success |
+  | expect(result.event.type).toBe(...) | And OrderSubmitted event should be emitted |
 
 #### Dependencies
 
@@ -139,7 +138,7 @@ _Verified by: Integration test validates command lifecycle_
 
 **Platform packages must have feature coverage**
 
-libar-dev/platform-\* packages need BDD tests for public APIs.
+libar-dev/platform-* packages need BDD tests for public APIs.
 
 _Verified by: Platform package has feature tests_
 

@@ -1,3 +1,9 @@
+import {
+  PROCESS_MANAGER_STATUSES,
+  isProcessManagerStatus,
+  type ProcessManagerStatus,
+} from "@libar-dev/platform-contracts-shared";
+
 /**
  * Process Manager types for event-reactive coordination.
  *
@@ -7,39 +13,10 @@
  */
 
 import type { UnknownRecord } from "../types.js";
+import type { GlobalPositionLike } from "../events/globalPosition.js";
 
-/**
- * Status of a process manager instance.
- *
- * - `idle`: No active processing, waiting for trigger event
- * - `processing`: Currently handling an event and emitting commands
- * - `completed`: Successfully finished processing
- * - `failed`: Processing failed, requires investigation
- */
-export type ProcessManagerStatus = "idle" | "processing" | "completed" | "failed";
-
-/**
- * All valid process manager status values.
- */
-export const PROCESS_MANAGER_STATUSES: readonly ProcessManagerStatus[] = [
-  "idle",
-  "processing",
-  "completed",
-  "failed",
-] as const;
-
-// O(1) lookup Set for type guard performance
-const PROCESS_MANAGER_STATUS_SET = new Set<string>(PROCESS_MANAGER_STATUSES);
-
-/**
- * Type guard to check if a value is a valid ProcessManagerStatus.
- *
- * @param value - Value to check
- * @returns True if value is a valid ProcessManagerStatus
- */
-export function isProcessManagerStatus(value: unknown): value is ProcessManagerStatus {
-  return typeof value === "string" && PROCESS_MANAGER_STATUS_SET.has(value);
-}
+export { PROCESS_MANAGER_STATUSES, isProcessManagerStatus };
+export type { ProcessManagerStatus };
 
 /**
  * Status of a dead letter entry.
@@ -92,7 +69,7 @@ export interface ProcessManagerState {
   status: ProcessManagerStatus;
 
   /** Last processed global position */
-  lastGlobalPosition: number;
+  lastGlobalPosition: GlobalPositionLike;
 
   /**
    * Custom state specific to this PM instance.

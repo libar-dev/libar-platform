@@ -16,6 +16,7 @@ import { internalMutation, internalQuery } from "../../_generated/server";
 import { v } from "convex/values";
 import { withCheckpoint, type MutationCtx } from "../_helpers";
 import { createScopedLogger } from "@libar-dev/platform-core";
+import { compatGlobalPositionValidator, type GlobalPositionLike } from "../../lib/globalPosition";
 import { PLATFORM_LOG_LEVEL } from "../../infrastructure.js";
 
 // ============================================================================
@@ -48,7 +49,7 @@ export const onOrderCancelled = internalMutation({
     customerId: v.string(),
     reason: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
     timestamp: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -141,7 +142,7 @@ export async function getCustomerCancellations(
   cancellations: Array<{
     orderId: string;
     eventId: string;
-    globalPosition: number;
+    globalPosition: GlobalPositionLike;
     reason: string;
     timestamp: number;
   }>;

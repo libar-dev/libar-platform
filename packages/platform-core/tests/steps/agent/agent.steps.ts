@@ -606,7 +606,7 @@ describeFeature(
         });
 
         Then("the checkpoint should be updated to position 101", () => {
-          expect(state.checkpoint!.lastProcessedPosition).toBe(101);
+          expect(state.checkpoint!.lastProcessedPosition).toBe(101n);
         });
 
         And("eventsProcessed counter should increment by 1", () => {
@@ -652,7 +652,7 @@ describeFeature(
           });
 
           Then("the checkpoint should remain at position 100", () => {
-            expect(state.checkpoint!.lastProcessedPosition).toBe(100);
+            expect(state.checkpoint!.lastProcessedPosition).toBe(100n);
           });
 
           And("a dead letter should be recorded with the error", () => {
@@ -699,7 +699,7 @@ describeFeature(
                 expect(checkpoint.status).toBe("active");
                 break;
               case "lastProcessedPosition":
-                expect(typeof checkpoint.lastProcessedPosition).toBe("number");
+                expect(typeof checkpoint.lastProcessedPosition).toBe("bigint");
                 break;
               case "eventsProcessed":
                 expect(typeof checkpoint.eventsProcessed).toBe("number");

@@ -13,6 +13,7 @@ import type * as audit from "../audit.js";
 import type * as checkpoints from "../checkpoints.js";
 import type * as commands from "../commands.js";
 import type * as deadLetters from "../deadLetters.js";
+import type * as verification from "../verification.js";
 
 import type {
   ApiFromModules,
@@ -27,6 +28,7 @@ const fullApi: ApiFromModules<{
   checkpoints: typeof checkpoints;
   commands: typeof commands;
   deadLetters: typeof deadLetters;
+  verification: typeof verification;
 }> = anyApi as any;
 
 /**

@@ -1,6 +1,12 @@
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { verificationProofValidator, verifyActor } from "./verification.js";
+import {
+  assertBoundaryValuesSize,
+  DEFAULT_BOUNDARY_VALUE_MAX_BYTES,
+} from "../../validation/boundary.js";
+import { vUnknown } from "../../validation/convexUnknown.js";
 
 // ============================================================================
 // Shared Validators
@@ -12,6 +18,7 @@ const approvalStatusValidator = v.union(
   v.literal("rejected"),
   v.literal("expired")
 );
+const AGENT_APPROVAL_VALUE_MAX_BYTES = DEFAULT_BOUNDARY_VALUE_MAX_BYTES;
 
 function toApprovalDTO(a: Doc<"pendingApprovals">) {
   return {
@@ -46,7 +53,7 @@ export const create = mutation({
     decisionId: v.string(),
     action: v.object({
       type: v.string(),
-      payload: v.any(),
+      payload: vUnknown(),
     }),
     confidence: v.number(),
     reason: v.string(),
@@ -54,6 +61,14 @@ export const create = mutation({
     expiresAt: v.number(),
   },
   handler: async (ctx, args) => {
+    assertBoundaryValuesSize([
+      {
+        fieldName: "pendingApprovals.create.action.payload",
+        value: args.action.payload,
+        maxBytes: AGENT_APPROVAL_VALUE_MAX_BYTES,
+      },
+    ]);
+
     const { approvalId } = args;
 
     // Idempotency check
@@ -93,10 +108,18 @@ export const approve = mutation({
   args: {
     approvalId: v.string(),
     reviewerId: v.string(),
+    verificationProof: verificationProofValidator,
     reviewNote: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { approvalId, reviewerId, reviewNote } = args;
+    const { approvalId, reviewNote } = args;
+    const verifiedActor = await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: args.reviewerId,
+      expectedSubjectType: "reviewer",
+      expectedBoundedContext: "agent",
+    });
+    const reviewerId = verifiedActor.subjectId;
 
     const approval = await ctx.db
       .query("pendingApprovals")
@@ -148,10 +171,18 @@ export const reject = mutation({
   args: {
     approvalId: v.string(),
     reviewerId: v.string(),
+    verificationProof: verificationProofValidator,
     reviewNote: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { approvalId, reviewerId, reviewNote } = args;
+    const { approvalId, reviewNote } = args;
+    const verifiedActor = await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: args.reviewerId,
+      expectedSubjectType: "reviewer",
+      expectedBoundedContext: "agent",
+    });
+    const reviewerId = verifiedActor.subjectId;
 
     const approval = await ctx.db
       .query("pendingApprovals")
@@ -241,7 +272,7 @@ export const queryApprovals = query({
   handler: async (ctx, args) => {
     const { agentId, status, limit = 100 } = args;
 
-    let results;
+    let results: Doc<"pendingApprovals">[];
 
     if (agentId && status) {
       // Both filters: use agentId+status compound index

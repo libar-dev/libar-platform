@@ -1,110 +1,85 @@
 # @libar-dev/platform-decider
 
-Pure Functional Event Sourcing Decider pattern for domain decision logic.
+Pure decision helpers for event-sourced business logic.
 
-## Overview
+## What this package gives you
 
-Deciders are pure functions that encode business rules:
+- result builders for success, rejection, and failure
+- type guards for decider results
+- decider types that stay independent of Convex runtime objects
 
-- **Pure** — No I/O, no side effects, deterministic
-- **Testable** — Test with plain objects, no mocking required
-- **Composable** — Combine deciders for complex logic
-- **Three Outcomes** — `success`, `rejected`, `failed`
-
-## Installation
+## Install
 
 ```bash
 pnpm add @libar-dev/platform-decider
 ```
 
-**Peer Dependencies:**
+## Example
 
-- `vitest` (>=2.0.0) — Optional, for testing utilities
+```ts
+import {
+  success,
+  rejected,
+  isSuccess,
+  type DeciderContext,
+  type DeciderOutput,
+} from "@libar-dev/platform-decider";
 
-## The Decider Pattern
+type OrderState = { orderId: string; status: "draft" | "submitted" };
 
-```typescript
-import { success, rejected, failed } from "@libar-dev/platform-decider";
-
-// Pure function: (state, command, context) → DeciderOutput
-const confirmOrderDecider = (state, command, context) => {
-  // Invariant check
-  if (state.status !== "pending") {
-    return rejected("ORDER_NOT_PENDING", "Order must be pending");
-  }
-
-  // Business rule
-  if (state.totalAmount > 10000 && !command.managerApproval) {
-    return rejected("MANAGER_APPROVAL_REQUIRED", "Large orders need approval");
-  }
-
-  // Success: return event + state update
-  return success({
-    data: { confirmedAt: context.now },
-    event: { eventType: "OrderConfirmed", payload: { orderId: state.orderId } },
-    stateUpdate: { status: "confirmed", confirmedAt: context.now },
-  });
+type SubmitOrderEvent = {
+  eventType: "OrderSubmitted";
+  payload: { orderId: string };
 };
+
+function decideSubmitOrder(
+  state: OrderState,
+  context: DeciderContext
+): DeciderOutput<SubmitOrderEvent, { submittedAt: number }, { status: "submitted" }> {
+  if (state.status !== "draft") {
+    return rejected("ORDER_NOT_IN_DRAFT", `Order is ${state.status}`);
+  }
+
+  return success({
+    data: { submittedAt: context.now },
+    event: { eventType: "OrderSubmitted", payload: { orderId: state.orderId } },
+    stateUpdate: { status: "submitted" },
+  });
+}
+
+const result = decideSubmitOrder({ orderId: "ord_1", status: "draft" }, { now: Date.now() });
+if (isSuccess(result)) {
+  console.log(result.event.eventType);
+}
 ```
 
-## API Reference
+## Main exports
 
-### Result Builders
+- `success`, `rejected`, `failed`
+- `isSuccess`, `isRejected`, `isFailed`
+- `DeciderOutput`, `DeciderContext`, `DeciderFn`, `Decider`
 
-| Function                  | Description                                     |
-| ------------------------- | ----------------------------------------------- |
-| `success(output)`         | Business rule passed, emit event + state update |
-| `rejected(code, message)` | Business rule failed, no event emitted          |
-| `failed(error)`           | System error, needs retry                       |
+## Stability
 
-### Type Guards
+| Surface | Status | Notes |
+| --- | --- | --- |
+| Core result builders and guards | Stable | Pure TypeScript helpers with broad test coverage |
+| Type exports | Stable | Safe to use in package code and app code |
+| Testing subpath | Stable | Useful for feature-driven decider tests |
 
-| Function             | Description                 |
-| -------------------- | --------------------------- |
-| `isSuccess(result)`  | Check if result is success  |
-| `isRejected(result)` | Check if result is rejected |
-| `isFailed(result)`   | Check if result is failed   |
+## Known limitations
 
-### Types
+- This package only models decision logic. It does not load state or persist anything.
+- Integration with CMS, event store, and command bus lives in `@libar-dev/platform-core`.
 
-| Type                                    | Description                                        |
-| --------------------------------------- | -------------------------------------------------- |
-| `DeciderOutput<TEvent, TData, TUpdate>` | Union type of all outcomes                         |
-| `DeciderContext`                        | Context passed to deciders (`now`, `userId`, etc.) |
-| `DeciderFn<TState, TCommand, TOutput>`  | Function signature for deciders                    |
-| `Decider<TState, TCommand, TOutput>`    | Decider with metadata                              |
+## Security notes
+
+- Deciders should stay pure and trust only the explicit inputs they receive.
+- Authentication and authorization belong in the caller that assembles decider context.
 
 ## Testing
 
-Deciders are pure functions, making them trivial to test:
-
-```typescript
-import { isSuccess, isRejected } from "@libar-dev/platform-decider";
-import { describe, it, expect } from "vitest";
-
-describe("confirmOrderDecider", () => {
-  const context = { now: Date.now(), userId: "user-1" };
-
-  it("rejects non-pending orders", () => {
-    const state = { status: "shipped", orderId: "123" };
-    const result = confirmOrderDecider(state, {}, context);
-
-    expect(isRejected(result)).toBe(true);
-    expect(result.code).toBe("ORDER_NOT_PENDING");
-  });
-
-  it("confirms pending orders", () => {
-    const state = { status: "pending", orderId: "123", totalAmount: 100 };
-    const result = confirmOrderDecider(state, {}, context);
-
-    expect(isSuccess(result)).toBe(true);
-    expect(result.event.eventType).toBe("OrderConfirmed");
-    expect(result.stateUpdate.status).toBe("confirmed");
-  });
-});
+```bash
+pnpm --filter @libar-dev/platform-decider test
+pnpm --filter @libar-dev/platform-decider test:coverage
 ```
-
-## Related Packages
-
-- `@libar-dev/platform-core` — Decider handler factories (`createDeciderHandler`)
-- `@libar-dev/platform-fsm` — FSM for status transitions

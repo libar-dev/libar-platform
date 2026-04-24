@@ -16,6 +16,7 @@ import { v } from "convex/values";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference, FunctionVisibility } from "convex/server";
 import { createScopedLogger } from "@libar-dev/platform-core";
+import { compatGlobalPositionValidator } from "../lib/globalPosition";
 import { PLATFORM_LOG_LEVEL } from "../infrastructure";
 
 // =============================================================================
@@ -82,7 +83,7 @@ export const routeEvent = internalMutation({
     eventType: v.string(),
     eventId: v.string(),
     streamId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
     /**
      * Event payload - intentionally uses v.any() for flexibility.
      * Validated by saga-specific Zod schema at runtime.

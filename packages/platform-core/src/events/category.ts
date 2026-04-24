@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  EVENT_CATEGORIES,
+  isEventCategory,
+  type EventCategory,
+} from "@libar-dev/platform-contracts-shared";
 
 /**
  * Event category taxonomy per DDD/ES patterns.
@@ -10,12 +15,8 @@ import { z } from "zod";
  * | trigger     | External notification  | ID only            | GDPR-compliant webhooks     |
  * | fat         | External sync          | Full state         | Data warehouses, analytics  |
  */
-export type EventCategory = "domain" | "integration" | "trigger" | "fat";
-
-/**
- * All valid event categories as a readonly tuple.
- */
-export const EVENT_CATEGORIES = ["domain", "integration", "trigger", "fat"] as const;
+export { EVENT_CATEGORIES, isEventCategory };
+export type { EventCategory };
 
 /**
  * Zod schema for event category validation.
@@ -31,24 +32,6 @@ export const DEFAULT_EVENT_CATEGORY: EventCategory = "domain";
  * Default schema version for events without explicit version.
  */
 export const DEFAULT_SCHEMA_VERSION = 1;
-
-/**
- * Type guard to check if a value is a valid EventCategory.
- *
- * @param value - Value to check
- * @returns True if value is a valid EventCategory
- *
- * @example
- * ```typescript
- * const category = "domain";
- * if (isEventCategory(category)) {
- *   // category is typed as EventCategory
- * }
- * ```
- */
-export function isEventCategory(value: unknown): value is EventCategory {
-  return typeof value === "string" && (EVENT_CATEGORIES as readonly string[]).includes(value);
-}
 
 /**
  * Normalize a category value to EventCategory with default fallback.

@@ -1,4 +1,4 @@
-# Churn Risk Agent Configuration
+#  Churn Risk Agent Configuration
 
 **Purpose:** Detailed documentation for the Churn Risk Agent Configuration pattern
 

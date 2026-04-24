@@ -172,7 +172,7 @@ Feature: Agent Commands Module
 
     Scenario: Generates unique decisionId
       When I create an emitted agent command with standard args
-      Then the decisionId matches the pattern "dec_DIGITS_HEX"
+      Then the decisionId matches the pattern "dec_UUIDv7"
 
     Scenario: Includes patternId when provided in options
       When I create an emitted agent command with patternId "churn-risk"

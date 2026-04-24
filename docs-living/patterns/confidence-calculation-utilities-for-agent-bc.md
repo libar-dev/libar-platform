@@ -1,4 +1,4 @@
-# Confidence Calculation Utilities for Agent BC
+#  Confidence Calculation Utilities for Agent BC
 
 **Purpose:** Detailed documentation for the Confidence Calculation Utilities for Agent BC pattern
 

@@ -29,6 +29,8 @@
  */
 
 import type { FunctionReference, FunctionVisibility } from "convex/server";
+import type { EventCategory } from "@libar-dev/platform-contracts-shared";
+import type { GlobalPositionLike } from "../../platform-core/src/events/globalPosition.js";
 import type {
   Logger,
   EventSubscription,
@@ -85,7 +87,7 @@ export interface AgentEventHandlerArgs {
   eventType: string;
 
   /** Global position for idempotency */
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
 
   /** Correlation ID */
   correlationId: string;
@@ -103,7 +105,7 @@ export interface AgentEventHandlerArgs {
   timestamp: number;
 
   /** Event category */
-  category: string;
+  category: EventCategory;
 
   /** Bounded context */
   boundedContext: string;

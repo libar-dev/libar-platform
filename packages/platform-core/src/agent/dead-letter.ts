@@ -14,6 +14,7 @@
  */
 
 import { z } from "zod";
+import { normalizeGlobalPosition, type GlobalPositionLike } from "../events/globalPosition.js";
 
 // ============================================================================
 // Error Codes
@@ -171,7 +172,7 @@ export const AgentDeadLetterSchema = z.object({
   eventId: z.string().min(1),
 
   /** Global position of the failed event */
-  globalPosition: z.number().int().nonnegative(),
+  globalPosition: z.bigint().nonnegative(),
 
   /** Error message describing the failure */
   error: z.string(),
@@ -222,7 +223,7 @@ export interface AgentDeadLetter {
   readonly eventId: string;
 
   /** Global position of the failed event */
-  readonly globalPosition: number;
+  readonly globalPosition: GlobalPositionLike;
 
   /** Error message describing the failure */
   readonly error: string;
@@ -270,15 +271,16 @@ export function createAgentDeadLetter(
   agentId: string,
   subscriptionId: string,
   eventId: string,
-  globalPosition: number,
+  globalPosition: GlobalPositionLike,
   error: string | Error | unknown,
   context?: AgentDeadLetterContext
 ): AgentDeadLetter {
+  const normalizedGlobalPosition = normalizeGlobalPosition(globalPosition);
   const base: AgentDeadLetter = {
     agentId,
     subscriptionId,
     eventId,
-    globalPosition,
+    globalPosition: normalizedGlobalPosition,
     error: sanitizeErrorMessage(error),
     attemptCount: 1,
     status: "pending",

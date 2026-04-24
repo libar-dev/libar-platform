@@ -15,20 +15,20 @@
 ## Description
 
 **Problem:** The `order-management` example app has grown organically during platform
-development. It doesn't demonstrate the new patterns (DCB, ReactiveProjections, Fat Events)
-implemented in Phases 16-20. Additionally, it's treated like a production app with full
-e2e coverage, creating unnecessary maintenance burden for a reference implementation.
+  development. It doesn't demonstrate the new patterns (DCB, ReactiveProjections, Fat Events)
+  implemented in Phases 16-20. Additionally, it's treated like a production app with full
+  e2e coverage, creating unnecessary maintenance burden for a reference implementation.
 
-**Solution:** Modernize once, then freeze. Add targeted demonstrations of each new platform
-pattern in the most natural locations, update documentation to designate it as a "Reference
-Implementation", and establish clear boundaries for what changes are allowed post-freeze.
+  **Solution:** Modernize once, then freeze. Add targeted demonstrations of each new platform
+  pattern in the most natural locations, update documentation to designate it as a "Reference
+  Implementation", and establish clear boundaries for what changes are allowed post-freeze.
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Pattern Validation | Proves platform patterns work in realistic multi-BC context |
-| Reference for Users | Shows recommended usage without overwhelming complexity |
-| Reduced Maintenance | Clear boundaries prevent scope creep and feature bloat |
-| Living Documentation | Example code linked from platform pattern documentation |
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Pattern Validation | Proves platform patterns work in realistic multi-BC context |
+  | Reference for Users | Shows recommended usage without overwhelming complexity |
+  | Reduced Maintenance | Clear boundaries prevent scope creep and feature bloat |
+  | Living Documentation | Example code linked from platform pattern documentation |
 
 ## Dependencies
 
@@ -103,34 +103,34 @@ Implementation", and establish clear boundaries for what changes are allowed pos
 **Order submission uses DCB for multi-product inventory reservation**
 
 The order submission flow should demonstrate Dynamic Consistency Boundaries (DCB)
-by atomically reserving inventory across multiple products in a single operation.
-This showcases cross-entity invariant validation within the Inventory bounded context.
+    by atomically reserving inventory across multiple products in a single operation.
+    This showcases cross-entity invariant validation within the Inventory bounded context.
 
     **Current State (sequential reservations):**
 
 ```typescript
 // Current: Multiple separate reservation calls
-for (const item of orderItems) {
-  await reserveInventory(ctx, item.productId, item.quantity);
-  // Risk: Partial reservation if later item fails
-}
+    for (const item of orderItems) {
+      await reserveInventory(ctx, item.productId, item.quantity);
+      // Risk: Partial reservation if later item fails
+    }
 ```
 
 **Target State (DCB atomic reservation):**
 
 ```typescript
 // Target: Single DCB call for all items
-const result = await executeWithDCB(ctx, {
-  scopeKey: createScopeKey(tenantId, "reservation", orderId),
-  entities: {
-    streamIds: orderItems.map((i) => i.productId),
-    loadEntity: (ctx, id) => inventoryRepo.tryLoad(ctx, id),
-  },
-  decider: reserveMultipleDecider,
-  command: { orderId, items: orderItems },
-  // ... rest of DCB config
-});
-// Guarantee: All-or-nothing reservation
+    const result = await executeWithDCB(ctx, {
+      scopeKey: createScopeKey(tenantId, "reservation", orderId),
+      entities: {
+        streamIds: orderItems.map(i => i.productId),
+        loadEntity: (ctx, id) => inventoryRepo.tryLoad(ctx, id),
+      },
+      decider: reserveMultipleDecider,
+      command: { orderId, items: orderItems },
+      // ... rest of DCB config
+    });
+    // Guarantee: All-or-nothing reservation
 ```
 
 _Verified by: Multi-product order uses DCB for atomic reservation, Insufficient inventory for one product rejects entire reservation_
@@ -138,8 +138,8 @@ _Verified by: Multi-product order uses DCB for atomic reservation, Insufficient 
 **Order detail view uses reactive projection for instant updates**
 
 The order detail page should demonstrate ReactiveProjections by showing
-instant UI updates without polling. This showcases the hybrid durable +
-optimistic projection model from Phase 17.
+    instant UI updates without polling. This showcases the hybrid durable +
+    optimistic projection model from Phase 17.
 
     **Architecture:**
     | Component | Purpose | Location |
@@ -152,15 +152,15 @@ optimistic projection model from Phase 17.
 
 ```typescript
 // Frontend hook usage
-const { data, isOptimistic, conflicts } = useReactiveProjection({
-  projection: api.orders.projections.orderDetail,
-  eventStream: api.orders.queries.recentOrderEvents,
-  evolve: orderDetailEvolve,
-  args: { orderId },
-});
+    const { data, isOptimistic, conflicts } = useReactiveProjection({
+      projection: api.orders.projections.orderDetail,
+      eventStream: api.orders.queries.recentOrderEvents,
+      evolve: orderDetailEvolve,
+      args: { orderId },
+    });
 
-// Instant updates on local commands
-// Automatic rollback on conflict detection
+    // Instant updates on local commands
+    // Automatic rollback on conflict detection
 ```
 
 _Verified by: Order detail view shows instant updates, Optimistic update rolls back on conflict_
@@ -168,8 +168,8 @@ _Verified by: Order detail view shows instant updates, Optimistic update rolls b
 **OrderSubmitted event includes customer snapshot for downstream consumers**
 
 The OrderSubmitted event should demonstrate Fat Events (ECST) by including
-relevant customer data at the time of submission. This enables downstream
-consumers to process the event without additional queries.
+    relevant customer data at the time of submission. This enables downstream
+    consumers to process the event without additional queries.
 
     **Enrichment Scope (Minimal):**
     | Field | Source | Purpose |
@@ -181,22 +181,22 @@ consumers to process the event without additional queries.
 
 ```typescript
 interface OrderSubmittedV2 {
-  // Core event data
-  orderId: string;
-  items: OrderItem[];
-  totalAmount: number;
+      // Core event data
+      orderId: string;
+      items: OrderItem[];
+      totalAmount: number;
 
-  // Fat event enrichment (snapshot at submission time)
-  customer: {
-    id: string;
-    name: string; // Snapshot - won't change if customer updates later
-    email: string; // Snapshot - for notification at this point in time
-  };
+      // Fat event enrichment (snapshot at submission time)
+      customer: {
+        id: string;
+        name: string;      // Snapshot - won't change if customer updates later
+        email: string;     // Snapshot - for notification at this point in time
+      };
 
-  // Metadata
-  submittedAt: number;
-  schemaVersion: 2;
-}
+      // Metadata
+      submittedAt: number;
+      schemaVersion: 2;
+    }
 ```
 
 _Verified by: OrderSubmitted includes customer snapshot, Customer snapshot is immutable in event_
@@ -204,8 +204,8 @@ _Verified by: OrderSubmitted includes customer snapshot, Customer snapshot is im
 **README documents the app as a Reference Implementation**
 
 The README should clearly communicate that this is a reference implementation,
-not a production application. It should catalog which platform patterns are
-demonstrated and link to the corresponding platform documentation.
+    not a production application. It should catalog which platform patterns are
+    demonstrated and link to the corresponding platform documentation.
 
     **README Sections:**
     | Section | Content |

@@ -15,6 +15,11 @@
  */
 
 import type { DeciderContext, DeciderEvent, DeciderOutput } from "@libar-dev/platform-decider";
+import type {
+  DCBScopeKey,
+  ParsedScopeKey,
+  ScopeKeyValidationError,
+} from "@libar-dev/platform-contracts-shared";
 import type { Logger } from "../logging/index.js";
 import type { EventData } from "../orchestration/types.js";
 import type { EventCategory } from "../events/category.js";
@@ -24,43 +29,7 @@ import type { UnknownRecord } from "../types.js";
 // Scope Key Types
 // =============================================================================
 
-/**
- * Branded type for DCB scope keys.
- *
- * Format: `tenant:${tenantId}:${scopeType}:${scopeId}`
- *
- * The brand ensures type safety - you can't accidentally pass a regular
- * string where a validated scope key is expected.
- *
- * @example
- * ```typescript
- * const scopeKey = createScopeKey("t1", "reservation", "res_123");
- * // Type: DCBScopeKey (branded string)
- * ```
- */
-export type DCBScopeKey = string & { readonly __brand: "DCBScopeKey" };
-
-/**
- * Parsed components of a scope key.
- */
-export interface ParsedScopeKey {
-  /** Tenant ID for isolation */
-  tenantId: string;
-  /** Type of scope (e.g., "reservation", "order") */
-  scopeType: string;
-  /** Unique ID within the scope type */
-  scopeId: string;
-  /** Original scope key */
-  raw: DCBScopeKey;
-}
-
-/**
- * Validation error for scope keys.
- */
-export interface ScopeKeyValidationError {
-  code: "INVALID_SCOPE_KEY_FORMAT" | "TENANT_ID_REQUIRED" | "SCOPE_KEY_EMPTY";
-  message: string;
-}
+export type { DCBScopeKey, ParsedScopeKey, ScopeKeyValidationError };
 
 // =============================================================================
 // Scope State Types

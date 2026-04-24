@@ -212,9 +212,12 @@ describe("CommandOrchestrator Integration", () => {
       });
 
       expect(result.status).toBe("success");
+      if (result.status !== "success") {
+        throw new Error(`expected success, received ${JSON.stringify(result)}`);
+      }
       expect(result.globalPosition).toBeDefined();
-      expect(typeof result.globalPosition).toBe("number");
-      expect(result.globalPosition).toBeGreaterThan(0);
+      expect(typeof result.globalPosition).toBe("bigint");
+      expect(result.globalPosition).toBeGreaterThan(0n);
     });
 
     it("should increment globalPosition for sequential events", async () => {
@@ -236,6 +239,9 @@ describe("CommandOrchestrator Integration", () => {
 
       expect(result1.globalPosition).toBeDefined();
       expect(result2.globalPosition).toBeDefined();
+      if (result1.status !== "success" || result2.status !== "success") {
+        throw new Error("expected both createOrder calls to succeed");
+      }
       expect(result2.globalPosition).toBeGreaterThan(result1.globalPosition);
     });
   });

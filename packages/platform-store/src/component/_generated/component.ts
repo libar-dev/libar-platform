@@ -42,18 +42,43 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             };
             payload: any;
             schemaVersion?: number;
+            scopeKey?: string;
           }>;
           expectedVersion: number;
           streamId: string;
           streamType: string;
+          tenantId?: string;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
         },
         | {
             eventIds: Array<string>;
-            globalPositions: Array<number>;
+            globalPositions: Array<number | bigint>;
             newVersion: number;
             status: "success";
           }
-        | { currentVersion: number; status: "conflict" },
+        | {
+            eventIds: Array<string>;
+            globalPositions: Array<number | bigint>;
+            newVersion: number;
+            status: "duplicate";
+          }
+        | { currentVersion: number; status: "conflict" }
+        | {
+            auditId: string;
+            currentVersion: number;
+            existingEventId: string;
+            status: "idempotency_conflict";
+          },
         Name
       >;
       checkScopeVersion: FunctionReference<
@@ -80,23 +105,27 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       getByCorrelation: FunctionReference<
         "query",
         "internal",
-        { correlationId: string },
-        Array<{
-          boundedContext: string;
-          category: "domain" | "integration" | "trigger" | "fat";
-          causationId?: string;
-          correlationId: string;
-          eventId: string;
-          eventType: string;
-          globalPosition: number;
-          metadata?: any;
-          payload: any;
-          schemaVersion: number;
-          streamId: string;
-          streamType: string;
-          timestamp: number;
-          version: number;
-        }>,
+        { correlationId: string; cursor?: number | bigint; limit?: number },
+        {
+          events: Array<{
+            boundedContext: string;
+            category: "domain" | "integration" | "trigger" | "fat";
+            causationId?: string;
+            correlationId: string;
+            eventId: string;
+            eventType: string;
+            globalPosition: number | bigint;
+            schemaVersion: number;
+            scopeKey?: string;
+            streamId: string;
+            streamType: string;
+            tenantId?: string;
+            timestamp: number;
+            version: number;
+          }>;
+          hasMore: boolean;
+          nextCursor: number | bigint | null;
+        },
         Name
       >;
       getByIdempotencyKey: FunctionReference<
@@ -110,13 +139,15 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           correlationId: string;
           eventId: string;
           eventType: string;
-          globalPosition: number;
+          globalPosition: number | bigint;
           idempotencyKey?: string;
           metadata?: any;
           payload: any;
           schemaVersion: number;
+          scopeKey?: string;
           streamId: string;
           streamType: string;
+          tenantId?: string;
           timestamp: number;
           version: number;
         } | null,
@@ -126,7 +157,30 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {},
-        number,
+        number | bigint,
+        Name
+      >;
+      getIdempotencyConflictAudits: FunctionReference<
+        "query",
+        "internal",
+        { idempotencyKey: string },
+        Array<{
+          attemptedAt: number;
+          auditId: string;
+          boundedContext: string;
+          conflictReason: string;
+          existingEventId: string;
+          existingEventType: string;
+          existingFingerprint: string;
+          existingPayload: any;
+          idempotencyKey: string;
+          incomingEventType: string;
+          incomingFingerprint: string;
+          incomingPayload: any;
+          streamId: string;
+          streamType: string;
+          tenantId?: string;
+        }>,
         Name
       >;
       getOrCreatePMState: FunctionReference<
@@ -152,7 +206,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           errorMessage?: string;
           instanceId: string;
           isNew: boolean;
-          lastGlobalPosition: number;
+          lastGlobalPosition: number | bigint;
           lastUpdatedAt: number;
           processManagerName: string;
           stateVersion: number;
@@ -187,7 +241,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           customState?: any;
           errorMessage?: string;
           instanceId: string;
-          lastGlobalPosition: number;
+          lastGlobalPosition: number | bigint;
           lastUpdatedAt: number;
           processManagerName: string;
           stateVersion: number;
@@ -216,7 +270,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         { scopeKey: string },
-        number,
+        number | bigint,
         Name
       >;
       getStreamVersion: FunctionReference<
@@ -264,7 +318,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           customState?: any;
           errorMessage?: string;
           instanceId: string;
-          lastGlobalPosition: number;
+          lastGlobalPosition: number | bigint;
           lastUpdatedAt: number;
           processManagerName: string;
           stateVersion: number;
@@ -295,25 +349,31 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           boundedContext?: string;
           eventTypes?: Array<string>;
-          fromPosition?: number;
+          fromPosition?: number | bigint;
           limit?: number;
         },
-        Array<{
-          boundedContext: string;
-          category: "domain" | "integration" | "trigger" | "fat";
-          causationId?: string;
-          correlationId: string;
-          eventId: string;
-          eventType: string;
-          globalPosition: number;
-          metadata?: any;
-          payload: any;
-          schemaVersion: number;
-          streamId: string;
-          streamType: string;
-          timestamp: number;
-          version: number;
-        }>,
+        {
+          events: Array<{
+            boundedContext: string;
+            category: "domain" | "integration" | "trigger" | "fat";
+            causationId?: string;
+            correlationId: string;
+            eventId: string;
+            eventType: string;
+            globalPosition: number | bigint;
+            metadata?: any;
+            payload: any;
+            schemaVersion: number;
+            scopeKey?: string;
+            streamId: string;
+            streamType: string;
+            tenantId?: string;
+            timestamp: number;
+            version: number;
+          }>;
+          hasMore: boolean;
+          nextPosition: number | bigint;
+        },
         Name
       >;
       readStream: FunctionReference<
@@ -332,12 +392,14 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           correlationId: string;
           eventId: string;
           eventType: string;
-          globalPosition: number;
+          globalPosition: number | bigint;
           metadata?: any;
           payload: any;
           schemaVersion: number;
+          scopeKey?: string;
           streamId: string;
           streamType: string;
+          tenantId?: string;
           timestamp: number;
           version: number;
         }>,
@@ -346,7 +408,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       readVirtualStream: FunctionReference<
         "query",
         "internal",
-        { fromGlobalPosition?: number; limit?: number; scopeKey: string },
+        {
+          fromGlobalPosition?: number | bigint;
+          limit?: number;
+          scopeKey: string;
+        },
         Array<{
           boundedContext: string;
           category: "domain" | "integration" | "trigger" | "fat";
@@ -354,12 +420,14 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           correlationId: string;
           eventId: string;
           eventType: string;
-          globalPosition: number;
+          globalPosition: number | bigint;
           metadata?: any;
           payload: any;
           schemaVersion: number;
+          scopeKey?: string;
           streamId: string;
           streamType: string;
+          tenantId?: string;
           timestamp: number;
           version: number;
         }>,
@@ -393,7 +461,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             correlationId?: string;
             customState?: any;
             errorMessage?: string;
-            lastGlobalPosition?: number;
+            lastGlobalPosition?: number | bigint;
             triggerEventId?: string;
           };
           processManagerName: string;
@@ -441,7 +509,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             correlationId?: string;
             customState?: any;
             errorMessage?: string;
-            lastGlobalPosition?: number;
+            lastGlobalPosition?: number | bigint;
             stateVersion?: number;
             status?: "idle" | "processing" | "completed" | "failed";
             triggerEventId?: string;
@@ -449,7 +517,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         },
         | {
             instanceId: string;
-            lastGlobalPosition: number;
+            lastGlobalPosition: number | bigint;
             newStatus: "idle" | "processing" | "completed" | "failed";
             processManagerName: string;
             status: "updated";

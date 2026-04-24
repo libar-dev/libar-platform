@@ -312,6 +312,7 @@ export async function executeWithDCB<
       eventType: failureEvent.eventType,
       streamType,
       streamId: scopeId as StreamId, // Use scopeId as streamId for scope-level events
+      scopeKey,
       schemaVersion,
       category: eventCategory,
       payload: failureEvent.payload as Record<string, unknown>,
@@ -402,6 +403,7 @@ export async function executeWithDCB<
       eventType: successEvent.eventType,
       streamType,
       streamId: scopeId as StreamId,
+      scopeKey,
       schemaVersion,
       category: eventCategory,
       payload: successEvent.payload as Record<string, unknown>,

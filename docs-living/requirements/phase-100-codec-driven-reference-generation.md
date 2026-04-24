@@ -16,51 +16,51 @@
 ## Description
 
 **Problem:**
-Reference documentation is specified via 11 recipe `.feature` files in
-`architect/recipes/`. Each recipe contains a Source Mapping table
-(static configuration) and Rule blocks (durable content). But recipes
-are configuration masquerading as feature files — no scenarios execute,
-no BDD benefit exists. The Source Mapping is static and the Rule blocks
-are durable knowledge that belongs in decision records.
+  Reference documentation is specified via 11 recipe `.feature` files in
+  `architect/recipes/`. Each recipe contains a Source Mapping table
+  (static configuration) and Rule blocks (durable content). But recipes
+  are configuration masquerading as feature files — no scenarios execute,
+  no BDD benefit exists. The Source Mapping is static and the Rule blocks
+  are durable knowledge that belongs in decision records.
 
-**Solution:**
-Replace recipe files with a parameterized `ReferenceDocumentCodec` that
-composes reference documents from convention-tagged decision records,
-TypeScript shape extractions, and behavior spec content. The Source Mapping
-becomes a TypeScript config object registered in the existing `GeneratorRegistry`.
-Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
+  **Solution:**
+  Replace recipe files with a parameterized `ReferenceDocumentCodec` that
+  composes reference documents from convention-tagged decision records,
+  TypeScript shape extractions, and behavior spec content. The Source Mapping
+  becomes a TypeScript config object registered in the existing `GeneratorRegistry`.
+  Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 
-**Business Value:**
+  **Business Value:**
 
-| Benefit                                | Impact                                              |
-| -------------------------------------- | --------------------------------------------------- |
-| Eliminate 11 recipe files              | Less surface area, no parallel config format        |
-| Reuse existing codec infrastructure    | z.codec(), DetailLevel, DocumentGenerator           |
-| Convention content in decision records | Durable, queryable, tagged — not trapped in recipes |
-| Dual output from single config         | DetailLevel controls docs/ vs \_claude-md/ output   |
-| Codec IS the config                    | No external configuration files to maintain         |
+  | Benefit | Impact |
+  | --- | --- |
+  | Eliminate 11 recipe files | Less surface area, no parallel config format |
+  | Reuse existing codec infrastructure | z.codec(), DetailLevel, DocumentGenerator |
+  | Convention content in decision records | Durable, queryable, tagged — not trapped in recipes |
+  | Dual output from single config | DetailLevel controls docs/ vs _claude-md/ output |
+  | Codec IS the config | No external configuration files to maintain |
 
-**Architecture:**
+  **Architecture:**
 
-| Component                 | Role                                                                  | Status             |
-| ------------------------- | --------------------------------------------------------------------- | ------------------ |
-| ReferenceDocConfig        | TypeScript config per document type                                   | New                |
-| ReferenceDocumentCodec    | Parameterized codec composing from conventions + shapes + behaviors   | New                |
-| ConventionExtractor       | Filters MasterDataset for convention-tagged decision records          | New                |
-| ReferenceDocGenerator     | Implements DocumentGenerator directly, registers in GeneratorRegistry | New                |
-| @architect-convention tag | CSV tag on decision records                                           | New taxonomy entry |
-| Decision record migration | Recipe Rule blocks → decision records                                 | Migration          |
+  | Component | Role | Status |
+  | --- | --- | --- |
+  | ReferenceDocConfig | TypeScript config per document type | New |
+  | ReferenceDocumentCodec | Parameterized codec composing from conventions + shapes + behaviors | New |
+  | ConventionExtractor | Filters MasterDataset for convention-tagged decision records | New |
+  | ReferenceDocGenerator | Implements DocumentGenerator directly, registers in GeneratorRegistry | New |
+  | @architect-convention tag | CSV tag on decision records | New taxonomy entry |
+  | Decision record migration | Recipe Rule blocks → decision records | Migration |
 
-**What Stays, What Goes:**
+  **What Stays, What Goes:**
 
-| Current                                 | After                                         |
-| --------------------------------------- | --------------------------------------------- |
-| 11 recipe .feature files (recipes/)     | Deleted                                       |
-| Recipe Source Mapping tables            | ReferenceDocConfig objects in TypeScript      |
-| Recipe Rule blocks (durable content)    | Decision records tagged @architect-convention |
-| Recipe @architect-claude-md-section tag | ReferenceDocConfig.claudeMdSection field      |
-| docs-generated/ staging area            | Direct output to \_claude-md/ and docs/       |
-| Manual \_claude-md/ modules             | Generated by codec at summary DetailLevel     |
+  | Current | After |
+  | --- | --- |
+  | 11 recipe .feature files (recipes/) | Deleted |
+  | Recipe Source Mapping tables | ReferenceDocConfig objects in TypeScript |
+  | Recipe Rule blocks (durable content) | Decision records tagged @architect-convention |
+  | Recipe @architect-claude-md-section tag | ReferenceDocConfig.claudeMdSection field |
+  | docs-generated/ staging area | Direct output to _claude-md/ and docs/ |
+  | Manual _claude-md/ modules | Generated by codec at summary DetailLevel |
 
 ## Acceptance Criteria
 
@@ -68,7 +68,7 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 
 - Given a ReferenceDocConfig for "Process Guard"
 - And convention-tagged decision records exist for "fsm-rules"
-- And TypeScript shapes are extracted from "src/lint/\*.ts"
+- And TypeScript shapes are extracted from "src/lint/*.ts"
 - When the reference codec decodes the MasterDataset
 - Then a RenderableDocument is produced with Process Guard content
 - And sections include convention content, API types, and validation rules
@@ -106,7 +106,7 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 
 **No shape sources match any pattern file paths**
 
-- Given a ReferenceDocConfig with shapeSources "src/nonexistent/\*.ts"
+- Given a ReferenceDocConfig with shapeSources "src/nonexistent/*.ts"
 - When the reference codec decodes the MasterDataset
 - Then the output omits the type definitions section
 - And no error is raised
@@ -123,7 +123,7 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 - Given a ReferenceDocConfig with claudeMdSection "validation"
 - When the reference generator runs
 - Then "docs/PROCESS-GUARD-REFERENCE.md" is generated at "detailed" level
-- And "\_claude-md/validation/process-guard.md" is generated at "summary" level
+- And "_claude-md/validation/process-guard.md" is generated at "summary" level
 
 **Summary compaction quality**
 
@@ -167,8 +167,8 @@ Recipe Rule blocks migrate to decision records tagged `@architect-convention`.
 **Reference documents are generated by a parameterized codec**
 
 **Invariant:** Each reference document type is a configuration object, not a
-separate codec class. One `createReferenceCodec(config)` factory serves all
-11 document types.
+    separate codec class. One `createReferenceCodec(config)` factory serves all
+    11 document types.
 
     **Rationale:** 11 separate codec classes would just be reimplementing recipes
     in TypeScript. A parameterized codec keeps the configuration declarative
@@ -179,8 +179,8 @@ _Verified by: Generate process guard reference at standard detail level, Generat
 **Convention content is extracted from tagged decision records**
 
 **Invariant:** Decision records tagged with `@architect-convention` are the
-source of truth for durable reference content. The extractor filters by
-convention tag value and extracts Rule block content.
+    source of truth for durable reference content. The extractor filters by
+    convention tag value and extracts Rule block content.
 
     **Rationale:** Recipe Rule blocks contain durable knowledge (tables, context,
     rationale) that belongs in decision records — permanent, queryable, tagged.
@@ -191,8 +191,8 @@ _Verified by: Extract conventions by tag value, Convention content preserves Rul
 **Reference codec handles missing or empty sources gracefully**
 
 **Invariant:** When convention tags, shape sources, or behavior tags match
-zero items in the MasterDataset, the codec produces a valid but sparse
-document rather than failing.
+    zero items in the MasterDataset, the codec produces a valid but sparse
+    document rather than failing.
 
     **Rationale:** Not all reference configs will have all three source types
     populated. Some references have no shapes (Session Guides), others have
@@ -203,9 +203,9 @@ _Verified by: No conventions found for requested tag values, No shape sources ma
 **Each reference generator produces dual output via DetailLevel**
 
 **Invariant:** A single ReferenceDocConfig drives both the detailed human
-reference (docs/) and the compact AI context (\_claude-md/). The
-ReferenceDocGenerator invokes the codec factory twice with different
-DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
+    reference (docs/) and the compact AI context (_claude-md/). The
+    ReferenceDocGenerator invokes the codec factory twice with different
+    DetailLevel values, following the DecisionDocGeneratorImpl multi-level pattern.
 
     **Rationale:** The recipe system declared dual targets in its Target Documents
     table. The generator approach achieves the same by running the same codec with
@@ -218,9 +218,9 @@ _Verified by: Dual output generation, Summary compaction quality_
 **Reference generators are discovered via the existing registry**
 
 **Invariant:** Reference generators register themselves in the GeneratorRegistry
-by implementing DocumentGenerator directly, following the DecisionDocGeneratorImpl
-precedent. DOCUMENT_TYPES is `as const` and not dynamically extensible, so the
-CodecBasedGenerator adapter is not used.
+    by implementing DocumentGenerator directly, following the DecisionDocGeneratorImpl
+    precedent. DOCUMENT_TYPES is `as const` and not dynamically extensible, so the
+    CodecBasedGenerator adapter is not used.
 
     **Rationale:** DecisionDocGeneratorImpl already demonstrates this pattern:
     direct DocumentGenerator implementation, dual output, factory function registration.
@@ -231,7 +231,7 @@ _Verified by: Reference generators appear in available generators list, CLI invo
 **Convention tag values classify decision records by topic**
 
 **Invariant:** The `@architect-convention` tag uses CSV format with defined
-values. Each value maps to a knowledge domain that reference codecs consume.
+    values. Each value maps to a knowledge domain that reference codecs consume.
 
     **Rationale:** Convention tags are orthogonal to existing `@architect-adr-category`
     (which is too coarse — "process" covers both testing policy and FSM rules).
@@ -255,8 +255,8 @@ _Verified by: Convention tag is registered in taxonomy_
 **Recipe Rule blocks are migrated to convention-tagged decision records**
 
 **Invariant:** Every Rule block from the 11 recipe .feature files is
-preserved as a Rule block in a decision record tagged with the appropriate
-`@architect-convention` value. No durable content is lost during migration.
+    preserved as a Rule block in a decision record tagged with the appropriate
+    `@architect-convention` value. No durable content is lost during migration.
 
     **Rationale:** Recipe Rule blocks contain tables, rationale, and context
     that are the authoritative reference for the delivery process. Migration
@@ -275,7 +275,7 @@ _Verified by: Recipe Rule block content preserved in decision record_
 - Decision record migration (existing ADRs) (complete)
 - Decision record creation (new from recipe Rules) (complete)
 - Recipe directory removal (complete)
-- CLI integration (generate-docs --generators reference-\*) (complete)
+- CLI integration (generate-docs --generators reference-*) (complete)
 
 ---
 

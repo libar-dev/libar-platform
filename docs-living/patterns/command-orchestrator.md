@@ -24,15 +24,15 @@ pattern that is central to this DDD/ES/CQRS architecture.
 
 ### Orchestration Steps
 
-| Step | Action             | Component       | Purpose                    |
-| ---- | ------------------ | --------------- | -------------------------- |
-| 1    | Record command     | Command Bus     | Idempotency check          |
-| 2    | Call handler       | Bounded Context | CMS update                 |
-| 3    | Handle rejection   | -               | Early exit if invalid      |
-| 4    | Append event       | Event Store     | Audit trail                |
-| 5    | Trigger projection | Workpool        | Update read models         |
-| 6    | Route saga         | Workflow        | Cross-context coordination |
-| 7    | Update status      | Command Bus     | Final status               |
+| Step | Action | Component | Purpose |
+|------|--------|-----------|---------|
+| 1 | Record command | Command Bus | Idempotency check |
+| 2 | Call handler | Bounded Context | CMS update |
+| 3 | Handle rejection | - | Early exit if invalid |
+| 4 | Append event | Event Store | Audit trail |
+| 5 | Trigger projection | Workpool | Update read models |
+| 6 | Route saga | Workflow | Cross-context coordination |
+| 7 | Update status | Command Bus | Final status |
 
 ### Key Features
 

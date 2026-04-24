@@ -17,6 +17,7 @@ import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";
 import { withCheckpoint, type MutationCtx } from "../_helpers";
 import type { Doc } from "../../_generated/dataModel";
+import { compatGlobalPositionValidator } from "../../lib/globalPosition";
 
 const PROJECTION_NAME = "activeReservations";
 
@@ -100,7 +101,7 @@ export const onStockReserved = internalMutation({
     items: v.array(reservationItemValidator),
     expiresAt: v.number(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { reservationId, orderId, items, expiresAt } = args;
@@ -134,7 +135,7 @@ export const onReservationConfirmed = internalMutation({
     reservationId: v.string(),
     orderId: v.string(),
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { reservationId } = args;
@@ -162,7 +163,7 @@ export const onReservationReleased = internalMutation({
     reason: v.string(),
     items: v.array(reservationItemValidator), // Items from enriched event
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { reservationId, items } = args;
@@ -194,7 +195,7 @@ export const onReservationExpired = internalMutation({
     orderId: v.string(),
     items: v.array(reservationItemValidator), // Items from enriched event
     eventId: v.string(),
-    globalPosition: v.number(),
+    globalPosition: compatGlobalPositionValidator,
   },
   handler: async (ctx, args) => {
     const { reservationId, items } = args;

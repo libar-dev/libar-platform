@@ -232,8 +232,8 @@ Feature: Agent Audit Trail
       Then the full audit event fails AgentAuditEventSchema validation
 
   Rule: generateDecisionId produces well-formed unique IDs
-    **Invariant:** IDs have dec_ prefix, dec_timestamp_random format, and are unique across calls
-    **Verified by:** Scenarios covering prefix, format, uniqueness, and timestamp embedding
+    **Invariant:** IDs have dec_ prefix, include a full UUIDv7 payload, and are unique across calls
+    **Verified by:** Scenarios covering prefix, format, uniqueness, and UUIDv7 shape
 
     Scenario: Generates IDs with dec_ prefix
       When I generate a decision ID
@@ -241,18 +241,17 @@ Feature: Agent Audit Trail
 
     Scenario: Generates IDs with expected format
       When I generate a decision ID
-      Then the decision ID has three underscore-separated parts
+      Then the decision ID has two underscore-separated parts
       And the first part is "dec"
-      And the second part is a numeric timestamp
-      And the third part is an 8-character hex suffix
+      And the second part is a UUIDv7 string
 
     Scenario: Generates unique IDs over multiple calls
       When I generate 3 decision IDs with small delays
       Then all 3 IDs are unique
 
-    Scenario: Includes timestamp in ID
+    Scenario: Uses a UUIDv7 payload in the ID
       When I generate a decision ID at fixed time "2024-01-15T12:00:00Z"
-      Then the timestamp part equals the fixed time epoch
+      Then the UUID payload matches UUIDv7 format
 
   Rule: createPatternDetectedAudit factory produces correct events
     **Invariant:** Factory returns event with PatternDetected type, generated decisionId, and all payload fields

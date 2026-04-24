@@ -41,9 +41,15 @@
  * @architect-uses EventStoreFoundation
  */
 
-import type { IdempotentAppendConfig, IdempotentAppendResult } from "./types.js";
+import type {
+  ExistingEventByIdempotencyKey,
+  IdempotentAppendConfig,
+  IdempotentAppendResult,
+} from "./types.js";
 import type { SafeQueryRef, SafeMutationRef } from "../function-refs/types.js";
-import { v7 as uuidv7 } from "uuid";
+import { createVerificationProof } from "../security/verificationProof.js";
+import { createIdempotencyFingerprint } from "./idempotencyFingerprint.js";
+import { generateEventId } from "../ids/generator.js";
 
 /**
  * Context type for idempotent append operations.
@@ -56,18 +62,14 @@ export interface IdempotentAppendContext {
 /**
  * Shape of an existing event returned from idempotency check.
  */
-interface ExistingEvent {
-  eventId: string;
-  version: number;
-}
-
-/**
- * Shape of the append result from the event store.
- */
 interface AppendResult {
-  status: "success" | "conflict";
+  status: "success" | "duplicate" | "conflict" | "idempotency_conflict";
+  eventIds?: string[];
+  globalPositions?: bigint[];
   newVersion?: number;
   currentVersion?: number;
+  existingEventId?: string;
+  auditId?: string;
 }
 
 /**
@@ -108,13 +110,79 @@ export async function idempotentAppendEvent(
 ): Promise<IdempotentAppendResult> {
   const { event, dependencies } = config;
   const { getByIdempotencyKey, appendToStream } = dependencies;
+  const correlationId = event.correlationId;
+
+  if (!correlationId) {
+    throw new Error(
+      `appendToStream requires metadata.correlationId for idempotency key ${event.idempotencyKey}`
+    );
+  }
+
+  const incomingFingerprint = createIdempotencyFingerprint({
+    streamType: event.streamType,
+    streamId: event.streamId,
+    boundedContext: event.boundedContext,
+    ...(event.tenantId !== undefined && { tenantId: event.tenantId }),
+    eventType: event.eventType,
+    category: "domain",
+    schemaVersion: 1,
+    payload: event.eventData,
+  });
 
   // Step 1: Check if event already exists by idempotency key
-  const existing = await ctx.runQuery<ExistingEvent | null>(getByIdempotencyKey, {
+  const existing = await ctx.runQuery<ExistingEventByIdempotencyKey | null>(getByIdempotencyKey, {
     idempotencyKey: event.idempotencyKey,
   });
 
   if (existing) {
+    const existingFingerprint = createIdempotencyFingerprint({
+      streamType: existing.streamType,
+      streamId: existing.streamId,
+      boundedContext: existing.boundedContext,
+      ...(existing.tenantId !== undefined && { tenantId: existing.tenantId }),
+      eventType: existing.eventType,
+      category: existing.category,
+      schemaVersion: existing.schemaVersion,
+      payload: existing.payload,
+    });
+
+    if (existingFingerprint !== incomingFingerprint) {
+      const conflictResult = await ctx.runMutation<AppendResult>(appendToStream, {
+        streamType: event.streamType,
+        streamId: event.streamId,
+        expectedVersion: event.expectedVersion ?? 0,
+        boundedContext: event.boundedContext,
+        ...(event.tenantId !== undefined && { tenantId: event.tenantId }),
+        verificationProof: await createVerificationProof({
+          target: "eventStore",
+          issuer: "platform-core:idempotentAppendEvent",
+          subjectId: event.boundedContext,
+          subjectType: "boundedContext",
+          boundedContext: event.boundedContext,
+          ...(event.tenantId !== undefined && { tenantId: event.tenantId }),
+        }),
+        events: [
+          {
+            eventId: generateEventId(event.boundedContext),
+            eventType: event.eventType,
+            payload: event.eventData,
+            idempotencyKey: event.idempotencyKey,
+            metadata: {
+              correlationId,
+              ...(event.causationId && { causationId: event.causationId }),
+            },
+          },
+        ],
+      });
+
+      if (conflictResult.status === "idempotency_conflict") {
+        throw new Error(
+          `Idempotency key ${event.idempotencyKey} was reused with different payload. ` +
+            `existingEventId=${conflictResult.existingEventId} auditId=${conflictResult.auditId}`
+        );
+      }
+    }
+
     // Duplicate detected - return existing event info
     return {
       status: "duplicate",
@@ -124,13 +192,23 @@ export async function idempotentAppendEvent(
   }
 
   // Step 2: Generate event ID and append
-  const eventId = `evt_${uuidv7()}`;
+  const eventId = generateEventId(event.boundedContext);
+  const verificationProof = await createVerificationProof({
+    target: "eventStore",
+    issuer: "platform-core:idempotentAppendEvent",
+    subjectId: event.boundedContext,
+    subjectType: "boundedContext",
+    boundedContext: event.boundedContext,
+    ...(event.tenantId !== undefined && { tenantId: event.tenantId }),
+  });
 
   const appendResult = await ctx.runMutation<AppendResult>(appendToStream, {
     streamType: event.streamType,
     streamId: event.streamId,
     expectedVersion: event.expectedVersion ?? 0,
     boundedContext: event.boundedContext,
+    ...(event.tenantId !== undefined && { tenantId: event.tenantId }),
+    verificationProof,
     events: [
       {
         eventId,
@@ -138,7 +216,7 @@ export async function idempotentAppendEvent(
         payload: event.eventData,
         idempotencyKey: event.idempotencyKey,
         metadata: {
-          correlationId: event.correlationId ?? `corr_${uuidv7()}`,
+          correlationId,
           ...(event.causationId && { causationId: event.causationId }),
         },
       },
@@ -147,13 +225,45 @@ export async function idempotentAppendEvent(
 
   // Handle OCC conflict by re-checking for duplicate
   // (Another process may have appended with same idempotency key)
+  if (appendResult.status === "duplicate") {
+    return {
+      status: "duplicate",
+      eventId: appendResult.eventIds?.[0] ?? eventId,
+      version: appendResult.newVersion ?? 1,
+    };
+  }
+
+  if (appendResult.status === "idempotency_conflict") {
+    throw new Error(
+      `Idempotency key ${event.idempotencyKey} was reused with different payload. ` +
+        `existingEventId=${appendResult.existingEventId} auditId=${appendResult.auditId}`
+    );
+  }
+
   if (appendResult.status === "conflict") {
     // Re-check for existing event - might have been appended by concurrent process
-    const recheck = await ctx.runQuery<ExistingEvent | null>(getByIdempotencyKey, {
+    const recheck = await ctx.runQuery<ExistingEventByIdempotencyKey | null>(getByIdempotencyKey, {
       idempotencyKey: event.idempotencyKey,
     });
 
     if (recheck) {
+      const recheckFingerprint = createIdempotencyFingerprint({
+        streamType: recheck.streamType,
+        streamId: recheck.streamId,
+        boundedContext: recheck.boundedContext,
+        ...(recheck.tenantId !== undefined && { tenantId: recheck.tenantId }),
+        eventType: recheck.eventType,
+        category: recheck.category,
+        schemaVersion: recheck.schemaVersion,
+        payload: recheck.payload,
+      });
+
+      if (recheckFingerprint !== incomingFingerprint) {
+        throw new Error(
+          `Idempotency key ${event.idempotencyKey} was concurrently reused with different payload.`
+        );
+      }
+
       return {
         status: "duplicate",
         eventId: recheck.eventId,

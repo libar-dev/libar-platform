@@ -19,7 +19,6 @@ Runs in Workpool action context -- can call external APIs (LLM).
 All persistence happens in the onComplete mutation.
 
 Architecture:
-
 - internalAction (NOT mutation) -- actions can call external APIs
 - Uses createAgentActionHandler factory from platform-core/agent
 - Loads state via ctx.runQuery (actions cannot use ctx.db)

@@ -13,8 +13,6 @@
  * because subsequent commands (submit, cancel) validate expected versions.
  */
 
-// Type declarations for Node.js globals that exist at runtime in Convex
-declare const process: { env: Record<string, string | undefined> };
 declare const console: { log: (...args: unknown[]) => void };
 
 import { mutation, query } from "./_generated/server";
@@ -23,47 +21,8 @@ import { makeFunctionReference } from "convex/server";
 import type { SafeMutationRef } from "@libar-dev/platform-core";
 import { components } from "./_generated/api";
 import { eventStore } from "./infrastructure";
-import { generateEventId } from "@libar-dev/platform-core";
+import { ensureTestEnvironment, generateEventId } from "@libar-dev/platform-core";
 import type { OrderEventType } from "./contexts/orders/domain/events.js";
-
-/**
- * Guards test-only functions from production execution.
- *
- * Security model:
- * - Unit tests: __CONVEX_TEST_MODE__ is set by setup.ts
- * - Integration tests: Self-hosted Docker backend (ephemeral, localhost-only)
- * - Production: Cloud Convex with CONVEX_CLOUD_URL env var
- *
- * Note: Self-hosted Convex doesn't reliably expose env vars via process.env,
- * so we use a heuristic: if CONVEX_CLOUD_URL is NOT set, we assume test mode.
- * In production (cloud Convex), this env var is always present.
- */
-function ensureTestEnvironment(): void {
-  // Check for convex-test unit test mode (set by setup.ts)
-  if (typeof globalThis !== "undefined" && globalThis.__CONVEX_TEST_MODE__ === true) {
-    return; // Unit test environment, allow
-  }
-
-  // In convex-test runtime, process may not be defined - which is fine for tests
-  if (typeof process === "undefined") {
-    return; // convex-test environment without globalThis flag, allow
-  }
-
-  // Check for IS_TEST env var (explicit test mode)
-  const env = process.env || {};
-  if (env["IS_TEST"]) {
-    return; // Explicit test mode, allow
-  }
-
-  // In self-hosted Convex (Docker), env vars may not be accessible via process.env.
-  // Cloud Convex always has CONVEX_CLOUD_URL set. If it's absent, we're likely in
-  // a self-hosted test environment.
-  if (!env["CONVEX_CLOUD_URL"]) {
-    return; // Self-hosted (likely Docker test backend), allow
-  }
-
-  throw new Error("SECURITY: Test-only function called without IS_TEST environment variable");
-}
 
 /**
  * Item type for test orders.

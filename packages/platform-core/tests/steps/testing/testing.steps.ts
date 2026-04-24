@@ -542,12 +542,13 @@ describeFeature(
       resetState();
       // Save original state
       state.originalGlobalThis = globalThis.__CONVEX_TEST_MODE__;
-      // We can't easily mock process.env in vitest, so we'll use the globalThis flag
+      state.originalProcessEnv = { ...process.env };
     });
 
     AfterEachScenario(() => {
       // Restore original state
       globalThis.__CONVEX_TEST_MODE__ = state.originalGlobalThis;
+      process.env = { ...state.originalProcessEnv };
       resetState();
     });
 
@@ -583,9 +584,8 @@ describeFeature(
 
     Scenario("Allow execution when IS_TEST env is set", ({ Given, When, Then }) => {
       Given('process.env.IS_TEST is "true"', () => {
-        // In vitest, IS_TEST is typically set by the test config
-        // We'll rely on the globalThis flag instead
-        globalThis.__CONVEX_TEST_MODE__ = true;
+        delete process.env["CONVEX_CLOUD_URL"];
+        process.env["IS_TEST"] = "true";
       });
 
       When("I call ensureTestEnvironment()", () => {
@@ -602,35 +602,21 @@ describeFeature(
       });
     });
 
-    Scenario("Allow execution when process is undefined", ({ Given, When, Then }) => {
-      Given("process is undefined", () => {
-        // In browser-like environment, process may not exist
-        // The guard handles this case
-        globalThis.__CONVEX_TEST_MODE__ = true;
-      });
-
-      When("I call ensureTestEnvironment()", () => {
-        try {
-          ensureTestEnvironment();
-          state.error = null;
-        } catch (e) {
-          state.error = e as Error;
-        }
-      });
-
-      Then("no error is thrown", () => {
-        expect(state.error).toBeNull();
-      });
-    });
-
-    Scenario("Allow execution in self-hosted environment", ({ Given, And, When, Then }) => {
+    Scenario("Allow execution on self-hosted runtime without explicit test signal", ({ Given, And, When, Then }) => {
       Given("process.env exists", () => {
-        // process.env exists in Node.js
+        process.env = { ...process.env };
       });
 
       And("CONVEX_CLOUD_URL is not set", () => {
-        // In test environment, CONVEX_CLOUD_URL is typically not set
-        globalThis.__CONVEX_TEST_MODE__ = true;
+        delete process.env["CONVEX_CLOUD_URL"];
+      });
+
+      And("IS_TEST is not set", () => {
+        delete process.env["IS_TEST"];
+      });
+
+      And("__CONVEX_TEST_MODE__ is not true", () => {
+        globalThis.__CONVEX_TEST_MODE__ = undefined;
       });
 
       When("I call ensureTestEnvironment()", () => {
@@ -648,37 +634,34 @@ describeFeature(
     });
 
     Scenario("Block execution in cloud production", ({ Given, And, When, Then }) => {
-      // Note: This test is tricky because we can't easily simulate a production
-      // environment in vitest. We'll verify the error message format instead.
       Given("process.env.CONVEX_CLOUD_URL is set", () => {
-        // We can't easily set this in vitest
-        // Skip this test by making it pass via the test mode flag
+        process.env["CONVEX_CLOUD_URL"] = "https://example.convex.cloud";
       });
 
       And("IS_TEST is not set", () => {
-        // Intentionally not clearing the test mode flag
+        delete process.env["IS_TEST"];
       });
 
       And("__CONVEX_TEST_MODE__ is not true", () => {
-        // In real tests, we'd unset this, but that would break other tests
-        // This scenario documents the expected behavior
+        globalThis.__CONVEX_TEST_MODE__ = undefined;
       });
 
       When("I call ensureTestEnvironment()", () => {
-        // Since we can't truly simulate production, we verify the function exists
-        expect(ensureTestEnvironment).toBeDefined();
-        state.error = null; // Doesn't throw in test mode
+        try {
+          ensureTestEnvironment();
+          state.error = null;
+        } catch (e) {
+          state.error = e as Error;
+        }
       });
 
       Then('an error is thrown with message containing "SECURITY"', () => {
-        // This would throw in production, but not in test mode
-        // We document the expected behavior
-        expect(true).toBe(true);
+        expect(state.error).not.toBeNull();
+        expect(state.error?.message).toContain("SECURITY");
       });
 
       And('the error message contains "Test-only function"', () => {
-        // Documented behavior
-        expect(true).toBe(true);
+        expect(state.error?.message).toContain("Test-only function");
       });
     });
 
@@ -699,7 +682,9 @@ describeFeature(
 
     Scenario("isTestEnvironment returns true with IS_TEST env", ({ Given, When, Then }) => {
       Given('process.env.IS_TEST is "true"', () => {
-        globalThis.__CONVEX_TEST_MODE__ = true;
+        delete process.env["CONVEX_CLOUD_URL"];
+        delete globalThis.__CONVEX_TEST_MODE__;
+        process.env["IS_TEST"] = "true";
       });
 
       When("I call isTestEnvironment()", () => {
@@ -713,12 +698,12 @@ describeFeature(
 
     Scenario("isTestEnvironment returns false in production", ({ Given, And, When, Then }) => {
       Given("process.env.CONVEX_CLOUD_URL is set", () => {
-        // Can't easily simulate
+        process.env["CONVEX_CLOUD_URL"] = "https://example.convex.cloud";
       });
 
       And("IS_TEST is not set", () => {
-        // Test mode is active, so this would return true
-        globalThis.__CONVEX_TEST_MODE__ = true;
+        delete process.env["IS_TEST"];
+        globalThis.__CONVEX_TEST_MODE__ = undefined;
       });
 
       When("I call isTestEnvironment()", () => {
@@ -726,9 +711,7 @@ describeFeature(
       });
 
       Then("I receive false", () => {
-        // In our test environment, it returns true
-        // We document the expected production behavior
-        expect(state.result).toBe(true);
+        expect(state.result).toBe(false);
       });
     });
 

@@ -18,6 +18,7 @@
 import { useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import type { FunctionReference } from "convex/server";
+import type { GlobalPositionLike } from "../../../packages/platform-core/src/events/globalPosition.js";
 import { useReactiveProjection, type ReactiveProjectionResult } from "./use-reactive-projection";
 import type { OrderStatus } from "@/types";
 
@@ -62,7 +63,7 @@ export interface OrderSummaryState {
   createdAt: number;
   updatedAt: number;
   /** Last processed event's global position for conflict detection */
-  lastGlobalPosition: number;
+  lastGlobalPosition: GlobalPositionLike;
 }
 
 /**
@@ -70,7 +71,7 @@ export interface OrderSummaryState {
  */
 export interface OrderProjectionEvent {
   eventType: string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   payload: Record<string, unknown>;
 }
 
@@ -92,14 +93,14 @@ interface OrderSummaryProjection {
   totalAmount: number;
   createdAt: number;
   updatedAt: number;
-  lastGlobalPosition?: number;
+  lastGlobalPosition?: GlobalPositionLike;
 }
 
 /** Return type for getRecentOrderEvents query */
 interface RecentEvent {
   eventId: string;
   eventType: string;
-  globalPosition: number;
+  globalPosition: GlobalPositionLike;
   timestamp: number;
   payload: Record<string, unknown>;
 }
@@ -113,7 +114,7 @@ const getRecentOrderEventsQuery = makeFunctionReference<"query">(
 ) as FunctionReference<
   "query",
   "public",
-  { orderId: string; afterGlobalPosition?: number },
+  { orderId: string; afterGlobalPosition?: GlobalPositionLike },
   RecentEvent[]
 >;
 
@@ -133,7 +134,7 @@ const getRecentOrderEventsQuery = makeFunctionReference<"query">(
  * @param event - Domain event to apply
  * @returns New state after applying the event
  *
- * TODO(shared-evolve): Extract shared evolve functions into a common package.
+ * Backlog: T5-001. Extract shared evolve functions into a common package.
  *
  * **Server-side canonical version:**
  * - `examples/order-management/convex/projections/evolve/orderSummary.evolve.ts`
@@ -244,8 +245,8 @@ function evolveOrderSummary(
  * Get position from order summary state.
  * Uses lastGlobalPosition for accurate conflict detection.
  */
-function getPosition(state: OrderSummaryState): number {
-  return state.lastGlobalPosition ?? 0;
+function getPosition(state: OrderSummaryState): GlobalPositionLike {
+  return state.lastGlobalPosition ?? 0n;
 }
 
 // ============================================================================
@@ -293,7 +294,7 @@ export function useReactiveOrderDetail(
   // We use updatedAt as a proxy for global position since the projection
   // doesn't store globalPosition directly
   //
-  // TODO(optimization): Events are fetched unconditionally. In Convex, the "skip"
+  // Backlog: T5-002. Events are fetched unconditionally. In Convex, the "skip"
   // pattern would be: useQuery(api.queries.events.getRecentOrderEvents, projection ? { ... } : "skip")
   // However, this creates a cascading dependency where events can't be fetched until
   // projection loads, adding latency. The current approach trades slightly more
@@ -329,7 +330,7 @@ export function useReactiveOrderDetail(
             createdAt: projection.createdAt,
             updatedAt: projection.updatedAt,
             // Default to 0 if not set (projection may not have lastGlobalPosition column)
-            lastGlobalPosition: projection.lastGlobalPosition ?? 0,
+            lastGlobalPosition: projection.lastGlobalPosition ?? 0n,
           };
 
   // Transform events to our event type

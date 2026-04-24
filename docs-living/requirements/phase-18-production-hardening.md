@@ -16,28 +16,27 @@
 ## Description
 
 **Problem:** Structured logging (Phase 13) exists but no metrics collection, distributed tracing,
-or admin tooling for production operations. Teams cannot monitor system health, trace event flows,
-or perform operational tasks like projection rebuilds without direct database access.
+  or admin tooling for production operations. Teams cannot monitor system health, trace event flows,
+  or perform operational tasks like projection rebuilds without direct database access.
 
-**Solution:** Comprehensive production-ready infrastructure:
+  **Solution:** Comprehensive production-ready infrastructure:
+  - **Metrics collection** - System health, throughput, latency tracking via Log Streams
+  - **Distributed tracing** - Event flow visualization with correlation IDs and trace context
+  - **Health checks** - Kubernetes readiness/liveness probes via httpAction
+  - **Circuit breakers** - Fault isolation and graceful degradation for external dependencies
+  - **Admin tooling** - Projection rebuilds, dead letter queue management, diagnostics
+  - **Durable function integration** - Reliable execution with Action Retrier, Workpool coordination
 
-- **Metrics collection** - System health, throughput, latency tracking via Log Streams
-- **Distributed tracing** - Event flow visualization with correlation IDs and trace context
-- **Health checks** - Kubernetes readiness/liveness probes via httpAction
-- **Circuit breakers** - Fault isolation and graceful degradation for external dependencies
-- **Admin tooling** - Projection rebuilds, dead letter queue management, diagnostics
-- **Durable function integration** - Reliable execution with Action Retrier, Workpool coordination
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Production visibility | Log Streams integration for metrics export to Prometheus/Datadog |
+  | Proactive monitoring | Projection lag and event throughput dashboards |
+  | Fast incident response | Health endpoints and circuit breakers for graceful degradation |
+  | Operational efficiency | Admin tools for common tasks (rebuild projections, manage DLQ) |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Production visibility | Log Streams integration for metrics export to Prometheus/Datadog |
-| Proactive monitoring | Projection lag and event throughput dashboards |
-| Fast incident response | Health endpoints and circuit breakers for graceful degradation |
-| Operational efficiency | Admin tools for common tasks (rebuild projections, manage DLQ) |
-
-**Note:** This is Phase 18b (WIP). Phase 18a (DurableFunctionAdapters) covers rate limiting
-adapter and DCB conflict retry patterns. This spec will be further refined and may be split
-into additional focused specs.
+  **Note:** This is Phase 18b (WIP). Phase 18a (DurableFunctionAdapters) covers rate limiting
+  adapter and DCB conflict retry patterns. This spec will be further refined and may be split
+  into additional focused specs.
 
 ## Acceptance Criteria
 
@@ -205,7 +204,7 @@ into additional focused specs.
 **Metrics track system health indicators**
 
 Projection lag, event throughput, command latency, and DLQ size are the core metrics.
-Metrics are collected as structured JSON for export via Convex Log Streams.
+    Metrics are collected as structured JSON for export via Convex Log Streams.
 
     | Metric | Labels | Unit | Purpose |
     | projection.lag_events | projection_name, partition_key | count | Projection processing delay |
@@ -224,21 +223,21 @@ Metrics are collected as structured JSON for export via Convex Log Streams.
 
 ```typescript
 // Current: Structured logging without metrics aggregation
-logger.debug("OrderConfirmed event processed", { orderId, timestamp });
+    logger.debug("OrderConfirmed event processed", { orderId, timestamp });
 ```
 
 **Target State (metrics collection):**
 
 ```typescript
 // Target: Metrics collection with Log Streams export
-const metrics = createMetricsCollector(ctx, {
-  projectionNames: ["orderSummaries", "inventoryLevels"],
-});
+    const metrics = createMetricsCollector(ctx, {
+      projectionNames: ["orderSummaries", "inventoryLevels"],
+    });
 
-// Collect and export as REPORT-level JSON
-const systemMetrics = await metrics.collect();
-logger.report("System metrics", systemMetrics);
-// Output: {"projectionLag":{"orderSummaries":0},"eventThroughput":{"eventsPerMinute":42},...}
+    // Collect and export as REPORT-level JSON
+    const systemMetrics = await metrics.collect();
+    logger.report("System metrics", systemMetrics);
+    // Output: {"projectionLag":{"orderSummaries":0},"eventThroughput":{"eventsPerMinute":42},...}
 ```
 
 _Verified by: Projection lag is tracked, Metrics collection handles missing checkpoints_
@@ -246,7 +245,7 @@ _Verified by: Projection lag is tracked, Metrics collection handles missing chec
 **Distributed tracing visualizes event flow**
 
 Trace context propagates from command through events to projections using correlation IDs.
-Within Convex, this is conceptual tracing via metadata - external visualization via Log Streams.
+    Within Convex, this is conceptual tracing via metadata - external visualization via Log Streams.
 
     **Convex Constraint:** No OpenTelemetry spans inside Convex functions. Instead, correlate
     logs via correlationId and traceContext metadata, then export to Jaeger/Zipkin via Log Streams.
@@ -255,31 +254,31 @@ Within Convex, this is conceptual tracing via metadata - external visualization 
 
 ```typescript
 // Current: Commands have correlationId but no trace context
-const result = await orchestrator.dispatch({
-  commandType: "SubmitOrder",
-  payload: { items },
-  correlationId: "corr-123",
-});
+    const result = await orchestrator.dispatch({
+      commandType: "SubmitOrder",
+      payload: { items },
+      correlationId: "corr-123",
+    });
 ```
 
 **Target State (full trace context):**
 
 ```typescript
 // Target: Trace context propagates through the flow
-const result = await orchestrator.dispatch({
-  commandType: "SubmitOrder",
-  payload: { items },
-  correlationId: "corr-123",
-  traceContext: {
-    traceId: "trace-abc",
-    spanId: "span-001",
-    parentSpanId: undefined,
-  },
-});
+    const result = await orchestrator.dispatch({
+      commandType: "SubmitOrder",
+      payload: { items },
+      correlationId: "corr-123",
+      traceContext: {
+        traceId: "trace-abc",
+        spanId: "span-001",
+        parentSpanId: undefined,
+      },
+    });
 
-// Events carry trace context in metadata
-// Projections log with same traceId
-// Log Streams export enables Jaeger visualization
+    // Events carry trace context in metadata
+    // Projections log with same traceId
+    // Log Streams export enables Jaeger visualization
 ```
 
 _Verified by: Trace spans command-to-projection flow, Missing trace context uses default_
@@ -287,7 +286,7 @@ _Verified by: Trace spans command-to-projection flow, Missing trace context uses
 **Health endpoints support Kubernetes probes**
 
 /health/ready for readiness (dependencies OK), /health/live for liveness (process running).
-Implemented via Convex httpAction for HTTP access.
+    Implemented via Convex httpAction for HTTP access.
 
     | Endpoint | Purpose | Checks | Response |
     | /health/ready | Readiness probe | Event store, projections, workpool depth | 200 OK or 503 |
@@ -300,25 +299,25 @@ Implemented via Convex httpAction for HTTP access.
 
 ```typescript
 // convex/http.ts
-import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+    import { httpRouter } from "convex/server";
+    import { httpAction } from "./_generated/server";
+    import { internal } from "./_generated/api";
 
-const http = httpRouter();
+    const http = httpRouter();
 
-http.route({
-  path: "/health/ready",
-  method: "GET",
-  handler: httpAction(async (ctx) => {
-    const health = await ctx.runQuery(internal.health.checkReadiness);
-    return new Response(JSON.stringify(health), {
-      status: health.status === "healthy" ? 200 : 503,
-      headers: { "Content-Type": "application/json" },
+    http.route({
+      path: "/health/ready",
+      method: "GET",
+      handler: httpAction(async (ctx) => {
+        const health = await ctx.runQuery(internal.health.checkReadiness);
+        return new Response(JSON.stringify(health), {
+          status: health.status === "healthy" ? 200 : 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
     });
-  }),
-});
 
-export default http;
+    export default http;
 ```
 
 _Verified by: Readiness probe checks dependencies, Unhealthy dependency fails readiness, Liveness probe always succeeds, Workpool backlog fails readiness_
@@ -326,7 +325,7 @@ _Verified by: Readiness probe checks dependencies, Unhealthy dependency fails re
 **Circuit breakers prevent cascade failures**
 
 Open circuit after threshold failures, half-open for recovery testing.
-State persists in Convex table (not memory) for durability across function invocations.
+    State persists in Convex table (not memory) for durability across function invocations.
 
     | State | Behavior | Transition |
     | CLOSED | Normal operation, track failures | → OPEN after threshold failures |
@@ -340,42 +339,42 @@ State persists in Convex table (not memory) for durability across function invoc
 
 ```typescript
 // When circuit opens, schedule half-open check
-if (newState === "OPEN") {
-  await ctx.scheduler.runAfter(
-    config.resetTimeoutMs,
-    internal.monitoring.circuitBreakers.checkHalfOpen,
-    { breakerName, openedAt: Date.now() }
-  );
-}
+    if (newState === "OPEN") {
+      await ctx.scheduler.runAfter(
+        config.resetTimeoutMs,
+        internal.monitoring.circuitBreakers.checkHalfOpen,
+        { breakerName, openedAt: Date.now() }
+      );
+    }
 ```
 
 Note: Use one-off scheduler, not @convex-dev/crons, because timeout is a single
-transition per circuit-open event.
+    transition per circuit-open event.
 
     **Implementation pattern:**
 
 ```typescript
 // Pure state machine (no I/O)
-function computeNextState(
-  current: CircuitBreakerState,
-  event: "success" | "failure" | "timeout",
-  config: CircuitBreakerConfig,
-  now: number
-): CircuitBreakerState;
+    function computeNextState(
+      current: CircuitBreakerState,
+      event: "success" | "failure" | "timeout",
+      config: CircuitBreakerConfig,
+      now: number
+    ): CircuitBreakerState;
 
-// App-level wrapper
-async function withCircuitBreaker<T>(
-  ctx: MutationCtx,
-  name: string,
-  operation: () => Promise<T>,
-  config?: CircuitBreakerConfig
-): Promise<T> {
-  const state = await loadCircuitState(ctx, name);
-  if (state.state === "open") {
-    throw new CircuitBreakerOpenError(name);
-  }
-  // ... execute and update state
-}
+    // App-level wrapper
+    async function withCircuitBreaker<T>(
+      ctx: MutationCtx,
+      name: string,
+      operation: () => Promise<T>,
+      config?: CircuitBreakerConfig
+    ): Promise<T> {
+      const state = await loadCircuitState(ctx, name);
+      if (state.state === "open") {
+        throw new CircuitBreakerOpenError(name);
+      }
+      // ... execute and update state
+    }
 ```
 
 _Verified by: Circuit opens after repeated failures, Circuit transitions to half-open after timeout, Successful half-open request closes circuit, Failed half-open request reopens circuit_
@@ -383,7 +382,7 @@ _Verified by: Circuit opens after repeated failures, Circuit transitions to half
 **Admin tooling enables operational tasks**
 
 Projection rebuild, DLQ inspection/retry, event flow tracing, system diagnostics.
-Build on existing patterns from sagas/admin.ts and projections/deadLetters.ts.
+    Build on existing patterns from sagas/admin.ts and projections/deadLetters.ts.
 
     | Operation | Endpoint | Purpose |
     | Trigger rebuild | admin.projections.triggerRebuild | Re-process events from position |
@@ -400,64 +399,59 @@ Build on existing patterns from sagas/admin.ts and projections/deadLetters.ts.
 
 ```typescript
 // admin/projections.ts
-export const triggerRebuild = internalMutation({
-  args: {
-    projectionName: v.string(),
-    fromGlobalPosition: v.optional(v.number()),
-  },
-  handler: async (ctx, { projectionName, fromGlobalPosition }) => {
-    // Reset checkpoint to target position
-    await ctx.db.patch(checkpoint._id, {
-      lastGlobalPosition: fromGlobalPosition ?? 0,
-      status: "rebuilding",
-    });
+    export const triggerRebuild = internalMutation({
+      args: {
+        projectionName: v.string(),
+        fromGlobalPosition: v.optional(v.number()),
+      },
+      handler: async (ctx, { projectionName, fromGlobalPosition }) => {
+        // Reset checkpoint to target position
+        await ctx.db.patch(checkpoint._id, {
+          lastGlobalPosition: fromGlobalPosition ?? 0,
+          status: "rebuilding",
+        });
 
-    // Workpool will pick up and re-process events
-    return { rebuildId: generateId(), startedAt: Date.now() };
-  },
-});
+        // Workpool will pick up and re-process events
+        return { rebuildId: generateId(), startedAt: Date.now() };
+      },
+    });
 ```
 
 **DLQ Population via Workpool onComplete:**
 
 ```typescript
 // Projection processing with onComplete for automatic DLQ population
-await projectionPool.enqueue(
-  ctx,
-  internal.projections.process,
-  { event },
-  {
-    key: event.streamId, // Partition for entity ordering
-    onComplete: internal.projections.handleResult,
-    context: { eventId: event.id, projectionName },
-  }
-);
+    await projectionPool.enqueue(ctx, internal.projections.process, { event }, {
+      key: event.streamId,  // Partition for entity ordering
+      onComplete: internal.projections.handleResult,
+      context: { eventId: event.id, projectionName },
+    });
 
-// Dead letter handler (reference: deadLetters.ts)
-export const handleResult = internalMutation({
-  args: vOnCompleteArgs(v.object({ eventId: v.string(), projectionName: v.string() })),
-  handler: async (ctx, { result, context }) => {
-    if (result.kind === "failed") {
-      await ctx.db.insert("deadLetters", {
-        ...context,
-        error: result.error,
-        status: "pending",
-        timestamp: Date.now(),
-      });
-    }
-  },
-});
+    // Dead letter handler (reference: deadLetters.ts)
+    export const handleResult = internalMutation({
+      args: vOnCompleteArgs(v.object({ eventId: v.string(), projectionName: v.string() })),
+      handler: async (ctx, { result, context }) => {
+        if (result.kind === "failed") {
+          await ctx.db.insert("deadLetters", {
+            ...context,
+            error: result.error,
+            status: "pending",
+            timestamp: Date.now(),
+          });
+        }
+      },
+    });
 ```
 
 Note: This pattern is already implemented in `examples/order-management/convex/projections/deadLetters.ts`.
-The onComplete handler ensures failed projections are automatically recorded for later retry.
+    The onComplete handler ensures failed projections are automatically recorded for later retry.
 
 _Verified by: Projection rebuild re-processes events, Dead letter retry re-enqueues event, Event flow trace returns full history, Durable function run diagnostics_
 
 **Durable functions provide reliable execution patterns**
 
 Production systems use @convex-dev durable function components for reliability.
-Each component serves a specific purpose - choosing the right one is critical.
+    Each component serves a specific purpose - choosing the right one is critical.
 
     | Component | Use Case | Key Feature | Platform Integration Point |
     | Action Retrier | External API calls | Exponential backoff + onComplete | Circuit breaker half-open probe |
@@ -485,138 +479,127 @@ External API call with retry? ──────────► Action Retrier
 ```
 
 Note: For rate limiting and DCB conflict retry, see Phase 18a (DurableFunctionAdapters).
-Action Retrier only supports actions, not mutations.
+    Action Retrier only supports actions, not mutations.
 
     **Circuit Breaker + Action Retrier Integration:**
 
 ```typescript
 // withCircuitBreaker.ts - Enhanced pattern with action retrier
-import { ActionRetrier } from "@convex-dev/action-retrier";
-import { retrier } from "./index";
+    import { ActionRetrier } from "@convex-dev/action-retrier";
+    import { retrier } from "./index";
 
-export async function withCircuitBreaker<T>(
-  ctx: ActionCtx,
-  name: string,
-  operation: FunctionReference<"action">,
-  args: { traceContext: TraceContext; [key: string]: unknown },
-  config?: CircuitBreakerConfig
-): Promise<{ runId: string; probeMode?: true } | { error: string; retryAfterMs?: number }> {
-  const circuitState = await loadCircuitState(ctx, name);
-  const { traceContext, ...rest } = args;
+    export async function withCircuitBreaker<T>(
+      ctx: ActionCtx,
+      name: string,
+      operation: FunctionReference<"action">,
+      args: { traceContext: TraceContext; [key: string]: unknown },
+      config?: CircuitBreakerConfig
+    ): Promise<
+      | { runId: string; probeMode?: true }
+      | { error: string; retryAfterMs?: number }
+    > {
+      const circuitState = await loadCircuitState(ctx, name);
+      const { traceContext, ...rest } = args;
 
-  if (circuitState.state === "open") {
-    return { error: `CIRCUIT_OPEN:${name}`, retryAfterMs: circuitState.retryAfterMs };
-  }
-
-  if (circuitState.state === "half_open") {
-    // Controlled probe - single attempt, no retries
-    // IMPORTANT: Always pass traceContext for distributed tracing continuity
-    const runId = await retrier.run(
-      ctx,
-      operation,
-      { ...rest, traceContext },
-      {
-        maxFailures: 0, // No retries for half-open probe
-        onComplete: internal.monitoring.onCircuitProbeComplete,
+      if (circuitState.state === "open") {
+        return { error: `CIRCUIT_OPEN:${name}`, retryAfterMs: circuitState.retryAfterMs };
       }
-    );
-    return { runId, probeMode: true };
-  }
 
-  // Closed state - normal operation with configured retries
-  // IMPORTANT: Always pass traceContext for distributed tracing continuity
-  const runId = await retrier.run(
-    ctx,
-    operation,
-    { ...rest, traceContext },
-    {
-      maxFailures: config?.maxRetries ?? 3,
-      initialBackoffMs: config?.initialBackoffMs ?? 250,
-      onComplete: internal.monitoring.onOperationComplete,
+      if (circuitState.state === "half_open") {
+        // Controlled probe - single attempt, no retries
+        // IMPORTANT: Always pass traceContext for distributed tracing continuity
+        const runId = await retrier.run(ctx, operation, { ...rest, traceContext }, {
+          maxFailures: 0,  // No retries for half-open probe
+          onComplete: internal.monitoring.onCircuitProbeComplete,
+        });
+        return { runId, probeMode: true };
+      }
+
+      // Closed state - normal operation with configured retries
+      // IMPORTANT: Always pass traceContext for distributed tracing continuity
+      const runId = await retrier.run(ctx, operation, { ...rest, traceContext }, {
+        maxFailures: config?.maxRetries ?? 3,
+        initialBackoffMs: config?.initialBackoffMs ?? 250,
+        onComplete: internal.monitoring.onOperationComplete,
+      });
+      return { runId };
     }
-  );
-  return { runId };
-}
 
-// Probe completion handler updates circuit state
-export const onCircuitProbeComplete = internalMutation({
-  args: { runId: runIdValidator, result: runResultValidator },
-  handler: async (ctx, { runId, result }) => {
-    const circuit = await findCircuitByProbeRunId(ctx, runId);
-    if (!circuit) return;
+    // Probe completion handler updates circuit state
+    export const onCircuitProbeComplete = internalMutation({
+      args: { runId: runIdValidator, result: runResultValidator },
+      handler: async (ctx, { runId, result }) => {
+        const circuit = await findCircuitByProbeRunId(ctx, runId);
+        if (!circuit) return;
 
-    if (result.type === "success") {
-      await transitionCircuit(ctx, circuit.name, "closed");
-    } else {
-      await transitionCircuit(ctx, circuit.name, "open");
-    }
-  },
-});
+        if (result.type === "success") {
+          await transitionCircuit(ctx, circuit.name, "closed");
+        } else {
+          await transitionCircuit(ctx, circuit.name, "open");
+        }
+      },
+    });
 ```
 
 **Dead Letter Queue Retry with Action Retrier:**
 
 ```typescript
 // dlqRetrier.ts - Action retrier for external service DLQ items
-export const retryDeadLetter = mutation({
-  args: { deadLetterId: v.id("deadLetters") },
-  handler: async (ctx, { deadLetterId }) => {
-    const deadLetter = await ctx.db.get(deadLetterId);
-    if (!deadLetter) throw new Error("Dead letter not found");
+    export const retryDeadLetter = mutation({
+      args: { deadLetterId: v.id("deadLetters") },
+      handler: async (ctx, { deadLetterId }) => {
+        const deadLetter = await ctx.db.get(deadLetterId);
+        if (!deadLetter) throw new Error("Dead letter not found");
 
-    // Use action retrier for external calls with exponential backoff
-    // IMPORTANT: Propagate traceContext to maintain distributed tracing through retries
-    const runId = await retrier.run(
-      ctx,
-      internal.external.processEvent,
-      {
-        eventId: deadLetter.eventId,
-        payload: deadLetter.payload,
-        traceContext: deadLetter.traceContext,
+        // Use action retrier for external calls with exponential backoff
+        // IMPORTANT: Propagate traceContext to maintain distributed tracing through retries
+        const runId = await retrier.run(
+          ctx,
+          internal.external.processEvent,
+          { eventId: deadLetter.eventId, payload: deadLetter.payload, traceContext: deadLetter.traceContext },
+          {
+            initialBackoffMs: 1000,  // Start cautiously
+            base: 2,
+            maxFailures: 5,  // More attempts for manual retry
+            onComplete: internal.admin.onDLQRetryComplete,
+          }
+        );
+
+        await ctx.db.patch(deadLetterId, {
+          status: "retrying",
+          retryRunId: runId,
+          lastRetryAt: Date.now(),
+          retryCount: (deadLetter.retryCount ?? 0) + 1,
+        });
+
+        return { runId };
       },
-      {
-        initialBackoffMs: 1000, // Start cautiously
-        base: 2,
-        maxFailures: 5, // More attempts for manual retry
-        onComplete: internal.admin.onDLQRetryComplete,
-      }
-    );
-
-    await ctx.db.patch(deadLetterId, {
-      status: "retrying",
-      retryRunId: runId,
-      lastRetryAt: Date.now(),
-      retryCount: (deadLetter.retryCount ?? 0) + 1,
     });
 
-    return { runId };
-  },
-});
+    export const onDLQRetryComplete = internalMutation({
+      args: { runId: runIdValidator, result: runResultValidator },
+      handler: async (ctx, { runId, result }) => {
+        const deadLetter = await ctx.db
+          .query("deadLetters")
+          .withIndex("by_retryRunId", (q) => q.eq("retryRunId", runId))
+          .unique();
 
-export const onDLQRetryComplete = internalMutation({
-  args: { runId: runIdValidator, result: runResultValidator },
-  handler: async (ctx, { runId, result }) => {
-    const deadLetter = await ctx.db
-      .query("deadLetters")
-      .withIndex("by_retryRunId", (q) => q.eq("retryRunId", runId))
-      .unique();
+        if (!deadLetter) return;
 
-    if (!deadLetter) return;
-
-    if (result.type === "success") {
-      await ctx.db.patch(deadLetter._id, {
-        status: "resolved",
-        resolvedAt: Date.now(),
-      });
-    } else if (result.type === "failed") {
-      await ctx.db.patch(deadLetter._id, {
-        status: "pending", // Back to pending for manual review
-        lastError: result.error,
-        failedAt: Date.now(),
-      });
-    }
-  },
-});
+        if (result.type === "success") {
+          await ctx.db.patch(deadLetter._id, {
+            status: "resolved",
+            resolvedAt: Date.now(),
+          });
+        } else if (result.type === "failed") {
+          await ctx.db.patch(deadLetter._id, {
+            status: "pending",  // Back to pending for manual review
+            lastError: result.error,
+            failedAt: Date.now(),
+          });
+        }
+      },
+    });
 ```
 
 _Verified by: Circuit breaker uses action retrier for half-open probe, Failed half-open probe reopens circuit via action retrier, Dead letter retry uses action retrier for external calls, Failed DLQ retry returns to pending status, Durable function calls propagate trace context_

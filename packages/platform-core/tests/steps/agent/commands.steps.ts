@@ -635,9 +635,9 @@ describeFeature(feature, ({ Rule, BeforeEachScenario, Background }) => {
         ]);
       });
 
-      Then('the decisionId matches the pattern "dec_DIGITS_HEX"', () => {
+      Then('the decisionId matches the pattern "dec_UUIDv7"', () => {
         expect(state.createdCommand!.metadata.decisionId).toBeDefined();
-        expect(state.createdCommand!.metadata.decisionId).toMatch(/^dec_\d+_[a-f0-9]+$/);
+        expect(state.createdCommand!.metadata.decisionId).toMatch(/^dec_[0-9a-f-]{36}$/);
       });
     });
 

@@ -15,28 +15,27 @@
 ## Description
 
 **Problem:** Workpool-based projections have 100-500ms latency. Users expect
-instant feedback (10-50ms) for their actions without polling.
+  instant feedback (10-50ms) for their actions without polling.
 
-**Solution:** A hybrid model combining:
+  **Solution:** A hybrid model combining:
+  - **Workpool** for durable, eventually-consistent projection updates
+  - **Reactive push** for instant UI feedback (10-50ms)
 
-- **Workpool** for durable, eventually-consistent projection updates
-- **Reactive push** for instant UI feedback (10-50ms)
+  The client sees both durable state AND optimistic updates from recent events.
 
-The client sees both durable state AND optimistic updates from recent events.
+  **Why It Matters for Convex-Native ES:**
+  | Benefit | How |
+  | Instant feedback | 10-50ms vs 100ms-2s polling |
+  | No polling | Convex reactive subscriptions |
+  | Durability preserved | Workpool still handles persistence |
+  | Graceful degradation | Falls back to durable state on conflict |
 
-**Why It Matters for Convex-Native ES:**
-| Benefit | How |
-| Instant feedback | 10-50ms vs 100ms-2s polling |
-| No polling | Convex reactive subscriptions |
-| Durability preserved | Workpool still handles persistence |
-| Graceful degradation | Falls back to durable state on conflict |
-
-**Key Concepts:**
-| Concept | Description |
-| Hybrid Model | Durable base + optimistic overlay |
-| Shared Evolve | Same evolve() logic on server and client |
-| Conflict Detection | Compare optimistic vs durable on refresh |
-| Rollback | Discard optimistic if conflict detected |
+  **Key Concepts:**
+  | Concept | Description |
+  | Hybrid Model | Durable base + optimistic overlay |
+  | Shared Evolve | Same evolve() logic on server and client |
+  | Conflict Detection | Compare optimistic vs durable on refresh |
+  | Rollback | Discard optimistic if conflict detected |
 
 ## Dependencies
 
@@ -175,7 +174,7 @@ The client sees both durable state AND optimistic updates from recent events.
 **Hybrid model combines durability with speed**
 
 Workpool handles persistence, reactive layer handles instant feedback.
-The two systems work together without interference.
+    The two systems work together without interference.
 
     | Current State | Target State |
     | Workpool only: 100-500ms latency | Hybrid: 10-50ms reactive + durable background |
@@ -187,7 +186,7 @@ _Verified by: Client receives instant update then durable confirmation, Optimist
 **Shared evolve logic runs on client and server**
 
 Same evolve() function ensures consistent state transformation.
-This is critical for optimistic updates to match durable results.
+    This is critical for optimistic updates to match durable results.
 
     The evolve function signature:
     | Input | Output |
@@ -198,7 +197,7 @@ _Verified by: Evolve produces identical results on client and server, Evolve han
 **Conflict detection triggers rollback**
 
 Optimistic updates are discarded if they conflict with durable state.
-This ensures data integrity while allowing optimistic UI.
+    This ensures data integrity while allowing optimistic UI.
 
     | Scenario | Detection | Resolution |
     | Optimistic ahead of durable | Check globalPosition | Merge with durable base |
@@ -210,7 +209,7 @@ _Verified by: Conflicting optimistic update is rolled back, Conflict detection h
 **Only View projections need reactive layer**
 
 Logic, Reporting, and Integration projections use Workpool only.
-This optimizes resource usage by limiting reactivity to client-facing projections.
+    This optimizes resource usage by limiting reactivity to client-facing projections.
 
     | Category | Reactive Eligible | Reason |
     | view | Yes | Client-facing, needs instant feedback |
@@ -223,7 +222,7 @@ _Verified by: Category determines reactive eligibility, Non-view projection reje
 **useReactiveProjection merges durable and optimistic state**
 
 The hook provides a unified interface for hybrid reactive projections.
-It abstracts the complexity of merging durable and optimistic states.
+    It abstracts the complexity of merging durable and optimistic states.
 
     Return type fields:
     | Field | Type | Description |

@@ -28,7 +28,6 @@ actionRetrier.run(chargeStripeMock, args, {
 ```
 
 When the action completes:
-
 - Success -> PaymentCompleted event appended
 - Failure -> PaymentFailed event appended
 - Canceled -> PaymentFailed event with "canceled" error

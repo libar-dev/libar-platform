@@ -10,7 +10,38 @@ export * from "./types.js";
 // Re-export all modules
 export * from "./events/index.js";
 export * from "./commands/index.js";
-export * from "./ids/index.js";
+export {
+  uuidv7,
+  generateId,
+  parseId,
+  generateCorrelationId,
+  generateCommandId,
+  generateEventId,
+  generateIntegrationEventId,
+  generateAgentSubscriptionId,
+  generateLifecycleDecisionId,
+  toCommandId,
+  toCorrelationId,
+  toCausationId,
+  toEventId,
+  toStreamId,
+  toApprovalId,
+  toDecisionId,
+  toAgentSubscriptionId,
+  toLifecycleDecisionId,
+  isValidIdString,
+} from "./ids/index.js";
+export type {
+  CommandId,
+  CorrelationId,
+  CausationId,
+  EventId,
+  StreamId,
+  ApprovalId,
+  DecisionId,
+  AgentSubscriptionId,
+  LifecycleDecisionId,
+} from "./ids/index.js";
 export * from "./cms/index.js";
 export * from "./projections/index.js";
 export * from "./orchestration/index.js";
@@ -27,6 +58,7 @@ export * from "./repository/index.js";
 export * from "./queries/index.js";
 export * from "./processManager/index.js";
 export * from "./logging/index.js";
+export * from "./metrics/index.js";
 export * from "./fsm/index.js";
 export * from "./decider/index.js";
 export * from "./function-refs/index.js";
@@ -39,3 +71,4 @@ export * from "./reservations/index.js";
 export * from "./agent/index.js";
 export * from "./workpool/index.js";
 export * from "./durability/index.js";
+export * from "./security/index.js";

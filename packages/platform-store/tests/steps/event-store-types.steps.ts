@@ -40,6 +40,13 @@ function initState(): ScenarioState {
   };
 }
 
+function requireAppendResult(currentState: ScenarioState | null): AppendResult {
+  if (currentState === null || currentState.appendResult === null) {
+    throw new Error("AppendResult should be initialized before assertions");
+  }
+  return currentState.appendResult;
+}
+
 // ============================================================================
 // Feature Tests
 // ============================================================================
@@ -309,22 +316,25 @@ describeFeature(feature, ({ Scenario, Background, AfterEachScenario }) => {
     });
 
     Then("the result should have eventIds array", async () => {
-      if (state!.appendResult!.status === "success") {
-        expect(Array.isArray(state!.appendResult.eventIds)).toBe(true);
-        expect(state!.appendResult.eventIds.length).toBeGreaterThan(0);
+      const appendResult = requireAppendResult(state);
+      if (appendResult.status === "success") {
+        expect(Array.isArray(appendResult.eventIds)).toBe(true);
+        expect(appendResult.eventIds.length).toBeGreaterThan(0);
       }
     });
 
     And("the result should have globalPositions array", async () => {
-      if (state!.appendResult!.status === "success") {
-        expect(Array.isArray(state!.appendResult.globalPositions)).toBe(true);
-        expect(state!.appendResult.globalPositions.length).toBeGreaterThan(0);
+      const appendResult = requireAppendResult(state);
+      if (appendResult.status === "success") {
+        expect(Array.isArray(appendResult.globalPositions)).toBe(true);
+        expect(appendResult.globalPositions.length).toBeGreaterThan(0);
       }
     });
 
     And("the result should have newVersion number", async () => {
-      if (state!.appendResult!.status === "success") {
-        expect(typeof state!.appendResult.newVersion).toBe("number");
+      const appendResult = requireAppendResult(state);
+      if (appendResult.status === "success") {
+        expect(typeof appendResult.newVersion).toBe("number");
       }
     });
   });
@@ -345,15 +355,17 @@ describeFeature(feature, ({ Scenario, Background, AfterEachScenario }) => {
     });
 
     Then("the result should have currentVersion number", async () => {
-      if (state!.appendResult!.status === "conflict") {
-        expect(typeof state!.appendResult.currentVersion).toBe("number");
+      const appendResult = requireAppendResult(state);
+      if (appendResult.status === "conflict") {
+        expect(typeof appendResult.currentVersion).toBe("number");
       }
     });
 
     And("the result should not have eventIds", async () => {
-      if (state!.appendResult!.status === "conflict") {
+      const appendResult = requireAppendResult(state);
+      if (appendResult.status === "conflict") {
         // Type narrowing ensures eventIds is not accessible
-        expect("eventIds" in state!.appendResult).toBe(false);
+        expect("eventIds" in appendResult).toBe(false);
       }
     });
   });
