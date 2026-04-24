@@ -379,6 +379,10 @@ importers:
         version: 4.1.5(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(msw@2.12.8(@types/node@25.6.0)(typescript@6.0.3))(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(tsx@4.21.0))
 
   packages/platform-bc:
+    dependencies:
+      '@libar-dev/platform-contracts-shared':
+        specifier: workspace:*
+        version: link:../platform-contracts-shared
     devDependencies:
       '@amiceli/vitest-cucumber':
         specifier: 'catalog:'
@@ -395,6 +399,9 @@ importers:
 
   packages/platform-bus:
     dependencies:
+      '@libar-dev/platform-contracts-shared':
+        specifier: workspace:*
+        version: link:../platform-contracts-shared
       '@libar-dev/platform-core':
         specifier: workspace:*
         version: link:../platform-core
@@ -415,6 +422,15 @@ importers:
         specifier: 'catalog:'
         version: 4.3.6
 
+  packages/platform-contracts-shared:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.5(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(msw@2.12.8(@types/node@25.6.0)(typescript@6.0.3))(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(tsx@4.21.0))
+
   packages/platform-core:
     dependencies:
       '@convex-dev/agent':
@@ -429,12 +445,18 @@ importers:
       '@libar-dev/platform-bc':
         specifier: workspace:*
         version: link:../platform-bc
+      '@libar-dev/platform-contracts-shared':
+        specifier: workspace:*
+        version: link:../platform-contracts-shared
       '@libar-dev/platform-decider':
         specifier: workspace:*
         version: link:../platform-decider
       '@libar-dev/platform-fsm':
         specifier: workspace:*
         version: link:../platform-fsm
+      convex-test:
+        specifier: '>=0.0.34'
+        version: 0.0.49(convex@1.36.0(react@19.2.5))
       uuid:
         specifier: 'catalog:'
         version: 14.0.0
@@ -481,6 +503,9 @@ importers:
 
   packages/platform-store:
     dependencies:
+      '@libar-dev/platform-contracts-shared':
+        specifier: workspace:*
+        version: link:../platform-contracts-shared
       '@libar-dev/platform-core':
         specifier: workspace:*
         version: link:../platform-core
@@ -494,6 +519,9 @@ importers:
       convex:
         specifier: 'catalog:'
         version: 1.36.0(react@19.2.5)
+      convex-helpers:
+        specifier: 'catalog:'
+        version: 0.1.115(@standard-schema/spec@1.1.0)(convex@1.36.0(react@19.2.5))(hono@4.11.7)(react@19.2.5)(typescript@6.0.3)(zod@4.3.6)
       vitest:
         specifier: 'catalog:'
         version: 4.1.5(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(msw@2.12.8(@types/node@25.6.0)(typescript@6.0.3))(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(tsx@4.21.0))
