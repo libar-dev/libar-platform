@@ -17,8 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **DCB Retry Execution**: DCB Retry Execution — reference implementation for integrating withDCBRetry into command handlers.
 - **Command Config Partition Key Validation**: Validates that all projection configurations in a command config have explicit partition keys defined.
 - **Agent as Bounded Context - AI-Driven Event Reactors**: Demonstrates the Agent as Bounded Context pattern where AI agents subscribe to domain events via EventBus and emit...
-- **Process Enhancements**: Vision: Transform the delivery process from a documentation tool into a delivery operating system.
 - **Release V 020**: Converts the aggregate-less pivot roadmap into executable specs for Phases 14-22.
+- **Process Enhancements**: Vision: Transform the delivery process from a documentation tool into a delivery operating system.
 - **Confirmed Order Cancellation**: Problem: The Order FSM treats `confirmed` as terminal.
 - **Agent LLM Integration**: Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.
 - **Agent BC Component Isolation**: Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...
@@ -59,8 +59,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **PDR 009 Design Session Methodology**
 - **PDR 008 Example App Purpose**
 - **PDR 007 Two Tier Spec Architecture**
-- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
-- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 - **Workpool Partitioning Strategy**: Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event...
 - **Saga Orchestration**: Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...
 - **Reservation Pattern**: Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...
@@ -80,6 +78,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Bdd Testing Infrastructure**: Problem: Domain logic tests require infrastructure (Docker, database).
 - **Agent Command Infrastructure**: Problem: Three interconnected gaps in agent command infrastructure: 1.
 - **Agent As Bounded Context**: Problem: AI agents are invoked manually without integration into the event-driven architecture.
+- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
+- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 
 ---
 
@@ -119,20 +119,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Integration Event Handlers**: Integration event handlers.
 - **Integration Event Schemas**: Integration event schema definitions for cross-context communication.
 - **Integration Dead Letters**: Dead letter queue management for cross-context event publications.
-- **Durable Append Action**: Durable Append - Workpool-backed event append with retry.
 - **Command Registry**: Command registry with Zod validation schemas per command type.
+- **Durable Append Action**: Durable Append - Workpool-backed event append with retry.
 - **Event Store**: Central event storage component for Event Sourcing.
 - **CMS Repository**: Factory for typed data access with automatic schema upcasting in dual-write handlers.
 - **Query Abstraction**: Query factory functions for creating type-safe read model queries.
+- **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
+- **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
 - **Process Manager Lifecycle**: FSM for managing PM state transitions (idle/processing/completed/failed) with validation.
 - **Process Manager**: Process Manager module for event-reactive coordination.
-- **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
-- **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
-- **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
+- **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
-- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
 - **Event Upcasting**: Transforms events from older schema versions to current version at read time.
+- **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
 - **Durable Cross-Context Event Publication**: Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.
 - **Poison Event Handling**: Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...
@@ -154,8 +154,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Order Items Projection**: Order line items read model.
 - **Product Catalog Projection**: Product catalog read model.
 - **Active Reservations Projection**: Tracks active stock reservations and updates stock levels.
-- **Customer Cancellations Projection**: Customer cancellation history with rolling 30-day window.
 - **Order With Inventory Projection**: OrderWithInventoryStatus cross-context projection handlers (app-level).
+- **Customer Cancellations Projection**: Customer cancellation history with rolling 30-day window.
 - **Order Command Configs**: Command configs for 6 order commands.
 - **Inventory Command Configs**: Command configs for 7 inventory commands.
 - **Foundation Infrastructure**: Consolidates old roadmap phases 0-13 into a single completed milestone.

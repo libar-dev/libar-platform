@@ -29,7 +29,7 @@
 | ✅ [Session](phases/phase-03-session.md)                                                                                        | 1/1      | 100%     |
 | ✅ [Construction](phases/phase-04-construction.md)                                                                              | 1/1      | 100%     |
 | ✅ [Retrospective](phases/phase-06-retrospective.md)                                                                            | 1/1      | 100%     |
-| ✅ [EventUpcasting](phases/phase-09-event-upcasting.md)                                                                         | 3/3      | 100%     |
+| ✅ [EventBusAbstraction](phases/phase-09-event-bus-abstraction.md)                                                              | 3/3      | 100%     |
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                                                                 | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                                                           | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                                                                     | 1/1      | 100%     |
@@ -106,7 +106,7 @@
 
 ---
 
-### ✅ EventUpcasting
+### ✅ EventBusAbstraction
 
 [███████████████] 3/3 100% complete
 

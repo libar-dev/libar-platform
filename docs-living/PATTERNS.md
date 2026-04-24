@@ -483,16 +483,16 @@ graph TD
     EventSubscriptionRegistry --> AgentAsBoundedContext
     EventSubscriptionRegistry --> AgentLLMIntegration
     HandlerFactories --> DeciderPattern
-    Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
-    Lifecycle_Command_Type_Definitions___DS_5_Stub ..-> AgentCommandInfrastructure
-    Lifecycle_Command_Handlers___DS_5_Stub ..-> AgentCommandInfrastructure
-    Lifecycle_Audit_Event_Types___DS_5_Stub ..-> AgentCommandInfrastructure
-    Checkpoint_Status_Extension_for_Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
     Pattern_Registry___DS_4_Stub ..-> AgentCommandInfrastructure
     Pattern_Executor___DS_4_Stub ..-> AgentCommandInfrastructure
     Agent_Command_Router___DS_4_Stub ..-> AgentCommandInfrastructure
     Command_Bridge___DS_4_Stub ..-> AgentCommandInfrastructure
     AgentBCConfig_Evolution___DS_4_Stub ..-> AgentCommandInfrastructure
+    Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
+    Lifecycle_Command_Type_Definitions___DS_5_Stub ..-> AgentCommandInfrastructure
+    Lifecycle_Command_Handlers___DS_5_Stub ..-> AgentCommandInfrastructure
+    Lifecycle_Audit_Event_Types___DS_5_Stub ..-> AgentCommandInfrastructure
+    Checkpoint_Status_Extension_for_Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
     Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub --> AgentBCConfig
     Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub ..-> AgentBCComponentIsolation
     Agent_onComplete_Handler_Factory___DS_2_Stub ..-> AgentLLMIntegration
@@ -507,8 +507,8 @@ graph TD
     ReservationReleasePM --> InventoryCommandHandlers
     ReservationReleasePM --> OrderWithInventoryProjection
     OrderNotificationPM --> OrderCommandHandlers
-    IntegrationRoutes --> OrderCommandHandlers
     DurableAppendAction ..-> DurableEventsIntegration
+    IntegrationRoutes --> OrderCommandHandlers
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
     Durable_Command_Orchestrator___Intent_Completion_Bracketing_Wrapper ..-> DurableEventsIntegration
@@ -518,13 +518,13 @@ graph TD
     CMSRepository --> CMSDualWrite
     ProcessManagerLifecycle --> EventBusAbstraction
     ProcessManager --> EventBusAbstraction
-    ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    ProjectionCheckpointing --> EventStoreFoundation
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -572,15 +572,15 @@ graph TD
     Agent_Component___Approval_Public_API___DS_1_Stub --> PendingApproval
     Agent_Component___Approval_Public_API___DS_1_Stub --> HumanInLoopConfig
     Agent_Component___Approval_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    OrderSummaryProjection --> EventStore
-    OrderItemsProjection --> OrderCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
-    ProductCatalogProjection --> InventoryCommandHandlers
-    ActiveReservationsProjection --> InventoryCommandHandlers
-    OrderWithInventoryProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> InventoryCommandHandlers
     PaymentOutboxHandler ..-> DurableEventsIntegration
     MockPaymentActions ..-> DurableEventsIntegration
+    OrderSummaryProjection --> EventStore
+    OrderItemsProjection --> OrderCommandHandlers
+    ProductCatalogProjection --> InventoryCommandHandlers
+    ActiveReservationsProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> InventoryCommandHandlers
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
@@ -601,23 +601,23 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
-    OrderCommandHandlers --> OrderDeciders
-    OrderCommandHandlers --> OrderRepository
     InventoryCommandHandlers --> InventoryDeciders
     InventoryCommandHandlers --> InventoryRepository
     Agent_Command_Emission_Tool --> AgentAsBoundedContext
     Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
-    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
-    Agent_BC_Utility_Functions --> AgentAsBoundedContext
-    Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
-    Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
-    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
-    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
-    LLM_Provider_Configuration --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentBCComponentIsolation
+    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
+    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
+    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
+    LLM_Provider_Configuration --> AgentAsBoundedContext
+    Agent_BC_Utility_Functions --> AgentAsBoundedContext
+    Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
+    Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
+    OrderCommandHandlers --> OrderDeciders
+    OrderCommandHandlers --> OrderRepository
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     Tranche1SupportingSecurityContractSweep -.-> Tranche0ReadinessHarness

@@ -114,8 +114,8 @@
 - ✅ Agent On Complete Handler
 - ✅ Inventory Domain Events
 - ✅ Inventory Command Handlers
-- ✅ Order Domain Events
 - ✅ Order Command Handlers
+- ✅ Order Domain Events
 - ✅ Progress calculation utilities for replay operations.
 - ✅ Types for event replay and projection rebuilding.
 
