@@ -49,11 +49,11 @@ validTransitions(orderFSM, "draft");
 
 ## Stability
 
-| Surface | Status | Notes |
-| --- | --- | --- |
+| Surface                       | Status | Notes                                             |
+| ----------------------------- | ------ | ------------------------------------------------- |
 | FSM definition and operations | Stable | Pure TypeScript with strong unit and BDD coverage |
-| Error type | Stable | Safe for `instanceof` checks in calling code |
-| Testing subpath | Stable | Useful when sharing helpers in spec-style tests |
+| Error type                    | Stable | Safe for `instanceof` checks in calling code      |
+| Testing subpath               | Stable | Useful when sharing helpers in spec-style tests   |
 
 ## Known limitations
 

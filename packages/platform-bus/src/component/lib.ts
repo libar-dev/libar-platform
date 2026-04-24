@@ -58,7 +58,11 @@ export const recordCommand = mutation({
   ),
   handler: async (ctx, args) => {
     assertBoundaryValuesSize([
-      { fieldName: "recordCommand.payload", value: args.payload, maxBytes: COMMAND_BUS_VALUE_MAX_BYTES },
+      {
+        fieldName: "recordCommand.payload",
+        value: args.payload,
+        maxBytes: COMMAND_BUS_VALUE_MAX_BYTES,
+      },
     ]);
 
     // Check for existing command with same ID
@@ -237,7 +241,7 @@ export const getByCorrelation = query({
         timestamp: c.metadata.timestamp,
         ...(c.executedAt !== undefined && { executedAt: c.executedAt }),
       })),
-      nextCursor: hasMore ? page[page.length - 1]?.correlationCursor ?? null : null,
+      nextCursor: hasMore ? (page[page.length - 1]?.correlationCursor ?? null) : null,
       hasMore,
     };
   },

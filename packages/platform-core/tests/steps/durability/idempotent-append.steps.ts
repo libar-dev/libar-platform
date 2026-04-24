@@ -46,7 +46,12 @@ interface TestState {
     | { status: "success"; newVersion: number }
     | { status: "duplicate"; eventIds: string[]; globalPositions: bigint[]; newVersion: number }
     | { status: "conflict"; currentVersion: number }
-    | { status: "idempotency_conflict"; existingEventId: string; auditId: string; currentVersion: number }
+    | {
+        status: "idempotency_conflict";
+        existingEventId: string;
+        auditId: string;
+        currentVersion: number;
+      }
     | null;
   recheckResult: TestState["existingEvent"];
   appendCalled: boolean;
@@ -286,14 +291,17 @@ describeFeature(feature, ({ Scenario, BeforeEachScenario, AfterEachScenario }) =
       }
     );
 
-    And('appendToStream reports an audited idempotency conflict for existing event "evt-456"', () => {
-      state.appendResult = {
-        status: "idempotency_conflict",
-        existingEventId: "evt-456",
-        auditId: "ida-123",
-        currentVersion: 1,
-      };
-    });
+    And(
+      'appendToStream reports an audited idempotency conflict for existing event "evt-456"',
+      () => {
+        state.appendResult = {
+          status: "idempotency_conflict",
+          existingEventId: "evt-456",
+          auditId: "ida-123",
+          currentVersion: 1,
+        };
+      }
+    );
 
     When(
       'calling idempotentAppendEvent with key "payment:ord-123" and payload chargeId "ch-new"',

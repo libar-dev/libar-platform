@@ -2,10 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 
 import { api } from "../../../../examples/order-management/convex/_generated/api";
-import {
-  generateCorrelationId,
-  generateStreamId,
-} from "./support/helpers";
+import { generateCorrelationId, generateStreamId } from "./support/helpers";
 
 interface TestableConvexHelper {
   mutation(fn: unknown, args: unknown): Promise<unknown>;
@@ -72,11 +69,15 @@ describe("EventStore pagination and virtual streams", () => {
     expect(firstPage.hasMore).toBe(true);
     expect(firstPage.nextCursor).toBeTruthy();
 
-    const secondPage = await testQuery<typeof firstPage>(t, api.testingFunctions.getEventsByCorrelation, {
-      correlationId,
-      limit: 2,
-      cursor: firstPage.nextCursor ?? undefined,
-    });
+    const secondPage = await testQuery<typeof firstPage>(
+      t,
+      api.testingFunctions.getEventsByCorrelation,
+      {
+        correlationId,
+        limit: 2,
+        cursor: firstPage.nextCursor ?? undefined,
+      }
+    );
 
     expect(secondPage.events).toHaveLength(1);
     expect(secondPage.hasMore).toBe(false);

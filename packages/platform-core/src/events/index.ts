@@ -12,7 +12,11 @@ export type {
   ExtractEnhancedEventPayload,
 } from "./types.js";
 
-export type { GlobalPosition, GlobalPositionLike, GlobalPositionAllocatorState } from "./globalPosition.js";
+export type {
+  GlobalPosition,
+  GlobalPositionLike,
+  GlobalPositionAllocatorState,
+} from "./globalPosition.js";
 
 // Category
 export type { EventCategory } from "./category.js";

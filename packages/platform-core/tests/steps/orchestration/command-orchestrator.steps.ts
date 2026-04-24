@@ -351,7 +351,9 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then("the workpool was called at least 2 times", () => {
-          expect(state.projectionPool!.calls.length + state.fanoutPool!.calls.length).toBeGreaterThanOrEqual(2);
+          expect(
+            state.projectionPool!.calls.length + state.fanoutPool!.calls.length
+          ).toBeGreaterThanOrEqual(2);
         });
 
         And("the workpool call 1 context contains:", (_ctx: unknown, dataTable: unknown) => {

@@ -89,11 +89,11 @@ export async function reserveInventory(ctx: unknown, tenantId: string, reservati
 
 ## Stability
 
-| Surface | Status | Notes |
-| --- | --- | --- |
-| Commands, queries, projections, repository, testing | Stable | Used broadly across the repo |
-| Agent, security, durability, DCB, reservations | Active | Real code paths exist, but the surface area is still evolving fastest here |
-| Metrics and monitoring helpers | Stable | Good for instrumentation, still intentionally lightweight |
+| Surface                                             | Status | Notes                                                                      |
+| --------------------------------------------------- | ------ | -------------------------------------------------------------------------- |
+| Commands, queries, projections, repository, testing | Stable | Used broadly across the repo                                               |
+| Agent, security, durability, DCB, reservations      | Active | Real code paths exist, but the surface area is still evolving fastest here |
+| Metrics and monitoring helpers                      | Stable | Good for instrumentation, still intentionally lightweight                  |
 
 ## Known limitations
 

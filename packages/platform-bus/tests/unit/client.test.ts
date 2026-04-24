@@ -103,16 +103,18 @@ describe("CommandBus Client", () => {
       await expect(commandBus.recordCommand(mutationCtx as never, recordArgs)).resolves.toEqual({
         status: "new",
       });
-      await expect(
-        commandBus.updateCommandResult(mutationCtx as never, updateArgs)
-      ).resolves.toBe(true);
+      await expect(commandBus.updateCommandResult(mutationCtx as never, updateArgs)).resolves.toBe(
+        true
+      );
       await expect(commandBus.getCommandStatus(queryCtx as never, statusArgs)).resolves.toEqual({
         commandId: "cmd_123",
         commandType: "CreateOrder",
         targetContext: "orders",
         status: "executed",
       });
-      await expect(commandBus.getByCorrelation(queryCtx as never, correlationArgs)).resolves.toEqual({
+      await expect(
+        commandBus.getByCorrelation(queryCtx as never, correlationArgs)
+      ).resolves.toEqual({
         commands: [],
         nextCursor: null,
         hasMore: false,
@@ -124,11 +126,7 @@ describe("CommandBus Client", () => {
       });
 
       expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(1, recordCommand, recordArgs);
-      expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(
-        2,
-        updateCommandResult,
-        updateArgs
-      );
+      expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(2, updateCommandResult, updateArgs);
       expect(queryCtx.runQuery).toHaveBeenNthCalledWith(1, getCommandStatus, statusArgs);
       expect(queryCtx.runQuery).toHaveBeenNthCalledWith(2, getByCorrelation, correlationArgs);
       expect(mutationCtx.runMutation).toHaveBeenNthCalledWith(3, cleanupExpired, cleanupArgs);

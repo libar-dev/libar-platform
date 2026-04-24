@@ -65,15 +65,19 @@ describe("EventStore correctness migration", () => {
       idempotencyKey,
     });
 
-    const second = await testMutation<typeof first>(t, api.testing.idempotentAppendTest.appendTestEvent, {
-      streamType: "Order",
-      streamId,
-      eventType: "PaymentCompleted",
-      eventData: { orderId: streamId, chargeId: "ch-1" },
-      boundedContext: "orders",
-      expectedVersion: 0,
-      idempotencyKey,
-    });
+    const second = await testMutation<typeof first>(
+      t,
+      api.testing.idempotentAppendTest.appendTestEvent,
+      {
+        streamType: "Order",
+        streamId,
+        eventType: "PaymentCompleted",
+        eventData: { orderId: streamId, chargeId: "ch-1" },
+        boundedContext: "orders",
+        expectedVersion: 0,
+        idempotencyKey,
+      }
+    );
 
     expect(first.result.status).toBe("success");
     expect(second.result.status).toBe("duplicate");
@@ -108,7 +112,12 @@ describe("EventStore correctness migration", () => {
     const idempotencyKey = `payment:${streamId}`;
 
     const first = await testMutation<{
-      result: { status: "success"; eventIds: string[]; globalPositions: bigint[]; newVersion: number };
+      result: {
+        status: "success";
+        eventIds: string[];
+        globalPositions: bigint[];
+        newVersion: number;
+      };
       eventId: string;
     }>(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Order",
@@ -172,7 +181,12 @@ describe("EventStore correctness migration", () => {
     t = createTestHelper();
 
     const first = await testMutation<{
-      result: { status: "success"; eventIds: string[]; globalPositions: bigint[]; newVersion: number };
+      result: {
+        status: "success";
+        eventIds: string[];
+        globalPositions: bigint[];
+        newVersion: number;
+      };
       eventId: string;
     }>(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Order",
@@ -184,7 +198,12 @@ describe("EventStore correctness migration", () => {
     });
 
     const second = await testMutation<{
-      result: { status: "success"; eventIds: string[]; globalPositions: bigint[]; newVersion: number };
+      result: {
+        status: "success";
+        eventIds: string[];
+        globalPositions: bigint[];
+        newVersion: number;
+      };
       eventId: string;
     }>(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Order",

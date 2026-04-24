@@ -102,7 +102,7 @@ export const handleChurnRiskOnComplete = internalMutation({
       subscriptionId: v.string(),
       eventId: v.string(),
       eventType: v.string(),
-    globalPosition: compatGlobalPositionValidator,
+      globalPosition: compatGlobalPositionValidator,
       correlationId: v.string(),
       causationId: v.string(),
       streamId: v.string(),

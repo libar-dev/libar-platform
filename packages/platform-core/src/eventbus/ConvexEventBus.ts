@@ -187,7 +187,7 @@ export class ConvexEventBus implements EventBus {
       // is not yet supported by Workpool. Events for the same entity may process
       // out of order under concurrent load. This is acceptable for most projections
       // which are idempotent via globalPosition checkpointing.
-    // Backlog: T5-007. Add key: partitionKey.value when Workpool adds key-based ordering support.
+      // Backlog: T5-007. Add key: partitionKey.value when Workpool adds key-based ordering support.
       try {
         if (isActionSubscription(subscription)) {
           // ACTION path — agent LLM handlers (Phase 22b)
@@ -208,18 +208,18 @@ export class ConvexEventBus implements EventBus {
             subscription.handler,
             handlerArgs,
             {
-            // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-            ...(onComplete ? { onComplete } : {}),
-            context: {
-              subscriptionName: subscription.name,
-              eventId: event.eventId,
-              eventType: event.eventType,
-              globalPosition: event.globalPosition,
-              // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-              partition: partitionKey,
-              correlationId: chain.correlationId,
-              causationId: chain.causationId,
-            },
+              // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
+              ...(onComplete ? { onComplete } : {}),
+              context: {
+                subscriptionName: subscription.name,
+                eventId: event.eventId,
+                eventType: event.eventType,
+                globalPosition: event.globalPosition,
+                // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+                partition: partitionKey,
+                correlationId: chain.correlationId,
+                causationId: chain.causationId,
+              },
             }
           );
         }

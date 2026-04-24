@@ -139,9 +139,9 @@ export interface WithPMCheckpointConfig<TCtx> {
     error: string,
     attemptCount: number,
     context?: {
-        eventId?: string;
-        globalPosition?: GlobalPositionLike;
-        correlationId?: string;
+      eventId?: string;
+      globalPosition?: GlobalPositionLike;
+      correlationId?: string;
       streamType?: string;
       streamId?: string;
       failedCommand?: { commandType: string; payload: Record<string, unknown> };

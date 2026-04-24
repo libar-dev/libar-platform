@@ -60,11 +60,11 @@ const page = await eventStore.readFromPosition(ctx, { fromPosition: 0n, limit: 1
 
 ## Stability
 
-| Surface | Status | Notes |
-| --- | --- | --- |
-| Client wrapper | Stable | Covered by unit and isolated integration tests |
-| Component config export | Stable | Used by the example app and platform harnesses |
-| Idempotency conflict audit surface | Stable | Added for the stricter event append contract |
+| Surface                            | Status | Notes                                          |
+| ---------------------------------- | ------ | ---------------------------------------------- |
+| Client wrapper                     | Stable | Covered by unit and isolated integration tests |
+| Component config export            | Stable | Used by the example app and platform harnesses |
+| Idempotency conflict audit surface | Stable | Added for the stricter event append contract   |
 
 ## Known limitations
 

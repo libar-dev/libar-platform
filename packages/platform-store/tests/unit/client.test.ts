@@ -65,8 +65,7 @@ describe("EventStore Client", () => {
           getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
           getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
           getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
-          getIdempotencyConflictAudits:
-            {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
         },
       });
       const mutationCtx = {
@@ -125,8 +124,7 @@ describe("EventStore Client", () => {
           getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
           getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
           getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
-          getIdempotencyConflictAudits:
-            {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
         },
       });
       const mutationCtx = {
@@ -404,12 +402,12 @@ describe("EventStore Client", () => {
 
   describe("AppendResult type", () => {
     it("can be success with eventIds and globalPositions", () => {
-        const result: AppendResult = {
-          status: "success",
-          eventIds: ["evt_123"],
-          globalPositions: [1703001234567001n],
-          newVersion: 1,
-        };
+      const result: AppendResult = {
+        status: "success",
+        eventIds: ["evt_123"],
+        globalPositions: [1703001234567001n],
+        newVersion: 1,
+      };
 
       expect(result.status).toBe("success");
       if (result.status === "success") {

@@ -421,7 +421,7 @@ export const releaseReservationConfig: CommandConfig<
       reservationId: args.reservationId,
       orderId: result.data.orderId,
       reason: args.reason,
-// Event payload access remains typed as Record<string, unknown>. See T5-004 above.
+      // Event payload access remains typed as Record<string, unknown>. See T5-004 above.
       items: result.event.payload["items"] as Array<{ productId: string; quantity: number }>,
       eventId: result.event.eventId,
       globalPosition,

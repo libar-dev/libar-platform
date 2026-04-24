@@ -102,7 +102,12 @@ describe("EventStore Backend Integration", () => {
     const streamId = generateStreamId("Order");
 
     const result = await testMutation<{
-      result: { status: "success"; eventIds: string[]; globalPositions: bigint[]; newVersion: number };
+      result: {
+        status: "success";
+        eventIds: string[];
+        globalPositions: bigint[];
+        newVersion: number;
+      };
       eventId: string;
     }>(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Order",

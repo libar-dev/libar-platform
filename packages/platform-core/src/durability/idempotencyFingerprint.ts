@@ -22,9 +22,7 @@ function normalizeForStableStringify(value: unknown): unknown {
     return Object.keys(value as Record<string, unknown>)
       .sort()
       .reduce<Record<string, unknown>>((accumulator, key) => {
-        accumulator[key] = normalizeForStableStringify(
-          (value as Record<string, unknown>)[key]
-        );
+        accumulator[key] = normalizeForStableStringify((value as Record<string, unknown>)[key]);
         return accumulator;
       }, {});
   }

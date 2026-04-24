@@ -1210,7 +1210,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         state.fakeTimeActive = true;
       });
 
-      When('I approve an expired pending approval', () => {
+      When("I approve an expired pending approval", () => {
         const approval = createTestApproval({
           status: "pending",
           expiresAt: Date.now() - 1000,
@@ -1332,30 +1332,33 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
       });
     });
 
-    RuleScenario("Throws error when rejecting expired pending approval", ({ Given, When, Then }) => {
-      Given('fake time is set to "2024-01-15T12:00:00Z"', () => {
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
-        state.fakeTimeActive = true;
-      });
-
-      When('I reject an expired pending approval', () => {
-        const approval = createTestApproval({
-          status: "pending",
-          expiresAt: Date.now() - 1000,
+    RuleScenario(
+      "Throws error when rejecting expired pending approval",
+      ({ Given, When, Then }) => {
+        Given('fake time is set to "2024-01-15T12:00:00Z"', () => {
+          vi.useFakeTimers();
+          vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
+          state.fakeTimeActive = true;
         });
-        state.error = null;
-        try {
-          rejectAction(approval, "reviewer", "reason");
-        } catch (error) {
-          state.error = error as Error;
-        }
-      });
 
-      Then('the rejection action throws "approval has expired"', () => {
-        expect(state.error?.message).toContain("approval has expired");
-      });
-    });
+        When("I reject an expired pending approval", () => {
+          const approval = createTestApproval({
+            status: "pending",
+            expiresAt: Date.now() - 1000,
+          });
+          state.error = null;
+          try {
+            rejectAction(approval, "reviewer", "reason");
+          } catch (error) {
+            state.error = error as Error;
+          }
+        });
+
+        Then('the rejection action throws "approval has expired"', () => {
+          expect(state.error?.message).toContain("approval has expired");
+        });
+      }
+    );
   });
 
   // ===========================================================================

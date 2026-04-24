@@ -127,7 +127,9 @@ describe("Component-boundary authentication", () => {
     });
 
     expect(commandResult.success).toBe(true);
-    const command = await testQuery(t, getCommandByDecisionIdRef, { decisionId: commandDecisionId });
+    const command = await testQuery(t, getCommandByDecisionIdRef, {
+      decisionId: commandDecisionId,
+    });
     expect(command?.agentId).toBe(agentId);
 
     const appendProof = await createVerificationProof({

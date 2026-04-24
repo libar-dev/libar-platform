@@ -72,8 +72,13 @@ async function signProof(proof: VerificationProof): Promise<string> {
 }
 
 export async function verifyActor(options: VerifyActorOptions): Promise<VerificationProof> {
-  const { proof, expectedSubjectId, expectedSubjectType, expectedBoundedContext, expectedTenantId } =
-    options;
+  const {
+    proof,
+    expectedSubjectId,
+    expectedSubjectType,
+    expectedBoundedContext,
+    expectedTenantId,
+  } = options;
 
   const expectedSignature = await signProof(proof);
   if (proof.signature !== expectedSignature) {

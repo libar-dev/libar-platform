@@ -368,7 +368,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
 
     RuleScenario("Accepts dead letter with globalPosition of 0", ({ Given, Then }) => {
       Given("a test dead letter with globalPosition 0", () => {
-      state.deadLetter = createTestDeadLetter({ globalPosition: 0n });
+        state.deadLetter = createTestDeadLetter({ globalPosition: 0n });
       });
       Then("AgentDeadLetterSchema accepts the dead letter", () => {
         const result = AgentDeadLetterSchema.safeParse(state.deadLetter);

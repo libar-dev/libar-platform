@@ -8,8 +8,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["src/**/*.test.ts"],
-  "references": [
-    { "path": "../platform-contracts-shared" },
-    { "path": "../platform-core" }
-  ]
+  "references": [{ "path": "../platform-contracts-shared" }, { "path": "../platform-core" }]
 }

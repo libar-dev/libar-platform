@@ -61,11 +61,11 @@ if (isSuccess(result)) {
 
 ## Stability
 
-| Surface | Status | Notes |
-| --- | --- | --- |
+| Surface                         | Status | Notes                                            |
+| ------------------------------- | ------ | ------------------------------------------------ |
 | Core result builders and guards | Stable | Pure TypeScript helpers with broad test coverage |
-| Type exports | Stable | Safe to use in package code and app code |
-| Testing subpath | Stable | Useful for feature-driven decider tests |
+| Type exports                    | Stable | Safe to use in package code and app code         |
+| Testing subpath                 | Stable | Useful for feature-driven decider tests          |
 
 ## Known limitations
 

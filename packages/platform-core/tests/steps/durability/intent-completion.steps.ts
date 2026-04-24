@@ -419,12 +419,12 @@ describeFeature(feature, ({ Scenario, ScenarioOutline, BeforeEachScenario, After
     When("calling checkIntentTimeout again", async () => {
       const ctx = createMockContext();
       state.checkTimeoutResult = await checkIntentTimeout(ctx, {
-          intentKey: "OrderSubmission:Order:ord-123:1704067200000",
-          streamType: "Order",
-          streamId: "ord-123",
-          boundedContext: "orders",
-          correlationId: "corr-intent-order-submission",
-          dependencies: {
+        intentKey: "OrderSubmission:Order:ord-123:1704067200000",
+        streamType: "Order",
+        streamId: "ord-123",
+        boundedContext: "orders",
+        correlationId: "corr-intent-order-submission",
+        dependencies: {
           getByIdempotencyKey: "mock",
           appendToStream: "mock",
         },

@@ -13,10 +13,7 @@ import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { createVerificationProof } from "../../../../packages/platform-core/src/security/verificationProof.js";
-import {
-  ensureTestEnvironment,
-  idempotentAppendEvent,
-} from "@libar-dev/platform-core";
+import { ensureTestEnvironment, idempotentAppendEvent } from "@libar-dev/platform-core";
 import type { SafeQueryRef, SafeMutationRef } from "@libar-dev/platform-core";
 import { makeFunctionReference } from "convex/server";
 

@@ -156,7 +156,9 @@ export const updateStatus = mutation({
       .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
       .collect();
 
-    await Promise.all(checkpoints.map((checkpoint) => ctx.db.patch(checkpoint._id, { status, updatedAt: now })));
+    await Promise.all(
+      checkpoints.map((checkpoint) => ctx.db.patch(checkpoint._id, { status, updatedAt: now }))
+    );
 
     return { updatedCount: checkpoints.length };
   },
@@ -248,7 +250,9 @@ export const transitionLifecycle = mutation({
       .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
       .collect();
 
-    await Promise.all(checkpoints.map((checkpoint) => ctx.db.patch(checkpoint._id, { status, updatedAt: now })));
+    await Promise.all(
+      checkpoints.map((checkpoint) => ctx.db.patch(checkpoint._id, { status, updatedAt: now }))
+    );
 
     // Insert audit event in the same transaction
     await ctx.db.insert("agentAuditEvents", {

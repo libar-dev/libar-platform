@@ -19,12 +19,12 @@ This directory contains the platform workspaces that power the Convex event sour
 
 ## Key commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm test:packages` | Run the six platform package suites |
-| `pnpm test:integration:platform` | Run isolated infrastructure integration tests |
-| `pnpm test:coverage` | Enforce measured coverage floors across platform packages |
-| `pnpm docs:all` | Refresh generated platform docs |
+| Command                          | Purpose                                                   |
+| -------------------------------- | --------------------------------------------------------- |
+| `pnpm test:packages`             | Run the six platform package suites                       |
+| `pnpm test:integration:platform` | Run isolated infrastructure integration tests             |
+| `pnpm test:coverage`             | Enforce measured coverage floors across platform packages |
+| `pnpm docs:all`                  | Refresh generated platform docs                           |
 
 ## Read next
 

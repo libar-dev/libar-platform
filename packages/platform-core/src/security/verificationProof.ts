@@ -108,7 +108,8 @@ export async function createVerificationProof(
   input: CreateVerificationProofInput
 ): Promise<VerificationProof> {
   const issuedAt = input.issuedAt ?? Date.now();
-  const expiresAt = input.expiresAt ?? issuedAt + (input.ttlMs ?? DEFAULT_VERIFICATION_PROOF_TTL_MS);
+  const expiresAt =
+    input.expiresAt ?? issuedAt + (input.ttlMs ?? DEFAULT_VERIFICATION_PROOF_TTL_MS);
   const payload: VerificationProofPayload = {
     issuer: input.issuer,
     subjectId: input.subjectId,

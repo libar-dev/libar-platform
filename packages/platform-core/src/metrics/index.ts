@@ -20,7 +20,9 @@ interface SafeGlobalThis {
 
 function isTestRuntime(): boolean {
   const safeGlobal = globalThis as SafeGlobalThis;
-  return safeGlobal.__CONVEX_TEST_MODE__ === true || safeGlobal.process?.env?.["IS_TEST"] === "true";
+  return (
+    safeGlobal.__CONVEX_TEST_MODE__ === true || safeGlobal.process?.env?.["IS_TEST"] === "true"
+  );
 }
 
 function getRuntimeConsole(): { info: (...args: unknown[]) => void } {

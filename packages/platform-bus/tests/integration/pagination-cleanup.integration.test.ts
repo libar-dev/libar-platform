@@ -101,17 +101,25 @@ describe("CommandBus pagination and cleanup", () => {
       });
     }
 
-    const firstCleanup = await testMutation(t, api.testingFunctions.cleanupExpiredCommandBusEntries, {
-      batchSize: 1,
-    });
+    const firstCleanup = await testMutation(
+      t,
+      api.testingFunctions.cleanupExpiredCommandBusEntries,
+      {
+        batchSize: 1,
+      }
+    );
 
     expect(firstCleanup.commands).toBe(1);
     expect(firstCleanup.correlations).toBe(1);
     expect(firstCleanup.hasMore).toBe(true);
 
-    const secondCleanup = await testMutation(t, api.testingFunctions.cleanupExpiredCommandBusEntries, {
-      batchSize: 1,
-    });
+    const secondCleanup = await testMutation(
+      t,
+      api.testingFunctions.cleanupExpiredCommandBusEntries,
+      {
+        batchSize: 1,
+      }
+    );
 
     expect(secondCleanup.commands).toBe(1);
     expect(secondCleanup.correlations).toBe(1);

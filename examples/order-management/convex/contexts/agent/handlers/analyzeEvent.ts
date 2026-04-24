@@ -31,7 +31,10 @@ import type { ActionCtx } from "../../../_generated/server.js";
 import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
-import { compatGlobalPositionValidator, normalizeGlobalPosition } from "../../../lib/globalPosition";
+import {
+  compatGlobalPositionValidator,
+  normalizeGlobalPosition,
+} from "../../../lib/globalPosition";
 import {
   createAgentActionHandler,
   type AgentActionResult,
@@ -147,7 +150,7 @@ export const analyzeChurnRiskEvent = internalAction({
                 streamType: "Order",
                 streamId: c.orderId,
                 eventId: c.eventId,
-                  globalPosition: normalizeGlobalPosition(c.globalPosition),
+                globalPosition: normalizeGlobalPosition(c.globalPosition),
                 timestamp: c.timestamp,
                 payload: {
                   orderId: c.orderId,

@@ -54,7 +54,9 @@ export const record = mutation({
 
     const existingAudit = await ctx.db
       .query("agentAuditEvents")
-      .withIndex("by_decision_eventtype", (q) => q.eq("decisionId", decisionId).eq("eventType", eventType))
+      .withIndex("by_decision_eventtype", (q) =>
+        q.eq("decisionId", decisionId).eq("eventType", eventType)
+      )
       .first();
 
     if (existingAudit) {

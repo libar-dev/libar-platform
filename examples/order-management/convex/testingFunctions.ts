@@ -60,8 +60,10 @@ const getEventStoreCorrelationRef = components.eventStore.lib
 const readVirtualStreamRef = components.eventStore.lib
   .readVirtualStream as unknown as FunctionReference<"query", "internal">;
 
-const commitScopeRef = components.eventStore.lib
-  .commitScope as unknown as FunctionReference<"mutation", "internal">;
+const commitScopeRef = components.eventStore.lib.commitScope as unknown as FunctionReference<
+  "mutation",
+  "internal"
+>;
 
 /**
  * Check if test environment is properly configured.

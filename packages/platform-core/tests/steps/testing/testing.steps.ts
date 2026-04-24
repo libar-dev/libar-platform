@@ -602,36 +602,39 @@ describeFeature(
       });
     });
 
-    Scenario("Allow execution on self-hosted runtime without explicit test signal", ({ Given, And, When, Then }) => {
-      Given("process.env exists", () => {
-        process.env = { ...process.env };
-      });
+    Scenario(
+      "Allow execution on self-hosted runtime without explicit test signal",
+      ({ Given, And, When, Then }) => {
+        Given("process.env exists", () => {
+          process.env = { ...process.env };
+        });
 
-      And("CONVEX_CLOUD_URL is not set", () => {
-        delete process.env["CONVEX_CLOUD_URL"];
-      });
+        And("CONVEX_CLOUD_URL is not set", () => {
+          delete process.env["CONVEX_CLOUD_URL"];
+        });
 
-      And("IS_TEST is not set", () => {
-        delete process.env["IS_TEST"];
-      });
+        And("IS_TEST is not set", () => {
+          delete process.env["IS_TEST"];
+        });
 
-      And("__CONVEX_TEST_MODE__ is not true", () => {
-        globalThis.__CONVEX_TEST_MODE__ = undefined;
-      });
+        And("__CONVEX_TEST_MODE__ is not true", () => {
+          globalThis.__CONVEX_TEST_MODE__ = undefined;
+        });
 
-      When("I call ensureTestEnvironment()", () => {
-        try {
-          ensureTestEnvironment();
-          state.error = null;
-        } catch (e) {
-          state.error = e as Error;
-        }
-      });
+        When("I call ensureTestEnvironment()", () => {
+          try {
+            ensureTestEnvironment();
+            state.error = null;
+          } catch (e) {
+            state.error = e as Error;
+          }
+        });
 
-      Then("no error is thrown", () => {
-        expect(state.error).toBeNull();
-      });
-    });
+        Then("no error is thrown", () => {
+          expect(state.error).toBeNull();
+        });
+      }
+    );
 
     Scenario("Block execution in cloud production", ({ Given, And, When, Then }) => {
       Given("process.env.CONVEX_CLOUD_URL is set", () => {

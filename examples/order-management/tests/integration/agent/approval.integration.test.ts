@@ -606,7 +606,9 @@ describe("Agent Approval Workflow Integration Tests", () => {
         status: "approved",
       });
 
-      const found = approvedApprovals.find((a: { approvalId: string }) => a.approvalId === approvalId);
+      const found = approvedApprovals.find(
+        (a: { approvalId: string }) => a.approvalId === approvalId
+      );
       expect(found).toBeDefined();
       expect(found?.status).toBe("approved");
     });

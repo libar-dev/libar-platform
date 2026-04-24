@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  NO_GLOBAL_POSITION,
-  isGlobalPositionAfter,
-} from "../events/globalPosition.js";
+import { NO_GLOBAL_POSITION, isGlobalPositionAfter } from "../events/globalPosition.js";
 import type { ProjectionCheckpoint } from "./types.js";
 
 /**

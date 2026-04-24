@@ -326,7 +326,9 @@ describeFeature(
           }
         );
 
-        RuleScenario("Same key with different payload is rejected", ({ Given, When, Then, And }) => {
+        RuleScenario(
+          "Same key with different payload is rejected",
+          ({ Given, When, Then, And }) => {
             Given(
               'an event with payload "original data" was appended with key "preserve-key"',
               async () => {
@@ -338,11 +340,11 @@ describeFeature(
                   idempotencyKey: state.currentIdempotencyKey,
                   streamType: state.currentStreamType,
                   streamId: state.currentStreamId,
-                   eventType: "DataEvent",
-                   eventData: { message: "original data" },
-                   boundedContext: "testing",
-                   correlationId: withPrefix(`corr-preserve-initial-${Date.now()}`),
-                 });
+                  eventType: "DataEvent",
+                  eventData: { message: "original data" },
+                  boundedContext: "testing",
+                  correlationId: withPrefix(`corr-preserve-initial-${Date.now()}`),
+                });
 
                 state.originalEventId = state.appendResult!.eventId;
               }
@@ -356,11 +358,11 @@ describeFeature(
                     idempotencyKey: state.currentIdempotencyKey!,
                     streamType: state.currentStreamType!,
                     streamId: state.currentStreamId!,
-                     eventType: "DataEvent",
-                     eventData: { message: "new data" },
-                     boundedContext: "testing",
-                     correlationId: withPrefix(`corr-preserve-repeat-${Date.now()}`),
-                   });
+                    eventType: "DataEvent",
+                    eventData: { message: "new data" },
+                    boundedContext: "testing",
+                    correlationId: withPrefix(`corr-preserve-repeat-${Date.now()}`),
+                  });
                 } catch (error) {
                   state.lastError = error as Error;
                 }

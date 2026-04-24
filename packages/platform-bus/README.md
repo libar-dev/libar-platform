@@ -54,10 +54,10 @@ if (recordResult.status === "new") {
 
 ## Stability
 
-| Surface | Status | Notes |
-| --- | --- | --- |
-| Client wrapper | Stable | Covered by unit and isolated integration tests |
-| Component config export | Stable | Mounts cleanly from consuming Convex apps |
+| Surface                   | Status   | Notes                                                                                |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| Client wrapper            | Stable   | Covered by unit and isolated integration tests                                       |
+| Component config export   | Stable   | Mounts cleanly from consuming Convex apps                                            |
 | Agent subscription helper | Emerging | Useful when integrating agent flows, still less battle-tested than the core bus path |
 
 ## Known limitations

@@ -564,18 +564,18 @@ export class CommandOrchestrator {
       config.projection.handler,
       projectionArgs,
       {
-      // Note: key-based partitioning not yet available in workpool
-      // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-      ...(onComplete ? { onComplete } : {}),
-      context: {
-        eventId: successResult.event.eventId,
-        projectionName: config.projection.projectionName,
-        // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-        partition,
-        // Correlation chain for tracing
-        correlationId: chain.correlationId,
-        causationId: chain.causationId,
-      },
+        // Note: key-based partitioning not yet available in workpool
+        // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
+        ...(onComplete ? { onComplete } : {}),
+        context: {
+          eventId: successResult.event.eventId,
+          projectionName: config.projection.projectionName,
+          // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+          partition,
+          // Correlation chain for tracing
+          correlationId: chain.correlationId,
+          causationId: chain.causationId,
+        },
       }
     );
 
@@ -622,17 +622,17 @@ export class CommandOrchestrator {
             secondary.handler,
             secondaryArgs,
             {
-            // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-            ...(secondaryOnComplete ? { onComplete: secondaryOnComplete } : {}),
-            context: {
-              eventId: successResult.event.eventId,
-              projectionName: secondary.projectionName,
-              // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-              partition: secondaryPartition,
-              // Correlation chain for tracing
-              correlationId: chain.correlationId,
-              causationId: chain.causationId,
-            },
+              // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
+              ...(secondaryOnComplete ? { onComplete: secondaryOnComplete } : {}),
+              context: {
+                eventId: successResult.event.eventId,
+                projectionName: secondary.projectionName,
+                // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+                partition: secondaryPartition,
+                // Correlation chain for tracing
+                correlationId: chain.correlationId,
+                causationId: chain.causationId,
+              },
             }
           );
         })
@@ -688,7 +688,7 @@ export class CommandOrchestrator {
           eventType: successResult.event.eventType,
           streamType: successResult.event.streamType,
           streamId: successResult.event.streamId,
-    // Backlog: T5-006. Make category and schemaVersion configurable via CommandConfig.
+          // Backlog: T5-006. Make category and schemaVersion configurable via CommandConfig.
           category: DEFAULT_EVENT_CATEGORY,
           schemaVersion: DEFAULT_SCHEMA_VERSION,
           boundedContext: config.boundedContext,

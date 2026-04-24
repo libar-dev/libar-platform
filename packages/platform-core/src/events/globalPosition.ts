@@ -80,8 +80,10 @@ export function subtractGlobalPositions(
   a: GlobalPositionLike,
   b: GlobalPositionLike
 ): GlobalPosition {
-  return normalizeGlobalPosition(a, "left globalPosition") -
-    normalizeGlobalPosition(b, "right globalPosition");
+  return (
+    normalizeGlobalPosition(a, "left globalPosition") -
+    normalizeGlobalPosition(b, "right globalPosition")
+  );
 }
 
 export function maxGlobalPosition(
@@ -134,8 +136,7 @@ export function allocateGlobalPositions(
   assertIntegerNumber(now, "now");
 
   let timestamp = state === null ? now : Math.max(now, state.lastTimestamp);
-  let sequence =
-    state !== null && timestamp === state.lastTimestamp ? state.lastSequence + 1 : 0;
+  let sequence = state !== null && timestamp === state.lastTimestamp ? state.lastSequence + 1 : 0;
 
   const positions: GlobalPosition[] = [];
   const maxSequence = Number(GLOBAL_POSITION_SEQUENCE_MODULO - 1n);

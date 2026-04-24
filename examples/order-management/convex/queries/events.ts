@@ -89,7 +89,9 @@ export const getRecentOrderEvents = query({
     let filteredEvents = events;
 
     if (afterGlobalPosition !== undefined) {
-      filteredEvents = events.filter((e) => isGlobalPositionAfter(e.globalPosition, afterGlobalPosition));
+      filteredEvents = events.filter((e) =>
+        isGlobalPositionAfter(e.globalPosition, afterGlobalPosition)
+      );
     }
 
     // Take only the most recent events to limit payload size
@@ -183,7 +185,9 @@ export const getRecentInventoryEvents = query({
     let filteredEvents = events;
 
     if (afterGlobalPosition !== undefined) {
-      filteredEvents = events.filter((e) => isGlobalPositionAfter(e.globalPosition, afterGlobalPosition));
+      filteredEvents = events.filter((e) =>
+        isGlobalPositionAfter(e.globalPosition, afterGlobalPosition)
+      );
     }
 
     // Take only the most recent events

@@ -157,7 +157,7 @@ export const appendToStream = mutation({
          * Each bounded context defines its own event schemas with Zod validation.
          * The Event Store acts as a generic log, not a typed repository.
          */
-         payload: vUnknown(),
+        payload: vUnknown(),
         metadata: v.optional(
           v.object({
             correlationId: v.string(),
@@ -306,9 +306,13 @@ export const appendToStream = mutation({
     }
 
     if (duplicateEvents.length > 0) {
-      if (duplicateEvents.length !== events.length || duplicateEvents.length !== new Set(duplicateEvents.map((event) => event.eventId)).size) {
+      if (
+        duplicateEvents.length !== events.length ||
+        duplicateEvents.length !== new Set(duplicateEvents.map((event) => event.eventId)).size
+      ) {
         const firstDuplicate = duplicateEvents[0]!;
-        const incomingEvent = events.find((event) => event.idempotencyKey !== undefined) ?? events[0]!;
+        const incomingEvent =
+          events.find((event) => event.idempotencyKey !== undefined) ?? events[0]!;
         const auditId = `ida_${uuidv7()}`;
 
         await ctx.db.insert("idempotencyConflictAudits", {
@@ -544,7 +548,9 @@ export const readFromPosition = query({
           const page = await ctx.db
             .query("events")
             .withIndex("by_event_type_and_global_position", (q) =>
-              q.eq("eventType", eventType).gt("globalPosition", cursors.get(eventType) ?? fromPosition)
+              q
+                .eq("eventType", eventType)
+                .gt("globalPosition", cursors.get(eventType) ?? fromPosition)
             )
             .take(limit + 1);
 
@@ -685,7 +691,7 @@ export const getByCorrelation = query({
         timestamp: e.timestamp,
         ...(e.causationId !== undefined && { causationId: e.causationId }),
       })),
-      nextCursor: hasMore ? page[page.length - 1]?.globalPosition ?? null : null,
+      nextCursor: hasMore ? (page[page.length - 1]?.globalPosition ?? null) : null,
       hasMore,
     };
   },
@@ -1269,7 +1275,12 @@ export const transitionPMState = mutation({
       return { status: "not_found" as const };
     }
 
-    const newStatus = assertTransitionOrNull(existing.status, event, processManagerName, instanceId);
+    const newStatus = assertTransitionOrNull(
+      existing.status,
+      event,
+      processManagerName,
+      instanceId
+    );
 
     if (newStatus === null) {
       return {

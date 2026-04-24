@@ -20,7 +20,9 @@ import type { PublishedEvent } from "../../src/eventbus/types.js";
 import { toCorrelationId, toCausationId, toEventId, toStreamId } from "../../src/ids/index.js";
 import type { UnknownRecord } from "../../src/types.js";
 
-function createMockMetrics(): PlatformMetrics & { calls: Array<{ type: string; name: string; value: number }> } {
+function createMockMetrics(): PlatformMetrics & {
+  calls: Array<{ type: string; name: string; value: number }>;
+} {
   const calls: Array<{ type: string; name: string; value: number }> = [];
   return {
     calls,
@@ -159,9 +161,13 @@ describe("observability primitives", () => {
       },
     };
 
-    await orchestrator.execute(createMockCtx(createSuccessResult()), config, { orderId: "ord_123" });
+    await orchestrator.execute(createMockCtx(createSuccessResult()), config, {
+      orderId: "ord_123",
+    });
 
-    expect(metrics.calls.some((call) => call.type === "histogram" && call.name === "command.duration")).toBe(true);
+    expect(
+      metrics.calls.some((call) => call.type === "histogram" && call.name === "command.duration")
+    ).toBe(true);
   });
 
   it("CommandOrchestrator rejects secondary projection fan-out above 50", async () => {
@@ -250,7 +256,9 @@ describe("observability primitives", () => {
       initiatedAt: Date.now(),
     });
 
-    expect(metrics.calls.some((call) => call.type === "counter" && call.name === "event.dispatched")).toBe(true);
+    expect(
+      metrics.calls.some((call) => call.type === "counter" && call.name === "event.dispatched")
+    ).toBe(true);
   });
 
   it("console metrics adapter writes structured output", () => {

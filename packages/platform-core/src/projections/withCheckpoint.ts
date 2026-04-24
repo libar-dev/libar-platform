@@ -63,10 +63,10 @@ export interface WithCheckpointConfig<TCtx> {
     partitionKey: string,
     checkpoint: {
       projectionName: string;
-        partitionKey: string;
-        lastGlobalPosition: ProjectionCheckpoint["lastGlobalPosition"];
-        lastEventId: string;
-        updatedAt: number;
+      partitionKey: string;
+      lastGlobalPosition: ProjectionCheckpoint["lastGlobalPosition"];
+      lastEventId: string;
+      updatedAt: number;
     }
   ) => Promise<void>;
 

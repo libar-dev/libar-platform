@@ -218,8 +218,18 @@ export interface EventStoreApi {
       ReadFromPositionResult
     >;
     getStreamVersion: FunctionReference<"query", "internal", GetStreamVersionArgs, number>;
-    getByCorrelation: FunctionReference<"query", "internal", GetByCorrelationArgs, GetByCorrelationResult>;
-    getGlobalPosition: FunctionReference<"query", "internal", Record<string, never>, GlobalPositionLike>;
+    getByCorrelation: FunctionReference<
+      "query",
+      "internal",
+      GetByCorrelationArgs,
+      GetByCorrelationResult
+    >;
+    getGlobalPosition: FunctionReference<
+      "query",
+      "internal",
+      Record<string, never>,
+      GlobalPositionLike
+    >;
     getIdempotencyConflictAudits: FunctionReference<
       "query",
       "internal",
@@ -351,7 +361,10 @@ export class EventStore<TApi extends EventStoreApi = EventStoreApi> {
   /**
    * Get events by correlation ID (for tracing).
    */
-  async getByCorrelation(ctx: QueryCtx, args: GetByCorrelationArgs): Promise<GetByCorrelationResult> {
+  async getByCorrelation(
+    ctx: QueryCtx,
+    args: GetByCorrelationArgs
+  ): Promise<GetByCorrelationResult> {
     return ctx.runQuery(this.component.lib.getByCorrelation, args);
   }
 

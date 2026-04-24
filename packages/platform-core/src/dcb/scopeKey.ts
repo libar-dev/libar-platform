@@ -14,7 +14,11 @@
  * @since Phase 16
  */
 
-export type { DCBScopeKey, ParsedScopeKey, ScopeKeyValidationError } from "@libar-dev/platform-contracts-shared";
+export type {
+  DCBScopeKey,
+  ParsedScopeKey,
+  ScopeKeyValidationError,
+} from "@libar-dev/platform-contracts-shared";
 export {
   SCOPE_KEY_PREFIX,
   createScopeKey,

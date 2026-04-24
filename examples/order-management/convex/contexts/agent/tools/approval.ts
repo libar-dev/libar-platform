@@ -27,10 +27,7 @@ import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../../../_generated/api.js";
 import { createVerificationProof } from "../../../../../../packages/platform-core/src/security/verificationProof.js";
-import {
-  createPlatformNoOpLogger,
-  type SafeMutationRef,
-} from "@libar-dev/platform-core";
+import { createPlatformNoOpLogger, type SafeMutationRef } from "@libar-dev/platform-core";
 import { APPROVAL_ERROR_CODES } from "@libar-dev/platform-core/agent";
 
 /**

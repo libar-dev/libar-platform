@@ -67,10 +67,10 @@ export const OrderCreated = defineEvent({
 
 ## Stability
 
-| Surface | Status | Notes |
-| --- | --- | --- |
-| Contract types | Stable | Used across platform packages and example app |
-| Definition helpers | Stable | Suitable for package and app metadata declarations |
+| Surface                       | Status | Notes                                                    |
+| ----------------------------- | ------ | -------------------------------------------------------- |
+| Contract types                | Stable | Used across platform packages and example app            |
+| Definition helpers            | Stable | Suitable for package and app metadata declarations       |
 | Registry-style metadata types | Stable | Useful for docs and introspection, not runtime execution |
 
 ## Known limitations
