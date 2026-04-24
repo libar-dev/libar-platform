@@ -30,7 +30,7 @@ Feature: Tranche 1 Supporting Security and Contract Sweep
       | Reviewer authorization default-deny migration | pending | authorization middleware and call sites | Yes | unit |
       | Approval expiration ordering fix | pending | approveAction and rejectAction surfaces | Yes | integration |
       | Lifecycle stubs throw or are removed | pending | public lifecycle surfaces | Yes | unit |
-      | platform-store dependency decision + guardrails | pending | libar-platform/architect/decisions/pdr-021-platform-store-runtime-dependency-on-platform-core.feature and REMEDIATION_PLAN.md | Yes | architect/docs |
+      | platform-store dependency decision + guardrails | pending | libar-platform/architect/decisions/pdr-021-platform-store-runtime-dependency-on-platform-core.feature and libar-platform/architect/remediation/REMEDIATION_PLAN.md | Yes | architect/docs |
 
   Rule: Supporting tranche-1 work follows the auth convention
 

@@ -15,8 +15,8 @@ Feature: PDR-021 - platform-store Runtime Dependency on platform-core Accepted w
     Given the following deliverables:
       | Deliverable | Status | Location |
       | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-021-platform-store-runtime-dependency-on-platform-core.feature |
-      | AC4 disposition alignment | complete | REMEDIATION_PLAN.md |
-      | AC2 deferral back-reference | complete | REMEDIATION_PLAN.md and libar-platform/architect/decisions/pdr-017-tranche-3-platform-architecture-gate.feature |
+      | AC4 disposition alignment | complete | libar-platform/architect/remediation/REMEDIATION_PLAN.md |
+      | AC2 deferral back-reference | complete | libar-platform/architect/remediation/REMEDIATION_PLAN.md and libar-platform/architect/decisions/pdr-017-tranche-3-platform-architecture-gate.feature |
 
   Rule: Context - AC4 was raised as a phantom dependency, but live code already uses a narrow public runtime subset
 
