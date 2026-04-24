@@ -1,19 +1,19 @@
 @architect
-@architect-adr:037
+@architect-adr:017
 @architect-adr-status:accepted
 @architect-adr-category:architecture
 @architect-release:vNEXT
-@architect-pattern:ADR037Tranche3PlatformArchitectureGate
+@architect-pattern:PDR017Tranche3PlatformArchitectureGate
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
-Feature: ADR-037 - Tranche 3 Platform Architecture Gate
+Feature: PDR-017 - Tranche 3 Platform Architecture Gate
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Final tranche-3 design gate decision | accepted | libar-platform/architect/decisions/adr-037-tranche-3-platform-architecture-gate.feature |
+      | Final tranche-3 design gate decision | accepted | libar-platform/architect/decisions/pdr-017-tranche-3-platform-architecture-gate.feature |
       | Shared contracts package | complete | libar-platform/packages/platform-contracts-shared/ |
       | Core/store/shared contract migration | complete | libar-platform/packages/platform-core/, libar-platform/packages/platform-store/, libar-platform/packages/platform-bc/ |
       | Transitional layering guard | complete | scripts/lint-layers.mjs, package.json, libar-platform/package.json |
@@ -50,7 +50,7 @@ Feature: ADR-037 - Tranche 3 Platform Architecture Gate
 
     Chosen tranche-3 path for packet 9:
 
-    1. Finalize ADR-037.
+    1. Finalize PDR-017.
     2. Land P36 now via `@libar-dev/platform-contracts-shared`.
     3. Keep the repo on the non-split path.
     4. Execute P41 now as a non-split transitional guard that blocks new layering regressions while known reach-through debt remains explicitly enumerated.
@@ -61,14 +61,14 @@ Feature: ADR-037 - Tranche 3 Platform Architecture Gate
     @acceptance-criteria @happy-path
     Scenario: Tranche-3 gate chooses the low-blast-radius path
       Given tranche-3 packet 9 starts with the design gate
-      When ADR-037 is reviewed
+      When PDR-017 is reviewed
       Then it accepts the shared-contract extraction
       And it rejects the platform-core and platform-store full split for this packet
       And it keeps tranche-3 on the non-split execution path
 
     @acceptance-criteria @validation
     Scenario: Optional package splits are not silently started
-      Given ADR-037 does not approve P42 or P43
+      Given PDR-017 does not approve P42 or P43
       When tranche-3 packet 9 is executed
       Then no package-split migration work is started in this packet
       And any follow-on cleanup remains explicitly sequenced after the shared-contract extraction
@@ -116,7 +116,7 @@ Feature: ADR-037 - Tranche 3 Platform Architecture Gate
 
     @acceptance-criteria @validation
     Scenario: Layering command enforces the tranche-3 non-split boundary rules
-      Given packet 9 stays on the non-split ADR-037 path
+      Given packet 9 stays on the non-split PDR-017 path
       When pnpm lint:layers runs
       Then it validates the allowed package dependency matrix
       And it rejects new cross-package reach-through imports beyond the acknowledged transitional allowlist
@@ -126,15 +126,15 @@ Feature: ADR-037 - Tranche 3 Platform Architecture Gate
 
     Revised non-split pattern list:
 
-    | Pattern ID | Decision after ADR-037 | Notes |
+    | Pattern ID | Decision after PDR-017 | Notes |
     | P36 shared contracts package | Approved and executed in this packet | Foundational, low blast radius |
     | P37 re-export shim deletion | Deferred follow-on | Depends on import migration planning after P36 lands |
     | P38 client classes -> functions | Deferred follow-on | Decision made here: remove eventually, but not in this packet |
     | P39 bus agent-subscription relocation | Deferred follow-on | Still touches public imports and should land atomically with consumer rewiring |
     | P40 platform-core root index slimming | Deferred follow-on | Safer after shared contracts are centralized and consumers are mapped |
     | P41 layering rules command | Approved and executed in this packet | Implemented as a transitional non-split guard that enforces the matrix and freezes known reach-through debt |
-    | P42 platform-core split | Rejected for this packet | Not approved by ADR-037 |
-    | P43 platform-store split | Rejected for this packet | Not approved by ADR-037 |
+    | P42 platform-core split | Rejected for this packet | Not approved by PDR-017 |
+    | P43 platform-store split | Rejected for this packet | Not approved by PDR-017 |
 
     Consequences:
     - Positive: tranche-3 closes real duplication now without starting an uncontrolled migration wave.

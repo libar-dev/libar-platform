@@ -1,19 +1,19 @@
 @architect
-@architect-adr:035
+@architect-adr:015
 @architect-adr-status:accepted
 @architect-adr-category:design
-@architect-pattern:ADR035GlobalPositionNumericRepresentation
+@architect-pattern:PDR015GlobalPositionNumericRepresentation
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-release:vNEXT
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
-Feature: ADR-035 - globalPosition Numeric Representation
+Feature: PDR-015 - globalPosition Numeric Representation
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | libar-platform/architect/decisions/adr-035-global-position-numeric-representation.feature |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-015-global-position-numeric-representation.feature |
       | Canonical bigint helpers | complete | libar-platform/packages/platform-core/src/events/globalPosition.ts |
       | Event-store allocator migration | complete | libar-platform/packages/platform-store/src/component/lib.ts |
       | Store schema + consumer compat path | complete | libar-platform/packages/platform-store/src/component/schema.ts and downstream checkpoint consumers |

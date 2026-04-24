@@ -488,13 +488,13 @@ graph TD
     Lifecycle_Command_Handlers___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Audit_Event_Types___DS_5_Stub ..-> AgentCommandInfrastructure
     Checkpoint_Status_Extension_for_Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
-    Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub --> AgentBCConfig
-    Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub ..-> AgentBCComponentIsolation
     Pattern_Registry___DS_4_Stub ..-> AgentCommandInfrastructure
     Pattern_Executor___DS_4_Stub ..-> AgentCommandInfrastructure
     Agent_Command_Router___DS_4_Stub ..-> AgentCommandInfrastructure
     Command_Bridge___DS_4_Stub ..-> AgentCommandInfrastructure
     AgentBCConfig_Evolution___DS_4_Stub ..-> AgentCommandInfrastructure
+    Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub --> AgentBCConfig
+    Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub ..-> AgentBCComponentIsolation
     Agent_onComplete_Handler_Factory___DS_2_Stub ..-> AgentLLMIntegration
     EventBus_Publish_Update___DS_2_Stub ..-> AgentLLMIntegration
     EventSubscription_Discriminated_Union___DS_2_Stub ..-> AgentLLMIntegration
@@ -516,6 +516,8 @@ graph TD
     Poison_Event_Admin_Functions___CRUD_operations_for_poisonEvents_table_ ..-> DurableEventsIntegration
     Intent_Admin_Functions___CRUD_operations_for_commandIntents_table_ ..-> DurableEventsIntegration
     CMSRepository --> CMSDualWrite
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBusAbstraction
     ProjectionCheckpointing --> EventStoreFoundation
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
@@ -523,8 +525,6 @@ graph TD
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBusAbstraction
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
     Event_Store_Durability_Types --> EventStoreFoundation
@@ -572,15 +572,15 @@ graph TD
     Agent_Component___Approval_Public_API___DS_1_Stub --> PendingApproval
     Agent_Component___Approval_Public_API___DS_1_Stub --> HumanInLoopConfig
     Agent_Component___Approval_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    PaymentOutboxHandler ..-> DurableEventsIntegration
-    MockPaymentActions ..-> DurableEventsIntegration
     OrderSummaryProjection --> EventStore
     OrderItemsProjection --> OrderCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    PaymentOutboxHandler ..-> DurableEventsIntegration
+    MockPaymentActions ..-> DurableEventsIntegration
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
@@ -607,17 +607,17 @@ graph TD
     InventoryCommandHandlers --> InventoryRepository
     Agent_Command_Emission_Tool --> AgentAsBoundedContext
     Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
+    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
+    Agent_BC_Utility_Functions --> AgentAsBoundedContext
+    Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
+    Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
+    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
+    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
+    LLM_Provider_Configuration --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentBCComponentIsolation
-    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
-    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
-    LLM_Provider_Configuration --> AgentAsBoundedContext
-    Agent_BC_Utility_Functions --> AgentAsBoundedContext
-    Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
-    Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
-    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     Tranche1SupportingSecurityContractSweep -.-> Tranche0ReadinessHarness

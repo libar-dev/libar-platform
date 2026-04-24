@@ -1,20 +1,20 @@
 @architect
-@architect-adr:034
+@architect-adr:014
 @architect-adr-status:accepted
 @architect-adr-category:architecture
-@architect-pattern:ADR034ComponentBoundaryAuthenticationConvention
+@architect-pattern:PDR014ComponentBoundaryAuthenticationConvention
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-release:vNEXT
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
 @architect-infra
-Feature: ADR-034 - Component-Boundary Authentication Convention
+Feature: PDR-014 - Component-Boundary Authentication Convention
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | libar-platform/architect/decisions/adr-034-component-boundary-authentication-convention.feature |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-014-component-boundary-authentication-convention.feature |
       | Canonical verificationProof contract | complete | libar-platform/packages/platform-core/src/security/verificationProof.ts |
       | Agent component verifyActor helper | complete | libar-platform/packages/platform-core/src/agent/component/verification.ts |
       | Event-store component verifyActor helper | complete | libar-platform/packages/platform-store/src/component/verification.ts |

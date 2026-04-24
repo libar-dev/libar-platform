@@ -16,15 +16,15 @@ Feature: Atomic Component-Boundary Authentication Convention
   without a canonical component-side proof contract. Fixing the affected mutations piecemeal would
   create drift and leave a mixed-trust window across approvals, audit, and event append flows.
 
-  **Solution:** Plan P11 as one atomic remediation packet: ADR-034 defines the canonical
+  **Solution:** Plan P11 as one atomic remediation packet: PDR-014 defines the canonical
   `verificationProof` contract, the `verifyActor()` helper becomes the default component-side gate,
   and all listed mutation sites migrate in the same implementation session.
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
-      | ADR-034 placeholder | pending | libar-platform/architect/decisions/adr-034-component-boundary-authentication-convention.feature | No | - |
-      | Canonical verificationProof contract | pending | ADR-034 and platform-core security surfaces | Yes | integration |
+      | PDR-014 placeholder | pending | libar-platform/architect/decisions/pdr-014-component-boundary-authentication-convention.feature | No | - |
+      | Canonical verificationProof contract | pending | PDR-014 and platform-core security surfaces | Yes | integration |
       | verifyActor helper | pending | libar-platform/packages/platform-core/ | Yes | integration |
       | Identity-bearing mutation migration | pending | approve, reject, audit.record, agentCommands.record, appendToStream | Yes | integration |
       | Contract-status tagging for system-only exceptions | pending | mutated component surfaces | Yes | integration |
@@ -40,7 +40,7 @@ Feature: Atomic Component-Boundary Authentication Convention
       Given the component-boundary auth packet is in roadmap state
       When implementation begins
       Then all identity-bearing mutation sites listed in the remediation plan are in the same packet
-      And ADR-034 is committed before the packet can complete
+      And PDR-014 is committed before the packet can complete
 
   Rule: Verification is component-side and defaults to deny
 

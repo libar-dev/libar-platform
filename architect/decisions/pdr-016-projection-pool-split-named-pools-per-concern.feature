@@ -1,20 +1,20 @@
 @architect
-@architect-adr:036
+@architect-adr:016
 @architect-adr-status:accepted
 @architect-adr-category:architecture
-@architect-pattern:ADR036ProjectionPoolSplitNamedPoolsPerConcern
+@architect-pattern:PDR016ProjectionPoolSplitNamedPoolsPerConcern
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-release:vNEXT
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
 @architect-infra
-Feature: ADR-036 - projectionPool Split into Named Pools per Concern
+Feature: PDR-016 - projectionPool Split into Named Pools per Concern
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | libar-platform/architect/decisions/adr-036-projection-pool-split-named-pools-per-concern.feature |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-016-projection-pool-split-named-pools-per-concern.feature |
       | Orchestrator named-pool dependency contract | complete | libar-platform/packages/platform-core/src/orchestration/types.ts |
       | Projection / saga / fanout routing implementation | complete | libar-platform/packages/platform-core/src/orchestration/CommandOrchestrator.ts |
       | Example-app pool mounting and wiring | complete | libar-platform/examples/order-management/convex/convex.config.ts and infrastructure.ts |

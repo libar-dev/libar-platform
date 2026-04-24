@@ -17,15 +17,15 @@ Feature: Atomic Event Correctness Migration
   guarantees and leave downstream consumers migrating against moving contracts.
 
   **Solution:** Plan P14, P17, and P18 as one correctness packet. Implementation starts with a full
-  consumer inventory, lands ADR-038 and ADR-035 first, then migrates idempotency, `globalPosition`,
+  consumer inventory, lands PDR-018 and PDR-015 first, then migrates idempotency, `globalPosition`,
   and canonical process-manager transitions together.
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location | Tests | Test Type |
       | globalPosition consumer inventory | pending | packet artifacts and implementation notes | No | - |
-      | ADR-038 placeholder | pending | libar-platform/architect/decisions/adr-038-idempotency-enforcement-for-append-to-stream.feature | No | - |
-      | ADR-035 placeholder | pending | libar-platform/architect/decisions/adr-035-global-position-numeric-representation.feature | No | - |
+      | PDR-018 placeholder | pending | libar-platform/architect/decisions/pdr-018-idempotency-enforcement-for-append-to-stream.feature | No | - |
+      | PDR-015 placeholder | pending | libar-platform/architect/decisions/pdr-015-global-position-numeric-representation.feature | No | - |
       | appendToStream idempotency migration | pending | libar-platform/packages/platform-core/ and platform-store/ | Yes | integration |
       | globalPosition representation migration and compat reader | pending | libar-platform/packages/platform-store/ and downstream consumers | Yes | integration |
       | Canonical PM transition map parity | pending | processManager/lifecycle.ts and parity tests | Yes | unit |
@@ -40,7 +40,7 @@ Feature: Atomic Event Correctness Migration
     Scenario: Event correctness packet starts from decisions and inventory
       Given the correctness packet is planned
       When implementation begins
-      Then ADR-038 and ADR-035 are committed before runtime changes complete
+      Then PDR-018 and PDR-015 are committed before runtime changes complete
       And a consumer inventory exists before `globalPosition` migration work starts
 
   Rule: Compatibility and ordering remain explicit

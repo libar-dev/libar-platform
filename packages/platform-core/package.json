@@ -151,7 +151,10 @@
     "zod": "^4.0.0",
     "@convex-dev/agent": ">=0.6.1 <1.0.0",
     "@convex-dev/workpool": ">=0.4.6 <1.0.0",
-    "@convex-dev/workflow": ">=0.3.11 <1.0.0"
+    "@convex-dev/workflow": ">=0.3.11 <1.0.0",
+    "convex-helpers": ">=0.1.78",
+    "convex-test": ">=0.0.34",
+    "vitest": ">=2.0.0"
   },
   "peerDependenciesMeta": {
     "vitest": {
@@ -172,11 +175,6 @@
     "@convex-dev/workflow": {
       "optional": true
     }
-  },
-  "optionalPeerDependencies": {
-    "vitest": ">=2.0.0",
-    "convex-helpers": ">=0.1.78",
-    "convex-test": ">=0.0.34"
   },
   "devDependencies": {
     "@amiceli/vitest-cucumber": "catalog:",

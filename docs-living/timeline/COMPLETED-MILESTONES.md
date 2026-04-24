@@ -116,8 +116,8 @@
 - ✅ Inventory Command Handlers
 - ✅ Order Domain Events
 - ✅ Order Command Handlers
-- ✅ Foundation Infrastructure (Phase 1)
 - ✅ Progress calculation utilities for replay operations.
+- ✅ Types for event replay and projection rebuilding.
 
 Showing 10 of 76 completed patterns. See quarterly files for full history.
 

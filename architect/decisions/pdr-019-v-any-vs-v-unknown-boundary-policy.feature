@@ -1,19 +1,19 @@
 @architect
-@architect-adr:039
+@architect-adr:019
 @architect-adr-status:accepted
 @architect-adr-category:architecture
-@architect-pattern:ADR039VAnyVsVUnknownBoundaryPolicy
+@architect-pattern:PDR019VAnyVsVUnknownBoundaryPolicy
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-release:vNEXT
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
-Feature: ADR-039 - v.any() vs v.unknown() Boundary Policy
+Feature: PDR-019 - v.any() vs v.unknown() Boundary Policy
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | libar-platform/architect/decisions/adr-039-v-any-vs-v-unknown-boundary-policy.feature |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-019-v-any-vs-v-unknown-boundary-policy.feature |
       | Shared serialized-size guard | complete | libar-platform/packages/platform-core/src/validation/boundary.ts |
       | Bus / store / agent boundary migration | complete | libar-platform/packages/platform-bus/src/component/**, libar-platform/packages/platform-store/src/component/**, libar-platform/packages/platform-core/src/agent/component/** |
       | Oversize regression coverage | complete | libar-platform/packages/platform-bus/tests/integration/command-bus-harness.integration.test.ts and libar-platform/packages/platform-store/tests/integration/store-harness.integration.test.ts |

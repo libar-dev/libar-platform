@@ -1,19 +1,19 @@
 @architect
-@architect-adr:038
+@architect-adr:018
 @architect-adr-status:accepted
 @architect-adr-category:architecture
-@architect-pattern:ADR038IdempotencyEnforcementForAppendToStream
+@architect-pattern:PDR018IdempotencyEnforcementForAppendToStream
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-release:vNEXT
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
-Feature: ADR-038 - Idempotency Enforcement for appendToStream
+Feature: PDR-018 - Idempotency Enforcement for appendToStream
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | libar-platform/architect/decisions/adr-038-idempotency-enforcement-for-append-to-stream.feature |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-018-idempotency-enforcement-for-append-to-stream.feature |
       | Enforced append semantics | complete | libar-platform/packages/platform-store/src/component/lib.ts |
       | Durability helper alignment | complete | libar-platform/packages/platform-core/src/durability/idempotentAppend.ts |
       | Audit trail for rejected key reuse | complete | libar-platform/packages/platform-store/src/component/schema.ts and lib.ts |

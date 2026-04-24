@@ -20,7 +20,7 @@
   guarantees and leave downstream consumers migrating against moving contracts.
 
   **Solution:** Plan P14, P17, and P18 as one correctness packet. Implementation starts with a full
-  consumer inventory, lands ADR-038 and ADR-035 first, then migrates idempotency, `globalPosition`,
+  consumer inventory, lands PDR-018 and PDR-015 first, then migrates idempotency, `globalPosition`,
   and canonical process-manager transitions together.
 
 ## Acceptance Criteria
@@ -29,7 +29,7 @@
 
 - Given the correctness packet is planned
 - When implementation begins
-- Then ADR-038 and ADR-035 are committed before runtime changes complete
+- Then PDR-018 and PDR-015 are committed before runtime changes complete
 - And a consumer inventory exists before `globalPosition` migration work starts
 
 **Old and new checkpoint formats are handled explicitly**
@@ -58,8 +58,8 @@ _Verified by: Old and new checkpoint formats are handled explicitly_
 ## Deliverables
 
 - globalPosition consumer inventory (pending)
-- ADR-038 placeholder (pending)
-- ADR-035 placeholder (pending)
+- PDR-018 placeholder (pending)
+- PDR-015 placeholder (pending)
 - appendToStream idempotency migration (pending)
 - globalPosition representation migration and compat reader (pending)
 - Canonical PM transition map parity (pending)

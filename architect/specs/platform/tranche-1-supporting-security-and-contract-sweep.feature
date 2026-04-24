@@ -34,7 +34,7 @@ Feature: Tranche 1 Supporting Security and Contract Sweep
   Rule: Supporting tranche-1 work follows the auth convention
 
     This packet does not redefine the proof model from P11. It consumes the component-boundary auth
-    convention once ADR-034 and its implementation packet establish the canonical contract.
+    convention once PDR-014 and its implementation packet establish the canonical contract.
 
     @acceptance-criteria
     Scenario: Supporting cleanup does not bypass the auth keystone

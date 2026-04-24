@@ -1,19 +1,19 @@
 @architect
-@architect-adr:040
+@architect-adr:020
 @architect-adr-status:accepted
 @architect-adr-category:architecture
-@architect-pattern:ADR040EventsTableIndexPolicy
+@architect-pattern:PDR020EventsTableIndexPolicy
 @architect-status:completed
 @architect-completed:2026-04-22
 @architect-release:vNEXT
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
-Feature: ADR-040 - events Table Index Policy
+Feature: PDR-020 - events Table Index Policy
 
   Background: Deliverables
     Given the following deliverables:
       | Deliverable | Status | Location |
-      | Decision spec (this file) | accepted | libar-platform/architect/decisions/adr-040-events-table-index-policy.feature |
+      | Decision spec (this file) | accepted | libar-platform/architect/decisions/pdr-020-events-table-index-policy.feature |
       | Replacement compound index | complete | libar-platform/packages/platform-store/src/component/schema.ts |
       | `readFromPosition` consumer migration | complete | libar-platform/packages/platform-store/src/component/lib.ts and admin replay consumers |
       | Index audit regression coverage | complete | libar-platform/packages/platform-store/tests/unit/index-audit.test.ts |
