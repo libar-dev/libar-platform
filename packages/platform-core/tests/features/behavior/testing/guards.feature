@@ -2,6 +2,7 @@
 @testing-infrastructure
 @architect-pattern:TestEnvironmentGuards
 @architect-status:completed
+@architect-unlock-reason:Task-3-branch-wide-remediation-guard-unblock
 @architect-phase:58
 @architect-quarter:Q1-2026
 @architect-effort:1h

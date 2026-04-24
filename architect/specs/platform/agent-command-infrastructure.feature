@@ -2,6 +2,7 @@
 @architect-release:v0.2.0
 @architect-pattern:AgentCommandInfrastructure
 @architect-status:completed
+@architect-unlock-reason:Task-3-branch-wide-remediation-guard-unblock
 @architect-phase:22c
 @architect-effort:1w
 @architect-product-area:Platform

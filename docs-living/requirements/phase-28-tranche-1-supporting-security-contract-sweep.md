@@ -17,7 +17,8 @@
 
 **Problem:** Several tranche-1 gaps remain after the auth keystone: test-mode checks fail open,
   correlation IDs can be fabricated, reviewer authorization still needs default-deny cleanup, lifecycle
-  stubs leak placeholder behavior, and `platform-store` carries an unexplained dependency edge.
+  stubs leak placeholder behavior, and `platform-store` still lacks a recorded decision for its constrained
+  `platform-core` runtime dependency.
 
   **Solution:** Plan P12, P13, P15, P16, P19, P20, and P21 as one supporting packet that executes
   after the component-boundary auth convention is established, but stays distinct from the P11 and
@@ -63,7 +64,7 @@ _Verified by: Supporting contract gaps fail closed after remediation_
 - Reviewer authorization default-deny migration (pending)
 - Approval expiration ordering fix (pending)
 - Lifecycle stubs throw or are removed (pending)
-- platform-store dependency cleanup (pending)
+- platform-store dependency decision + guardrails (pending)
 
 ---
 

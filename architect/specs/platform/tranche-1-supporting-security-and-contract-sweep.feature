@@ -14,7 +14,8 @@ Feature: Tranche 1 Supporting Security and Contract Sweep
 
   **Problem:** Several tranche-1 gaps remain after the auth keystone: test-mode checks fail open,
   correlation IDs can be fabricated, reviewer authorization still needs default-deny cleanup, lifecycle
-  stubs leak placeholder behavior, and `platform-store` carries an unexplained dependency edge.
+  stubs leak placeholder behavior, and `platform-store` still lacks a recorded decision for its constrained
+  `platform-core` runtime dependency.
 
   **Solution:** Plan P12, P13, P15, P16, P19, P20, and P21 as one supporting packet that executes
   after the component-boundary auth convention is established, but stays distinct from the P11 and
@@ -29,7 +30,7 @@ Feature: Tranche 1 Supporting Security and Contract Sweep
       | Reviewer authorization default-deny migration | pending | authorization middleware and call sites | Yes | unit |
       | Approval expiration ordering fix | pending | approveAction and rejectAction surfaces | Yes | integration |
       | Lifecycle stubs throw or are removed | pending | public lifecycle surfaces | Yes | unit |
-      | platform-store dependency cleanup | pending | libar-platform/packages/platform-store/package.json | Yes | unit |
+      | platform-store dependency decision + guardrails | pending | libar-platform/architect/decisions/pdr-021-platform-store-runtime-dependency-on-platform-core.feature and REMEDIATION_PLAN.md | Yes | architect/docs |
 
   Rule: Supporting tranche-1 work follows the auth convention
 

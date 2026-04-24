@@ -5,6 +5,7 @@
 @architect-release:vNEXT
 @architect-pattern:PDR017Tranche3PlatformArchitectureGate
 @architect-status:completed
+@architect-unlock-reason:Record-AC2-deferral-traceability-after-PDR021
 @architect-completed:2026-04-22
 @architect-quarter:Q2-2026
 @architect-product-area:Platform
@@ -43,7 +44,7 @@ Feature: PDR-017 - Tranche 3 Platform Architecture Gate
     Design-gate answers:
 
     | Question | Decision | Rationale |
-    | Split platform-core into kernel + agent + reservations + dcb + testing? | No, not in tranche-3 packet 9 | Too many current consumers still import broad platform-core surfaces. A split now would turn one design gate into a multi-package migration program. |
+    | Split platform-core into kernel + agent + reservations + dcb + testing? | No, not in tranche-3 packet 9 | Too many current consumers still import broad platform-core surfaces. A split now would turn one design gate into a multi-package migration program, so AC2 stays deferred follow-on work under PDR-017 instead of closing here. |
     | Split platform-store into events + pm-state + dcb-scopes + projection-status? | No, not in tranche-3 packet 9 | platform-store still reaches into platform-core utility modules. Splitting before those utility seams are reduced would freeze accidental boundaries into new packages. |
     | Extract scope-key / EventCategory / ProcessManagerStatus to a zero-dependency package? | Yes, now | This is the cheapest high-value boundary improvement and directly reduces duplication between core, store, BC definitions, and bus-facing typed contracts. |
     | Keep CommandBus / EventStore client classes? | No long-term; defer runtime migration to follow-on cleanup packet | The classes are thin wrappers and should eventually be replaced by functions, but consumers currently instantiate them in app/frontend infrastructure. The design question is resolved; the migration is deferred. |
@@ -54,7 +55,7 @@ Feature: PDR-017 - Tranche 3 Platform Architecture Gate
     2. Land P36 now via `@libar-dev/platform-contracts-shared`.
     3. Keep the repo on the non-split path.
     4. Execute P41 now as a non-split transitional guard that blocks new layering regressions while known reach-through debt remains explicitly enumerated.
-    5. Explicitly reject P42 and P43 for this packet.
+    5. Explicitly reject P42 and P43 for this packet, while keeping AC2 as acknowledged deferred follow-on work under this gate.
 
     This decision means no split migration document is required in this packet because the split path is not approved.
 
@@ -133,7 +134,7 @@ Feature: PDR-017 - Tranche 3 Platform Architecture Gate
     | P39 bus agent-subscription relocation | Deferred follow-on | Still touches public imports and should land atomically with consumer rewiring |
     | P40 platform-core root index slimming | Deferred follow-on | Safer after shared contracts are centralized and consumers are mapped |
     | P41 layering rules command | Approved and executed in this packet | Implemented as a transitional non-split guard that enforces the matrix and freezes known reach-through debt |
-    | P42 platform-core split | Rejected for this packet | Not approved by PDR-017 |
+    | P42 platform-core split | Rejected for this packet | Not approved by PDR-017; AC2 remains deferred follow-on work rather than closed |
     | P43 platform-store split | Rejected for this packet | Not approved by PDR-017 |
 
     Consequences:
