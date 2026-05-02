@@ -256,6 +256,9 @@ export default defineSchema({
     // Scope identity - format: tenant:${tenantId}:${scopeType}:${scopeId}
     scopeKey: v.string(),
 
+    // Owning bounded context for authorization checks
+    boundedContext: v.string(),
+
     // OCC tracking
     currentVersion: v.number(),
 

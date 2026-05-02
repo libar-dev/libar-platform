@@ -4,6 +4,10 @@ import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../../../examples/order-management/convex/_generated/api";
 import { generateCorrelationId, generateStreamId } from "./support/helpers";
 
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
 interface TestableConvexHelper {
   mutation(fn: unknown, args: unknown): Promise<unknown>;
   query(fn: unknown, args: unknown): Promise<unknown>;
@@ -111,7 +115,9 @@ describe("EventStore pagination and virtual streams", () => {
   it("reads virtual streams from denormalized scopeKey and legacy backfill", async () => {
     t = createTestHelper();
     const scopeKey = `tenant:test:reservation:${generateStreamId("scope")}`;
+    const otherScopeKey = `tenant:test:reservation:${generateStreamId("other_scope")}`;
     const streamId = generateStreamId("Reservation");
+    const foreignStreamId = streamId;
 
     await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Reservation",
@@ -125,7 +131,18 @@ describe("EventStore pagination and virtual streams", () => {
     await testMutation(t, api.testingFunctions.commitTestScope, {
       scopeKey,
       expectedVersion: 0,
+      boundedContext: "inventory",
       streamIds: [streamId],
+    });
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Order",
+      streamId: foreignStreamId,
+      eventType: "OrderCreated",
+      eventData: { orderId: foreignStreamId, stage: "foreign" },
+      boundedContext: "orders",
+      tenantId: "test",
+      expectedVersion: 0,
     });
 
     await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
@@ -138,11 +155,37 @@ describe("EventStore pagination and virtual streams", () => {
       expectedVersion: 1,
     });
 
+    await testMutation(t, api.testingFunctions.commitTestScope, {
+      scopeKey: otherScopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [streamId],
+    });
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId,
+      eventType: "ReservationAdjusted",
+      scopeKey: otherScopeKey,
+      eventData: { reservationId: streamId, stage: "other-scope" },
+      boundedContext: "inventory",
+      expectedVersion: 2,
+    });
+
     const events = await testQuery<
-      Array<{ eventType: string; scopeKey?: string; payload: { stage: string } }>
+      Array<{
+        eventType: string;
+        scopeKey?: string;
+        globalPosition: bigint;
+        payload: { stage: string };
+      }>
     >(t, api.testingFunctions.readEventsForScope, {
       scopeKey,
       limit: 10,
+    });
+
+    const latestPosition = await testQuery<bigint>(t, api.testingFunctions.getScopeLatestPosition, {
+      scopeKey,
     });
 
     expect(events.map((event) => event.eventType)).toEqual([
@@ -153,5 +196,47 @@ describe("EventStore pagination and virtual streams", () => {
     expect(events[1]?.scopeKey).toBe(scopeKey);
     expect(events[0]?.payload.stage).toBe("legacy");
     expect(events[1]?.payload.stage).toBe("denormalized");
+    expect(events.map((event) => event.payload.stage)).not.toContain("foreign");
+    expect(events.map((event) => event.payload.stage)).not.toContain("other-scope");
+    expect(latestPosition).toBe(events[1]?.globalPosition);
+  });
+
+  it("reports latest position for scoped events without legacy streamIds", async () => {
+    t = createTestHelper();
+    const scopeKey = `tenant:test:reservation:${generateStreamId("scope_no_legacy")}`;
+    const streamId = generateStreamId("Reservation");
+
+    await testMutation(t, api.testingFunctions.commitTestScope, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+    });
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId,
+      eventType: "ReservationConfirmed",
+      scopeKey,
+      eventData: { reservationId: streamId, stage: "scoped-only" },
+      boundedContext: "inventory",
+      expectedVersion: 0,
+    });
+
+    const events = await testQuery<Array<{ globalPosition: bigint; payload: { stage: string } }>>(
+      t,
+      api.testingFunctions.readEventsForScope,
+      {
+        scopeKey,
+        limit: 10,
+      }
+    );
+
+    const latestPosition = await testQuery<bigint>(t, api.testingFunctions.getScopeLatestPosition, {
+      scopeKey,
+    });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]?.payload.stage).toBe("scoped-only");
+    expect(latestPosition).toBe(events[0]?.globalPosition);
   });
 });

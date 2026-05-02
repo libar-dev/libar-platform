@@ -19,6 +19,7 @@ import {
   ensureTestEnvironment,
   isTestEnvironment,
 } from "@libar-dev/platform-core";
+import { parseScopeKey } from "@libar-dev/platform-core/dcb";
 import { compatGlobalPositionValidator } from "./lib/globalPosition";
 
 const verificationProofValidator = v.object({
@@ -59,6 +60,9 @@ const getEventStoreCorrelationRef = components.eventStore.lib
 
 const readVirtualStreamRef = components.eventStore.lib
   .readVirtualStream as unknown as FunctionReference<"query", "internal">;
+
+const getScopeLatestPositionRef = components.eventStore.lib
+  .getScopeLatestPosition as unknown as FunctionReference<"query", "internal">;
 
 const commitScopeRef = components.eventStore.lib.commitScope as unknown as FunctionReference<
   "mutation",
@@ -248,15 +252,57 @@ export const readEventsForScope = query({
   },
 });
 
+export const getScopeLatestPosition = query({
+  args: {
+    scopeKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runQuery(getScopeLatestPositionRef, args);
+  },
+});
+
 export const commitTestScope = mutation({
   args: {
     scopeKey: v.string(),
     expectedVersion: v.number(),
+    boundedContext: v.string(),
     streamIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     ensureTestEnvironment();
-    return await ctx.runMutation(commitScopeRef, args);
+
+    const parsed = parseScopeKey(args.scopeKey);
+    if (!parsed) {
+      throw new Error(`Invalid scope key format: ${args.scopeKey}`);
+    }
+
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "order-management:testingFunctions:commitTestScope",
+      subjectId: args.boundedContext,
+      subjectType: "boundedContext",
+      boundedContext: args.boundedContext,
+      tenantId: parsed.tenantId,
+    });
+
+    return await ctx.runMutation(commitScopeRef, {
+      scopeKey: args.scopeKey,
+      expectedVersion: args.expectedVersion,
+      boundedContext: args.boundedContext,
+      ...(args.streamIds !== undefined && { streamIds: args.streamIds }),
+      verificationProof,
+    });
+  },
+});
+
+export const getScopeByKey = query({
+  args: {
+    scopeKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+    return await ctx.runQuery(components.eventStore.lib.getScope, args);
   },
 });
 
@@ -902,6 +948,37 @@ export const testComponentAppendToStreamWithProof = mutation({
         ...(args.tenantId !== undefined && { tenantId: args.tenantId }),
         events: args.events,
         verificationProof,
+      });
+
+      return { success: true as const, result };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+export const testComponentCommitScopeWithProof = mutation({
+  args: {
+    scopeKey: v.string(),
+    expectedVersion: v.number(),
+    boundedContext: v.string(),
+    streamIds: v.optional(v.array(v.string())),
+    verificationProof: v.optional(verificationProofValidator),
+  },
+  handler: async (ctx, args) => {
+    ensureTestEnvironment();
+
+    try {
+      const verificationProof = args.verificationProof;
+      const result = await ctx.runMutation(components.eventStore.lib.commitScope, {
+        scopeKey: args.scopeKey,
+        expectedVersion: args.expectedVersion,
+        boundedContext: args.boundedContext,
+        ...(args.streamIds !== undefined && { streamIds: args.streamIds }),
+        ...(verificationProof !== undefined && { verificationProof }),
       });
 
       return { success: true as const, result };

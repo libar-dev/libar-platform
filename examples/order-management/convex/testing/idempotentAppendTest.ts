@@ -14,6 +14,7 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { createVerificationProof } from "../../../../packages/platform-core/src/security/verificationProof.js";
 import { ensureTestEnvironment, idempotentAppendEvent } from "@libar-dev/platform-core";
+import { parseScopeKey } from "@libar-dev/platform-core/dcb";
 import type { SafeQueryRef, SafeMutationRef } from "@libar-dev/platform-core";
 import { makeFunctionReference } from "convex/server";
 
@@ -233,6 +234,8 @@ export const appendTestEvent = mutation({
     } = args;
 
     const eventId = `evt_test_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const scopedTenantId = scopeKey !== undefined ? parseScopeKey(scopeKey)?.tenantId : undefined;
+    const effectiveTenantId = tenantId ?? scopedTenantId;
 
     const verificationProof = await createVerificationProof({
       target: "eventStore",
@@ -240,7 +243,7 @@ export const appendTestEvent = mutation({
       subjectId: boundedContext,
       subjectType: "boundedContext",
       boundedContext,
-      ...(tenantId !== undefined && { tenantId }),
+      ...(effectiveTenantId !== undefined && { tenantId: effectiveTenantId }),
     });
 
     const result = await ctx.runMutation(components.eventStore.lib.appendToStream, {
@@ -248,7 +251,7 @@ export const appendTestEvent = mutation({
       streamId,
       expectedVersion,
       boundedContext,
-      ...(tenantId !== undefined && { tenantId }),
+      ...(effectiveTenantId !== undefined && { tenantId: effectiveTenantId }),
       verificationProof,
       events: [
         {

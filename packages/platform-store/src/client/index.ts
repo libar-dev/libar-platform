@@ -7,10 +7,11 @@ import type {
   GenericQueryCtx,
   GenericDataModel,
 } from "convex/server";
-import type { EventCategory } from "@libar-dev/platform-contracts-shared";
+import type { DCBScopeKey, EventCategory } from "@libar-dev/platform-contracts-shared";
+import { parseScopeKey } from "@libar-dev/platform-contracts-shared";
 import type { GlobalPositionLike } from "@libar-dev/platform-core/events";
 import { createVerificationProof } from "@libar-dev/platform-core/security";
-export type { EventCategory } from "@libar-dev/platform-contracts-shared";
+export type { DCBScopeKey, EventCategory } from "@libar-dev/platform-contracts-shared";
 
 /**
  * Event input for appending to a stream.
@@ -72,6 +73,24 @@ export type AppendResult =
       status: "idempotency_conflict";
       existingEventId: string;
       auditId: string;
+      currentVersion: number;
+    };
+
+export interface CommitScopeArgs {
+  scopeKey: DCBScopeKey | string;
+  expectedVersion: number;
+  boundedContext: string;
+  streamIds?: string[];
+  [key: string]: unknown;
+}
+
+export type CommitScopeResult =
+  | {
+      status: "success";
+      newVersion: number;
+    }
+  | {
+      status: "conflict";
       currentVersion: number;
     };
 
@@ -236,6 +255,7 @@ export interface EventStoreApi {
       { idempotencyKey: string },
       IdempotencyConflictAudit[]
     >;
+    commitScope: FunctionReference<"mutation", "internal", CommitScopeArgs, CommitScopeResult>;
   };
 }
 
@@ -310,17 +330,48 @@ export class EventStore<TApi extends EventStoreApi = EventStoreApi> {
    * Append events to a stream with optimistic concurrency control.
    */
   async appendToStream(ctx: MutationCtx, args: AppendArgs): Promise<AppendResult> {
+    const derivedScopeTenants = new Set<string>();
+    for (const event of args.events) {
+      if (event.scopeKey === undefined) {
+        continue;
+      }
+
+      const parsed = parseScopeKey(event.scopeKey);
+      if (!parsed) {
+        throw new Error(`Invalid scope key format: ${event.scopeKey}`);
+      }
+      derivedScopeTenants.add(parsed.tenantId);
+    }
+
+    if (derivedScopeTenants.size > 1) {
+      throw new Error("appendToStream does not support events from multiple scope tenants");
+    }
+
+    const derivedTenantId = derivedScopeTenants.values().next().value as string | undefined;
+    if (
+      args.tenantId !== undefined &&
+      derivedTenantId !== undefined &&
+      args.tenantId !== derivedTenantId
+    ) {
+      throw new Error(
+        `appendToStream tenantId ${args.tenantId} does not match scoped event tenant ${derivedTenantId}`
+      );
+    }
+
+    const effectiveTenantId = args.tenantId ?? derivedTenantId;
+
     const verificationProof = await createVerificationProof({
       target: "eventStore",
       issuer: "platform-store:EventStore.appendToStream",
       subjectId: args.boundedContext,
       subjectType: "boundedContext",
       boundedContext: args.boundedContext,
-      ...(args.tenantId !== undefined && { tenantId: args.tenantId }),
+      ...(effectiveTenantId !== undefined && { tenantId: effectiveTenantId }),
     });
 
     const result = await ctx.runMutation(this.component.lib.appendToStream, {
       ...args,
+      ...(effectiveTenantId !== undefined && { tenantId: effectiveTenantId }),
       verificationProof,
     });
 
@@ -332,6 +383,33 @@ export class EventStore<TApi extends EventStoreApi = EventStoreApi> {
     }
 
     return result;
+  }
+
+  /**
+   * Commit a DCB scope version with component-boundary verification.
+   */
+  async commitScope(ctx: MutationCtx, args: CommitScopeArgs): Promise<CommitScopeResult> {
+    const parsed = parseScopeKey(args.scopeKey);
+    if (!parsed) {
+      throw new Error(`Invalid scope key format: ${args.scopeKey}`);
+    }
+
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-store:EventStore.commitScope",
+      subjectId: args.boundedContext,
+      subjectType: "boundedContext",
+      boundedContext: args.boundedContext,
+      tenantId: parsed.tenantId,
+    });
+
+    return ctx.runMutation(this.component.lib.commitScope, {
+      scopeKey: args.scopeKey,
+      expectedVersion: args.expectedVersion,
+      boundedContext: args.boundedContext,
+      ...(args.streamIds !== undefined && { streamIds: args.streamIds }),
+      verificationProof,
+    });
   }
 
   /**

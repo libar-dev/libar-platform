@@ -98,9 +98,10 @@ export type ScopeCommitResult =
  *     return result;
  *   },
  *   commitScope: async (streamIds) => {
- *     return ctx.runMutation(components.eventStore.lib.commitScope, {
+ *     return eventStore.commitScope(ctx, {
  *       scopeKey: config.scopeKey,
  *       expectedVersion: config.expectedVersion,
+ *       boundedContext: config.boundedContext,
  *       streamIds,
  *     });
  *   },
@@ -115,6 +116,7 @@ export interface ScopeOperations {
    * For new scopes (expectedVersion = 0), this may return null.
    */
   getScope: () => Promise<{
+    boundedContext: string;
     currentVersion: number;
     tenantId: string;
     scopeType: string;

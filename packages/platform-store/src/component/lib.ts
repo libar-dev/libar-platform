@@ -214,6 +214,38 @@ export const appendToStream = mutation({
     });
     const boundedContext = verifiedActor.boundedContext;
 
+    for (const event of events) {
+      if (event.scopeKey === undefined) {
+        continue;
+      }
+
+      const parsedScope = parseScopeKey(event.scopeKey);
+      if (!parsedScope) {
+        throw new Error(`Invalid scope key format: ${event.scopeKey}`);
+      }
+
+      if (verifiedActor.tenantId !== parsedScope.tenantId) {
+        throw new Error(
+          `Scoped append tenant mismatch for ${event.scopeKey}: proof tenant ${verifiedActor.tenantId ?? "<none>"} cannot write tenant ${parsedScope.tenantId}`
+        );
+      }
+
+      const scope = await ctx.db
+        .query("dcbScopes")
+        .withIndex("by_scope_key", (q) => q.eq("scopeKey", event.scopeKey!))
+        .first();
+
+      if (!scope) {
+        throw new Error(`Scope ${event.scopeKey} must exist before appending scoped events`);
+      }
+
+      if (scope.boundedContext !== boundedContext) {
+        throw new Error(
+          `Scope ${event.scopeKey} belongs to bounded context ${scope.boundedContext}, not ${boundedContext}`
+        );
+      }
+    }
+
     assertBoundaryValuesSize(
       args.events.flatMap((event, index) => [
         {
@@ -1690,9 +1722,12 @@ function parseScopeKey(scopeKey: string): {
 export const getOrCreateScope = mutation({
   args: {
     scopeKey: v.string(),
+    boundedContext: v.string(),
+    verificationProof: verificationProofValidator,
   },
   returns: v.object({
     scopeKey: v.string(),
+    boundedContext: v.string(),
     currentVersion: v.number(),
     tenantId: v.string(),
     scopeType: v.string(),
@@ -1700,7 +1735,7 @@ export const getOrCreateScope = mutation({
     isNew: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    const { scopeKey } = args;
+    const { scopeKey, boundedContext } = args;
 
     // Parse and validate scope key
     const parsed = parseScopeKey(scopeKey);
@@ -1710,6 +1745,14 @@ export const getOrCreateScope = mutation({
       );
     }
 
+    await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: boundedContext,
+      expectedSubjectType: "boundedContext",
+      expectedBoundedContext: boundedContext,
+      expectedTenantId: parsed.tenantId,
+    });
+
     // Check if scope exists
     const existing = await ctx.db
       .query("dcbScopes")
@@ -1717,8 +1760,15 @@ export const getOrCreateScope = mutation({
       .first();
 
     if (existing) {
+      if (existing.boundedContext !== boundedContext) {
+        throw new Error(
+          `Scope ${scopeKey} belongs to bounded context ${existing.boundedContext}, not ${boundedContext}`
+        );
+      }
+
       return {
         scopeKey,
+        boundedContext: existing.boundedContext,
         currentVersion: existing.currentVersion,
         tenantId: existing.tenantId,
         scopeType: existing.scopeType,
@@ -1731,6 +1781,7 @@ export const getOrCreateScope = mutation({
     const now = Date.now();
     await ctx.db.insert("dcbScopes", {
       scopeKey,
+      boundedContext,
       currentVersion: 0,
       tenantId: parsed.tenantId,
       scopeType: parsed.scopeType,
@@ -1741,6 +1792,7 @@ export const getOrCreateScope = mutation({
 
     return {
       scopeKey,
+      boundedContext,
       currentVersion: 0,
       tenantId: parsed.tenantId,
       scopeType: parsed.scopeType,
@@ -1814,6 +1866,8 @@ export const commitScope = mutation({
   args: {
     scopeKey: v.string(),
     expectedVersion: v.number(),
+    boundedContext: v.string(),
+    verificationProof: verificationProofValidator,
     streamIds: v.optional(v.array(v.string())),
   },
   returns: v.union(
@@ -1827,8 +1881,21 @@ export const commitScope = mutation({
     })
   ),
   handler: async (ctx, args) => {
-    const { scopeKey, expectedVersion, streamIds } = args;
+    const { scopeKey, expectedVersion, boundedContext, streamIds } = args;
     const now = Date.now();
+
+    const parsed = parseScopeKey(scopeKey);
+    if (!parsed) {
+      throw new Error(`Invalid scope key format: ${scopeKey}`);
+    }
+
+    await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: boundedContext,
+      expectedSubjectType: "boundedContext",
+      expectedBoundedContext: boundedContext,
+      expectedTenantId: parsed.tenantId,
+    });
 
     const scope = await ctx.db
       .query("dcbScopes")
@@ -1841,13 +1908,9 @@ export const commitScope = mutation({
         return { status: "conflict" as const, currentVersion: 0 };
       }
 
-      const parsed = parseScopeKey(scopeKey);
-      if (!parsed) {
-        throw new Error(`Invalid scope key format: ${scopeKey}`);
-      }
-
       await ctx.db.insert("dcbScopes", {
         scopeKey,
+        boundedContext,
         currentVersion: 1,
         tenantId: parsed.tenantId,
         scopeType: parsed.scopeType,
@@ -1858,6 +1921,12 @@ export const commitScope = mutation({
       });
 
       return { status: "success" as const, newVersion: 1 };
+    }
+
+    if (scope.boundedContext !== boundedContext) {
+      throw new Error(
+        `Scope ${scopeKey} belongs to bounded context ${scope.boundedContext}, not ${boundedContext}`
+      );
     }
 
     // Check OCC
@@ -1899,6 +1968,7 @@ export const getScope = query({
   returns: v.union(
     v.object({
       scopeKey: v.string(),
+      boundedContext: v.string(),
       currentVersion: v.number(),
       tenantId: v.string(),
       scopeType: v.string(),
@@ -1923,6 +1993,7 @@ export const getScope = query({
 
     return {
       scopeKey: scope.scopeKey,
+      boundedContext: scope.boundedContext,
       currentVersion: scope.currentVersion,
       tenantId: scope.tenantId,
       scopeType: scope.scopeType,
@@ -1951,6 +2022,7 @@ export const listScopesByTenant = query({
   returns: v.array(
     v.object({
       scopeKey: v.string(),
+      boundedContext: v.string(),
       currentVersion: v.number(),
       tenantId: v.string(),
       scopeType: v.string(),
@@ -1980,6 +2052,7 @@ export const listScopesByTenant = query({
 
     return results.map((s) => ({
       scopeKey: s.scopeKey,
+      boundedContext: s.boundedContext,
       currentVersion: s.currentVersion,
       tenantId: s.tenantId,
       scopeType: s.scopeType,
@@ -2055,12 +2128,18 @@ export const readVirtualStream = query({
       return [];
     }
 
-    const indexedEvents = await ctx.db
-      .query("events")
-      .withIndex("by_scope_key_and_global_position", (q) =>
-        q.eq("scopeKey", scopeKey).gt("globalPosition", fromGlobalPosition)
-      )
-      .take(effectiveLimit);
+    const indexedEvents = (
+      await ctx.db
+        .query("events")
+        .withIndex("by_scope_key_and_global_position", (q) =>
+          q.eq("scopeKey", scopeKey).gt("globalPosition", fromGlobalPosition)
+        )
+        .take(effectiveLimit)
+    ).filter(
+      (event) =>
+        event.boundedContext === scope.boundedContext &&
+        (event.tenantId === scope.tenantId || event.tenantId === undefined)
+    );
 
     const streamIds = scope.streamIds ?? [];
     let legacyEvents: Array<Doc<"events">> = [];
@@ -2072,7 +2151,15 @@ export const readVirtualStream = query({
             .query("events")
             .withIndex("by_global_position", (q) => q.gt("globalPosition", fromGlobalPosition))
             .filter((q) =>
-              q.and(q.eq(q.field("streamId"), streamId), q.eq(q.field("scopeKey"), undefined))
+              q.and(
+                q.eq(q.field("streamId"), streamId),
+                q.eq(q.field("scopeKey"), undefined),
+                q.eq(q.field("boundedContext"), scope.boundedContext),
+                q.or(
+                  q.eq(q.field("tenantId"), scope.tenantId),
+                  q.eq(q.field("tenantId"), undefined)
+                )
+              )
             )
             .take(effectiveLimit)
         )
@@ -2131,15 +2218,37 @@ export const getScopeLatestPosition = query({
       .withIndex("by_scope_key", (q) => q.eq("scopeKey", scopeKey))
       .first();
 
-    if (!scope || !scope.streamIds || scope.streamIds.length === 0) {
+    if (!scope) {
       return 0n;
     }
 
     const positions: GlobalPositionLike[] = [];
-    for (const streamId of scope.streamIds) {
+    const latestScopedEvent = await ctx.db
+      .query("events")
+      .withIndex("by_scope_key_and_global_position", (q) => q.eq("scopeKey", scopeKey))
+      .order("desc")
+      .first();
+
+    if (
+      latestScopedEvent &&
+      latestScopedEvent.boundedContext === scope.boundedContext &&
+      (latestScopedEvent.tenantId === scope.tenantId || latestScopedEvent.tenantId === undefined) &&
+      isGlobalPositionAfter(latestScopedEvent.globalPosition, -1)
+    ) {
+      positions.push(latestScopedEvent.globalPosition);
+    }
+
+    for (const streamId of scope.streamIds ?? []) {
       const latestEvent = await ctx.db
         .query("events")
-        .filter((q) => q.eq(q.field("streamId"), streamId))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("streamId"), streamId),
+            q.eq(q.field("scopeKey"), undefined),
+            q.eq(q.field("boundedContext"), scope.boundedContext),
+            q.or(q.eq(q.field("tenantId"), scope.tenantId), q.eq(q.field("tenantId"), undefined))
+          )
+        )
         .order("desc")
         .first();
 

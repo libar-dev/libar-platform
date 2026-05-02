@@ -11,6 +11,7 @@
  */
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
+import type { FunctionReference } from "convex/server";
 import { components } from "../_generated/api";
 import {
   createScopeKey,
@@ -19,8 +20,13 @@ import {
   DCB_MAX_RETRIES_EXCEEDED,
   DCB_RETRY_KEY_PREFIX,
 } from "@libar-dev/platform-core/dcb";
-import { ensureTestEnvironment } from "@libar-dev/platform-core";
+import { createVerificationProof, ensureTestEnvironment } from "@libar-dev/platform-core";
 import { dcbRetryPool } from "../infrastructure";
+
+const commitScopeRef = components.eventStore.lib.commitScope as unknown as FunctionReference<
+  "mutation",
+  "internal"
+>;
 
 // =============================================================================
 // Test Configuration
@@ -52,12 +58,22 @@ export const initializeTestScope = mutation({
   handler: async (ctx, { scopeId }) => {
     ensureTestEnvironment();
     const scopeKey = createScopeKey(TEST_TENANT_ID, TEST_SCOPE_TYPE, scopeId);
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "frontend:testing:dcbRetryTest:initializeTestScope",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: TEST_TENANT_ID,
+    });
 
     // Commit scope with version 0 (creates new scope at version 1)
-    const result = await ctx.runMutation(components.eventStore.lib.commitScope, {
+    const result = await ctx.runMutation(commitScopeRef, {
       scopeKey,
       expectedVersion: 0,
+      boundedContext: "inventory",
       streamIds: [`test-stream-${scopeId}`],
+      verificationProof,
     });
 
     return {
@@ -81,11 +97,21 @@ export const advanceScopeVersion = mutation({
   handler: async (ctx, { scopeId, currentVersion }) => {
     ensureTestEnvironment();
     const scopeKey = createScopeKey(TEST_TENANT_ID, TEST_SCOPE_TYPE, scopeId);
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "frontend:testing:dcbRetryTest:advanceScopeVersion",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: TEST_TENANT_ID,
+    });
 
-    const result = await ctx.runMutation(components.eventStore.lib.commitScope, {
+    const result = await ctx.runMutation(commitScopeRef, {
       scopeKey,
       expectedVersion: currentVersion,
+      boundedContext: "inventory",
       streamIds: [`test-stream-${scopeId}`],
+      verificationProof,
     });
 
     return result;

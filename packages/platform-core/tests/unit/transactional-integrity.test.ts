@@ -232,6 +232,7 @@ describe("transactional integrity", () => {
         schemaVersion: 1,
         scopeOperations: {
           getScope: async () => ({
+            boundedContext: "inventory",
             currentVersion: 0,
             tenantId: "t1",
             scopeType: "reservation",

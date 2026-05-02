@@ -18,6 +18,8 @@ import type {
   StoredEvent,
   AppendArgs,
   AppendResult,
+  CommitScopeArgs,
+  CommitScopeResult,
   ReadStreamArgs,
   ReadFromPositionArgs,
   ReadFromPositionResult,
@@ -38,6 +40,7 @@ describe("EventStore Client", () => {
       const mockApi = {
         lib: {
           appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
           readStream: {} as EventStoreApi["lib"]["readStream"],
           readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
           getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
@@ -60,6 +63,7 @@ describe("EventStore Client", () => {
       const eventStore = new EventStore({
         lib: {
           appendToStream,
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
           readStream: {} as EventStoreApi["lib"]["readStream"],
           readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
           getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
@@ -119,6 +123,7 @@ describe("EventStore Client", () => {
       const eventStore = new EventStore({
         lib: {
           appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
           readStream: {} as EventStoreApi["lib"]["readStream"],
           readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
           getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
@@ -156,6 +161,129 @@ describe("EventStore Client", () => {
       );
     });
 
+    it("derives tenant proof context from scoped events when tenantId is omitted", async () => {
+      vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
+
+      const appendToStream = {} as EventStoreApi["lib"]["appendToStream"];
+      const eventStore = new EventStore({
+        lib: {
+          appendToStream,
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
+          readStream: {} as EventStoreApi["lib"]["readStream"],
+          readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
+          getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
+          getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
+          getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+        },
+      });
+      const mutationCtx = {
+        runMutation: vi.fn().mockResolvedValue({
+          status: "success",
+          eventIds: ["evt_123"],
+          globalPositions: [1703001234567001n],
+          newVersion: 1,
+        }),
+      };
+
+      await expect(
+        eventStore.appendToStream(mutationCtx as never, {
+          streamType: "Reservation",
+          streamId: "res_123",
+          expectedVersion: 0,
+          boundedContext: "inventory",
+          events: [
+            {
+              eventId: "evt_123",
+              eventType: "ReservationCreated",
+              scopeKey: "tenant:tenant-42:reservation:res_123",
+              payload: { reservationId: "res_123" },
+              metadata: { correlationId: "corr_123" },
+            },
+          ],
+        })
+      ).resolves.toEqual({
+        status: "success",
+        eventIds: ["evt_123"],
+        globalPositions: [1703001234567001n],
+        newVersion: 1,
+      });
+
+      expect(createVerificationProof).toHaveBeenCalledWith({
+        target: "eventStore",
+        issuer: "platform-store:EventStore.appendToStream",
+        subjectId: "inventory",
+        subjectType: "boundedContext",
+        boundedContext: "inventory",
+        tenantId: "tenant-42",
+      });
+      expect(mutationCtx.runMutation).toHaveBeenCalledWith(appendToStream, {
+        streamType: "Reservation",
+        streamId: "res_123",
+        expectedVersion: 0,
+        boundedContext: "inventory",
+        tenantId: "tenant-42",
+        events: [
+          {
+            eventId: "evt_123",
+            eventType: "ReservationCreated",
+            scopeKey: "tenant:tenant-42:reservation:res_123",
+            payload: { reservationId: "res_123" },
+            metadata: { correlationId: "corr_123" },
+          },
+        ],
+        verificationProof: "proof-token",
+      });
+    });
+
+    it("delegates commitScope and attaches a verification proof", async () => {
+      vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
+
+      const commitScope = {} as EventStoreApi["lib"]["commitScope"];
+      const eventStore = new EventStore({
+        lib: {
+          appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope,
+          readStream: {} as EventStoreApi["lib"]["readStream"],
+          readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
+          getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
+          getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
+          getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+        },
+      });
+      const mutationCtx = {
+        runMutation: vi.fn().mockResolvedValue({
+          status: "success",
+          newVersion: 1,
+        } satisfies CommitScopeResult),
+      };
+      const args: CommitScopeArgs = {
+        scopeKey: "tenant:tenant-1:reservation:res_123",
+        expectedVersion: 0,
+        boundedContext: "inventory",
+        streamIds: ["product_1"],
+      };
+
+      await expect(eventStore.commitScope(mutationCtx as never, args)).resolves.toEqual({
+        status: "success",
+        newVersion: 1,
+      });
+
+      expect(createVerificationProof).toHaveBeenCalledWith({
+        target: "eventStore",
+        issuer: "platform-store:EventStore.commitScope",
+        subjectId: "inventory",
+        subjectType: "boundedContext",
+        boundedContext: "inventory",
+        tenantId: "tenant-1",
+      });
+      expect(mutationCtx.runMutation).toHaveBeenCalledWith(commitScope, {
+        ...args,
+        verificationProof: "proof-token",
+      });
+    });
+
     it("delegates query methods to the component API", async () => {
       const readStream = {} as EventStoreApi["lib"]["readStream"];
       const readFromPosition = {} as EventStoreApi["lib"]["readFromPosition"];
@@ -167,6 +295,7 @@ describe("EventStore Client", () => {
       const eventStore = new EventStore({
         lib: {
           appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
           readStream,
           readFromPosition,
           getStreamVersion,

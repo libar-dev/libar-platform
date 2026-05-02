@@ -8,7 +8,7 @@ Central event storage, stream ordering, and idempotency conflict auditing for Co
 - stream appends with optimistic concurrency control
 - globally ordered event reads for projections
 - correlation-based event tracing
-- verification-proof wiring for append calls
+- verification-proof wiring for append and scope-commit calls
 - idempotency conflict audit lookup support
 
 ## Install
@@ -54,7 +54,7 @@ const page = await eventStore.readFromPosition(ctx, { fromPosition: 0n, limit: 1
 ## Main exports
 
 - `EventStore`
-- `AppendArgs`, `AppendResult`, `StoredEvent`
+- `AppendArgs`, `AppendResult`, `CommitScopeArgs`, `CommitScopeResult`, `StoredEvent`
 - `ReadStreamArgs`, `ReadFromPositionArgs`, `ReadFromPositionResult`
 - `GetByCorrelationResult`, `IdempotencyConflictAudit`
 
@@ -74,7 +74,9 @@ const page = await eventStore.readFromPosition(ctx, { fromPosition: 0n, limit: 1
 
 ## Security notes
 
-- `appendToStream` attaches a verification proof and should be called from trusted bounded-context code.
+- `appendToStream` and `commitScope` attach verification proofs and should be called from trusted bounded-context code.
+- DCB scope records are bound to the creating bounded context; another bounded context in the same tenant cannot reuse the same scope key.
+- Scoped event appends require an existing scope owned by the same bounded context and tenant as the proof.
 - Treat correlation and tenant fields as auditable metadata, not as auth decisions by themselves.
 - Idempotency conflicts are hard failures because same-key different-payload reuse is rejected and audited.
 

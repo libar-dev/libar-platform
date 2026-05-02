@@ -94,9 +94,21 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          boundedContext: string;
           expectedVersion: number;
           scopeKey: string;
           streamIds?: Array<string>;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
         },
         | { newVersion: number; status: "success" }
         | { currentVersion: number; status: "conflict" },
@@ -218,8 +230,23 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       getOrCreateScope: FunctionReference<
         "mutation",
         "internal",
-        { scopeKey: string },
         {
+          boundedContext: string;
+          scopeKey: string;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
+        },
+        {
+          boundedContext: string;
           currentVersion: number;
           isNew: boolean;
           scopeId: string;
@@ -255,6 +282,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "internal",
         { scopeKey: string },
         {
+          boundedContext: string;
           createdAt: number;
           currentVersion: number;
           lastUpdatedAt: number;
@@ -332,6 +360,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "internal",
         { limit?: number; scopeType?: string; tenantId: string },
         Array<{
+          boundedContext: string;
           createdAt: number;
           currentVersion: number;
           lastUpdatedAt: number;

@@ -25,6 +25,9 @@ const commandWithProofRef = makeFunctionReference<"mutation">(
 const appendWithProofRef = makeFunctionReference<"mutation">(
   "testingFunctions:testComponentAppendToStreamWithProof"
 );
+const commitScopeWithProofRef = makeFunctionReference<"mutation">(
+  "testingFunctions:testComponentCommitScopeWithProof"
+);
 const getApprovalByIdRef = makeFunctionReference<"query">("queries/agent:getApprovalById");
 const getAuditByDecisionIdRef = makeFunctionReference<"query">(
   "testingFunctions:getAgentAuditEventByDecisionId"
@@ -33,6 +36,7 @@ const getCommandByDecisionIdRef = makeFunctionReference<"query">(
   "testingFunctions:getAgentCommandByDecisionId"
 );
 const getEventsForStreamRef = makeFunctionReference<"query">("testingFunctions:getEventsForStream");
+const getScopeByKeyRef = makeFunctionReference<"query">("testingFunctions:getScopeByKey");
 
 describe("Component-boundary authentication", () => {
   let t: ConvexTestingHelper;
@@ -163,6 +167,276 @@ describe("Component-boundary authentication", () => {
     });
     expect(events).toHaveLength(1);
     expect(events[0]?.boundedContext).toBe("orders");
+
+    const scopeKey = `tenant:tenant-scope-a:reservation:${generateTestId("scope")}`;
+    const scopeProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: "tenant-scope-a",
+    });
+
+    const scopeResult = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: scopeProof,
+    });
+
+    expect(scopeResult.success).toBe(true);
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope?.boundedContext).toBe("inventory");
+    expect(scope?.tenantId).toBe("tenant-scope-a");
+    expect(scope?.scopeType).toBe("reservation");
+    expect(scope?.currentVersion).toBe(1);
+  });
+
+  it("rejects commitScope when another bounded context reuses an existing scope key", async () => {
+    const scopeKey = `tenant:tenant-owned-scope:reservation:${generateTestId("scope")}`;
+    const createProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope:owner",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: "tenant-owned-scope",
+    });
+
+    const initial = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: createProof,
+    });
+    expect(initial.success).toBe(true);
+
+    const reuseProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope:reuse",
+      subjectId: "orders",
+      subjectType: "boundedContext",
+      boundedContext: "orders",
+      tenantId: "tenant-owned-scope",
+    });
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 1,
+      boundedContext: "orders",
+      streamIds: [generateTestId("stream")],
+      verificationProof: reuseProof,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected scope ownership mismatch to fail");
+    }
+    expect(result.error).toContain("belongs to bounded context inventory");
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope?.boundedContext).toBe("inventory");
+    expect(scope?.currentVersion).toBe(1);
+    expect(scope?.streamIds).toHaveLength(1);
+  });
+
+  it("rejects scoped append when another bounded context targets an existing scope", async () => {
+    const scopeKey = `tenant:tenant-scoped-append:reservation:${generateTestId("scope")}`;
+    const inventoryProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:scoped-append:owner",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: "tenant-scoped-append",
+    });
+
+    const created = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: inventoryProof,
+    });
+    expect(created.success).toBe(true);
+
+    const ordersProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:scoped-append:foreign",
+      subjectId: "orders",
+      subjectType: "boundedContext",
+      boundedContext: "orders",
+      tenantId: "tenant-scoped-append",
+    });
+    const foreignStreamId = generateTestId("ord");
+
+    const result = await testMutation(t, appendWithProofRef, {
+      streamType: "Order",
+      streamId: foreignStreamId,
+      expectedVersion: 0,
+      boundedContext: "orders",
+      tenantId: "tenant-scoped-append",
+      events: [
+        {
+          eventId: generateTestId("evt"),
+          eventType: "OrderCreated",
+          scopeKey,
+          payload: { orderId: foreignStreamId },
+          metadata: { correlationId: generateTestId("corr") },
+        },
+      ],
+      verificationProof: ordersProof,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected scoped append ownership mismatch to fail");
+    }
+    expect(result.error).toContain("belongs to bounded context inventory");
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope?.boundedContext).toBe("inventory");
+    expect(scope?.currentVersion).toBe(1);
+
+    const events = await testQuery(t, getEventsForStreamRef, {
+      streamType: "Order",
+      streamId: foreignStreamId,
+    });
+    expect(events).toHaveLength(0);
+  });
+
+  it("rejects a forged commitScope proof and creates no scope", async () => {
+    const scopeKey = `tenant:tenant-forged:reservation:${generateTestId("scope")}`;
+    const proof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope:forged",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: "tenant-forged",
+    });
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: { ...proof, signature: `${proof.signature}-forged` },
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected forged commitScope proof to fail");
+    }
+    expect(result.error).toContain("Verification proof rejected");
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope).toBeNull();
+  });
+
+  it("rejects commitScope with the wrong bounded context", async () => {
+    const scopeKey = `tenant:tenant-wrong-bc:reservation:${generateTestId("scope")}`;
+    const proof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope:wrong-bc",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "orders",
+      tenantId: "tenant-wrong-bc",
+    });
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: proof,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected wrong bounded context to fail");
+    }
+    expect(result.error).toContain("bounded context mismatch");
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope).toBeNull();
+  });
+
+  it("rejects commitScope with the wrong tenant", async () => {
+    const scopeKey = `tenant:tenant-a:reservation:${generateTestId("scope")}`;
+    const proof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope:tenant",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: "tenant-b",
+    });
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: proof,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected wrong tenant to fail");
+    }
+    expect(result.error).toContain("tenant mismatch");
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope).toBeNull();
+  });
+
+  it("rejects commitScope without a proof", async () => {
+    const scopeKey = `tenant:tenant-missing-proof:reservation:${generateTestId("scope")}`;
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected missing proof to fail");
+    }
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope).toBeNull();
+  });
+
+  it("rejects malformed scope keys before writing a scope", async () => {
+    const proof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:commitScope:malformed",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: "tenant-malformed",
+    });
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey: "invalid_scope_key",
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [generateTestId("stream")],
+      verificationProof: proof,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected malformed scope key to fail");
+    }
+    expect(result.error).toContain("Invalid scope key format");
   });
 
   it("rejects a forged proof and leaves no audit write behind", async () => {
