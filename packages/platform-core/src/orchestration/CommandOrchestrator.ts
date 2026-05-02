@@ -28,8 +28,12 @@ import type { Logger } from "../logging/types.js";
 import { createPlatformDefaultLogger } from "../logging/scoped.js";
 import type { PlatformMetrics } from "../metrics/index.js";
 import { createDefaultPlatformMetrics } from "../metrics/index.js";
+import { TransactionAbortError } from "../transactionAbort.js";
 
 const MAX_SECONDARY_PROJECTIONS = 50;
+type EventAppendResult = Awaited<
+  ReturnType<OrchestratorDependencies["eventStore"]["appendToStream"]>
+>;
 
 /**
  * @architect
@@ -317,6 +321,15 @@ export class CommandOrchestrator {
       boundedContext: config.boundedContext,
     });
 
+    if (
+      config.secondaryProjections &&
+      config.secondaryProjections.length > MAX_SECONDARY_PROJECTIONS
+    ) {
+      throw new Error(
+        `Command ${config.commandType} configured ${config.secondaryProjections.length} secondary projections. Maximum supported fan-out is ${MAX_SECONDARY_PROJECTIONS}.`
+      );
+    }
+
     // Type assertion explanation:
     // Convex's FunctionReference type system requires exact type matching for function
     // references, but our generic CommandConfig allows any function reference that matches
@@ -373,86 +386,107 @@ export class CommandOrchestrator {
 
       // Emit the failure event to the event store
       // Use handler-specified expectedVersion, or default to 0 for new streams
-      const failedAppendResult = await this.deps.eventStore.appendToStream(ctx, {
-        streamType: failedResult.event.streamType,
-        streamId: failedResult.event.streamId,
-        expectedVersion: failedResult.expectedVersion ?? 0,
-        boundedContext: config.boundedContext,
-        events: [
-          {
-            eventId: failedResult.event.eventId,
-            eventType: failedResult.event.eventType,
-            ...(failedResult.event.scopeKey !== undefined
-              ? { scopeKey: failedResult.event.scopeKey }
-              : {}),
-            payload: failedResult.event.payload,
-            metadata: failedResult.event.metadata,
-          },
-        ],
-      });
-
-      // 3b. Record command-event correlation for failed events
-      if (
-        failedAppendResult.status === "success" &&
-        this.deps.commandBusComponent?.recordCommandEventCorrelation
-      ) {
-        await ctx.runMutation(this.deps.commandBusComponent.recordCommandEventCorrelation, {
-          commandId,
-          eventIds: [failedResult.event.eventId],
-          commandType: config.commandType,
+      const failedAppendResult = this.requireSuccessfulAppend(
+        await this.deps.eventStore.appendToStream(ctx, {
+          streamType: failedResult.event.streamType,
+          streamId: failedResult.event.streamId,
+          expectedVersion: failedResult.expectedVersion ?? 0,
           boundedContext: config.boundedContext,
+          events: [
+            {
+              eventId: failedResult.event.eventId,
+              eventType: failedResult.event.eventType,
+              ...(failedResult.event.scopeKey !== undefined
+                ? { scopeKey: failedResult.event.scopeKey }
+                : {}),
+              payload: failedResult.event.payload,
+              metadata: failedResult.event.metadata,
+            },
+          ],
+        }),
+        {
+          commandType: config.commandType,
+          commandId,
+          correlationId,
+          eventId: failedResult.event.eventId,
+          streamType: failedResult.event.streamType,
+          streamId: failedResult.event.streamId,
+          expectedVersion: failedResult.expectedVersion ?? 0,
+          phase: "failed",
+        }
+      );
+
+      try {
+        // 3b. Record command-event correlation for failed events
+        if (this.deps.commandBusComponent?.recordCommandEventCorrelation) {
+          await ctx.runMutation(this.deps.commandBusComponent.recordCommandEventCorrelation, {
+            commandId,
+            eventIds: [failedResult.event.eventId],
+            commandType: config.commandType,
+            boundedContext: config.boundedContext,
+          });
+        }
+
+        // Trigger failed projection if configured
+        const failedGlobalPosition = failedAppendResult.globalPositions?.[0];
+
+        if (config.failedProjection && failedGlobalPosition !== undefined) {
+          const failedProjectionArgs = config.failedProjection.toProjectionArgs(
+            commandArgs,
+            failedResult,
+            failedGlobalPosition
+          );
+          const failedPartition = config.failedProjection.getPartitionKey(commandArgs);
+
+          // Use projection-specific onComplete, fall back to orchestrator default
+          const failedOnComplete =
+            config.failedProjection.onComplete ?? this.deps.defaultOnComplete;
+
+          await this.enqueueMutationWithMetrics(
+            "projectionPool",
+            this.deps.projectionPool,
+            ctx,
+            config.failedProjection.handler,
+            failedProjectionArgs,
+            {
+              ...(failedOnComplete ? { onComplete: failedOnComplete } : {}),
+              context: {
+                eventId: failedResult.event.eventId,
+                projectionName: config.failedProjection.projectionName,
+                // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+                partition: failedPartition,
+                correlationId: chain.correlationId,
+                causationId: chain.causationId,
+              },
+            }
+          );
+        }
+
+        // Update command as executed (business failure is still an execution)
+        await this.deps.commandBus.updateCommandResult(ctx, {
+          commandId,
+          status: "executed",
+          result: { status: "failed", reason: failedResult.reason },
+        });
+
+        return {
+          status: "failed" as const,
+          reason: failedResult.reason,
+          eventId: toEventId(failedResult.event.eventId),
+        };
+      } catch (error) {
+        this.abortAfterSuccessfulAppend(error, {
+          commandType: config.commandType,
+          commandId,
+          correlationId,
+          eventId: failedResult.event.eventId,
+          streamType: failedResult.event.streamType,
+          streamId: failedResult.event.streamId,
+          expectedVersion: failedResult.expectedVersion ?? 0,
+          phase: "failed",
+          appendStatus: "success",
         });
       }
-
-      // Trigger failed projection if configured
-      const failedGlobalPosition =
-        failedAppendResult.status === "success"
-          ? failedAppendResult.globalPositions?.[0]
-          : undefined;
-
-      if (config.failedProjection && failedGlobalPosition !== undefined) {
-        const failedProjectionArgs = config.failedProjection.toProjectionArgs(
-          commandArgs,
-          failedResult,
-          failedGlobalPosition
-        );
-        const failedPartition = config.failedProjection.getPartitionKey(commandArgs);
-
-        // Use projection-specific onComplete, fall back to orchestrator default
-        const failedOnComplete = config.failedProjection.onComplete ?? this.deps.defaultOnComplete;
-
-        await this.enqueueMutationWithMetrics(
-          "projectionPool",
-          this.deps.projectionPool,
-          ctx,
-          config.failedProjection.handler,
-          failedProjectionArgs,
-          {
-            ...(failedOnComplete ? { onComplete: failedOnComplete } : {}),
-            context: {
-              eventId: failedResult.event.eventId,
-              projectionName: config.failedProjection.projectionName,
-              // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-              partition: failedPartition,
-              correlationId: chain.correlationId,
-              causationId: chain.causationId,
-            },
-          }
-        );
-      }
-
-      // Update command as executed (business failure is still an execution)
-      await this.deps.commandBus.updateCommandResult(ctx, {
-        commandId,
-        status: "executed",
-        result: { status: "failed", reason: failedResult.reason },
-      });
-
-      return {
-        status: "failed" as const,
-        reason: failedResult.reason,
-        eventId: toEventId(failedResult.event.eventId),
-      };
     }
 
     // Cast to success result for type safety
@@ -468,269 +502,261 @@ export class CommandOrchestrator {
       version: successResult.version,
     });
 
-    const appendResult = await this.deps.eventStore.appendToStream(ctx, {
-      streamType: successResult.event.streamType,
-      streamId: successResult.event.streamId,
-      expectedVersion: successResult.version - 1, // Previous version
-      boundedContext: config.boundedContext,
-      events: [
-        {
-          eventId: successResult.event.eventId,
-          eventType: successResult.event.eventType,
-          ...(successResult.event.scopeKey !== undefined
-            ? { scopeKey: successResult.event.scopeKey }
-            : {}),
-          payload: successResult.event.payload,
-          metadata: successResult.event.metadata,
-        },
-      ],
-    });
-
-    if (appendResult.status === "conflict") {
-      this.logger.warn("Event Store OCC conflict", {
+    const appendResult = this.requireSuccessfulAppend(
+      await this.deps.eventStore.appendToStream(ctx, {
+        streamType: successResult.event.streamType,
+        streamId: successResult.event.streamId,
+        expectedVersion: successResult.version - 1, // Previous version
+        boundedContext: config.boundedContext,
+        events: [
+          {
+            eventId: successResult.event.eventId,
+            eventType: successResult.event.eventType,
+            ...(successResult.event.scopeKey !== undefined
+              ? { scopeKey: successResult.event.scopeKey }
+              : {}),
+            payload: successResult.event.payload,
+            metadata: successResult.event.metadata,
+          },
+        ],
+      }),
+      {
         commandType: config.commandType,
         commandId,
         correlationId,
         eventId: successResult.event.eventId,
+        streamType: successResult.event.streamType,
         streamId: successResult.event.streamId,
         expectedVersion: successResult.version - 1,
-      });
-      // OCC conflict handling: CMS updated but Event Store failed
-      // The command must be retried - Command Bus idempotency ensures
-      // the retry returns the cached result without re-executing the handler.
-      await this.deps.commandBus.updateCommandResult(ctx, {
-        commandId,
-        status: "rejected",
-        result: {
-          status: "rejected",
-          code: "EVENT_STORE_CONFLICT",
-          reason: "Event store version conflict",
-        },
-      });
-      return {
-        status: "rejected" as const,
-        code: "EVENT_STORE_CONFLICT",
-        reason: "Event store version conflict",
-      };
-    }
-
-    // 4a. Record command-event correlation for successful events
-    if (this.deps.commandBusComponent?.recordCommandEventCorrelation) {
-      await ctx.runMutation(this.deps.commandBusComponent.recordCommandEventCorrelation, {
-        commandId,
-        eventIds: [successResult.event.eventId],
-        commandType: config.commandType,
-        boundedContext: config.boundedContext,
-      });
-    }
-
-    // 5. Trigger projection via Workpool with dead letter support
-    this.logger.debug("Event appended successfully", {
-      commandType: config.commandType,
-      commandId,
-      eventId: successResult.event.eventId,
-      globalPosition: appendResult.globalPositions?.[0],
-    });
-
-    const globalPosition = appendResult.globalPositions?.[0];
-
-    // GlobalPosition must always be defined after a successful Event Store append.
-    // If undefined, this indicates a bug in the Event Store component or an unexpected
-    // edge case that requires investigation. We fail fast here rather than silently
-    // skipping projections, which would cause hard-to-debug inconsistencies.
-    if (globalPosition === undefined) {
-      throw new Error(
-        `Event Store returned undefined globalPosition for event ${successResult.event.eventId}. ` +
-          `This indicates a bug in the Event Store append operation. ` +
-          `Stream: ${successResult.event.streamType}:${successResult.event.streamId}, ` +
-          `Version: ${successResult.version}`
-      );
-    }
-
-    const projectionArgs = config.projection.toProjectionArgs(
-      commandArgs,
-      successResult as Extract<TResult, CommandHandlerSuccess<TData>>,
-      globalPosition
-    );
-    const partition = config.projection.getPartitionKey(commandArgs);
-
-    // Use projection-specific onComplete, fall back to orchestrator default
-    const onComplete = config.projection.onComplete ?? this.deps.defaultOnComplete;
-
-    await this.enqueueMutationWithMetrics(
-      "projectionPool",
-      this.deps.projectionPool,
-      ctx,
-      config.projection.handler,
-      projectionArgs,
-      {
-        // Note: key-based partitioning not yet available in workpool
-        // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-        ...(onComplete ? { onComplete } : {}),
-        context: {
-          eventId: successResult.event.eventId,
-          projectionName: config.projection.projectionName,
-          // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-          partition,
-          // Correlation chain for tracing
-          correlationId: chain.correlationId,
-          causationId: chain.causationId,
-        },
+        phase: "success",
       }
     );
 
-    this.logger.debug("Projection triggered", {
-      commandType: config.commandType,
-      commandId,
-      projectionName: config.projection.projectionName,
-      partitionKey: partition.value,
-    });
+    try {
+      // 4a. Record command-event correlation for successful events
+      if (this.deps.commandBusComponent?.recordCommandEventCorrelation) {
+        await ctx.runMutation(this.deps.commandBusComponent.recordCommandEventCorrelation, {
+          commandId,
+          eventIds: [successResult.event.eventId],
+          commandType: config.commandType,
+          boundedContext: config.boundedContext,
+        });
+      }
 
-    // 5a. Trigger secondary projections in parallel (e.g., cross-context projections)
-    //
-    // NOTE on batching: We cannot use enqueueMutationBatch here because:
-    // 1. Each projection may have a DIFFERENT handler (batch requires same handler)
-    // 2. Each projection needs a DIFFERENT context for dead letter tracking
-    //    (projectionName, partitionKey differ per projection)
-    // 3. @convex-dev/workpool's batch API applies a single options object to all items
-    //
-    // The WorkpoolClient.enqueueMutationBatch method is available for future use
-    // if Workpool adds support for per-item context.
-    if (config.secondaryProjections) {
-      if (config.secondaryProjections.length > MAX_SECONDARY_PROJECTIONS) {
+      // 5. Trigger projection via Workpool with dead letter support
+      this.logger.debug("Event appended successfully", {
+        commandType: config.commandType,
+        commandId,
+        eventId: successResult.event.eventId,
+        globalPosition: appendResult.globalPositions?.[0],
+      });
+
+      const globalPosition = appendResult.globalPositions?.[0];
+
+      // GlobalPosition must always be defined after a successful Event Store append.
+      // If undefined, this indicates a bug in the Event Store component or an unexpected
+      // edge case that requires investigation. We fail fast here rather than silently
+      // skipping projections, which would cause hard-to-debug inconsistencies.
+      if (globalPosition === undefined) {
         throw new Error(
-          `Command ${config.commandType} configured ${config.secondaryProjections.length} secondary projections. Maximum supported fan-out is ${MAX_SECONDARY_PROJECTIONS}.`
+          `Event Store returned undefined globalPosition for event ${successResult.event.eventId}. ` +
+            `This indicates a bug in the Event Store append operation. ` +
+            `Stream: ${successResult.event.streamType}:${successResult.event.streamId}, ` +
+            `Version: ${successResult.version}`
         );
       }
 
-      await Promise.all(
-        config.secondaryProjections.map(async (secondary) => {
-          const secondaryArgs = secondary.toProjectionArgs(
-            commandArgs,
-            successResult as Extract<TResult, CommandHandlerSuccess<TData>>,
-            globalPosition
-          );
-          const secondaryPartition = secondary.getPartitionKey(commandArgs);
-
-          // Use secondary-specific onComplete, fall back to orchestrator default
-          const secondaryOnComplete = secondary.onComplete ?? this.deps.defaultOnComplete;
-
-          return this.enqueueMutationWithMetrics(
-            "fanoutPool",
-            this.deps.fanoutPool,
-            ctx,
-            secondary.handler,
-            secondaryArgs,
-            {
-              // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-              ...(secondaryOnComplete ? { onComplete: secondaryOnComplete } : {}),
-              context: {
-                eventId: successResult.event.eventId,
-                projectionName: secondary.projectionName,
-                // Partition key wrapped in structured field (Convex validators reject dynamic keys)
-                partition: secondaryPartition,
-                // Correlation chain for tracing
-                correlationId: chain.correlationId,
-                causationId: chain.causationId,
-              },
-            }
-          );
-        })
+      const projectionArgs = config.projection.toProjectionArgs(
+        commandArgs,
+        successResult as Extract<TResult, CommandHandlerSuccess<TData>>,
+        globalPosition
       );
-    }
+      const partition = config.projection.getPartitionKey(commandArgs);
 
-    // 6. Route to saga if configured (for cross-context coordination)
-    // Note: Saga routing is scheduled async via workpool to avoid deep nesting.
-    // Convex has a 16-level document depth limit, and synchronous saga routing
-    // would exceed it due to nested workflow creation calls.
-    if (config.sagaRoute) {
-      const eventType = config.sagaRoute.getEventType(commandArgs);
-      // Use saga-specific onComplete, fall back to orchestrator default
-      const sagaOnComplete = config.sagaRoute.onComplete ?? this.deps.defaultOnComplete;
+      // Use projection-specific onComplete, fall back to orchestrator default
+      const onComplete = config.projection.onComplete ?? this.deps.defaultOnComplete;
 
       await this.enqueueMutationWithMetrics(
-        "sagaPool",
-        this.deps.sagaPool,
+        "projectionPool",
+        this.deps.projectionPool,
         ctx,
-        config.sagaRoute.router,
+        config.projection.handler,
+        projectionArgs,
         {
-          eventType,
-          eventId: successResult.event.eventId,
-          streamId: successResult.event.streamId,
-          globalPosition,
-          payload: successResult.event.payload,
-          // Pass correlation chain to saga router for derived chains
-          correlationId: chain.correlationId,
-        },
-        {
+          // Note: key-based partitioning not yet available in workpool
           // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
-          ...(sagaOnComplete ? { onComplete: sagaOnComplete } : {}),
+          ...(onComplete ? { onComplete } : {}),
           context: {
-            purpose: "saga-routing",
-            eventType,
-            streamId: successResult.event.streamId,
+            eventId: successResult.event.eventId,
+            projectionName: config.projection.projectionName,
+            // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+            partition,
             // Correlation chain for tracing
             correlationId: chain.correlationId,
             causationId: chain.causationId,
           },
         }
       );
-    }
 
-    // 6a. Publish to EventBus if configured
-    // The EventBus provides an alternative publish/subscribe model for event delivery.
-    // It can be used alongside or instead of direct projection triggering above.
-    if (this.deps.eventBus) {
-      await this.deps.eventBus.publish(
-        ctx,
-        {
-          eventId: successResult.event.eventId,
-          eventType: successResult.event.eventType,
-          streamType: successResult.event.streamType,
-          streamId: successResult.event.streamId,
-          // Backlog: T5-006. Make category and schemaVersion configurable via CommandConfig.
-          category: DEFAULT_EVENT_CATEGORY,
-          schemaVersion: DEFAULT_SCHEMA_VERSION,
-          boundedContext: config.boundedContext,
-          globalPosition,
-          timestamp: Date.now(),
-          payload: successResult.event.payload,
-          correlation: {
+      this.logger.debug("Projection triggered", {
+        commandType: config.commandType,
+        commandId,
+        projectionName: config.projection.projectionName,
+        partitionKey: partition.value,
+      });
+
+      // 5a. Trigger secondary projections in parallel (e.g., cross-context projections)
+      //
+      // NOTE on batching: We cannot use enqueueMutationBatch here because:
+      // 1. Each projection may have a DIFFERENT handler (batch requires same handler)
+      // 2. Each projection needs a DIFFERENT context for dead letter tracking
+      //    (projectionName, partitionKey differ per projection)
+      // 3. @convex-dev/workpool's batch API applies a single options object to all items
+      //
+      // The WorkpoolClient.enqueueMutationBatch method is available for future use
+      // if Workpool adds support for per-item context.
+      if (config.secondaryProjections) {
+        await Promise.all(
+          config.secondaryProjections.map(async (secondary) => {
+            const secondaryArgs = secondary.toProjectionArgs(
+              commandArgs,
+              successResult as Extract<TResult, CommandHandlerSuccess<TData>>,
+              globalPosition
+            );
+            const secondaryPartition = secondary.getPartitionKey(commandArgs);
+
+            // Use secondary-specific onComplete, fall back to orchestrator default
+            const secondaryOnComplete = secondary.onComplete ?? this.deps.defaultOnComplete;
+
+            return this.enqueueMutationWithMetrics(
+              "fanoutPool",
+              this.deps.fanoutPool,
+              ctx,
+              secondary.handler,
+              secondaryArgs,
+              {
+                // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
+                ...(secondaryOnComplete ? { onComplete: secondaryOnComplete } : {}),
+                context: {
+                  eventId: successResult.event.eventId,
+                  projectionName: secondary.projectionName,
+                  // Partition key wrapped in structured field (Convex validators reject dynamic keys)
+                  partition: secondaryPartition,
+                  // Correlation chain for tracing
+                  correlationId: chain.correlationId,
+                  causationId: chain.causationId,
+                },
+              }
+            );
+          })
+        );
+      }
+
+      // 6. Route to saga if configured (for cross-context coordination)
+      // Note: Saga routing is scheduled async via workpool to avoid deep nesting.
+      // Convex has a 16-level document depth limit, and synchronous saga routing
+      // would exceed it due to nested workflow creation calls.
+      if (config.sagaRoute) {
+        const eventType = config.sagaRoute.getEventType(commandArgs);
+        // Use saga-specific onComplete, fall back to orchestrator default
+        const sagaOnComplete = config.sagaRoute.onComplete ?? this.deps.defaultOnComplete;
+
+        await this.enqueueMutationWithMetrics(
+          "sagaPool",
+          this.deps.sagaPool,
+          ctx,
+          config.sagaRoute.router,
+          {
+            eventType,
+            eventId: successResult.event.eventId,
+            streamId: successResult.event.streamId,
+            globalPosition,
+            payload: successResult.event.payload,
+            // Pass correlation chain to saga router for derived chains
             correlationId: chain.correlationId,
-            causationId: chain.causationId,
           },
-        },
-        chain
-      );
-    }
+          {
+            // Only include onComplete if defined (exactOptionalPropertyTypes compliance)
+            ...(sagaOnComplete ? { onComplete: sagaOnComplete } : {}),
+            context: {
+              purpose: "saga-routing",
+              eventType,
+              streamId: successResult.event.streamId,
+              // Correlation chain for tracing
+              correlationId: chain.correlationId,
+              causationId: chain.causationId,
+            },
+          }
+        );
+      }
 
-    // 7. Update command status to executed
-    await this.deps.commandBus.updateCommandResult(ctx, {
-      commandId,
-      status: "executed",
-      result: {
-        status: "success",
+      // 6a. Publish to EventBus if configured
+      // The EventBus provides an alternative publish/subscribe model for event delivery.
+      // It can be used alongside or instead of direct projection triggering above.
+      if (this.deps.eventBus) {
+        await this.deps.eventBus.publish(
+          ctx,
+          {
+            eventId: successResult.event.eventId,
+            eventType: successResult.event.eventType,
+            streamType: successResult.event.streamType,
+            streamId: successResult.event.streamId,
+            // Backlog: T5-006. Make category and schemaVersion configurable via CommandConfig.
+            category: DEFAULT_EVENT_CATEGORY,
+            schemaVersion: DEFAULT_SCHEMA_VERSION,
+            boundedContext: config.boundedContext,
+            globalPosition,
+            timestamp: Date.now(),
+            payload: successResult.event.payload,
+            correlation: {
+              correlationId: chain.correlationId,
+              causationId: chain.causationId,
+            },
+          },
+          chain
+        );
+      }
+
+      // 7. Update command status to executed
+      await this.deps.commandBus.updateCommandResult(ctx, {
+        commandId,
+        status: "executed",
+        result: {
+          status: "success",
+          data: successResult.data,
+          version: successResult.version,
+        },
+      });
+
+      this.logger.info("Command completed", {
+        commandType: config.commandType,
+        commandId,
+        correlationId,
+        eventId: successResult.event.eventId,
+        globalPosition,
+        version: successResult.version,
+      });
+
+      return {
+        status: "success" as const,
         data: successResult.data,
         version: successResult.version,
-      },
-    });
-
-    this.logger.info("Command completed", {
-      commandType: config.commandType,
-      commandId,
-      correlationId,
-      eventId: successResult.event.eventId,
-      globalPosition,
-      version: successResult.version,
-    });
-
-    return {
-      status: "success" as const,
-      data: successResult.data,
-      version: successResult.version,
-      eventId: toEventId(successResult.event.eventId),
-      globalPosition,
-    };
+        eventId: toEventId(successResult.event.eventId),
+        globalPosition,
+      };
+    } catch (error) {
+      this.abortAfterSuccessfulAppend(error, {
+        commandType: config.commandType,
+        commandId,
+        correlationId,
+        eventId: successResult.event.eventId,
+        streamType: successResult.event.streamType,
+        streamId: successResult.event.streamId,
+        expectedVersion: successResult.version - 1,
+        phase: "success",
+        appendStatus: "success",
+      });
+    }
   }
 
   private async enqueueMutationWithMetrics(
@@ -752,5 +778,97 @@ export class CommandOrchestrator {
       this.pendingQueueDepth.set(poolName, nextDepth);
       this.metrics.gauge("queue.depth", nextDepth, { pool: poolName });
     }
+  }
+
+  private requireSuccessfulAppend(
+    appendResult: EventAppendResult,
+    context: {
+      commandType: string;
+      commandId: CommandId;
+      correlationId: string;
+      eventId: EventId;
+      streamType: string;
+      streamId: string;
+      expectedVersion: number;
+      phase: "success" | "failed";
+    }
+  ): EventAppendResult & { status: "success" } {
+    if (appendResult.status === "success") {
+      return appendResult as EventAppendResult & { status: "success" };
+    }
+
+    const errorContext = {
+      commandType: context.commandType,
+      commandId: context.commandId,
+      correlationId: context.correlationId,
+      eventId: context.eventId,
+      streamType: context.streamType,
+      streamId: context.streamId,
+      expectedVersion: context.expectedVersion,
+      phase: context.phase,
+      appendStatus: appendResult.status,
+      ...(appendResult.currentVersion !== undefined
+        ? { currentVersion: appendResult.currentVersion }
+        : {}),
+      ...(appendResult.existingEventId !== undefined
+        ? { existingEventId: appendResult.existingEventId }
+        : {}),
+      ...(appendResult.auditId !== undefined ? { auditId: appendResult.auditId } : {}),
+    } satisfies UnknownRecord;
+
+    if (appendResult.status === "conflict") {
+      this.logger.warn("Event Store OCC conflict requires transaction abort", errorContext);
+      throw new TransactionAbortError(
+        "EVENT_STORE_CONFLICT",
+        `Event store version conflict while appending ${context.phase} event ${context.eventId}`,
+        errorContext
+      );
+    }
+
+    this.logger.error("Event Store append returned non-success status", errorContext);
+    throw new TransactionAbortError(
+      "EVENT_STORE_APPEND_ABORT",
+      `Event store append returned ${appendResult.status} while appending ${context.phase} event ${context.eventId}`,
+      errorContext
+    );
+  }
+
+  private abortAfterSuccessfulAppend(
+    error: unknown,
+    context: {
+      commandType: string;
+      commandId: CommandId;
+      correlationId: string;
+      eventId: EventId;
+      streamType: string;
+      streamId: string;
+      expectedVersion: number;
+      phase: "success" | "failed";
+      appendStatus: "success";
+    }
+  ): never {
+    if (error instanceof TransactionAbortError) {
+      throw error;
+    }
+
+    const errorContext = {
+      commandType: context.commandType,
+      commandId: context.commandId,
+      correlationId: context.correlationId,
+      eventId: context.eventId,
+      streamType: context.streamType,
+      streamId: context.streamId,
+      expectedVersion: context.expectedVersion,
+      phase: context.phase,
+      appendStatus: context.appendStatus,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    } satisfies UnknownRecord;
+
+    this.logger.error("Post-append failure requires transaction abort", errorContext);
+    throw new TransactionAbortError(
+      "EVENT_STORE_POST_APPEND_ABORT",
+      `Post-append orchestration failed for ${context.phase} event ${context.eventId}`,
+      errorContext
+    );
   }
 }

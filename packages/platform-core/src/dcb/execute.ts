@@ -8,8 +8,8 @@
  * 2. Loads all entities in scope
  * 3. Checks scope version (OCC)
  * 4. Calls pure DCB decider with aggregated state
- * 5. Applies state updates atomically
- * 6. Commits scope version
+ * 5. Commits scope version
+ * 6. Applies state updates atomically
  * 7. Returns events for Event Store
  *
  * @module dcb/execute
@@ -69,14 +69,15 @@ interface DCBMutationContext {
  * 3. **Build Aggregated State**: Combine entity states for decider input
  * 4. **Execute Decider**: Call pure business logic with aggregated state
  * 5. **Handle Result**: Process success/rejected/failed outcomes
- * 6. **Apply Updates**: Persist state changes to individual entities
- * 7. **Commit Scope**: Increment scope version for OCC
+ * 6. **Commit Scope**: Increment scope version for OCC before entity writes
+ * 7. **Apply Updates**: Persist state changes only after scope commit succeeds
  *
  * ## OCC Behavior
  *
  * - If `expectedVersion` doesn't match current scope version, returns `conflict`
  * - For new scopes (expectedVersion = 0), creates the scope record
- * - Scope version is atomically incremented on successful commit
+ * - Scope version is incremented before entity writes so conflicts never leave
+ *   partial state behind
  *
  * @param ctx - Convex mutation context with scope management functions
  * @param config - DCB execution configuration
@@ -336,46 +337,41 @@ export async function executeWithDCB<
   }
 
   // =========================================================================
-  // Step 8: Apply State Updates (Success Path)
+  // Step 8: Validate State Updates and Prepare Scope Commit (Success Path)
   // =========================================================================
 
   if (isSuccess(deciderResult)) {
     const stateUpdates = deciderResult.stateUpdate;
 
+    const pendingUpdates: Array<{
+      streamId: string;
+      entityState: DCBEntityState<TCms, TId>;
+      update: TStateUpdate;
+    }> = [];
+
     // Track which stream IDs were updated for scope tracking
     const updatedStreamIds: string[] = [];
 
-    // Apply updates to each entity - fail fast if decider emits update for unknown entity
+    // Validate each entity update before any write or scope commit occurs.
     for (const [streamId, update] of stateUpdates.entries()) {
       const entityState = entityStates.get(streamId);
       if (!entityState) {
         log.error("DCB state update references unknown stream", { streamId });
         throw new Error(`Unknown streamId in state update: ${streamId}`);
       }
-      await applyUpdate(ctx, entityState._id, entityState.cms, update, newVersion, now);
+      pendingUpdates.push({ streamId, entityState, update });
       updatedStreamIds.push(streamId);
-
-      log.debug("DCB entity updated", {
-        streamId,
-        newVersion,
-      });
     }
 
     // =========================================================================
     // Step 9: Commit Scope Version (OCC Final Check)
     // =========================================================================
 
-    // If scopeOperations provided, commit scope version with OCC
-    // This is the atomic guarantee - if another transaction modified the scope
-    // between our read and now, this will detect it
+    // Commit scope before entity writes so a returned conflict means nothing was patched.
     if (scopeOperations) {
       const commitResult = await scopeOperations.commitScope(updatedStreamIds);
 
       if (commitResult.status === "conflict") {
-        // OCC conflict detected - another operation modified the scope.
-        // IMPORTANT: Entity updates from applyUpdate have already been written and
-        // will persist (Convex only rolls back on thrown errors, not early returns).
-        // Callers must handle retry logic appropriately.
         log.warn("DCB scope commit conflict", {
           scopeKey,
           expectedVersion,
@@ -390,6 +386,19 @@ export async function executeWithDCB<
       log.debug("DCB scope committed", {
         scopeKey,
         newVersion: commitResult.newVersion,
+      });
+    }
+
+    // =========================================================================
+    // Step 10: Apply State Updates
+    // =========================================================================
+
+    for (const { streamId, entityState, update } of pendingUpdates) {
+      await applyUpdate(ctx, entityState._id, entityState.cms, update, newVersion, now);
+
+      log.debug("DCB entity updated", {
+        streamId,
+        newVersion,
       });
     }
 

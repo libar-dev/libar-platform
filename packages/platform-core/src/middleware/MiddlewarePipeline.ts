@@ -26,6 +26,7 @@ import type {
 } from "./types.js";
 import type { CommandHandlerResult } from "../orchestration/types.js";
 import type { UnknownRecord } from "../types.js";
+import { isTransactionAbortError } from "../transactionAbort.js";
 
 /**
  * Pipeline for executing command middlewares in order.
@@ -153,6 +154,10 @@ export class MiddlewarePipeline<TCustom = UnknownRecord> {
         ctx = beforeResult.ctx;
         executedMiddlewares.push(middleware);
       } catch (error) {
+        if (isTransactionAbortError(error)) {
+          throw error;
+        }
+
         // Middleware error - treat as rejected (infrastructure error)
         // Note: Debug logging should be handled via custom middleware or external logger
         return {
@@ -169,6 +174,10 @@ export class MiddlewarePipeline<TCustom = UnknownRecord> {
     try {
       result = await handler();
     } catch (error) {
+      if (isTransactionAbortError(error)) {
+        throw error;
+      }
+
       // Handler threw - wrap as rejected result
       result = {
         status: "rejected",
@@ -201,6 +210,10 @@ export class MiddlewarePipeline<TCustom = UnknownRecord> {
       try {
         currentResult = await middleware.after(ctx, currentResult);
       } catch (error) {
+        if (isTransactionAbortError(error)) {
+          throw error;
+        }
+
         // After hook error - continue with current result but notify via callback
         // This allows monitoring/logging of after-hook failures without failing the command
         if (this.options.onAfterHookError) {
