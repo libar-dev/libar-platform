@@ -38,7 +38,7 @@ Feature: DCB Conflict Retry
   # Retry Behavior
   # ============================================================================
 
-  Rule: OCC conflicts trigger automatic retry via Workpool
+  Rule: OCC conflicts trigger automatic retry scheduling via Workpool
 
     @happy-path
     Scenario: Conflict triggers retry with updated version
@@ -58,7 +58,7 @@ Feature: DCB Conflict Retry
       And the code should be "DCB_MAX_RETRIES_EXCEEDED"
 
     @edge-case
-    Scenario: Partition key ensures scope serialization
+    Scenario: Scope-aware scheduling key is preserved
         Given scope key "tenant:t1:reservation:r1"
       When conflict triggers retry
       Then partition key should be "dcb:tenant:t1:reservation:r1"

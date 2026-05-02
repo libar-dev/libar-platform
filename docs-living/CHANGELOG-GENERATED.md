@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Repo Level Docs Generation**: As a monorepo maintainer, I want unified documentation generation from multiple sources.
 - **Process Metadata Expansion**: The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
 - **Codec Driven Reference Generation**: Reference documentation is specified via 11 recipe `.feature` files in `architect/recipes/`.
+- **PDR 021 Platform Store Runtime Dependency On Platform Core**
 - **PDR 020 Events Table Index Policy**
 - **PDR 019 V Any Vs V Unknown Boundary Policy**
 - **PDR 018 Idempotency Enforcement For Append To Stream**
@@ -59,6 +60,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **PDR 009 Design Session Methodology**
 - **PDR 008 Example App Purpose**
 - **PDR 007 Two Tier Spec Architecture**
+- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
+- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 - **Workpool Partitioning Strategy**: Problem: ADR-018 defines critical partition key strategies for preventing OCC conflicts and ensuring per-entity event...
 - **Saga Orchestration**: Problem: Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot use atomic transactions because bounded...
 - **Reservation Pattern**: Problem: Uniqueness constraints before entity creation require check-then-create patterns with race condition risk,...
@@ -78,8 +81,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Bdd Testing Infrastructure**: Problem: Domain logic tests require infrastructure (Docker, database).
 - **Agent Command Infrastructure**: Problem: Three interconnected gaps in agent command infrastructure: 1.
 - **Agent As Bounded Context**: Problem: AI agents are invoked manually without integration into the event-driven architecture.
-- **Example App Modernization**: Problem: The `order-management` example app has grown organically during platform development.
-- **Agent Churn Risk Completion**: Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c...
 
 ---
 
@@ -111,16 +112,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Saga Registry**: Saga registry providing idempotent saga start (startSagaIfNotExists), status tracking, and Zod payload validation at...
 - **Order Fulfillment Saga**: Order Fulfillment Saga.
 - **Saga Completion Handler**: Workflow onComplete callback handler.
-- **Projection Definitions**: Registry of all projection definitions and replay handler registry.
-- **Projection Dead Letters**: Dead letter queue for failed projection and subscription handlers.
 - **Reservation Release PM**: Process manager: OrderCancelled -> ReleaseReservation command.
 - **Order Notification PM**: Process manager: OrderConfirmed -> SendNotification command.
+- **Projection Definitions**: Registry of all projection definitions and replay handler registry.
+- **Projection Dead Letters**: Dead letter queue for failed projection and subscription handlers.
 - **Integration Routes**: Integration event routes.
 - **Integration Event Handlers**: Integration event handlers.
 - **Integration Event Schemas**: Integration event schema definitions for cross-context communication.
 - **Integration Dead Letters**: Dead letter queue management for cross-context event publications.
-- **Command Registry**: Command registry with Zod validation schemas per command type.
 - **Durable Append Action**: Durable Append - Workpool-backed event append with retry.
+- **Command Registry**: Command registry with Zod validation schemas per command type.
 - **Event Store**: Central event storage component for Event Sourcing.
 - **CMS Repository**: Factory for typed data access with automatic schema upcasting in dual-write handlers.
 - **Query Abstraction**: Query factory functions for creating type-safe read model queries.
@@ -131,8 +132,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
-- **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
+- **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
 - **Durable Cross-Context Event Publication**: Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.
 - **Poison Event Handling**: Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...
@@ -141,24 +142,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Event Store Durability**: Guaranteed event persistence patterns for Convex-native event sourcing.
 - **Idempotent Event Append**: Ensures each logical event is stored exactly once in the event store, regardless of how many times the append...
 - **Durable Append via Workpool Actions**: Failed event appends from async contexts are retried via Workpool actions with exponential backoff until success or...
+- **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
 - **DCB Types**: Types for scope-based multi-entity coordination within bounded contexts.
 - **DCB Scope Key Utilities**: Re-export the canonical shared scope-key contract used across platform packages.
 - **Correlation Chain System**: Correlation types for tracking causal relationships in command-event flows.
-- **CMS Dual Write**: Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside...
-- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Bounded Context Identity**: BoundedContextFoundation:bounded-context-identity Core identification contract for bounded contexts, providing...
 - **Dual Write Contract**: BoundedContextFoundation:dual-write-contract Type-safe contract for bounded contexts using the dual-write pattern,...
+- **Command Bus**: Type-safe client for the Convex Command Bus component providing infrastructure-level idempotency.
 - **Payment Outbox Handler**: Payment Outbox Handler - Captures payment action results as events.
 - **Mock Payment Actions**: Mock Payment Actions - Simulated external payment service.
 - **Order Summary Projection**: OrderSummary projection handlers (app-level).
 - **Order Items Projection**: Order line items read model.
 - **Product Catalog Projection**: Product catalog read model.
 - **Active Reservations Projection**: Tracks active stock reservations and updates stock levels.
-- **Order With Inventory Projection**: OrderWithInventoryStatus cross-context projection handlers (app-level).
 - **Customer Cancellations Projection**: Customer cancellation history with rolling 30-day window.
+- **Order With Inventory Projection**: OrderWithInventoryStatus cross-context projection handlers (app-level).
 - **Order Command Configs**: Command configs for 6 order commands.
 - **Inventory Command Configs**: Command configs for 7 inventory commands.
-- **Foundation Infrastructure**: Consolidates old roadmap phases 0-13 into a single completed milestone.
 - **Workpool Partition Key Types**: Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.
 - **Workpool Partitioning Strategy**: Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.
 - **Partition Key Helper Functions**: Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.
@@ -166,13 +166,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Projection Complexity Classifier**: Analyzes projection characteristics and recommends appropriate partition strategies using a decision tree approach.
 - **Types for event replay and projection rebuilding.**: Types for event replay and projection rebuilding.
 - **Progress calculation utilities for replay operations.**: Progress calculation utilities for replay operations.
-- **Order Command Handlers**: Order command handlers implementing the dual-write pattern.
-- **Order Domain Events**: Orders BC domain events (6 types, 2 schema versions).
 - **Inventory Command Handlers**: Inventory command handlers implementing the dual-write pattern.
 - **Inventory Domain Events**: Inventory BC domain events (7 types).
+- **Order Command Handlers**: Order command handlers implementing the dual-write pattern.
+- **Order Domain Events**: Orders BC domain events (6 types, 2 schema versions).
 - **Agent On Complete Handler**: Workpool job completion handler for agent BC.
 - **Agent Action Handler**: Agent action handler for churn risk detection.
-- **Order Deciders**: Pure decision functions for Order aggregate.
+- **Foundation Infrastructure**: Consolidates old roadmap phases 0-13 into a single completed milestone.
 - **Inventory Deciders**: Pure decision functions for Inventory aggregate (product + reservation).
+- **Order Deciders**: Pure decision functions for Order aggregate.
 
 ---

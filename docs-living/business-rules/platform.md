@@ -955,20 +955,20 @@ Different services have different failure characteristics.
 
 > **Invariant:** OCC conflicts from DCB operations must be retried automatically with exponential backoff and scope-based serialization—callers must not implement retry logic.
 >
-> **Rationale:** Manual retry leads to inconsistent patterns, missing jitter (thundering herd), and no partition ordering (OCC storms). Workpool provides durable retry with partition keys that serialize retries per scope, preventing concurrent attempts.
+> **Rationale:** Manual retry leads to inconsistent patterns, missing jitter (thundering herd), and no partition ordering (OCC storms). The helper uses Workpool for durable scheduling and scope-based serialization; it does not rely on Workpool's built-in mutation retry behavior.
 
 **Verified by:**
 - DCB succeeds on first attempt
 - DCB conflict triggers automatic retry
 - Max retries exceeded returns rejected
 - Backoff increases exponentially with jitter
-- Partition key ensures scope serialization
+- Scope-aware scheduling metadata is preserved
 - DCB retry with onComplete callback
 - Version advances between retry scheduling and execution
 - Version advances between retry scheduling and execution
 
-    The `withDCBRetry` helper wraps `executeWithDCB` and uses Workpool to automatically
-    retry on OCC conflicts with exponential backoff and jitter.
+    The `withDCBRetry` helper wraps `executeWithDCB` and uses Workpool to schedule
+    explicit retries on OCC conflicts with exponential backoff and jitter.
 
 **Implementation:** `@libar-dev/platform-core/src/dcb/withRetry.ts`
 

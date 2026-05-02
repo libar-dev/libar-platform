@@ -828,9 +828,9 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
   });
 
   // =========================================================================
-  // Rule: Partition key ensures scope serialization
+  // Rule: Scope-aware scheduling metadata stays stable across retries
   // =========================================================================
-  Rule("Partition key ensures scope serialization", ({ RuleScenario }) => {
+  Rule("Scope-aware scheduling metadata stays stable across retries", ({ RuleScenario }) => {
     RuleScenario("Retries use consistent partition key", ({ Given, When, Then, And }) => {
       let scopeKey: string;
 
@@ -862,8 +862,8 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
       });
 
       And("retries for the same scope execute in FIFO order", () => {
-        // Partition keys ensure FIFO ordering within Workpool
-        // This is guaranteed by Workpool's partition key semantics
+        // The adapter preserves stable scope-aware scheduling metadata.
+        // FIFO ordering depends on the underlying Workpool runtime support.
         expect(true).toBe(true);
       });
     });

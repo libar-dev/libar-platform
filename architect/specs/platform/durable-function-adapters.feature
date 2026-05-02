@@ -28,7 +28,7 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
   **Why It Matters for Convex-Native ES:**
   | Benefit | How |
   | Production-grade rate limiting | Sharding, persistence, reservation patterns via component |
-  | Automatic OCC retry | Workpool handles backoff, jitter, partition ordering |
+  | Automatic OCC retry | Explicit Workpool scheduling applies backoff and jitter consistently |
   | Zero middleware changes | Adapter implements existing `RateLimitChecker` interface |
   | Consistent retry patterns | Centralized backoff config, prevents boilerplate |
 
@@ -45,8 +45,8 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
   DCB executeWithDCB                     DCB withDCBRetry
        │                                       │
        ▼                                       ▼
-  Returns { status: "conflict" }         Auto-retry via Workpool
-  (caller handles retry)                 (backoff, jitter, partition key)
+  Returns { status: "conflict" }         Retry scheduled via Workpool helper
+  (caller handles retry)                 (backoff, jitter, serialized scheduling)
   """
 
   # ===========================================================================
@@ -202,18 +202,19 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
     exponential backoff and scope-based serialization—callers must not implement retry logic.
 
     **Rationale:** Manual retry leads to inconsistent patterns, missing jitter (thundering
-    herd), and no partition ordering (OCC storms). Workpool provides durable retry with
-    partition keys that serialize retries per scope, preventing concurrent attempts.
+    herd), and no partition ordering (OCC storms). The helper uses Workpool for durable
+    scheduling and scope-based serialization; it does not rely on Workpool's built-in
+    mutation retry behavior.
 
     **API:** See `@libar-dev/platform-core/src/dcb/withRetry.ts`
 
     **Verified by:** DCB succeeds on first attempt, DCB conflict triggers automatic retry,
     Max retries exceeded returns rejected, Backoff increases exponentially with jitter,
-    Partition key ensures scope serialization, DCB retry with onComplete callback,
+    Scope-aware scheduling metadata is preserved, DCB retry with onComplete callback,
     Version advances between retry scheduling and execution
 
-    The `withDCBRetry` helper wraps `executeWithDCB` and uses Workpool to automatically
-    retry on OCC conflicts with exponential backoff and jitter.
+    The `withDCBRetry` helper wraps `executeWithDCB` and uses Workpool to schedule
+    explicit retries on OCC conflicts with exponential backoff and jitter.
 
     **Current Problem:**
     """typescript
@@ -243,16 +244,16 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
       | { status: "deferred"; retryKey: string; scheduledAt: number };
 
     /**
-     * Execute DCB with automatic OCC conflict retry via Workpool.
+     * Execute DCB with explicit OCC conflict retry scheduling via Workpool.
      *
      * On conflict:
      * 1. Checks if max attempts exceeded → returns rejected
      * 2. Calculates backoff with jitter
-     * 3. Enqueues retry mutation to Workpool with partition key = scopeKey
+     * 3. Enqueues retry mutation to Workpool with scope-aware metadata
      * 4. Returns { status: "deferred" } to caller
      *
-     * Partition key ensures only one retry runs at a time per scope,
-     * preventing OCC storms.
+     * When the runtime supports Workpool keys, retries can request per-scope
+     * ordering. Correctness does not depend on that support.
      */
     export interface DCBRetryOptions {
       /** Current attempt number (0-indexed) */
@@ -308,7 +309,7 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
         retryConfig: config,
         options: { attempt: attempt + 1, onComplete, context },
       }, {
-        key: retryKey,        // Partition by scope for ordering
+        key: retryKey,        // Request per-scope ordering when supported
         runAfter: backoffMs,  // Delayed execution
       });
 
@@ -382,12 +383,12 @@ Feature: Durable Function Adapters - Bridge Platform to Convex Components
       And total should not exceed 30000ms
 
     @acceptance-criteria @edge-case
-    Scenario: Partition key ensures scope serialization
+    Scenario: Scope-aware scheduling metadata is preserved
       Given two concurrent DCB operations on the same scope
       When both trigger retries
-      Then both retries should use the same partition key
-      And Workpool should execute them sequentially
-      And only one should run at a time
+      Then both retries should use the same scheduling key
+      And the retry metadata should keep the scope identity stable
+      And later retries should carry the incremented attempt
 
     @acceptance-criteria @happy-path
     Scenario: DCB retry with onComplete callback

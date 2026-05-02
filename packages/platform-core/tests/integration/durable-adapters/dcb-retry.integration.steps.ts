@@ -2,7 +2,7 @@
  * DCB Retry Helper - Integration Step Definitions
  *
  * Integration test steps for validating the withDCBRetry adapter
- * that handles OCC conflicts with automatic retry via Workpool.
+ * that handles OCC conflicts with automatic retry scheduling via Workpool.
  *
  * @architect
  * @architect-pattern DurableFunctionAdapters
@@ -230,10 +230,10 @@ describeFeature(
     });
 
     // ===========================================================================
-    // Rule: OCC conflicts trigger automatic retry via Workpool
+    // Rule: OCC conflicts trigger automatic retry scheduling via Workpool
     // ===========================================================================
 
-    Rule("OCC conflicts trigger automatic retry via Workpool", ({ RuleScenario }) => {
+    Rule("OCC conflicts trigger automatic retry scheduling via Workpool", ({ RuleScenario }) => {
       RuleScenario("Conflict triggers retry with updated version", ({ Given, And, When, Then }) => {
         Given("a DCB operation with expectedVersion {int}", (_ctx: unknown, version: number) => {
           state.currentScopeId = generateTestScopeId(`conflict-retry-${Date.now()}`);
@@ -304,7 +304,7 @@ describeFeature(
         });
       });
 
-      RuleScenario("Partition key ensures scope serialization", ({ Given, When, Then }) => {
+      RuleScenario("Scope-aware scheduling key is preserved", ({ Given, When, Then }) => {
         Given("scope key {string}", (_ctx: unknown, scopeKey: string) => {
           // Parse the scope key format: tenant:tenantId:scopeType:scopeId
           const parts = scopeKey.split(":");

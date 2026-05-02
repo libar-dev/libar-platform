@@ -67,7 +67,7 @@ Feature: DCB Retry Adapter (App Integration)
       When calculating backoff for attempt 10
       Then total delay should not exceed 30000ms
 
-  Rule: Partition key ensures scope serialization
+  Rule: Scope-aware scheduling metadata stays stable across retries
 
     @partition
     Scenario: Retries use consistent partition key

@@ -236,7 +236,7 @@ describeFeature(dcbConflictRetryFeature, ({ Background, Rule, AfterEachScenario 
   // Retry Behavior
   // =========================================================================
 
-  Rule("OCC conflicts trigger automatic retry via Workpool", ({ RuleScenario }) => {
+  Rule("OCC conflicts trigger automatic retry scheduling via Workpool", ({ RuleScenario }) => {
     RuleScenario("Conflict triggers retry with updated version", ({ Given, And, When, Then }) => {
       Given("a DCB operation with expectedVersion 5", () => {
         state.scopeKey = createScopeKey("t1", "reservation", "res_123");
@@ -324,7 +324,7 @@ describeFeature(dcbConflictRetryFeature, ({ Background, Rule, AfterEachScenario 
       });
     });
 
-    RuleScenario("Partition key ensures scope serialization", ({ Given, When, Then }) => {
+    RuleScenario("Scope-aware scheduling key is preserved", ({ Given, When, Then }) => {
       Given('scope key "tenant:t1:reservation:r1"', () => {
         state.scopeKey = createScopeKey("t1", "reservation", "r1");
         state.dcbResult = {

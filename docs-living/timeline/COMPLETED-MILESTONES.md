@@ -22,8 +22,8 @@
 
 | Pattern                   | Description                                                                                                         |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| CMS Dual Write            | Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside... |
 | Foundation Infrastructure | Consolidates old roadmap phases 0-13 into a single completed milestone.                                             |
+| CMS Dual Write            | Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside... |
 
 </details>
 
@@ -108,16 +108,16 @@
 
 ## Recent Completions
 
+- ✅ Projection Complexity Classifier
+- ✅ Per-Projection Partition Configuration
+- ✅ Partition Key Helper Functions
+- ✅ Workpool Partitioning Strategy
+- ✅ Workpool Partition Key Types
 - ✅ Inventory Deciders
 - ✅ Order Deciders
-- ✅ Agent Action Handler
-- ✅ Agent On Complete Handler
-- ✅ Inventory Domain Events
-- ✅ Inventory Command Handlers
-- ✅ Order Command Handlers
-- ✅ Order Domain Events
 - ✅ Progress calculation utilities for replay operations.
 - ✅ Types for event replay and projection rebuilding.
+- ✅ Agent Action Handler
 
 Showing 10 of 76 completed patterns. See quarterly files for full history.
 

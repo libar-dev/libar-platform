@@ -483,11 +483,6 @@ graph TD
     EventSubscriptionRegistry --> AgentAsBoundedContext
     EventSubscriptionRegistry --> AgentLLMIntegration
     HandlerFactories --> DeciderPattern
-    Pattern_Registry___DS_4_Stub ..-> AgentCommandInfrastructure
-    Pattern_Executor___DS_4_Stub ..-> AgentCommandInfrastructure
-    Agent_Command_Router___DS_4_Stub ..-> AgentCommandInfrastructure
-    Command_Bridge___DS_4_Stub ..-> AgentCommandInfrastructure
-    AgentBCConfig_Evolution___DS_4_Stub ..-> AgentCommandInfrastructure
     Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Command_Type_Definitions___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Command_Handlers___DS_5_Stub ..-> AgentCommandInfrastructure
@@ -495,6 +490,11 @@ graph TD
     Checkpoint_Status_Extension_for_Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
     Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub --> AgentBCConfig
     Cross_Component_Query_Types_for_Agent_BC___DS_1_Stub ..-> AgentBCComponentIsolation
+    Pattern_Registry___DS_4_Stub ..-> AgentCommandInfrastructure
+    Pattern_Executor___DS_4_Stub ..-> AgentCommandInfrastructure
+    Agent_Command_Router___DS_4_Stub ..-> AgentCommandInfrastructure
+    Command_Bridge___DS_4_Stub ..-> AgentCommandInfrastructure
+    AgentBCConfig_Evolution___DS_4_Stub ..-> AgentCommandInfrastructure
     Agent_onComplete_Handler_Factory___DS_2_Stub ..-> AgentLLMIntegration
     EventBus_Publish_Update___DS_2_Stub ..-> AgentLLMIntegration
     EventSubscription_Discriminated_Union___DS_2_Stub ..-> AgentLLMIntegration
@@ -507,8 +507,8 @@ graph TD
     ReservationReleasePM --> InventoryCommandHandlers
     ReservationReleasePM --> OrderWithInventoryProjection
     OrderNotificationPM --> OrderCommandHandlers
-    DurableAppendAction ..-> DurableEventsIntegration
     IntegrationRoutes --> OrderCommandHandlers
+    DurableAppendAction ..-> DurableEventsIntegration
     CommandRegistry --> OrderCommandHandlers
     CommandRegistry --> InventoryCommandHandlers
     Durable_Command_Orchestrator___Intent_Completion_Bracketing_Wrapper ..-> DurableEventsIntegration
@@ -516,14 +516,14 @@ graph TD
     Poison_Event_Admin_Functions___CRUD_operations_for_poisonEvents_table_ ..-> DurableEventsIntegration
     Intent_Admin_Functions___CRUD_operations_for_commandIntents_table_ ..-> DurableEventsIntegration
     CMSRepository --> CMSDualWrite
-    ProcessManagerLifecycle --> EventBusAbstraction
-    ProcessManager --> EventBusAbstraction
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
     CommandOrchestrator --> EventStore
     CommandOrchestrator --> CommandBus
     CommandOrchestrator --> MiddlewarePipeline
     CommandOrchestrator --> Workpool
+    ProcessManagerLifecycle --> EventBusAbstraction
+    ProcessManager --> EventBusAbstraction
     ProjectionCheckpointing --> EventStoreFoundation
     MiddlewarePipeline --> CommandBusFoundation
     InvariantFramework --> BoundedContextFoundation
@@ -578,9 +578,9 @@ graph TD
     OrderItemsProjection --> OrderCommandHandlers
     ProductCatalogProjection --> InventoryCommandHandlers
     ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
     Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
@@ -601,24 +601,30 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
+    OrderCommandHandlers --> OrderDeciders
+    OrderCommandHandlers --> OrderRepository
     InventoryCommandHandlers --> InventoryDeciders
     InventoryCommandHandlers --> InventoryRepository
-    Agent_Command_Emission_Tool --> AgentAsBoundedContext
-    Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentAsBoundedContext
     AgentOnCompleteHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentLLMIntegration
     AgentActionHandler --> AgentBCComponentIsolation
-    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
-    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
-    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
-    LLM_Provider_Configuration --> AgentAsBoundedContext
+    Agent_Command_Emission_Tool --> AgentAsBoundedContext
+    Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
     Agent_BC_Utility_Functions --> AgentAsBoundedContext
     Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
     Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
-    OrderCommandHandlers --> OrderDeciders
-    OrderCommandHandlers --> OrderRepository
+    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
+    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
+    LLM_Provider_Configuration --> AgentAsBoundedContext
+    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
+    ExampleAppModernization -.-> DynamicConsistencyBoundaries
+    ExampleAppModernization -.-> ReactiveProjections
+    ExampleAppModernization -.-> EcstFatEvents
+    ExampleAppModernization -.-> ReservationPattern
+    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
+    AgentAdminFrontend -.-> AgentChurnRiskCompletion
     WorkpoolPartitioningStrategy -.-> DurableFunctionAdapters
     Tranche1SupportingSecurityContractSweep -.-> Tranche0ReadinessHarness
     Tranche1SupportingSecurityContractSweep -.-> Tranche0ReleaseCiDocsProcessGuardrails
@@ -666,12 +672,6 @@ graph TD
     AdminToolingConsolidation -.-> EventReplayInfrastructure
     AdminToolingConsolidation -.-> HealthObservability
     AdminToolingConsolidation -.-> CircuitBreakerPattern
-    ExampleAppModernization -.-> DynamicConsistencyBoundaries
-    ExampleAppModernization -.-> ReactiveProjections
-    ExampleAppModernization -.-> EcstFatEvents
-    ExampleAppModernization -.-> ReservationPattern
-    AgentChurnRiskCompletion -.-> AgentCommandInfrastructure
-    AgentAdminFrontend -.-> AgentChurnRiskCompletion
 ```
 
 ---
