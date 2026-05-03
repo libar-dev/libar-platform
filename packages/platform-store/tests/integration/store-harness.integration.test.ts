@@ -18,6 +18,10 @@ import { ConvexTestingHelper } from "convex-helpers/testing";
 import { api } from "../../../../examples/order-management/convex/_generated/api";
 import { testRunId, generateStreamId } from "./support/helpers";
 
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
 /**
  * Type-safe wrapper for ConvexTestingHelper.mutation.
  * Avoids TS2589 with generated API types.
@@ -418,6 +422,116 @@ describe("EventStore Backend Integration", () => {
 
     expect(secondPage.events).toHaveLength(1);
     expect(secondPage.events[0]!.boundedContext).toBe(sparseOrdersContext);
+    expect(secondPage.hasMore).toBe(false);
+    expect(secondPage.events[0]!.globalPosition).toBeGreaterThan(firstPage.nextPosition);
+  });
+
+  it("fills sparse pages when both eventTypes and boundedContext filters are active", async () => {
+    t = createTestHelper();
+    const targetEventType = `SparseCombined_${testRunId}_${Date.now()}`;
+    const otherEventType = `SparseOther_${testRunId}_${Date.now()}`;
+    const targetContext = `inventory_sparse_target_${testRunId}_${Date.now()}`;
+    const otherContext = `orders_sparse_other_${testRunId}_${Date.now()}`;
+    const reservationStreamA = generateStreamId("Reservation");
+    const reservationStreamB = generateStreamId("Reservation");
+    const reservationStreamC = generateStreamId("Reservation");
+    const unrelatedInventoryStream = generateStreamId("Reservation");
+    const unrelatedOrderStream = generateStreamId("Order");
+    const unrelatedInventoryStreamB = generateStreamId("Reservation");
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId: reservationStreamA,
+      eventType: targetEventType,
+      eventData: { reservationId: reservationStreamA, match: 1 },
+      boundedContext: targetContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId: unrelatedInventoryStream,
+      eventType: otherEventType,
+      eventData: { reservationId: unrelatedInventoryStream, match: "wrong-event-type" },
+      boundedContext: targetContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Order",
+      streamId: unrelatedOrderStream,
+      eventType: targetEventType,
+      eventData: { orderId: unrelatedOrderStream, match: "wrong-context" },
+      boundedContext: otherContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId: reservationStreamB,
+      eventType: targetEventType,
+      eventData: { reservationId: reservationStreamB, match: 2 },
+      boundedContext: targetContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId: unrelatedInventoryStreamB,
+      eventType: otherEventType,
+      eventData: { reservationId: unrelatedInventoryStreamB, match: "wrong-event-type-2" },
+      boundedContext: targetContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId: reservationStreamC,
+      eventType: targetEventType,
+      eventData: { reservationId: reservationStreamC, match: 3 },
+      boundedContext: targetContext,
+      expectedVersion: 0,
+    });
+
+    const firstPage = await testQuery<{
+      events: Array<{
+        eventType: string;
+        boundedContext: string;
+        globalPosition: bigint;
+        payload: { match: number };
+      }>;
+      nextPosition: bigint;
+      hasMore: boolean;
+    }>(t, api.testingFunctions.readEventsFromPosition, {
+      limit: 2,
+      eventTypes: [targetEventType],
+      boundedContext: targetContext,
+    });
+
+    expect(firstPage.events).toHaveLength(2);
+    expect(firstPage.events[0]!.eventType).toBe(targetEventType);
+    expect(firstPage.events[0]!.boundedContext).toBe(targetContext);
+    expect(firstPage.events[0]!.payload.match).toBe(1);
+    expect(firstPage.events[1]!.eventType).toBe(targetEventType);
+    expect(firstPage.events[1]!.boundedContext).toBe(targetContext);
+    expect(firstPage.events[1]!.payload.match).toBe(2);
+    expect(firstPage.hasMore).toBe(true);
+
+    const secondPage = await testQuery<{
+      events: Array<{
+        eventType: string;
+        boundedContext: string;
+        globalPosition: bigint;
+        payload: { match: number };
+      }>;
+      nextPosition: bigint;
+      hasMore: boolean;
+    }>(t, api.testingFunctions.readEventsFromPosition, {
+      fromPosition: firstPage.nextPosition,
+      limit: 2,
+      eventTypes: [targetEventType],
+      boundedContext: targetContext,
+    });
+
+    expect(secondPage.events).toHaveLength(1);
+    expect(secondPage.events[0]!.eventType).toBe(targetEventType);
+    expect(secondPage.events[0]!.boundedContext).toBe(targetContext);
+    expect(secondPage.events[0]!.payload.match).toBe(3);
     expect(secondPage.hasMore).toBe(false);
     expect(secondPage.events[0]!.globalPosition).toBeGreaterThan(firstPage.nextPosition);
   });

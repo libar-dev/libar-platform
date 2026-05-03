@@ -22,8 +22,8 @@
 
 | Pattern                   | Description                                                                                                         |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Foundation Infrastructure | Consolidates old roadmap phases 0-13 into a single completed milestone.                                             |
 | CMS Dual Write            | Core types for Command Model State - the continuously updated aggregate snapshot maintained atomically alongside... |
+| Foundation Infrastructure | Consolidates old roadmap phases 0-13 into a single completed milestone.                                             |
 
 </details>
 
@@ -37,12 +37,12 @@
 </details>
 
 <details>
-<summary>✅ EventUpcasting (3 patterns)</summary>
+<summary>✅ EventBusAbstraction (3 patterns)</summary>
 
 | Pattern                  | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
-| Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
 | Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
+| Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
 | Correlation Chain System | Correlation types for tracking causal relationships in command-event flows.              |
 
 </details>
@@ -108,16 +108,16 @@
 
 ## Recent Completions
 
-- ✅ Projection Complexity Classifier
-- ✅ Per-Projection Partition Configuration
-- ✅ Partition Key Helper Functions
-- ✅ Workpool Partitioning Strategy
-- ✅ Workpool Partition Key Types
 - ✅ Inventory Deciders
 - ✅ Order Deciders
+- ✅ Agent Action Handler
+- ✅ Agent On Complete Handler
+- ✅ Inventory Domain Events
+- ✅ Order Domain Events
+- ✅ Inventory Command Handlers
+- ✅ Order Command Handlers
 - ✅ Progress calculation utilities for replay operations.
 - ✅ Types for event replay and projection rebuilding.
-- ✅ Agent Action Handler
 
 Showing 10 of 76 completed patterns. See quarterly files for full history.
 

@@ -18,6 +18,10 @@ import { api } from "../../../../examples/order-management/convex/_generated/api
 import { waitUntil, generateTestId } from "./support/helpers";
 import { testMutation, testQuery } from "../../src/testing/integration-helpers.js";
 
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
 describe("CommandOrchestrator Integration", () => {
   let t: ConvexTestingHelper;
 
@@ -44,6 +48,9 @@ describe("CommandOrchestrator Integration", () => {
       });
 
       expect(result.status).toBe("success");
+      if (result.status !== "success") {
+        throw new Error(`expected success, received ${JSON.stringify(result)}`);
+      }
       expect(result.eventId).toBeDefined();
       expect(result.globalPosition).toBeDefined();
 
@@ -197,6 +204,9 @@ describe("CommandOrchestrator Integration", () => {
       });
 
       expect(result.status).toBe("rejected");
+      if (result.status !== "rejected") {
+        throw new Error(`expected rejection, received ${JSON.stringify(result)}`);
+      }
       expect(result.code).toBe("ORDER_ALREADY_EXISTS");
     });
   });
@@ -237,12 +247,76 @@ describe("CommandOrchestrator Integration", () => {
         customerId,
       });
 
-      expect(result1.globalPosition).toBeDefined();
-      expect(result2.globalPosition).toBeDefined();
       if (result1.status !== "success" || result2.status !== "success") {
         throw new Error("expected both createOrder calls to succeed");
       }
-      expect(result2.globalPosition).toBeGreaterThan(result1.globalPosition);
+      expect(result1.globalPosition).toBeDefined();
+      expect(result2.globalPosition).toBeDefined();
+      const firstPosition = result1.globalPosition;
+      const secondPosition = result2.globalPosition;
+      if (firstPosition === undefined || secondPosition === undefined) {
+        throw new Error("expected both createOrder calls to return global positions");
+      }
+      expect(secondPosition).toBeGreaterThan(firstPosition);
+    });
+
+    it("rolls back command and CMS writes when append conflicts after the handler succeeds", async () => {
+      const orderId = generateTestId("ord");
+      const customerId = generateTestId("cust");
+      const commandId = generateTestId("cmd");
+
+      const seeded = await testMutation(
+        t,
+        api.testingFunctions.testComponentAppendToStreamWithProof,
+        {
+          streamType: "Order",
+          streamId: orderId,
+          expectedVersion: 0,
+          boundedContext: "orders",
+          events: [
+            {
+              eventId: generateTestId("evt"),
+              eventType: "OrderCreated",
+              payload: { orderId, seeded: true },
+              metadata: { correlationId: generateTestId("corr") },
+            },
+          ],
+        }
+      );
+
+      expect(seeded.success).toBe(true);
+      expect(seeded.result?.status).toBe("success");
+
+      await expect(
+        testMutation(t, api.orders.createOrder, {
+          orderId,
+          customerId,
+          commandId,
+        })
+      ).rejects.toThrow(/Event store version conflict/);
+
+      const [order, commandStatus, events, summary] = await Promise.all([
+        testQuery(t, api.testing.getTestOrder, { orderId }),
+        testQuery(t, api.testingFunctions.getCommandStatus, { commandId }),
+        testQuery(t, api.testingFunctions.getEventsForStream, {
+          streamType: "Order",
+          streamId: orderId,
+        }),
+        testQuery(t, api.orders.getOrderSummary, { orderId }),
+      ]);
+
+      const typedEvents = events as Array<{
+        eventId: string;
+        eventType: string;
+        payload: { orderId: string; seeded?: boolean };
+      }>;
+
+      expect(order).toBeNull();
+      expect(commandStatus).toBeNull();
+      expect(summary).toBeNull();
+      expect(typedEvents).toHaveLength(1);
+      expect(typedEvents[0]?.eventType).toBe("OrderCreated");
+      expect(typedEvents[0]?.payload).toMatchObject({ orderId, seeded: true });
     });
   });
 
@@ -258,6 +332,9 @@ describe("CommandOrchestrator Integration", () => {
       });
 
       expect(createResult.status).toBe("success");
+      if (createResult.status !== "success") {
+        throw new Error(`expected success, received ${JSON.stringify(createResult)}`);
+      }
       expect(createResult.version).toBe(1);
 
       // Wait for projection

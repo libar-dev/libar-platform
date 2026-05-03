@@ -36,6 +36,18 @@ Feature: Batch Validation
       When the batch is validated in "partial" mode with max batch size 3
       Then validation fails with error code "BATCH_TOO_LARGE"
 
+    @validation
+    Scenario: Accepts batch exactly at default max size
+      Given a batch of 100 generic test commands
+      When the batch is validated in "partial" mode using default max batch size
+      Then validation succeeds
+
+    @validation
+    Scenario: Rejects batch exceeding default max size
+      Given a batch of 101 generic test commands
+      When the batch is validated in "partial" mode using default max batch size
+      Then validation fails with error code "BATCH_TOO_LARGE"
+
   # ============================================================================
   # validateBatch - Partial Mode
   # ============================================================================

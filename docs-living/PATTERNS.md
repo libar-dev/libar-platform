@@ -482,7 +482,6 @@ graph TD
     EventSubscriptionRegistry --> ReservationReleasePM
     EventSubscriptionRegistry --> AgentAsBoundedContext
     EventSubscriptionRegistry --> AgentLLMIntegration
-    HandlerFactories --> DeciderPattern
     Agent_Lifecycle_FSM___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Command_Type_Definitions___DS_5_Stub ..-> AgentCommandInfrastructure
     Lifecycle_Command_Handlers___DS_5_Stub ..-> AgentCommandInfrastructure
@@ -515,6 +514,42 @@ graph TD
     Rebuild_Demonstration___Projection_rebuild_from_event_stream_ ..-> DurableEventsIntegration
     Poison_Event_Admin_Functions___CRUD_operations_for_poisonEvents_table_ ..-> DurableEventsIntegration
     Intent_Admin_Functions___CRUD_operations_for_commandIntents_table_ ..-> DurableEventsIntegration
+    HandlerFactories --> DeciderPattern
+    Agent_Component_Schema___DS_1_Stub ..-> AgentBCComponentIsolation
+    Agent_Component___Dead_Letter_Public_API___DS_1_Stub --> AgentDeadLetter
+    Agent_Component___Dead_Letter_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
+    Agent_Component_Definition___DS_1_Stub --> AgentBCConfig
+    Agent_Component_Definition___DS_1_Stub ..-> AgentBCComponentIsolation
+    Agent_Component___Command_Public_API___DS_1_Stub --> EmittedAgentCommand
+    Agent_Component___Command_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
+    Agent_Component___Checkpoint_Public_API___DS_1_Stub --> AgentCheckpoint
+    Agent_Component___Checkpoint_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
+    Agent_Component___Audit_Public_API___DS_1_Stub --> AgentAuditEvent
+    Agent_Component___Audit_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
+    Agent_Component___Approval_Public_API___DS_1_Stub --> PendingApproval
+    Agent_Component___Approval_Public_API___DS_1_Stub --> HumanInLoopConfig
+    Agent_Component___Approval_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
+    PaymentOutboxHandler ..-> DurableEventsIntegration
+    MockPaymentActions ..-> DurableEventsIntegration
+    ProductCatalogProjection --> InventoryCommandHandlers
+    ActiveReservationsProjection --> InventoryCommandHandlers
+    OrderWithInventoryProjection --> OrderCommandHandlers
+    OrderWithInventoryProjection --> InventoryCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
+    OrderSummaryProjection --> EventStore
+    OrderItemsProjection --> OrderCommandHandlers
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
+    Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
+    Churn_Risk_Agent_Configuration --> AgentAsBoundedContext
+    OrderCommandConfigs --> OrderSummaryProjection
+    OrderCommandConfigs --> OrderWithInventoryProjection
+    OrderCommandConfigs --> OrderItemsProjection
+    OrderCommandConfigs --> CustomerCancellationsProjection
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
+    DualWriteContract --> BoundedContextIdentity
     CMSRepository --> CMSDualWrite
     Command_Config_Partition_Key_Validation --> WorkpoolPartitioningStrategy
     Command_Config_Partition_Key_Validation ..-> WorkpoolPartitioningStrategy
@@ -557,41 +592,23 @@ graph TD
     Durable_Append_via_Workpool_Actions --> WorkpoolPartitioningStrategy
     Durable_Append_via_Workpool_Actions ..-> EventStoreDurability
     CorrelationChainSystem --> EventStoreFoundation
-    DualWriteContract --> BoundedContextIdentity
-    Agent_Component_Schema___DS_1_Stub ..-> AgentBCComponentIsolation
-    Agent_Component___Dead_Letter_Public_API___DS_1_Stub --> AgentDeadLetter
-    Agent_Component___Dead_Letter_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    Agent_Component_Definition___DS_1_Stub --> AgentBCConfig
-    Agent_Component_Definition___DS_1_Stub ..-> AgentBCComponentIsolation
-    Agent_Component___Command_Public_API___DS_1_Stub --> EmittedAgentCommand
-    Agent_Component___Command_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    Agent_Component___Checkpoint_Public_API___DS_1_Stub --> AgentCheckpoint
-    Agent_Component___Checkpoint_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    Agent_Component___Audit_Public_API___DS_1_Stub --> AgentAuditEvent
-    Agent_Component___Audit_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    Agent_Component___Approval_Public_API___DS_1_Stub --> PendingApproval
-    Agent_Component___Approval_Public_API___DS_1_Stub --> HumanInLoopConfig
-    Agent_Component___Approval_Public_API___DS_1_Stub ..-> AgentBCComponentIsolation
-    PaymentOutboxHandler ..-> DurableEventsIntegration
-    MockPaymentActions ..-> DurableEventsIntegration
-    OrderSummaryProjection --> EventStore
-    OrderItemsProjection --> OrderCommandHandlers
-    ProductCatalogProjection --> InventoryCommandHandlers
-    ActiveReservationsProjection --> InventoryCommandHandlers
-    OrderWithInventoryProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> IntegrationPatterns
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors -.-> ReactiveProjections
-    Agent_as_Bounded_Context___AI_Driven_Event_Reactors ..-> AgentAsBoundedContext
-    Churn_Risk_Agent_Configuration --> AgentAsBoundedContext
-    OrderCommandConfigs --> OrderSummaryProjection
-    OrderCommandConfigs --> OrderWithInventoryProjection
-    OrderCommandConfigs --> OrderItemsProjection
-    OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
+    InventoryCommandHandlers --> InventoryDeciders
+    InventoryCommandHandlers --> InventoryRepository
+    Agent_Command_Emission_Tool --> AgentAsBoundedContext
+    Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
+    AgentOnCompleteHandler --> AgentAsBoundedContext
+    AgentOnCompleteHandler --> AgentLLMIntegration
+    AgentActionHandler --> AgentLLMIntegration
+    AgentActionHandler --> AgentBCComponentIsolation
+    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
+    Agent_BC_Utility_Functions --> AgentAsBoundedContext
+    Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
+    Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
+    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
+    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
+    LLM_Provider_Configuration --> AgentAsBoundedContext
+    OrderCommandHandlers --> OrderDeciders
+    OrderCommandHandlers --> OrderRepository
     Workpool_Partition_Key_Types --> EventBusAbstraction
     Workpool_Partition_Key_Types ..-> WorkpoolPartitioningStrategy
     Workpool_Partitioning_Strategy ..-> WorkpoolPartitioningStrategy
@@ -601,23 +618,6 @@ graph TD
     Projection_Complexity_Classifier ..-> WorkpoolPartitioningStrategy
     Types_for_event_replay_and_projection_rebuilding_ ..-> EventReplayInfrastructure
     Progress_calculation_utilities_for_replay_operations_ ..-> EventReplayInfrastructure
-    OrderCommandHandlers --> OrderDeciders
-    OrderCommandHandlers --> OrderRepository
-    InventoryCommandHandlers --> InventoryDeciders
-    InventoryCommandHandlers --> InventoryRepository
-    AgentOnCompleteHandler --> AgentAsBoundedContext
-    AgentOnCompleteHandler --> AgentLLMIntegration
-    AgentActionHandler --> AgentLLMIntegration
-    AgentActionHandler --> AgentBCComponentIsolation
-    Agent_Command_Emission_Tool --> AgentAsBoundedContext
-    Agent_Approval_Workflow_Tools --> AgentAsBoundedContext
-    Agent_BC_Utility_Functions --> AgentAsBoundedContext
-    Customer_Utility_Functions_for_Agent_BC --> AgentAsBoundedContext
-    Confidence_Calculation_Utilities_for_Agent_BC --> AgentAsBoundedContext
-    OpenRouter_Agent_Runtime --> AgentAsBoundedContext
-    LLM_Configuration_and_Runtime_Exports --> AgentAsBoundedContext
-    LLM_Provider_Configuration --> AgentAsBoundedContext
-    Churn_Risk_Pattern_Definition --> AgentAsBoundedContext
     RepoLevelDocsGeneration -.-> ProcessMetadataExpansion
     ExampleAppModernization -.-> DynamicConsistencyBoundaries
     ExampleAppModernization -.-> ReactiveProjections

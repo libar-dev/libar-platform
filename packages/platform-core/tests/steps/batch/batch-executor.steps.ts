@@ -916,6 +916,80 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         expect(state.executor).toHaveBeenCalledTimes(3);
       });
     });
+
+    RuleScenario(
+      "Accepts batch exactly at default max command count",
+      ({ Given, And, When, Then }) => {
+        Given("a mock executor that succeeds for all commands", () => {
+          state.executor = createMockExecutor();
+        });
+
+        And("a BatchExecutor with the mock executor only", () => {
+          state.batch = new BatchExecutor({ executor: state.executor! });
+        });
+
+        And("a batch of 100 generic test commands", () => {
+          state.commands = Array.from({ length: 100 }, (_, i) => ({
+            commandType: "Test",
+            args: {},
+            commandId: toCommandId(`cmd_${i}`),
+          }));
+        });
+
+        When('the batch is executed in "partial" mode using default max batch size', async () => {
+          state.result = await state.batch!.execute(state.commands, {
+            mode: "partial",
+          });
+        });
+
+        Then('the batch result status is "success"', () => {
+          expect(state.result?.status).toBe("success");
+        });
+
+        And("the executor was called 100 times", () => {
+          expect(state.executor).toHaveBeenCalledTimes(100);
+        });
+      }
+    );
+
+    RuleScenario(
+      "Rejects batch exceeding default max command count before execution",
+      ({ Given, And, When, Then }) => {
+        Given("a mock executor that succeeds for all commands", () => {
+          state.executor = createMockExecutor();
+        });
+
+        And("a BatchExecutor with the mock executor only", () => {
+          state.batch = new BatchExecutor({ executor: state.executor! });
+        });
+
+        And("a batch of 101 generic test commands", () => {
+          state.commands = Array.from({ length: 101 }, (_, i) => ({
+            commandType: "Test",
+            args: {},
+            commandId: toCommandId(`cmd_${i}`),
+          }));
+        });
+
+        When('the batch is executed in "partial" mode using default max batch size', async () => {
+          state.result = await state.batch!.execute(state.commands, {
+            mode: "partial",
+          });
+        });
+
+        Then('the batch result status is "failed"', () => {
+          expect(state.result?.status).toBe("failed");
+        });
+
+        And('all batch results have status "rejected"', () => {
+          expect(state.result?.results.every((r) => r.status === "rejected")).toBe(true);
+        });
+
+        And("the executor was not called", () => {
+          expect(state.executor).not.toHaveBeenCalled();
+        });
+      }
+    );
   });
 
   // ==========================================================================
@@ -964,6 +1038,10 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
       And('result 1 error contains "validation failed"', () => {
         expect(state.result?.results[1]?.error).toContain("validation failed");
+      });
+
+      And("the executor was not called", () => {
+        expect(state.executor).not.toHaveBeenCalled();
       });
     });
   });

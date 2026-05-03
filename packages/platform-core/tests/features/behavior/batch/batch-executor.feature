@@ -236,6 +236,25 @@ Feature: BatchExecutor
       Then the batch result status is "success"
       And the executor was called 3 times
 
+    @validation
+    Scenario: Accepts batch exactly at default max command count
+      Given a mock executor that succeeds for all commands
+      And a BatchExecutor with the mock executor only
+      And a batch of 100 generic test commands
+      When the batch is executed in "partial" mode using default max batch size
+      Then the batch result status is "success"
+      And the executor was called 100 times
+
+    @validation
+    Scenario: Rejects batch exceeding default max command count before execution
+      Given a mock executor that succeeds for all commands
+      And a BatchExecutor with the mock executor only
+      And a batch of 101 generic test commands
+      When the batch is executed in "partial" mode using default max batch size
+      Then the batch result status is "failed"
+      And all batch results have status "rejected"
+      And the executor was not called
+
   # ============================================================================
   # Default Bounded Context
   # ============================================================================
@@ -253,6 +272,7 @@ Feature: BatchExecutor
       When the batch is executed in "partial" mode
       Then the batch result status is "failed"
       And result 1 error contains "validation failed"
+      And the executor was not called
 
   # ============================================================================
   # Factory Function
