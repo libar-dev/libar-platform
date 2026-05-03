@@ -618,15 +618,47 @@ export const readFromPosition = query({
 
       candidateEvents ??= [];
     } else {
-      let query = ctx.db
-        .query("events")
-        .withIndex("by_global_position", (q) => q.gt("globalPosition", fromPosition));
-
       if (boundedContext) {
-        query = query.filter((q) => q.eq(q.field("boundedContext"), boundedContext));
-      }
+        let cursor = fromPosition;
+        const mergedEvents = new Map<string, Doc<"events">>();
 
-      candidateEvents = await query.take(limit + 1);
+        while (true) {
+          const page = await ctx.db
+            .query("events")
+            .withIndex("by_global_position", (q) => q.gt("globalPosition", cursor))
+            .take(limit + 1);
+
+          if (page.length === 0) {
+            break;
+          }
+
+          for (const event of page) {
+            if (event.boundedContext === boundedContext) {
+              mergedEvents.set(event.eventId, event);
+            }
+          }
+
+          cursor = normalizeGlobalPosition(
+            page[page.length - 1]!.globalPosition,
+            "boundedContext.cursor"
+          );
+
+          candidateEvents = Array.from(mergedEvents.values()).sort((left, right) =>
+            compareGlobalPositions(left.globalPosition, right.globalPosition)
+          );
+
+          if (candidateEvents.length > limit || page.length <= limit) {
+            break;
+          }
+        }
+
+        candidateEvents ??= [];
+      } else {
+        candidateEvents = await ctx.db
+          .query("events")
+          .withIndex("by_global_position", (q) => q.gt("globalPosition", fromPosition))
+          .take(limit + 1);
+      }
     }
 
     const filteredEvents = boundedContext

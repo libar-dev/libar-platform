@@ -349,6 +349,79 @@ describe("EventStore Backend Integration", () => {
     expect(secondPage.nextPosition).toBe(secondPage.events[0]!.globalPosition);
   });
 
+  it("fills bounded-context pages across sparse interleaved global events", async () => {
+    t = createTestHelper();
+    const ordersEventType = `SparseOrders_${testRunId}_${Date.now()}`;
+    const inventoryEventType = `SparseInventory_${testRunId}_${Date.now()}`;
+    const sparseOrdersContext = `orders_sparse_${testRunId}_${Date.now()}`;
+    const sparseInventoryContext = `inventory_sparse_${testRunId}_${Date.now()}`;
+    const orderStreamA = generateStreamId("Order");
+    const orderStreamB = generateStreamId("Order");
+    const inventoryStreamA = generateStreamId("Inventory");
+    const inventoryStreamB = generateStreamId("Inventory");
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Order",
+      streamId: orderStreamA,
+      eventType: ordersEventType,
+      eventData: { orderId: orderStreamA, step: 1 },
+      boundedContext: sparseOrdersContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "InventoryItem",
+      streamId: inventoryStreamA,
+      eventType: inventoryEventType,
+      eventData: { productId: inventoryStreamA, step: 1 },
+      boundedContext: sparseInventoryContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "InventoryItem",
+      streamId: inventoryStreamB,
+      eventType: inventoryEventType,
+      eventData: { productId: inventoryStreamB, step: 2 },
+      boundedContext: sparseInventoryContext,
+      expectedVersion: 0,
+    });
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Order",
+      streamId: orderStreamB,
+      eventType: ordersEventType,
+      eventData: { orderId: orderStreamB, step: 2 },
+      boundedContext: sparseOrdersContext,
+      expectedVersion: 0,
+    });
+
+    const firstPage = await testQuery<{
+      events: Array<{ boundedContext: string; globalPosition: bigint }>;
+      nextPosition: bigint;
+      hasMore: boolean;
+    }>(t, api.testingFunctions.readEventsFromPosition, {
+      limit: 1,
+      boundedContext: sparseOrdersContext,
+    });
+
+    expect(firstPage.events).toHaveLength(1);
+    expect(firstPage.events[0]!.boundedContext).toBe(sparseOrdersContext);
+    expect(firstPage.hasMore).toBe(true);
+
+    const secondPage = await testQuery<{
+      events: Array<{ boundedContext: string; globalPosition: bigint }>;
+      nextPosition: bigint;
+      hasMore: boolean;
+    }>(t, api.testingFunctions.readEventsFromPosition, {
+      fromPosition: firstPage.nextPosition,
+      limit: 1,
+      boundedContext: sparseOrdersContext,
+    });
+
+    expect(secondPage.events).toHaveLength(1);
+    expect(secondPage.events[0]!.boundedContext).toBe(sparseOrdersContext);
+    expect(secondPage.hasMore).toBe(false);
+    expect(secondPage.events[0]!.globalPosition).toBeGreaterThan(firstPage.nextPosition);
+  });
+
   it("rejects append requests that omit metadata.correlationId", async () => {
     t = createTestHelper();
     const streamId = generateStreamId("Order");
