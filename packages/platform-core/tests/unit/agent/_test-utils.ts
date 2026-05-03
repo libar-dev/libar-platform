@@ -9,11 +9,11 @@ import type { AgentComponentAPI } from "../../../src/agent/handler-types.js";
 export function createMockLogger(): Logger {
   return {
     debug: vi.fn(),
+    trace: vi.fn(),
     info: vi.fn(),
+    report: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    child: vi.fn().mockReturnThis(),
-    flush: vi.fn(),
   };
 }
 

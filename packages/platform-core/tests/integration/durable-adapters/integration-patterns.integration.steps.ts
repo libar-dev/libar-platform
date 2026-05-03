@@ -15,7 +15,7 @@ import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { makeFunctionReference } from "convex/server";
-import type { SafeMutationRef, SafeQueryRef } from "../../../src/types/function-references.js";
+import type { SafeMutationRef, SafeQueryRef } from "../../../src/function-refs/types.js";
 import { withPrefix, testMutation, testQuery } from "../../../src/testing/index.js";
 
 // =============================================================================
@@ -90,9 +90,22 @@ interface IntegrationTestState {
     areSeparateInstances: boolean;
   } | null;
   retryArgsResult: {
-    receivedExpectedVersion: number;
-    receivedAttempt: number;
-    receivedScopeKey: string;
+    status: "deferred" | "rejected";
+    wouldEnqueue?: {
+      partitionKey: string;
+      runAfter: number;
+      retryAttempt: number;
+      expectedVersion: number;
+    };
+    retryAttempt?: number;
+    scheduledAfterMs?: number;
+    code?: string;
+    reason?: string;
+    context?: {
+      scopeKey?: string;
+      lastAttempt?: number;
+      lastConflictVersion?: number;
+    };
   } | null;
 
   // Component mounting results
@@ -308,25 +321,16 @@ describeFeature(
         });
 
         Then("retry mutation should receive updated expectedVersion", () => {
-          expect(
-            (state.retryArgsResult as { wouldEnqueue?: { expectedVersion: number } }).wouldEnqueue
-              ?.expectedVersion
-          ).toBe(10);
+          expect(state.retryArgsResult?.wouldEnqueue?.expectedVersion).toBe(10);
         });
 
         And("retry mutation should receive incremented attempt", () => {
-          expect(
-            (state.retryArgsResult as { wouldEnqueue?: { retryAttempt: number } }).wouldEnqueue
-              ?.retryAttempt
-          ).toBe(1);
+          expect(state.retryArgsResult?.wouldEnqueue?.retryAttempt).toBe(1);
         });
 
         And("retry mutation should receive original DCB config", () => {
           // Scope key is included in partition key
-          expect(
-            (state.retryArgsResult as { wouldEnqueue?: { partitionKey: string } }).wouldEnqueue
-              ?.partitionKey
-          ).toContain("dcb:");
+          expect(state.retryArgsResult?.wouldEnqueue?.partitionKey).toContain("dcb:");
         });
       });
 

@@ -13,7 +13,7 @@ import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { makeFunctionReference } from "convex/server";
-import type { SafeMutationRef } from "../../../src/types/function-references.js";
+import type { SafeMutationRef } from "../../../src/function-refs/types.js";
 import { testRunId, withPrefix, testMutation } from "../../../src/testing/index.js";
 
 // =============================================================================
@@ -132,7 +132,8 @@ describeFeature(feature, ({ Background, Rule, BeforeAllScenarios, AfterAllScenar
               count,
             });
             // All requests should be allowed when under limit
-            expect(state.consumeResult.allAllowed).toBe(true);
+            expect(state.consumeResult).not.toBeNull();
+            expect(state.consumeResult!.allAllowed).toBe(true);
           }
         }
       );

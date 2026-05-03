@@ -15,7 +15,7 @@ import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { makeFunctionReference } from "convex/server";
-import type { SafeMutationRef, SafeQueryRef } from "../../../src/types/function-references.js";
+import type { SafeMutationRef, SafeQueryRef } from "../../../src/function-refs/types.js";
 import { withPrefix, testMutation, testQuery } from "../../../src/testing/index.js";
 import { DCB_MAX_RETRIES_EXCEEDED } from "../../../src/dcb/withRetry.js";
 

@@ -15,7 +15,12 @@
  */
 
 import type { ConvexTestingHelper } from "convex-helpers/testing";
-import type { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
+import type {
+  FunctionArgs,
+  FunctionReference,
+  FunctionReturnType,
+  FunctionVisibility,
+} from "convex/server";
 
 /**
  * Minimal interface for ConvexTestingHelper methods.
@@ -50,7 +55,9 @@ interface TestableConvexHelper {
  * });
  * ```
  */
-export async function testMutation<Mutation extends FunctionReference<"mutation">>(
+export async function testMutation<
+  Mutation extends FunctionReference<"mutation", FunctionVisibility>,
+>(
   t: ConvexTestingHelper,
   mutation: Mutation,
   args: FunctionArgs<Mutation>
@@ -80,7 +87,7 @@ export async function testMutation<Mutation extends FunctionReference<"mutation"
  * });
  * ```
  */
-export async function testQuery<Query extends FunctionReference<"query">>(
+export async function testQuery<Query extends FunctionReference<"query", FunctionVisibility>>(
   t: ConvexTestingHelper,
   query: Query,
   args: FunctionArgs<Query>
@@ -111,7 +118,7 @@ export async function testQuery<Query extends FunctionReference<"query">>(
  * });
  * ```
  */
-export async function testAction<Action extends FunctionReference<"action">>(
+export async function testAction<Action extends FunctionReference<"action", FunctionVisibility>>(
   t: ConvexTestingHelper,
   action: Action,
   args: FunctionArgs<Action>

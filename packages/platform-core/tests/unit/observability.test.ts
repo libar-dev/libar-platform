@@ -17,7 +17,8 @@ import type {
 } from "../../src/orchestration/types.js";
 import type { PlatformMetrics } from "../../src/metrics/index.js";
 import type { PublishedEvent } from "../../src/eventbus/types.js";
-import { toCorrelationId, toCausationId, toEventId, toStreamId } from "../../src/ids/index.js";
+import type { SafeMutationRef } from "../../src/function-refs/types.js";
+import { toCommandId, toCorrelationId, toCausationId, toEventId, toStreamId } from "../../src/ids/index.js";
 import type { UnknownRecord } from "../../src/types.js";
 
 function createMockMetrics(): PlatformMetrics & {
@@ -71,23 +72,30 @@ function createMockEventStore(): EventStoreClient {
   };
 }
 
-const mockHandler = { name: "mockHandler" } as FunctionReference<
+const mockHandler = { name: "mockHandler" } as unknown as FunctionReference<
   "mutation",
   FunctionVisibility,
   { orderId: string; commandId: string; correlationId: string },
-  CommandHandlerResult
+  CommandHandlerResult<{ orderId: string }>
 >;
 
-const mockProjectionHandler = { name: "mockProjectionHandler" } as FunctionReference<
+const mockProjectionHandler = { name: "mockProjectionHandler" } as unknown as FunctionReference<
   "mutation",
   FunctionVisibility,
   UnknownRecord,
   unknown
 >;
 
-function createMockCtx(handlerResult: CommandHandlerResult): MutationCtx {
+const mockSubscriptionHandler = { name: "subscriptionHandler" } as unknown as FunctionReference<
+  "mutation",
+  FunctionVisibility,
+  Record<string, unknown>,
+  unknown
+>;
+
+function createMockCtx(handlerResult: CommandHandlerResult<{ orderId: string }>): MutationCtx {
   return {
-    runMutation: async (ref) => {
+    runMutation: async (ref: SafeMutationRef) => {
       if (ref === mockHandler) {
         return handlerResult;
       }
@@ -141,7 +149,7 @@ describe("observability primitives", () => {
     const config: CommandConfig<
       { orderId: string },
       { orderId: string; commandId: string; correlationId: string },
-      CommandHandlerResult,
+      CommandHandlerResult<{ orderId: string }>,
       UnknownRecord,
       { orderId: string }
     > = {
@@ -184,7 +192,7 @@ describe("observability primitives", () => {
     const config: CommandConfig<
       { orderId: string },
       { orderId: string; commandId: string; correlationId: string },
-      CommandHandlerResult,
+      CommandHandlerResult<{ orderId: string }>,
       UnknownRecord,
       { orderId: string }
     > = {
@@ -223,15 +231,11 @@ describe("observability primitives", () => {
   it("ConvexEventBus emits event.dispatched metrics", async () => {
     const metrics = createMockMetrics();
     const workpool = createMockWorkpool();
-    const handler = { name: "subscriptionHandler" } as FunctionReference<
-      "mutation",
-      FunctionVisibility,
-      Record<string, unknown>,
-      unknown
-    >;
-
     const subscriptions = defineSubscriptions((registry) => {
-      registry.subscribe("order.handler", handler).forEventTypes("OrderSubmitted").build();
+      registry
+        .subscribe("order.handler", mockSubscriptionHandler)
+        .forEventTypes("OrderSubmitted")
+        .build();
     });
 
     const bus = new ConvexEventBus(workpool, subscriptions, { metrics });
@@ -250,9 +254,9 @@ describe("observability primitives", () => {
     };
 
     await bus.publish({} as MutationCtx, event, {
-      commandId: "cmd_1",
-      correlationId: "corr_1",
-      causationId: "cmd_1",
+      commandId: toCommandId("cmd_1"),
+      correlationId: toCorrelationId("corr_1"),
+      causationId: toCausationId("cmd_1"),
       initiatedAt: Date.now(),
     });
 
