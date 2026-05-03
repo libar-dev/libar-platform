@@ -46,6 +46,12 @@ export interface BatchOptions {
   mode: BatchExecutionMode;
 
   /**
+   * Maximum number of commands allowed in a single batch.
+   * Defaults to 100 when omitted.
+   */
+  maxBatchSize?: number;
+
+  /**
    * For atomic mode: the aggregate ID that all commands must target.
    * Required when mode is "atomic".
    */
@@ -160,6 +166,7 @@ export interface BatchValidationError {
   /** Error code */
   code:
     | "EMPTY_BATCH"
+    | "BATCH_TOO_LARGE"
     | "CROSS_AGGREGATE_ATOMIC"
     | "MISSING_AGGREGATE_ID"
     | "UNREGISTERED_COMMAND"

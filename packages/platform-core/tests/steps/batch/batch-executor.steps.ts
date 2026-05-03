@@ -15,8 +15,14 @@ import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
 import { BatchExecutor, createBatchExecutor } from "../../../src/batch/BatchExecutor.js";
-import type { BatchCommand, BatchResult, CommandExecutor } from "../../../src/batch/types.js";
+import type {
+  BatchCommand,
+  BatchResult,
+  BatchSummary,
+  CommandExecutor,
+} from "../../../src/batch/types.js";
 import type { CommandHandlerResult } from "../../../src/orchestration/types.js";
+import { toCommandId, toCorrelationId } from "../../../src/ids/index.js";
 import { getDataTableRows } from "../_helpers/data-table.js";
 
 // =============================================================================
@@ -52,7 +58,7 @@ function createMockExecutor(
         },
       };
     }
-  );
+  ) as unknown as CommandExecutor;
 }
 
 function createFailingExecutor(failAfter: number): CommandExecutor {
@@ -88,7 +94,7 @@ function createFailingExecutor(failAfter: number): CommandExecutor {
         },
       };
     }
-  );
+  ) as unknown as CommandExecutor;
 }
 
 // =============================================================================
@@ -135,6 +141,17 @@ function createInitialState(): TestState {
 }
 
 let state: TestState = createInitialState();
+
+function requireResult(): BatchResult {
+  expect(state.result).not.toBeNull();
+  return state.result!;
+}
+
+function getSummaryValue(field: string): BatchSummary[keyof BatchSummary] {
+  const summary = requireResult().summary;
+  const key = field as keyof BatchSummary;
+  return summary[key];
+}
 
 // =============================================================================
 // Feature
@@ -184,13 +201,13 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
 
           Then('the batch result status is "success"', () => {
-            expect(state.result.status).toBe("success");
+            expect(state.result?.status).toBe("success");
           });
 
           And("the batch summary shows:", (_ctx: unknown, dataTable: unknown) => {
             const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
             for (const row of rows) {
-              expect(state.result.summary[row.field]).toBe(Number(row.value));
+              expect(getSummaryValue(row.field)).toBe(Number(row.value));
             }
           });
 
@@ -230,13 +247,13 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
 
           Then('the batch result status is "failed"', () => {
-            expect(state.result.status).toBe("failed");
+            expect(state.result?.status).toBe("failed");
           });
 
           And("the batch summary shows:", (_ctx: unknown, dataTable: unknown) => {
             const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
             for (const row of rows) {
-              expect(state.result.summary[row.field]).toBe(Number(row.value));
+              expect(getSummaryValue(row.field)).toBe(Number(row.value));
             }
           });
 
@@ -279,12 +296,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
 
           Then('the batch result status is "failed"', () => {
-            expect(state.result.status).toBe("failed");
+            expect(state.result?.status).toBe("failed");
           });
 
           And('all batch results have status "rejected"', () => {
             expect(
-              state.result.results.every((r: { status: string }) => r.status === "rejected")
+              state.result?.results.every((r: { status: string }) => r.status === "rejected")
             ).toBe(true);
           });
 
@@ -319,13 +336,13 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
             state.result = await state.batch!.execute(state.commands, {
               mode: "atomic",
               aggregateId: "ord_1",
-              correlationId: "batch_corr_123",
+              correlationId: toCorrelationId("batch_corr_123"),
             });
           }
         );
 
         Then('the batch correlationId is "batch_corr_123"', () => {
-          expect(state.result.correlationId).toBe("batch_corr_123");
+          expect(state.result?.correlationId).toBe("batch_corr_123");
         });
 
         And('the executor received correlationId "batch_corr_123"', () => {
@@ -356,7 +373,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
               {
                 commandType: "AddOrderItem",
                 args: { orderId: "ord_1", productId: "prod_1" },
-                correlationId: "cmd_corr_1",
+                correlationId: toCorrelationId("cmd_corr_1"),
               },
               { commandType: "AddOrderItem", args: { orderId: "ord_1", productId: "prod_2" } },
             ];
@@ -368,7 +385,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
               state.result = await state.batch!.execute(state.commands, {
                 mode: "atomic",
                 aggregateId: "ord_1",
-                correlationId: "batch_corr",
+                correlationId: toCorrelationId("batch_corr"),
               });
             }
           );
@@ -434,13 +451,13 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
 
           Then('the batch result status is "partial"', () => {
-            expect(state.result.status).toBe("partial");
+            expect(state.result?.status).toBe("partial");
           });
 
           And("the batch summary shows:", (_ctx: unknown, dataTable: unknown) => {
             const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
             for (const row of rows) {
-              expect(state.result.summary[row.field]).toBe(Number(row.value));
+              expect(getSummaryValue(row.field)).toBe(Number(row.value));
             }
           });
 
@@ -476,13 +493,13 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
 
           Then('the batch result status is "success"', () => {
-            expect(state.result.status).toBe("success");
+            expect(state.result?.status).toBe("success");
           });
 
           And("the batch summary shows:", (_ctx: unknown, dataTable: unknown) => {
             const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
             for (const row of rows) {
-              expect(state.result.summary[row.field]).toBe(Number(row.value));
+              expect(getSummaryValue(row.field)).toBe(Number(row.value));
             }
           });
         }
@@ -518,7 +535,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           });
 
           Then('the batch result status is "success"', () => {
-            expect(state.result.status).toBe("success");
+            expect(state.result?.status).toBe("success");
           });
 
           And("the executor was called 2 times", () => {
@@ -564,7 +581,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
                 },
               };
             }
-          ) as CommandExecutor;
+          ) as unknown as CommandExecutor;
         });
 
         And("a BatchExecutor with the tracking executor", () => {
@@ -575,7 +592,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           state.commands = Array.from({ length: 10 }, (_, i) => ({
             commandType: "Test",
             args: {},
-            commandId: `cmd_${i}`,
+            commandId: toCommandId(`cmd_${i}`),
           }));
         });
 
@@ -608,9 +625,9 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
 
           And("a batch of 3 generic test commands", () => {
             state.commands = [
-              { commandType: "Test", args: {}, commandId: "cmd_1" },
-              { commandType: "Test", args: {}, commandId: "cmd_2" },
-              { commandType: "Test", args: {}, commandId: "cmd_3" },
+              { commandType: "Test", args: {}, commandId: toCommandId("cmd_1") },
+              { commandType: "Test", args: {}, commandId: toCommandId("cmd_2") },
+              { commandType: "Test", args: {}, commandId: toCommandId("cmd_3") },
             ];
           });
 
@@ -626,13 +643,13 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           );
 
           Then('the batch result status is "partial"', () => {
-            expect(state.result.status).toBe("partial");
+            expect(state.result?.status).toBe("partial");
           });
 
           And("the batch summary shows:", (_ctx: unknown, dataTable: unknown) => {
             const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
             for (const row of rows) {
-              expect(state.result.summary[row.field]).toBe(Number(row.value));
+              expect(getSummaryValue(row.field)).toBe(Number(row.value));
             }
           });
         }
@@ -668,17 +685,17 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then("the batch has 2 results", () => {
-          expect(state.result.results).toHaveLength(2);
+          expect(state.result?.results).toHaveLength(2);
         });
 
         And('result 0 has commandType "TestA" and index 0', () => {
-          expect(state.result.results[0]?.commandType).toBe("TestA");
-          expect(state.result.results[0]?.index).toBe(0);
+          expect(state.result?.results[0]?.commandType).toBe("TestA");
+          expect(state.result?.results[0]?.index).toBe(0);
         });
 
         And('result 1 has commandType "TestB" and index 1', () => {
-          expect(state.result.results[1]?.commandType).toBe("TestB");
-          expect(state.result.results[1]?.index).toBe(1);
+          expect(state.result?.results[1]?.commandType).toBe("TestB");
+          expect(state.result?.results[1]?.index).toBe(1);
         });
       });
 
@@ -700,8 +717,8 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then("result 0 has a numeric durationMs", () => {
-          expect(state.result.results[0]?.durationMs).toBeDefined();
-          expect(typeof state.result.results[0]?.durationMs).toBe("number");
+          expect(state.result?.results[0]?.durationMs).toBeDefined();
+          expect(typeof state.result?.results[0]?.durationMs).toBe("number");
         });
       });
 
@@ -711,7 +728,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
             status: "rejected" as const,
             code: "TEST_ERROR",
             reason: "Something went wrong",
-          })) as CommandExecutor;
+          })) as unknown as CommandExecutor;
         });
 
         And("a BatchExecutor with the rejecting executor", () => {
@@ -727,7 +744,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         });
 
         Then('result 0 has error "Something went wrong"', () => {
-          expect(state.result.results[0]?.error).toBe("Something went wrong");
+          expect(state.result?.results[0]?.error).toBe("Something went wrong");
         });
       });
 
@@ -757,12 +774,12 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         Then("the batch summary shows:", (_ctx: unknown, dataTable: unknown) => {
           const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
           for (const row of rows) {
-            expect(state.result.summary[row.field]).toBe(Number(row.value));
+            expect(getSummaryValue(row.field)).toBe(Number(row.value));
           }
         });
 
         And("the batch summary totalDurationMs is non-negative", () => {
-          expect(state.result.summary.totalDurationMs).toBeGreaterThanOrEqual(0);
+          expect(state.result?.summary.totalDurationMs).toBeGreaterThanOrEqual(0);
         });
       });
     }
@@ -793,15 +810,15 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       Then('the batch result status is "failed"', () => {
-        expect(state.result.status).toBe("failed");
+        expect(state.result?.status).toBe("failed");
       });
 
       And('result 0 has status "failed"', () => {
-        expect(state.result.results[0]?.status).toBe("failed");
+        expect(state.result?.results[0]?.status).toBe("failed");
       });
 
       And('result 0 has error "Executor crashed"', () => {
-        expect(state.result.results[0]?.error).toBe("Executor crashed");
+        expect(state.result?.results[0]?.error).toBe("Executor crashed");
       });
     });
 
@@ -819,11 +836,84 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       Then('the batch result status is "failed"', () => {
-        expect(state.result.status).toBe("failed");
+        expect(state.result?.status).toBe("failed");
       });
 
       And("the executor was not called", () => {
         expect(state.executor).not.toHaveBeenCalled();
+      });
+    });
+
+    RuleScenario(
+      "Rejects batch exceeding max command count before execution",
+      ({ Given, And, When, Then }) => {
+        Given("a mock executor that succeeds for all commands", () => {
+          state.executor = createMockExecutor();
+        });
+
+        And("a BatchExecutor with the mock executor only", () => {
+          state.batch = new BatchExecutor({ executor: state.executor! });
+        });
+
+        And("a batch of 4 generic test commands", () => {
+          state.commands = Array.from({ length: 4 }, (_, i) => ({
+            commandType: "Test",
+            args: {},
+            commandId: toCommandId(`cmd_${i}`),
+          }));
+        });
+
+        When('the batch is executed in "partial" mode with max batch size 3', async () => {
+          state.result = await state.batch!.execute(state.commands, {
+            mode: "partial",
+            maxBatchSize: 3,
+          });
+        });
+
+        Then('the batch result status is "failed"', () => {
+          expect(state.result?.status).toBe("failed");
+        });
+
+        And('all batch results have status "rejected"', () => {
+          expect(state.result?.results.every((r) => r.status === "rejected")).toBe(true);
+        });
+
+        And("the executor was not called", () => {
+          expect(state.executor).not.toHaveBeenCalled();
+        });
+      }
+    );
+
+    RuleScenario("Accepts batch exactly at max command count", ({ Given, And, When, Then }) => {
+      Given("a mock executor that succeeds for all commands", () => {
+        state.executor = createMockExecutor();
+      });
+
+      And("a BatchExecutor with the mock executor only", () => {
+        state.batch = new BatchExecutor({ executor: state.executor! });
+      });
+
+      And("a batch of 3 generic test commands", () => {
+        state.commands = Array.from({ length: 3 }, (_, i) => ({
+          commandType: "Test",
+          args: {},
+          commandId: toCommandId(`cmd_${i}`),
+        }));
+      });
+
+      When('the batch is executed in "partial" mode with max batch size 3', async () => {
+        state.result = await state.batch!.execute(state.commands, {
+          mode: "partial",
+          maxBatchSize: 3,
+        });
+      });
+
+      Then('the batch result status is "success"', () => {
+        expect(state.result?.status).toBe("success");
+      });
+
+      And("the executor was called 3 times", () => {
+        expect(state.executor).toHaveBeenCalledTimes(3);
       });
     });
   });
@@ -869,11 +959,11 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       Then('the batch result status is "failed"', () => {
-        expect(state.result.status).toBe("failed");
+        expect(state.result?.status).toBe("failed");
       });
 
       And('result 1 error contains "validation failed"', () => {
-        expect(state.result.results[1]?.error).toContain("validation failed");
+        expect(state.result?.results[1]?.error).toContain("validation failed");
       });
     });
   });

@@ -26,6 +26,8 @@ interface RegistrationInfo {
  */
 type RegistryLookup = (commandType: string) => RegistrationInfo | undefined;
 
+const DEFAULT_MAX_BATCH_SIZE = 100;
+
 /**
  * Validate a batch of commands before execution.
  *
@@ -53,6 +55,19 @@ export function validateBatch(
     errors.push({
       code: "EMPTY_BATCH",
       message: "Batch cannot be empty",
+    });
+    return { valid: false, errors };
+  }
+
+  const maxBatchSize = options.maxBatchSize ?? DEFAULT_MAX_BATCH_SIZE;
+  if (commands.length > maxBatchSize) {
+    errors.push({
+      code: "BATCH_TOO_LARGE",
+      message: `Batch cannot contain more than ${maxBatchSize} commands (received ${commands.length})`,
+      context: {
+        maxBatchSize,
+        actualSize: commands.length,
+      },
     });
     return { valid: false, errors };
   }

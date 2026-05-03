@@ -15,14 +15,26 @@ Feature: Batch Validation
 
   Rule: Empty batches are always rejected
 
-    **Invariant:** A batch with zero commands is never valid.
-    **Verified by:** Validating an empty array returns EMPTY_BATCH error.
+    **Invariant:** A batch with zero commands is never valid, and oversized batches are rejected before deeper validation.
+    **Verified by:** Validating an empty array returns EMPTY_BATCH; exact max succeeds; max+1 returns BATCH_TOO_LARGE.
 
     @happy-path
     Scenario: Rejects empty batch
       Given an empty batch of commands
       When the batch is validated in "partial" mode
       Then validation fails with error code "EMPTY_BATCH"
+
+    @validation
+    Scenario: Accepts batch exactly at max size
+      Given a batch of 3 generic test commands
+      When the batch is validated in "partial" mode with max batch size 3
+      Then validation succeeds
+
+    @validation
+    Scenario: Rejects batch exceeding max size
+      Given a batch of 4 generic test commands
+      When the batch is validated in "partial" mode with max batch size 3
+      Then validation fails with error code "BATCH_TOO_LARGE"
 
   # ============================================================================
   # validateBatch - Partial Mode

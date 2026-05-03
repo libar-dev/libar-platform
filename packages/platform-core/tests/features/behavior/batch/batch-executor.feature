@@ -197,8 +197,8 @@ Feature: BatchExecutor
 
   Rule: BatchExecutor handles executor exceptions gracefully
 
-    **Invariant:** Thrown errors are caught and reported as failed results, not unhandled exceptions.
-    **Verified by:** Executor throws produce failed status with error message; empty batch is rejected.
+    **Invariant:** Thrown errors are caught and reported as failed results, not unhandled exceptions, and validation failures block execution before the executor runs.
+    **Verified by:** Executor throws produce failed status with error message; empty batches and oversized batches are rejected before execution.
 
     Scenario: Handles executor throwing errors
       Given an executor that throws "Executor crashed"
@@ -216,6 +216,25 @@ Feature: BatchExecutor
       When an empty batch is executed in "partial" mode
       Then the batch result status is "failed"
       And the executor was not called
+
+    @validation
+    Scenario: Rejects batch exceeding max command count before execution
+      Given a mock executor that succeeds for all commands
+      And a BatchExecutor with the mock executor only
+      And a batch of 4 generic test commands
+      When the batch is executed in "partial" mode with max batch size 3
+      Then the batch result status is "failed"
+      And all batch results have status "rejected"
+      And the executor was not called
+
+    @validation
+    Scenario: Accepts batch exactly at max command count
+      Given a mock executor that succeeds for all commands
+      And a BatchExecutor with the mock executor only
+      And a batch of 3 generic test commands
+      When the batch is executed in "partial" mode with max batch size 3
+      Then the batch result status is "success"
+      And the executor was called 3 times
 
   # ============================================================================
   # Default Bounded Context

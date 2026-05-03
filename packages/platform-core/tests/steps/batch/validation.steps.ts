@@ -129,6 +129,49 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         }
       });
     });
+
+    RuleScenario("Accepts batch exactly at max size", ({ Given, When, Then }) => {
+      Given("a batch of 3 generic test commands", () => {
+        state.commands = Array.from({ length: 3 }, (_, i) => ({
+          commandType: `Test${i + 1}`,
+          args: {},
+        }));
+      });
+
+      When('the batch is validated in "partial" mode with max batch size 3', () => {
+        state.validationResult = validateBatch(state.commands, {
+          mode: "partial",
+          maxBatchSize: 3,
+        }) as TestState["validationResult"];
+      });
+
+      Then("validation succeeds", () => {
+        expect(state.validationResult?.valid).toBe(true);
+      });
+    });
+
+    RuleScenario("Rejects batch exceeding max size", ({ Given, When, Then }) => {
+      Given("a batch of 4 generic test commands", () => {
+        state.commands = Array.from({ length: 4 }, (_, i) => ({
+          commandType: `Test${i + 1}`,
+          args: {},
+        }));
+      });
+
+      When('the batch is validated in "partial" mode with max batch size 3', () => {
+        state.validationResult = validateBatch(state.commands, {
+          mode: "partial",
+          maxBatchSize: 3,
+        }) as TestState["validationResult"];
+      });
+
+      Then('validation fails with error code "BATCH_TOO_LARGE"', () => {
+        expect(state.validationResult?.valid).toBe(false);
+        if (!state.validationResult?.valid) {
+          expect(state.validationResult?.errors?.[0]?.code).toBe("BATCH_TOO_LARGE");
+        }
+      });
+    });
   });
 
   // ==========================================================================
