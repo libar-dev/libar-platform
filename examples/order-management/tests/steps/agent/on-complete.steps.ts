@@ -10,6 +10,7 @@ import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { api, internal } from "../../../convex/_generated/api";
 import { createUnitTestContext } from "../../support/setup";
+import type { WorkId } from "@convex-dev/workpool";
 
 // =============================================================================
 // Test State
@@ -50,6 +51,10 @@ function createInitialState(): TestState {
     deadLetterCount: 0,
     deadLetter: null,
   };
+}
+
+function toWorkId(value: string): WorkId {
+  return value as WorkId;
 }
 
 let state: TestState = createInitialState();
@@ -96,12 +101,12 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
   // ===========================================================================
 
   Rule("Successful and canceled results do not create dead letters", ({ RuleScenario }) => {
-    RuleScenario("No dead letter on success", ({ When, Then }) => {
+    RuleScenario("No dead letter on success", ({ When, Then, And }) => {
       When("the onComplete handler receives a success result", async () => {
         await state.t.mutation(
           internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
           {
-            workId: "work_1",
+            workId: toWorkId("work_1"),
             context: baseContext,
             result: { kind: "success", returnValue: null },
           }
@@ -112,6 +117,14 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
       Then("the dead letter count should be 0", () => {
         expect(state.deadLetterCount).toBe(0);
       });
+
+      And("the checkpoint should advance to the event global position", async () => {
+        const checkpoint = await state.t.query(api.queries.agent.getCheckpoint, {
+          agentId: AGENT_ID,
+        });
+        expect(checkpoint).not.toBeNull();
+        expect(checkpoint?.lastProcessedPosition).toBe(baseContext.globalPosition);
+      });
     });
 
     RuleScenario("No dead letter on canceled", ({ When, Then }) => {
@@ -119,7 +132,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
         await state.t.mutation(
           internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
           {
-            workId: "work_2",
+            workId: toWorkId("work_2"),
             context: baseContext,
             result: { kind: "canceled" },
           }
@@ -143,7 +156,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
         await state.t.mutation(
           internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
           {
-            workId: "work_3",
+            workId: toWorkId("work_3"),
             context: baseContext,
             result: { kind: "failed", error: "Test error" },
           }
@@ -179,7 +192,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
         await state.t.mutation(
           internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
           {
-            workId: "work_4a",
+            workId: toWorkId("work_4a"),
             context: baseContext,
             result: { kind: "failed", error: "First error" },
           }
@@ -192,7 +205,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
           await state.t.mutation(
             internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
             {
-              workId: "work_4b",
+              workId: toWorkId("work_4b"),
               context: baseContext,
               result: { kind: "failed", error: "Second error" },
             }
@@ -229,7 +242,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
         await state.t.mutation(
           internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
           {
-            workId: "work_5a",
+            workId: toWorkId("work_5a"),
             context: baseContext,
             result: { kind: "failed", error: "Original error" },
           }
@@ -249,7 +262,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
           await state.t.mutation(
             internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete,
             {
-              workId: "work_5b",
+              workId: toWorkId("work_5b"),
               context: baseContext,
               result: { kind: "failed", error: "Should not overwrite" },
             }

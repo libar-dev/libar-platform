@@ -110,6 +110,7 @@ export const recordPendingApproval = internalMutation({
       reason: args.reason,
       triggeringEventIds: args.triggeringEventIds,
       expiresAt: args.expiresAt,
+      verificationProof: agentVerificationProof,
     });
 
     if (result.status === "already_exists") {
@@ -373,9 +374,18 @@ export const expirePendingApprovals = internalMutation({
   args: {},
   handler: async (ctx) => {
     const logger = createPlatformNoOpLogger();
+    const boundedContextVerificationProof = await createVerificationProof({
+      target: "agentBC",
+      issuer: "order-management:contexts/agent/tools/approval:expirePendingApprovals",
+      subjectId: "agent",
+      subjectType: "boundedContext",
+      boundedContext: "agent",
+    });
 
     // Component handles iteration and patching internally
-    const result = await ctx.runMutation(components.agentBC.approvals.expirePending, {});
+    const result = await ctx.runMutation(components.agentBC.approvals.expirePending, {
+      verificationProof: boundedContextVerificationProof,
+    });
 
     if (result.expiredCount > 0) {
       logger.info("Expired pending approvals", {

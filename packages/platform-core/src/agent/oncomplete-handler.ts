@@ -25,6 +25,19 @@ import type { GlobalPositionLike } from "../events/globalPosition.js";
 import type { AgentActionResult } from "./action-handler.js";
 import { DEFAULT_APPROVAL_TIMEOUT_MS } from "./approval.js";
 import type { AgentComponentAPI, RunMutationCtx } from "./handler-types.js";
+import { createVerificationProof } from "../security/verificationProof.js";
+
+const ONCOMPLETE_REQUIRED_PERSISTENCE_ERROR_CODE = "AGENT_ONCOMPLETE_REQUIRED_PERSISTENCE_FAILED";
+
+class RequiredOnCompleteSideEffectError extends Error {
+  constructor(
+    public readonly step: "audit" | "command" | "approval",
+    public readonly causeMessage: string
+  ) {
+    super(`Required onComplete ${step} persistence failed: ${causeMessage}`);
+    this.name = "RequiredOnCompleteSideEffectError";
+  }
+}
 
 // ============================================================================
 // Workpool Context Type
@@ -177,8 +190,9 @@ export interface AgentOnCompleteConfig {
  *
  * WARNING -- NO-THROW ZONE: If the onComplete mutation throws a non-OCC error,
  * it rolls back silently. The Workpool considers the work "done" -- no
- * re-dispatch occurs. Every operation MUST be wrapped in try-catch. Failures
- * must be logged and dead-lettered, never thrown.
+ * re-dispatch occurs. Required persistence failures intentionally bubble to the
+ * catch-all dead-letter path so checkpoint advancement is blocked, but the
+ * handler itself must still resolve without throwing to its caller.
  *
  * Persistence order (AD-7 -- checkpoint updated LAST):
  * 1. On success:
@@ -228,6 +242,16 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
   const comp = config.agentComponent;
   const approvalTimeoutMs = config.approvalTimeoutMs ?? DEFAULT_APPROVAL_TIMEOUT_MS;
 
+  async function createAgentVerificationProof(agentId: string, issuer: string) {
+    return createVerificationProof({
+      target: "agentBC",
+      issuer,
+      subjectId: agentId,
+      subjectType: "agent",
+      boundedContext: "agent",
+    });
+  }
+
   return async (ctx: TCtx, { workId, context, result }: AgentOnCompleteArgs): Promise<void> => {
     const { agentId, subscriptionId, eventId, globalPosition } = context;
     const mutCtx = ctx as RunMutationCtx;
@@ -271,12 +295,18 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
       }
 
       try {
+        const verificationProof = await createAgentVerificationProof(
+          agentId,
+          "platform-core:agent/oncomplete-handler:failed-audit"
+        );
+
         // Record failure audit event
         await mutCtx.runMutation(comp.audit.record, {
           eventType: "AgentAnalysisFailed",
           agentId,
           decisionId: `fail_${agentId}_${globalPosition}`,
           timestamp: Date.now(),
+          verificationProof,
           payload: {
             error: result.error,
             sourceEventId: eventId,
@@ -297,15 +327,14 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
     // Success path
     // ----------------------------------------------------------------
     const actionResult = result.returnValue;
-
-    // Null result means event was skipped (idempotency/inactive agent)
-    if (!actionResult) {
-      return;
-    }
-
-    const { decisionId, decision, analysisMethod, llmMetrics } = actionResult;
+    const decisionId = actionResult?.decisionId;
 
     try {
+      const verificationProof = await createAgentVerificationProof(
+        agentId,
+        "platform-core:agent/oncomplete-handler:success-persistence"
+      );
+
       // Idempotency check (AD-6) -- load-or-create enters the OCC write set
       // immediately, which is correct since we always want to update the checkpoint.
       const checkpointResult = await mutCtx.runMutation(comp.checkpoints.loadOrCreate, {
@@ -331,6 +360,21 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
         return;
       }
 
+      // Null result means event was skipped (idempotency/inactive agent), but the
+      // checkpoint must still advance so the event is not retried forever.
+      if (!actionResult) {
+        await mutCtx.runMutation(comp.checkpoints.update, {
+          agentId,
+          subscriptionId,
+          lastProcessedPosition: globalPosition,
+          lastEventId: eventId,
+          incrementEventsProcessed: true,
+        });
+        return;
+      }
+
+      const { decision, analysisMethod, llmMetrics } = actionResult;
+
       // 1. Record audit event (idempotent by decisionId)
       if (decision) {
         try {
@@ -339,6 +383,7 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
             agentId,
             decisionId,
             timestamp: Date.now(),
+            verificationProof,
             payload: {
               patternDetected: decision.command ? decision.command : null,
               confidence: decision.confidence,
@@ -356,12 +401,10 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
             },
           });
         } catch (auditError) {
-          logger.error("Failed to record audit in onComplete", {
-            agentId,
-            decisionId,
-            error: auditError instanceof Error ? auditError.message : String(auditError),
-          });
-          // Continue -- do not fail the whole onComplete for audit
+          throw new RequiredOnCompleteSideEffectError(
+            "audit",
+            auditError instanceof Error ? auditError.message : String(auditError)
+          );
         }
 
         // 2. Record command if decision includes one
@@ -375,13 +418,13 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
               confidence: decision.confidence,
               reason: decision.reason,
               triggeringEventIds: decision.triggeringEvents ?? [],
+              verificationProof,
             });
           } catch (cmdError) {
-            logger.error("Failed to record command in onComplete", {
-              agentId,
-              decisionId,
-              error: cmdError instanceof Error ? cmdError.message : String(cmdError),
-            });
+            throw new RequiredOnCompleteSideEffectError(
+              "command",
+              cmdError instanceof Error ? cmdError.message : String(cmdError)
+            );
           }
 
           // 2b. Enqueue command routing (if bridge configured and not pending approval)
@@ -421,13 +464,13 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
               reason: decision.reason,
               triggeringEventIds: decision.triggeringEvents ?? [],
               expiresAt: Date.now() + approvalTimeoutMs,
+              verificationProof,
             });
           } catch (aprError) {
-            logger.error("Failed to create approval in onComplete", {
-              agentId,
-              decisionId,
-              error: aprError instanceof Error ? aprError.message : String(aprError),
-            });
+            throw new RequiredOnCompleteSideEffectError(
+              "approval",
+              aprError instanceof Error ? aprError.message : String(aprError)
+            );
           }
         }
       }
@@ -447,12 +490,18 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
       });
     } catch (error) {
       // NO-THROW: Catch-all for unexpected errors in the success path
-      logger.error("Unexpected error in agent onComplete", {
-        agentId,
-        eventId,
-        decisionId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      const isRequiredPersistenceError = error instanceof RequiredOnCompleteSideEffectError;
+      logger.error(
+        isRequiredPersistenceError
+          ? "Required persistence failed in agent onComplete"
+          : "Unexpected error in agent onComplete",
+        {
+          agentId,
+          eventId,
+          decisionId,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
 
       // Try to create a dead letter as last resort
       try {
@@ -464,6 +513,12 @@ export function createAgentOnCompleteHandler<TCtx = unknown>(
           error: error instanceof Error ? error.message : String(error),
           attemptCount: 1, // Placeholder: Workpool onComplete does not surface retry count
           workId,
+          context: {
+            correlationId: context.correlationId,
+            ...(isRequiredPersistenceError && {
+              errorCode: ONCOMPLETE_REQUIRED_PERSISTENCE_ERROR_CODE,
+            }),
+          },
         });
       } catch (dlFallbackError) {
         // Truly nothing more we can do

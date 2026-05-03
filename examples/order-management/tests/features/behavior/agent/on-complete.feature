@@ -20,6 +20,7 @@ Feature: Agent onComplete Handler
     Scenario: No dead letter on success
       When the onComplete handler receives a success result
       Then the dead letter count should be 0
+      And the checkpoint should advance to the event global position
 
     Scenario: No dead letter on canceled
       When the onComplete handler receives a canceled result

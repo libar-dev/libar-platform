@@ -33,11 +33,11 @@ import { getDataTableRows } from "../_helpers/data-table.js";
 function createMockLogger(): Logger {
   return {
     debug: vi.fn(),
+    trace: vi.fn(),
     info: vi.fn(),
+    report: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    child: vi.fn().mockReturnThis(),
-    flush: vi.fn(),
   };
 }
 
@@ -125,6 +125,8 @@ interface TestState {
   calledRefs: unknown[];
   checkpointLoadOrCreateThrows: string | null;
   auditRecordThrows: string | null;
+  commandRecordThrows: string | null;
+  approvalCreateThrows: string | null;
   deadLetterRecordThrows: string | null;
   checkpointLastProcessedPosition: number | null;
   approvalTimeoutMs: number | undefined;
@@ -143,6 +145,8 @@ function createInitialState(): TestState {
     calledRefs: [],
     checkpointLoadOrCreateThrows: null,
     auditRecordThrows: null,
+    commandRecordThrows: null,
+    approvalCreateThrows: null,
     deadLetterRecordThrows: null,
     checkpointLastProcessedPosition: null,
     approvalTimeoutMs: undefined,
@@ -180,10 +184,16 @@ function configureMockRunMutation(): void {
     }
     if (ref === s.mockComponent.commands.record) {
       s.callOrder.push("commands");
+      if (s.commandRecordThrows) {
+        throw new Error(s.commandRecordThrows);
+      }
       return {};
     }
     if (ref === s.mockComponent.approvals.create) {
       s.callOrder.push("approvals");
+      if (s.approvalCreateThrows) {
+        throw new Error(s.approvalCreateThrows);
+      }
       return {};
     }
     if (ref === s.mockComponent.checkpoints.update) {
@@ -204,13 +214,11 @@ function configureMockRunMutation(): void {
 function buildHandler(): ReturnType<typeof createAgentOnCompleteHandler> {
   const opts: Parameters<typeof createAgentOnCompleteHandler>[0] = {
     agentComponent: state.mockComponent,
+    ...(state.logger ? { logger: state.logger } : {}),
+    ...(state.approvalTimeoutMs !== undefined
+      ? { approvalTimeoutMs: state.approvalTimeoutMs }
+      : {}),
   };
-  if (state.logger) {
-    opts.logger = state.logger;
-  }
-  if (state.approvalTimeoutMs !== undefined) {
-    opts.approvalTimeoutMs = state.approvalTimeoutMs;
-  }
   return createAgentOnCompleteHandler(opts);
 }
 
@@ -299,8 +307,9 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
             (call: unknown[]) => call[0] === state.mockComponent.deadLetters.record
           );
           expect(deadLetterCall).toBeDefined();
+          const deadLetterArgs = deadLetterCall?.[1] as Record<string, unknown> | undefined;
           for (const row of rows) {
-            const actual = deadLetterCall![1][row.field as keyof (typeof deadLetterCall)[1]];
+            const actual = deadLetterArgs?.[row.field];
             const expected = isNaN(Number(row.value)) ? row.value : Number(row.value);
             expect(actual).toBe(expected);
           }
@@ -338,12 +347,13 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
   });
 
   // ===========================================================================
-  // Rule: Success with null returnValue is a no-op
+  // Rule: Success with null returnValue still advances checkpoint
   // ===========================================================================
 
-  Rule("Success with null returnValue is a no-op", ({ RuleScenario }) => {
-    RuleScenario("Returns immediately when returnValue is null", ({ Given, And, When, Then }) => {
+  Rule("Success with null returnValue still advances checkpoint", ({ RuleScenario }) => {
+    RuleScenario("Advances checkpoint when returnValue is null", ({ Given, And, When, Then }) => {
       Given("a handler with default config", () => {
+        configureMockRunMutation();
         state.handler = buildHandler();
       });
 
@@ -357,8 +367,24 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
         await state.handler!(state.mockCtx, state.args!);
       });
 
-      Then("runMutation is not called", () => {
-        expect(state.mockRunMutation).not.toHaveBeenCalled();
+      Then("the checkpoint loadOrCreate is called", () => {
+        expect(state.calledRefs).toContain(state.mockComponent.checkpoints.loadOrCreate);
+      });
+
+      And("the checkpoint update is called", () => {
+        expect(state.calledRefs).toContain(state.mockComponent.checkpoints.update);
+      });
+
+      And("the audit record is not called", () => {
+        expect(state.calledRefs).not.toContain(state.mockComponent.audit.record);
+      });
+
+      And("the commands record is not called", () => {
+        expect(state.calledRefs).not.toContain(state.mockComponent.commands.record);
+      });
+
+      And("the approvals create is not called", () => {
+        expect(state.calledRefs).not.toContain(state.mockComponent.approvals.create);
       });
     });
   });
@@ -445,9 +471,11 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
             (call: unknown[]) => call[0] === state.mockComponent.checkpoints.update
           );
           expect(checkpointUpdateCall).toBeDefined();
+          const checkpointUpdateArgs = checkpointUpdateCall?.[1] as
+            | Record<string, unknown>
+            | undefined;
           for (const row of rows) {
-            const actual =
-              checkpointUpdateCall![1][row.field as keyof (typeof checkpointUpdateCall)[1]];
+            const actual = checkpointUpdateArgs?.[row.field];
             let expected: unknown;
             if (row.value === "true") expected = true;
             else if (row.value === "false") expected = false;
@@ -788,8 +816,9 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
             (call: unknown[]) => call[0] === state.mockComponent.deadLetters.record
           );
           expect(deadLetterCall).toBeDefined();
+          const deadLetterArgs = deadLetterCall?.[1] as Record<string, unknown> | undefined;
           for (const row of rows) {
-            const actual = deadLetterCall![1][row.field as keyof (typeof deadLetterCall)[1]];
+            const actual = deadLetterArgs?.[row.field];
             expect(actual).toBe(row.value);
           }
         });
@@ -810,7 +839,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
     );
 
     RuleScenario(
-      "Continues to record commands and checkpoint when audit throws",
+      "Dead-letters and skips checkpoint when audit persistence fails",
       ({ Given, And, When, Then }) => {
         Given("a handler with default config and a logger", () => {
           state.logger = createMockLogger();
@@ -857,26 +886,257 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScena
           expect(state.calledRefs).toContain(state.mockComponent.audit.record);
         });
 
-        And("the commands record is called", () => {
-          expect(state.calledRefs).toContain(state.mockComponent.commands.record);
+        And("the commands record is not called", () => {
+          expect(state.calledRefs).not.toContain(state.mockComponent.commands.record);
         });
 
-        And("the checkpoint update is called", () => {
-          expect(state.calledRefs).toContain(state.mockComponent.checkpoints.update);
+        And("the checkpoint update is not called", () => {
+          expect(state.calledRefs).not.toContain(state.mockComponent.checkpoints.update);
+        });
+
+        And("the dead letter is recorded with fields:", (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
+          const deadLetterCall = state.mockRunMutation.mock.calls.find(
+            (call: unknown[]) => call[0] === state.mockComponent.deadLetters.record
+          );
+          expect(deadLetterCall).toBeDefined();
+          for (const row of rows) {
+            const actual = deadLetterCall?.[1]?.[row.field as keyof (typeof deadLetterCall)[1]];
+            expect(actual).toBe(row.value);
+          }
         });
 
         And(
-          'the logger error is called with message "Failed to record audit in onComplete" and agentId "test-agent" and error "Audit store unavailable"',
+          'the dead letter context includes correlationId "corr_123" and errorCode "AGENT_ONCOMPLETE_REQUIRED_PERSISTENCE_FAILED"',
+          () => {
+            const deadLetterCall = state.mockRunMutation.mock.calls.find(
+              (call: unknown[]) => call[0] === state.mockComponent.deadLetters.record
+            );
+            expect(deadLetterCall?.[1]?.context).toMatchObject({
+              correlationId: "corr_123",
+              errorCode: "AGENT_ONCOMPLETE_REQUIRED_PERSISTENCE_FAILED",
+            });
+          }
+        );
+
+        And(
+          'the logger error is called with message "Required persistence failed in agent onComplete" and agentId "test-agent" and error "Required onComplete audit persistence failed: Audit store unavailable"',
           () => {
             expect(state.logger!.error).toHaveBeenCalledWith(
-              "Failed to record audit in onComplete",
+              "Required persistence failed in agent onComplete",
               expect.objectContaining({
                 agentId: "test-agent",
-                error: "Audit store unavailable",
+                error: "Required onComplete audit persistence failed: Audit store unavailable",
               })
             );
           }
         );
+      }
+    );
+
+    RuleScenario(
+      "Dead-letters and skips checkpoint when command persistence fails",
+      ({ Given, And, When, Then }) => {
+        Given("a handler with default config and a logger", () => {
+          state.logger = createMockLogger();
+        });
+
+        And("the checkpoint loadOrCreate returns lastProcessedPosition 0", () => {
+          state.checkpointLastProcessedPosition = 0;
+        });
+
+        And('the commands record will throw "Command store unavailable"', () => {
+          state.commandRecordThrows = "Command store unavailable";
+          configureMockRunMutation();
+          state.handler = buildHandler();
+        });
+
+        And(
+          "args with a success result containing a decision with command and requiresApproval false",
+          () => {
+            const actionResult = createTestActionResult({
+              decision: {
+                command: "SuggestOutreach",
+                payload: { customerId: "cust-123" },
+                confidence: 0.9,
+                reason: "Churn risk",
+                requiresApproval: false,
+                triggeringEvents: ["evt_1"],
+              },
+            });
+            state.args = createTestArgs({
+              result: { kind: "success", returnValue: actionResult },
+            });
+          }
+        );
+
+        When("the handler is invoked", async () => {
+          await state.handler!(state.mockCtx, state.args!);
+        });
+
+        Then("the handler resolves without throwing", () => {
+          // Already resolved
+        });
+
+        And("the audit record is called", () => {
+          expect(state.calledRefs).toContain(state.mockComponent.audit.record);
+        });
+
+        And("the commands record is called", () => {
+          expect(state.calledRefs).toContain(state.mockComponent.commands.record);
+        });
+
+        And("the checkpoint update is not called", () => {
+          expect(state.calledRefs).not.toContain(state.mockComponent.checkpoints.update);
+        });
+
+        And("the dead letter is recorded with fields:", (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
+          const deadLetterCall = state.mockRunMutation.mock.calls.find(
+            (call: unknown[]) => call[0] === state.mockComponent.deadLetters.record
+          );
+          expect(deadLetterCall).toBeDefined();
+          for (const row of rows) {
+            const actual = deadLetterCall?.[1]?.[row.field as keyof (typeof deadLetterCall)[1]];
+            expect(actual).toBe(row.value);
+          }
+        });
+      }
+    );
+
+    RuleScenario(
+      "Dead-letters and skips checkpoint when approval persistence fails",
+      ({ Given, And, When, Then }) => {
+        Given("a handler with default config and a logger", () => {
+          state.logger = createMockLogger();
+        });
+
+        And("the checkpoint loadOrCreate returns lastProcessedPosition 0", () => {
+          state.checkpointLastProcessedPosition = 0;
+        });
+
+        And('the approvals create will throw "Approval store unavailable"', () => {
+          state.approvalCreateThrows = "Approval store unavailable";
+          configureMockRunMutation();
+          state.handler = buildHandler();
+        });
+
+        And("args with a success result containing a decision with requiresApproval true", () => {
+          const actionResult = createTestActionResult({
+            decision: {
+              command: "SuggestOutreach",
+              payload: { customerId: "cust-123" },
+              confidence: 0.85,
+              reason: "Churn risk detected",
+              requiresApproval: true,
+              triggeringEvents: ["evt_1"],
+            },
+          });
+          state.args = createTestArgs({
+            result: { kind: "success", returnValue: actionResult },
+          });
+        });
+
+        When("the handler is invoked", async () => {
+          await state.handler!(state.mockCtx, state.args!);
+        });
+
+        Then("the handler resolves without throwing", () => {
+          // Already resolved
+        });
+
+        And("the audit record is called", () => {
+          expect(state.calledRefs).toContain(state.mockComponent.audit.record);
+        });
+
+        And("the commands record is called", () => {
+          expect(state.calledRefs).toContain(state.mockComponent.commands.record);
+        });
+
+        And("the approvals create is called", () => {
+          expect(state.calledRefs).toContain(state.mockComponent.approvals.create);
+        });
+
+        And("the checkpoint update is not called", () => {
+          expect(state.calledRefs).not.toContain(state.mockComponent.checkpoints.update);
+        });
+
+        And("the dead letter is recorded with fields:", (_ctx: unknown, dataTable: unknown) => {
+          const rows = getDataTableRows<{ field: string; value: string }>(dataTable);
+          const deadLetterCall = state.mockRunMutation.mock.calls.find(
+            (call: unknown[]) => call[0] === state.mockComponent.deadLetters.record
+          );
+          expect(deadLetterCall).toBeDefined();
+          for (const row of rows) {
+            const actual = deadLetterCall?.[1]?.[row.field as keyof (typeof deadLetterCall)[1]];
+            expect(actual).toBe(row.value);
+          }
+        });
+      }
+    );
+
+    RuleScenario(
+      "Success persistence calls include verification proofs",
+      ({ Given, And, When, Then }) => {
+        Given('a handler with default config and fake timers at "2024-01-15T12:00:00Z"', () => {
+          vi.useFakeTimers();
+          vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
+          configureMockRunMutation();
+          state.handler = buildHandler();
+        });
+
+        And("args with a success result containing a decision with requiresApproval true", () => {
+          const actionResult = createTestActionResult({
+            decision: {
+              command: "SuggestOutreach",
+              payload: { customerId: "cust-123" },
+              confidence: 0.85,
+              reason: "Churn risk detected",
+              requiresApproval: true,
+              triggeringEvents: ["evt_1"],
+            },
+          });
+          state.args = createTestArgs({
+            result: { kind: "success", returnValue: actionResult },
+          });
+        });
+
+        When("the handler is invoked", async () => {
+          await state.handler!(state.mockCtx, state.args!);
+        });
+
+        Then('the audit record includes a verification proof for agentId "test-agent"', () => {
+          const auditCall = state.mockRunMutation.mock.calls.find(
+            (call: unknown[]) => call[0] === state.mockComponent.audit.record
+          );
+          expect(auditCall?.[1]?.verificationProof).toMatchObject({
+            subjectId: "test-agent",
+            subjectType: "agent",
+            boundedContext: "agent",
+          });
+        });
+
+        And('the commands record includes a verification proof for agentId "test-agent"', () => {
+          const commandCall = state.mockRunMutation.mock.calls.find(
+            (call: unknown[]) => call[0] === state.mockComponent.commands.record
+          );
+          expect(commandCall?.[1]?.verificationProof).toMatchObject({
+            subjectId: "test-agent",
+            subjectType: "agent",
+            boundedContext: "agent",
+          });
+        });
+
+        And('the approvals create includes a verification proof for agentId "test-agent"', () => {
+          const approvalCall = state.mockRunMutation.mock.calls.find(
+            (call: unknown[]) => call[0] === state.mockComponent.approvals.create
+          );
+          expect(approvalCall?.[1]?.verificationProof).toMatchObject({
+            subjectId: "test-agent",
+            subjectType: "agent",
+            boundedContext: "agent",
+          });
+        });
       }
     );
 

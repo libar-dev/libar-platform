@@ -58,11 +58,40 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           expiresAt: number;
           reason: string;
           triggeringEventIds: Array<string>;
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
         },
         any,
         Name
       >;
-      expirePending: FunctionReference<"mutation", "internal", {}, any, Name>;
+      expirePending: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          verificationProof: {
+            boundedContext: string;
+            expiresAt: number;
+            issuedAt: number;
+            issuer: string;
+            nonce: string;
+            signature: string;
+            subjectId: string;
+            subjectType: "reviewer" | "agent" | "boundedContext" | "system";
+            tenantId?: string;
+          };
+        },
+        any,
+        Name
+      >;
       getById: FunctionReference<
         "query",
         "internal",

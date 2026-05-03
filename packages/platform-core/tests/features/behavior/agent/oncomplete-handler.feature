@@ -38,15 +38,19 @@ Feature: Agent onComplete Handler
       And the checkpoint update is not called
       And the checkpoint loadOrCreate is not called
 
-  Rule: Success with null returnValue is a no-op
-    **Invariant:** A null returnValue (skipped event) triggers no mutations
-    **Verified by:** Scenario confirming zero runMutation calls
+  Rule: Success with null returnValue still advances checkpoint
+    **Invariant:** A null returnValue (skipped event) records no audit/command/approval side effects but still advances the checkpoint once.
+    **Verified by:** Scenario confirming checkpoint load/update without additional persistence
 
-    Scenario: Returns immediately when returnValue is null
+    Scenario: Advances checkpoint when returnValue is null
       Given a handler with default config
       And args with a success result with null returnValue
       When the handler is invoked
-      Then runMutation is not called
+      Then the checkpoint loadOrCreate is called
+      And the checkpoint update is called
+      And the audit record is not called
+      And the commands record is not called
+      And the approvals create is not called
 
   Rule: Success with decision persists audit, command, approval, and checkpoint
     **Invariant:** Persistence operations execute in strict order: loadOrCreate, audit, commands, approvals, checkpoint update
@@ -148,7 +152,7 @@ Feature: Agent onComplete Handler
         | error   | Database connection lost  |
       And the logger error is called with message "Unexpected error in agent onComplete" and agentId "test-agent" and error "Database connection lost"
 
-    Scenario: Continues to record commands and checkpoint when audit throws
+    Scenario: Dead-letters and skips checkpoint when audit persistence fails
       Given a handler with default config and a logger
       And the checkpoint loadOrCreate returns lastProcessedPosition 0
       And the audit record will throw "Audit store unavailable"
@@ -156,9 +160,56 @@ Feature: Agent onComplete Handler
       When the handler is invoked
       Then the handler resolves without throwing
       And the audit record is called
+      And the commands record is not called
+      And the checkpoint update is not called
+      And the dead letter is recorded with fields:
+        | field   | value                                                  |
+        | agentId | test-agent                                             |
+        | eventId | evt_123                                                |
+        | error   | Required onComplete audit persistence failed: Audit store unavailable |
+      And the dead letter context includes correlationId "corr_123" and errorCode "AGENT_ONCOMPLETE_REQUIRED_PERSISTENCE_FAILED"
+      And the logger error is called with message "Required persistence failed in agent onComplete" and agentId "test-agent" and error "Required onComplete audit persistence failed: Audit store unavailable"
+
+    Scenario: Dead-letters and skips checkpoint when command persistence fails
+      Given a handler with default config and a logger
+      And the checkpoint loadOrCreate returns lastProcessedPosition 0
+      And the commands record will throw "Command store unavailable"
+      And args with a success result containing a decision with command and requiresApproval false
+      When the handler is invoked
+      Then the handler resolves without throwing
+      And the audit record is called
       And the commands record is called
-      And the checkpoint update is called
-      And the logger error is called with message "Failed to record audit in onComplete" and agentId "test-agent" and error "Audit store unavailable"
+      And the checkpoint update is not called
+      And the dead letter is recorded with fields:
+        | field   | value                                                     |
+        | agentId | test-agent                                                |
+        | eventId | evt_123                                                   |
+        | error   | Required onComplete command persistence failed: Command store unavailable |
+
+    Scenario: Dead-letters and skips checkpoint when approval persistence fails
+      Given a handler with default config and a logger
+      And the checkpoint loadOrCreate returns lastProcessedPosition 0
+      And the approvals create will throw "Approval store unavailable"
+      And args with a success result containing a decision with requiresApproval true
+      When the handler is invoked
+      Then the handler resolves without throwing
+      And the audit record is called
+      And the commands record is called
+      And the approvals create is called
+      And the checkpoint update is not called
+      And the dead letter is recorded with fields:
+        | field   | value                                                       |
+        | agentId | test-agent                                                  |
+        | eventId | evt_123                                                     |
+        | error   | Required onComplete approval persistence failed: Approval store unavailable |
+
+    Scenario: Success persistence calls include verification proofs
+      Given a handler with default config and fake timers at "2024-01-15T12:00:00Z"
+      And args with a success result containing a decision with requiresApproval true
+      When the handler is invoked
+      Then the audit record includes a verification proof for agentId "test-agent"
+      And the commands record includes a verification proof for agentId "test-agent"
+      And the approvals create includes a verification proof for agentId "test-agent"
 
     Scenario: Does not throw even when dead letter recording also fails
       Given a handler with default config and a logger

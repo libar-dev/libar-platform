@@ -59,6 +59,7 @@ export const create = mutation({
     reason: v.string(),
     triggeringEventIds: v.array(v.string()),
     expiresAt: v.number(),
+    verificationProof: verificationProofValidator,
   },
   handler: async (ctx, args) => {
     assertBoundaryValuesSize([
@@ -70,6 +71,13 @@ export const create = mutation({
     ]);
 
     const { approvalId } = args;
+    const verifiedActor = await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectId: args.agentId,
+      expectedSubjectType: "agent",
+      expectedBoundedContext: "agent",
+    });
+    const agentId = verifiedActor.subjectId;
 
     // Idempotency check
     const existing = await ctx.db
@@ -84,7 +92,7 @@ export const create = mutation({
     const now = Date.now();
     await ctx.db.insert("pendingApprovals", {
       approvalId: args.approvalId,
-      agentId: args.agentId,
+      agentId,
       decisionId: args.decisionId,
       action: args.action,
       confidence: args.confidence,
@@ -231,8 +239,16 @@ export const reject = mutation({
  * Called by a cron job to clean up stale approvals.
  */
 export const expirePending = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    verificationProof: verificationProofValidator,
+  },
+  handler: async (ctx, args) => {
+    await verifyActor({
+      proof: args.verificationProof,
+      expectedSubjectType: "boundedContext",
+      expectedBoundedContext: "agent",
+    });
+
     const now = Date.now();
 
     // Query pending approvals that have expired
