@@ -11,7 +11,13 @@
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
-import { createCMSRepository, NotFoundError, VersionConflictError } from "../../../src/repository";
+import {
+  createCMSRepository,
+  NotFoundError,
+  VersionConflictError,
+  type CMSRepository,
+  type RepositoryLoadResult,
+} from "../../../src/repository";
 import type { BaseCMS, CMSLoadResult } from "../../../src/cms/types";
 import { getDataTableRows } from "../_helpers/data-table.js";
 
@@ -26,17 +32,62 @@ interface TestCMS extends BaseCMS {
   version: number;
 }
 
+type RawDoc = Record<string, unknown>;
+
+type MockFirst = ReturnType<typeof vi.fn<() => Promise<RawDoc | null>>>;
+type MockWithIndex = ReturnType<
+  typeof vi.fn<
+    (
+      indexName: string,
+      indexRange: (q: { eq(field: string, value: unknown): unknown }) => unknown
+    ) => { first(): Promise<RawDoc | null> }
+  >
+>;
+type MockQuery = ReturnType<typeof vi.fn<(tableName: string) => { withIndex: MockWithIndex }>>;
+type MockInsert = ReturnType<
+  typeof vi.fn<(tableName: string, document: RawDoc) => Promise<string>>
+>;
+type MockPatch = ReturnType<typeof vi.fn<(id: unknown, updates: RawDoc) => Promise<void>>>;
+type MockGet = ReturnType<typeof vi.fn<(id: unknown) => Promise<RawDoc | null>>>;
+
+interface MockDbBundle {
+  db: {
+    query: MockQuery;
+    insert: MockInsert;
+    patch: MockPatch;
+    get: MockGet;
+  };
+  mocks: {
+    query: MockQuery;
+    withIndex: MockWithIndex;
+    first: MockFirst;
+    insert: MockInsert;
+    patch: MockPatch;
+    get: MockGet;
+  };
+}
+
 // =============================================================================
 // Mock Helpers
 // =============================================================================
 
-function createMockDb() {
-  const mockFirst = vi.fn<[], Promise<Record<string, unknown> | null>>();
-  const mockWithIndex = vi.fn().mockReturnValue({ first: mockFirst });
-  const mockQuery = vi.fn().mockReturnValue({ withIndex: mockWithIndex });
-  const mockInsert = vi.fn<[string, Record<string, unknown>], Promise<string>>();
-  const mockPatch = vi.fn<[unknown, Record<string, unknown>], Promise<void>>();
-  const mockGet = vi.fn<[unknown], Promise<Record<string, unknown> | null>>();
+function createMockDb(): MockDbBundle {
+  const mockFirst = vi.fn<() => Promise<RawDoc | null>>();
+  const mockWithIndex =
+    vi.fn<
+      (
+        indexName: string,
+        indexRange: (q: { eq(field: string, value: unknown): unknown }) => unknown
+      ) => { first(): Promise<RawDoc | null> }
+    >();
+  mockWithIndex.mockReturnValue({ first: mockFirst });
+
+  const mockQuery = vi.fn<(tableName: string) => { withIndex: MockWithIndex }>();
+  mockQuery.mockReturnValue({ withIndex: mockWithIndex });
+
+  const mockInsert = vi.fn<(tableName: string, document: RawDoc) => Promise<string>>();
+  const mockPatch = vi.fn<(id: unknown, updates: RawDoc) => Promise<void>>();
+  const mockGet = vi.fn<(id: unknown) => Promise<RawDoc | null>>();
 
   return {
     db: {
@@ -57,7 +108,7 @@ function createMockDb() {
 }
 
 function createMockUpcast() {
-  return vi.fn<[unknown], CMSLoadResult<TestCMS>>().mockImplementation((raw) => ({
+  return vi.fn<(raw: unknown) => CMSLoadResult<TestCMS>>().mockImplementation((raw) => ({
     cms: raw as TestCMS,
     wasUpcasted: false,
     originalStateVersion: (raw as TestCMS).stateVersion ?? 1,
@@ -69,17 +120,13 @@ function createMockUpcast() {
 // =============================================================================
 
 interface TestState {
-  mockDb: ReturnType<typeof createMockDb>;
+  mockDb: MockDbBundle;
   mockUpcast: ReturnType<typeof createMockUpcast>;
-  repo: ReturnType<typeof createCMSRepository<TestCMS>>;
-  loadResult: Awaited<ReturnType<ReturnType<typeof createCMSRepository<TestCMS>>["load"]>> | null;
-  tryLoadResult: Awaited<
-    ReturnType<ReturnType<typeof createCMSRepository<TestCMS>>["tryLoad"]>
-  > | null;
+  repo: CMSRepository<TestCMS, string, string>;
+  loadResult: RepositoryLoadResult<TestCMS, string> | null;
+  tryLoadResult: RepositoryLoadResult<TestCMS, string> | null;
   existsResult: boolean | null;
-  loadManyResult: Awaited<
-    ReturnType<ReturnType<typeof createCMSRepository<TestCMS>>["loadMany"]>
-  > | null;
+  loadManyResult: Array<RepositoryLoadResult<TestCMS, string> | null> | null;
   insertResult: string | null;
   caughtError: unknown;
   cmsRecord: TestCMS | null;
@@ -90,7 +137,7 @@ interface TestState {
 function createInitialState(): TestState {
   const mockDb = createMockDb();
   const mockUpcast = createMockUpcast();
-  const repo = createCMSRepository<TestCMS>({
+  const repo = createCMSRepository<TestCMS, string, string>({
     table: "testCMS",
     idField: "testId",
     index: "by_testId",
