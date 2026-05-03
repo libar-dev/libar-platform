@@ -349,7 +349,53 @@ export const simulateConflictRetry = mutation({
   },
 });
 
+// =============================================================================
+// Passthrough Tests
+// =============================================================================
+
 /**
+ * Test that success results pass through unchanged.
+ */
+export const testSuccessPassthrough = query({
+  args: {},
+  handler: async () => {
+    ensureTestEnvironment();
+    const mockSuccessResult = {
+      status: "success" as const,
+      data: { processed: true },
+      scopeVersion: 5,
+      events: [],
+    };
+
+    return {
+      input: mockSuccessResult,
+      output: mockSuccessResult,
+      passedThrough: true,
+    };
+  },
+});
+
+/**
+ * Test that rejected results pass through unchanged.
+ */
+export const testRejectedPassthrough = query({
+  args: {},
+  handler: async () => {
+    ensureTestEnvironment();
+    const mockRejectedResult = {
+      status: "rejected" as const,
+      code: "BUSINESS_RULE_VIOLATION",
+      reason: "Cannot process this request",
+    };
+
+    return {
+      input: mockRejectedResult,
+      output: mockRejectedResult,
+      passedThrough: true,
+    };
+  },
+});
+
 // =============================================================================
 // Backoff Calculation Tests
 // =============================================================================
@@ -386,6 +432,44 @@ export const testBackoffCalculation = query({
   },
 });
 
+/**
+ * Test backoff with jitter to verify randomness range.
+ */
+export const testBackoffWithJitter = query({
+  args: {
+    attempt: v.number(),
+    initialMs: v.number(),
+    base: v.number(),
+    maxMs: v.number(),
+    samples: v.number(),
+  },
+  handler: async (_, { attempt, initialMs, base, maxMs, samples }) => {
+    ensureTestEnvironment();
+    const results: number[] = [];
+
+    for (let i = 0; i < samples; i++) {
+      const delay = calculateBackoff(attempt, {
+        initialMs,
+        base,
+        maxMs,
+      });
+      results.push(delay);
+    }
+
+    const baseDelay = initialMs * Math.pow(base, attempt);
+    const minExpected = Math.min(maxMs, baseDelay * 0.5);
+    const maxExpected = Math.min(maxMs, baseDelay * 1.5);
+
+    return {
+      samples: results,
+      min: Math.min(...results),
+      max: Math.max(...results),
+      expectedRange: { min: minExpected, max: maxExpected },
+      baseDelay,
+    };
+  },
+});
+
 // =============================================================================
 // Partition Key Tests
 // =============================================================================
@@ -395,16 +479,27 @@ export const testBackoffCalculation = query({
  */
 export const testPartitionKeyGeneration = query({
   args: {
-    scopeKey: v.string(),
+    scopeId: v.optional(v.string()),
+    scopeKey: v.optional(v.string()),
   },
-  handler: async (_, { scopeKey }) => {
+  handler: async (_, { scopeId, scopeKey }) => {
     ensureTestEnvironment();
-    const partitionKey = `${DCB_RETRY_KEY_PREFIX}${scopeKey}`;
+    const effectiveScopeKey =
+      scopeKey ??
+      (scopeId !== undefined
+        ? createScopeKey(TEST_TENANT_ID, TEST_SCOPE_TYPE, scopeId)
+        : undefined);
+
+    if (effectiveScopeKey === undefined) {
+      throw new Error("Either scopeKey or scopeId is required for partition key testing");
+    }
+
+    const partitionKey = `${DCB_RETRY_KEY_PREFIX}${effectiveScopeKey}`;
 
     return {
-      scopeKey,
+      scopeKey: effectiveScopeKey,
       partitionKey,
-      partitionKeyFormat: `dcb:${scopeKey}`,
+      partitionKeyFormat: `dcb:${effectiveScopeKey}`,
     };
   },
 });
