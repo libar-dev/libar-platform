@@ -254,19 +254,16 @@ describeFeature(createOrderFeature, ({ Scenario, Background, AfterEachScenario }
       "I create an order with commandId {string}:",
       async (_ctx: unknown, commandId: string, table: OrderDataTableRow[]) => {
         const data = parseOrderDataTable(table);
-
-        // Generate unique orderId to avoid collision across runs
-        const uniqueOrderId = `${data.orderId}-${Date.now()}`;
+        const orderId = `${data.orderId}-${Date.now()}`;
         const customerId = data.customerId;
 
-        // Store for subsequent steps
-        scenarioState!.scenario.orderId = uniqueOrderId;
+        scenarioState!.scenario.orderId = orderId;
         scenarioState!.scenario.customerId = customerId;
         scenarioState!.scenario.commandId = commandId;
 
         try {
           scenarioState!.lastResult = await testMutation(scenarioState!.t, api.orders.createOrder, {
-            orderId: uniqueOrderId,
+            orderId,
             customerId,
             commandId,
           });
@@ -279,27 +276,21 @@ describeFeature(createOrderFeature, ({ Scenario, Background, AfterEachScenario }
     );
 
     And(
-      "I create an order with commandId {string}:",
+      "I repeat creating an order with commandId {string}:",
       async (_ctx: unknown, commandId: string, table: OrderDataTableRow[]) => {
         const data = parseOrderDataTable(table);
 
-        // Use the SAME orderId from previous step
-        const orderId = scenarioState!.scenario.orderId!;
-        const customerId = data.customerId;
-
         try {
-          // Second call with same commandId
           scenarioState!.secondResult = await testMutation(
             scenarioState!.t,
             api.orders.createOrder,
             {
-              orderId,
-              customerId,
+              orderId: scenarioState!.scenario.orderId!,
+              customerId: data.customerId,
               commandId,
             }
           );
         } catch (error) {
-          // Store as second result error
           scenarioState!.secondResult = { error: error as Error };
         }
       }

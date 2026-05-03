@@ -19,9 +19,10 @@ import {
   noJitter,
   DCB_MAX_RETRIES_EXCEEDED,
   DCB_RETRY_KEY_PREFIX,
+  executeWithDCB,
 } from "@libar-dev/platform-core/dcb";
 import { createVerificationProof, ensureTestEnvironment } from "@libar-dev/platform-core";
-import { dcbRetryPool } from "../infrastructure";
+import { success } from "@libar-dev/platform-core/decider";
 
 const commitScopeRef = components.eventStore.lib.commitScope as unknown as FunctionReference<
   "mutation",
@@ -140,6 +141,140 @@ export const getTestScopeState = query({
   },
 });
 
+/**
+ * Execute a real app-level DCB operation that hits a final scope commit conflict.
+ *
+ * This proves `executeWithDCB` returns `conflict` before `applyUpdate` runs, so
+ * app-level CMS/projection rows are left unchanged when a competing scope commit
+ * wins first.
+ */
+export const executeFinalScopeConflictRollback = mutation({
+  args: {
+    scopeId: v.string(),
+    productId: v.string(),
+    quantity: v.number(),
+    correlationId: v.string(),
+    commandId: v.string(),
+  },
+  handler: async (ctx, { scopeId, productId, quantity, correlationId, commandId }) => {
+    ensureTestEnvironment();
+
+    const scopeKey = createScopeKey(TEST_TENANT_ID, TEST_SCOPE_TYPE, scopeId);
+    const competingStreamId = `competing-stream-${scopeId}`;
+    const verificationProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "order-management:testing:dcbRetryTest:executeFinalScopeConflictRollback",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId: TEST_TENANT_ID,
+    });
+
+    let competingCommitInjected = false;
+
+    const result = await executeWithDCB(ctx as Parameters<typeof executeWithDCB>[0], {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamType: "Reservation",
+      schemaVersion: 1,
+      scopeOperations: {
+        getScope: async () => {
+          return await ctx.runQuery(components.eventStore.lib.getScope, { scopeKey });
+        },
+        commitScope: async (streamIds) => {
+          if (!competingCommitInjected) {
+            competingCommitInjected = true;
+            const competingCommit = await ctx.runMutation(commitScopeRef, {
+              scopeKey,
+              expectedVersion: 0,
+              boundedContext: "inventory",
+              streamIds: [competingStreamId],
+              verificationProof,
+            });
+
+            if (competingCommit.status !== "success") {
+              throw new Error("Failed to inject competing scope commit for rollback test");
+            }
+          }
+
+          return await ctx.runMutation(commitScopeRef, {
+            scopeKey,
+            expectedVersion: 0,
+            boundedContext: "inventory",
+            streamIds,
+            verificationProof,
+          });
+        },
+      },
+      entities: {
+        streamIds: [productId],
+        loadEntity: async (_innerCtx, streamId) => {
+          const product = await ctx.db
+            .query("productCatalog")
+            .withIndex("by_productId", (q) => q.eq("productId", streamId))
+            .first();
+
+          if (!product) {
+            return null;
+          }
+
+          return {
+            cms: product,
+            _id: product._id,
+          };
+        },
+      },
+      decider: (state, command, deciderContext) => {
+        const entityState = state.entities.get(command.productId);
+        if (!entityState) {
+          throw new Error(`Expected product ${command.productId} to exist for DCB rollback test`);
+        }
+
+        return success({
+          data: {
+            productId: command.productId,
+            requestedQuantity: command.quantity,
+            attemptedAt: deciderContext.now,
+          },
+          event: {
+            eventType: "TestScopeConflictRollbackVerified" as const,
+            payload: {
+              productId: command.productId,
+              quantity: command.quantity,
+            },
+          },
+          stateUpdate: new Map([
+            [
+              command.productId,
+              {
+                availableQuantity: entityState.cms.availableQuantity - command.quantity,
+                reservedQuantity: entityState.cms.reservedQuantity + command.quantity,
+              },
+            ],
+          ]),
+        });
+      },
+      command: { productId, quantity },
+      applyUpdate: async (innerCtx, id, _cms, update, _version, now) => {
+        await innerCtx.db.patch(id, {
+          ...update,
+          updatedAt: now,
+        });
+      },
+      commandId,
+      correlationId,
+    });
+
+    return {
+      scopeKey,
+      correlationId,
+      competingStreamId,
+      result,
+    };
+  },
+});
+
 // =============================================================================
 // DCB Retry Logic Test Mutations
 // =============================================================================
@@ -215,51 +350,6 @@ export const simulateConflictRetry = mutation({
 });
 
 /**
- * Test that success results pass through unchanged.
- */
-export const testSuccessPassthrough = query({
-  args: {},
-  handler: async () => {
-    ensureTestEnvironment();
-    // Simulate a success result - should pass through unchanged
-    const mockSuccessResult = {
-      status: "success" as const,
-      data: { processed: true },
-      scopeVersion: 5,
-      events: [],
-    };
-
-    // In real usage, withDCBRetry.handleResult would return this unchanged
-    return {
-      input: mockSuccessResult,
-      output: mockSuccessResult, // Same - passed through
-      passedThrough: true,
-    };
-  },
-});
-
-/**
- * Test that rejected results pass through unchanged.
- */
-export const testRejectedPassthrough = query({
-  args: {},
-  handler: async () => {
-    ensureTestEnvironment();
-    // Simulate a rejected result - should pass through unchanged
-    const mockRejectedResult = {
-      status: "rejected" as const,
-      code: "BUSINESS_RULE_VIOLATION",
-      reason: "Cannot process this request",
-    };
-
-    return {
-      input: mockRejectedResult,
-      output: mockRejectedResult, // Same - passed through
-      passedThrough: true,
-    };
-  },
-});
-
 // =============================================================================
 // Backoff Calculation Tests
 // =============================================================================
@@ -296,46 +386,6 @@ export const testBackoffCalculation = query({
   },
 });
 
-/**
- * Test backoff with jitter to verify randomness range.
- */
-export const testBackoffWithJitter = query({
-  args: {
-    attempt: v.number(),
-    initialMs: v.number(),
-    base: v.number(),
-    maxMs: v.number(),
-    samples: v.number(),
-  },
-  handler: async (_, { attempt, initialMs, base, maxMs, samples }) => {
-    ensureTestEnvironment();
-    const results: number[] = [];
-
-    for (let i = 0; i < samples; i++) {
-      // Use default jitter (random)
-      const delay = calculateBackoff(attempt, {
-        initialMs,
-        base,
-        maxMs,
-        // No jitterFn = use defaultJitter
-      });
-      results.push(delay);
-    }
-
-    const baseDelay = initialMs * Math.pow(base, attempt);
-    const minExpected = Math.min(maxMs, baseDelay * 0.5);
-    const maxExpected = Math.min(maxMs, baseDelay * 1.5);
-
-    return {
-      samples: results,
-      min: Math.min(...results),
-      max: Math.max(...results),
-      expectedRange: { min: minExpected, max: maxExpected },
-      baseDelay,
-    };
-  },
-});
-
 // =============================================================================
 // Partition Key Tests
 // =============================================================================
@@ -345,42 +395,16 @@ export const testBackoffWithJitter = query({
  */
 export const testPartitionKeyGeneration = query({
   args: {
-    scopeId: v.string(),
+    scopeKey: v.string(),
   },
-  handler: async (_, { scopeId }) => {
+  handler: async (_, { scopeKey }) => {
     ensureTestEnvironment();
-    const scopeKey = createScopeKey(TEST_TENANT_ID, TEST_SCOPE_TYPE, scopeId);
     const partitionKey = `${DCB_RETRY_KEY_PREFIX}${scopeKey}`;
 
     return {
       scopeKey,
       partitionKey,
-      scopeKeyFormat: `tenant:${TEST_TENANT_ID}:${TEST_SCOPE_TYPE}:${scopeId}`,
-      partitionKeyFormat: `dcb:tenant:${TEST_TENANT_ID}:${TEST_SCOPE_TYPE}:${scopeId}`,
-    };
-  },
-});
-
-// =============================================================================
-// DCB Retry Pool Verification
-// =============================================================================
-
-/**
- * Verify dcbRetryPool is properly configured.
- *
- * This doesn't actually enqueue work, just verifies the pool exists.
- */
-export const verifyDcbRetryPoolConfig = query({
-  args: {},
-  handler: async () => {
-    ensureTestEnvironment();
-    // dcbRetryPool is imported from infrastructure
-    // If we got here without errors, it's configured
-    const hasEnqueueMutation = typeof dcbRetryPool.enqueueMutation === "function";
-
-    return {
-      configured: true,
-      hasEnqueueMutation,
+      partitionKeyFormat: `dcb:${scopeKey}`,
     };
   },
 });

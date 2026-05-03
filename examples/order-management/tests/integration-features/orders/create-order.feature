@@ -30,7 +30,7 @@ Feature: Create Order (Integration)
     When I create an order with commandId "cmd-idem-01":
       | orderId    | customerId  |
       | ord-int-03 | cust-int-03 |
-    And I create an order with commandId "cmd-idem-01":
+    And I repeat creating an order with commandId "cmd-idem-01":
       | orderId    | customerId  |
       | ord-int-03 | cust-int-03 |
     Then the second command should return duplicate status

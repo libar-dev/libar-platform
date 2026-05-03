@@ -30,7 +30,7 @@ Feature: Add Stock (Integration)
     When I add stock with commandId "cmd-stock-idem-01" to product "prod-stock-02":
       | quantity | reason     |
       | 20       | Test stock |
-    And I add stock with commandId "cmd-stock-idem-01" to product "prod-stock-02":
+    And I repeat adding stock with commandId "cmd-stock-idem-01" to product "prod-stock-02":
       | quantity | reason     |
       | 20       | Test stock |
     Then the second command should return duplicate status

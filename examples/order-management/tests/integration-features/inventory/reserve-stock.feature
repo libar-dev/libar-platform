@@ -21,7 +21,7 @@ Feature: Reserve Stock (Integration)
   @happy-path
   Scenario: Reserve stock for multiple items
     Given a product "prod-res-int-02" exists with 50 available stock
-    And a product "prod-res-int-03" exists with 30 available stock
+    And another product "prod-res-int-03" exists with 30 available stock
     When I reserve stock for order "ord-res-int-02" with:
       | productId       | quantity |
       | prod-res-int-02 | 5        |
@@ -43,7 +43,7 @@ Feature: Reserve Stock (Integration)
   @validation
   Scenario: All-or-nothing reservation when one item fails
     Given a product "prod-res-int-05" exists with 100 available stock
-    And a product "prod-res-int-06" exists with 2 available stock
+    And another product "prod-res-int-06" exists with 2 available stock
     When I reserve stock for order "ord-res-int-04" with:
       | productId       | quantity |
       | prod-res-int-05 | 5        |
@@ -74,7 +74,7 @@ Feature: Reserve Stock (Integration)
     When I reserve stock for order "ord-res-int-07" with commandId "cmd-res-idem-01":
       | productId       | quantity |
       | prod-res-int-08 | 10       |
-    And I reserve stock for order "ord-res-int-07" with commandId "cmd-res-idem-01":
+    And I repeat reserving stock for order "ord-res-int-07" with commandId "cmd-res-idem-01":
       | productId       | quantity |
       | prod-res-int-08 | 10       |
     Then the second command should return duplicate status

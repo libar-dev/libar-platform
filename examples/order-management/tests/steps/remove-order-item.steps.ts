@@ -345,6 +345,20 @@ describeFeature(removeOrderItemFeature, ({ Scenario, Background, AfterEachScenar
       "I remove item {string} from order {string} with commandId {string}",
       async (_ctx: unknown, productId: string, orderId: string, commandId: string) => {
         scenarioState!.scenario.commandId = commandId;
+
+        await executeMutation(scenarioState!, async () => {
+          return await scenarioState!.t.mutation(api.orders.removeOrderItem, {
+            orderId,
+            productId,
+            commandId,
+          });
+        });
+      }
+    );
+
+    And(
+      "I retry removing item {string} from order {string} with commandId {string}",
+      async (_ctx: unknown, productId: string, orderId: string, commandId: string) => {
         await executeMutation(scenarioState!, async () => {
           return await scenarioState!.t.mutation(api.orders.removeOrderItem, {
             orderId,
@@ -358,20 +372,6 @@ describeFeature(removeOrderItemFeature, ({ Scenario, Background, AfterEachScenar
     Then("the command should succeed", () => {
       assertCommandSucceeded(scenarioState!);
     });
-
-    // Second call with same commandId should return duplicate
-    And(
-      "I remove item {string} from order {string} with commandId {string}",
-      async (_ctx: unknown, productId: string, orderId: string, commandId: string) => {
-        await executeMutation(scenarioState!, async () => {
-          return await scenarioState!.t.mutation(api.orders.removeOrderItem, {
-            orderId,
-            productId,
-            commandId,
-          });
-        });
-      }
-    );
 
     Then("the command should return duplicate result", () => {
       assertCommandDuplicate(scenarioState!);

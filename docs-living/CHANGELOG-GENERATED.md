@@ -17,11 +17,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **DCB Retry Execution**: DCB Retry Execution — reference implementation for integrating withDCBRetry into command handlers.
 - **Command Config Partition Key Validation**: Validates that all projection configurations in a command config have explicit partition keys defined.
 - **Agent as Bounded Context - AI-Driven Event Reactors**: Demonstrates the Agent as Bounded Context pattern where AI agents subscribe to domain events via EventBus and emit...
-- **Release V 020**: Converts the aggregate-less pivot roadmap into executable specs for Phases 14-22.
 - **Process Enhancements**: Vision: Transform the delivery process from a documentation tool into a delivery operating system.
+- **Release V 020**: Converts the aggregate-less pivot roadmap into executable specs for Phases 14-22.
 - **Confirmed Order Cancellation**: Problem: The Order FSM treats `confirmed` as terminal.
 - **Agent LLM Integration**: Problem: The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that cannot call external APIs.
 - **Agent BC Component Isolation**: Problem: Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`, `agentCommands`,...
+- **Themed Decision Architecture**: Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.
+- **Test Content Blocks**: This feature demonstrates what content blocks are captured and rendered by the PRD generator.
+- **Repo Level Docs Generation**: As a monorepo maintainer, I want unified documentation generation from multiple sources.
+- **Process Metadata Expansion**: The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
+- **Codec Driven Reference Generation**: Reference documentation is specified via 11 recipe `.feature` files in `architect/recipes/`.
 - **PDR 021 Platform Store Runtime Dependency On Platform Core**
 - **PDR 020 Events Table Index Policy**
 - **PDR 019 V Any Vs V Unknown Boundary Policy**
@@ -30,11 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **PDR 016 Projection Pool Split Named Pools Per Concern**
 - **PDR 015 Global Position Numeric Representation**
 - **PDR 014 Component Boundary Authentication Convention**
-- **Themed Decision Architecture**: Decisions (ADRs, PDRs) should not be "dumped into same folder" when generated.
-- **Test Content Blocks**: This feature demonstrates what content blocks are captured and rendered by the PRD generator.
-- **Repo Level Docs Generation**: As a monorepo maintainer, I want unified documentation generation from multiple sources.
-- **Process Metadata Expansion**: The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
-- **Codec Driven Reference Generation**: Reference documentation is specified via 11 recipe `.feature` files in `architect/recipes/`.
 - **Tranche1 Supporting Security Contract Sweep**: Problem: Several tranche-1 gaps remain after the auth keystone: test-mode checks fail open, correlation IDs can be...
 - **Tranche0 Release Ci Docs Process Guardrails**: Problem: `test.yml` ignores markdown and docs-only changes, release automation is not yet normalized around architect...
 - **Tranche0 Readiness Harness**: Problem: The remediation program cannot safely begin security or correctness migrations while `platform-store` lacks...
@@ -114,26 +114,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Saga Completion Handler**: Workflow onComplete callback handler.
 - **Projection Definitions**: Registry of all projection definitions and replay handler registry.
 - **Projection Dead Letters**: Dead letter queue for failed projection and subscription handlers.
-- **Reservation Release PM**: Process manager: OrderCancelled -> ReleaseReservation command.
-- **Order Notification PM**: Process manager: OrderConfirmed -> SendNotification command.
 - **Integration Routes**: Integration event routes.
 - **Integration Event Handlers**: Integration event handlers.
 - **Integration Event Schemas**: Integration event schema definitions for cross-context communication.
 - **Integration Dead Letters**: Dead letter queue management for cross-context event publications.
 - **Durable Append Action**: Durable Append - Workpool-backed event append with retry.
 - **Command Registry**: Command registry with Zod validation schemas per command type.
+- **Reservation Release PM**: Process manager: OrderCancelled -> ReleaseReservation command.
+- **Order Notification PM**: Process manager: OrderConfirmed -> SendNotification command.
 - **Event Store**: Central event storage component for Event Sourcing.
 - **CMS Repository**: Factory for typed data access with automatic schema upcasting in dual-write handlers.
 - **Query Abstraction**: Query factory functions for creating type-safe read model queries.
-- **Process Manager Lifecycle**: FSM for managing PM state transitions (idle/processing/completed/failed) with validation.
-- **Process Manager**: Process Manager module for event-reactive coordination.
 - **Projection Checkpointing**: Projection checkpoint helper for idempotent event processing.
 - **Command Orchestrator**: The CommandOrchestrator encapsulates the 7-step dual-write + projection execution pattern that is central to this...
 - **Middleware Pipeline**: Orchestrates middleware execution in the correct order.
-- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
+- **Process Manager Lifecycle**: FSM for managing PM state transitions (idle/processing/completed/failed) with validation.
+- **Process Manager**: Process Manager module for event-reactive coordination.
 - **Invariant Framework**: Factory for declarative business rule validation with typed error codes.
-- **Event Upcasting**: Transforms events from older schema versions to current version at read time.
+- **Logging Infrastructure**: Factory for domain-specific loggers with scope prefixes and level filtering.
 - **Event Bus Abstraction**: Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling.
+- **Event Upcasting**: Transforms events from older schema versions to current version at read time.
 - **Event Store Durability Types**: Core types for durable event persistence patterns: - Outbox pattern for action result capture - Idempotent event...
 - **Durable Cross-Context Event Publication**: Cross-context events use Workpool-backed publication with tracking, retry, and dead letter handling.
 - **Poison Event Handling**: Events that cause projection processing failures are tracked; after N failures, they are quarantined and skipped to...
@@ -157,9 +157,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Active Reservations Projection**: Tracks active stock reservations and updates stock levels.
 - **Customer Cancellations Projection**: Customer cancellation history with rolling 30-day window.
 - **Order With Inventory Projection**: OrderWithInventoryStatus cross-context projection handlers (app-level).
-- **Inventory Command Configs**: Command configs for 7 inventory commands.
 - **Order Command Configs**: Command configs for 6 order commands.
-- **Foundation Infrastructure**: Consolidates old roadmap phases 0-13 into a single completed milestone.
+- **Inventory Command Configs**: Command configs for 7 inventory commands.
 - **Workpool Partition Key Types**: Provides type definitions for partition key strategies that ensure per-entity event ordering and prevent OCC conflicts.
 - **Workpool Partitioning Strategy**: Standardized partition key patterns for event ordering and OCC prevention in Workpool-based projection processing.
 - **Partition Key Helper Functions**: Standardized partition key generation for per-entity event ordering and OCC prevention in Workpool-based processing.
@@ -167,13 +166,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Projection Complexity Classifier**: Analyzes projection characteristics and recommends appropriate partition strategies using a decision tree approach.
 - **Types for event replay and projection rebuilding.**: Types for event replay and projection rebuilding.
 - **Progress calculation utilities for replay operations.**: Progress calculation utilities for replay operations.
+- **Foundation Infrastructure**: Consolidates old roadmap phases 0-13 into a single completed milestone.
+- **Order Command Handlers**: Order command handlers implementing the dual-write pattern.
+- **Order Domain Events**: Orders BC domain events (6 types, 2 schema versions).
 - **Inventory Command Handlers**: Inventory command handlers implementing the dual-write pattern.
 - **Inventory Domain Events**: Inventory BC domain events (7 types).
 - **Agent On Complete Handler**: Workpool job completion handler for agent BC.
 - **Agent Action Handler**: Agent action handler for churn risk detection.
-- **Order Command Handlers**: Order command handlers implementing the dual-write pattern.
-- **Order Domain Events**: Orders BC domain events (6 types, 2 schema versions).
-- **Inventory Deciders**: Pure decision functions for Inventory aggregate (product + reservation).
 - **Order Deciders**: Pure decision functions for Order aggregate.
+- **Inventory Deciders**: Pure decision functions for Inventory aggregate (product + reservation).
 
 ---

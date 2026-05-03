@@ -22,7 +22,7 @@ Feature: Reserve Stock
   @happy-path
   Scenario: Reserve multiple items atomically
     Given a product "prod_reserve_002" exists with 50 available stock
-    And a product "prod_reserve_003" exists with 30 available stock
+    And another product "prod_reserve_003" exists with 30 available stock
     When I send a ReserveStock command with:
       | field         | value           |
       | reservationId | res_002         |
@@ -48,7 +48,7 @@ Feature: Reserve Stock
   @business-rule
   Scenario: Multi-item reservation is all-or-nothing
     Given a product "prod_reserve_005" exists with 100 available stock
-    And a product "prod_reserve_006" exists with 2 available stock
+    And another product "prod_reserve_006" exists with 2 available stock
     When I send a ReserveStock command with:
       | field         | value           |
       | reservationId | res_004         |

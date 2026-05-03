@@ -37,12 +37,12 @@
 </details>
 
 <details>
-<summary>✅ EventBusAbstraction (3 patterns)</summary>
+<summary>✅ EventUpcasting (3 patterns)</summary>
 
 | Pattern                  | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
-| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
+| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Correlation Chain System | Correlation types for tracking causal relationships in command-event flows.              |
 
 </details>
@@ -113,8 +113,8 @@
 - ✅ Agent Action Handler
 - ✅ Agent On Complete Handler
 - ✅ Inventory Domain Events
-- ✅ Order Domain Events
 - ✅ Inventory Command Handlers
+- ✅ Order Domain Events
 - ✅ Order Command Handlers
 - ✅ Progress calculation utilities for replay operations.
 - ✅ Types for event replay and projection rebuilding.

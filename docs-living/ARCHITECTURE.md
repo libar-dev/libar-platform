@@ -25,14 +25,14 @@ Component architecture with bounded context isolation:
 graph TB
     subgraph agent["Agent BC"]
         Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
-        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
-        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
         AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
         AgentActionHandler["AgentActionHandler[command-handler]"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
+        Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
         Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
@@ -71,13 +71,13 @@ graph TB
         SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
         ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
         ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
-        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
         IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
         IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
-        CommandRegistry["CommandRegistry[infrastructure]"]
+        DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         DurableAppendAction["DurableAppendAction[infrastructure]"]
+        CommandRegistry["CommandRegistry[infrastructure]"]
         PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
         OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
@@ -100,15 +100,15 @@ graph TB
     CustomerCancellationsProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> OrderCommandHandlers
     OrderWithInventoryProjection --> InventoryCommandHandlers
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
     OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandHandlers --> InventoryDeciders
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
+    InventoryCommandHandlers --> InventoryDeciders
 ```
 
 ---

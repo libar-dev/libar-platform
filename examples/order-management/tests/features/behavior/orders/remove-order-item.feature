@@ -75,5 +75,5 @@ Feature: Remove Items from Order
       | prod_002  | Gadget      | 1        | 25.00     |
     When I remove item "prod_001" from order "ord_remove_007" with commandId "cmd_remove_007"
     Then the command should succeed
-    And I remove item "prod_001" from order "ord_remove_007" with commandId "cmd_remove_007"
+    And I retry removing item "prod_001" from order "ord_remove_007" with commandId "cmd_remove_007"
     Then the command should return duplicate result

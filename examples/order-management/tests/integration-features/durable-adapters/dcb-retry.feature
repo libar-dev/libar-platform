@@ -35,15 +35,15 @@ Feature: DCB Retry Adapter (App Integration)
       And the result should include failure reason
       And no retry should be scheduled
 
-  Rule: OCC conflicts trigger automatic retry scheduling
+  Rule: OCC conflicts return retry scheduling metadata
 
     @conflict-retry
-    Scenario: DCB conflict triggers retry with updated version
+    Scenario: DCB conflict returns retry metadata with updated version
       Given a DCB test scope "conflict-scope-01" is initialized
       And the scope version is advanced to cause conflict
       When I execute a DCB operation with expected version 0
       Then the DCB result status should be "deferred"
-      And a retry should be scheduled via dcbRetryPool
+      And retry metadata should include a DCB partition key
       And the retry should use the updated expected version
 
     @conflict-retry
@@ -52,6 +52,17 @@ Feature: DCB Retry Adapter (App Integration)
       When I execute a DCB operation at max attempt count
       Then the DCB result status should be "rejected"
       And the result code should be "DCB_MAX_RETRIES_EXCEEDED"
+
+    @conflict-retry
+    Scenario: Final scope conflict rolls back state updates
+      Given a product "dcb-prod-final-conflict" exists with 100 available stock
+      When I execute a DCB operation that hits a final scope conflict for product "dcb-prod-final-conflict"
+      Then the DCB result status should be "conflict"
+      And the conflict result should report current version 1
+      And the product "dcb-prod-final-conflict" should have 100 available and 0 reserved stock
+      And the DCB scope should exist at version 1
+      And the DCB scope should only reference the competing stream
+      And no DCB success events should exist for the rollback correlation id
 
   Rule: Backoff uses exponential increase with jitter
 
@@ -72,6 +83,6 @@ Feature: DCB Retry Adapter (App Integration)
     @partition
     Scenario: Retries use consistent partition key
       Given a DCB test scope with key "tenant:t1:reservation:r1"
-      When conflict triggers retry
+      When conflict metadata is generated twice for that scope
       Then the partition key should be "dcb:tenant:t1:reservation:r1"
-      And retries for the same scope execute in FIFO order
+      And repeated metadata generation should return the same partition key

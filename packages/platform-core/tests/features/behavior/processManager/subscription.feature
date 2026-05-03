@@ -303,7 +303,7 @@ Feature: Process Manager EventBus Subscription
         | orderAnalytics    | analytics | OrderConfirmed,OrderShipped |
       When I create PM subscriptions in bulk
       Then subscription 0 filters by events "OrderConfirmed"
-      And subscription 1 filters by events "OrderConfirmed,OrderShipped"
+      And subscription 1 also filters by events "OrderConfirmed,OrderShipped"
 
   Rule: createPMSubscriptions handles empty definitions
 
@@ -328,7 +328,7 @@ Feature: Process Manager EventBus Subscription
         | orderAnalytics    | analytics | OrderConfirmed,OrderShipped |
       When I create PM subscriptions in bulk
       Then subscription 0 handler is the "orderNotification" mock handler
-      And subscription 1 handler is the "orderAnalytics" mock handler
+      And subscription 1 also uses the "orderAnalytics" mock handler
 
   # ============================================================================
   # DEFAULT_PM_SUBSCRIPTION_PRIORITY

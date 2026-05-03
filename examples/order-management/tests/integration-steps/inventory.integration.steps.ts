@@ -338,11 +338,11 @@ describeFeature(createProductFeature, ({ Scenario, Background, AfterEachScenario
       "I create a product with commandId {string}:",
       async (_ctx: unknown, commandId: string, table: ProductDataTableRow[]) => {
         const data = parseProductDataTable(table);
-        const uniqueProductId = `${data.productId}-${Date.now()}`;
-        const uniqueSku = `${data.sku}-${Date.now()}`;
+        const productId = `${data.productId}-${Date.now()}`;
+        const sku = `${data.sku}-${Date.now()}`;
 
-        scenarioState!.scenario.productId = uniqueProductId;
-        scenarioState!.scenario.sku = uniqueSku;
+        scenarioState!.scenario.productId = productId;
+        scenarioState!.scenario.sku = sku;
         scenarioState!.scenario.commandId = commandId;
 
         try {
@@ -350,9 +350,9 @@ describeFeature(createProductFeature, ({ Scenario, Background, AfterEachScenario
             scenarioState!.t,
             api.inventory.createProduct,
             {
-              productId: uniqueProductId,
+              productId,
               productName: data.productName,
-              sku: uniqueSku,
+              sku,
               unitPrice: data.unitPrice,
               commandId,
             }
@@ -366,20 +366,18 @@ describeFeature(createProductFeature, ({ Scenario, Background, AfterEachScenario
     );
 
     And(
-      "I create a product with commandId {string}:",
+      "I repeat creating a product with commandId {string}:",
       async (_ctx: unknown, commandId: string, table: ProductDataTableRow[]) => {
         const data = parseProductDataTable(table);
-        const productId = scenarioState!.scenario.productId!;
-        const sku = scenarioState!.scenario.sku!;
 
         try {
           scenarioState!.secondResult = await testMutation(
             scenarioState!.t,
             api.inventory.createProduct,
             {
-              productId,
+              productId: scenarioState!.scenario.productId!,
               productName: data.productName,
-              sku,
+              sku: scenarioState!.scenario.sku!,
               unitPrice: data.unitPrice,
               commandId,
             }
@@ -592,7 +590,7 @@ describeFeature(addStockFeature, ({ Scenario, Background, AfterEachScenario }) =
     );
 
     And(
-      "I add stock with commandId {string} to product {string}:",
+      "I repeat adding stock with commandId {string} to product {string}:",
       async (_ctx: unknown, commandId: string, _productId: string, table: StockDataTableRow[]) => {
         const data = parseStockDataTable(table);
         const productId = scenarioState!.scenario.productId!;
@@ -962,6 +960,21 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
       }
     );
 
+    And(
+      "another product {string} exists with {int} available stock",
+      async (_ctx: unknown, productId: string, availableQuantity: number) => {
+        const uniqueProductId = `${productId}-${Date.now()}`;
+        productIds.push(uniqueProductId);
+
+        await testMutation(scenarioState!.t, api.testing.createTestProduct, {
+          productId: uniqueProductId,
+          productName: `Product ${productId}`,
+          sku: generateSku(),
+          availableQuantity,
+        });
+      }
+    );
+
     When(
       "I reserve stock for order {string} with:",
       async (_ctx: unknown, orderId: string, table: ReservationItemTableRow[]) => {
@@ -1089,7 +1102,7 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
     );
 
     And(
-      "a product {string} exists with {int} available stock",
+      "another product {string} exists with {int} available stock",
       async (_ctx: unknown, productId: string, availableQuantity: number) => {
         const uniqueProductId = `${productId}-${Date.now()}`;
         productIds.push(uniqueProductId);
@@ -1266,21 +1279,6 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
   // --------------------------------------------------------------------------
   Scenario("All-or-nothing reservation when one item fails", ({ Given, And, When, Then }) => {
     Given(
-      "a product {string} exists with {int} available stock",
-      async (_ctx: unknown, productId: string, availableQuantity: number) => {
-        const uniqueProductId = `${productId}-${Date.now()}`;
-        productIds.push(uniqueProductId);
-
-        await testMutation(scenarioState!.t, api.testing.createTestProduct, {
-          productId: uniqueProductId,
-          productName: `Product ${productId}`,
-          sku: generateSku(),
-          availableQuantity,
-        });
-      }
-    );
-
-    And(
       "a product {string} exists with {int} available stock",
       async (_ctx: unknown, productId: string, availableQuantity: number) => {
         const uniqueProductId = `${productId}-${Date.now()}`;
@@ -1479,8 +1477,9 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
         commandId: string,
         table: ReservationItemTableRow[]
       ) => {
-        const uniqueOrderId = `${orderId}-${Date.now()}`;
-        scenarioState!.scenario.orderId = uniqueOrderId;
+        const effectiveOrderId = `${orderId}-${Date.now()}`;
+
+        scenarioState!.scenario.orderId = effectiveOrderId;
         scenarioState!.scenario.commandId = commandId;
 
         const items = table.map((row) => ({
@@ -1489,16 +1488,18 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
         }));
 
         try {
-          scenarioState!.lastResult = await testMutation(
-            scenarioState!.t,
-            api.inventory.reserveStock,
-            { orderId: uniqueOrderId, items, commandId }
-          );
+          const result = await testMutation(scenarioState!.t, api.inventory.reserveStock, {
+            orderId: effectiveOrderId,
+            items,
+            commandId,
+          });
+
+          scenarioState!.lastResult = result;
           scenarioState!.lastError = null;
 
-          const result = scenarioState!.lastResult as { data?: { reservationId?: string } };
-          if (result.data?.reservationId) {
-            scenarioState!.scenario.reservationId = result.data.reservationId;
+          const successResult = result as { data?: { reservationId?: string } };
+          if (successResult.data?.reservationId) {
+            scenarioState!.scenario.reservationId = successResult.data.reservationId;
           }
         } catch (error) {
           scenarioState!.lastError = error as Error;
@@ -1508,7 +1509,7 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
     );
 
     And(
-      "I reserve stock for order {string} with commandId {string}:",
+      "I repeat reserving stock for order {string} with commandId {string}:",
       async (
         _ctx: unknown,
         _orderId: string,

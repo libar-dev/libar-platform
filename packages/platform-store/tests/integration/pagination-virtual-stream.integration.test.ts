@@ -201,6 +201,54 @@ describe("EventStore pagination and virtual streams", () => {
     expect(latestPosition).toBe(events[1]?.globalPosition);
   });
 
+  it("does not expose foreign legacy events from caller-provided scope streamIds", async () => {
+    t = createTestHelper();
+    const scopeKey = `tenant:test:reservation:${generateStreamId("scope_guarded")}`;
+    const foreignStreamId = generateStreamId("Order");
+    const legitimateStreamId = generateStreamId("Reservation");
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Order",
+      streamId: foreignStreamId,
+      eventType: "OrderCreated",
+      eventData: { orderId: foreignStreamId, stage: "foreign-associated" },
+      boundedContext: "orders",
+      tenantId: "foreign-tenant",
+      expectedVersion: 0,
+    });
+
+    await testMutation(t, api.testingFunctions.commitTestScope, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [foreignStreamId],
+    });
+
+    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
+      streamType: "Reservation",
+      streamId: legitimateStreamId,
+      eventType: "ReservationConfirmed",
+      scopeKey,
+      eventData: { reservationId: legitimateStreamId, stage: "legitimate-scoped" },
+      boundedContext: "inventory",
+      expectedVersion: 0,
+    });
+
+    const events = await testQuery<Array<{ eventType: string; payload: { stage: string } }>>(
+      t,
+      api.testingFunctions.readEventsForScope,
+      {
+        scopeKey,
+        limit: 10,
+      }
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0]?.eventType).toBe("ReservationConfirmed");
+    expect(events[0]?.payload.stage).toBe("legitimate-scoped");
+    expect(events.map((event) => event.payload.stage)).not.toContain("foreign-associated");
+  });
+
   it("reports latest position for scoped events without legacy streamIds", async () => {
     t = createTestHelper();
     const scopeKey = `tenant:test:reservation:${generateStreamId("scope_no_legacy")}`;

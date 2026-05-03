@@ -15,11 +15,38 @@
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { api } from "../../convex/_generated/api";
+import { makeFunctionReference, type FunctionReference } from "convex/server";
 import { testMutation, testQuery } from "../support/integrationHelpers";
 
-// Type-safe access to testing subdirectory modules via bracket notation
-const rateLimitTestApi = api["testing/rateLimitTest"];
-const dcbRetryTestApi = api["testing/dcbRetryTest"];
+const rateLimitTestApi = {
+  checkRateLimit: makeFunctionReference<"mutation">(
+    "testing/rateLimitTest:checkRateLimit"
+  ) as unknown as FunctionReference<"mutation">,
+  consumeRateLimitTokens: makeFunctionReference<"mutation">(
+    "testing/rateLimitTest:consumeRateLimitTokens"
+  ) as unknown as FunctionReference<"mutation">,
+};
+
+const dcbRetryTestApi = {
+  initializeTestScope: makeFunctionReference<"mutation">(
+    "testing/dcbRetryTest:initializeTestScope"
+  ) as unknown as FunctionReference<"mutation">,
+  advanceScopeVersion: makeFunctionReference<"mutation">(
+    "testing/dcbRetryTest:advanceScopeVersion"
+  ) as unknown as FunctionReference<"mutation">,
+  simulateConflictRetry: makeFunctionReference<"mutation">(
+    "testing/dcbRetryTest:simulateConflictRetry"
+  ) as unknown as FunctionReference<"mutation">,
+  executeFinalScopeConflictRollback: makeFunctionReference<"mutation">(
+    "testing/dcbRetryTest:executeFinalScopeConflictRollback"
+  ) as unknown as FunctionReference<"mutation">,
+  testBackoffCalculation: makeFunctionReference<"query">(
+    "testing/dcbRetryTest:testBackoffCalculation"
+  ) as unknown as FunctionReference<"query">,
+  testPartitionKeyGeneration: makeFunctionReference<"query">(
+    "testing/dcbRetryTest:testPartitionKeyGeneration"
+  ) as unknown as FunctionReference<"query">,
+};
 import {
   getState,
   setLastResult,
@@ -46,6 +73,7 @@ interface DurableAdaptersState extends IntegrationScenarioState {
       data?: unknown;
       code?: string;
       reason?: string;
+      currentVersion?: number;
       wouldEnqueue?: {
         partitionKey: string;
         runAfter: number;
@@ -72,6 +100,8 @@ interface DurableAdaptersState extends IntegrationScenarioState {
       scopeKey: string;
       version: number;
     };
+    rollbackCorrelationId?: string;
+    competingStreamId?: string;
     /** Test user ID for rate limiting */
     userId?: string;
     /** Test limit name */
@@ -476,13 +506,11 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
   // =========================================================================
   Rule("DCB operations succeed without retry when no conflict", ({ RuleScenario }) => {
     RuleScenario("DCB operation succeeds on first attempt", ({ Given, When, Then, And }) => {
-      let testProductId: string;
-
       Given(
         "a product {string} exists with {int} available stock",
         async (_ctx: unknown, productBase: string, quantity: number) => {
           const state = getExtendedState();
-          testProductId = `${testRunId}_${productBase}`;
+          const testProductId = `${testRunId}_${productBase}`;
           const sku = generateSku();
 
           await testMutation(state.t, api.testing.createTestProduct, {
@@ -546,7 +574,7 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
             async () => {
               const product = await testQuery(state.t, api.inventory.getProduct, { productId });
               // Return truthy only when reserved stock is > 0 (reservation processed)
-              return product?.reservedQuantity > 0 ? product : null;
+              return (product?.reservedQuantity ?? 0) > 0 ? product : null;
             },
             {
               message: `Waiting for stock reservation to process for ${productId}`,
@@ -572,13 +600,11 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
     });
 
     RuleScenario("DCB rejected result passes through unchanged", ({ Given, When, Then, And }) => {
-      let testProductId: string;
-
       Given(
         "a product {string} exists with {int} available stock",
         async (_ctx: unknown, productBase: string, quantity: number) => {
           const state = getExtendedState();
-          testProductId = `${testRunId}_${productBase}`;
+          const testProductId = `${testRunId}_${productBase}`;
           const sku = generateSku();
 
           await testMutation(state.t, api.testing.createTestProduct, {
@@ -639,11 +665,11 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
   });
 
   // =========================================================================
-  // Rule: OCC conflicts trigger automatic retry scheduling
+  // Rule: OCC conflicts return retry scheduling metadata
   // =========================================================================
-  Rule("OCC conflicts trigger automatic retry scheduling", ({ RuleScenario }) => {
+  Rule("OCC conflicts return retry scheduling metadata", ({ RuleScenario }) => {
     RuleScenario(
-      "DCB conflict triggers retry with updated version",
+      "DCB conflict returns retry metadata with updated version",
       ({ Given, When, Then, And }) => {
         let scopeId: string;
 
@@ -697,7 +723,7 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
           }
         );
 
-        And("a retry should be scheduled via dcbRetryPool", () => {
+        And("retry metadata should include a DCB partition key", () => {
           const state = getExtendedState();
           const result = state.durableAdapters.dcbResult;
           expect(result?.wouldEnqueue).toBeDefined();
@@ -749,6 +775,129 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
       And("the result code should be {string}", (_ctx: unknown, expectedCode: string) => {
         const state = getExtendedState();
         expect(state.durableAdapters.dcbResult?.code).toBe(expectedCode);
+      });
+    });
+
+    RuleScenario("Final scope conflict rolls back state updates", ({ Given, When, Then, And }) => {
+      Given(
+        "a product {string} exists with {int} available stock",
+        async (_ctx: unknown, productBase: string, quantity: number) => {
+          const state = getExtendedState();
+          const productId = `${testRunId}_${productBase}`;
+          const sku = generateSku();
+
+          await testMutation(state.t, api.testing.createTestProduct, {
+            productId,
+            productName: `Test Product ${productBase}`,
+            sku,
+            availableQuantity: quantity,
+            reservedQuantity: 0,
+          });
+
+          state.scenario.productId = productId;
+        }
+      );
+
+      When(
+        "I execute a DCB operation that hits a final scope conflict for product {string}",
+        async (_ctx: unknown, productBase: string) => {
+          const state = getExtendedState();
+          const productId = `${testRunId}_${productBase}`;
+          const scopeId = generateScopeId(`${productBase}-final-conflict`);
+          const correlationId = `${testRunId}_corr_${productBase}`;
+          const commandId = `${testRunId}_cmd_${productBase}`;
+
+          const result = await testMutation(
+            state.t,
+            dcbRetryTestApi.executeFinalScopeConflictRollback,
+            {
+              scopeId,
+              productId,
+              quantity: 10,
+              correlationId,
+              commandId,
+            }
+          );
+
+          state.durableAdapters.dcbResult = result.result;
+          state.durableAdapters.testScope = {
+            scopeId,
+            scopeKey: result.scopeKey,
+            version: result.result.currentVersion ?? 0,
+          };
+          state.durableAdapters.rollbackCorrelationId = result.correlationId;
+          state.durableAdapters.competingStreamId = result.competingStreamId;
+          setLastResult(result.result);
+        }
+      );
+
+      Then("the DCB result status should be {string}", (_ctx: unknown, expectedStatus: string) => {
+        const state = getExtendedState();
+        expect(state.durableAdapters.dcbResult?.status).toBe(expectedStatus);
+      });
+
+      And(
+        "the conflict result should report current version {int}",
+        (_ctx: unknown, version: number) => {
+          const state = getExtendedState();
+          expect(state.durableAdapters.dcbResult?.currentVersion).toBe(version);
+        }
+      );
+
+      And(
+        "the product {string} should have {int} available and {int} reserved stock",
+        async (_ctx: unknown, productBase: string, available: number, reserved: number) => {
+          const state = getExtendedState();
+          const productId = `${testRunId}_${productBase}`;
+
+          const product = await testQuery(state.t, api.inventory.getProduct, { productId });
+
+          expect(product?.availableQuantity).toBe(available);
+          expect(product?.reservedQuantity).toBe(reserved);
+        }
+      );
+
+      And("the DCB scope should exist at version {int}", async (_ctx: unknown, version: number) => {
+        const state = getExtendedState();
+        const scopeKey = state.durableAdapters.testScope?.scopeKey;
+        expect(scopeKey).toBeDefined();
+
+        const scope = await testQuery(state.t, api.testingFunctions.getScopeByKey, {
+          scopeKey: scopeKey!,
+        });
+
+        expect(scope?.currentVersion).toBe(version);
+      });
+
+      And("the DCB scope should only reference the competing stream", async () => {
+        const state = getExtendedState();
+        const scopeKey = state.durableAdapters.testScope?.scopeKey;
+        expect(scopeKey).toBeDefined();
+
+        const scope = await testQuery(state.t, api.testingFunctions.getScopeByKey, {
+          scopeKey: scopeKey!,
+        });
+
+        expect(scope?.streamIds).toEqual([state.durableAdapters.competingStreamId]);
+      });
+
+      And("no DCB success events should exist for the rollback correlation id", async () => {
+        const state = getExtendedState();
+        const correlationId = state.durableAdapters.rollbackCorrelationId;
+        expect(correlationId).toBeDefined();
+
+        const page = (await testQuery(state.t, api.testingFunctions.getEventsByCorrelation, {
+          correlationId: correlationId!,
+          limit: 10,
+        })) as {
+          events: Array<{ eventId: string }>;
+          nextCursor: bigint | null;
+          hasMore: boolean;
+        };
+
+        expect(page.events).toHaveLength(0);
+        expect(page.hasMore).toBe(false);
+        expect(page.nextCursor).toBeNull();
       });
     });
   });
@@ -838,33 +987,39 @@ describeFeature(dcbRetryFeature, ({ Background, Rule }) => {
         scopeKey = key;
       });
 
-      When("conflict triggers retry", async () => {
+      When("conflict metadata is generated twice for that scope", async () => {
         const state = getExtendedState();
 
-        // Extract scopeId from the key format "tenant:t1:reservation:r1"
-        const parts = scopeKey.split(":");
-        const scopeId = parts[parts.length - 1];
+        const [firstResult, secondResult] = await Promise.all([
+          testQuery(state.t, dcbRetryTestApi.testPartitionKeyGeneration, {
+            scopeKey,
+          }),
+          testQuery(state.t, dcbRetryTestApi.testPartitionKeyGeneration, {
+            scopeKey,
+          }),
+        ]);
 
-        const result = await testQuery(state.t, dcbRetryTestApi.testPartitionKeyGeneration, {
-          scopeId,
-        });
-
-        state.durableAdapters.partitionKeyResult = result;
-        setLastResult(result);
+        state.durableAdapters.partitionKeyResult = firstResult;
+        state.lastResult = { firstResult, secondResult };
       });
 
-      Then("the partition key should be {string}", (_ctx: unknown) => {
+      Then(
+        "the partition key should be {string}",
+        (_ctx: unknown, expectedPartitionKey: string) => {
+          const state = getExtendedState();
+          const partitionKey = state.durableAdapters.partitionKeyResult?.partitionKey;
+          expect(partitionKey).toBe(expectedPartitionKey);
+        }
+      );
+
+      And("repeated metadata generation should return the same partition key", () => {
         const state = getExtendedState();
-        // The actual partition key follows the pattern dcb:tenant:TEST_TENANT_ID:TEST_SCOPE_TYPE:scopeId
-        // We verify it starts with "dcb:" and contains the scope ID
-        const partitionKey = state.durableAdapters.partitionKeyResult?.partitionKey;
-        expect(partitionKey).toContain("dcb:");
-      });
+        const results = state.lastResult as {
+          firstResult: { partitionKey: string };
+          secondResult: { partitionKey: string };
+        };
 
-      And("retries for the same scope execute in FIFO order", () => {
-        // The adapter preserves stable scope-aware scheduling metadata.
-        // FIFO ordering depends on the underlying Workpool runtime support.
-        expect(true).toBe(true);
+        expect(results.firstResult.partitionKey).toBe(results.secondResult.partitionKey);
       });
     });
   });

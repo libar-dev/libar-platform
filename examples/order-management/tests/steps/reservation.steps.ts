@@ -103,7 +103,7 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
     );
 
     And(
-      "a product {string} exists with {int} available stock",
+      "another product {string} exists with {int} available stock",
       async (_ctx: unknown, productId: string, quantity: number) => {
         await state!.t.mutation(api.testing.createTestProduct, {
           productId,
@@ -211,7 +211,7 @@ describeFeature(reserveStockFeature, ({ Scenario, Background, AfterEachScenario 
     );
 
     And(
-      "a product {string} exists with {int} available stock",
+      "another product {string} exists with {int} available stock",
       async (_ctx: unknown, productId: string, quantity: number) => {
         await state!.t.mutation(api.testing.createTestProduct, {
           productId,

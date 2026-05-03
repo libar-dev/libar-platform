@@ -79,6 +79,7 @@ import type * as sagas_payments_outbox from "../sagas/payments/outbox.js";
 import type * as sagas_registry from "../sagas/registry.js";
 import type * as sagas_router from "../sagas/router.js";
 import type * as testing from "../testing.js";
+import type * as testing_agentOnCompleteRequiredPersistence from "../testing/agentOnCompleteRequiredPersistence.js";
 import type * as testing_dcbRetryTest from "../testing/dcbRetryTest.js";
 import type * as testing_durablePublicationTest from "../testing/durablePublicationTest.js";
 import type * as testing_eventReplayTest from "../testing/eventReplayTest.js";
@@ -167,6 +168,7 @@ declare const fullApi: ApiFromModules<{
   "sagas/registry": typeof sagas_registry;
   "sagas/router": typeof sagas_router;
   testing: typeof testing;
+  "testing/agentOnCompleteRequiredPersistence": typeof testing_agentOnCompleteRequiredPersistence;
   "testing/dcbRetryTest": typeof testing_dcbRetryTest;
   "testing/durablePublicationTest": typeof testing_durablePublicationTest;
   "testing/eventReplayTest": typeof testing_eventReplayTest;

@@ -1038,7 +1038,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       );
 
       And(
-        "subscription {int} filters by events {string}",
+        "subscription {int} also filters by events {string}",
         (_ctx: unknown, index: number, events: string) => {
           const expected = events.split(",");
           expect(state.subscriptions![index]?.filter?.eventTypes).toEqual(expected);
@@ -1097,7 +1097,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       );
 
       And(
-        "subscription {int} handler is the {string} mock handler",
+        "subscription {int} also uses the {string} mock handler",
         (_ctx: unknown, index: number, handlerName: string) => {
           expect(state.subscriptions![index]?.handler).toBe(handlerMap[handlerName]);
         }

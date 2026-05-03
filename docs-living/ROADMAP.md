@@ -33,7 +33,7 @@
 | ✅ [MiddlewarePipeline](phases/phase-10-middleware-pipeline.md)                                                                 | 1/1      | 100%     |
 | ✅ [CMSRepository](phases/phase-11-cms-repository.md)                                                                           | 3/3      | 100%     |
 | ✅ [QueryAbstraction](phases/phase-12-query-abstraction.md)                                                                     | 1/1      | 100%     |
-| ✅ [ProcessManagerLifecycle](phases/phase-13-process-manager-lifecycle.md)                                                      | 3/3      | 100%     |
+| ✅ [LoggingInfrastructure](phases/phase-13-logging-infrastructure.md)                                                           | 3/3      | 100%     |
 | ✅ [HandlerFactories](phases/phase-14-handler-factories.md)                                                                     | 2/2      | 100%     |
 | ✅ [ProjectionCategories](phases/phase-15-projection-categories.md)                                                             | 1/1      | 100%     |
 | ✅ [DCBTypes](phases/phase-16-dcb-types.md)                                                                                     | 3/3      | 100%     |
@@ -150,7 +150,7 @@
 
 ---
 
-### ✅ ProcessManagerLifecycle
+### ✅ LoggingInfrastructure
 
 [███████████████] 3/3 100% complete
 

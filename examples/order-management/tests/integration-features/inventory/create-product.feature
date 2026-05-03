@@ -38,7 +38,7 @@ Feature: Create Product (Integration)
     When I create a product with commandId "cmd-prod-idem-01":
       | productId   | productName  | sku         | unitPrice |
       | prod-int-04 | Test Product | SKU-INT-004 | 29.99     |
-    And I create a product with commandId "cmd-prod-idem-01":
+    And I repeat creating a product with commandId "cmd-prod-idem-01":
       | productId   | productName  | sku         | unitPrice |
       | prod-int-04 | Test Product | SKU-INT-004 | 29.99     |
     Then the second command should return duplicate status
