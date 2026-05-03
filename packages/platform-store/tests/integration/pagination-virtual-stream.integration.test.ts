@@ -117,7 +117,7 @@ describe("EventStore pagination and virtual streams", () => {
     const scopeKey = `tenant:test:reservation:${generateStreamId("scope")}`;
     const otherScopeKey = `tenant:test:reservation:${generateStreamId("other_scope")}`;
     const streamId = generateStreamId("Reservation");
-    const foreignStreamId = streamId;
+    const foreignStreamId = generateStreamId("Order");
 
     await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Reservation",
@@ -205,7 +205,6 @@ describe("EventStore pagination and virtual streams", () => {
     t = createTestHelper();
     const scopeKey = `tenant:test:reservation:${generateStreamId("scope_guarded")}`;
     const foreignStreamId = generateStreamId("Order");
-    const legitimateStreamId = generateStreamId("Reservation");
 
     await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
       streamType: "Order",
@@ -217,36 +216,23 @@ describe("EventStore pagination and virtual streams", () => {
       expectedVersion: 0,
     });
 
-    await testMutation(t, api.testingFunctions.commitTestScope, {
-      scopeKey,
-      expectedVersion: 0,
-      boundedContext: "inventory",
-      streamIds: [foreignStreamId],
-    });
+    await expect(
+      testMutation(t, api.testingFunctions.commitTestScope, {
+        scopeKey,
+        expectedVersion: 0,
+        boundedContext: "inventory",
+        streamIds: [foreignStreamId],
+      })
+    ).rejects.toThrow(/Cannot associate legacy stream .* bounded context orders/i);
 
-    await testMutation(t, api.testing.idempotentAppendTest.appendTestEvent, {
-      streamType: "Reservation",
-      streamId: legitimateStreamId,
-      eventType: "ReservationConfirmed",
-      scopeKey,
-      eventData: { reservationId: legitimateStreamId, stage: "legitimate-scoped" },
-      boundedContext: "inventory",
-      expectedVersion: 0,
-    });
-
-    const events = await testQuery<Array<{ eventType: string; payload: { stage: string } }>>(
+    const scope = await testQuery<null | { scopeKey: string }>(
       t,
-      api.testingFunctions.readEventsForScope,
+      api.testingFunctions.getScopeByKey,
       {
         scopeKey,
-        limit: 10,
       }
     );
-
-    expect(events).toHaveLength(1);
-    expect(events[0]?.eventType).toBe("ReservationConfirmed");
-    expect(events[0]?.payload.stage).toBe("legitimate-scoped");
-    expect(events.map((event) => event.payload.stage)).not.toContain("foreign-associated");
+    expect(scope).toBeNull();
   });
 
   it("reports latest position for scoped events without legacy streamIds", async () => {

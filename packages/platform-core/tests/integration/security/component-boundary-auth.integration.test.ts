@@ -308,6 +308,66 @@ describe("Component-boundary authentication", () => {
     expect(events).toHaveLength(0);
   });
 
+  it("rejects commitScope when a valid proof tries to associate a foreign legacy stream", async () => {
+    const tenantId = "tenant-foreign-stream-association";
+    const foreignStreamId = generateTestId("ord");
+    const scopeKey = `tenant:${tenantId}:reservation:${generateTestId("scope")}`;
+
+    const ordersProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:foreign-stream:orders",
+      subjectId: "orders",
+      subjectType: "boundedContext",
+      boundedContext: "orders",
+      tenantId,
+    });
+
+    const appendResult = await testMutation(t, appendWithProofRef, {
+      streamType: "Order",
+      streamId: foreignStreamId,
+      expectedVersion: 0,
+      boundedContext: "orders",
+      tenantId,
+      events: [
+        {
+          eventId: generateTestId("evt"),
+          eventType: "OrderCreated",
+          payload: { orderId: foreignStreamId },
+          metadata: { correlationId: generateTestId("corr") },
+        },
+      ],
+      verificationProof: ordersProof,
+    });
+
+    expect(appendResult.success).toBe(true);
+
+    const inventoryProof = await createVerificationProof({
+      target: "eventStore",
+      issuer: "platform-core:test:component-boundary-auth:foreign-stream:inventory",
+      subjectId: "inventory",
+      subjectType: "boundedContext",
+      boundedContext: "inventory",
+      tenantId,
+    });
+
+    const result = await testMutation(t, commitScopeWithProofRef, {
+      scopeKey,
+      expectedVersion: 0,
+      boundedContext: "inventory",
+      streamIds: [foreignStreamId],
+      verificationProof: inventoryProof,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("expected foreign legacy stream association to fail");
+    }
+    expect(result.error).toMatch(/bounded context|orders|inventory/i);
+
+    const scope = await testQuery(t, getScopeByKeyRef, { scopeKey });
+    expect(scope).toBeNull();
+  });
+
   it("rejects a forged commitScope proof and creates no scope", async () => {
     const scopeKey = `tenant:tenant-forged:reservation:${generateTestId("scope")}`;
     const proof = await createVerificationProof({

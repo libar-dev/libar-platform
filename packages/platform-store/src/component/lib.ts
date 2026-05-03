@@ -1929,6 +1929,29 @@ export const commitScope = mutation({
       expectedTenantId: parsed.tenantId,
     });
 
+    if (streamIds && streamIds.length > 0) {
+      for (const streamId of streamIds) {
+        const existingLegacyEvents = await ctx.db
+          .query("events")
+          .filter((q) => q.eq(q.field("streamId"), streamId))
+          .collect();
+
+        for (const event of existingLegacyEvents) {
+          if (event.boundedContext !== boundedContext) {
+            throw new Error(
+              `Cannot associate legacy stream ${streamId} from bounded context ${event.boundedContext} with scope ${scopeKey} in bounded context ${boundedContext}`
+            );
+          }
+
+          if (event.tenantId !== undefined && event.tenantId !== parsed.tenantId) {
+            throw new Error(
+              `Cannot associate legacy stream ${streamId} from tenant ${event.tenantId} with scope ${scopeKey} in tenant ${parsed.tenantId}`
+            );
+          }
+        }
+      }
+    }
+
     const scope = await ctx.db
       .query("dcbScopes")
       .withIndex("by_scope_key", (q) => q.eq("scopeKey", scopeKey))
