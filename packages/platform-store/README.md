@@ -74,7 +74,9 @@ const page = await eventStore.readFromPosition(ctx, { fromPosition: 0n, limit: 1
 
 ## Security notes
 
-- `appendToStream` and `commitScope` attach verification proofs and should be called from trusted bounded-context code.
+- `appendToStream` and `commitScope` attach verification proofs, but the current proof scheme is a **development boundary marker**, not a production-grade cryptographic trust mechanism.
+- The current implementation uses source-visible target secrets plus a custom hash. It is appropriate for repository-controlled server code and local negative tests, but not for hostile-code or multi-team production trust boundaries.
+- Production hardening requires server-held keys or capabilities, standard signing, explicit audience binding, and rotation/expiry policy outside source control. Prefer asymmetric signing when verification happens inside mounted components; an HMAC secret copied into component source/config is still not a safe trust boundary.
 - DCB scope records are bound to the creating bounded context; another bounded context in the same tenant cannot reuse the same scope key.
 - Scoped event appends require an existing scope owned by the same bounded context and tenant as the proof.
 - Treat correlation and tenant fields as auditable metadata, not as auth decisions by themselves.

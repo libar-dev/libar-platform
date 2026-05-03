@@ -104,6 +104,8 @@ export async function reserveInventory(ctx: unknown, tenantId: string, reservati
 ## Security notes
 
 - Verification proofs and boundary validation live here, but the caller still needs to wire them correctly.
+- The current proof implementation is a **development-only boundary marker**: it relies on source-visible target secrets and a custom hash, so it should not be presented as production-grade component authorization.
+- Treat current proofs as defense-in-depth for trusted server code paths and negative tests only. Production-grade trust requires server-held keys or capabilities, standard signing, explicit audience binding, and rotation outside source control. Prefer asymmetric signing for mounted components; HMAC only fits when the verifier can keep the secret outside source/config.
 - Do not bypass component boundaries by reaching into private tables or assuming auth passthrough.
 - Use typed error categories instead of loose string reasons at orchestration boundaries.
 

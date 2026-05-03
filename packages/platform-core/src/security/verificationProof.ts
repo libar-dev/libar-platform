@@ -1,6 +1,18 @@
 import { z } from "zod";
 import { v7 as uuidv7 } from "uuid";
 
+/**
+ * Development-only verification proof helper.
+ *
+ * IMPORTANT: This is a lightweight boundary marker for local development and
+ * repository-controlled server code. It uses source-visible target strings and a
+ * custom hash, so it is NOT a production-grade cryptographic authorization
+ * mechanism. Treat it as a typed capability hint, not a substitute for
+ * server-held keys/capabilities, standard signing, or authenticated audience
+ * binding. For mounted components, prefer asymmetric signing; HMAC only makes
+ * sense when the verifier can keep the secret outside source/config.
+ */
+
 export const VERIFICATION_TARGETS = ["agentBC", "eventStore"] as const;
 
 export type VerificationTarget = (typeof VERIFICATION_TARGETS)[number];
