@@ -58,7 +58,10 @@ function resetState(): void {
  * - Published Language → fat (contract stability)
  * - Integration category → fat
  */
-function determineEventType(scenario: string): { type: "fat" | "thin" | "either"; reason: string } {
+function determineEventType(scenario: string): {
+  type: "fat" | "thin" | "thin or fat";
+  reason: string;
+} {
   const scenarioLower = scenario.toLowerCase();
 
   // Cross-BC scenarios
@@ -87,7 +90,7 @@ function determineEventType(scenario: string): { type: "fat" | "thin" | "either"
  * Determines event type based on frequency and consumer distribution.
  */
 function evaluateEventType(
-  eventName: string,
+  _eventName: string,
   frequency: string,
   multipleContexts: boolean
 ): { type: "fat" | "thin"; reason: string } {
@@ -159,10 +162,13 @@ describeFeature(feature, ({ Background, Rule, BeforeEachScenario, AfterEachScena
   Rule("Cross-context integration should use fat events", ({ RuleScenarioOutline }) => {
     RuleScenarioOutline(
       "Event type for integration scenarios",
-      (
-        { Given, When, Then, And },
-        variables: { scenario: string; event_type: string; reason: string }
-      ) => {
+      ({ Given, When, Then, And }, examples) => {
+        const variables = examples as {
+          scenario: string;
+          event_type: "fat" | "thin" | "thin or fat";
+          reason: string;
+        };
+
         Given('an event for "<scenario>"', () => {
           state.scenario = variables.scenario;
         });
@@ -283,21 +289,23 @@ describeFeature(feature, ({ Background, Rule, BeforeEachScenario, AfterEachScena
   // ===========================================================================
 
   Rule("Event category can indicate fat/thin preference", ({ RuleScenarioOutline }) => {
-    RuleScenarioOutline(
-      "Category suggests event type",
-      ({ Given, When, Then }, variables: { category: string; suggested_type: string }) => {
-        Given('an event with category "<category>"', () => {
-          state.category = variables.category;
-        });
+    RuleScenarioOutline("Category suggests event type", ({ Given, When, Then }, examples) => {
+      const variables = examples as {
+        category: string;
+        suggested_type: "fat" | "thin" | "thin or fat";
+      };
 
-        When("checking suggested event type", () => {
-          state.recommendedEventType = categorySuggestedType(state.category);
-        });
+      Given('an event with category "<category>"', () => {
+        state.category = variables.category;
+      });
 
-        Then('suggested type is "<suggested_type>"', () => {
-          expect(state.recommendedEventType).toBe(variables.suggested_type);
-        });
-      }
-    );
+      When("checking suggested event type", () => {
+        state.recommendedEventType = categorySuggestedType(state.category);
+      });
+
+      Then('suggested type is "<suggested_type>"', () => {
+        expect(state.recommendedEventType).toBe(variables.suggested_type);
+      });
+    });
   });
 });

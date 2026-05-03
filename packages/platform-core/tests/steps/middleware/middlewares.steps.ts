@@ -42,6 +42,13 @@ import {
   RateLimitKeys,
   RATE_LIMIT_ORDER,
 } from "../../../src/middleware/rateLimit.js";
+import {
+  toCausationId,
+  toCommandId,
+  toCorrelationId,
+  toEventId,
+  toStreamId,
+} from "../../../src/ids/index.js";
 import type {
   MiddlewareContext,
   MiddlewareCommandInfo,
@@ -63,8 +70,8 @@ function createMockContext(
       boundedContext: "orders",
       category: "aggregate",
       args: { orderId: "ord_123", customerId: "cust_456" },
-      commandId: "cmd_001",
-      correlationId: "corr_001",
+      commandId: toCommandId("cmd_001"),
+      correlationId: toCorrelationId("corr_001"),
       ...overrides,
     },
     custom,
@@ -777,14 +784,14 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
             data: {},
             version: 1,
             event: {
-              eventId: "evt_001",
+              eventId: toEventId("evt_001"),
               eventType: "OrderCreated",
               streamType: "order",
-              streamId: "ord_123",
+              streamId: toStreamId("ord_123"),
               payload: {},
               metadata: {
-                correlationId: "corr_001",
-                causationId: "cmd_001",
+                correlationId: toCorrelationId("corr_001"),
+                causationId: toCausationId("cmd_001"),
               },
             },
           });
@@ -813,14 +820,14 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
           status: "failed",
           reason: "Business failure",
           event: {
-            eventId: "evt_001",
+            eventId: toEventId("evt_001"),
             eventType: "OrderFailed",
             streamType: "order",
-            streamId: "ord_123",
+            streamId: toStreamId("ord_123"),
             payload: {},
             metadata: {
-              correlationId: "corr_001",
-              causationId: "cmd_001",
+              correlationId: toCorrelationId("corr_001"),
+              causationId: toCausationId("cmd_001"),
             },
           },
         });

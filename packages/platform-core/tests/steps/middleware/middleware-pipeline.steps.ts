@@ -18,6 +18,13 @@ import {
   MiddlewarePipeline,
   createMiddlewarePipeline,
 } from "../../../src/middleware/MiddlewarePipeline.js";
+import {
+  toCausationId,
+  toCommandId,
+  toCorrelationId,
+  toEventId,
+  toStreamId,
+} from "../../../src/ids/index.js";
 import type { MiddlewareContext } from "../../../src/middleware/types.js";
 import type { CommandHandlerResult } from "../../../src/orchestration/types.js";
 import type { MiddlewareCommandInfo } from "../../../src/middleware/types.js";
@@ -35,8 +42,8 @@ function createMockCommandInfo(
     boundedContext: "orders",
     category: "aggregate",
     args: { orderId: "ord_123" },
-    commandId: "cmd_456",
-    correlationId: "corr_789",
+    commandId: toCommandId("cmd_456"),
+    correlationId: toCorrelationId("corr_789"),
     ...overrides,
   };
 }
@@ -47,12 +54,15 @@ function createSuccessResult(): CommandHandlerResult<unknown> {
     data: { orderId: "ord_123" },
     version: 1,
     event: {
-      eventId: "evt_001",
+      eventId: toEventId("evt_001"),
       eventType: "OrderCreated",
       streamType: "order",
-      streamId: "ord_123",
+      streamId: toStreamId("ord_123"),
       payload: {},
-      metadata: { correlationId: "corr_789", causationId: "cmd_456" },
+      metadata: {
+        correlationId: toCorrelationId("corr_789"),
+        causationId: toCausationId("cmd_456"),
+      },
     },
   };
 }
