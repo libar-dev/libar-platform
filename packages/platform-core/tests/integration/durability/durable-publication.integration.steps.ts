@@ -9,7 +9,29 @@
 import { describe, beforeAll, afterAll, expect } from "vitest";
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { ConvexTestingHelper } from "convex-helpers/testing";
-import { withPrefix } from "../../../src/testing/index.js";
+import { makeFunctionReference } from "convex/server";
+import type { SafeMutationRef, SafeQueryRef } from "../../../src/function-refs/types.js";
+import { testMutation, testQuery, withPrefix } from "../../../src/testing/index.js";
+
+const testPublishEvent = makeFunctionReference<"mutation">(
+  "testing/durablePublicationTest:testPublishEvent"
+) as SafeMutationRef;
+
+const getPublicationRecords = makeFunctionReference<"query">(
+  "testing/durablePublicationTest:getPublicationRecords"
+) as SafeQueryRef;
+
+const createTestPublication = makeFunctionReference<"mutation">(
+  "testing/durablePublicationTest:createTestPublication"
+) as SafeMutationRef;
+
+const listPublicationsByStatus = makeFunctionReference<"query">(
+  "testing/durablePublicationTest:listPublicationsByStatus"
+) as SafeQueryRef;
+
+const getPublicationStats = makeFunctionReference<"query">(
+  "testing/durablePublicationTest:getPublicationStats"
+) as SafeQueryRef;
 
 // =============================================================================
 // Feature Loading
@@ -133,28 +155,24 @@ describe("Durable Publication Integration Tests", () => {
           );
 
           When("publishing the event via durable publisher", async () => {
-            state!.publishResult = await state!.helper.mutation(
-              "testing/durablePublicationTest:testPublishEvent",
-              {
-                eventId: state!.eventId,
-                eventType: "TestEvent",
-                eventData: { test: true },
-                streamType: "TestStream",
-                streamId: `${state!.testRunId}_stream_1`,
-                sourceContext: state!.sourceContext,
-                targetContexts: state!.targetContexts,
-                maxAttempts: 3,
-              }
-            );
+            state!.publishResult = await testMutation(state!.helper, testPublishEvent, {
+              eventId: state!.eventId,
+              eventType: "TestEvent",
+              eventData: { test: true },
+              streamType: "TestStream",
+              streamId: `${state!.testRunId}_stream_1`,
+              sourceContext: state!.sourceContext,
+              targetContexts: state!.targetContexts,
+              maxAttempts: 3,
+            });
           });
 
           Then(
             "{int} publication records should exist in eventPublications",
             async (_ctx: unknown, count: number) => {
-              const records = (await state!.helper.query(
-                "testing/durablePublicationTest:getPublicationRecords",
-                { eventId: state!.eventId }
-              )) as PublicationRecord[];
+              const records = (await testQuery(state!.helper, getPublicationRecords, {
+                eventId: state!.eventId,
+              })) as PublicationRecord[];
 
               expect(records).toHaveLength(count);
             }
@@ -163,10 +181,9 @@ describe("Durable Publication Integration Tests", () => {
           And(
             "each record should have status {string}",
             async (_ctx: unknown, expectedStatus: string) => {
-              const records = (await state!.helper.query(
-                "testing/durablePublicationTest:getPublicationRecords",
-                { eventId: state!.eventId }
-              )) as PublicationRecord[];
+              const records = (await testQuery(state!.helper, getPublicationRecords, {
+                eventId: state!.eventId,
+              })) as PublicationRecord[];
 
               for (const record of records) {
                 expect(record.status).toBe(expectedStatus);
@@ -177,10 +194,9 @@ describe("Durable Publication Integration Tests", () => {
           And(
             "each record should have attemptCount {int}",
             async (_ctx: unknown, expectedCount: number) => {
-              const records = (await state!.helper.query(
-                "testing/durablePublicationTest:getPublicationRecords",
-                { eventId: state!.eventId }
-              )) as PublicationRecord[];
+              const records = (await testQuery(state!.helper, getPublicationRecords, {
+                eventId: state!.eventId,
+              })) as PublicationRecord[];
 
               for (const record of records) {
                 expect(record.attemptCount).toBe(expectedCount);
@@ -189,10 +205,9 @@ describe("Durable Publication Integration Tests", () => {
           );
 
           And("each record should have a unique publicationId", async () => {
-            const records = (await state!.helper.query(
-              "testing/durablePublicationTest:getPublicationRecords",
-              { eventId: state!.eventId }
-            )) as PublicationRecord[];
+            const records = (await testQuery(state!.helper, getPublicationRecords, {
+              eventId: state!.eventId,
+            })) as PublicationRecord[];
 
             const ids = records.map((r) => r.publicationId);
             const uniqueIds = new Set(ids);
@@ -215,29 +230,25 @@ describe("Durable Publication Integration Tests", () => {
         });
 
         When("publishing the event via durable publisher", async () => {
-          state!.publishResult = await state!.helper.mutation(
-            "testing/durablePublicationTest:testPublishEvent",
-            {
-              eventId: state!.eventId,
-              eventType: "TestEvent",
-              eventData: { test: true },
-              streamType: "TestStream",
-              streamId: `${state!.testRunId}_stream_1`,
-              sourceContext: state!.sourceContext,
-              targetContexts: state!.targetContexts,
-              correlationId: state!.correlationId,
-              maxAttempts: 3,
-            }
-          );
+          state!.publishResult = await testMutation(state!.helper, testPublishEvent, {
+            eventId: state!.eventId,
+            eventType: "TestEvent",
+            eventData: { test: true },
+            streamType: "TestStream",
+            streamId: `${state!.testRunId}_stream_1`,
+            sourceContext: state!.sourceContext,
+            targetContexts: state!.targetContexts,
+            correlationId: state!.correlationId,
+            maxAttempts: 3,
+          });
         });
 
         Then(
           "the publication record should have correlationId {string}",
           async (_ctx: unknown, _corrId: string) => {
-            const records = (await state!.helper.query(
-              "testing/durablePublicationTest:getPublicationRecords",
-              { eventId: state!.eventId }
-            )) as PublicationRecord[];
+            const records = (await testQuery(state!.helper, getPublicationRecords, {
+              eventId: state!.eventId,
+            })) as PublicationRecord[];
 
             expect(records).toHaveLength(1);
             expect(records[0].correlationId).toBe(state!.correlationId);
@@ -247,10 +258,9 @@ describe("Durable Publication Integration Tests", () => {
         And(
           "the publication record should have sourceContext {string}",
           async (_ctx: unknown, expected: string) => {
-            const records = (await state!.helper.query(
-              "testing/durablePublicationTest:getPublicationRecords",
-              { eventId: state!.eventId }
-            )) as PublicationRecord[];
+            const records = (await testQuery(state!.helper, getPublicationRecords, {
+              eventId: state!.eventId,
+            })) as PublicationRecord[];
 
             expect(records[0].sourceContext).toBe(expected);
           }
@@ -259,10 +269,9 @@ describe("Durable Publication Integration Tests", () => {
         And(
           "the publication record should have targetContext {string}",
           async (_ctx: unknown, expected: string) => {
-            const records = (await state!.helper.query(
-              "testing/durablePublicationTest:getPublicationRecords",
-              { eventId: state!.eventId }
-            )) as PublicationRecord[];
+            const records = (await testQuery(state!.helper, getPublicationRecords, {
+              eventId: state!.eventId,
+            })) as PublicationRecord[];
 
             expect(records[0].targetContext).toBe(expected);
           }
@@ -285,19 +294,16 @@ describe("Durable Publication Integration Tests", () => {
         );
 
         When("publishing the event via durable publisher", async () => {
-          state!.publishResult = await state!.helper.mutation(
-            "testing/durablePublicationTest:testPublishEvent",
-            {
-              eventId: state!.eventId,
-              eventType: "TestEvent",
-              eventData: { test: true },
-              streamType: "TestStream",
-              streamId: `${state!.testRunId}_stream_1`,
-              sourceContext: state!.sourceContext,
-              targetContexts: state!.targetContexts,
-              maxAttempts: 3,
-            }
-          );
+          state!.publishResult = await testMutation(state!.helper, testPublishEvent, {
+            eventId: state!.eventId,
+            eventType: "TestEvent",
+            eventData: { test: true },
+            streamType: "TestStream",
+            streamId: `${state!.testRunId}_stream_1`,
+            sourceContext: state!.sourceContext,
+            targetContexts: state!.targetContexts,
+            maxAttempts: 3,
+          });
         });
 
         Then(
@@ -348,7 +354,7 @@ describe("Durable Publication Integration Tests", () => {
               const pubId = `${state!.testRunId}_pub_${eventId}_${ctx}`;
               state!.createdPublicationIds.push(pubId);
 
-              await state!.helper.mutation("testing/durablePublicationTest:createTestPublication", {
+              await testMutation(state!.helper, createTestPublication, {
                 publicationId: pubId,
                 eventId: state!.eventId,
                 sourceContext: "orders",
@@ -362,10 +368,9 @@ describe("Durable Publication Integration Tests", () => {
 
         When("querying publications for event {string}", async (_ctx: unknown, eventId: string) => {
           const fullEventId = `${state!.testRunId}_${eventId}`;
-          state!.queryResult = (await state!.helper.query(
-            "testing/durablePublicationTest:getPublicationRecords",
-            { eventId: fullEventId }
-          )) as PublicationRecord[];
+          state!.queryResult = (await testQuery(state!.helper, getPublicationRecords, {
+            eventId: fullEventId,
+          })) as PublicationRecord[];
         });
 
         Then(
@@ -386,10 +391,9 @@ describe("Durable Publication Integration Tests", () => {
 
         When("querying publications for event {string}", async (_ctx: unknown, eventId: string) => {
           const fullEventId = `${state!.testRunId}_${eventId}`;
-          state!.queryResult = (await state!.helper.query(
-            "testing/durablePublicationTest:getPublicationRecords",
-            { eventId: fullEventId }
-          )) as PublicationRecord[];
+          state!.queryResult = (await testQuery(state!.helper, getPublicationRecords, {
+            eventId: fullEventId,
+          })) as PublicationRecord[];
         });
 
         Then(
@@ -413,7 +417,7 @@ describe("Durable Publication Integration Tests", () => {
             const fullPubId = `${state!.testRunId}_${pubId}`;
             state!.createdPublicationIds.push(fullPubId);
 
-            await state!.helper.mutation("testing/durablePublicationTest:createTestPublication", {
+            await testMutation(state!.helper, createTestPublication, {
               publicationId: fullPubId,
               eventId: `${state!.testRunId}_event_for_${pubId}`,
               sourceContext: "orders",
@@ -427,10 +431,9 @@ describe("Durable Publication Integration Tests", () => {
         When(
           "querying publications with status {string}",
           async (_ctx: unknown, status: string) => {
-            state!.queryResult = (await state!.helper.query(
-              "testing/durablePublicationTest:listPublicationsByStatus",
-              { status: status as "pending" | "delivered" | "failed" | "dead_lettered" }
-            )) as PublicationRecord[];
+            state!.queryResult = (await testQuery(state!.helper, listPublicationsByStatus, {
+              status: status as "pending" | "delivered" | "failed" | "dead_lettered",
+            })) as PublicationRecord[];
           }
         );
 
@@ -463,7 +466,7 @@ describe("Durable Publication Integration Tests", () => {
               const pubId = `${state!.testRunId}_stats_${status}_${i}`;
               state!.createdPublicationIds.push(pubId);
 
-              await state!.helper.mutation("testing/durablePublicationTest:createTestPublication", {
+              await testMutation(state!.helper, createTestPublication, {
                 publicationId: pubId,
                 eventId: `${state!.testRunId}_event_stats_${status}_${i}`,
                 sourceContext: "orders",
@@ -476,8 +479,9 @@ describe("Durable Publication Integration Tests", () => {
         });
 
         When("querying publication stats", async () => {
-          state!.statsResult = (await state!.helper.query(
-            "testing/durablePublicationTest:getPublicationStats",
+          state!.statsResult = (await testQuery(
+            state!.helper,
+            getPublicationStats,
             {}
           )) as PublicationStats;
         });
@@ -504,7 +508,7 @@ describe("Durable Publication Integration Tests", () => {
           const pubId1 = `${state!.testRunId}_pub_evt-pub-010`;
           state!.createdPublicationIds.push(pubId1);
 
-          await state!.helper.mutation("testing/durablePublicationTest:createTestPublication", {
+          await testMutation(state!.helper, createTestPublication, {
             publicationId: pubId1,
             eventId: state!.eventId,
             sourceContext: "orders",
@@ -518,7 +522,7 @@ describe("Durable Publication Integration Tests", () => {
           const pubId2 = `${state!.testRunId}_pub_evt-pub-011`;
           state!.createdPublicationIds.push(pubId2);
 
-          await state!.helper.mutation("testing/durablePublicationTest:createTestPublication", {
+          await testMutation(state!.helper, createTestPublication, {
             publicationId: pubId2,
             eventId: eventId2,
             sourceContext: "orders",
@@ -529,10 +533,9 @@ describe("Durable Publication Integration Tests", () => {
         });
 
         When("querying publications for the first event", async () => {
-          state!.queryResult = (await state!.helper.query(
-            "testing/durablePublicationTest:getPublicationRecords",
-            { eventId: state!.eventId }
-          )) as PublicationRecord[];
+          state!.queryResult = (await testQuery(state!.helper, getPublicationRecords, {
+            eventId: state!.eventId,
+          })) as PublicationRecord[];
         });
 
         Then("only that event's publication should be returned", async () => {

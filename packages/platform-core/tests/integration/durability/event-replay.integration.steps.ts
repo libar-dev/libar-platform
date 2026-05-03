@@ -9,7 +9,29 @@
 import { describe, beforeAll, afterAll, expect } from "vitest";
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
 import { ConvexTestingHelper } from "convex-helpers/testing";
-import { withPrefix } from "../../../src/testing/index.js";
+import { makeFunctionReference } from "convex/server";
+import type { SafeMutationRef, SafeQueryRef } from "../../../src/function-refs/types.js";
+import { testMutation, testQuery, withPrefix } from "../../../src/testing/index.js";
+
+const createTestCheckpoint = makeFunctionReference<"mutation">(
+  "testing/eventReplayTest:createTestCheckpoint"
+) as SafeMutationRef;
+
+const getCheckpointByReplayId = makeFunctionReference<"query">(
+  "testing/eventReplayTest:getCheckpointByReplayId"
+) as SafeQueryRef;
+
+const updateCheckpointProgress = makeFunctionReference<"mutation">(
+  "testing/eventReplayTest:updateCheckpointProgress"
+) as SafeMutationRef;
+
+const simulateStartReplay = makeFunctionReference<"mutation">(
+  "testing/eventReplayTest:simulateStartReplay"
+) as SafeMutationRef;
+
+const listCheckpointsByStatus = makeFunctionReference<"query">(
+  "testing/eventReplayTest:listCheckpointsByStatus"
+) as SafeQueryRef;
 
 // =============================================================================
 // Feature Loading
@@ -110,7 +132,7 @@ describe("Event Replay Integration Tests", () => {
             state!.projection = `${state!.testRunId}_${projection}`;
             state!.replayId = `${state!.testRunId}_replay_${Date.now()}`;
 
-            await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+            await testMutation(state!.helper, createTestCheckpoint, {
               replayId: state!.replayId,
               projection: state!.projection,
               status: "running",
@@ -119,10 +141,9 @@ describe("Event Replay Integration Tests", () => {
         );
 
         Then("a checkpoint should exist in replayCheckpoints", async () => {
-          state!.checkpoint = (await state!.helper.query(
-            "testing/eventReplayTest:getCheckpointByReplayId",
-            { replayId: state!.replayId }
-          )) as CheckpointRecord;
+          state!.checkpoint = (await testQuery(state!.helper, getCheckpointByReplayId, {
+            replayId: state!.replayId,
+          })) as CheckpointRecord;
 
           expect(state!.checkpoint).not.toBeNull();
         });
@@ -150,7 +171,7 @@ describe("Event Replay Integration Tests", () => {
             state!.replayId = `${state!.testRunId}_replay_update_${Date.now()}`;
             state!.createdReplayIds.push(state!.replayId);
 
-            await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+            await testMutation(state!.helper, createTestCheckpoint, {
               replayId: state!.replayId,
               projection: state!.projection,
               status: "running",
@@ -162,15 +183,14 @@ describe("Event Replay Integration Tests", () => {
         When(
           "updating the checkpoint with {int} events processed",
           async (_ctx: unknown, eventsProcessed: number) => {
-            await state!.helper.mutation("testing/eventReplayTest:updateCheckpointProgress", {
+            await testMutation(state!.helper, updateCheckpointProgress, {
               replayId: state!.replayId,
               eventsProcessed,
             });
 
-            state!.checkpoint = (await state!.helper.query(
-              "testing/eventReplayTest:getCheckpointByReplayId",
-              { replayId: state!.replayId }
-            )) as CheckpointRecord;
+            state!.checkpoint = (await testQuery(state!.helper, getCheckpointByReplayId, {
+              replayId: state!.replayId,
+            })) as CheckpointRecord;
           }
         );
 
@@ -207,7 +227,7 @@ describe("Event Replay Integration Tests", () => {
               state!.replayId = `${state!.testRunId}_replay_existing_${uniqueTs}`;
               state!.createdReplayIds.push(state!.replayId);
 
-              await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+              await testMutation(state!.helper, createTestCheckpoint, {
                 replayId: state!.replayId,
                 projection: state!.projection,
                 status: "running",
@@ -220,13 +240,10 @@ describe("Event Replay Integration Tests", () => {
             async (_ctx: unknown, _projection: string) => {
               const newReplayId = `${state!.testRunId}_replay_conflict_${Date.now()}`;
 
-              state!.startResult = (await state!.helper.mutation(
-                "testing/eventReplayTest:simulateStartReplay",
-                {
-                  projection: state!.projection,
-                  replayId: newReplayId,
-                }
-              )) as StartReplayResult;
+              state!.startResult = (await testMutation(state!.helper, simulateStartReplay, {
+                projection: state!.projection,
+                replayId: newReplayId,
+              })) as StartReplayResult;
             }
           );
 
@@ -252,7 +269,7 @@ describe("Event Replay Integration Tests", () => {
             state!.projection = `${state!.testRunId}_testProjection`;
             state!.createdReplayIds.push(state!.replayId);
 
-            await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+            await testMutation(state!.helper, createTestCheckpoint, {
               replayId: state!.replayId,
               projection: state!.projection,
               status: "running",
@@ -262,10 +279,9 @@ describe("Event Replay Integration Tests", () => {
         );
 
         When("querying checkpoint by replayId", async () => {
-          state!.checkpoint = (await state!.helper.query(
-            "testing/eventReplayTest:getCheckpointByReplayId",
-            { replayId: state!.replayId }
-          )) as CheckpointRecord;
+          state!.checkpoint = (await testQuery(state!.helper, getCheckpointByReplayId, {
+            replayId: state!.replayId,
+          })) as CheckpointRecord;
         });
 
         Then("the checkpoint should be returned with correct details", async () => {
@@ -282,7 +298,7 @@ describe("Event Replay Integration Tests", () => {
           // Create running checkpoint
           const runningId = `${state!.testRunId}_replay_list_running`;
           state!.createdReplayIds.push(runningId);
-          await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+          await testMutation(state!.helper, createTestCheckpoint, {
             replayId: runningId,
             projection: `${state!.testRunId}_proj_running`,
             status: "running",
@@ -291,7 +307,7 @@ describe("Event Replay Integration Tests", () => {
           // Create completed checkpoint
           const completedId = `${state!.testRunId}_replay_list_completed`;
           state!.createdReplayIds.push(completedId);
-          await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+          await testMutation(state!.helper, createTestCheckpoint, {
             replayId: completedId,
             projection: `${state!.testRunId}_proj_completed`,
             status: "completed",
@@ -300,7 +316,7 @@ describe("Event Replay Integration Tests", () => {
           // Create failed checkpoint
           const failedId = `${state!.testRunId}_replay_list_failed`;
           state!.createdReplayIds.push(failedId);
-          await state!.helper.mutation("testing/eventReplayTest:createTestCheckpoint", {
+          await testMutation(state!.helper, createTestCheckpoint, {
             replayId: failedId,
             projection: `${state!.testRunId}_proj_failed`,
             status: "failed",
@@ -308,10 +324,9 @@ describe("Event Replay Integration Tests", () => {
         });
 
         When("listing checkpoints with status {string}", async (_ctx: unknown, status: string) => {
-          state!.queryResult = (await state!.helper.query(
-            "testing/eventReplayTest:listCheckpointsByStatus",
-            { status: status as "running" | "paused" | "completed" | "failed" | "cancelled" }
-          )) as CheckpointRecord[];
+          state!.queryResult = (await testQuery(state!.helper, listCheckpointsByStatus, {
+            status: status as "running" | "paused" | "completed" | "failed" | "cancelled",
+          })) as CheckpointRecord[];
         });
 
         Then("only running checkpoints should be returned", async () => {
