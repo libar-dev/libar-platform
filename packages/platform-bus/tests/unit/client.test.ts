@@ -404,7 +404,6 @@ describe("CommandBus Client", () => {
         commandType: "CreateOrder",
         targetContext: "orders",
         status: "executed",
-        result: { orderId: "ord_456" },
         executedAt: Date.now(),
         timestamp: Date.now() - 1000,
       };

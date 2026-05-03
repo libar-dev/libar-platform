@@ -46,6 +46,7 @@
     "test:watch": "vitest",
     "test:integration": "cd ../../../ && just test-infrastructure-isolated",
     "test:integration:ci": "vitest run --config vitest.integration.config.ts",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },
   "peerDependencies": {
