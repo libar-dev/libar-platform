@@ -18,7 +18,13 @@ import type {
 import type { PlatformMetrics } from "../../src/metrics/index.js";
 import type { PublishedEvent } from "../../src/eventbus/types.js";
 import type { SafeMutationRef } from "../../src/function-refs/types.js";
-import { toCommandId, toCorrelationId, toCausationId, toEventId, toStreamId } from "../../src/ids/index.js";
+import {
+  toCommandId,
+  toCorrelationId,
+  toCausationId,
+  toEventId,
+  toStreamId,
+} from "../../src/ids/index.js";
 import type { UnknownRecord } from "../../src/types.js";
 
 function createMockMetrics(): PlatformMetrics & {
