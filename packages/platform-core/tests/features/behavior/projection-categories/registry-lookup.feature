@@ -21,6 +21,61 @@ Feature: Registry Category Lookup
       | orderStatusFeed    | integration | cross-context |
       """
 
+  # ============================================================================
+  # getByCategory Method
+  # ============================================================================
+
+  @acceptance-criteria @happy-path
+  Scenario: getByCategory returns all view projections
+    When I call getByCategory with "view"
+    Then I receive 2 projections
+    And the result contains "orderSummary"
+    And the result contains "productCatalog"
+
+  @acceptance-criteria @happy-path
+  Scenario: getByCategory returns all logic projections
+    When I call getByCategory with "logic"
+    Then I receive 1 projection
+    And the result contains "orderExistence"
+
+  @acceptance-criteria @happy-path
+  Scenario: getByCategory returns all reporting projections
+    When I call getByCategory with "reporting"
+    Then I receive 1 projection
+    And the result contains "dailySales"
+
+  @acceptance-criteria @happy-path
+  Scenario: getByCategory returns all integration projections
+    When I call getByCategory with "integration"
+    Then I receive 1 projection
+    And the result contains "orderStatusFeed"
+
+  @acceptance-criteria @edge-case
+  Scenario: getByCategory returns empty array for category with no projections
+    Given an empty projection registry
+    When I call getByCategory with "view"
+    Then I receive 0 projections
+
+  # ============================================================================
+  # Use Cases
+  # ============================================================================
+
+  @acceptance-criteria @happy-path
+  Scenario: Target view projections for reactive layer
+    When I call getByCategory with "view"
+    Then all returned projections have category "view"
+    And these are candidates for reactive subscriptions
+
+  @acceptance-criteria @happy-path
+  Scenario: Target integration projections for EventBus routing
+    When I call getByCategory with "integration"
+    Then all returned projections have category "integration"
+    And these are candidates for EventBus publication
+
+  # ============================================================================
+  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # ============================================================================
+
   Rule: Registry supports category-based lookup
 
     **Invariant:** The projection registry exposes getByCategory(category) returning
@@ -39,41 +94,6 @@ Feature: Registry Category Lookup
     getByCategory returns all integration projections,
     getByCategory returns empty array for category with no projections
 
-    # ============================================================================
-    # getByCategory Method
-    # ============================================================================
-
-    @acceptance-criteria @happy-path
-    Scenario: getByCategory returns all view projections
-      When I call getByCategory with "view"
-      Then I receive 2 projections
-      And the result contains "orderSummary"
-      And the result contains "productCatalog"
-
-    @acceptance-criteria @happy-path
-    Scenario: getByCategory returns all logic projections
-      When I call getByCategory with "logic"
-      Then I receive 1 projection
-      And the result contains "orderExistence"
-
-    @acceptance-criteria @happy-path
-    Scenario: getByCategory returns all reporting projections
-      When I call getByCategory with "reporting"
-      Then I receive 1 projection
-      And the result contains "dailySales"
-
-    @acceptance-criteria @happy-path
-    Scenario: getByCategory returns all integration projections
-      When I call getByCategory with "integration"
-      Then I receive 1 projection
-      And the result contains "orderStatusFeed"
-
-    @acceptance-criteria @edge-case
-    Scenario: getByCategory returns empty array for category with no projections
-      Given an empty projection registry
-      When I call getByCategory with "view"
-      Then I receive 0 projections
-
   Rule: Only View projections are candidates for reactive subscriptions
 
     **Invariant:** When infrastructure resolves the set of reactive-eligible
@@ -87,19 +107,3 @@ Feature: Registry Category Lookup
 
     **Verified by:** Target view projections for reactive layer,
     Target integration projections for EventBus routing
-
-    # ============================================================================
-    # Use Cases
-    # ============================================================================
-
-    @acceptance-criteria @happy-path
-    Scenario: Target view projections for reactive layer
-      When I call getByCategory with "view"
-      Then all returned projections have category "view"
-      And these are candidates for reactive subscriptions
-
-    @acceptance-criteria @happy-path
-    Scenario: Target integration projections for EventBus routing
-      When I call getByCategory with "integration"
-      Then all returned projections have category "integration"
-      And these are candidates for EventBus publication

@@ -23,48 +23,6 @@ Feature: Platform Package BDD Coverage
     Given the monorepo contains @libar-dev/platform-* packages
     And each package follows the standard directory structure
 
-  Rule: All domain-logic tests are Gherkin
-
-    **Invariant:** Domain logic — deciders, FSM transitions, invariants — is
-    tested exclusively through .feature files using Given/When/Then. No
-    describe/it/.test.ts files exist for domain logic in platform packages
-    or in example apps under tests/features/.
-
-    **Rationale:** Pure deciders map cleanly onto State (Given) → Command
-    (When) → Outcome (Then). Mixing styles fragments the documentation
-    surface and lets opaque assertion-style tests grow back into the codebase.
-    A single style produces uniform living documentation.
-
-    **Verified by:** Domain logic test follows BDD pattern
-
-    @acceptance-criteria @happy-path
-    Scenario: Domain logic test follows BDD pattern
-      Given a decider for "SubmitOrder"
-      When writing tests for the decider
-      Then tests must be in .feature file format
-      And steps must use Given (state) / When (command) / Then (outcome)
-
-  Rule: Pure deciders enable infrastructure-free unit tests
-
-    **Invariant:** Decider unit tests run without Docker, without a database
-    connection, and without any external infrastructure. A decider unit test
-    suite completes in under 100ms per scenario on developer hardware.
-
-    **Rationale:** Pure functions have no I/O surface to mock — Given is just
-    state, When is just a command record, Then asserts on the returned event
-    or error. Removing infrastructure from the test path is what makes BDD
-    feedback loops fast enough to run on every save.
-
-    **Verified by:** Decider test requires no infrastructure
-
-    @acceptance-criteria @happy-path
-    Scenario: Decider test requires no infrastructure
-      Given a pure decider function
-      When running the test
-      Then no database connection should be needed
-      And no Docker containers should be required
-      And test should complete in under 100ms
-
   # ============================================================================
   # Package Feature Directory Structure
   # ============================================================================
@@ -202,3 +160,36 @@ Feature: Platform Package BDD Coverage
       Given feature file "decider-outputs.feature"
       When looking for step definitions
       Then steps should be in "steps/decider/outputs.steps.ts" or "steps/decider.steps.ts"
+
+  # ============================================================================
+  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # ============================================================================
+
+  Rule: All domain-logic tests are Gherkin
+
+    **Invariant:** Domain logic — deciders, FSM transitions, invariants — is
+    tested exclusively through .feature files using Given/When/Then. No
+    describe/it/.test.ts files exist for domain logic in platform packages
+    or in example apps under tests/features/.
+
+    **Rationale:** Pure deciders map cleanly onto State (Given) → Command
+    (When) → Outcome (Then). Mixing styles fragments the documentation
+    surface and lets opaque assertion-style tests grow back into the codebase.
+    A single style produces uniform living documentation.
+
+    **Verified by:** Step definitions follow naming convention,
+    Step file matches feature file
+
+  Rule: Pure deciders enable infrastructure-free unit tests
+
+    **Invariant:** Decider unit tests run without Docker, without a database
+    connection, and without any external infrastructure. A decider unit test
+    suite completes in under 100ms per scenario on developer hardware.
+
+    **Rationale:** Pure functions have no I/O surface to mock — Given is just
+    state, When is just a command record, Then asserts on the returned event
+    or error. Removing infrastructure from the test path is what makes BDD
+    feedback loops fast enough to run on every save.
+
+    **Verified by:** Package has feature directory - platform-core,
+    Package has feature directory - platform-decider

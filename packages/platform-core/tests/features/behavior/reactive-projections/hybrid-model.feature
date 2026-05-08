@@ -17,36 +17,18 @@ Feature: Hybrid Model - Durable + Reactive Projections
     Given the reactive projection system is initialized
     And a view projection "orderSummary" is registered
 
-  Rule: Hybrid model combines durability with speed
+  # ============================================================================
+  # Instant Optimistic Update
+  # ============================================================================
 
-    **Invariant:** Workpool handles durable persistence (100-500ms latency) while
-    a reactive layer pushes optimistic updates to clients within 50ms. Both
-    systems operate on the same projection without interference: optimistic
-    state is overlaid on the durable base, and converges to the durable state
-    once Workpool catches up.
-
-    **Rationale:** Workpool alone yields 100-500ms latency, which feels sluggish
-    for direct user actions. Pure client-side optimism alone loses durability.
-    Combining the two preserves Convex-native durability while delivering UI
-    feedback at perceptual-instant latency, with graceful degradation when
-    optimism conflicts with durable truth.
-
-    **Verified by:** Client receives instant update then durable confirmation,
-    Optimistic update works during Workpool backlog,
-    Durable state takes precedence after convergence
-
-    # ============================================================================
-    # Instant Optimistic Update
-    # ============================================================================
-
-    @happy-path
-    Scenario: Client receives instant update then durable confirmation
-    # Implementation placeholder - stub scenario
-    Given an order is submitted
-    When the OrderSubmitted event is published
-    Then client sees optimistic update within 50ms
-    And Workpool updates durable projection within 500ms
-    And client state converges to durable state
+  @happy-path
+  Scenario: Client receives instant update then durable confirmation
+  # Implementation placeholder - stub scenario
+  Given an order is submitted
+  When the OrderSubmitted event is published
+  Then client sees optimistic update within 50ms
+  And Workpool updates durable projection within 500ms
+  And client state converges to durable state
 
   # ============================================================================
   # Workpool Backlog Handling
@@ -73,3 +55,25 @@ Feature: Hybrid Model - Durable + Reactive Projections
     When durable projection is updated
     Then optimistic overlay clears for processed events
     And client shows durable state
+
+  # ============================================================================
+  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # ============================================================================
+
+  Rule: Hybrid model combines durability with speed
+
+    **Invariant:** Workpool handles durable persistence (100-500ms latency) while
+    a reactive layer pushes optimistic updates to clients within 50ms. Both
+    systems operate on the same projection without interference: optimistic
+    state is overlaid on the durable base, and converges to the durable state
+    once Workpool catches up.
+
+    **Rationale:** Workpool alone yields 100-500ms latency, which feels sluggish
+    for direct user actions. Pure client-side optimism alone loses durability.
+    Combining the two preserves Convex-native durability while delivering UI
+    feedback at perceptual-instant latency, with graceful degradation when
+    optimism conflicts with durable truth.
+
+    **Verified by:** Client receives instant update then durable confirmation,
+    Optimistic update works during Workpool backlog,
+    Durable state takes precedence after convergence

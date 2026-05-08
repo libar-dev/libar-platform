@@ -17,40 +17,22 @@ Feature: Reactive Eligibility by Category
     Given the projection registry is available
     And projections are categorized by type
 
-  Rule: Only View projections need reactive layer
+  # ============================================================================
+  # Category-Based Eligibility
+  # ============================================================================
 
-    **Invariant:** Reactive subscriptions are accepted only for projections
-    declared with category "view". Logic, Reporting, and Integration projections
-    reject reactive subscription attempts with REACTIVE_NOT_SUPPORTED and direct
-    callers to plain useQuery or the appropriate alternative surface.
+  @happy-path
+  Scenario Outline: Category determines reactive eligibility
+  # Implementation placeholder - stub scenario
+  Given a projection with category "<category>"
+  Then it should <eligibility> for reactive updates
 
-    **Rationale:** Reactive infrastructure (WebSocket connections, change
-    detection, client-side optimistic state) is expensive. Limiting eligibility
-    to View projections — the only category that drives UI — keeps that cost
-    proportional to user-visible benefit. Logic, Reporting, and Integration
-    projections target validation, analytics, and cross-BC sync respectively;
-    none gain from real-time push.
-
-    **Verified by:** Category determines reactive eligibility,
-    Non-view projection rejects reactive subscription,
-    View projection enables full reactive functionality
-
-    # ============================================================================
-    # Category-Based Eligibility
-    # ============================================================================
-
-    @happy-path
-    Scenario Outline: Category determines reactive eligibility
-    # Implementation placeholder - stub scenario
-    Given a projection with category "<category>"
-    Then it should <eligibility> for reactive updates
-
-    Examples:
-      | category    | eligibility       |
-      | view        | be eligible       |
-      | logic       | not be eligible   |
-      | reporting   | not be eligible   |
-      | integration | not be eligible   |
+  Examples:
+    | category    | eligibility       |
+    | view        | be eligible       |
+    | logic       | not be eligible   |
+    | reporting   | not be eligible   |
+    | integration | not be eligible   |
 
   # ============================================================================
   # Non-View Rejection
@@ -77,6 +59,43 @@ Feature: Reactive Eligibility by Category
     And optimistic updates are enabled
     And conflict detection is active
 
+  # ============================================================================
+  # Initial Loading State
+  # ============================================================================
+
+  @unit
+  Scenario: Initial reactive result represents loading state
+  # Tests createInitialReactiveResult() returns correct loading state
+  When createInitialReactiveResult is called
+  Then state should be null
+  And isLoading should be true
+  And isOptimistic should be false
+  And durablePosition should be 0
+  And pendingEvents should be 0
+  And error should be null
+
+  # ============================================================================
+  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # ============================================================================
+
+  Rule: Only View projections need reactive layer
+
+    **Invariant:** Reactive subscriptions are accepted only for projections
+    declared with category "view". Logic, Reporting, and Integration projections
+    reject reactive subscription attempts with REACTIVE_NOT_SUPPORTED and direct
+    callers to plain useQuery or the appropriate alternative surface.
+
+    **Rationale:** Reactive infrastructure (WebSocket connections, change
+    detection, client-side optimistic state) is expensive. Limiting eligibility
+    to View projections — the only category that drives UI — keeps that cost
+    proportional to user-visible benefit. Logic, Reporting, and Integration
+    projections target validation, analytics, and cross-BC sync respectively;
+    none gain from real-time push.
+
+    **Verified by:** Category determines reactive eligibility,
+    Non-view projection rejects reactive subscription,
+    View projection enables full reactive functionality
+
   Rule: useReactiveProjection exposes merged durable + optimistic state
 
     **Invariant:** The hook returns a result object exposing a merged state
@@ -94,18 +113,3 @@ Feature: Reactive Eligibility by Category
     affordances without reimplementing the merge logic.
 
     **Verified by:** Initial reactive result represents loading state
-
-    # ============================================================================
-    # Initial Loading State
-    # ============================================================================
-
-    @unit
-    Scenario: Initial reactive result represents loading state
-    # Tests createInitialReactiveResult() returns correct loading state
-    When createInitialReactiveResult is called
-    Then state should be null
-    And isLoading should be true
-    And isOptimistic should be false
-    And durablePosition should be 0
-    And pendingEvents should be 0
-    And error should be null

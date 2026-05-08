@@ -9,21 +9,6 @@ Feature: Cancel Order
   Background:
     Given the system is ready
 
-  Rule: Confirmed orders can be cancelled
-
-    **Invariant:** The Order FSM allows transitioning from `confirmed` to `cancelled`.
-    The CancelOrder decider accepts cancellation requests for confirmed orders. Already
-    cancelled orders remain rejected with ORDER_ALREADY_CANCELLED.
-
-    **Rationale:** Treating `confirmed` as terminal blocks legitimate cancellation
-    flows (customer changes mind post-confirmation) and prevents the Agent BC churn
-    risk demo from triggering. Allowing the transition keeps Order and Reservation
-    states synchronizable while preserving idempotency guarantees on already-final states.
-
-    **Verified by:** Cancel draft order, Cancel submitted order, Cancel confirmed
-    order, Cannot cancel already cancelled order, Cannot cancel non-existent order,
-    CancelOrder is idempotent with same commandId
-
   @happy-path
   Scenario: Cancel draft order
     Given an order "ord_cancel_001" exists with status "draft"
@@ -62,3 +47,18 @@ Feature: Cancel Order
     Given an order "ord_cancel_005" exists with status "draft"
     When I send a CancelOrder command twice with the same commandId for "ord_cancel_005"
     Then the order should only be cancelled once
+
+  Rule: Confirmed orders can be cancelled
+
+    **Invariant:** The Order FSM allows transitioning from `confirmed` to `cancelled`.
+    The CancelOrder decider accepts cancellation requests for confirmed orders. Already
+    cancelled orders remain rejected with ORDER_ALREADY_CANCELLED.
+
+    **Rationale:** Treating `confirmed` as terminal blocks legitimate cancellation
+    flows (customer changes mind post-confirmation) and prevents the Agent BC churn
+    risk demo from triggering. Allowing the transition keeps Order and Reservation
+    states synchronizable while preserving idempotency guarantees on already-final states.
+
+    **Verified by:** Cancel draft order, Cancel submitted order, Cancel confirmed
+    order, Cannot cancel already cancelled order, Cannot cancel non-existent order,
+    CancelOrder is idempotent with same commandId
