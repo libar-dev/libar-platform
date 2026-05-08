@@ -7,7 +7,7 @@
 @architect-product-area:Platform
 @architect-business-value:production-monitoring-and-k8s-integration
 @architect-depends-on:EventReplayInfrastructure,WorkpoolPartitioningStrategy
-@architect-executable-specs:platform-core/tests/features/behavior/health-observability
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/health-observability
 Feature: Health Endpoints and Metrics Collection
 
   **Problem:** No Kubernetes integration (readiness/liveness probes), no metrics for

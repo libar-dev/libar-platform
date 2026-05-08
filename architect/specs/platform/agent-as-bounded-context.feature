@@ -7,7 +7,7 @@
 @architect-effort:2w
 @architect-product-area:Platform
 @architect-depends-on:ReactiveProjections,EcstFatEvents
-@architect-executable-specs:platform-core/tests/features/behavior/agent
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/agent
 @architect-sequence-orchestrator:agent-event-pipeline
 Feature: Agent as Bounded Context - AI-Native Architecture Pattern
 

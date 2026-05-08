@@ -6,7 +6,7 @@
 @architect-effort:2d
 @architect-product-area:Platform
 @architect-depends-on:EventStoreFoundation
-@architect-executable-specs:platform-core/tests/features/behavior/uniqueness
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/uniqueness
 Feature: Deterministic ID Hashing - OCC-Based Uniqueness Without TTL
 
   **Problem:** TTL-based reservations work well for multi-step flows (registration wizards),

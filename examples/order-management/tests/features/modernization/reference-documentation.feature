@@ -1,6 +1,7 @@
 @architect-phase:23
 @architect-product-area:ExampleApp
-@architect-pattern:ExampleAppModernization
+@architect-pattern:ExampleAppModernizationExecutableTests
+@architect-implements:ExampleAppModernization
 @architect-status:completed
 @acceptance-criteria
 Feature: Reference Implementation Documentation
@@ -17,6 +18,18 @@ Feature: Reference Implementation Documentation
   # ============================================================================
 
   Rule: README documents the app as a Reference Implementation
+
+    **Invariant:** The example-app README clearly designates this as a reference
+    implementation (not production), and catalogs every demonstrated platform pattern
+    with a phase number, code-location link, and documentation link.
+
+    **Rationale:** Without an explicit "reference implementation" frame, users will
+    treat the example as production-ready and request features that bloat scope.
+    The Patterns Demonstrated catalog is the discovery surface that turns the example
+    into living documentation tied back to platform docs.
+
+    **Verified by:** README has Reference Implementation designation, All demonstrated
+    patterns are cataloged, Pattern links are valid, Architecture diagram is present
 
     @happy-path
     Scenario: README has Reference Implementation designation

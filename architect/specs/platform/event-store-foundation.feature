@@ -9,6 +9,7 @@
 @architect-pre-existing-completion
 @architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
 @architect-sequence-orchestrator:event-store-append-flow
+@architect-executable-specs:libar-platform/packages/platform-store/tests/features/behavior/event-store-foundation-executable-tests.feature
 Feature: Event Store Foundation - Centralized Event Storage
 
   **Problem:** Event Sourcing requires centralized storage for domain events with

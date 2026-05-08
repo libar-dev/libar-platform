@@ -8,7 +8,7 @@
 @architect-product-area:Platform
 @architect-business-value:production-grade-reliability-with-minimal-code
 @architect-depends-on:DCB
-@architect-executable-specs:platform-core/tests/features/behavior/durable-function-adapters
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/durable-function-adapters
 @architect-sequence-orchestrator:durable-adapter-bridge
 Feature: Durable Function Adapters - Bridge Platform to Convex Components
 

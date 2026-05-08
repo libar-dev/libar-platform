@@ -2,11 +2,12 @@
 @architect-release:v0.2.0
 @architect-pattern:AgentChurnRiskCompletion
 @architect-status:completed
+@architect-unlock-reason:value-transfer-fix-forward-link-to-canonical-executable-feature
 @architect-phase:22d
 @architect-effort:1w
 @architect-product-area:ExampleApp
 @architect-depends-on:AgentCommandInfrastructure
-@architect-executable-specs:order-management/tests/integration-features/agent
+@architect-executable-specs:libar-platform/examples/order-management/tests/features/behavior/agent/on-complete.feature
 Feature: Agent Churn Risk Completion - Full LLM Integration in Example App
 
   **Problem:** The churn-risk agent in the order-management example app has working

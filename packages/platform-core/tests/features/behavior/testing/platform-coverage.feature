@@ -1,4 +1,8 @@
 @architect
+@architect-pattern:BddTestingInfrastructureExecutableTests
+@architect-implements:BddTestingInfrastructure
+@architect-status:completed
+@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention
 @architect-phase:19
 @architect-product-area:PlatformCore
 @testing-infrastructure
@@ -19,11 +23,69 @@ Feature: Platform Package BDD Coverage
     Given the monorepo contains @libar-dev/platform-* packages
     And each package follows the standard directory structure
 
+  Rule: All domain-logic tests are Gherkin
+
+    **Invariant:** Domain logic — deciders, FSM transitions, invariants — is
+    tested exclusively through .feature files using Given/When/Then. No
+    describe/it/.test.ts files exist for domain logic in platform packages
+    or in example apps under tests/features/.
+
+    **Rationale:** Pure deciders map cleanly onto State (Given) → Command
+    (When) → Outcome (Then). Mixing styles fragments the documentation
+    surface and lets opaque assertion-style tests grow back into the codebase.
+    A single style produces uniform living documentation.
+
+    **Verified by:** Domain logic test follows BDD pattern
+
+    @acceptance-criteria @happy-path
+    Scenario: Domain logic test follows BDD pattern
+      Given a decider for "SubmitOrder"
+      When writing tests for the decider
+      Then tests must be in .feature file format
+      And steps must use Given (state) / When (command) / Then (outcome)
+
+  Rule: Pure deciders enable infrastructure-free unit tests
+
+    **Invariant:** Decider unit tests run without Docker, without a database
+    connection, and without any external infrastructure. A decider unit test
+    suite completes in under 100ms per scenario on developer hardware.
+
+    **Rationale:** Pure functions have no I/O surface to mock — Given is just
+    state, When is just a command record, Then asserts on the returned event
+    or error. Removing infrastructure from the test path is what makes BDD
+    feedback loops fast enough to run on every save.
+
+    **Verified by:** Decider test requires no infrastructure
+
+    @acceptance-criteria @happy-path
+    Scenario: Decider test requires no infrastructure
+      Given a pure decider function
+      When running the test
+      Then no database connection should be needed
+      And no Docker containers should be required
+      And test should complete in under 100ms
+
   # ============================================================================
   # Package Feature Directory Structure
   # ============================================================================
 
   Rule: Each platform package must have a tests/features/ directory
+
+    **Invariant:** Every @libar-dev/platform-* package contains a tests/features/
+    directory with at least one .feature file. Public APIs are documented
+    through executable BDD specifications, not standalone .test.ts files.
+
+    **Rationale:** BDD as the exclusive testing approach for platform packages
+    yields living documentation in business terms, ensures domain-expert
+    readability of behavioural contracts, and prevents the package family from
+    drifting back to opaque unit-test conventions.
+
+    **Verified by:** Package has feature directory - platform-core,
+    Package has feature directory - platform-decider,
+    Package has feature directory - platform-fsm,
+    Package has feature directory - platform-store,
+    Package has feature directory - platform-bus,
+    Package has feature directory - platform-bc
 
     Platform packages expose public APIs that need BDD coverage.
     The tests/features/ directory is the standard location.
@@ -76,6 +138,18 @@ Feature: Platform Package BDD Coverage
 
   Rule: Public APIs must have corresponding feature files
 
+    **Invariant:** Every exported function or type that is part of a platform
+    package's public API has a feature file documenting its behaviour with
+    happy-path and edge-case scenarios. Missing coverage is detected and
+    surfaced by the coverage analyser.
+
+    **Rationale:** Public-API drift between code and specification is the
+    fastest way for living documentation to become misleading. Tying coverage
+    to exports keeps the executable surface aligned with what consumers see.
+
+    **Verified by:** Exported function has feature coverage,
+    Missing coverage is detected
+
     Each exported function or type that is part of the public API
     should have BDD coverage demonstrating its behavior.
 
@@ -98,6 +172,19 @@ Feature: Platform Package BDD Coverage
   # ============================================================================
 
   Rule: Step definitions must be organized by domain
+
+    **Invariant:** Step definitions are placed under tests/steps/ in per-domain
+    files. No two step files declare the same Given/When/Then pattern; pattern
+    conflicts are reported at load time rather than silently shadowing earlier
+    bindings.
+
+    **Rationale:** vitest-cucumber resolves duplicate step patterns by silently
+    shadowing — only the last-loaded binding runs. Domain-scoped organisation
+    prevents the silent-shadow class of bug entirely and keeps step ownership
+    legible to reviewers.
+
+    **Verified by:** Step definitions follow naming convention,
+    Step file matches feature file
 
     To prevent step definition conflicts, each package organizes
     steps by feature area in separate files.

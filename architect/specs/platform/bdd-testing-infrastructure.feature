@@ -7,7 +7,7 @@
 @architect-effort:2w
 @architect-product-area:Platform
 @architect-depends-on:DeciderPattern
-@architect-executable-specs:platform-core/tests/features/behavior/testing
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/testing
 Feature: BDD Testing Infrastructure - Gherkin as Exclusive Testing Approach
 
   **Problem:** Domain logic tests require infrastructure (Docker, database).

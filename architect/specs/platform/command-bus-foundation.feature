@@ -10,6 +10,7 @@
 @architect-pre-existing-completion
 @architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
 @architect-sequence-orchestrator:command-orchestration-flow
+@architect-executable-specs:libar-platform/packages/platform-bus/tests/features/behavior/command-bus-foundation-executable-tests.feature
 Feature: Command Bus Foundation - Command Idempotency and Orchestration
 
   **Problem:** Command execution requires idempotency (same command = same result),

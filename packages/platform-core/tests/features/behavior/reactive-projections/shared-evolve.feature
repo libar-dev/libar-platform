@@ -1,5 +1,8 @@
+@architect
 @architect-pattern:ReactiveProjectionSharedEvolve
+@architect-implements:ReactiveProjections
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:17
 @architect-product-area:Platform
 @acceptance-criteria
@@ -14,12 +17,30 @@ Feature: Shared Evolve Logic - Client/Server Consistency
     Given an evolve function is defined for the projection
     And the evolve function handles OrderSubmitted and OrderConfirmed events
 
-  # ============================================================================
-  # Consistent Transformation
-  # ============================================================================
+  Rule: Shared evolve logic runs on client and server
 
-  @happy-path
-  Scenario: Evolve produces identical results on client and server
+    **Invariant:** The same evolve(state, event) function executes on both
+    client (optimistic overlay) and server (durable Workpool projection).
+    Given identical input state and event, both surfaces produce identical
+    output state. Unknown event types leave state unchanged and never throw.
+
+    **Rationale:** Optimistic UI is only correct if the client's optimistic
+    transformation matches the server's durable transformation — otherwise
+    every conflict-detection comparison would falsely fire. Sharing the evolve
+    function (rather than re-implementing per surface) is the only practical
+    way to guarantee that equivalence.
+
+    **Verified by:** Evolve produces identical results on client and server,
+    Evolve handles unknown event types gracefully,
+    Multiple events evolve in sequence,
+    Evolve error includes event context
+
+    # ============================================================================
+    # Consistent Transformation
+    # ============================================================================
+
+    @happy-path
+    Scenario: Evolve produces identical results on client and server
     # Implementation placeholder - stub scenario
     Given an OrderSubmitted event
     When evolve is applied on client (optimistic)

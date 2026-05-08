@@ -6,7 +6,7 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:IntegrationPatterns21a
-@architect-executable-specs:platform-core/tests/features/behavior/integration
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/integration
 Feature: Integration Patterns (21b) - Schema Evolution & Contract Testing
 
   **Problem:** Schema evolution breaks consumers. No tooling validates producer-consumer

@@ -7,7 +7,7 @@
 @architect-product-area:Platform
 @architect-business-value:operational-reliability-and-system-observability
 @architect-depends-on:ReactiveProjections,DurableFunctionAdapters
-@architect-executable-specs:platform-core/tests/features/behavior/production-hardening
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/production-hardening
 Feature: Production Hardening - Observability and Operational Tooling
 
   **Problem:** Structured logging (Phase 13) exists but no metrics collection, distributed tracing,

@@ -1,4 +1,6 @@
 @integration @durability @publication
+@architect-pattern:DurableEventsIntegrationExecutableTests
+@architect-implements:DurableEventsIntegration
 Feature: Durable Cross-Context Publication (App Integration)
   As a developer using event sourcing
   I want cross-context event publications to be tracked and retryable
@@ -13,6 +15,19 @@ Feature: Durable Cross-Context Publication (App Integration)
     And durable publication is configured with maxAttempts 3
 
   Rule: Publications create tracking records
+
+    **Invariant:** A durably-enqueued event will eventually be persisted/delivered or
+    moved to dead letter. Each (event, targetContext) pair gets its own publication
+    record so per-target retry and status are tracked independently.
+
+    **Rationale:** Some events are too important to lose — payment confirmations,
+    order submissions that trigger sagas, inventory reservations. They must survive
+    transient failures (network issues, temporary unavailability) and be retried
+    automatically. Per-target tracking lets one slow consumer fail without affecting
+    others.
+
+    **Verified by:** Publishing creates records for each target context, Publication
+    records contain event metadata
 
     @tracking
     Scenario: Publishing creates records for each target context

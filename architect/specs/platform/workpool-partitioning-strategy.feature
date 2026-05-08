@@ -8,7 +8,7 @@
 @architect-product-area:Platform
 @architect-business-value:projection-ordering-and-occ-prevention
 @architect-depends-on:DurableFunctionAdapters
-@architect-executable-specs:platform-core/tests/features/behavior/workpool-partitioning
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/workpool-partitioning
 @architect-sequence-orchestrator:partition-key-selection
 Feature: Workpool Partitioning Strategy - Per-Entity Event Ordering
 

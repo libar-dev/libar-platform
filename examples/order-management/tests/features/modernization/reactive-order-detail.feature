@@ -1,6 +1,7 @@
 @architect-phase:23
 @architect-product-area:ExampleApp
 @architect-pattern:ReactiveProjections
+@architect-implements:ExampleAppModernization
 @architect-status:completed
 @acceptance-criteria
 Feature: Reactive Order Detail View
@@ -18,6 +19,18 @@ Feature: Reactive Order Detail View
   # ============================================================================
 
   Rule: Order detail view uses reactive projection for instant updates
+
+    **Invariant:** Order-detail subscribers receive state updates within ~50ms of a
+    state-changing command, without polling. Optimistic updates that conflict with
+    the durable projection roll back to the server-truth value.
+
+    **Rationale:** ReactiveProjections demonstrate the hybrid durable + optimistic
+    projection model from Phase 17 — instant UI feedback while preserving server
+    authority. Conflict rollback prevents the client from showing fabricated state.
+
+    **Verified by:** Order detail view shows instant updates, Multiple rapid updates
+    are applied correctly, Optimistic update rolls back on conflict, Stale event
+    stream is handled gracefully
 
     @happy-path
     Scenario: Order detail view shows instant updates

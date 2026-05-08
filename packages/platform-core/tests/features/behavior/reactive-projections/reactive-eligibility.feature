@@ -1,5 +1,8 @@
+@architect
 @architect-pattern:ReactiveProjectionEligibility
+@architect-implements:ReactiveProjections
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:17
 @architect-product-area:Platform
 @acceptance-criteria
@@ -14,12 +17,30 @@ Feature: Reactive Eligibility by Category
     Given the projection registry is available
     And projections are categorized by type
 
-  # ============================================================================
-  # Category-Based Eligibility
-  # ============================================================================
+  Rule: Only View projections need reactive layer
 
-  @happy-path
-  Scenario Outline: Category determines reactive eligibility
+    **Invariant:** Reactive subscriptions are accepted only for projections
+    declared with category "view". Logic, Reporting, and Integration projections
+    reject reactive subscription attempts with REACTIVE_NOT_SUPPORTED and direct
+    callers to plain useQuery or the appropriate alternative surface.
+
+    **Rationale:** Reactive infrastructure (WebSocket connections, change
+    detection, client-side optimistic state) is expensive. Limiting eligibility
+    to View projections — the only category that drives UI — keeps that cost
+    proportional to user-visible benefit. Logic, Reporting, and Integration
+    projections target validation, analytics, and cross-BC sync respectively;
+    none gain from real-time push.
+
+    **Verified by:** Category determines reactive eligibility,
+    Non-view projection rejects reactive subscription,
+    View projection enables full reactive functionality
+
+    # ============================================================================
+    # Category-Based Eligibility
+    # ============================================================================
+
+    @happy-path
+    Scenario Outline: Category determines reactive eligibility
     # Implementation placeholder - stub scenario
     Given a projection with category "<category>"
     Then it should <eligibility> for reactive updates
@@ -56,12 +77,30 @@ Feature: Reactive Eligibility by Category
     And optimistic updates are enabled
     And conflict detection is active
 
-  # ============================================================================
-  # Initial Loading State
-  # ============================================================================
+  Rule: useReactiveProjection exposes merged durable + optimistic state
 
-  @unit
-  Scenario: Initial reactive result represents loading state
+    **Invariant:** The hook returns a result object exposing a merged state
+    field (null when no durable projection exists yet), an isOptimistic flag
+    indicating whether optimistic events are currently overlaid, a
+    durablePosition cursor for the last processed global position, and a
+    pendingEvents count of unconfirmed optimistic events. Initial calls
+    represent a loading state with state=null, durablePosition=0, and
+    pendingEvents=0.
+
+    **Rationale:** Consumers of optimistic UI need to know not just the value
+    but also how confident to be in it (durable vs optimistic) and how many
+    events are still in flight. Surfacing those signals as first-class fields
+    on the hook return type lets components render appropriate confidence
+    affordances without reimplementing the merge logic.
+
+    **Verified by:** Initial reactive result represents loading state
+
+    # ============================================================================
+    # Initial Loading State
+    # ============================================================================
+
+    @unit
+    Scenario: Initial reactive result represents loading state
     # Tests createInitialReactiveResult() returns correct loading state
     When createInitialReactiveResult is called
     Then state should be null

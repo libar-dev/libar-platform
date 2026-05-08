@@ -7,7 +7,7 @@
 @architect-product-area:Platform
 @architect-business-value:unified-operations-interface
 @architect-depends-on:EventReplayInfrastructure,HealthObservability,CircuitBreakerPattern
-@architect-executable-specs:platform-core/tests/features/behavior/admin-tooling
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/admin-tooling
 Feature: Admin Tooling Consolidation - Unified Operations Interface
 
   **Problem:** Admin functionality is scattered across the codebase:

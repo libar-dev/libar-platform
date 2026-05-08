@@ -1,7 +1,9 @@
+@architect
 @architect-pattern:PollingUtilities
+@architect-implements:BddTestingInfrastructure
 @testing-infrastructure
-@architect-pattern:PollingUtilities
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:56
 @architect-quarter:Q1-2026
 @architect-effort:2h

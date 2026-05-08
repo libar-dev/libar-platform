@@ -2,13 +2,14 @@
 @architect-release:v0.2.0
 @architect-pattern:EventReplayInfrastructure
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:18b-1
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-business-value:projection-recovery-and-schema-migration
 @architect-depends-on:EventStoreFoundation,DurableFunctionAdapters,EventStoreDurability
 @architect-enables:SchemaMigration,ProjectionRecovery
-@architect-executable-specs:platform-core/tests/features/behavior/event-replay
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/event-replay
 @architect-see-also:EventStoreDurability,ProjectionCategories,WorkpoolPartitioningStrategy
 Feature: Event Replay Infrastructure - Durable Projection Rebuilding
 

@@ -9,7 +9,7 @@
 @architect-business-value:guaranteed-event-capture-and-audit-trail
 @architect-depends-on:EventStoreFoundation,DurableFunctionAdapters,WorkpoolPartitioningStrategy
 @architect-enables:SagaEngine,ProjectionRebuilder,CrossContextIntegration,AuditCompliance
-@architect-executable-specs:platform-core/tests/features/behavior/event-store-durability
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/event-store-durability
 @architect-see-also:EventSubscription,EventVersioning,ProductionHardening,AgentAsBoundedContext
 @architect-api-ref:libar-dev/platform-core/src/durability/outbox.ts,libar-dev/platform-core/src/durability/types.ts,libar-dev/platform-core/src/durability/idempotentAppend.ts
 Feature: Event Store Durability - Guaranteed Event Persistence

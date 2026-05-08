@@ -1,4 +1,8 @@
 @architect
+@architect-pattern:BddTestingInfrastructureExecutableTests
+@architect-implements:BddTestingInfrastructure
+@architect-status:completed
+@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention
 @architect-phase:19
 @architect-product-area:PlatformCore
 @testing-infrastructure
@@ -26,6 +30,20 @@ Feature: Integration Test Isolation
 
   Rule: Docker restart provides clean state between test suites
 
+    **Invariant:** Between integration test suites, a Docker restart wipes the
+    backend database, Workpool queue, and scheduled-function table. After
+    restart, no entity, queued job, or scheduled function from a prior run
+    is observable.
+
+    **Rationale:** Workpool and Scheduler internal state is opaque — there is
+    no programmatic cleanup API. Docker restart is the only deterministic way
+    to guarantee a fresh state, which is required for integration tests to be
+    reproducible. Skipping the restart causes state pollution to leak across
+    suites in non-obvious ways.
+
+    **Verified by:** Fresh state after Docker restart,
+    Detect state pollution without restart
+
     Integration tests require a fresh database state. The Docker restart
     pattern ensures no state pollution from previous test runs.
 
@@ -51,6 +69,18 @@ Feature: Integration Test Isolation
 
   Rule: Each test uses unique namespace to prevent collisions
 
+    **Invariant:** Every test prefixes its logical entity ids and correlation
+    ids with a unique per-test namespace. Two tests creating entities with the
+    same logical id produce distinct stored ids and never collide.
+
+    **Rationale:** Within a Docker-restart boundary, multiple individual tests
+    share state. A unique namespace per test is what allows them to run
+    independently within that boundary, and propagating the namespace into
+    correlation ids enables event-trace attribution back to the specific test.
+
+    **Verified by:** Unique namespace per test,
+    Namespace applied to correlation IDs
+
     Test namespacing allows multiple tests to run without entity ID
     collisions, even when Docker is not restarted between individual tests.
 
@@ -75,6 +105,20 @@ Feature: Integration Test Isolation
   # ============================================================================
 
   Rule: Background jobs are isolated between tests
+
+    **Invariant:** Workpool jobs and scheduled functions enqueued by one test
+    are isolated from subsequent tests. Pending jobs from a previous test are
+    not observable to the next test, and scheduled functions carry the
+    originating test's namespace so cleanup can identify them.
+
+    **Rationale:** Background jobs run asynchronously and may outlive the test
+    that scheduled them. Without isolation, slow jobs from test-1 silently
+    influence test-2's assertions. Namespacing scheduled functions allows
+    targeted cleanup; full isolation across suites still requires a Docker
+    restart.
+
+    **Verified by:** Workpool jobs from previous test don't interfere,
+    Scheduled functions use test-specific context
 
     Workpool jobs and scheduled functions from one test should not
     affect another test's results.

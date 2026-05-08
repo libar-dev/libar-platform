@@ -1,4 +1,6 @@
 @integration @durability @idempotent-append
+@architect-pattern:DurableEventsIntegrationExecutableTests
+@architect-implements:DurableEventsIntegration
 Feature: Idempotent Event Append (App Integration)
   As a developer using the order-management app
   I want event appends with idempotency keys to be deduplicated
@@ -15,6 +17,17 @@ Feature: Idempotent Event Append (App Integration)
     Given the backend is running and clean
 
   Rule: First append with unique idempotency key creates event
+
+    **Invariant:** For any (commandId, eventType) tuple, at most one event can exist
+    in the event store. Duplicate append attempts return the existing event without
+    modification.
+
+    **Rationale:** Commands may be retried due to network partitions, client timeouts,
+    or infrastructure failures. Without idempotency, retries would create duplicate
+    events, corrupting projections and triggering duplicate side effects.
+
+    **Verified by:** Append event with unique idempotency key succeeds, Different
+    idempotency keys create separate events
 
     @happy-path
     Scenario: Append event with unique idempotency key succeeds
@@ -34,6 +47,16 @@ Feature: Idempotent Event Append (App Integration)
       And they should have different event IDs
 
   Rule: Duplicate append with same idempotency key returns existing event
+
+    **Invariant:** A second append using the same idempotency key returns the original
+    event ID with status "duplicate"; no new event is written. A different payload
+    under the same key is rejected to preserve the original event's content.
+
+    **Rationale:** Idempotency must be content-stable — silently overwriting payloads
+    on retry would mask bugs in retry logic and corrupt the audit trail.
+
+    **Verified by:** Second append with same idempotency key returns duplicate, Same
+    key with different payload is rejected
 
     @duplicate
     Scenario: Second append with same idempotency key returns duplicate

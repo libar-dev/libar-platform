@@ -9,6 +9,7 @@
 @architect-completed:2026-01-18
 @architect-pre-existing-completion
 @architect-unlock-reason:initial-completion
+@architect-executable-specs:libar-platform/packages/platform-bc/tests/features/behavior/bounded-context-foundation-executable-tests.feature
 Feature: Bounded Context Foundation - Physical Isolation and Contracts
 
   **Problem:** DDD Bounded Contexts need clear boundaries with physical enforcement,

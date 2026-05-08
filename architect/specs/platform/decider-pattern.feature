@@ -6,7 +6,7 @@
 @architect-effort:4w
 @architect-completed:2026-01-08
 @architect-product-area:Platform
-@architect-executable-specs:platform-decider/tests/features/behavior,platform-fsm/tests/features/behavior
+@architect-executable-specs:libar-platform/packages/platform-decider/tests/features/behavior,libar-platform/packages/platform-fsm/tests/features/behavior
 @architect-depends-on:platform-fsm
 @architect-unlock-reason:initial-completion
 Feature: Decider Pattern - Pure Domain Logic Extraction

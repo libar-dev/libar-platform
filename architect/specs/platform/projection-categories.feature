@@ -7,7 +7,7 @@
 @architect-effort-actual:2h
 @architect-product-area:Platform
 @architect-depends-on:DeciderPattern
-@architect-executable-specs:platform-core/tests/unit/projections
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/projection-categories
 @architect-unlock-reason:add-business-rule-annotations
 Feature: Projection Categories - Taxonomy for Query Patterns
 

@@ -1,4 +1,6 @@
 @integration @durability @event-replay
+@architect-pattern:DurableEventsIntegrationExecutableTests
+@architect-implements:DurableEventsIntegration
 Feature: Event Replay Infrastructure (App Integration)
   As a developer maintaining projections
   I want to rebuild projections from event history
@@ -27,6 +29,17 @@ Feature: Event Replay Infrastructure (App Integration)
       And the updatedAt timestamp should be recent
 
   Rule: Concurrent replays are prevented
+
+    **Invariant:** A projection can be rebuilt from any starting position in the event
+    stream, but only one rebuild can be active per projection at a time. Subsequent
+    rebuild attempts for an active projection are rejected with REPLAY_ALREADY_ACTIVE.
+
+    **Rationale:** Projection data can become corrupted (bugs, schema migrations gone
+    wrong, manual data fixes). The event stream is the source of truth — projections
+    are derived views that can be reconstructed at any time. Preventing concurrent
+    rebuilds avoids interleaved writes that would produce inconsistent state.
+
+    **Verified by:** Cannot start replay for already running projection
 
     @idempotency
     Scenario: Cannot start replay for already running projection

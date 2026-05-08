@@ -2,11 +2,12 @@
 @architect-release:v0.2.0
 @architect-pattern:ReactiveProjections
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:17
 @architect-effort:2w
 @architect-product-area:Platform
 @architect-depends-on:ProjectionCategories
-@architect-executable-specs:platform-core/tests/features/behavior/reactive-projections
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/reactive-projections
 Feature: Reactive Projections - Hybrid Durable + Real-Time Updates
 
   **Problem:** Workpool-based projections have 100-500ms latency. Users expect

@@ -8,7 +8,7 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:DeciderPattern
-@architect-executable-specs:platform-core/tests/features/behavior/ecst
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/ecst
 Feature: ECST / Fat Events - Event-Carried State Transfer
 
   **Problem:** Thin events require consumers to query back to the source BC,

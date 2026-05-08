@@ -2,11 +2,12 @@
 @architect-release:v0.2.0
 @architect-pattern:ExampleAppModernization
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:23
 @architect-effort:2d
 @architect-product-area:ExampleApp
 @architect-depends-on:DynamicConsistencyBoundaries,ReactiveProjections,EcstFatEvents,ReservationPattern
-@architect-executable-specs:order-management/tests/features/modernization
+@architect-executable-specs:libar-platform/examples/order-management/tests/features/modernization
 Feature: Example App Modernization - Reference Implementation Freeze
 
   **Problem:** The `order-management` example app has grown organically during platform

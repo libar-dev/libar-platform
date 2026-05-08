@@ -1,4 +1,6 @@
 @integration @durability @orphan-detection
+@architect-pattern:DurableEventsIntegrationExecutableTests
+@architect-implements:DurableEventsIntegration
 Feature: Orphan Intent Detection (App Integration)
   As a developer using event sourcing
   I want orphaned intents to be detected and flagged
@@ -15,6 +17,17 @@ Feature: Orphan Intent Detection (App Integration)
     And orphan detection is configured
 
   Rule: Pending intents exceeding timeout are detected
+
+    **Invariant:** Any intent in "pending" status for longer than timeoutMs will be
+    detected and transitioned to "abandoned" status. Operators are alerted for
+    investigation.
+
+    **Rationale:** Network partitions, process crashes, and deadlocks can leave
+    commands in an incomplete state. Automated detection ensures these don't go
+    unnoticed, enabling timely investigation and potential data recovery.
+
+    **Verified by:** Intent exceeding timeout is flagged as abandoned, Intent within
+    timeout is not flagged
 
     @orphan-detection
     Scenario: Intent exceeding timeout is flagged as abandoned

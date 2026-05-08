@@ -1,4 +1,6 @@
 @integration @durability @poison-event
+@architect-pattern:DurableEventsIntegrationExecutableTests
+@architect-implements:DurableEventsIntegration
 Feature: Poison Event Handling (App Integration)
   As a developer using event sourcing
   I want malformed events to be quarantined after repeated failures
@@ -36,6 +38,18 @@ Feature: Poison Event Handling (App Integration)
 
   Rule: Events are quarantined after max attempts
 
+    **Invariant:** A malformed event that fails processing N times will be quarantined
+    and excluded from further processing. The projection will continue with remaining
+    events.
+
+    **Rationale:** Malformed events (schema violations, missing references, data
+    corruption) should not block all projection processing indefinitely. Quarantining
+    allows the system to continue while preserving the problematic events for
+    investigation and potential replay after code fixes are deployed.
+
+    **Verified by:** Event quarantined after 3 failures, Quarantine captures error
+    details
+
     @quarantine
     Scenario: Event quarantined after 3 failures
       Given a pending poison record for event "evt-poison-003" with 2 attempts
@@ -66,6 +80,17 @@ Feature: Poison Event Handling (App Integration)
       And no new error should be recorded
 
   Rule: Unquarantine enables reprocessing
+
+    **Invariant:** A quarantined event can be returned to a replayable state by an
+    operator (status -> "replayed", attemptCount -> 0). Calling unquarantine on a
+    non-quarantined event is a no-op that returns "not_quarantined".
+
+    **Rationale:** Quarantine is recoverable, not permanent — once the underlying bug
+    is fixed, operators must be able to re-introduce the event into processing without
+    bypassing the poison-event safety net.
+
+    **Verified by:** Unquarantine resets status for retry, Unquarantine of
+    non-quarantined event returns not_quarantined
 
     @recovery
     Scenario: Unquarantine resets status for retry

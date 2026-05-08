@@ -1,6 +1,7 @@
 @architect-phase:23
 @architect-product-area:ExampleApp
 @architect-pattern:DCBMultiProductReservation
+@architect-implements:ExampleAppModernization
 @architect-status:completed
 @acceptance-criteria
 Feature: DCB Multi-Product Reservation
@@ -18,6 +19,19 @@ Feature: DCB Multi-Product Reservation
   # ============================================================================
 
   Rule: Order submission uses DCB for atomic multi-product reservation
+
+    **Invariant:** Multi-product order submission reserves inventory across all
+    requested products atomically. Either all reservations succeed or none do —
+    partial reservations are not visible.
+
+    **Rationale:** Sequential per-product reservations risk partial state if a later
+    item fails. DCB (Dynamic Consistency Boundaries) demonstrates cross-entity
+    invariant validation within the Inventory bounded context, providing all-or-nothing
+    semantics without a distributed transaction.
+
+    **Verified by:** Multi-product order uses DCB for atomic reservation, Insufficient
+    inventory for one product rejects entire reservation, DCB handles concurrent
+    reservation conflicts, Duplicate product IDs are rejected
 
     @happy-path
     Scenario: Multi-product order uses DCB for atomic reservation

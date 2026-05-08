@@ -1,7 +1,9 @@
+@architect
 @architect-pattern:BDDWorld
+@architect-implements:BddTestingInfrastructure
 @testing-infrastructure
-@architect-pattern:BDDWorld
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:57
 @architect-quarter:Q1-2026
 @architect-effort:2h

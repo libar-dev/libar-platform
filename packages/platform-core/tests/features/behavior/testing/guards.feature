@@ -1,6 +1,7 @@
+@architect
 @architect-pattern:TestEnvironmentGuards
+@architect-implements:BddTestingInfrastructure
 @testing-infrastructure
-@architect-pattern:TestEnvironmentGuards
 @architect-status:completed
 @architect-unlock-reason:Task-3-branch-wide-remediation-guard-unblock
 @architect-phase:58

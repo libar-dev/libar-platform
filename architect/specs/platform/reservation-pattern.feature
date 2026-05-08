@@ -2,11 +2,12 @@
 @architect-release:v0.2.0
 @architect-pattern:ReservationPattern
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:20
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:DynamicConsistencyBoundaries
-@architect-executable-specs:platform-core/tests/features/behavior/reservation
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/reservation
 Feature: Reservation Pattern - TTL-Based Pre-Creation Uniqueness
 
   **Problem:** Uniqueness constraints before entity creation require check-then-create

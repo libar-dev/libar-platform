@@ -7,7 +7,7 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:AgentLLMIntegration
-@architect-executable-specs:platform-core/tests/features/behavior/agent/command-infrastructure
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/agent/command-infrastructure
 Feature: Agent Command Infrastructure - Routing, Lifecycle, and Pattern Unification
 
   **Problem:** Three interconnected gaps in agent command infrastructure:

@@ -1,6 +1,7 @@
 @architect-phase:23
 @architect-product-area:ExampleApp
 @architect-pattern:EcstFatEvents
+@architect-implements:ExampleAppModernization
 @architect-status:completed
 @acceptance-criteria
 Feature: Fat Events - Enriched OrderSubmitted
@@ -18,6 +19,20 @@ Feature: Fat Events - Enriched OrderSubmitted
   # ============================================================================
 
   Rule: OrderSubmitted event includes customer snapshot
+
+    **Invariant:** Every OrderSubmitted event carries a snapshot of the customer's
+    name and email at the moment of submission. Subsequent customer updates do not
+    mutate already-emitted events.
+
+    **Rationale:** Fat Events (ECST — Event-Carried State Transfer) enable downstream
+    consumers to process orders without additional customer queries. Snapshot
+    immutability preserves the historical truth of "what the customer looked like
+    when they ordered".
+
+    **Verified by:** OrderSubmitted includes customer snapshot, Event enrichment does
+    not block order submission, Customer snapshot is immutable in event, Missing
+    customer data handled gracefully, V1 events are upcasted to V2 with null customer,
+    V2 events are not modified by upcaster
 
     @happy-path
     Scenario: OrderSubmitted includes customer snapshot

@@ -6,7 +6,7 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:AgentBCComponentIsolation
-@architect-executable-specs:platform-core/tests/features/behavior/agent/llm-integration
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/agent/llm-integration
 Feature: Agent LLM Integration - Action/Mutation Split and Cost Control
 
   **Problem:** The agent event handler (`handleChurnRiskEvent`) is a Convex mutation that

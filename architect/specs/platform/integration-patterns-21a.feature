@@ -6,7 +6,7 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:EcstFatEvents
-@architect-executable-specs:platform-core/tests/features/behavior/integration
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/integration
 Feature: Integration Patterns (21a) - Registry & Core Patterns
 
   **Problem:** Cross-context communication is ad-hoc. Domain events are used directly

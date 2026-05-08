@@ -6,7 +6,7 @@
 @architect-effort:2d
 @architect-product-area:Platform
 @architect-depends-on:SagaOrchestration,AgentAsBoundedContext
-@architect-executable-specs:order-management/tests/features/behavior/orders,order-management/tests/integration-features/orders
+@architect-executable-specs:libar-platform/examples/order-management/tests/features/behavior/orders,libar-platform/examples/order-management/tests/integration-features/orders
 Feature: Confirmed Order Cancellation with Reservation Release
 
   **Problem:** The Order FSM treats `confirmed` as terminal. Orders cannot be

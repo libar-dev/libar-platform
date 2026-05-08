@@ -10,6 +10,7 @@
 @architect-pre-existing-completion
 @architect-unlock-reason:Add-sequence-annotations-for-design-review-generation
 @architect-sequence-orchestrator:saga-fulfillment-flow
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/orchestration/saga-orchestration-executable-tests.feature
 Feature: Saga Orchestration - Cross-Context Coordination with Compensation
 
   **Problem:** Cross-BC operations (e.g., Order -> Inventory -> Shipping) cannot

@@ -1,5 +1,8 @@
+@architect
 @architect-pattern:ReactiveProjectionHybridModel
+@architect-implements:ReactiveProjections
 @architect-status:completed
+@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine
 @architect-phase:17
 @architect-product-area:Platform
 @acceptance-criteria
@@ -14,12 +17,30 @@ Feature: Hybrid Model - Durable + Reactive Projections
     Given the reactive projection system is initialized
     And a view projection "orderSummary" is registered
 
-  # ============================================================================
-  # Instant Optimistic Update
-  # ============================================================================
+  Rule: Hybrid model combines durability with speed
 
-  @happy-path
-  Scenario: Client receives instant update then durable confirmation
+    **Invariant:** Workpool handles durable persistence (100-500ms latency) while
+    a reactive layer pushes optimistic updates to clients within 50ms. Both
+    systems operate on the same projection without interference: optimistic
+    state is overlaid on the durable base, and converges to the durable state
+    once Workpool catches up.
+
+    **Rationale:** Workpool alone yields 100-500ms latency, which feels sluggish
+    for direct user actions. Pure client-side optimism alone loses durability.
+    Combining the two preserves Convex-native durability while delivering UI
+    feedback at perceptual-instant latency, with graceful degradation when
+    optimism conflicts with durable truth.
+
+    **Verified by:** Client receives instant update then durable confirmation,
+    Optimistic update works during Workpool backlog,
+    Durable state takes precedence after convergence
+
+    # ============================================================================
+    # Instant Optimistic Update
+    # ============================================================================
+
+    @happy-path
+    Scenario: Client receives instant update then durable confirmation
     # Implementation placeholder - stub scenario
     Given an order is submitted
     When the OrderSubmitted event is published

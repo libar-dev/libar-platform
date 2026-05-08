@@ -1,4 +1,6 @@
 @integration @durability @durable-commands
+@architect-pattern:DurableEventsIntegrationExecutableTests
+@architect-implements:DurableEventsIntegration
 Feature: Durable Command Execution (App Integration)
   As a developer using event sourcing
   I want commands to be tracked with intent/completion bracketing
@@ -14,6 +16,18 @@ Feature: Durable Command Execution (App Integration)
     And durable command execution is configured with timeoutMs 5000
 
   Rule: Intent is recorded before command execution
+
+    **Invariant:** Every command execution must have exactly one matching completion
+    event. An intent without completion after timeout indicates a stuck or crashed
+    command.
+
+    **Rationale:** Distributed systems fail in subtle ways — network partitions,
+    process crashes, deadlocks. Intent bracketing creates an audit trail that enables
+    detection of commands that started but never finished, enabling automated recovery
+    or human intervention.
+
+    **Verified by:** Successful command records intent and completion, Intent record
+    captures command metadata
 
     @intent-recording
     Scenario: Successful command records intent and completion

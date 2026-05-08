@@ -7,7 +7,7 @@
 @architect-product-area:Platform
 @architect-business-value:external-service-resilience-and-budget-preservation
 @architect-depends-on:DurableFunctionAdapters
-@architect-executable-specs:platform-core/tests/features/behavior/circuit-breaker
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/circuit-breaker
 Feature: Circuit Breaker Pattern - External Service Resilience
 
   **Problem:** External API failures (Stripe, SendGrid, webhooks) cascade through the system.

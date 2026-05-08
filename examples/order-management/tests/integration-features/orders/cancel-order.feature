@@ -1,4 +1,6 @@
 @orders @integration @commands
+@architect-pattern:ConfirmedOrderCancellationExecutableTests
+@architect-implements:ConfirmedOrderCancellation
 Feature: Cancel Order (Integration)
   As a customer
   I want to cancel my order
@@ -6,6 +8,38 @@ Feature: Cancel Order (Integration)
 
   Background:
     Given the backend is running and clean
+
+  Rule: Confirmed orders can be cancelled
+
+    **Invariant:** The Order FSM allows transitioning from `confirmed` to `cancelled`,
+    and the projection reflects the cancellation. Cancellation of already-cancelled
+    orders is rejected with ORDER_ALREADY_CANCELLED.
+
+    **Rationale:** Allowing post-confirmation cancellation enables real-world refund
+    flows and the churn-risk Agent BC demo, while preserving idempotency on terminal
+    states.
+
+    **Verified by:** Cancel draft order and verify projection, Cancel submitted order
+    and verify projection, Cancel confirmed order and verify projection, Reject
+    cancelling already cancelled order
+
+  Rule: Reservation is released when confirmed order is cancelled
+
+    **Invariant:** When a confirmed order with an active reservation is cancelled, the
+    ReservationReleaseOnOrderCancel process manager releases the reservation and stock
+    returns to the available pool. The PM is idempotent and skips reservations that
+    are already released or expired.
+
+    **Rationale:** Order and Reservation bounded contexts must stay synchronized
+    without compensation logic — a Process Manager (per ADR-033) is the right
+    coordination primitive because the flow is a simple event → command with no
+    multi-step coordination or external awaits.
+
+    **Verified by:** Reservation is released when confirmed order is cancelled,
+    Cancelling draft order does not trigger reservation release, Cancelling submitted
+    order before saga completion releases pending reservation, PM handles already
+    released reservation gracefully, PM skips expired reservation when order is
+    cancelled
 
   @happy-path
   Scenario: Cancel draft order and verify projection

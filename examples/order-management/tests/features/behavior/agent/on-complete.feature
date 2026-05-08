@@ -1,4 +1,6 @@
 @agent-on-complete
+@architect-pattern:AgentChurnRiskCompletionExecutableTests
+@architect-implements:AgentChurnRiskCompletion
 Feature: Agent onComplete Handler
 
   As a system operator

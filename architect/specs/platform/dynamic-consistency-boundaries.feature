@@ -7,7 +7,7 @@
 @architect-effort:2w
 @architect-product-area:Platform
 @architect-depends-on:DeciderPattern
-@architect-executable-specs:platform-core/tests/features/behavior/dcb
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/dcb
 Feature: Dynamic Consistency Boundaries (DCB) - Multi-Entity Invariants
 
   **Problem:** Cross-entity invariants within a bounded context currently require

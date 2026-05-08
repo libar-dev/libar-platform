@@ -6,7 +6,7 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-depends-on:AgentAsBoundedContext
-@architect-executable-specs:platform-core/tests/features/behavior/agent/component-isolation
+@architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/agent/component-isolation
 Feature: Agent BC Component Isolation - Physical Bounded Context Enforcement
 
   **Problem:** Agent BC tables (`agentCheckpoints`, `agentAuditEvents`, `agentDeadLetters`,

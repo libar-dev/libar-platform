@@ -1,4 +1,6 @@
 @orders @commands
+@architect-pattern:ConfirmedOrderCancellationExecutableTests
+@architect-implements:ConfirmedOrderCancellation
 Feature: Cancel Order
   As a customer
   I want to cancel my order
@@ -6,6 +8,21 @@ Feature: Cancel Order
 
   Background:
     Given the system is ready
+
+  Rule: Confirmed orders can be cancelled
+
+    **Invariant:** The Order FSM allows transitioning from `confirmed` to `cancelled`.
+    The CancelOrder decider accepts cancellation requests for confirmed orders. Already
+    cancelled orders remain rejected with ORDER_ALREADY_CANCELLED.
+
+    **Rationale:** Treating `confirmed` as terminal blocks legitimate cancellation
+    flows (customer changes mind post-confirmation) and prevents the Agent BC churn
+    risk demo from triggering. Allowing the transition keeps Order and Reservation
+    states synchronizable while preserving idempotency guarantees on already-final states.
+
+    **Verified by:** Cancel draft order, Cancel submitted order, Cancel confirmed
+    order, Cannot cancel already cancelled order, Cannot cancel non-existent order,
+    CancelOrder is idempotent with same commandId
 
   @happy-path
   Scenario: Cancel draft order

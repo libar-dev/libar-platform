@@ -8,7 +8,7 @@
 @architect-product-area:Platform
 @architect-business-value:production-reliability-and-failure-recovery
 @architect-depends-on:ProductionHardening,DurableFunctionAdapters,EventReplayInfrastructure
-@architect-executable-specs:order-management/tests/integration-features/durability/
+@architect-executable-specs:libar-platform/examples/order-management/tests/integration-features/durability/
 Feature: Durable Events Integration - Production-Ready Event Persistence
 
   **Problem:** Phase 18 delivered durability primitives to `platform-core`, but the example app's
