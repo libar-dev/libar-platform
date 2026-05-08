@@ -2,17 +2,22 @@
 @architect-pattern:EventStoreFoundationExecutableTests
 @architect-implements:EventStoreFoundation
 @architect-status:completed
+@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention
 @architect-product-area:PlatformStore
 Feature: EventStoreFoundation Executable Tests
 
   **Provenance:** This file was authored under the refactoring carve-out
-  (per `_shared/spec-pattern-relationships.md`) to expose
-  EventStoreFoundation in the PatternGraph. The pattern was originally
+  to expose EventStoreFoundation in the PatternGraph. The pattern was originally
   implemented before the `@architect-implements:` convention. Rule
   invariants and rationales below are transferred verbatim from
   `libar-platform/architect/specs/platform/event-store-foundation.feature`.
-  Scenario bodies are shape-only stubs at file-creation time and will be
-  wired up to step definitions in a follow-up `architect-refactor-session`.
+  Scenario bodies are shape-only stubs at file-creation time.
+
+  **Transitional status:** This carrier is graph-continuity scaffolding,
+  not runnable coverage yet. Every scenario below is intentionally tagged
+  `@stub` until backlog item `T5-009` wires the harness and step
+  definitions. Backlog item `T5-010` expands the current transfer set with
+  concurrency and edge-case coverage once wiring is real.
 
   Background:
     Given the platform-store EventStore client is available
@@ -113,7 +118,7 @@ Feature: EventStoreFoundation Executable Tests
 
     **Verified by:** Successful append with matching version, Conflict on version mismatch
 
-    @happy-path
+    @happy-path @stub
     Scenario: Successful append with matching version
       Given a stream "Order" with id "ord-123" at version 5
       When appending an event with expectedVersion 5
@@ -121,7 +126,7 @@ Feature: EventStoreFoundation Executable Tests
       And the stream version becomes 6
       And the event receives a globalPosition
 
-    @validation
+    @validation @stub
     Scenario: Conflict on version mismatch
       Given a stream "Order" with id "ord-123" at version 5
       When appending an event with expectedVersion 3
@@ -143,7 +148,7 @@ Feature: EventStoreFoundation Executable Tests
 
     **Verified by:** Projection resumes from checkpoint
 
-    @happy-path
+    @happy-path @stub
     Scenario: Projection resumes from checkpoint
       Given a projection with lastProcessedPosition 1000
       When reading events from position 1001

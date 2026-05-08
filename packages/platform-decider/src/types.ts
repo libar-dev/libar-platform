@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-phase 14
  * @architect-decider
- * @architect-uses DeciderPattern
  *
  * ## Handler Factories - Decider-to-Handler Wrappers
  *

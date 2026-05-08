@@ -6,14 +6,14 @@
 
 ## Summary
 
-**Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
+**Progress:** [█████░░░░░░░░░░░░░░░] 1/4 (25%)
 
 | Status      | Count |
 | ----------- | ----- |
-| ✅ Completed | 3     |
+| ✅ Completed | 1     |
 | 🚧 Active   | 1     |
 | 📋 Planned  | 2     |
-| **Total**   | 6     |
+| **Total**   | 4     |
 
 ---
 
@@ -574,118 +574,6 @@ _Verified by: Convention tag is registered in taxonomy_
     must be lossless.
 
 _Verified by: Recipe Rule block content preserved in decision record_
-
----
-
-### ✅ Process Metadata Expansion
-
-| Property       | Value                                   |
-| -------------- | --------------------------------------- |
-| Status         | completed                               |
-| Effort         | 2h                                      |
-| Quarter        | Q1-2026                                 |
-| Business Value | enable variance and governance tracking |
-
-**Problem:**
-  The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views.
-  Missing tag categories included:
-  - Variance tracking (planned vs actual effort)
-  - Progressive governance (risk-based filtering)
-  - Backlog ordering (priority)
-  - Time distribution analysis (workflow types)
-  - Hierarchical roadmap views (epic→phase→task)
-
-  Without these tags, opportunities 2-8 from the convergence roadmap could not
-  be implemented. The tag registry needed expansion to enable future capabilities.
-
-  **Solution:**
-  Added 6 new metadata tags to architect/tag-registry.json:
-  - @architect-risk:{low|medium|high} - Progressive governance (Opp 6)
-  - @architect-effort-actual:Nw - Variance tracking (Opp 3)
-  - @architect-workflow:{design|impl|docs|testing|discovery} - Time distribution
-  - @architect-priority:{high|medium|low} - Backlog ordering
-  - @architect-level:{epic|phase|task} - Hierarchy support (Opp 8)
-  - @architect-parent:PatternName - Hierarchy linking (Opp 8)
-
-  Updated PDR-003 with new tag conventions and acceptance criteria.
-
-  This work is foundation for Setup A (Framework Roadmap OS) from convergence docs.
-
-#### Acceptance Criteria
-
-**New tags are defined in tag registry**
-
-- Given the architect/tag-registry.json file
-- Then it should contain metadataTags for risk, effort-actual, workflow, priority, level, parent
-- And each tag should have format, purpose, and example fields
-- And enum tags should have values and default fields
-
-**PDR-003 documents new tag conventions**
-
-- Given the PDR-003 decision file
-- Then it should document process metadata tags section
-- And it should document hierarchy tags section
-
-**Tags enable filtering in generated docs**
-
-- Given TypeScript phase files with new metadata tags
-- When generating roadmap documentation
-- Then patterns can be filtered by risk, priority, workflow
-- And hierarchy relationships are rendered
-
----
-
-### ✅ Repo Level Docs Generation
-
-| Property       | Value                                        |
-| -------------- | -------------------------------------------- |
-| Status         | completed                                    |
-| Effort         | 4h                                           |
-| Quarter        | Q1-2026                                      |
-| Business Value | enable multi source documentation generation |
-
-As a monorepo maintainer, I want unified documentation generation from multiple sources.
-
-  So that specs, platform packages, and example app produce coherent documentation.
-
-  The PoC validated multi-source generation with combined Gherkin feature sources
-  and established tag conventions for PRD extraction, roadmap planning, and timeline
-  metadata. See session learnings documented in the Gherkin comments below.
-
-#### Dependencies
-
-- Depends on: ProcessMetadataExpansion
-
-#### Acceptance Criteria
-
-**Generate PRD from specs**
-
-- Given feature files in libar-platform/architect/specs/ with PRD tags
-- When running pnpm docs:prd
-- Then PRODUCT-REQUIREMENTS.md is generated in docs-living/
-- And features are grouped by product area
-- And acceptance criteria are extracted from @acceptance-criteria scenarios
-
-**Generate remaining work summary**
-
-- Given feature files with deliverables in Background section
-- When running pnpm docs:prd:remaining
-- Then REMAINING-WORK.md shows statistics, incomplete items, next actionable phases
-
-**Generate implementation plans**
-
-- Given feature files with acceptance criteria and deliverables
-- When running pnpm docs:prd:plan
-- Then SESSION-PLAN.md shows structured implementation guidance
-- And each planned phase has pre-planning checklist
-- And deliverables are listed with locations
-
-**All generation scripts complete successfully**
-
-- Given properly tagged spec files
-- When running pnpm docs:prd:all
-- Then all generators complete without errors
-- And generated files are formatted with prettier
 
 ---
 

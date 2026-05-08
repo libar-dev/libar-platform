@@ -52,10 +52,6 @@
   | Stream ID Format | `{EntityType}:{hash}` | `User:a1b2c3d4e5f6` |
   | OCC Conflict | expectedVersion mismatch | "Stream already exists" |
 
-## Dependencies
-
-- Depends on: EventStoreFoundation
-
 ## Acceptance Criteria
 
 **Same email produces same stream ID**

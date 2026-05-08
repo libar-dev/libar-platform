@@ -73,37 +73,24 @@ Feature: Registry Category Lookup
     And these are candidates for EventBus publication
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Registry supports category-based lookup
+  # Invariant: The projection registry exposes getByCategory(category) returning
+  # the complete subset of registered projections whose declared category matches.
+  # Projections of other categories are never included; lookups against an empty
+  # registry return an empty collection rather than failing.
+  # Rationale: Infrastructure layers (reactive subscriber, EventBus publisher,
+  # admin reporting surface) need to enumerate exactly the projections relevant to
+  # their concern. Category-keyed lookup is the canonical routing primitive that
+  # makes client exposure and reactive targeting implementable.
+  # Covered by executable category lookup scenarios above.
 
-    **Invariant:** The projection registry exposes getByCategory(category) returning
-    the complete subset of registered projections whose declared category matches.
-    Projections of other categories are never included; lookups against an empty
-    registry return an empty collection rather than failing.
-
-    **Rationale:** Infrastructure layers (reactive subscriber, EventBus publisher,
-    admin reporting surface) need to enumerate exactly the projections relevant to
-    their concern. Category-keyed lookup is the canonical routing primitive that
-    makes Rules 4 and 5 (client exposure, reactive targeting) implementable.
-
-    **Verified by:** getByCategory returns all view projections,
-    getByCategory returns all logic projections,
-    getByCategory returns all reporting projections,
-    getByCategory returns all integration projections,
-    getByCategory returns empty array for category with no projections
-
-  Rule: Only View projections are candidates for reactive subscriptions
-
-    **Invariant:** When infrastructure resolves the set of reactive-eligible
-    projections, it queries the registry by the "view" category. Logic, Reporting,
-    and Integration projections are never enrolled in the reactive layer.
-
-    **Rationale:** Reactive infrastructure (WebSocket connections, change detection,
-    client memory) is expensive. Limiting reactivity to View projections ensures
-    those resources are spent only on UI-visible state. Cross-context (Integration)
-    flows route through EventBus, not direct reactive subscriptions.
-
-    **Verified by:** Target view projections for reactive layer,
-    Target integration projections for EventBus routing
+  # Invariant: When infrastructure resolves the set of reactive-eligible
+  # projections, it queries the registry by the "view" category. Logic, Reporting,
+  # and Integration projections are never enrolled in the reactive layer.
+  # Rationale: Reactive infrastructure (WebSocket connections, change detection,
+  # client memory) is expensive. Limiting reactivity to View projections ensures
+  # those resources are spent only on UI-visible state. Cross-context (Integration)
+  # flows route through EventBus, not direct reactive subscriptions.
+  # Covered by executable routing use-case scenarios above.

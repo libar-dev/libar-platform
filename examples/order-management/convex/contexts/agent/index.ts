@@ -4,7 +4,7 @@
  * @architect-implements AgentAsBoundedContext
  * @architect-status active
  * @architect-phase 22
- * @architect-depends-on IntegrationPatterns,ReactiveProjections
+ * @architect-depends-on ReactiveProjections
  * @architect-brief docs/project-management/aggregate-less-pivot/pattern-briefs/08-agent-as-bc.md
  *
  * ## Agent as Bounded Context - AI-Driven Event Reactors

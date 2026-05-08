@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 1/1 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 1     |
 
 ---
 
@@ -29,12 +29,12 @@
 | Business Value | manage scenario context across steps |
 
 As a BDD test author
-I want world/state management utilities
-So that I can manage scenario context across steps
+  I want world/state management utilities
+  So that I can manage scenario context across steps
 
-The "World" in BDD testing is the shared context across all steps within
-a single scenario. This module provides base interfaces and factory
-functions for creating test worlds for both unit and integration tests.
+  The "World" in BDD testing is the shared context across all steps within
+  a single scenario. This module provides base interfaces and factory
+  functions for creating test worlds for both unit and integration tests.
 
 #### Acceptance Criteria
 

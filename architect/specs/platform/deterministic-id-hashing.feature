@@ -5,7 +5,6 @@
 @architect-phase:20
 @architect-effort:2d
 @architect-product-area:Platform
-@architect-depends-on:EventStoreFoundation
 @architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/uniqueness
 Feature: Deterministic ID Hashing - OCC-Based Uniqueness Without TTL
 

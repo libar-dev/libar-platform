@@ -39,10 +39,6 @@
   **Convex Constraint:** No in-memory state across function invocations. Circuit state must
   persist in Convex table. Timeout transitions use `ctx.scheduler.runAfter`, not in-memory timers.
 
-## Dependencies
-
-- Depends on: DurableFunctionAdapters
-
 ## Acceptance Criteria
 
 **Circuit remains closed on success**

@@ -5,7 +5,7 @@
  * @architect-event-sourcing
  * @architect-core
  *
- * @architect-uses EventStoreFoundation, DurableFunctionAdapters, WorkpoolPartitioningStrategy
+ * @architect-uses WorkpoolPartitioningStrategy
  * @architect-used-by CommandOrchestrator, SagaEngine, ProjectionProcessor
  *
  * ## Event Store Durability
@@ -21,6 +21,12 @@
  * - **Intent/Completion** - Long-running operations bracketed with events
  * - **Poison Events** - Malformed events quarantined after failures
  *
+ * ### When to Use
+ *
+ * - Importing the platform's durable event-persistence helpers from one place
+ * - Combining outbox, retry, publication, and recovery patterns in application code
+ * - Standardizing the event-store durability surface shared by sagas and projections
+ *
  * ### Usage
  *
  * ```typescript
@@ -35,8 +41,6 @@
  * } from "@libar-dev/platform-core/durability";
  * ```
  *
- * @architect-uses EventStoreFoundation, DurableFunctionAdapters
- * @architect-used-by CommandOrchestrator, SagaEngine
  */
 
 // Types

@@ -1,5 +1,8 @@
+@architect
 @agent-on-complete
 @architect-pattern:AgentChurnRiskCompletionExecutableTests
+@architect-status:completed
+@architect-unlock-reason:carrier-opt-in-for-shipped-pattern-continuity
 @architect-implements:AgentChurnRiskCompletion
 Feature: Agent onComplete Handler
 
@@ -81,3 +84,53 @@ Feature: Agent onComplete Handler
         | status       | ignored        |
         | attemptCount | 1              |
         | error        | Original error |
+
+  Rule: Approvals expire after configured timeout
+
+    **Invariant:** Pending approvals must transition to "expired" status after
+    `approvalTimeout` elapses. Once expired, they can no longer be approved.
+    **Rationale:** Stale approvals cannot linger forever or be acted on after
+    their review window closes.
+    **Verified by:** Cron expires approval after timeout, Expired approval cannot be approved
+
+    @acceptance-criteria @validation
+    Scenario: Cron expires approval after timeout
+      When the onComplete handler records a pending approval for customer "cust_expired"
+      And approval expiration runs after the timeout elapses
+      Then the pending approval should have:
+        | field  | value   |
+        | status | expired |
+      And an "ApprovalExpired" audit event should exist for the pending approval
+
+    Scenario: Expired approval cannot be approved
+      When the onComplete handler records a pending approval for customer "cust_expired_review"
+      And approval expiration runs after the timeout elapses
+      And reviewer "reviewer_late" attempts to approve the expired action
+      Then the approval action should fail with error "INVALID_STATUS_TRANSITION"
+
+  Rule: Emitted commands create real domain records
+
+    **Invariant:** Auto-executed `SuggestCustomerOutreach` decisions must route
+    to the real outreach handler, which creates an outreach task record and emits
+    an `OutreachCreated` domain event.
+    **Rationale:** Agent commands must produce observable business effects, not
+    stop at command metadata.
+    **Verified by:** SuggestCustomerOutreach creates outreach record and emits event
+
+    @acceptance-criteria @happy-path
+    Scenario: SuggestCustomerOutreach creates outreach record and emits event
+      When the onComplete handler auto-executes a SuggestCustomerOutreach command for customer "cust_outreach_123"
+      And scheduled command routing completes
+      Then the recorded command should have:
+        | field  | value                   |
+        | status | completed               |
+        | type   | SuggestCustomerOutreach |
+      And the outreach task should have:
+        | field             | value             |
+        | customerId        | cust_outreach_123 |
+        | agentId           | churn-risk-agent  |
+        | riskLevel         | high              |
+        | cancellationCount | 4                 |
+        | correlationId     | corr_1            |
+        | status            | pending           |
+      And an "OutreachCreated" event should be emitted for the outreach task

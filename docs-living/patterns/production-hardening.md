@@ -40,7 +40,6 @@
 ## Dependencies
 
 - Depends on: ReactiveProjections
-- Depends on: DurableFunctionAdapters
 
 ## Acceptance Criteria
 

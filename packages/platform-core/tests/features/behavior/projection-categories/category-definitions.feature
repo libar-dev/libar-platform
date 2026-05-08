@@ -84,30 +84,20 @@ Feature: Projection Category Definitions
       | integration | false   |
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Projections are classified into four distinct categories
+  # Invariant: Every projection must belong to exactly one of four categories:
+  # Logic, View, Reporting, or Integration. Categories are mutually exclusive.
+  # Rationale: Without explicit categories, developers must guess which projection
+  # to use for which purpose, leading to misuse (e.g., using Logic projections for UI)
+  # and performance issues (e.g., subscribing to Reporting projections reactively).
+  # Covered by executable scenarios above for category constants, validation, and helpers.
 
-    **Invariant:** Every projection must belong to exactly one of four categories:
-    Logic, View, Reporting, or Integration. Categories are mutually exclusive.
-
-    **Rationale:** Without explicit categories, developers must guess which projection
-    to use for which purpose, leading to misuse (e.g., using Logic projections for UI)
-    and performance issues (e.g., subscribing to Reporting projections reactively).
-
-    **Verified by:** PROJECTION_CATEGORIES tuple contains all valid categories,
-    isProjectionCategory validates category strings,
-    Category helper functions identify correct categories
-
-  Rule: Category determines client exposure
-
-    **Invariant:** Client exposure is determined solely by category. Logic and
-    Integration projections are never client-accessible. View projections are
-    always client-accessible. Reporting projections require admin role.
-
-    **Rationale:** Security and performance concerns require clear boundaries.
-    Logic projections contain internal validation state that shouldn't leak.
-    Integration projections are for cross-BC communication, not direct queries.
-
-    **Verified by:** isClientExposed returns correct exposure status
+  # Invariant: Client exposure is determined solely by category. Logic and
+  # Integration projections are never client-accessible. View projections are
+  # always client-accessible. Reporting projections require admin role.
+  # Rationale: Security and performance concerns require clear boundaries.
+  # Logic projections contain internal validation state that shouldn't leak.
+  # Integration projections are for cross-BC communication, not direct queries.
+  # Covered by the executable client exposure scenario above.

@@ -16,12 +16,12 @@
 ## Description
 
 As a BDD test author
-I want world/state management utilities
-So that I can manage scenario context across steps
+  I want world/state management utilities
+  So that I can manage scenario context across steps
 
-The "World" in BDD testing is the shared context across all steps within
-a single scenario. This module provides base interfaces and factory
-functions for creating test worlds for both unit and integration tests.
+  The "World" in BDD testing is the shared context across all steps within
+  a single scenario. This module provides base interfaces and factory
+  functions for creating test worlds for both unit and integration tests.
 
 ## Acceptance Criteria
 
@@ -90,12 +90,12 @@ functions for creating test worlds for both unit and integration tests.
 
 ## Deliverables
 
-- BaseUnitTestWorld interface (Complete)
-- BaseIntegrationTestWorld interface (Complete)
-- createBaseUnitTestWorld() factory (Complete)
-- createBaseIntegrationTestWorld() factory (Complete)
-- resetWorldState() utility (Complete)
-- Behavior test feature file (Complete)
+- BaseUnitTestWorld interface (complete)
+- BaseIntegrationTestWorld interface (complete)
+- createBaseUnitTestWorld() factory (complete)
+- createBaseIntegrationTestWorld() factory (complete)
+- resetWorldState() utility (complete)
+- Behavior test feature file (complete)
 
 ---
 

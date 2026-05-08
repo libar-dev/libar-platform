@@ -43,7 +43,7 @@ type EventAppendResult = Awaited<
  * @architect-usecase "Executing commands with dual-write pattern"
  * @architect-usecase "Coordinating CMS update, event append, and projection trigger"
  * @architect-usecase "Ensuring command idempotency across retries"
- * @architect-uses EventStore, CommandBus, MiddlewarePipeline, Workpool
+ * @architect-uses EventStore, CommandBus, MiddlewarePipeline
  * @architect-used-by BoundedContextHandlers
  *
  * ## CommandOrchestrator - Dual-Write Pattern Implementation

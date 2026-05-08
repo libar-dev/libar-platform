@@ -3,7 +3,15 @@
  * @architect-implements EventReplayInfrastructure
  * @architect-status completed
  *
+ * ## Replay Progress Utilities
+ *
  * Progress calculation utilities for replay operations.
+ *
+ * ### When to Use
+ *
+ * - Deriving percent complete and remaining time for replay dashboards
+ * - Converting checkpoint state into operator-facing replay progress objects
+ * - Determining whether a replay is still active or terminal
  */
 
 import type { ReplayCheckpoint, ReplayProgress } from "./types.js";

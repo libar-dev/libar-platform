@@ -15,8 +15,8 @@
 ## Description
 
 As a platform developer
-I want only view projections to support reactive updates
-So that system resources are optimized
+  I want only view projections to support reactive updates
+  So that system resources are optimized
 
 ## Acceptance Criteria
 

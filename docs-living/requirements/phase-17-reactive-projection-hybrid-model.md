@@ -15,8 +15,8 @@
 ## Description
 
 As a frontend developer
-I want projections that combine durability with instant feedback
-So that users see optimistic updates while maintaining data integrity
+  I want projections that combine durability with instant feedback
+  So that users see optimistic updates while maintaining data integrity
 
 ## Acceptance Criteria
 

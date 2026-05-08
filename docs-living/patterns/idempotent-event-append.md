@@ -16,6 +16,12 @@
 Ensures each logical event is stored exactly once in the event store,
 regardless of how many times the append operation is retried.
 
+### When to Use
+
+- Appending domain events from flows that may retry after partial failure
+- Deduplicating action, saga, or scheduled-job writes with a stable key
+- Detecting idempotency-key reuse with conflicting payloads before they drift the event log
+
 ### Idempotency Key Strategy
 
 | Event Source | Pattern | Example |

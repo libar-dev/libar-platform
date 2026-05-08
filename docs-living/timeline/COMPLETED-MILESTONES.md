@@ -37,13 +37,13 @@
 </details>
 
 <details>
-<summary>✅ EventUpcasting (3 patterns)</summary>
+<summary>✅ CorrelationChainSystem (3 patterns)</summary>
 
 | Pattern                  | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
-| Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
-| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
 | Correlation Chain System | Correlation types for tracking causal relationships in command-event flows.              |
+| Event Bus Abstraction    | Durable event pub/sub using Workpool for parallelism, retries, and dead letter handling. |
+| Event Upcasting          | Transforms events from older schema versions to current version at read time.            |
 
 </details>
 
@@ -76,12 +76,12 @@
 </details>
 
 <details>
-<summary>✅ ProcessManagerLifecycle (2 patterns)</summary>
+<summary>✅ LoggingInfrastructure (2 patterns)</summary>
 
 | Pattern                   | Description                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------- |
-| Process Manager Lifecycle | FSM for managing PM state transitions (idle/processing/completed/failed) with validation. |
 | Logging Infrastructure    | Factory for domain-specific loggers with scope prefixes and level filtering.              |
+| Process Manager Lifecycle | FSM for managing PM state transitions (idle/processing/completed/failed) with validation. |
 
 </details>
 
@@ -95,12 +95,12 @@
 </details>
 
 <details>
-<summary>✅ DCBTypes (2 patterns)</summary>
+<summary>✅ DCBScopeKeyUtilities (2 patterns)</summary>
 
 | Pattern                 | Description                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------- |
-| DCB Types               | Types for scope-based multi-entity coordination within bounded contexts.         |
 | DCB Scope Key Utilities | Re-export the canonical shared scope-key contract used across platform packages. |
+| DCB Types               | Types for scope-based multi-entity coordination within bounded contexts.         |
 
 </details>
 
@@ -108,16 +108,16 @@
 
 ## Recent Completions
 
-- ✅ Inventory Deciders
-- ✅ Order Deciders
-- ✅ Agent Action Handler
-- ✅ Agent On Complete Handler
-- ✅ Inventory Domain Events
-- ✅ Inventory Command Handlers
-- ✅ Order Domain Events
-- ✅ Order Command Handlers
-- ✅ Progress calculation utilities for replay operations.
-- ✅ Types for event replay and projection rebuilding.
+- ✅ DCB Scope Key Utilities (Phase 16)
+- ✅ DCB Types (Phase 16)
+- ✅ Handler Factories (Phase 14)
+- ✅ Logging Infrastructure (Phase 13)
+- ✅ Process Manager Lifecycle (Phase 13)
+- ✅ Query Abstraction (Phase 12)
+- ✅ CMS Repository (Phase 11)
+- ✅ Invariant Framework (Phase 11)
+- ✅ Middleware Pipeline (Phase 10)
+- ✅ Correlation Chain System (Phase 9)
 
 Showing 10 of 76 completed patterns. See quarterly files for full history.
 

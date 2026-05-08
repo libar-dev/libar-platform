@@ -26,6 +26,12 @@ Without bracketing, partially-completed operations are:
 Intent events enable timeout detection and manual intervention
 for stuck operations.
 
+### When to Use
+
+- Bracketing long-running operations with explicit start and finish events
+- Scheduling timeout checks for work that might stall or need reconciliation
+- Exposing operation progress to observability and manual recovery tooling
+
 ### Pattern
 
 | Operation | Intent Event | Completion Events |

@@ -9,8 +9,8 @@
 
 | Metric     | Value |
 | ---------- | ----- |
-| Total ADRs | 18    |
-| Accepted   | 18    |
+| Total ADRs | 20    |
+| Accepted   | 20    |
 | Proposed   | 0     |
 | Deprecated | 0     |
 | Superseded | 0     |
@@ -50,18 +50,20 @@
 
 ### process
 
-8 decisions
+10 decisions
 
-| ADR                                                             | Title                                   | Status   |
-| --------------------------------------------------------------- | --------------------------------------- | -------- |
-| [ADR-001](decisions/adr-001-process-decisions-folder.md)        | PDR 001 Process Decisions Folder        | accepted |
-| [ADR-002](decisions/adr-002-release-management-architecture.md) | Release Management Architecture         | accepted |
-| [ADR-003](decisions/adr-003-behavior-feature-file-structure.md) | PDR 003 Behavior Feature File Structure | accepted |
-| [ADR-004](decisions/adr-004-unified-tag-prefix-architecture.md) | Unified Tag Prefix Architecture         | accepted |
-| [ADR-005](decisions/adr-005-mvp-workflow.md)                    | PDR 005 Mvp Workflow                    | accepted |
-| [ADR-006](decisions/adr-006-typescript-taxonomy.md)             | PDR 006 TypeScript Taxonomy             | accepted |
-| [ADR-007](decisions/adr-007-two-tier-spec-architecture.md)      | PDR 007 Two Tier Spec Architecture      | accepted |
-| [ADR-009](decisions/adr-009-design-session-methodology.md)      | PDR 009 Design Session Methodology      | accepted |
+| ADR                                                                 | Title                                       | Status   |
+| ------------------------------------------------------------------- | ------------------------------------------- | -------- |
+| [ADR-001](decisions/adr-001-process-decisions-folder.md)            | PDR 001 Process Decisions Folder            | accepted |
+| [ADR-002](decisions/adr-002-release-management-architecture.md)     | Release Management Architecture             | accepted |
+| [ADR-003](decisions/adr-003-behavior-feature-file-structure.md)     | PDR 003 Behavior Feature File Structure     | accepted |
+| [ADR-004](decisions/adr-004-unified-tag-prefix-architecture.md)     | Unified Tag Prefix Architecture             | accepted |
+| [ADR-005](decisions/adr-005-mvp-workflow.md)                        | PDR 005 Mvp Workflow                        | accepted |
+| [ADR-006](decisions/adr-006-typescript-taxonomy.md)                 | PDR 006 TypeScript Taxonomy                 | accepted |
+| [ADR-007](decisions/adr-007-two-tier-spec-architecture.md)          | PDR 007 Two Tier Spec Architecture          | accepted |
+| [ADR-009](decisions/adr-009-design-session-methodology.md)          | PDR 009 Design Session Methodology          | accepted |
+| [ADR-022](decisions/adr-022-value-transfer-doctrine-adoption.md)    | PDR 022 Value Transfer Doctrine Adoption    | accepted |
+| [ADR-023](decisions/adr-023-bulk-doctrine-rollback-and-recovery.md) | PDR 023 Bulk Doctrine Rollback And Recovery | accepted |
 
 ---
 
@@ -87,5 +89,7 @@
 | [ADR-019](decisions/adr-019-v-any-vs-v-unknown-boundary-policy.md)                 | PDR 019 V Any Vs V Unknown Boundary Policy                 | accepted | architecture |
 | [ADR-020](decisions/adr-020-events-table-index-policy.md)                          | PDR 020 Events Table Index Policy                          | accepted | architecture |
 | [ADR-021](decisions/adr-021-platform-store-runtime-dependency-on-platform-core.md) | PDR 021 Platform Store Runtime Dependency On Platform Core | accepted | architecture |
+| [ADR-022](decisions/adr-022-value-transfer-doctrine-adoption.md)                   | PDR 022 Value Transfer Doctrine Adoption                   | accepted | process      |
+| [ADR-023](decisions/adr-023-bulk-doctrine-rollback-and-recovery.md)                | PDR 023 Bulk Doctrine Rollback And Recovery                | accepted | process      |
 
 ---

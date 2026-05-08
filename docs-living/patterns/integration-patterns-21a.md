@@ -41,10 +41,6 @@
   **Relationship to Phase 21b:** This spec provides foundational registry infrastructure.
   Phase 21b (IntegrationPatterns21b) builds on this with schema versioning and contract testing.
 
-## Dependencies
-
-- Depends on: EcstFatEvents
-
 ## Acceptance Criteria
 
 **Context Map shows BC topology**

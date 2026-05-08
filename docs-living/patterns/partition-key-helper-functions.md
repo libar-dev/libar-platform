@@ -16,6 +16,12 @@
 Standardized partition key generation for per-entity event ordering
 and OCC prevention in Workpool-based processing.
 
+### When to Use
+
+- Generating partition keys for projection configs and durable work submission
+- Reusing the same key formats across entity, customer, saga, and DCB flows
+- Avoiding ad hoc partition-key implementations that break ordering guarantees
+
 ### Quick Reference
 
 | Helper | Key Format | Use Case |

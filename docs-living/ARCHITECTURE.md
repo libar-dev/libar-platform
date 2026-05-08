@@ -24,91 +24,91 @@ Component architecture with bounded context isolation:
 ```mermaid
 graph TB
     subgraph agent["Agent BC"]
-        Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
-        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
-        AgentActionHandler["AgentActionHandler[command-handler]"]
-        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
         Agent_Approval_Workflow_Tools["Agent Approval Workflow Tools[service]"]
-        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         Agent_BC_Utility_Functions["Agent BC Utility Functions[service]"]
-        Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
+        Agent_Command_Emission_Tool["Agent Command Emission Tool[service]"]
+        AgentActionHandler["AgentActionHandler[command-handler]"]
+        AgentOnCompleteHandler["AgentOnCompleteHandler[infrastructure]"]
+        Churn_Risk_Agent_Configuration["Churn Risk Agent Configuration[infrastructure]"]
+        Churn_Risk_Pattern_Definition["Churn Risk Pattern Definition[decider]"]
         Confidence_Calculation_Utilities_for_Agent_BC["Confidence Calculation Utilities for Agent BC[service]"]
-        OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
+        Customer_Utility_Functions_for_Agent_BC["Customer Utility Functions for Agent BC[service]"]
         LLM_Configuration_and_Runtime_Exports["LLM Configuration and Runtime Exports[infrastructure]"]
         LLM_Provider_Configuration["LLM Provider Configuration[infrastructure]"]
+        OpenRouter_Agent_Runtime["OpenRouter Agent Runtime[infrastructure]"]
     end
     subgraph inventory["Inventory BC"]
-        InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
-        InventoryPublicAPI["InventoryPublicAPI[infrastructure]"]
-        ProductCatalogProjection["ProductCatalogProjection[projection]"]
         ActiveReservationsProjection["ActiveReservationsProjection[projection]"]
         InventoryCommandConfigs["InventoryCommandConfigs[infrastructure]"]
         InventoryCommandHandlers["InventoryCommandHandlers[command-handler]"]
-        InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
         InventoryDeciders["InventoryDeciders[decider]"]
+        InventoryDomainEvents["InventoryDomainEvents[bounded-context]"]
+        InventoryInternalMutations["InventoryInternalMutations[infrastructure]"]
+        InventoryPublicAPI["InventoryPublicAPI[infrastructure]"]
+        ProductCatalogProjection["ProductCatalogProjection[projection]"]
     end
     subgraph orders["Orders BC"]
-        OrderPublicAPI["OrderPublicAPI[infrastructure]"]
-        ReservationReleasePM["ReservationReleasePM[process-manager]"]
-        OrderNotificationPM["OrderNotificationPM[process-manager]"]
-        OrderSummaryProjection["OrderSummaryProjection[projection]"]
-        OrderItemsProjection["OrderItemsProjection[projection]"]
         CustomerCancellationsProjection["CustomerCancellationsProjection[projection]"]
         OrderCommandConfigs["OrderCommandConfigs[infrastructure]"]
         OrderCommandHandlers["OrderCommandHandlers[command-handler]"]
-        OrderDomainEvents["OrderDomainEvents[bounded-context]"]
         OrderDeciders["OrderDeciders[decider]"]
+        OrderDomainEvents["OrderDomainEvents[bounded-context]"]
+        OrderItemsProjection["OrderItemsProjection[projection]"]
+        OrderNotificationPM["OrderNotificationPM[process-manager]"]
+        OrderPublicAPI["OrderPublicAPI[infrastructure]"]
+        OrderSummaryProjection["OrderSummaryProjection[projection]"]
+        ReservationReleasePM["ReservationReleasePM[process-manager]"]
     end
     subgraph shared["Shared Infrastructure"]
-        RateLimitDefinitions["RateLimitDefinitions[infrastructure]"]
-        OrderManagementInfrastructure["OrderManagementInfrastructure[infrastructure]"]
-        EventSubscriptionRegistry["EventSubscriptionRegistry[infrastructure]"]
-        CrossContextReadModel["CrossContextReadModel[read-model]"]
         AppCompositionRoot["AppCompositionRoot[infrastructure]"]
-        SagaRouter["SagaRouter[infrastructure]"]
-        SagaRegistry["SagaRegistry[infrastructure]"]
-        OrderFulfillmentSaga["OrderFulfillmentSaga[saga]"]
-        SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
-        ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
-        ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
-        IntegrationRoutes["IntegrationRoutes[infrastructure]"]
-        IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
-        IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
-        IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
+        CommandRegistry["CommandRegistry[infrastructure]"]
+        CrossContextReadModel["CrossContextReadModel[read-model]"]
         DCBRetryExecution["DCBRetryExecution[infrastructure]"]
         DurableAppendAction["DurableAppendAction[infrastructure]"]
-        CommandRegistry["CommandRegistry[infrastructure]"]
-        PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
+        EventSubscriptionRegistry["EventSubscriptionRegistry[infrastructure]"]
+        IntegrationDeadLetters["IntegrationDeadLetters[infrastructure]"]
+        IntegrationEventHandlers["IntegrationEventHandlers[infrastructure]"]
+        IntegrationEventSchemas["IntegrationEventSchemas[infrastructure]"]
+        IntegrationRoutes["IntegrationRoutes[infrastructure]"]
         MockPaymentActions["MockPaymentActions[infrastructure]"]
+        OrderFulfillmentSaga["OrderFulfillmentSaga[saga]"]
+        OrderManagementInfrastructure["OrderManagementInfrastructure[infrastructure]"]
         OrderWithInventoryProjection["OrderWithInventoryProjection[projection]"]
+        PaymentOutboxHandler["PaymentOutboxHandler[infrastructure]"]
+        ProjectionDeadLetters["ProjectionDeadLetters[infrastructure]"]
+        ProjectionDefinitions["ProjectionDefinitions[infrastructure]"]
+        RateLimitDefinitions["RateLimitDefinitions[infrastructure]"]
+        SagaCompletionHandler["SagaCompletionHandler[infrastructure]"]
+        SagaRegistry["SagaRegistry[infrastructure]"]
+        SagaRouter["SagaRouter[infrastructure]"]
     end
+    ActiveReservationsProjection --> InventoryCommandHandlers
+    CommandRegistry --> InventoryCommandHandlers
+    CommandRegistry --> OrderCommandHandlers
+    CustomerCancellationsProjection --> OrderCommandHandlers
     EventSubscriptionRegistry --> OrderNotificationPM
     EventSubscriptionRegistry --> ReservationReleasePM
-    SagaRouter --> OrderFulfillmentSaga
-    OrderFulfillmentSaga --> OrderCommandHandlers
-    OrderFulfillmentSaga --> InventoryCommandHandlers
-    SagaCompletionHandler --> SagaRegistry
-    ReservationReleasePM --> InventoryCommandHandlers
-    ReservationReleasePM --> OrderWithInventoryProjection
-    OrderNotificationPM --> OrderCommandHandlers
     IntegrationRoutes --> OrderCommandHandlers
-    CommandRegistry --> OrderCommandHandlers
-    CommandRegistry --> InventoryCommandHandlers
-    OrderItemsProjection --> OrderCommandHandlers
-    ProductCatalogProjection --> InventoryCommandHandlers
-    ActiveReservationsProjection --> InventoryCommandHandlers
-    CustomerCancellationsProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> OrderCommandHandlers
-    OrderWithInventoryProjection --> InventoryCommandHandlers
+    InventoryCommandConfigs --> ActiveReservationsProjection
+    InventoryCommandConfigs --> OrderWithInventoryProjection
+    InventoryCommandConfigs --> ProductCatalogProjection
+    InventoryCommandHandlers --> InventoryDeciders
+    OrderCommandConfigs --> CustomerCancellationsProjection
+    OrderCommandConfigs --> OrderItemsProjection
     OrderCommandConfigs --> OrderSummaryProjection
     OrderCommandConfigs --> OrderWithInventoryProjection
-    OrderCommandConfigs --> OrderItemsProjection
-    OrderCommandConfigs --> CustomerCancellationsProjection
-    InventoryCommandConfigs --> ActiveReservationsProjection
-    InventoryCommandConfigs --> ProductCatalogProjection
-    InventoryCommandConfigs --> OrderWithInventoryProjection
     OrderCommandHandlers --> OrderDeciders
-    InventoryCommandHandlers --> InventoryDeciders
+    OrderFulfillmentSaga --> InventoryCommandHandlers
+    OrderFulfillmentSaga --> OrderCommandHandlers
+    OrderItemsProjection --> OrderCommandHandlers
+    OrderNotificationPM --> OrderCommandHandlers
+    OrderWithInventoryProjection --> InventoryCommandHandlers
+    OrderWithInventoryProjection --> OrderCommandHandlers
+    ProductCatalogProjection --> InventoryCommandHandlers
+    ReservationReleasePM --> InventoryCommandHandlers
+    ReservationReleasePM --> OrderWithInventoryProjection
+    SagaCompletionHandler --> SagaRegistry
+    SagaRouter --> OrderFulfillmentSaga
 ```
 
 ---

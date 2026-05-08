@@ -47,7 +47,26 @@ Follows the Workpool pattern for consistent logging across the platform.
 | Quarter        | Q1-2026                                              |
 | Business Value | focused packages for consumers with clear boundaries |
 
-**Problem:**
+**Provenance (refactoring carve-out, META-pattern):** PackageArchitecture
+  is a structural meta-pattern describing repository-level package
+  boundaries (layered dependency direction, naming, publishability). It
+  has no behavioural surface that an executable Gherkin feature could
+  meaningfully assert beyond "the type-checker, build graph, and
+  package.json declarations agree" — checks that already live in the
+  monorepo's typecheck/build/lint pipeline rather than in `tests/features/`.
+  Per `libar-platform/architect/_shared/annotation-ownership.md` under
+  "Code-originated patterns" and
+  `libar-platform/architect/_shared/spec-pattern-relationships.md` under
+  "Refactoring carve-out", a
+  pure structural meta-pattern is exempted from the
+  `<Pattern>ExecutableTests` requirement; this design spec remains the
+  canonical surface and intentionally carries no
+  `@architect-executable-specs:` forward link. If a future
+  `@architect-role:meta` taxonomy value is introduced, this spec should
+  adopt it. Do NOT author a retroactive executable feature for this
+  pattern — the carve-out applies.
+
+  **Problem:**
   The original @convex-es/core package grew to 25+ modules, creating issues:
   - Large bundle size for consumers who only need specific patterns
   - Unclear API surface (what's core vs experimental?)

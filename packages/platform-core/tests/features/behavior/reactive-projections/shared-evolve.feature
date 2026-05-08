@@ -67,23 +67,16 @@ Feature: Shared Evolve Logic - Client/Server Consistency
     And error message should contain "CorruptEvent"
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Shared evolve logic runs on client and server
-
-    **Invariant:** The same evolve(state, event) function executes on both
-    client (optimistic overlay) and server (durable Workpool projection).
-    Given identical input state and event, both surfaces produce identical
-    output state. Unknown event types leave state unchanged and never throw.
-
-    **Rationale:** Optimistic UI is only correct if the client's optimistic
-    transformation matches the server's durable transformation — otherwise
-    every conflict-detection comparison would falsely fire. Sharing the evolve
-    function (rather than re-implementing per surface) is the only practical
-    way to guarantee that equivalence.
-
-    **Verified by:** Evolve produces identical results on client and server,
-    Evolve handles unknown event types gracefully,
-    Multiple events evolve in sequence,
-    Evolve error includes event context
+  # Invariant: The same evolve(state, event) function executes on both
+  # client (optimistic overlay) and server (durable Workpool projection).
+  # Given identical input state and event, both surfaces produce identical
+  # output state. Unknown event types leave state unchanged and never throw.
+  # Rationale: Optimistic UI is only correct if the client's optimistic
+  # transformation matches the server's durable transformation; otherwise
+  # every conflict-detection comparison would falsely fire. Sharing the evolve
+  # function (rather than re-implementing per surface) is the only practical
+  # way to guarantee that equivalence.
+  # Covered by executable shared-evolve scenarios above.

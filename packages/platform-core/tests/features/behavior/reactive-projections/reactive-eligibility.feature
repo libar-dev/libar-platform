@@ -75,41 +75,30 @@ Feature: Reactive Eligibility by Category
   And error should be null
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Only View projections need reactive layer
+  # Invariant: Reactive subscriptions are accepted only for projections
+  # declared with category "view". Logic, Reporting, and Integration projections
+  # reject reactive subscription attempts with REACTIVE_NOT_SUPPORTED and direct
+  # callers to plain useQuery or the appropriate alternative surface.
+  # Rationale: Reactive infrastructure (WebSocket connections, change
+  # detection, client-side optimistic state) is expensive. Limiting eligibility
+  # to View projections keeps that cost proportional to user-visible benefit.
+  # Logic, Reporting, and Integration projections target validation, analytics,
+  # and cross-BC sync respectively; none gain from real-time push.
+  # Covered by executable eligibility and rejection scenarios above.
 
-    **Invariant:** Reactive subscriptions are accepted only for projections
-    declared with category "view". Logic, Reporting, and Integration projections
-    reject reactive subscription attempts with REACTIVE_NOT_SUPPORTED and direct
-    callers to plain useQuery or the appropriate alternative surface.
-
-    **Rationale:** Reactive infrastructure (WebSocket connections, change
-    detection, client-side optimistic state) is expensive. Limiting eligibility
-    to View projections — the only category that drives UI — keeps that cost
-    proportional to user-visible benefit. Logic, Reporting, and Integration
-    projections target validation, analytics, and cross-BC sync respectively;
-    none gain from real-time push.
-
-    **Verified by:** Category determines reactive eligibility,
-    Non-view projection rejects reactive subscription,
-    View projection enables full reactive functionality
-
-  Rule: useReactiveProjection exposes merged durable + optimistic state
-
-    **Invariant:** The hook returns a result object exposing a merged state
-    field (null when no durable projection exists yet), an isOptimistic flag
-    indicating whether optimistic events are currently overlaid, a
-    durablePosition cursor for the last processed global position, and a
-    pendingEvents count of unconfirmed optimistic events. Initial calls
-    represent a loading state with state=null, durablePosition=0, and
-    pendingEvents=0.
-
-    **Rationale:** Consumers of optimistic UI need to know not just the value
-    but also how confident to be in it (durable vs optimistic) and how many
-    events are still in flight. Surfacing those signals as first-class fields
-    on the hook return type lets components render appropriate confidence
-    affordances without reimplementing the merge logic.
-
-    **Verified by:** Initial reactive result represents loading state
+  # Invariant: The hook returns a result object exposing a merged state
+  # field (null when no durable projection exists yet), an isOptimistic flag
+  # indicating whether optimistic events are currently overlaid, a
+  # durablePosition cursor for the last processed global position, and a
+  # pendingEvents count of unconfirmed optimistic events. Initial calls
+  # represent a loading state with state=null, durablePosition=0, and
+  # pendingEvents=0.
+  # Rationale: Consumers of optimistic UI need to know not just the value
+  # but also how confident to be in it (durable vs optimistic) and how many
+  # events are still in flight. Surfacing those signals as first-class fields
+  # on the hook return type lets components render appropriate confidence
+  # affordances without reimplementing the merge logic.
+  # Covered by the executable initial loading-state scenario above.

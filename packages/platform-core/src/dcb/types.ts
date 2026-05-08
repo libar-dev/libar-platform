@@ -10,6 +10,12 @@
  *
  * Types for scope-based multi-entity coordination within bounded contexts.
  *
+ * ### When to Use
+ *
+ * - Modeling multi-entity deciders that coordinate within one bounded context
+ * - Typing scope-level OCC operations, aggregated state, and DCB execution results
+ * - Sharing the canonical DCB contracts across handlers, deciders, and tests
+ *
  * @module dcb/types
  * @since Phase 16
  */

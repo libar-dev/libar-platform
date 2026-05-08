@@ -24,6 +24,12 @@ underlying idempotent check prevents duplicates.
 
 ### When to Use
 
+- Retrying event-store appends that originate from actions, sagas, or scheduled jobs
+- Preserving idempotent event writes when async execution can outlive the caller mutation
+- Enqueueing append work into Workpool while keeping per-stream ordering explicit
+
+### Recommended Scenarios
+
 | Scenario | Use durableAppendEvent? | Why |
 |----------|-------------------------|-----|
 | Synchronous command handler | No | Atomic dual-write handles this |

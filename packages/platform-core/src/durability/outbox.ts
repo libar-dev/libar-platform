@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-event-sourcing
  *
- * @architect-uses idempotentAppend, ActionRetrier, Workpool
  * @architect-used-by CommandOrchestrator, SagaEngine, PaymentHandler
  * @architect-usecase "When capturing external API results as domain events"
  *
@@ -27,6 +26,12 @@
  * - Convex OCC auto-retry handles transient conflicts
  * - If OCC exhausted, the failure is logged for manual recovery
  * - The `context` parameter preserves all data needed for recovery
+ *
+ * ### When to Use
+ *
+ * - Capturing external side-effect outcomes as domain events after actions finish
+ * - Preserving recovery context for retries or manual reconciliation
+ * - Converting action success and failure paths into the same event-store workflow
  *
  * ### Usage
  *
@@ -52,7 +57,6 @@
  * });
  * ```
  *
- * @architect-uses EventStoreFoundation, DurableFunctionAdapters
  */
 
 import type {

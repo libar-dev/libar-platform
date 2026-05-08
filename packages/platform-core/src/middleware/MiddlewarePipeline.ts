@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-phase 10
  * @architect-command
- * @architect-uses CommandBusFoundation
  * @architect-used-by CommandOrchestrator
  *
  * ## Middleware Pipeline - Command Execution Hooks

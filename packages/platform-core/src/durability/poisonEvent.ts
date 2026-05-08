@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-event-sourcing
  *
- * @architect-uses EventStoreFoundation, Workpool
  * @architect-used-by ProjectionProcessor, EventReplayInfrastructure, ProjectionRebuilder
  * @architect-usecase "When projection processing must not be blocked by malformed events"
  *
@@ -34,6 +33,12 @@
  * - Permanently ignored if event data is invalid
  * - Used to generate compensating events
  *
+ * ### When to Use
+ *
+ * - Protecting projection pipelines from permanently malformed or toxic events
+ * - Tracking repeated handler failures without blocking unrelated event processing
+ * - Supporting operator workflows for quarantine, replay, and investigation
+ *
  * ### Usage
  *
  * ```typescript
@@ -50,7 +55,6 @@
  * await handler(ctx, event);
  * ```
  *
- * @architect-uses EventStoreFoundation
  */
 
 import type { PoisonEventRecord, PoisonEventConfig } from "./types.js";

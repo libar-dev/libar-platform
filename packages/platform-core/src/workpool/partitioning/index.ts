@@ -9,6 +9,12 @@
  * Standardized partition key patterns for event ordering and OCC prevention
  * in Workpool-based projection processing.
  *
+ * ### When to Use
+ *
+ * - Choosing a partitioning helper for new projections or secondary projections
+ * - Importing the complete Workpool partitioning toolkit from a single entrypoint
+ * - Standardizing per-entity, per-customer, per-saga, and global partition patterns
+ *
  * ### Quick Reference
  *
  * | Projection Type | Helper | Key Format |

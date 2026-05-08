@@ -6,7 +6,7 @@
 @architect-effort:3w
 @architect-product-area:Platform
 @architect-business-value:operational-reliability-and-system-observability
-@architect-depends-on:ReactiveProjections,DurableFunctionAdapters
+@architect-depends-on:ReactiveProjections
 @architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/production-hardening
 Feature: Production Hardening - Observability and Operational Tooling
 

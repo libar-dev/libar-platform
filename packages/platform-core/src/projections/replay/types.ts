@@ -3,7 +3,15 @@
  * @architect-implements EventReplayInfrastructure
  * @architect-status completed
  *
+ * ## Event Replay Infrastructure Types
+ *
  * Types for event replay and projection rebuilding.
+ *
+ * ### When to Use
+ *
+ * - Typing replay checkpoints, rebuild requests, and UI progress payloads
+ * - Wiring replay handlers that process stored events in chunks
+ * - Sharing a stable event-replay contract between runtime code and admin tooling
  */
 
 import { z } from "zod";

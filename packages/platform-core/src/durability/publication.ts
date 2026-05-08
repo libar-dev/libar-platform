@@ -4,7 +4,7 @@
  * @architect-status completed
  * @architect-event-sourcing
  *
- * @architect-uses Workpool, idempotentAppend, WorkpoolPartitioningStrategy, EventBusAbstraction
+ * @architect-uses WorkpoolPartitioningStrategy, EventBusAbstraction
  * @architect-used-by IntegrationRoutes, CrossContextIntegration, SagaEngine
  * @architect-usecase "When publishing events across bounded contexts durably"
  *
@@ -23,6 +23,12 @@
  *
  * The source bounded context owns publication tracking. This maintains
  * BC boundaries and allows source-specific circuit breaker logic.
+ *
+ * ### When to Use
+ *
+ * - Publishing integration events across bounded contexts with retry tracking
+ * - Recording per-target delivery state and dead-letter outcomes
+ * - Preserving per-event ordering while allowing parallel delivery by target
  *
  * ### Partition Key Strategy
  *
@@ -47,7 +53,6 @@
  * });
  * ```
  *
- * @architect-uses DurableFunctionAdapters, WorkpoolPartitioningStrategy
  */
 
 import type { DurablePublisherConfig, EventPublication, PublicationStatus } from "./types.js";

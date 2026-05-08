@@ -4,7 +4,7 @@
  * @architect-status completed
  * @architect-event-sourcing
  *
- * @architect-uses idempotentAppend, Workpool, WorkpoolPartitioningStrategy
+ * @architect-uses WorkpoolPartitioningStrategy
  * @architect-used-by SagaEngine, ScheduledJobs, outbox
  * @architect-usecase "When event append must survive failures in async contexts"
  *
@@ -20,6 +20,12 @@
  * underlying idempotent check prevents duplicates.
  *
  * ### When to Use
+ *
+ * - Retrying event-store appends that originate from actions, sagas, or scheduled jobs
+ * - Preserving idempotent event writes when async execution can outlive the caller mutation
+ * - Enqueueing append work into Workpool while keeping per-stream ordering explicit
+ *
+ * ### Recommended Scenarios
  *
  * | Scenario | Use durableAppendEvent? | Why |
  * |----------|-------------------------|-----|
@@ -53,7 +59,6 @@
  * });
  * ```
  *
- * @architect-uses EventStoreFoundation, DurableFunctionAdapters
  */
 
 import type {

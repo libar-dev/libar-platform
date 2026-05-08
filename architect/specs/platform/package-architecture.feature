@@ -19,8 +19,10 @@ Feature: Package Architecture - Extraction and Naming Strategy
   meaningfully assert beyond "the type-checker, build graph, and
   package.json declarations agree" — checks that already live in the
   monorepo's typecheck/build/lint pipeline rather than in `tests/features/`.
-  Per `_shared/annotation-ownership.md` §"Code-originated patterns" and
-  `_shared/spec-pattern-relationships.md` §"Refactoring carve-out", a
+  Per `libar-platform/architect/_shared/annotation-ownership.md` under
+  "Code-originated patterns" and
+  `libar-platform/architect/_shared/spec-pattern-relationships.md` under
+  "Refactoring carve-out", a
   pure structural meta-pattern is exempted from the
   `<Pattern>ExecutableTests` requirement; this design spec remains the
   canonical surface and intentionally carries no

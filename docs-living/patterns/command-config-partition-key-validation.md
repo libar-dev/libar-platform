@@ -27,6 +27,12 @@ ordering contract remains planned/documented until upstream support exists.
 2. Partition key function must return valid `{ name, value }` shape
 3. Value must be a non-empty string
 
+### When to Use
+
+- Failing fast when command configs omit explicit projection partition keys
+- Enforcing a consistent Workpool partition-key contract across command handlers
+- Catching invalid partition-key shapes during configuration tests and startup checks
+
 ### Error Handling
 
 Validation collects all errors and throws a single comprehensive error.

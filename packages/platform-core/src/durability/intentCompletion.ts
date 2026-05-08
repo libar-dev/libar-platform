@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-event-sourcing
  *
- * @architect-uses EventStoreFoundation, idempotentAppend
  * @architect-used-by SagaEngine, LongRunningOperations, ReconciliationService
  * @architect-usecase "When operations span multiple steps and need visibility"
  *
@@ -22,6 +21,12 @@
  *
  * Intent events enable timeout detection and manual intervention
  * for stuck operations.
+ *
+ * ### When to Use
+ *
+ * - Bracketing long-running operations with explicit start and finish events
+ * - Scheduling timeout checks for work that might stall or need reconciliation
+ * - Exposing operation progress to observability and manual recovery tooling
  *
  * ### Pattern
  *
@@ -59,7 +64,6 @@
  * });
  * ```
  *
- * @architect-uses EventStoreFoundation
  */
 
 import type { IntentEvent, CompletionStatus, IdempotentAppendDependencies } from "./types.js";

@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-phase 04
  * @architect-projection
- * @architect-uses EventStoreFoundation
  *
  * ## Projection Checkpointing - Idempotent Processing
  *

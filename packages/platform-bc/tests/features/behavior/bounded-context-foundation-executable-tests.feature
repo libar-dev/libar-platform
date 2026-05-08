@@ -2,12 +2,12 @@
 @architect-pattern:BoundedContextFoundationExecutableTests
 @architect-implements:BoundedContextFoundation
 @architect-status:completed
+@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention
 @architect-product-area:PlatformBC
 Feature: BoundedContextFoundation Executable Tests
 
   **Provenance:** This file was authored under the refactoring carve-out
-  (per `_shared/spec-pattern-relationships.md`) to expose
-  BoundedContextFoundation in the PatternGraph. The pattern was
+  to expose BoundedContextFoundation in the PatternGraph. The pattern was
   originally implemented before the `@architect-implements:` convention.
   Rule invariants and rationales below are transferred verbatim from
   `libar-platform/architect/specs/platform/bounded-context-foundation.feature`.
@@ -15,8 +15,13 @@ Feature: BoundedContextFoundation Executable Tests
   contracts; this file covers the foundational physical-isolation
   invariants that span Convex components. Many scenarios require Convex
   integration runtime to fully verify and are shape-only stubs at
-  file-creation time; they will be wired up to step definitions in a
-  follow-up `architect-refactor-session`.
+  file-creation time.
+
+  **Transitional status:** This carrier is graph-continuity scaffolding,
+  not runnable coverage yet. Every scenario below is intentionally tagged
+  `@stub` until backlog item `T5-009` wires the harness and step
+  definitions. Backlog item `T5-010` expands the current transfer set with
+  concurrency and edge-case coverage once wiring is real.
 
   Background:
     Given the platform-bc contracts and definitions are available
@@ -36,13 +41,13 @@ Feature: BoundedContextFoundation Executable Tests
 
     **Verified by:** Direct table query fails across component boundary, Component API access succeeds
 
-    @happy-path
+    @happy-path @stub
     Scenario: Direct table query fails across component boundary
       Given a bounded context "orders" with table "orderCMS"
       When the parent app attempts to query "orderCMS" directly
       Then the query fails because the table doesn't exist in parent database
 
-    @happy-path
+    @happy-path @stub
     Scenario: Component API access succeeds
       Given a bounded context "orders" with handler "createOrder"
       When the parent app calls ctx.runMutation(components.orders.handlers.createOrder)
@@ -89,7 +94,7 @@ Feature: BoundedContextFoundation Executable Tests
 
     **Verified by:** User ID passed explicitly to component
 
-    @happy-path
+    @happy-path @stub
     Scenario: User ID passed explicitly to component
       Given a command requiring user authorization
       When calling the bounded context handler
@@ -110,7 +115,7 @@ Feature: BoundedContextFoundation Executable Tests
 
     **Verified by:** ID conversion at boundary
 
-    @happy-path
+    @happy-path @stub
     Scenario: ID conversion at boundary
       Given an order with internal ID of type Id<"orderCMS">
       When returning the order through the component API
@@ -132,7 +137,7 @@ Feature: BoundedContextFoundation Executable Tests
 
     **Verified by:** Contract provides type safety for commands
 
-    @happy-path
+    @happy-path @stub
     Scenario: Contract provides type safety for commands
       Given a DualWriteContextContract with commandTypes ["CreateOrder", "SubmitOrder"]
       When using ExtractCommandTypes helper

@@ -7,16 +7,20 @@
 Feature: SagaOrchestration Executable Tests
 
   **Provenance:** This file was authored under the refactoring carve-out
-  (per `_shared/spec-pattern-relationships.md`) to expose
-  SagaOrchestration in the PatternGraph. The pattern was originally
+  to expose SagaOrchestration in the PatternGraph. The pattern was originally
   implemented before the `@architect-implements:` convention. Rule
   invariants and rationales below are transferred verbatim from
   `libar-platform/architect/specs/platform/saga-orchestration.feature`.
   The reference saga implementation lives in
   `examples/order-management/convex/sagas/`; this file's scenarios are
-  shape-only stubs at file-creation time and will be wired up to step
-  definitions (against the order-management harness) in a follow-up
-  `architect-refactor-session`.
+  shape-only stubs at file-creation time.
+
+  **Transitional status:** This carrier is graph-continuity scaffolding,
+  not runnable coverage yet. Every scenario below is intentionally tagged
+  `@stub` until backlog item `T5-009` wires the order-management harness
+  and step definitions. Backlog item `T5-010` expands the current
+  transfer set with compensation, concurrency, and edge-case coverage
+  once wiring is real.
 
   Background:
     Given the saga registry and Convex Workflow integration are available
@@ -37,7 +41,7 @@ Feature: SagaOrchestration Executable Tests
 
     **Verified by:** Successful cross-context coordination, Compensation on step failure
 
-    @happy-path
+    @happy-path @stub
     Scenario: Successful cross-context coordination
       Given an OrderSubmitted event for order "ord-123"
       When the Order Fulfillment saga processes the event
@@ -45,7 +49,7 @@ Feature: SagaOrchestration Executable Tests
       And on success, it confirms the order
       And the saga completes with status "completed"
 
-    @validation
+    @validation @stub
     Scenario: Compensation on step failure
       Given an OrderSubmitted event for order "ord-456"
       When the Inventory BC rejects the reservation (insufficient stock)
@@ -109,7 +113,7 @@ Feature: SagaOrchestration Executable Tests
 
     **Verified by:** First trigger starts saga, Duplicate trigger returns existing saga
 
-    @happy-path
+    @happy-path @stub
     Scenario: First trigger starts saga
       Given no saga exists for order "ord-789"
       When startSagaIfNotExists is called with sagaId "ord-789"
@@ -117,7 +121,7 @@ Feature: SagaOrchestration Executable Tests
       And the workflow is started
       And the result indicates isNew = true
 
-    @happy-path
+    @happy-path @stub
     Scenario: Duplicate trigger returns existing saga
       Given a saga exists for order "ord-789" with status "pending"
       When startSagaIfNotExists is called with sagaId "ord-789" again

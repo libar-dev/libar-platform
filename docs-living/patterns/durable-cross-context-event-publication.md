@@ -27,6 +27,12 @@ must be durable with guaranteed delivery or explicit failure tracking.
 The source bounded context owns publication tracking. This maintains
 BC boundaries and allows source-specific circuit breaker logic.
 
+### When to Use
+
+- Publishing integration events across bounded contexts with retry tracking
+- Recording per-target delivery state and dead-letter outcomes
+- Preserving per-event ordering while allowing parallel delivery by target
+
 ### Partition Key Strategy
 
 Uses `pub:${eventId}:${targetContext}` to ensure per-event ordering

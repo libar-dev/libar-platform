@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 1/1 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 1     |
 
 ---
 
@@ -29,19 +29,19 @@
 | Business Value | prevent test utilities in production |
 
 As a platform developer
-I want environment guards for test-only functions
-So that test utilities cannot be called in production
+  I want environment guards for test-only functions
+  So that test utilities cannot be called in production
 
-The guards module provides security functions that prevent test-only
-utilities (like createTestEntity) from being called in production.
-This is critical for preventing accidental data manipulation in
-live environments.
+  The guards module provides security functions that prevent test-only
+  utilities (like createTestEntity) from being called in production.
+  This is critical for preventing accidental data manipulation in
+  live environments.
 
 #### Acceptance Criteria
 
-**Allow execution when **CONVEX_TEST_MODE** is true**
+**Allow execution when __CONVEX_TEST_MODE__ is true**
 
-- Given globalThis.**CONVEX_TEST_MODE** is true
+- Given globalThis.__CONVEX_TEST_MODE__ is true
 - When I call ensureTestEnvironment()
 - Then no error is thrown
 
@@ -51,16 +51,12 @@ live environments.
 - When I call ensureTestEnvironment()
 - Then no error is thrown
 
-**Allow execution when process is undefined**
-
-- Given process is undefined
-- When I call ensureTestEnvironment()
-- Then no error is thrown
-
-**Allow execution in self-hosted environment**
+**Allow execution on self-hosted runtime without explicit test signal**
 
 - Given process.env exists
 - And CONVEX_CLOUD_URL is not set
+- And IS_TEST is not set
+- And __CONVEX_TEST_MODE__ is not true
 - When I call ensureTestEnvironment()
 - Then no error is thrown
 
@@ -68,14 +64,14 @@ live environments.
 
 - Given process.env.CONVEX_CLOUD_URL is set
 - And IS_TEST is not set
-- And **CONVEX_TEST_MODE** is not true
+- And __CONVEX_TEST_MODE__ is not true
 - When I call ensureTestEnvironment()
 - Then an error is thrown with message containing "SECURITY"
 - And the error message contains "Test-only function"
 
 **isTestEnvironment returns true in test mode**
 
-- Given globalThis.**CONVEX_TEST_MODE** is true
+- Given globalThis.__CONVEX_TEST_MODE__ is true
 - When I call isTestEnvironment()
 - Then I receive true
 

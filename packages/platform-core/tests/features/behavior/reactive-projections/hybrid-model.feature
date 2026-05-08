@@ -57,23 +57,17 @@ Feature: Hybrid Model - Durable + Reactive Projections
     And client shows durable state
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Hybrid model combines durability with speed
-
-    **Invariant:** Workpool handles durable persistence (100-500ms latency) while
-    a reactive layer pushes optimistic updates to clients within 50ms. Both
-    systems operate on the same projection without interference: optimistic
-    state is overlaid on the durable base, and converges to the durable state
-    once Workpool catches up.
-
-    **Rationale:** Workpool alone yields 100-500ms latency, which feels sluggish
-    for direct user actions. Pure client-side optimism alone loses durability.
-    Combining the two preserves Convex-native durability while delivering UI
-    feedback at perceptual-instant latency, with graceful degradation when
-    optimism conflicts with durable truth.
-
-    **Verified by:** Client receives instant update then durable confirmation,
-    Optimistic update works during Workpool backlog,
-    Durable state takes precedence after convergence
+  # Invariant: Workpool handles durable persistence (100-500ms latency) while
+  # a reactive layer pushes optimistic updates to clients within 50ms. Both
+  # systems operate on the same projection without interference: optimistic
+  # state is overlaid on the durable base, and converges to the durable state
+  # once Workpool catches up.
+  # Rationale: Workpool alone yields 100-500ms latency, which feels sluggish
+  # for direct user actions. Pure client-side optimism alone loses durability.
+  # Combining the two preserves Convex-native durability while delivering UI
+  # feedback at perceptual-instant latency, with graceful degradation when
+  # optimism conflicts with durable truth.
+  # Covered by executable hybrid-model scenarios above.

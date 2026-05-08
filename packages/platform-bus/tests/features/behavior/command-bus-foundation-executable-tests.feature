@@ -2,19 +2,24 @@
 @architect-pattern:CommandBusFoundationExecutableTests
 @architect-implements:CommandBusFoundation
 @architect-status:completed
+@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention
 @architect-product-area:PlatformBus
 Feature: CommandBusFoundation Executable Tests
 
   **Provenance:** This file was authored under the refactoring carve-out
-  (per `_shared/spec-pattern-relationships.md`) to expose
-  CommandBusFoundation in the PatternGraph. The pattern was originally
+  to expose CommandBusFoundation in the PatternGraph. The pattern was originally
   implemented before the `@architect-implements:` convention. Rule
   invariants and rationales below are transferred verbatim from
   `libar-platform/architect/specs/platform/command-bus-foundation.feature`.
   A sibling file `idempotency.feature` carries the in-package pattern
   `CommandBusIdempotency`; this file covers the broader foundation.
-  Scenario bodies are shape-only stubs at file-creation time and will be
-  wired up to step definitions in a follow-up `architect-refactor-session`.
+  Scenario bodies are shape-only stubs at file-creation time.
+
+  **Transitional status:** This carrier is graph-continuity scaffolding,
+  not runnable coverage yet. Every scenario below is intentionally tagged
+  `@stub` until backlog item `T5-009` wires the harness and step
+  definitions. Backlog item `T5-010` expands the current transfer set with
+  concurrency and edge-case coverage once wiring is real.
 
   Background:
     Given the platform-bus CommandBus client is available
@@ -35,14 +40,14 @@ Feature: CommandBusFoundation Executable Tests
 
     **Verified by:** First command execution is recorded, Duplicate command returns cached result
 
-    @happy-path
+    @happy-path @stub
     Scenario: First command execution is recorded
       Given no command exists with id "cmd-123"
       When recording command "cmd-123" of type "CreateOrder"
       Then the command is recorded with status "pending"
       And the response indicates isNew = true
 
-    @happy-path
+    @happy-path @stub
     Scenario: Duplicate command returns cached result
       Given command "cmd-123" exists with status "executed" and result "success"
       When recording command "cmd-123" again
@@ -64,21 +69,21 @@ Feature: CommandBusFoundation Executable Tests
 
     **Verified by:** Successful command transitions to executed, Business rejection transitions to rejected, Unexpected error transitions to failed
 
-    @happy-path
+    @happy-path @stub
     Scenario: Successful command transitions to executed
       Given a command in "pending" status
       When the command handler returns success
       Then the status becomes "executed"
       And the result contains success data
 
-    @validation
+    @validation @stub
     Scenario: Business rejection transitions to rejected
       Given a command in "pending" status
       When the command handler returns rejected with code "INVALID_STATUS"
       Then the status becomes "rejected"
       And the result contains the rejection code
 
-    @validation
+    @validation @stub
     Scenario: Unexpected error transitions to failed
       Given a command in "pending" status
       When the command handler throws an unexpected error

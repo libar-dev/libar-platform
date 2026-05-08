@@ -16,12 +16,12 @@
 ## Description
 
 As a developer writing integration tests
-I want async polling utilities
-So that I can wait for eventual consistency patterns
+  I want async polling utilities
+  So that I can wait for eventual consistency patterns
 
-The polling module provides utilities for waiting on async conditions,
-essential when testing projections processed via Workpool or other
-eventually consistent patterns.
+  The polling module provides utilities for waiting on async conditions,
+  essential when testing projections processed via Workpool or other
+  eventually consistent patterns.
 
 ## Acceptance Criteria
 
@@ -92,12 +92,12 @@ eventually consistent patterns.
 
 ## Deliverables
 
-- sleep() function (Complete)
-- waitUntil() polling utility (Complete)
-- waitFor() boolean predicate polling (Complete)
-- DEFAULT_TIMEOUT_MS constant (Complete)
-- DEFAULT_POLL_INTERVAL_MS constant (Complete)
-- Behavior test feature file (Complete)
+- sleep() function (complete)
+- waitUntil() polling utility (complete)
+- waitFor() boolean predicate polling (complete)
+- DEFAULT_TIMEOUT_MS constant (complete)
+- DEFAULT_POLL_INTERVAL_MS constant (complete)
+- Behavior test feature file (complete)
 
 ---
 

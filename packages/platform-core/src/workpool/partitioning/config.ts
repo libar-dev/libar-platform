@@ -9,6 +9,12 @@
  * Defines configuration types and constants for projection partitioning
  * including parallelism recommendations based on partition strategy.
  *
+ * ### When to Use
+ *
+ * - Declaring partition strategy metadata alongside projection configuration
+ * - Looking up default parallelism guidance for a chosen partition strategy
+ * - Keeping partitioning recommendations consistent across platform packages
+ *
  * ### Parallelism Guidelines
  *
  * | Strategy | Recommended | Rationale |

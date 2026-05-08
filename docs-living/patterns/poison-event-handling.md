@@ -37,6 +37,12 @@ Quarantined events can be:
 - Permanently ignored if event data is invalid
 - Used to generate compensating events
 
+### When to Use
+
+- Protecting projection pipelines from permanently malformed or toxic events
+- Tracking repeated handler failures without blocking unrelated event processing
+- Supporting operator workflows for quarantine, replay, and investigation
+
 ### Usage
 
 ```typescript

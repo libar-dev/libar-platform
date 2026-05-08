@@ -87,32 +87,20 @@ Feature: Explicit Category Declaration
     And error message contains "INVALID_CATEGORY"
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Projections must declare explicit category
+  # Invariant: Category must be specified at projection definition time.
+  # Projections without explicit category fail registration with CATEGORY_REQUIRED.
+  # Rationale: Implicit categories (guessed from naming or usage) lead to
+  # inconsistent behavior. Explicit declaration forces developers to think about
+  # the projection's purpose and enables compile-time validation.
+  # Covered by executable validation scenarios above.
 
-    **Invariant:** Category must be specified at projection definition time.
-    Projections without explicit category fail registration with CATEGORY_REQUIRED.
-
-    **Rationale:** Implicit categories (guessed from naming or usage) lead to
-    inconsistent behavior. Explicit declaration forces developers to think about
-    the projection's purpose and enables compile-time validation.
-
-    **Verified by:** Missing category returns CATEGORY_REQUIRED error,
-    Null category returns CATEGORY_REQUIRED error,
-    Valid category passes validation,
-    assertValidCategory returns category on valid input
-
-  Rule: Invalid categories are rejected at registration
-
-    **Invariant:** Any category value not in the closed set
-    {logic, view, reporting, integration} fails registration with INVALID_CATEGORY.
-    Categorisation is case-sensitive.
-
-    **Rationale:** A closed enum prevents drift and typos that would silently
-    misroute projections (e.g. "viewModel" not enabling reactive subscriptions).
-    Case sensitivity prevents convention divergence ("View" vs "view").
-
-    **Verified by:** Invalid category returns INVALID_CATEGORY error,
-    assertValidCategory throws on invalid input
+  # Invariant: Any category value not in the closed set
+  # {logic, view, reporting, integration} fails registration with INVALID_CATEGORY.
+  # Categorisation is case-sensitive.
+  # Rationale: A closed enum prevents drift and typos that would silently
+  # misroute projections (e.g. "viewModel" not enabling reactive subscriptions).
+  # Case sensitivity prevents convention divergence ("View" vs "view").
+  # Covered by executable invalid-category scenarios above.

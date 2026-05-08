@@ -1,197 +1,162 @@
 # Architect Spec Cleanup Report
 
-**Date:** 2026-05-08
+**Date:** 2026-05-09
 **Branch:** `architect/value-tranfer`
-**Scope:** Value-transfer audit + execution for the 43 design specs under `libar-platform/architect/specs/` in preparation for upgrading to the new architect package version.
+**Audit basis:** current branch state after Tasks 1 through 9, current architect graph query output, and the in-repo doctrine sources under `libar-platform/architect/_shared/`
 
-> This report has TWO sections. **§A** is the post-transfer state (what was actually executed in this session). **§B** is the original audit (before any changes). Read §A first for the current verdict; §B is preserved for audit trail.
+This report is the durable deletion audit for the spec cleanup branch. It is written against the branch as it exists now, not against the earlier transfer session snapshot. The branch already deleted 21 design specs and one linked stub file. Relative to `main`, the branch currently stands at **18 added**, **37 modified**, and **22 deleted** files.
 
----
+## 1. Current Verdict
 
-# §A — Post-Transfer Final State
+| Category                           | Count | Current truth                                                                         |
+| ---------------------------------- | ----: | ------------------------------------------------------------------------------------- |
+| Standard gate-passing deletions    |    19 | Deleted on this branch after value transfer completed and carrier continuity verified |
+| Narrative-only deletion exemptions |     2 | Deleted on this branch under a zero-Rule, zero-transfer exemption                     |
+| Still blocked                      |     3 | Kept because the deletion gate still fails                                            |
+| Meta exemption, keep               |     1 | `PackageArchitecture` stays as a structural policy record                             |
+| Active, keep                       |     3 | `AgentBCComponentIsolation`, `AgentLLMIntegration`, `ProcessEnhancements`             |
+| Roadmap, keep                      |    12 | Future work remains design-owned                                                      |
+| Roadmap, reclassify                |     3 | `TestContentBlocks`, `ThemedDecisionArchitecture`, `AgentAdminFrontend`               |
+| Original audited population        |    43 | Reconciled total                                                                      |
 
-## Executive Summary (after value-transfer execution)
+Additional branch facts:
 
-| Bucket                   |  Count | Verdict                                                                                |
-| ------------------------ | -----: | -------------------------------------------------------------------------------------- |
-| **Deletion-ready**       | **21** | Safe to `git rm` in a follow-up cleanup PR                                             |
-| **Still blocked**        |  **3** | ConfirmedOrderCancellation, AgentCommandInfrastructure, CodecDrivenReferenceGeneration |
-| **META exempt – keep**   |  **1** | PackageArchitecture (formal carve-out documented in spec)                              |
-| **Active – keep**        |  **3** | AgentBCComponentIsolation, AgentLLMIntegration, ProcessEnhancements                    |
-| **Roadmap – keep**       | **12** | Genuine future work                                                                    |
-| **Roadmap – reclassify** |  **3** | TestContentBlocks, ThemedDecisionArchitecture, AgentAdminFrontend                      |
-| **TOTAL**                | **43** |                                                                                        |
+- The 22 deleted files are 21 design specs plus `libar-platform/architect/stubs/testing-bdd-infrastructure/bdd-infrastructure.ts`.
+- The four foundational carve-out carriers are intentionally **completed but transitional**. They preserve graph continuity and transferred rule text, but they are still non-runnable `@stub` carriers until backlog items `T5-009` and `T5-010` land.
+- Task 9 cleared the review-listed F4 and F5 branch regressions. The current `pnpm architect:query -- arch dangling` output now reports **12 unrelated or pre-existing unresolved edges**, which are disclosed in Section 6.
 
-**Process Guard validation:** ✅ PASS (5 added files, 56 modified files, 3 status transitions, all FSM-consistent).
+## 2. Doctrine Sources Used For This Reconciliation
 
-## Files changed in this session
+This report cites only in-repo doctrine and decision records.
 
-### Bulk path-prefix fix (28 files)
+- `libar-platform/architect/_shared/value-transfer.md`
+- `libar-platform/architect/_shared/annotation-ownership.md`
+- `libar-platform/architect/_shared/spec-pattern-relationships.md`
+- `libar-platform/architect/_shared/four-tier-ladder.md`
+- `libar-platform/architect/_shared/fsm-transitions.md`
+- `libar-platform/architect/decisions/pdr-022-value-transfer-doctrine-adoption.feature`
+- `docs/project-management/IMPROVEMENT_BACKLOG.md`, for backlog items `T5-009` and `T5-010`
 
-All `@architect-executable-specs:` paths in design specs that previously used unprefixed paths (`platform-core/...`, `order-management/...`) were corrected to fully-qualified paths (`libar-platform/packages/platform-core/...`, `libar-platform/examples/order-management/...`).
+No off-branch doctrine paths are used as authority here.
 
-### Mechanical patches + Rule-content transfer (Agent 1 — platform-core fixable group)
+## 3. Audit Rules Applied
 
-- **ProjectionCategories** — design-spec forward-link patched from `tests/unit/projections` → `tests/features/behavior/projection-categories`. 3 executable .features in that dir received reverse tags + 4-field-template Rule blocks (5 design Rules transferred).
-- **BddTestingInfrastructure** — 5 executable .features (`world.feature`, `guards.feature`, `polling.feature`, `integration-isolation.feature`, `platform-coverage.feature`) received `@architect-implements:BddTestingInfrastructure`. R1 (domain logic must be Gherkin) and R2 (deciders enable test isolation) **had no executable home** — newly authored as Rule blocks with verifying scenarios in `platform-coverage.feature`. Duplicate `@architect-pattern:TestEnvironmentGuards` lines deduplicated on 3 files.
-- **ReactiveProjections** — 4 executable .features in `reactive-projections/` received reverse tags. All 5 design Rules transferred to the 4-field template across `conflict-detection.feature`, `hybrid-model.feature`, `reactive-eligibility.feature`, `shared-evolve.feature`.
+The standard pre-deletion gate comes from `value-transfer.md`.
 
-### Mechanical patches + Rule-content transfer (Agent 2 — order-management group)
+1. The deleted design spec had a forward link to an executable carrier.
+2. That forward link resolved to a real file or directory under `tests/features/`.
+3. The executable carrier held `@architect-implements:<Pattern>` for the semantic pattern being removed.
+4. The substantive `Rule:` content from the design spec was preserved in the carrier.
+5. The architectural rationale survived the delete, either in the executable carrier itself or, where it materially belonged, in additive source annotations.
 
-- **DurableEventsIntegration** — 6 executable .features in `tests/integration-features/durability/` received reverse tags. All 8 design Rules enriched to 4-field template (with 1 noted "TS-only coverage" for the outbox-handler rule).
-- **ConfirmedOrderCancellation** — `tests/features/behavior/orders/cancel-order.feature` + `tests/integration-features/orders/cancel-order.feature` received reverse tags + 2 fully-templated Rule blocks. **Status remains `active`** — FSM transition to `completed` is out of scope for value transfer.
-- **ExampleAppModernization** — 4 executable .features in `tests/features/modernization/` received reverse tags. One file (`reference-documentation.feature`) had its identity tag renamed from `ExampleAppModernization` (which duplicated the design-spec identity) to `ExampleAppModernizationExecutableTests` per bipartite naming. All 4 design Rules transferred.
-- **AgentChurnRiskCompletion** — design-spec forward link **repointed** from non-existent `tests/integration-features/agent` to `tests/features/behavior/agent/on-complete.feature` (the canonical executable home). `on-complete.feature` received `@architect-pattern:AgentChurnRiskCompletionExecutableTests` + `@architect-implements:AgentChurnRiskCompletion`. Rule 1 (LLM-essential) fully covered. Rules 2 (approval expiration) and 3 (commands create real domain records) have only TS integration-test coverage — additive per doctrine.
+Two extra doctrine notes matter here.
 
-### `<Pattern>ExecutableTests` carve-out files authored (Agent 3 — foundational patterns)
+- `spec-pattern-relationships.md` allows `<Pattern>ExecutableTests` carve-outs for older shipped patterns, but the carrier must keep the semantic pattern name bare through `@architect-implements:<Pattern>`.
+- `fsm-transitions.md` makes workflow completion and evidence maturity separate concerns. That is why the four carve-out carriers can remain `@architect-status:completed` while this report still labels them transitional and non-runnable.
 
-Four NEW executable feature files created under the formal refactoring carve-out:
+## 4. Per-Pattern Deletion Audit Matrix
 
-- `libar-platform/packages/platform-bc/tests/features/behavior/bounded-context-foundation-executable-tests.feature` — 5 Rule blocks transferred verbatim from `BoundedContextFoundation` design spec.
-- `libar-platform/packages/platform-bus/tests/features/behavior/command-bus-foundation-executable-tests.feature` — 5 Rule blocks transferred from `CommandBusFoundation`.
-- `libar-platform/packages/platform-store/tests/features/behavior/event-store-foundation-executable-tests.feature` — 5 Rule blocks transferred from `EventStoreFoundation`.
-- `libar-platform/packages/platform-core/tests/features/behavior/orchestration/saga-orchestration-executable-tests.feature` — 5 Rule blocks transferred from `SagaOrchestration`.
+### 4.1 Standard gate-passing deletions, 19 specs
 
-Each carries `@architect-pattern:<Pattern>ExecutableTests` + `@architect-implements:<Pattern>` + `@architect-status:completed` + `@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention`. Forward link added to each corresponding design spec. Newly-authored scenarios are tagged `@stub` per the anti-pattern rule against inventing scenarios — step definitions will be wired in a follow-up `architect-refactor-session`.
+| Pattern                      | Deleted source spec                                                              | Durable carrier after delete                                                                                                                                                       | Rules preserved | Gate status              | Audit notes                                                                                                                                                                                                                                                                                                |
+| ---------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------: | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AgentAsBoundedContext        | `libar-platform/architect/specs/platform/agent-as-bounded-context.feature`       | `libar-platform/packages/platform-core/tests/features/behavior/agent/`                                                                                                             |               6 | G1-G5 pass               | Reverse links live across the agent behavior carrier set. Rationale survives in the carrier prose and existing package source annotations.                                                                                                                                                                 |
+| BddTestingInfrastructure     | `libar-platform/architect/specs/platform/bdd-testing-infrastructure.feature`     | `libar-platform/packages/platform-core/tests/features/behavior/testing/`                                                                                                           |               5 | G1-G5 pass               | `world.feature`, `guards.feature`, `polling.feature`, `integration-isolation.feature`, and `platform-coverage.feature` share the carrier burden. The extra executable rule material lives in `platform-coverage.feature`, which is why more than one carrier file keeps the same semantic continuity edge. |
+| BoundedContextFoundation     | `libar-platform/architect/specs/platform/bounded-context-foundation.feature`     | `libar-platform/packages/platform-bc/tests/features/behavior/bounded-context-foundation-executable-tests.feature`                                                                  |               5 | G1-G5 pass, transitional | Refactoring carve-out carrier created under the bare semantic name contract from PDR-022. All transferred scenarios are `@stub`. Backlog: `T5-009`, then `T5-010`.                                                                                                                                         |
+| CommandBusFoundation         | `libar-platform/architect/specs/platform/command-bus-foundation.feature`         | `libar-platform/packages/platform-bus/tests/features/behavior/command-bus-foundation-executable-tests.feature`                                                                     |               5 | G1-G5 pass, transitional | Same carve-out status as above. The carrier is graph-valid and prose-complete, but not yet runnable. Backlog: `T5-009`, then `T5-010`.                                                                                                                                                                     |
+| DeciderPattern               | `libar-platform/architect/specs/platform/decider-pattern.feature`                | `libar-platform/packages/platform-decider/tests/features/behavior/decider-outputs.feature`, `libar-platform/packages/platform-fsm/tests/features/behavior/fsm-transitions.feature` |               5 | G1-G5 pass               | Transfer stayed split across the decider and FSM executable surfaces because the deleted spec covered both pure decision output and transition discipline.                                                                                                                                                 |
+| DurableEventsIntegration     | `libar-platform/architect/specs/platform/durable-events-integration.feature`     | `libar-platform/examples/order-management/tests/integration-features/durability/`                                                                                                  |               8 | G1-G5 pass               | Six integration carriers now hold the transferred durability rules, including the previously called-out outbox-handler rule coverage note.                                                                                                                                                                 |
+| DurableFunctionAdapters      | `libar-platform/architect/specs/platform/durable-function-adapters.feature`      | `libar-platform/packages/platform-core/tests/features/behavior/durable-function-adapters/`                                                                                         |               3 | G1-G5 pass               | Existing behavior carriers were already the truthful durability surface, so the branch deleted the planning duplicate after continuity checks.                                                                                                                                                             |
+| DynamicConsistencyBoundaries | `libar-platform/architect/specs/platform/dynamic-consistency-boundaries.feature` | `libar-platform/packages/platform-core/tests/features/behavior/dcb/`                                                                                                               |               5 | G1-G5 pass               | Transfer remains on the DCB behavior carrier set, not in doctrine prose.                                                                                                                                                                                                                                   |
+| EcstFatEvents                | `libar-platform/architect/specs/platform/ecst-fat-events.feature`                | `libar-platform/packages/platform-core/tests/features/behavior/ecst/`                                                                                                              |               4 | G1-G5 pass               | Existing executable carriers now hold the deleted pattern's rule content and continuity tag.                                                                                                                                                                                                               |
+| EventReplayInfrastructure    | `libar-platform/architect/specs/platform/event-replay-infrastructure.feature`    | `libar-platform/packages/platform-core/tests/features/behavior/event-replay/replay-progress.feature`                                                                               |               5 | G1-G5 pass               | The replay-progress carrier is the durable runtime proof surface after transfer.                                                                                                                                                                                                                           |
+| EventStoreDurability         | `libar-platform/architect/specs/platform/event-store-durability.feature`         | `libar-platform/packages/platform-core/tests/features/behavior/event-store-durability/`                                                                                            |               7 | G1-G5 pass               | Runtime durability rules now live in the platform-core event-store-durability carrier set.                                                                                                                                                                                                                 |
+| EventStoreFoundation         | `libar-platform/architect/specs/platform/event-store-foundation.feature`         | `libar-platform/packages/platform-store/tests/features/behavior/event-store-foundation-executable-tests.feature`                                                                   |               5 | G1-G5 pass, transitional | Refactoring carve-out carrier. Completed for graph continuity and preserved rule text, not yet runnable. Backlog: `T5-009`, then `T5-010`.                                                                                                                                                                 |
+| ProjectionCategories         | `libar-platform/architect/specs/platform/projection-categories.feature`          | `libar-platform/packages/platform-core/tests/features/behavior/projection-categories/`                                                                                             |               5 | G1-G5 pass               | The stale `tests/unit/projections` pointer was replaced with the real behavior carrier directory before deletion.                                                                                                                                                                                          |
+| ReactiveProjections          | `libar-platform/architect/specs/platform/reactive-projections.feature`           | `libar-platform/packages/platform-core/tests/features/behavior/reactive-projections/`                                                                                              |               5 | G1-G5 pass               | Four executable carriers now preserve the deleted spec's rule set.                                                                                                                                                                                                                                         |
+| ReservationPattern           | `libar-platform/architect/specs/platform/reservation-pattern.feature`            | `libar-platform/packages/platform-core/tests/features/behavior/reservation/`                                                                                                       |               5 | G1-G5 pass               | Reservation behavior already had the right executable surface. The delete removed only the duplicate design carrier.                                                                                                                                                                                       |
+| SagaOrchestration            | `libar-platform/architect/specs/platform/saga-orchestration.feature`             | `libar-platform/packages/platform-core/tests/features/behavior/orchestration/saga-orchestration-executable-tests.feature`                                                          |               5 | G1-G5 pass, transitional | Refactoring carve-out carrier. Completed for continuity, still non-runnable until `T5-009` and `T5-010`.                                                                                                                                                                                                   |
+| WorkpoolPartitioningStrategy | `libar-platform/architect/specs/platform/workpool-partitioning-strategy.feature` | `libar-platform/packages/platform-core/tests/features/behavior/workpool-partitioning/`                                                                                             |               6 | G1-G5 pass               | Three executable carriers now hold the partitioning rule content.                                                                                                                                                                                                                                          |
+| AgentChurnRiskCompletion     | `libar-platform/architect/specs/example-app/agent-churn-risk-completion.feature` | `libar-platform/examples/order-management/tests/features/behavior/agent/`                                                                                                          |               3 | G1-G5 pass               | The canonical carrier is the whole `tests/features/behavior/agent/` directory. `on-complete.feature` now carries the LLM-essential, approval-expiration, and command-to-domain-record rules, so this is no longer a TS-only transfer claim.                                                                |
+| ExampleAppModernization      | `libar-platform/architect/specs/example-app/example-app-modernization.feature`   | `libar-platform/examples/order-management/tests/features/modernization/`                                                                                                           |               4 | G1-G5 pass               | The runtime modernization carriers absorbed the deleted design rules without changing the bare semantic name.                                                                                                                                                                                              |
 
-### META carve-out (Agent 3 — PackageArchitecture)
+### 4.2 Narrative-only deletion exemptions, 2 specs
 
-Provenance paragraph added to `package-architecture.feature` documenting WHY no executable feature is appropriate (pure structural meta-pattern; repository-shape assertions verified by typecheck/build/lint, not Gherkin scenarios). Spec is intentionally retained — by-design exception to the deletion gate.
+These two files were deleted under a separate category. They were not standard gate-passing value transfers because there was no transferable rule content.
 
-### Process Guard unlock-reasons (13 files)
+| Pattern                  | Deleted source spec                                                 | Why the standard gate did not apply                                                                                                                                              | Audit verdict                                                   |
+| ------------------------ | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| ProcessMetadataExpansion | `libar-platform/architect/specs/process-metadata-expansion.feature` | The file had **0 Rule blocks** and **0 invariants**. It was a completion narrative for shipped process metadata work, not a behavioral design spec awaiting executable transfer. | Deleted under a narrative-only, zero-transfer exemption.        |
+| RepoLevelDocsGeneration  | `libar-platform/architect/specs/repo-level-docs-generation.feature` | The file had **0 Rule blocks** and **0 invariants**. It served as a completion record for docs generation tooling that already shipped.                                          | Deleted under the same narrative-only, zero-transfer exemption. |
 
-To pass `architect-guard --staged`:
+This distinction addresses the H4 doctrine review finding directly. These deletions were harmless, but they were not examples of the normal five-step transfer gate.
 
-- 10 files (4 design specs + 6 executable .features) modified at `@architect-status:completed` received `@architect-unlock-reason:value-transfer-add-reverse-tags-and-enrich-rule-blocks-per-new-architect-doctrine`.
-- 3 files (1 saga carve-out + 2 testing/) authored at `@architect-status:completed` received `@architect-unlock-reason:refactoring-carve-out-executable-tests-for-shipped-pattern-predates-implements-convention`.
+## 5. Transitional Carve-Out Disclosure
 
-## Deletion-Ready inventory (21 specs)
+The following carriers are graph-valid, source-of-truth-preserving, and still non-runnable today.
 
-Safe to `git rm` in a follow-up cleanup PR:
+| Semantic pattern         | Transitional carrier                                                                                                      | Current truth                                                                 | Backlog            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------ |
+| BoundedContextFoundation | `libar-platform/packages/platform-bc/tests/features/behavior/bounded-context-foundation-executable-tests.feature`         | Completed record, all transferred scenarios marked `@stub`, harness not wired | `T5-009`, `T5-010` |
+| CommandBusFoundation     | `libar-platform/packages/platform-bus/tests/features/behavior/command-bus-foundation-executable-tests.feature`            | Completed record, all transferred scenarios marked `@stub`, harness not wired | `T5-009`, `T5-010` |
+| EventStoreFoundation     | `libar-platform/packages/platform-store/tests/features/behavior/event-store-foundation-executable-tests.feature`          | Completed record, all transferred scenarios marked `@stub`, harness not wired | `T5-009`, `T5-010` |
+| SagaOrchestration        | `libar-platform/packages/platform-core/tests/features/behavior/orchestration/saga-orchestration-executable-tests.feature` | Completed record, all transferred scenarios marked `@stub`, harness not wired | `T5-009`, `T5-010` |
 
-### Platform (15)
+This is intentional transitional state, not hidden runnable coverage. The branch keeps these carriers because they preserve the semantic graph and transferred rule text now, while the backlog tracks harness wiring and post-wiring expansion separately.
 
-1. `platform/agent-as-bounded-context.feature`
-2. `platform/bdd-testing-infrastructure.feature`
-3. `platform/bounded-context-foundation.feature` _(via ExecutableTests carve-out)_
-4. `platform/command-bus-foundation.feature` _(via ExecutableTests carve-out)_
-5. `platform/decider-pattern.feature`
-6. `platform/durable-events-integration.feature`
-7. `platform/durable-function-adapters.feature`
-8. `platform/dynamic-consistency-boundaries.feature`
-9. `platform/ecst-fat-events.feature`
-10. `platform/event-replay-infrastructure.feature`
-11. `platform/event-store-durability.feature`
-12. `platform/event-store-foundation.feature` _(via ExecutableTests carve-out)_
-13. `platform/projection-categories.feature`
-14. `platform/reactive-projections.feature`
-15. `platform/reservation-pattern.feature`
-16. `platform/saga-orchestration.feature` _(via ExecutableTests carve-out)_
-17. `platform/workpool-partitioning-strategy.feature`
+## 6. Remaining Dangling State After Task 9
 
-### Root-level (2)
+Task 9 fixed the review-listed branch regressions on the F4 and F5 lines. The stable graph is not fully clean yet. The current dangling query reports **12 unresolved edges** that remain unrelated to the completed transfer work.
 
-18. `process-metadata-expansion.feature`
-19. `repo-level-docs-generation.feature`
+| Pattern                                             | Remaining missing references           |
+| --------------------------------------------------- | -------------------------------------- |
+| OrderManagementInfrastructure                       | `Workpool`, `Workflow`                 |
+| Agent Component, Dead Letter Public API, DS-1 Stub  | `AgentDeadLetter`                      |
+| Agent Component Definition, DS-1 Stub               | `AgentBCConfig`                        |
+| Agent Component, Command Public API, DS-1 Stub      | `EmittedAgentCommand`                  |
+| Agent Component, Checkpoint Public API, DS-1 Stub   | `AgentCheckpoint`                      |
+| Agent Component, Audit Public API, DS-1 Stub        | `AgentAuditEvent`                      |
+| Agent Component, Approval Public API, DS-1 Stub     | `PendingApproval`, `HumanInLoopConfig` |
+| Cross-Component Query Types for Agent BC, DS-1 Stub | `AgentBCConfig`                        |
+| OrderCommandHandlers                                | `OrderRepository`                      |
+| InventoryCommandHandlers                            | `InventoryRepository`                  |
 
-### Example-app (3)
+Nothing in this remaining set is a reopened F4 or F5 regression. The cleanup report needs to record that plainly so later sessions do not mistake unrelated graph debt for a failure of the completed transfer work.
 
-20. `example-app/agent-churn-risk-completion.feature` _(forward link repointed; Rules 2-3 are TS-only coverage)_
-21. `example-app/example-app-modernization.feature`
+## 7. Still Blocked And Kept Specs
 
-### Stubs to bundle-delete with parents
+| Pattern                        | Current blocker                                                                                                                                        | Why it still stays                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| ConfirmedOrderCancellation     | The spec is still `@architect-status:active` even though the rule transfer is complete.                                                                | Deletion waits on the honest FSM transition to `completed`. This is a workflow-truth blocker, not a missing transfer blocker. |
+| AgentCommandInfrastructure     | The supposed carrier directory still does not exist as a truthful boundary and the semantic coverage remains mixed into the parent agent behavior set. | Needs a targeted refactor session to repoint carriers and add continuity tags before deletion can be honest.                  |
+| CodecDrivenReferenceGeneration | The old forward link still points at a non-existent location and the live executable truth is split under a different semantic name.                   | Needs a naming decision and continuity repair before any delete is safe.                                                      |
 
-- `libar-platform/architect/stubs/testing-bdd-infrastructure/` _(BddTestingInfrastructure parent ready)_
-- `libar-platform/architect/stubs/agent-command-routing/` and `agent-lifecycle-fsm/` are blocked on AgentCommandInfrastructure resolution (see §A.STILL_BLOCKED).
-- Other stubs (production-hardening, agent-action-handler, agent-component-isolation, integration-patterns) stay — parents are roadmap or active.
+## 8. Retained Non-Deleted Specs
 
-## Still blocked (3 specs)
+### 8.1 Meta exemption, keep
 
-| Pattern                            | Spec File                                       | Blocker                                                                                                                                                                                                                                    | Path forward                                                                                                                                                                                                                                                                                                                                  |
-| ---------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ConfirmedOrderCancellation**     | `platform/confirmed-order-cancellation.feature` | Status is `active` despite 8/8 deliverables done. Reverse links + Rule transfer NOW IN PLACE — gate fails ONLY on FSM status.                                                                                                              | Run `architect-implement-spec` session → transition `active → completed` with empty deliverables-completion change. Then re-evaluate gate.                                                                                                                                                                                                    |
-| **AgentCommandInfrastructure**     | `platform/agent-command-infrastructure.feature` | Forward link points at `behavior/agent/command-infrastructure/` which does not exist as a sub-dir; tests are mixed into the parent `behavior/agent/` folder (which is `AgentAsBoundedContext`'s target). Reverse links missing.            | Run `architect-refactor-session` → repoint forward link to specific files in `behavior/agent/` (e.g. `commands.feature`, `command-router.feature`, `command-bridge.feature`) AND add `@architect-implements:AgentCommandInfrastructure` reverse tags. Then bundle-delete `agent-command-routing/` + `agent-lifecycle-fsm/` stubs with parent. |
-| **CodecDrivenReferenceGeneration** | `codec-driven-reference-generation.feature`     | Forward link points at non-existent `reference-generation/`. Real tests in `deps-packages/architect/tests/features/behavior/codecs/reference-codec-*.feature` carry `@architect-implements:ReferenceDocShowcase` (different pattern name). | **Decision required**: (a) repoint + rename reverse tag, OR (b) accept `ReferenceDocShowcase` as canonical and delete this spec since value has transferred under a different pattern name. **Recommend (b)** per new doctrine: executable feature is canonical.                                                                              |
+| Pattern             | Why it stays                                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| PackageArchitecture | Structural policy record. It is not honest to force this into an executable behavior carrier, so the spec remains the durable source. |
 
-## Active specs (4)
+### 8.2 Active keep
 
-| Pattern                    | Verdict                            | Notes                                                                         |
-| -------------------------- | ---------------------------------- | ----------------------------------------------------------------------------- |
-| ConfirmedOrderCancellation | **TRANSITION** then deletion-ready | 8/8 deliverables done; FSM transition out of scope for value-transfer session |
-| AgentBCComponentIsolation  | KEEP                               | In-flight Phase 22a; blocks AgentLLMIntegration                               |
-| AgentLLMIntegration        | KEEP                               | In-flight Phase 22b; blocked by AgentBCComponentIsolation                     |
-| ProcessEnhancements        | KEEP                               | Phase 100 epic                                                                |
+| Pattern                   | Why it stays                                                     |
+| ------------------------- | ---------------------------------------------------------------- |
+| AgentBCComponentIsolation | In-flight implementation work. Not deletion-eligible.            |
+| AgentLLMIntegration       | In-flight work and still blocked by `AgentBCComponentIsolation`. |
+| ProcessEnhancements       | Phase 100 epic, still planning-owned.                            |
 
-## Roadmap specs (15)
+### 8.3 Roadmap keep
 
-### Keep (12) — genuine future work, doctrine-aligned
+`AdminToolingConsolidation`, `CircuitBreakerPattern`, `ComponentBoundaryAuthenticationConvention`, `DeterministicIdHashing`, `EventCorrectnessMigration`, `HealthObservability`, `IntegrationPatterns21a`, `IntegrationPatterns21b`, `ProductionHardening`, `Tranche0ReadinessHarness`, `Tranche0ReleaseCiDocsProcessGuardrails`, `Tranche1SupportingSecurityContractSweep`.
 
-AdminToolingConsolidation, CircuitBreakerPattern, ComponentBoundaryAuthenticationConvention, DeterministicIdHashing, EventCorrectnessMigration, HealthObservability, IntegrationPatterns21a, IntegrationPatterns21b, ProductionHardening, Tranche0ReadinessHarness, Tranche0ReleaseCiDocsProcessGuardrails, Tranche1SupportingSecurityContractSweep.
+### 8.4 Roadmap reclassify
 
-### Reclassify (3) — re-tier in follow-up `architect-plan-session`
+- `TestContentBlocks`
+- `ThemedDecisionArchitecture`
+- `AgentAdminFrontend`
 
-- **TestContentBlocks** → `architect/specs/candidates/` (pedagogical demo, minimal substance)
-- **ThemedDecisionArchitecture** → `architect/specs/candidates/` (documentation enhancement, no critical path)
-- **AgentAdminFrontend** → `architect/specs/candidates/` until frontend app is scaffolded (references non-existent `apps/frontend/`)
+## 9. Docs-Living Parity Requirement
 
-## Recommended next steps
-
-### A. Cleanup PR — deletion of 21 ready specs
-
-After review, the cleanup PR should:
-
-1. `git rm` the 21 deletion-ready design specs listed above.
-2. `git rm -r libar-platform/architect/stubs/testing-bdd-infrastructure/`.
-3. `pnpm docs:all` to regenerate `docs-living/PATTERNS.md`, `ROADMAP.md`, timeline.
-4. `pnpm architect-guard --all --strict` final validation.
-
-### B. Follow-up sessions (separate PRs)
-
-1. `architect-implement-spec` for ConfirmedOrderCancellation FSM transition (then bundle-delete in subsequent cleanup).
-2. `architect-refactor-session` for AgentCommandInfrastructure test consolidation + reverse tags (then bundle-delete with `agent-command-routing/` + `agent-lifecycle-fsm/` stubs).
-3. Decision on CodecDrivenReferenceGeneration — recommend deleting under (b) above.
-4. `architect-plan-session` per spec for the 3 reclassify candidates.
-5. Architect package upgrade — install new version, swap CLI prefix, replace skills, re-validate the full graph.
-
----
-
-# §B — Original Audit (pre-transfer baseline)
-
-This section preserves the original 5-bucket categorization captured at session start, before any value-transfer execution. Useful for understanding what changed and why.
-
-| Bucket (original)           | Count | Resolution in §A                                                                                                                                                                                                                                                                         |
-| --------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Deletion-ready immediately  |    12 | All deleted-ready (unchanged)                                                                                                                                                                                                                                                            |
-| Mechanical-patch fixable    |     5 | 4 executed → deletion-ready (BddTesting, ReactiveProjections, ProjectionCategories, DurableEventsIntegration). 1 still blocked (CodecDrivenReferenceGeneration — decision required).                                                                                                     |
-| Deeper investigation needed |     7 | 4 resolved via ExecutableTests carve-out (Bounded Context, Command Bus, Event Store, Saga Foundations) → deletion-ready. 1 retained as META exempt (PackageArchitecture). 2 still blocked (AgentCommandInfrastructure, AgentChurnRiskCompletion → resolved by Agent 2 → deletion-ready). |
-| Active – keep               |     4 | 3 keep + 1 transition (ConfirmedOrderCancellation deliverables 8/8)                                                                                                                                                                                                                      |
-| Roadmap – keep / reclassify |    15 | 12 keep + 3 reclassify (no change)                                                                                                                                                                                                                                                       |
-
-## Doctrine reference
-
-This work applies the new architect package's value-transfer doctrine. Authoritative sources:
-
-- `architect-studio/packages/architect-claude-plugin/skills/_shared/value-transfer.md` — pre-deletion gate (5 criteria), transfer checklist, anti-patterns.
-- `architect-studio/packages/architect-claude-plugin/skills/_shared/annotation-ownership.md` — production-TS JSDoc annotations are **additive, not mandatory**.
-- `architect-studio/packages/architect-claude-plugin/skills/_shared/spec-pattern-relationships.md` — bipartite production↔test pattern graph, `*ExecutableTests` escape hatch for shipped code.
-- `architect-studio/packages/architect-claude-plugin/skills/_shared/four-tier-ladder.md` — `idea → candidate → plan → design` maturity ladder.
-- `architect-studio/packages/architect-claude-plugin/skills/_shared/fsm-transitions.md` — Process Guard FSM (`roadmap → active → completed`) vs. acceptance-gate maturity flips. Unlock-reason rules (≥10 chars, no placeholders).
-
-## The 5-criterion pre-deletion gate
-
-A design spec is safe to delete only when **all** of:
-
-1. **Forward link present** — design spec carries `@architect-executable-specs:<path>`.
-2. **Forward link resolves** — path points at a real file/dir under `tests/features/`.
-3. **Reverse link present** — that target carries `@architect-implements:<Pattern>` for the focal pattern.
-4. **Rich content has landed** — every Rule block in the design spec has a counterpart Rule block in the executable feature carrying `**Invariant:**` (and `**Rationale:** / **Verified by:**` where authored).
-5. **Architecturally significant rationale lives in JSDoc** — judgment call; annotations are additive.
-
-## Glossary
-
-- **DELETION_READY** — All 5 pre-deletion gate criteria satisfied; safe to `git rm`.
-- **STILL_BLOCKED** — Gate fails on substantive issues requiring a dedicated session.
-- **META exempt** — Pattern is structural metadata; deletion gate does not apply (PackageArchitecture).
-- **ExecutableTests carve-out** — Formal escape hatch for shipped code that predates the `@architect-implements:` convention. Authored under refactoring carve-out per `_shared/spec-pattern-relationships.md`.
-- **TRANSITION** — FSM status flip needed (most often `active` → `completed`).
-- **MINIMAL_STUB / RECLASSIFY** — Spec belongs in `candidates/` or `ideas/` per the four-tier ladder.
+The generated docs under `libar-platform/docs-living/` are projections of this source graph. They must always be regenerated after spec deletions or carrier-link changes. This report should be read together with a successful `pnpm docs:all` run and a clean parity check on `libar-platform/docs-living/`.

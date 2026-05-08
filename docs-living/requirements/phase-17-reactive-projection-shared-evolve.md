@@ -15,8 +15,8 @@
 ## Description
 
 As a platform developer
-I want evolve logic shared between client and server
-So that state transformations are always consistent
+  I want evolve logic shared between client and server
+  So that state transformations are always consistent
 
 ## Acceptance Criteria
 

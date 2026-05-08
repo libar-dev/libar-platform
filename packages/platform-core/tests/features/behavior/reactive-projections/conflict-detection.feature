@@ -87,25 +87,17 @@ Feature: Conflict Detection and Rollback
       | 5,6,7     | 10        |           |
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: Conflict detection triggers rollback
-
-    **Invariant:** Optimistic state is discarded whenever it conflicts with the
-    durable projection. A conflict is any divergence between the optimistic
-    overlay and the durable view at a shared globalPosition (different event
-    ids, or stale optimism past the staleness threshold). Non-conflicting
-    optimism (durable lagging behind optimistic on the same event branch) is
-    preserved until durable catches up.
-
-    **Rationale:** Optimistic UI must never produce a state that contradicts
-    the durable record of truth. Detect-and-rollback is the simplest model
-    that preserves data integrity while still allowing optimism: the user sees
-    a brief correction rather than a permanently incorrect view.
-
-    **Verified by:** Conflicting optimistic update is rolled back,
-    Conflict detection handles network partition,
-    No conflict when optimistic is ahead of durable,
-    Rollback triggers UI notification,
-    Partial clearing preserves unconfirmed events
+  # Invariant: Optimistic state is discarded whenever it conflicts with the
+  # durable projection. A conflict is any divergence between the optimistic
+  # overlay and the durable view at a shared globalPosition (different event
+  # ids, or stale optimism past the staleness threshold). Non-conflicting
+  # optimism (durable lagging behind optimistic on the same event branch) is
+  # preserved until durable catches up.
+  # Rationale: Optimistic UI must never produce a state that contradicts
+  # the durable record of truth. Detect-and-rollback is the simplest model
+  # that preserves data integrity while still allowing optimism: the user sees
+  # a brief correction rather than a permanently incorrect view.
+  # Covered by executable conflict, convergence, notification, and clearing scenarios above.

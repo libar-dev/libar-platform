@@ -15,8 +15,8 @@
 ## Description
 
 As a platform developer
-I want conflicts detected and resolved automatically
-So that data integrity is maintained despite optimistic updates
+  I want conflicts detected and resolved automatically
+  So that data integrity is maintained despite optimistic updates
 
 ## Acceptance Criteria
 

@@ -6,14 +6,14 @@
 
 ## Progress
 
-**Progress:** [████████░░░░░░░░░░░░] 3/8 (38%)
+**Progress:** [███░░░░░░░░░░░░░░░░░] 1/6 (17%)
 
 | Status      | Count |
 | ----------- | ----- |
-| ✅ Completed | 3     |
+| ✅ Completed | 1     |
 | 🚧 Active   | 4     |
 | 📋 Planned  | 1     |
-| **Total**   | 8     |
+| **Total**   | 6     |
 
 ---
 
@@ -80,7 +80,6 @@ This example implements a churn risk agent that:
 
 #### Dependencies
 
-- Depends on: IntegrationPatterns
 - Depends on: ReactiveProjections
 
 ---
@@ -933,11 +932,9 @@ _Verified by: Three cancellations trigger churn risk agent_
 
 ## ✅ Recently Completed
 
-| Pattern                        | Description                                                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| ✅ Agent As Bounded Context     | Problem: AI agents are invoked manually without integration into the event-driven architecture.                     |
-| ✅ Agent Churn Risk Completion  | Problem: The churn-risk agent in the order-management example app has working infrastructure from Phases 22a-22c... |
-| ✅ Agent Command Infrastructure | Problem: Three interconnected gaps in agent command infrastructure: 1.                                              |
+| Pattern                        | Description                                                            |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| ✅ Agent Command Infrastructure | Problem: Three interconnected gaps in agent command infrastructure: 1. |
 
 ---
 

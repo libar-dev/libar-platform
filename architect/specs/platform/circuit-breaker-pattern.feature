@@ -6,7 +6,6 @@
 @architect-effort:1w
 @architect-product-area:Platform
 @architect-business-value:external-service-resilience-and-budget-preservation
-@architect-depends-on:DurableFunctionAdapters
 @architect-executable-specs:libar-platform/packages/platform-core/tests/features/behavior/circuit-breaker
 Feature: Circuit Breaker Pattern - External Service Resilience
 

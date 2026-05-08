@@ -3,7 +3,6 @@
  * @architect-pattern CorrelationChainSystem
  * @architect-status completed
  * @architect-phase 09
- * @architect-uses EventStoreFoundation
  * @architect-used-by CommandOrchestrator, SagaOrchestration
  *
  * ## Correlation Chain - Request Tracing

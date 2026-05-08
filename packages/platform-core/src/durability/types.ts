@@ -16,11 +16,10 @@
  *
  * ### When to Use
  *
- * Import these types when implementing any durability pattern. They provide
- * the shared vocabulary for event append operations, outbox handling,
- * cross-context publication, and failure recovery.
+ * - Implementing any platform durability helper or app-side durable handler
+ * - Sharing a common type vocabulary for event append, publication, and recovery flows
+ * - Typing retry-safe interfaces passed between platform-core and mounted components
  *
- * @architect-uses EventStoreFoundation, DurableFunctionAdapters, Workpool
  * @architect-used-by idempotentAppend, outbox, durableAppend, publication, intentCompletion, poisonEvent
  */
 

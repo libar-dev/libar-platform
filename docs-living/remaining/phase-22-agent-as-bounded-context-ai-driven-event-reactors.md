@@ -24,10 +24,10 @@
 
 ### 🚧 Agent as Bounded Context - AI-Driven Event Reactors
 
-| Property     | Value                                    |
-| ------------ | ---------------------------------------- |
-| Status       | active                                   |
-| Dependencies | IntegrationPatterns, ReactiveProjections |
+| Property     | Value               |
+| ------------ | ------------------- |
+| Status       | active              |
+| Dependencies | ReactiveProjections |
 
 ## Agent as Bounded Context - AI-Driven Event Reactors
 

@@ -10,7 +10,6 @@
  * @architect
  * @architect-implements ExampleAppModernization
  * @architect-status roadmap
- * @architect-uses DynamicConsistencyBoundaries, ReservationPattern
  *
  * @since Phase 23 (Example App Modernization - Rule 1)
  */

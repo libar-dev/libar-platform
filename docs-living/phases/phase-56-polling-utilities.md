@@ -8,12 +8,12 @@
 
 **Progress:** [████████████████████] 1/1 (100%)
 
-| Status       | Count |
-| ------------ | ----- |
+| Status      | Count |
+| ----------- | ----- |
 | ✅ Completed | 1     |
-| 🚧 Active    | 0     |
-| 📋 Planned   | 0     |
-| **Total**    | 1     |
+| 🚧 Active   | 0     |
+| 📋 Planned  | 0     |
+| **Total**   | 1     |
 
 ---
 
@@ -29,12 +29,12 @@
 | Business Value | enable async condition waiting in tests |
 
 As a developer writing integration tests
-I want async polling utilities
-So that I can wait for eventual consistency patterns
+  I want async polling utilities
+  So that I can wait for eventual consistency patterns
 
-The polling module provides utilities for waiting on async conditions,
-essential when testing projections processed via Workpool or other
-eventually consistent patterns.
+  The polling module provides utilities for waiting on async conditions,
+  essential when testing projections processed via Workpool or other
+  eventually consistent patterns.
 
 #### Acceptance Criteria
 

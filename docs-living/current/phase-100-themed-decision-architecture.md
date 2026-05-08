@@ -6,14 +6,14 @@
 
 ## Progress
 
-**Progress:** [██████████░░░░░░░░░░] 3/6 (50%)
+**Progress:** [█████░░░░░░░░░░░░░░░] 1/4 (25%)
 
 | Status      | Count |
 | ----------- | ----- |
-| ✅ Completed | 3     |
+| ✅ Completed | 1     |
 | 🚧 Active   | 1     |
 | 📋 Planned  | 2     |
-| **Total**   | 6     |
+| **Total**   | 4     |
 
 ---
 
@@ -73,11 +73,9 @@
 
 ## ✅ Recently Completed
 
-| Pattern                             | Description                                                                                                     |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| ✅ Codec Driven Reference Generation | Reference documentation is specified via 11 recipe `.feature` files in `architect/recipes/`.                    |
-| ✅ Process Metadata Expansion        | The monorepo's delivery process lacked metadata tags for variance tracking, governance, and hierarchical views. |
-| ✅ Repo Level Docs Generation        | As a monorepo maintainer, I want unified documentation generation from multiple sources.                        |
+| Pattern                             | Description                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- |
+| ✅ Codec Driven Reference Generation | Reference documentation is specified via 11 recipe `.feature` files in `architect/recipes/`. |
 
 ---
 

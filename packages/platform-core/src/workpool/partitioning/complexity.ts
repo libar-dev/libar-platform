@@ -9,6 +9,12 @@
  * Analyzes projection characteristics and recommends appropriate
  * partition strategies using a decision tree approach.
  *
+ * ### When to Use
+ *
+ * - Choosing a partition strategy for a new projection based on its data shape
+ * - Explaining why a projection should serialize globally or partition more narrowly
+ * - Converting architectural projection traits into a concrete Workpool recommendation
+ *
  * ### Decision Tree
  *
  * ```

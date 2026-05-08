@@ -7,7 +7,7 @@
  * Uses convex-test for isolated testing with mocked DB.
  */
 import { loadFeature, describeFeature } from "@amiceli/vitest-cucumber";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 import { api, internal } from "../../../convex/_generated/api";
 import { createUnitTestContext } from "../../support/setup";
 import type { WorkId } from "@convex-dev/workpool";
@@ -43,6 +43,14 @@ interface TestState {
     globalPosition: number;
     [key: string]: unknown;
   } | null;
+  approvalId: string | null;
+  approval: Record<string, unknown> | null;
+  approvalActionResult: { success: boolean; error?: string } | null;
+  decisionId: string | null;
+  command: Record<string, unknown> | null;
+  outreachTask: Record<string, unknown> | null;
+  outreachEvents: Array<Record<string, unknown>>;
+  currentCustomerId: string | null;
 }
 
 function createInitialState(): TestState {
@@ -50,6 +58,14 @@ function createInitialState(): TestState {
     t: createUnitTestContext(),
     deadLetterCount: 0,
     deadLetter: null,
+    approvalId: null,
+    approval: null,
+    approvalActionResult: null,
+    decisionId: null,
+    command: null,
+    outreachTask: null,
+    outreachEvents: [],
+    currentCustomerId: null,
   };
 }
 
@@ -79,15 +95,128 @@ async function refreshDeadLetterState() {
     ) as TestState["deadLetter"]) ?? null;
 }
 
+function parseExpectedValue(value: string): string | number | boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+
+  const numeric = Number(value);
+  return Number.isNaN(numeric) ? value : numeric;
+}
+
+function expectRecordToMatch(
+  record: Record<string, unknown> | null,
+  table: Array<{ field: string; value: string }>
+) {
+  expect(record).not.toBeNull();
+  for (const row of table) {
+    expect(record![row.field]).toBe(parseExpectedValue(row.value));
+  }
+}
+
+async function invokeSuccessfulOnComplete(args: {
+  workId: string;
+  decisionId: string;
+  customerId: string;
+  riskLevel?: "high" | "medium" | "low";
+  cancellationCount?: number;
+  confidence?: number;
+  requiresApproval: boolean;
+}) {
+  state.decisionId = args.decisionId;
+  state.currentCustomerId = args.customerId;
+  state.approvalId = args.requiresApproval ? `apr_${args.decisionId}` : null;
+
+  await state.t.mutation(internal.contexts.agent.handlers.onComplete.handleChurnRiskOnComplete, {
+    workId: toWorkId(args.workId),
+    context: baseContext,
+    result: {
+      kind: "success",
+      returnValue: {
+        decisionId: args.decisionId,
+        decision: {
+          command: "SuggestCustomerOutreach",
+          payload: {
+            customerId: args.customerId,
+            riskLevel: args.riskLevel ?? "high",
+            cancellationCount: args.cancellationCount ?? 4,
+          },
+          confidence: args.confidence ?? 0.92,
+          reason: "Customer crossed churn threshold",
+          requiresApproval: args.requiresApproval,
+          triggeringEvents: [baseContext.eventId],
+        },
+        analysisMethod: "rule-based",
+        patternId: "churn-risk-threshold",
+      },
+    },
+  });
+}
+
+async function refreshApprovalState() {
+  if (!state.approvalId) {
+    state.approval = null;
+    return;
+  }
+
+  const approval = await state.t.query(api.queries.agent.getApprovalById, {
+    approvalId: state.approvalId,
+  });
+  state.approval = (approval as Record<string, unknown> | null) ?? null;
+}
+
+async function refreshCommandState() {
+  if (!state.decisionId) {
+    state.command = null;
+    return;
+  }
+
+  const command = await state.t.query(api.testingFunctions.getAgentCommandByDecisionId, {
+    decisionId: state.decisionId,
+  });
+  state.command = (command as Record<string, unknown> | null) ?? null;
+}
+
+async function refreshOutreachState() {
+  if (!state.currentCustomerId) {
+    state.outreachTask = null;
+    state.outreachEvents = [];
+    return;
+  }
+
+  const outreachTasks = await state.t.query(api.testing.getTestOutreachTasks, {
+    customerId: state.currentCustomerId,
+    limit: 10,
+  });
+
+  const outreachTask = (outreachTasks[0] ?? null) as Record<string, unknown> | null;
+  state.outreachTask = outreachTask;
+
+  if (!outreachTask || typeof outreachTask["outreachId"] !== "string") {
+    state.outreachEvents = [];
+    return;
+  }
+
+  const events = await state.t.query(api.testingFunctions.getEventsForStream, {
+    streamType: "Outreach",
+    streamId: outreachTask["outreachId"],
+  });
+
+  state.outreachEvents = events as Array<Record<string, unknown>>;
+}
+
 // =============================================================================
 // Feature
 // =============================================================================
 
 const feature = await loadFeature("tests/features/behavior/agent/on-complete.feature");
 
-describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
+describeFeature(feature, ({ Rule, Background, BeforeEachScenario, AfterEachScenario }) => {
   BeforeEachScenario(() => {
     state = createInitialState();
+  });
+
+  AfterEachScenario(() => {
+    vi.useRealTimers();
   });
 
   Background(({ Given }) => {
@@ -171,12 +300,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
       And(
         "the dead letter for the event should have:",
         (_ctx: unknown, table: Array<{ field: string; value: string }>) => {
-          expect(state.deadLetter).not.toBeNull();
-          for (const row of table) {
-            const actual = state.deadLetter![row.field];
-            const expected = isNaN(Number(row.value)) ? row.value : Number(row.value);
-            expect(actual).toBe(expected);
-          }
+          expectRecordToMatch(state.deadLetter, table);
         }
       );
     });
@@ -221,12 +345,7 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
       And(
         "the dead letter for the event should have:",
         (_ctx: unknown, table: Array<{ field: string; value: string }>) => {
-          expect(state.deadLetter).not.toBeNull();
-          for (const row of table) {
-            const actual = state.deadLetter![row.field];
-            const expected = isNaN(Number(row.value)) ? row.value : Number(row.value);
-            expect(actual).toBe(expected);
-          }
+          expectRecordToMatch(state.deadLetter, table);
         }
       );
     });
@@ -274,14 +393,173 @@ describeFeature(feature, ({ Rule, Background, BeforeEachScenario }) => {
       Then(
         "the dead letter for the event should have:",
         (_ctx: unknown, table: Array<{ field: string; value: string }>) => {
-          expect(state.deadLetter).not.toBeNull();
-          for (const row of table) {
-            const actual = state.deadLetter![row.field];
-            const expected = isNaN(Number(row.value)) ? row.value : Number(row.value);
-            expect(actual).toBe(expected);
-          }
+          expectRecordToMatch(state.deadLetter, table);
         }
       );
     });
+  });
+
+  // ===========================================================================
+  // Rule: Approvals expire after configured timeout
+  // ===========================================================================
+
+  Rule("Approvals expire after configured timeout", ({ RuleScenario }) => {
+    RuleScenario("Cron expires approval after timeout", ({ When, And, Then }) => {
+      When(
+        'the onComplete handler records a pending approval for customer "cust_expired"',
+        async () => {
+          vi.useFakeTimers();
+          vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+
+          await invokeSuccessfulOnComplete({
+            workId: "work_6a",
+            decisionId: "dec_expired_approval",
+            customerId: "cust_expired",
+            requiresApproval: true,
+            confidence: 0.74,
+          });
+          await refreshApprovalState();
+        }
+      );
+
+      And("approval expiration runs after the timeout elapses", async () => {
+        vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1);
+        await state.t.mutation(api.testingFunctions.testExpirePendingApprovals, {});
+        await refreshApprovalState();
+      });
+
+      Then(
+        "the pending approval should have:",
+        (_ctx: unknown, table: Array<{ field: string; value: string }>) => {
+          expectRecordToMatch(state.approval, table);
+        }
+      );
+
+      And('an "ApprovalExpired" audit event should exist for the pending approval', async () => {
+        expect(state.approvalId).not.toBeNull();
+        const auditEvents = await state.t.query(api.queries.agent.getAuditEvents, {
+          agentId: AGENT_ID,
+          eventType: "ApprovalExpired",
+          limit: 20,
+        });
+
+        expect(
+          auditEvents.some(
+            (event: { payload?: { approvalId?: string } }) =>
+              event.payload?.approvalId === state.approvalId
+          )
+        ).toBe(true);
+      });
+    });
+
+    RuleScenario("Expired approval cannot be approved", ({ When, And, Then }) => {
+      When(
+        'the onComplete handler records a pending approval for customer "cust_expired_review"',
+        async () => {
+          vi.useFakeTimers();
+          vi.setSystemTime(new Date("2026-01-02T00:00:00.000Z"));
+
+          await invokeSuccessfulOnComplete({
+            workId: "work_6b",
+            decisionId: "dec_expired_review",
+            customerId: "cust_expired_review",
+            requiresApproval: true,
+            confidence: 0.71,
+          });
+          await refreshApprovalState();
+        }
+      );
+
+      And("approval expiration runs after the timeout elapses", async () => {
+        vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1);
+        await state.t.mutation(api.testingFunctions.testExpirePendingApprovals, {});
+        await refreshApprovalState();
+      });
+
+      And('reviewer "reviewer_late" attempts to approve the expired action', async () => {
+        expect(state.approvalId).not.toBeNull();
+        state.approvalActionResult = await state.t.mutation(
+          api.testingFunctions.testApproveAgentAction,
+          {
+            approvalId: state.approvalId!,
+            reviewerId: "reviewer_late",
+          }
+        );
+      });
+
+      Then('the approval action should fail with error "INVALID_STATUS_TRANSITION"', () => {
+        expect(state.approvalActionResult).toEqual({
+          success: false,
+          error: "INVALID_STATUS_TRANSITION",
+        });
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Rule: Emitted commands create real domain records
+  // ===========================================================================
+
+  Rule("Emitted commands create real domain records", ({ RuleScenario }) => {
+    RuleScenario(
+      "SuggestCustomerOutreach creates outreach record and emits event",
+      ({ When, And, Then }) => {
+        When(
+          'the onComplete handler auto-executes a SuggestCustomerOutreach command for customer "cust_outreach_123"',
+          async () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date("2026-01-03T00:00:00.000Z"));
+
+            await invokeSuccessfulOnComplete({
+              workId: "work_7a",
+              decisionId: "dec_auto_outreach",
+              customerId: "cust_outreach_123",
+              requiresApproval: false,
+              confidence: 0.95,
+            });
+            await refreshCommandState();
+          }
+        );
+
+        And("scheduled command routing completes", async () => {
+          await state.t.finishAllScheduledFunctions(vi.runAllTimers);
+          await refreshCommandState();
+          await refreshOutreachState();
+        });
+
+        Then(
+          "the recorded command should have:",
+          (_ctx: unknown, table: Array<{ field: string; value: string }>) => {
+            expectRecordToMatch(state.command, table);
+          }
+        );
+
+        And(
+          "the outreach task should have:",
+          (_ctx: unknown, table: Array<{ field: string; value: string }>) => {
+            expectRecordToMatch(state.outreachTask, table);
+          }
+        );
+
+        And('an "OutreachCreated" event should be emitted for the outreach task', () => {
+          expect(state.outreachEvents.length).toBeGreaterThan(0);
+
+          const createdEvent = state.outreachEvents.find(
+            (event) => event["eventType"] === "OutreachCreated"
+          );
+
+          expect(createdEvent).toBeDefined();
+          expect((createdEvent?.payload as Record<string, unknown>)?.customerId).toBe(
+            "cust_outreach_123"
+          );
+          expect((createdEvent?.payload as Record<string, unknown>)?.agentId).toBe(AGENT_ID);
+          expect((createdEvent?.payload as Record<string, unknown>)?.riskLevel).toBe("high");
+          expect((createdEvent?.payload as Record<string, unknown>)?.cancellationCount).toBe(4);
+          expect((createdEvent?.payload as Record<string, unknown>)?.correlationId).toBe(
+            baseContext.correlationId
+          );
+        });
+      }
+    );
   });
 });

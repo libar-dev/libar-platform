@@ -31,6 +31,12 @@ It will be called regardless of action success/failure/cancel. If the
 - If OCC exhausted, the failure is logged for manual recovery
 - The `context` parameter preserves all data needed for recovery
 
+### When to Use
+
+- Capturing external side-effect outcomes as domain events after actions finish
+- Preserving recovery context for retries or manual reconciliation
+- Converting action success and failure paths into the same event-store workflow
+
 ### Usage
 
 ```typescript

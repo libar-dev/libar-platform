@@ -71,7 +71,6 @@ This example implements a churn risk agent that:
 
 ## Dependencies
 
-- Depends on: IntegrationPatterns
 - Depends on: ReactiveProjections
 
 ---

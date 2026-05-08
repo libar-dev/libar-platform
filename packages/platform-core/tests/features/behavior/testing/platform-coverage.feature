@@ -162,34 +162,22 @@ Feature: Platform Package BDD Coverage
       Then steps should be in "steps/decider/outputs.steps.ts" or "steps/decider.steps.ts"
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
   # ============================================================================
 
-  Rule: All domain-logic tests are Gherkin
+  # Invariant: Domain logic — deciders, FSM transitions, invariants — is tested
+  # exclusively through .feature files using Given/When/Then. No describe/it/.test.ts
+  # files exist for domain logic in platform packages or in example apps under
+  # tests/features/.
+  # Rationale: Pure deciders map cleanly onto State (Given) → Command (When) →
+  # Outcome (Then). Mixing styles fragments the documentation surface and lets
+  # opaque assertion-style tests grow back into the codebase. A single style
+  # produces uniform living documentation.
 
-    **Invariant:** Domain logic — deciders, FSM transitions, invariants — is
-    tested exclusively through .feature files using Given/When/Then. No
-    describe/it/.test.ts files exist for domain logic in platform packages
-    or in example apps under tests/features/.
-
-    **Rationale:** Pure deciders map cleanly onto State (Given) → Command
-    (When) → Outcome (Then). Mixing styles fragments the documentation
-    surface and lets opaque assertion-style tests grow back into the codebase.
-    A single style produces uniform living documentation.
-
-    **Verified by:** Step definitions follow naming convention,
-    Step file matches feature file
-
-  Rule: Pure deciders enable infrastructure-free unit tests
-
-    **Invariant:** Decider unit tests run without Docker, without a database
-    connection, and without any external infrastructure. A decider unit test
-    suite completes in under 100ms per scenario on developer hardware.
-
-    **Rationale:** Pure functions have no I/O surface to mock — Given is just
-    state, When is just a command record, Then asserts on the returned event
-    or error. Removing infrastructure from the test path is what makes BDD
-    feedback loops fast enough to run on every save.
-
-    **Verified by:** Package has feature directory - platform-core,
-    Package has feature directory - platform-decider
+  # Invariant: Decider unit tests run without Docker, without a database connection,
+  # and without any external infrastructure. A decider unit test suite completes in
+  # under 100ms per scenario on developer hardware.
+  # Rationale: Pure functions have no I/O surface to mock — Given is just state,
+  # When is just a command record, Then asserts on the returned event or error.
+  # Removing infrastructure from the test path is what makes BDD feedback loops
+  # fast enough to run on every save.

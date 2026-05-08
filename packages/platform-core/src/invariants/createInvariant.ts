@@ -4,7 +4,6 @@
  * @architect-status completed
  * @architect-phase 11
  * @architect-ddd
- * @architect-uses BoundedContextFoundation
  *
  * ## Invariant Framework - Declarative Business Rules
  *
