@@ -124,37 +124,33 @@ Feature: Cancel Order (Integration)
     And the product "prod-expired-01" should have 90 available and 10 reserved stock
 
   # ============================================================================
-  # Documentation-only Rules (preserved invariants — not bound to step callbacks)
+  # Non-executable Invariants
+  # (Comment form — actual `Rule:` keywords cause vitest-cucumber to hang when
+  # the steps file does not register Rule(...)/RuleScenario(...) callbacks.)
   # ============================================================================
 
-  Rule: Confirmed orders can be cancelled
+  # Invariant (Confirmed orders can be cancelled): The Order FSM allows
+  # transitioning from `confirmed` to `cancelled`, and the projection reflects
+  # the cancellation. Cancellation of already-cancelled orders is rejected with
+  # ORDER_ALREADY_CANCELLED.
+  # Rationale: Allowing post-confirmation cancellation enables real-world refund
+  # flows and the churn-risk Agent BC demo, while preserving idempotency on
+  # terminal states.
+  # Verified by: Cancel draft order and verify projection, Cancel submitted order
+  # and verify projection, Cancel confirmed order and verify projection, Reject
+  # cancelling already cancelled order
 
-    **Invariant:** The Order FSM allows transitioning from `confirmed` to `cancelled`,
-    and the projection reflects the cancellation. Cancellation of already-cancelled
-    orders is rejected with ORDER_ALREADY_CANCELLED.
-
-    **Rationale:** Allowing post-confirmation cancellation enables real-world refund
-    flows and the churn-risk Agent BC demo, while preserving idempotency on terminal
-    states.
-
-    **Verified by:** Cancel draft order and verify projection, Cancel submitted order
-    and verify projection, Cancel confirmed order and verify projection, Reject
-    cancelling already cancelled order
-
-  Rule: Reservation is released when confirmed order is cancelled
-
-    **Invariant:** When a confirmed order with an active reservation is cancelled, the
-    ReservationReleaseOnOrderCancel process manager releases the reservation and stock
-    returns to the available pool. The PM is idempotent and skips reservations that
-    are already released or expired.
-
-    **Rationale:** Order and Reservation bounded contexts must stay synchronized
-    without compensation logic — a Process Manager (per ADR-033) is the right
-    coordination primitive because the flow is a simple event → command with no
-    multi-step coordination or external awaits.
-
-    **Verified by:** Reservation is released when confirmed order is cancelled,
-    Cancelling draft order does not trigger reservation release, Cancelling submitted
-    order before saga completion releases pending reservation, PM handles already
-    released reservation gracefully, PM skips expired reservation when order is
-    cancelled
+  # Invariant (Reservation is released when confirmed order is cancelled): When
+  # a confirmed order with an active reservation is cancelled, the
+  # ReservationReleaseOnOrderCancel process manager releases the reservation and
+  # stock returns to the available pool. The PM is idempotent and skips
+  # reservations that are already released or expired.
+  # Rationale: Order and Reservation bounded contexts must stay synchronized
+  # without compensation logic — a Process Manager (per ADR-033) is the right
+  # coordination primitive because the flow is a simple event → command with no
+  # multi-step coordination or external awaits.
+  # Verified by: Reservation is released when confirmed order is cancelled,
+  # Cancelling draft order does not trigger reservation release, Cancelling
+  # submitted order before saga completion releases pending reservation, PM
+  # handles already released reservation gracefully, PM skips expired
+  # reservation when order is cancelled

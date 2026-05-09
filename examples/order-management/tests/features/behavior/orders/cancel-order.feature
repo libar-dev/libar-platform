@@ -48,17 +48,19 @@ Feature: Cancel Order
     When I send a CancelOrder command twice with the same commandId for "ord_cancel_005"
     Then the order should only be cancelled once
 
-  Rule: Confirmed orders can be cancelled
+  # ============================================================================
+  # Non-executable Invariants
+  # ============================================================================
 
-    **Invariant:** The Order FSM allows transitioning from `confirmed` to `cancelled`.
-    The CancelOrder decider accepts cancellation requests for confirmed orders. Already
-    cancelled orders remain rejected with ORDER_ALREADY_CANCELLED.
-
-    **Rationale:** Treating `confirmed` as terminal blocks legitimate cancellation
-    flows (customer changes mind post-confirmation) and prevents the Agent BC churn
-    risk demo from triggering. Allowing the transition keeps Order and Reservation
-    states synchronizable while preserving idempotency guarantees on already-final states.
-
-    **Verified by:** Cancel draft order, Cancel submitted order, Cancel confirmed
-    order, Cannot cancel already cancelled order, Cannot cancel non-existent order,
-    CancelOrder is idempotent with same commandId
+  # Invariant (Confirmed orders can be cancelled): The Order FSM allows
+  # transitioning from `confirmed` to `cancelled`. The CancelOrder decider accepts
+  # cancellation requests for confirmed orders. Already cancelled orders remain
+  # rejected with ORDER_ALREADY_CANCELLED.
+  # Rationale: Treating `confirmed` as terminal blocks legitimate cancellation
+  # flows (customer changes mind post-confirmation) and prevents the Agent BC
+  # churn risk demo from triggering. Allowing the transition keeps Order and
+  # Reservation states synchronizable while preserving idempotency guarantees on
+  # already-final states.
+  # Verified by: Cancel draft order, Cancel submitted order, Cancel confirmed
+  # order, Cannot cancel already cancelled order, Cannot cancel non-existent
+  # order, CancelOrder is idempotent with same commandId
