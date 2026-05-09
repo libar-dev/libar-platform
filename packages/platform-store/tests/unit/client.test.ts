@@ -236,6 +236,159 @@ describe("EventStore Client", () => {
       });
     });
 
+    it("rejects appendToStream when an event has an invalid scope key format", async () => {
+      vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
+
+      const eventStore = new EventStore({
+        lib: {
+          appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
+          readStream: {} as EventStoreApi["lib"]["readStream"],
+          readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
+          getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
+          getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
+          getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+        },
+      });
+      const mutationCtx = { runMutation: vi.fn() };
+
+      await expect(
+        eventStore.appendToStream(mutationCtx as never, {
+          streamType: "Reservation",
+          streamId: "res_123",
+          expectedVersion: 0,
+          boundedContext: "inventory",
+          events: [
+            {
+              eventId: "evt_123",
+              eventType: "ReservationCreated",
+              scopeKey: "not-a-valid-scope-key",
+              payload: {},
+              metadata: { correlationId: "corr_123" },
+            },
+          ],
+        })
+      ).rejects.toThrow("Invalid scope key format: not-a-valid-scope-key");
+
+      expect(mutationCtx.runMutation).not.toHaveBeenCalled();
+    });
+
+    it("rejects appendToStream when events span multiple scope tenants", async () => {
+      vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
+
+      const eventStore = new EventStore({
+        lib: {
+          appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
+          readStream: {} as EventStoreApi["lib"]["readStream"],
+          readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
+          getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
+          getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
+          getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+        },
+      });
+      const mutationCtx = { runMutation: vi.fn() };
+
+      await expect(
+        eventStore.appendToStream(mutationCtx as never, {
+          streamType: "Reservation",
+          streamId: "res_123",
+          expectedVersion: 0,
+          boundedContext: "inventory",
+          events: [
+            {
+              eventId: "evt_1",
+              eventType: "ReservationCreated",
+              scopeKey: "tenant:tenant-1:reservation:res_123",
+              payload: {},
+              metadata: { correlationId: "corr_1" },
+            },
+            {
+              eventId: "evt_2",
+              eventType: "ReservationCreated",
+              scopeKey: "tenant:tenant-2:reservation:res_123",
+              payload: {},
+              metadata: { correlationId: "corr_2" },
+            },
+          ],
+        })
+      ).rejects.toThrow("appendToStream does not support events from multiple scope tenants");
+
+      expect(mutationCtx.runMutation).not.toHaveBeenCalled();
+    });
+
+    it("rejects appendToStream when args.tenantId mismatches the scoped event tenant", async () => {
+      vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
+
+      const eventStore = new EventStore({
+        lib: {
+          appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
+          readStream: {} as EventStoreApi["lib"]["readStream"],
+          readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
+          getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
+          getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
+          getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+        },
+      });
+      const mutationCtx = { runMutation: vi.fn() };
+
+      await expect(
+        eventStore.appendToStream(mutationCtx as never, {
+          streamType: "Reservation",
+          streamId: "res_123",
+          expectedVersion: 0,
+          boundedContext: "inventory",
+          tenantId: "tenant-1",
+          events: [
+            {
+              eventId: "evt_1",
+              eventType: "ReservationCreated",
+              scopeKey: "tenant:tenant-2:reservation:res_123",
+              payload: {},
+              metadata: { correlationId: "corr_1" },
+            },
+          ],
+        })
+      ).rejects.toThrow(
+        "appendToStream tenantId tenant-1 does not match scoped event tenant tenant-2"
+      );
+
+      expect(mutationCtx.runMutation).not.toHaveBeenCalled();
+    });
+
+    it("rejects commitScope when scopeKey is malformed", async () => {
+      vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
+
+      const eventStore = new EventStore({
+        lib: {
+          appendToStream: {} as EventStoreApi["lib"]["appendToStream"],
+          commitScope: {} as EventStoreApi["lib"]["commitScope"],
+          readStream: {} as EventStoreApi["lib"]["readStream"],
+          readFromPosition: {} as EventStoreApi["lib"]["readFromPosition"],
+          getStreamVersion: {} as EventStoreApi["lib"]["getStreamVersion"],
+          getByCorrelation: {} as EventStoreApi["lib"]["getByCorrelation"],
+          getGlobalPosition: {} as EventStoreApi["lib"]["getGlobalPosition"],
+          getIdempotencyConflictAudits: {} as EventStoreApi["lib"]["getIdempotencyConflictAudits"],
+        },
+      });
+      const mutationCtx = { runMutation: vi.fn() };
+
+      await expect(
+        eventStore.commitScope(mutationCtx as never, {
+          scopeKey: "bogus-scope-key",
+          expectedVersion: 0,
+          boundedContext: "inventory",
+          streamIds: ["product_1"],
+        })
+      ).rejects.toThrow("Invalid scope key format: bogus-scope-key");
+
+      expect(mutationCtx.runMutation).not.toHaveBeenCalled();
+    });
+
     it("delegates commitScope and attaches a verification proof", async () => {
       vi.mocked(createVerificationProof).mockResolvedValue("proof-token" as never);
 
