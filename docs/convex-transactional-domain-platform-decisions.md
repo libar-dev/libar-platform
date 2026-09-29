@@ -2,7 +2,7 @@
 
 Working notes of 2026-09-29 for a greenfield redesign. This is not a spec and not complete. It records the decisions that shape the design, the reason for each, and what is still unproven.
 
-It grew from `convex-transactional-domain-platform-spec-v0.1.md`, its commentary, and a review of both on 2026-09-29. It stands on its own. The decisions, the facts they rest on, the probes and the acceptance scenarios are all here, and reading v0.1 is not needed. Where the two differ, this document holds the later decision. S-numbers point to the Sources section at the end.
+It grew from a v0.1 spec draft, its commentary, and a review of both on 2026-09-29. Both drafts were removed after commit `18024f6`; see Notes on v0.1 for how to read them. This document stands on its own. The decisions, the facts they rest on, the probes and the acceptance scenarios are all here, and reading v0.1 is not needed. Where the two differ, this document holds the later decision. S-numbers point to the Sources section at the end.
 
 Each decision carries a provenance line. Carried means taken from v0.1 in substance. Changed means the review reversed or narrowed v0.1. New means v0.1 did not address it. The owner has ruled on none of them; all are proposals.
 
@@ -517,9 +517,9 @@ This design authorizes no deletion or migration of existing data. Keep the curre
 - A read model moved into the command transaction needs one correct rebuild. Changing future writes alone does not repair it.
 - A mechanism with no retained obligations and no consumer does not survive because a document named it.
 
-## Notes on v0.1 and its commentary
+## Notes on v0.1
 
-- The commentary contains `:chatgpt-content-reference{...}` markers and a `sandbox:/mnt/data` link.
+- The drafts live in commit `18024f6`. Read them with `git show 18024f6:docs/convex-transactional-domain-platform-spec-v0.1.md` and `git show 18024f6:docs/convex-transactional-domain-platform-spec-v0.1-commentary.md`.
 - The commentary's additions over the spec, the first-experiment table and the cost targets, are folded in above.
 - v0.1's fact table in its section 2 lists nine facts chosen after the design. The fact ledger replaces it.
 - The acceptance scenarios above replace v0.1's list of 38. Rows marked changed or new differ from it.
