@@ -1,0 +1,3458 @@
+{
+  "tier": "native",
+  "commit": "5c8e6162508dadee12c1c895786f5b76bfbc6e19",
+  "clean": true,
+  "command": "vitest run --project native",
+  "startedAt": "2026-10-01T19:30:02.306Z",
+  "finishedAt": "2026-10-01T19:30:50.612Z",
+  "result": "passed",
+  "versions": {
+    "node": "v24.21.0",
+    "convex": "1.46.0",
+    "convex-helpers": "0.1.124",
+    "convex-test": "0.0.60",
+    "vitest": "5.0.3",
+    "typescript": "7.0.2",
+    "react": "19.3.0",
+    "happy-dom": "20.14.5"
+  },
+  "tests": [
+    {
+      "name": "Probe 4: how deep nested calls may go (spec:facts.f13-transactions-have-limits.probe-4-nesting-depth) > executes the bound example against a fresh world",
+      "file": "tests/native/f13-transactions-have-limits.probe-4-nesting-depth.test.ts",
+      "result": "passed",
+      "durationMs": 1803.7860409999998,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "stack1Trial",
+          "value": {
+            "stack": 1,
+            "answer": 1,
+            "error": null,
+            "rows": 1
+          }
+        },
+        {
+          "name": "stack2Trial",
+          "value": {
+            "stack": 2,
+            "answer": 2,
+            "error": null,
+            "rows": 2
+          }
+        },
+        {
+          "name": "stack3Trial",
+          "value": {
+            "stack": 3,
+            "answer": 3,
+            "error": null,
+            "rows": 3
+          }
+        },
+        {
+          "name": "stack4Trial",
+          "value": {
+            "stack": 4,
+            "answer": 4,
+            "error": null,
+            "rows": 4
+          }
+        },
+        {
+          "name": "stack5Trial",
+          "value": {
+            "stack": 5,
+            "answer": 5,
+            "error": null,
+            "rows": 5
+          }
+        },
+        {
+          "name": "stack6Trial",
+          "value": {
+            "stack": 6,
+            "answer": 6,
+            "error": null,
+            "rows": 6
+          }
+        },
+        {
+          "name": "stack7Trial",
+          "value": {
+            "stack": 7,
+            "answer": 7,
+            "error": null,
+            "rows": 7
+          }
+        },
+        {
+          "name": "stack8Trial",
+          "value": {
+            "stack": 8,
+            "answer": 8,
+            "error": null,
+            "rows": 8
+          }
+        },
+        {
+          "name": "stack9Trial",
+          "value": {
+            "stack": 9,
+            "answer": 9,
+            "error": null,
+            "rows": 9
+          }
+        },
+        {
+          "name": "stack10Trial",
+          "value": {
+            "stack": 10,
+            "answer": null,
+            "error": "Error: [Request ID: 22a9fce17b5328fe] Server Error\nUncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Cross component call depth limit exceeded. Do you have an infinite loop in your app?\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n",
+            "rows": 0
+          }
+        },
+        {
+          "name": "depthBoundary",
+          "value": {
+            "deepest": 9,
+            "firstFailure": 10,
+            "refusal": "Error: [Request ID: 22a9fce17b5328fe] Server Error\nUncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Cross component call depth limit exceeded. Do you have an infinite loop in your app?\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n\n    at async handler (../fixture/convex/limits.ts:119:12)\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: stop and kill keep stored rows across restart, and dispose removes storage twice",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 1973.641958,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://changed-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 1: a client closed with a pending mutation (spec:facts.f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 2442.534958,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "trials",
+          "value": [
+            {
+              "trial": "closed 0",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 1",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 2",
+              "gapMs": 2,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 3",
+              "gapMs": 3,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 4",
+              "gapMs": 4,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 5",
+              "gapMs": 5,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 6",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 7",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 8",
+              "gapMs": 2,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 9",
+              "gapMs": 3,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 10",
+              "gapMs": 4,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 11",
+              "gapMs": 5,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 12",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 13",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 14",
+              "gapMs": 2,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 15",
+              "gapMs": 3,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 16",
+              "gapMs": 4,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 17",
+              "gapMs": 5,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 18",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 19",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 0
+            }
+          ]
+        },
+        {
+          "name": "closedClientSummary",
+          "value": {
+            "trials": 20,
+            "confirmed": 0,
+            "noRow": 7,
+            "oneRow": 13
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 3: the cost of a component call from a mutation (spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 3111.033166,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "costSamples",
+          "value": [
+            {
+              "round": 0,
+              "path": "helper",
+              "cacheBuster": 1000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.005172542,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.005172542,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 0,
+              "path": "nested",
+              "cacheBuster": 2000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.174677708,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.174677708,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 0,
+              "path": "component",
+              "cacheBuster": 3000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.190583042,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.190583042,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 1,
+              "path": "helper",
+              "cacheBuster": 4000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.003042542,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.003042542,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 1,
+              "path": "nested",
+              "cacheBuster": 5000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.075134667,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.075134667,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 1,
+              "path": "component",
+              "cacheBuster": 6000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.097401167,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.097401167,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "path": "helper",
+              "cacheBuster": 7000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002071458,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.002071458,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "path": "nested",
+              "cacheBuster": 8000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.054287958,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.054287958,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "path": "component",
+              "cacheBuster": 9000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.103319,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.103319,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "path": "helper",
+              "cacheBuster": 10000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.00328375,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.00328375,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "path": "nested",
+              "cacheBuster": 11000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.076133416,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.076133416,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "path": "component",
+              "cacheBuster": 12000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.111397583,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.111397583,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 4,
+              "path": "helper",
+              "cacheBuster": 13000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002263416,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.002263416,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 4,
+              "path": "nested",
+              "cacheBuster": 14000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.055716417,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.055716417,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 4,
+              "path": "component",
+              "cacheBuster": 15000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.076372959,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.076372959,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 5,
+              "path": "helper",
+              "cacheBuster": 16000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.003426209,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.003426209,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 5,
+              "path": "nested",
+              "cacheBuster": 17000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.053565542,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.053565542,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 5,
+              "path": "component",
+              "cacheBuster": 18000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.095136375,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.095136375,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 6,
+              "path": "helper",
+              "cacheBuster": 19000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002920959,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.002920959,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 6,
+              "path": "nested",
+              "cacheBuster": 20000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.056550125,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.056550125,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 6,
+              "path": "component",
+              "cacheBuster": 21000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.11463225,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.11463225,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 7,
+              "path": "helper",
+              "cacheBuster": 22000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002355458,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.002355458,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 7,
+              "path": "nested",
+              "cacheBuster": 23000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.064747125,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.064747125,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 7,
+              "path": "component",
+              "cacheBuster": 24000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.090297959,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.090297959,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 8,
+              "path": "helper",
+              "cacheBuster": 25000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002131708,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.002131708,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 8,
+              "path": "nested",
+              "cacheBuster": 26000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx70d9gh5emfpmj1bnbqqn31vn8ff2sa"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.056460166,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.056460166,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 8,
+              "path": "component",
+              "cacheBuster": 27000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn707xh0g41a2s5gaqp7289wa58ffpwb"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.079940459,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaMutation",
+                  "componentPath": null,
+                  "executionTime": 0.079940459,
+                  "cachedResult": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "readCostSummary",
+          "value": {
+            "kind": "mutation",
+            "readsPerSample": 50,
+            "acceptedSamples": {
+              "helper": 9,
+              "nested": 9,
+              "component": 9
+            },
+            "componentCompletionRecords": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "helper": 0.002920959,
+            "nested": 0.056550125,
+            "component": 0.097401167,
+            "componentMinusHelperSeconds": 0.094480208,
+            "componentMinusHelperPerReadSeconds": 0.0018896041599999998
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 2: ConvexError data through a nested mutation (spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 925.608708,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "catchingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            }
+          }
+        },
+        {
+          "name": "rowsAfterCatching",
+          "value": {
+            "child": 0,
+            "parent": 1
+          }
+        },
+        {
+          "name": "passingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            },
+            "text": "ConvexError: [Request ID: d1b7317e2faaa8a3] Server Error\nUncaught ConvexError: Uncaught ConvexError: {\"array\":[\"one\",2,false,null],\"boolean\":true,\"code\":\"staleVersion\",\"int64\":\"9007199254740993n\",\"nested\":{\"count\":3,\"label\":\"nested\"},\"nil\":null,\"number\":17.25}\n    at handler (../fixture/convex/failures.ts:21:11)\n\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtParent",
+          "value": {
+            "property": null,
+            "message": "Error: Uncaught Error: plain failure: thrower-nested-97480696-2012-45e1-91cd-5cdd61150a5d\n    at handler (../fixture/convex/failures.ts:39:23)\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtClient",
+          "value": {
+            "property": null,
+            "message": "Error: [Request ID: 228d595bb30bdc58] Server Error\nUncaught Error: Uncaught Error: plain failure: thrower-nested-97480696-2012-45e1-91cd-5cdd61150a5d\n    at handler (../fixture/convex/failures.ts:39:23)\n\n"
+          }
+        },
+        {
+          "name": "throwBoundarySummary",
+          "value": {
+            "boundary": "nested",
+            "caughtDataUnchanged": true,
+            "passedDataUnchanged": true,
+            "childRows": 0,
+            "parentRows": 1,
+            "plainErrorFromThrower": true,
+            "writeGuardReached": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 3: the cost of a component call from a query (spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query) > executes the bound example against a fresh world",
+      "file": "tests/native/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query.test.ts",
+      "result": "passed",
+      "durationMs": 3201.291834,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "costSamples",
+          "value": [
+            {
+              "round": 0,
+              "path": "helper",
+              "cacheBuster": 1000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.003960209,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.003960209,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 0,
+              "path": "nested",
+              "cacheBuster": 2000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.072264458,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.072264458,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 0,
+              "path": "component",
+              "cacheBuster": 3000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.124968708,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.124968708,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 1,
+              "path": "helper",
+              "cacheBuster": 4000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002588084,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.002588084,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 1,
+              "path": "nested",
+              "cacheBuster": 5000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.057443334,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.057443334,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 1,
+              "path": "component",
+              "cacheBuster": 6000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.085630375,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.085630375,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "path": "helper",
+              "cacheBuster": 7000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002631959,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.002631959,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "path": "nested",
+              "cacheBuster": 8000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.060351791,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.060351791,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "path": "component",
+              "cacheBuster": 9000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.126857666,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.126857666,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "path": "helper",
+              "cacheBuster": 10000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.004402375,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.004402375,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "path": "nested",
+              "cacheBuster": 11000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.063041167,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.063041167,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "path": "component",
+              "cacheBuster": 12000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.080074541,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.080074541,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 4,
+              "path": "helper",
+              "cacheBuster": 13000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.004291375,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.004291375,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 4,
+              "path": "nested",
+              "cacheBuster": 14000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.049639584,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.049639584,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 4,
+              "path": "component",
+              "cacheBuster": 15000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.089845958,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.089845958,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 5,
+              "path": "helper",
+              "cacheBuster": 16000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002376791,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.002376791,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 5,
+              "path": "nested",
+              "cacheBuster": 17000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.059472417,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.059472417,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 5,
+              "path": "component",
+              "cacheBuster": 18000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.093615541,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.093615541,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 6,
+              "path": "helper",
+              "cacheBuster": 19000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002732709,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.002732709,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 6,
+              "path": "nested",
+              "cacheBuster": 20000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.082036833,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.082036833,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 6,
+              "path": "component",
+              "cacheBuster": 21000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.097814167,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.097814167,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 7,
+              "path": "helper",
+              "cacheBuster": 22000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.002858208,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.002858208,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 7,
+              "path": "nested",
+              "cacheBuster": 23000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.058263958,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.058263958,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 7,
+              "path": "component",
+              "cacheBuster": 24000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.087744916,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.087744916,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 8,
+              "path": "helper",
+              "cacheBuster": 25000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.003143333,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.003143333,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 8,
+              "path": "nested",
+              "cacheBuster": 26000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jx71f5s02qs2wrsn65zm1gcngh8ff4dg"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.052509583,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.052509583,
+                  "cachedResult": false
+                }
+              ]
+            },
+            {
+              "round": 8,
+              "path": "component",
+              "cacheBuster": 27000,
+              "result": {
+                "documentsRead": 50,
+                "id": "jn7c285erqmz3bxhmhk8b1zq0s8ffjx3"
+              },
+              "callError": null,
+              "executionTimeSeconds": 0.075860333,
+              "cachedResult": false,
+              "error": null,
+              "records": [
+                {
+                  "identifier": "readCost:viaQuery",
+                  "componentPath": null,
+                  "executionTime": 0.075860333,
+                  "cachedResult": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "readCostSummary",
+          "value": {
+            "kind": "query",
+            "readsPerSample": 50,
+            "acceptedSamples": {
+              "helper": 9,
+              "nested": 9,
+              "component": 9
+            },
+            "componentCompletionRecords": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "helper": 0.002858208,
+            "nested": 0.059472417,
+            "component": 0.089845958,
+            "componentMinusHelperSeconds": 0.08698775,
+            "componentMinusHelperPerReadSeconds": 0.001739755
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 2: ConvexError data through a component boundary (spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary) > executes the bound example against a fresh world",
+      "file": "tests/native/f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary.test.ts",
+      "result": "passed",
+      "durationMs": 912.0964160000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "catchingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            }
+          }
+        },
+        {
+          "name": "rowsAfterCatching",
+          "value": {
+            "child": 0,
+            "parent": 1
+          }
+        },
+        {
+          "name": "passingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            },
+            "text": "ConvexError: [Request ID: dd39595886e9b33a] Server Error\nUncaught ConvexError: Uncaught ConvexError: {\"array\":[\"one\",2,false,null],\"boolean\":true,\"code\":\"staleVersion\",\"int64\":\"9007199254740993n\",\"nested\":{\"count\":3,\"label\":\"nested\"},\"nil\":null,\"number\":17.25}\n    at handler (../fixture/convex/annex/failures.ts:8:11)\n\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtParent",
+          "value": {
+            "property": null,
+            "message": "Error: Uncaught Error: plain failure: thrower-annex-762e02c4-f350-4580-852b-af955f0ac5d2\n    at handler (../fixture/convex/annex/failures.ts:26:23)\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtClient",
+          "value": {
+            "property": null,
+            "message": "Error: [Request ID: 3896df6fdef3e2ff] Server Error\nUncaught Error: Uncaught Error: plain failure: thrower-annex-762e02c4-f350-4580-852b-af955f0ac5d2\n    at handler (../fixture/convex/annex/failures.ts:26:23)\n\n"
+          }
+        },
+        {
+          "name": "throwBoundarySummary",
+          "value": {
+            "boundary": "annex",
+            "caughtDataUnchanged": true,
+            "passedDataUnchanged": true,
+            "childRows": 0,
+            "parentRows": 1,
+            "plainErrorFromThrower": true,
+            "writeGuardReached": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: a component query that calls ctx.auth.getUserIdentity() completes, and its answer is recorded",
+      "file": "tests/native/component-auth.test.ts",
+      "result": "passed",
+      "durationMs": 887.981791,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "identitySeenInsideComponent",
+          "value": {
+            "answered": "an identity",
+            "issuer": "https://fixture-issuer.test",
+            "subject": "user-1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 5: a page that outgrows its read cap comes back through the parent as a split (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed.test.ts",
+      "result": "passed",
+      "durationMs": 942.8025419999999,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "initialPinnedPage",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j9780czmdafw6t0g708kkxf2rs8fecb5",
+              "j97c86ve39w6bf9gpkq7bnw2a18fe628",
+              "j970gmtmjy31j2szj2m3dh3xcx8fev02",
+              "j97c1b26dgs2571ssb3mq6p9sh8feyb1",
+              "j97d59mgxf1464qeyea3xndwvx8fen4b",
+              "j976sg4s9se3ysw0ytrqftndds8ffqy9",
+              "j97dgjbhq1syh9ckpem9pszwzx8feq0h",
+              "j97556cw3mmkzv8dd9wcb7zn4n8ff38d",
+              "j978h0ayjdepayty2fxgwe45cn8ffyn6",
+              "j97bk038nv6tncbj6t9mqqf4s58ffbh8"
+            ]
+          }
+        },
+        {
+          "name": "splitPage",
+          "value": {
+            "rows": 20,
+            "status": "SplitRequired",
+            "ids": [
+              "j9780czmdafw6t0g708kkxf2rs8fecb5",
+              "j9719q0h6n059wy2xwb06e1c9d8feqc5",
+              "j97e1mqsvvjxcwzzcagqmbq4z98fesjn",
+              "j97fwzxtm97x55nc3q4wdpzqjd8fex29",
+              "j97ae6brj7gy9jy4wqq7asrw2s8fe994",
+              "j97cj6w2119x1rytfxhhk0dmjh8feeb2",
+              "j9788gnz8hf68h25hpmrrds8vs8feekj",
+              "j97cjyx6eex7mhh1jmfwz1ghy18fead1",
+              "j970d93jhd3wese9dym6scf0th8ffwhx",
+              "j971hxm94h5k4r3hpgsn5cwc4x8ffkxx",
+              "j97cjqr9jhd6jdct7fysvr03kx8ffn8x",
+              "j97dcy3xv49hbnc5k437v3rpth8ffrmn",
+              "j975sa32jewp9gnpa1nkttxefn8fegw7",
+              "j97dr0qwg4p52wmd169xqemswn8ffbam",
+              "j9787jf6j5nzvy40c0gzdqjmb98ffkb3",
+              "j97ce9n12kpyztve49h2tbyk3d8ffk26",
+              "j97c86ve39w6bf9gpkq7bnw2a18fe628",
+              "j970gmtmjy31j2szj2m3dh3xcx8fev02",
+              "j97c1b26dgs2571ssb3mq6p9sh8feyb1",
+              "j97d59mgxf1464qeyea3xndwvx8fen4b"
+            ]
+          }
+        },
+        {
+          "name": "relayedSplit",
+          "value": {
+            "status": "SplitRequired",
+            "splitCursor": "[0.5625,1790883007423.274,\"j971hxm94h5k4r3hpgsn5cwc4x8ffkxx\"]",
+            "continueCursor": "[4,1790883007370.3289,\"j97d59mgxf1464qeyea3xndwvx8fen4b\"]",
+            "endCursor": "[9,1790883007370.33,\"j97bk038nv6tncbj6t9mqqf4s58ffbh8\"]",
+            "rows": 20
+          }
+        },
+        {
+          "name": "splitSummary",
+          "value": {
+            "pageStatus": "SplitRequired",
+            "left": [
+              "j9780czmdafw6t0g708kkxf2rs8fecb5",
+              "j9719q0h6n059wy2xwb06e1c9d8feqc5",
+              "j97e1mqsvvjxcwzzcagqmbq4z98fesjn",
+              "j97fwzxtm97x55nc3q4wdpzqjd8fex29",
+              "j97ae6brj7gy9jy4wqq7asrw2s8fe994",
+              "j97cj6w2119x1rytfxhhk0dmjh8feeb2",
+              "j9788gnz8hf68h25hpmrrds8vs8feekj",
+              "j97cjyx6eex7mhh1jmfwz1ghy18fead1",
+              "j970d93jhd3wese9dym6scf0th8ffwhx",
+              "j971hxm94h5k4r3hpgsn5cwc4x8ffkxx"
+            ],
+            "right": [
+              "j97cjqr9jhd6jdct7fysvr03kx8ffn8x",
+              "j97dcy3xv49hbnc5k437v3rpth8ffrmn",
+              "j975sa32jewp9gnpa1nkttxefn8fegw7",
+              "j97dr0qwg4p52wmd169xqemswn8ffbam",
+              "j9787jf6j5nzvy40c0gzdqjmb98ffkb3",
+              "j97ce9n12kpyztve49h2tbyk3d8ffk26",
+              "j97c86ve39w6bf9gpkq7bnw2a18fe628",
+              "j970gmtmjy31j2szj2m3dh3xcx8fev02",
+              "j97c1b26dgs2571ssb3mq6p9sh8feyb1",
+              "j97d59mgxf1464qeyea3xndwvx8fen4b",
+              "j976sg4s9se3ysw0ytrqftndds8ffqy9",
+              "j97dgjbhq1syh9ckpem9pszwzx8feq0h",
+              "j97556cw3mmkzv8dd9wcb7zn4n8ff38d",
+              "j978h0ayjdepayty2fxgwe45cn8ffyn6",
+              "j97bk038nv6tncbj6t9mqqf4s58ffbh8"
+            ],
+            "wholeRange": [
+              "j9780czmdafw6t0g708kkxf2rs8fecb5",
+              "j9719q0h6n059wy2xwb06e1c9d8feqc5",
+              "j97e1mqsvvjxcwzzcagqmbq4z98fesjn",
+              "j97fwzxtm97x55nc3q4wdpzqjd8fex29",
+              "j97ae6brj7gy9jy4wqq7asrw2s8fe994",
+              "j97cj6w2119x1rytfxhhk0dmjh8feeb2",
+              "j9788gnz8hf68h25hpmrrds8vs8feekj",
+              "j97cjyx6eex7mhh1jmfwz1ghy18fead1",
+              "j970d93jhd3wese9dym6scf0th8ffwhx",
+              "j971hxm94h5k4r3hpgsn5cwc4x8ffkxx",
+              "j97cjqr9jhd6jdct7fysvr03kx8ffn8x",
+              "j97dcy3xv49hbnc5k437v3rpth8ffrmn",
+              "j975sa32jewp9gnpa1nkttxefn8fegw7",
+              "j97dr0qwg4p52wmd169xqemswn8ffbam",
+              "j9787jf6j5nzvy40c0gzdqjmb98ffkb3",
+              "j97ce9n12kpyztve49h2tbyk3d8ffk26",
+              "j97c86ve39w6bf9gpkq7bnw2a18fe628",
+              "j970gmtmjy31j2szj2m3dh3xcx8fev02",
+              "j97c1b26dgs2571ssb3mq6p9sh8feyb1",
+              "j97d59mgxf1464qeyea3xndwvx8fen4b",
+              "j976sg4s9se3ysw0ytrqftndds8ffqy9",
+              "j97dgjbhq1syh9ckpem9pszwzx8feq0h",
+              "j97556cw3mmkzv8dd9wcb7zn4n8ff38d",
+              "j978h0ayjdepayty2fxgwe45cn8ffyn6",
+              "j97bk038nv6tncbj6t9mqqf4s58ffbh8"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "An ordinary client cannot call a component's function (spec:platform.native-harness.ordinary-client-refused-component-function) > executes the bound example against a fresh world",
+      "file": "tests/native/ordinary-client-refused-component-function.test.ts",
+      "result": "passed",
+      "durationMs": 4664.432291,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "componentSocketSummary",
+          "value": {
+            "sends": 3,
+            "backendCloses": 3,
+            "answer": "no answer",
+            "socketWaitMs": 3000
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 5: the client hook splits a page across the boundary and loses rows (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary.test.ts",
+      "result": "passed",
+      "durationMs": 1329.616334,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "hookBeforeInsert",
+          "value": {
+            "rows": 30,
+            "status": "Exhausted"
+          }
+        },
+        {
+          "name": "hookCappedPage",
+          "value": {
+            "status": "SplitRequired",
+            "rows": 20,
+            "continueCursor": "[4,1790883007332.863,\"j97fdptq69ny81rz0rkvb65v8x8fewqf\"]",
+            "endCursor": "[9,1790883007332.8643,\"j979ev6gh34mx1zagqtfpx594h8fffv5\"]"
+          }
+        },
+        {
+          "name": "hookSplitSummary",
+          "value": {
+            "rowsInList": 45,
+            "rowsShown": 40,
+            "status": "Exhausted",
+            "missingPositions": [
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          }
+        },
+        {
+          "name": "hookMissingCursorRange",
+          "value": {
+            "missing": [
+              "j97fas3kv01w5nd62d2wt997tn8fem9p",
+              "j977rgk1cvy47br3n9zs44v3hs8feq4f",
+              "j976w4qm9r20d2pge0ggx9h0358ffjsf",
+              "j97fj6hd5vxg2epg81mc22kpn18feb5e",
+              "j979ev6gh34mx1zagqtfpx594h8fffv5"
+            ],
+            "betweenCursors": [
+              "j97fas3kv01w5nd62d2wt997tn8fem9p",
+              "j977rgk1cvy47br3n9zs44v3hs8feq4f",
+              "j976w4qm9r20d2pge0ggx9h0358ffjsf",
+              "j97fj6hd5vxg2epg81mc22kpn18feb5e",
+              "j979ev6gh34mx1zagqtfpx594h8fffv5"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 1: the HTTP client and a caller's retry (spec:facts.f05-react-client-retries-until-confirmed.probe-1-http-client-retry) > executes the bound example against a fresh world",
+      "file": "tests/native/f05-react-client-retries-until-confirmed.probe-1-http-client-retry.test.ts",
+      "result": "passed",
+      "durationMs": 892.4398330000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "requestsAfterEachCall",
+          "value": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "httpRetrySummary",
+          "value": {
+            "rows": 2,
+            "requestsAfterCall": [
+              1,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: a taken --port causes fresh port pairs and the third start succeeds",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 3126.5235410000005,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "1c96562587d294ccf66bb657c35998dc1c0850e02590e5e886bbbac3b7f0a5f0",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "realBackendExecutableSha256",
+          "value": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676"
+        }
+      ]
+    },
+    {
+      "name": "A token signed by the fixture issuer yields the caller's identity (spec:platform.native-harness.fixture-issuer-token-yields-identity) > executes the bound example against a fresh world",
+      "file": "tests/native/fixture-issuer-token-yields-identity.test.ts",
+      "result": "passed",
+      "durationMs": 908.8342500000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 5: pages of a component list stay contiguous under live writes (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous.test.ts",
+      "result": "passed",
+      "durationMs": 1149.313084,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "initialPinnedPage0",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n"
+            ]
+          }
+        },
+        {
+          "name": "initialPinnedPage1",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j9765q8hx9h002pvd5aaxdntkh8fe7wd",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt"
+            ]
+          }
+        },
+        {
+          "name": "initialPinnedPage2",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ]
+          }
+        },
+        {
+          "name": "initialPinnedPage3",
+          "value": {
+            "rows": 0,
+            "status": null,
+            "ids": []
+          }
+        },
+        {
+          "name": "initialPinnedPages",
+          "value": [
+            {
+              "rows": 10,
+              "isDone": false
+            },
+            {
+              "rows": 10,
+              "isDone": false
+            },
+            {
+              "rows": 10,
+              "isDone": false
+            },
+            {
+              "rows": 0,
+              "isDone": true
+            }
+          ]
+        },
+        {
+          "name": "pinnedPageAfterInsert1",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j9765q8hx9h002pvd5aaxdntkh8fe7wd",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt"
+            ]
+          }
+        },
+        {
+          "name": "pinnedPageAfterInsert2",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ]
+          }
+        },
+        {
+          "name": "pinnedPageAfterInsert3",
+          "value": {
+            "rows": 0,
+            "status": null,
+            "ids": []
+          }
+        },
+        {
+          "name": "pinnedPageAfterInsert0",
+          "value": {
+            "rows": 15,
+            "status": "SplitRecommended",
+            "ids": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n"
+            ]
+          }
+        },
+        {
+          "name": "pagesAfterInsert",
+          "value": [
+            [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n"
+            ],
+            [
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j9765q8hx9h002pvd5aaxdntkh8fe7wd",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt"
+            ],
+            [
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ],
+            []
+          ]
+        },
+        {
+          "name": "contiguityAfterInsert",
+          "value": {
+            "actual": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n",
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j9765q8hx9h002pvd5aaxdntkh8fe7wd",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt",
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ],
+            "expected": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n",
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j9765q8hx9h002pvd5aaxdntkh8fe7wd",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt",
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ]
+          }
+        },
+        {
+          "name": "pinnedPageAfterDelete0",
+          "value": {
+            "rows": 15,
+            "status": "SplitRecommended",
+            "ids": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n"
+            ]
+          }
+        },
+        {
+          "name": "pinnedPageAfterDelete2",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ]
+          }
+        },
+        {
+          "name": "pinnedPageAfterDelete3",
+          "value": {
+            "rows": 0,
+            "status": null,
+            "ids": []
+          }
+        },
+        {
+          "name": "pinnedPageAfterDelete1",
+          "value": {
+            "rows": 9,
+            "status": null,
+            "ids": [
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt"
+            ]
+          }
+        },
+        {
+          "name": "contiguitySummary",
+          "value": {
+            "pages": 4,
+            "rowsAfterInsert": 35,
+            "rowsAfterDelete": 34,
+            "removed": "j9765q8hx9h002pvd5aaxdntkh8fe7wd",
+            "actual": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n",
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt",
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ],
+            "expected": [
+              "j975875w0qv0va0fnvwd4xhag18ffahy",
+              "j97dv6kjf6nk24wda59682yg858fea3a",
+              "j97c5bdghrh98ghpxm56kjdjt18ffbes",
+              "j9729jtcyf8js01r12pmhy1ban8fezw3",
+              "j97akrv84cvghhga00h47r94z18ffbxw",
+              "j972a7z4xxve6vdcjg08dnjbt18ffeza",
+              "j976c1wy1mwcdgjrqyfec441c58ff30j",
+              "j978geedd4emeq0kbjx3mv4pvh8fe7vh",
+              "j979339ny245d03g7js9c7zqjx8fetfj",
+              "j975jzt9v4jz6y6s9st6w5z3ah8fe25p",
+              "j972fd7ree946ae73csz7ssxj58fea6q",
+              "j971paw8r3vchwsgxfvy51kjvs8fec11",
+              "j975zvevffdr1bvn6149h1cpfh8ffvss",
+              "j97229gbs1vrktv5nq68smxp9h8fetv6",
+              "j97dzeq94x68mjrp7wy0nvkwkx8ff58n",
+              "j97034yyhetwxg95x6b5j1tmkx8feqyy",
+              "j978g3v58na9kw9z12y0ha9czn8fe8rx",
+              "j97dskscymgembcvdnfw8t6hb98fft3s",
+              "j97f54zb329w4vxyrmc0xxbnyd8feydg",
+              "j973pkhvv8hgdvhq2svvzabaeh8ffskm",
+              "j97a7vjnqxjcdnswjyatbdsc018fff94",
+              "j979b78ghzjjfxzd34yraysg0d8fewem",
+              "j97em3n4xs12p2fq71tcrpj2md8ffnfa",
+              "j976ype2hmr1vz2jez94ngae7x8ffegt",
+              "j973wpy0q1zh597nmca6567v518fedh1",
+              "j978r95kph8v15e6mn2j7ttgwx8ffjb0",
+              "j97dxhp1qtjthzta2ewh2bd0ds8ffy7k",
+              "j978cqmrebh8rxwhfbxfaxt3758ffsye",
+              "j974ex7v817c72tv46jrn1p1v18ff0yt",
+              "j97bvk7npjm7ek6091vtb0axa18fe5jm",
+              "j975mvre4vz7554str0vdtp36s8fec8e",
+              "j97fc5p4t5p57n0k4kpr6d8x9n8ff8dd",
+              "j970d741p1mq30qy6jm4361rj58ffmmx",
+              "j979w3bz0880q2v87dg1401wjh8ffqmq"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "The admin key acting as an identity reaches an internal function (spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function) > executes the bound example against a fresh world",
+      "file": "tests/native/admin-key-acting-as-identity-reaches-internal-function.test.ts",
+      "result": "passed",
+      "durationMs": 1003.9536250000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 5: a subscription to a parent query follows the component's data (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates.test.ts",
+      "result": "passed",
+      "durationMs": 1038.6502500000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "subscriptionSummary",
+          "value": {
+            "waitMs": 5000,
+            "observationAfterDeliveryMs": 100,
+            "values": [
+              {
+                "id": "j97ap5hq5hrnzyx17qbmdb1abx8fehn7",
+                "label": "changed"
+              }
+            ],
+            "error": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: a taken --site-proxy-port causes fresh port pairs and the third start succeeds",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 1105.8786249999994,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "6097bc25f9745c9ee4bf66c0de64bc3d10b702dc7d05948bb25edae0e9f42914",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "realBackendExecutableSha256",
+          "value": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676"
+        }
+      ]
+    },
+    {
+      "name": "An ordinary client cannot call an internal function (spec:platform.native-harness.ordinary-client-refused-internal-function) > executes the bound example against a fresh world",
+      "file": "tests/native/ordinary-client-refused-internal-function.test.ts",
+      "result": "passed",
+      "durationMs": 925.5353750000002,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "native: the parent sweep verifies and kills two real owned backend processes",
+      "file": "tests/native/harness-sweep.test.ts",
+      "result": "passed",
+      "durationMs": 316.206708,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        },
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "native review: failed inspection must not silently discard ownership",
+      "file": "tests/native/harness-sweep.test.ts",
+      "result": "passed",
+      "durationMs": 154.25549999999998,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "native: three taken ports fail clearly and remove the failed start's storage",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 3774.373417,
+      "errors": [],
+      "backends": [],
+      "measurements": [
+        {
+          "name": "realBackendExecutableSha256",
+          "value": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676"
+        }
+      ]
+    },
+    {
+      "name": "Probe 1: a backend restart with a mutation in flight (spec:facts.f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 11303.144125,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "trials",
+          "value": [
+            {
+              "trial": "restart 0",
+              "delayMs": 0,
+              "committedBeforeKill": false,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 1",
+              "delayMs": 0,
+              "committedBeforeKill": false,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 2",
+              "delayMs": 0,
+              "committedBeforeKill": false,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 3",
+              "delayMs": 1,
+              "committedBeforeKill": false,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 4",
+              "delayMs": 2,
+              "committedBeforeKill": false,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 5",
+              "delayMs": 4,
+              "committedBeforeKill": true,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 6",
+              "delayMs": 8,
+              "committedBeforeKill": false,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 7",
+              "delayMs": 16,
+              "committedBeforeKill": true,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 8",
+              "delayMs": 32,
+              "committedBeforeKill": true,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 9",
+              "delayMs": 64,
+              "committedBeforeKill": true,
+              "pendingAtKill": true,
+              "pendingAtRelease": true,
+              "resolved": true,
+              "rows": 1
+            }
+          ]
+        },
+        {
+          "name": "restartSummary",
+          "value": {
+            "trials": 10,
+            "resolvedAfterRestart": 10,
+            "resolvedBeforeRelease": 0,
+            "killedBeforeCommit": 6,
+            "killedAfterCommit": 4,
+            "rowCounts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: stop escalates to SIGKILL when the owned process ignores SIGINT and keeps its storage",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 5358.785583000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "d43b86c5c4f386e22d2bceacadec05607b59f8aeeeab29051fd51ebfd934a6fa",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "native: a log mark from before a kill cannot be read after restart",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 857.7276250000014,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 4: a nested call draws on the caller's transaction limits (spec:facts.f13-transactions-have-limits.probe-4-nested-call-shares-limits) > executes the bound example against a fresh world",
+      "file": "tests/native/f13-transactions-have-limits.probe-4-nested-call-shares-limits.test.ts",
+      "result": "passed",
+      "durationMs": 21874.027917000003,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "seededPayloads",
+          "value": {
+            "size": 921600,
+            "parentCount": 10,
+            "childCount": 10
+          }
+        },
+        {
+          "name": "combinedReadOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: 31ded4e2945b3ebd] Server Error\nUncaught Error: Uncaught Error: Too many bytes read in a single function execution (limit: 16777216 bytes). Consider using smaller limits in your queries, paginating your queries, or using indexed queries with a selective index range expressions.\n    at async handler (../fixture/convex/limits.ts:47:11)\n\n    at async handler (../fixture/convex/limits.ts:78:34)\n"
+          }
+        },
+        {
+          "name": "readTogether",
+          "value": "fails on the bytes-read limit"
+        },
+        {
+          "name": "parentReadOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "childReadOutcome",
+          "value": {
+            "outcome": "returns",
+            "error": null
+          }
+        },
+        {
+          "name": "readsAlone",
+          "value": {
+            "parent": "commits",
+            "child": "returns",
+            "parentDocuments": 10,
+            "childDocuments": 10,
+            "childPayloadBytes": 9216000
+          }
+        },
+        {
+          "name": "sharedReadMetrics",
+          "value": {
+            "byteGrowth": 921684,
+            "documentGrowth": 1,
+            "childBytes": 921684,
+            "childDocuments": 1,
+            "payloadBytes": 921600
+          }
+        },
+        {
+          "name": "combinedWriteOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: 822a83bc7f482201] Server Error\nUncaught Error: Uncaught Error: Too many bytes written in a single function execution (limit: 16 MiB)\n    at async handler (../fixture/convex/limits.ts:23:35)\n\n    at async handler (../fixture/convex/limits.ts:102:8)\n"
+          }
+        },
+        {
+          "name": "writesTogether",
+          "value": "fails on the bytes-written limit"
+        },
+        {
+          "name": "failedWriteRows",
+          "value": 0
+        },
+        {
+          "name": "parentWriteOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "parentWriteRows",
+          "value": 10
+        },
+        {
+          "name": "childWriteOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "childWriteRows",
+          "value": 20
+        },
+        {
+          "name": "limitSummary",
+          "value": {
+            "boundary": "nested",
+            "combinedRead": "fails on the bytes-read limit",
+            "combinedWrite": "fails on the bytes-written limit",
+            "failedWriteRows": 0,
+            "committedRows": 20
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 4: a component call draws on the caller's transaction limits (spec:facts.f13-transactions-have-limits.probe-4-component-call-shares-limits) > executes the bound example against a fresh world",
+      "file": "tests/native/f13-transactions-have-limits.probe-4-component-call-shares-limits.test.ts",
+      "result": "passed",
+      "durationMs": 22059.392083000002,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "seededPayloads",
+          "value": {
+            "size": 921600,
+            "parentCount": 10,
+            "childCount": 10
+          }
+        },
+        {
+          "name": "combinedReadOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: c2ea05a4f0b048c9] Server Error\nUncaught Error: Uncaught Error: Too many bytes read in a single function execution (limit: 16777216 bytes). Consider using smaller limits in your queries, paginating your queries, or using indexed queries with a selective index range expressions.\n    at async handler (../fixture/convex/annex/limits.ts:34:11)\n\n    at async handler (../fixture/convex/limits.ts:78:34)\n"
+          }
+        },
+        {
+          "name": "readTogether",
+          "value": "fails on the bytes-read limit"
+        },
+        {
+          "name": "parentReadOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "childReadOutcome",
+          "value": {
+            "outcome": "returns",
+            "error": null
+          }
+        },
+        {
+          "name": "readsAlone",
+          "value": {
+            "parent": "commits",
+            "child": "returns",
+            "parentDocuments": 10,
+            "childDocuments": 10,
+            "childPayloadBytes": 9216000
+          }
+        },
+        {
+          "name": "sharedReadMetrics",
+          "value": {
+            "byteGrowth": 921684,
+            "documentGrowth": 1,
+            "childBytes": 921684,
+            "childDocuments": 1,
+            "payloadBytes": 921600
+          }
+        },
+        {
+          "name": "combinedWriteOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: fe38bb69217b7aa9] Server Error\nUncaught Error: Uncaught Error: Too many bytes written in a single function execution (limit: 16 MiB)\n    at async handler (../fixture/convex/annex/limits.ts:8:35)\n\n    at async handler (../fixture/convex/limits.ts:102:8)\n"
+          }
+        },
+        {
+          "name": "writesTogether",
+          "value": "fails on the bytes-written limit"
+        },
+        {
+          "name": "failedWriteRows",
+          "value": 0
+        },
+        {
+          "name": "parentWriteOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "parentWriteRows",
+          "value": 10
+        },
+        {
+          "name": "childWriteOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "childWriteRows",
+          "value": 20
+        },
+        {
+          "name": "limitSummary",
+          "value": {
+            "boundary": "annex",
+            "combinedRead": "fails on the bytes-read limit",
+            "combinedWrite": "fails on the bytes-written limit",
+            "failedWriteRows": 0,
+            "committedRows": 20
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: a restart that stalls after spawning reaps its process",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 30333.047000000002,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "ba5e5886252087598e99ff0e96692c233a4854e3714f5266656bedf0e4bc3344",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "native: codegen interrupted by SIGINT removes its starting backend and storage",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 359.6029170000038,
+      "errors": [],
+      "backends": [],
+      "measurements": []
+    },
+    {
+      "name": "native: codegen interrupted by SIGTERM removes its starting backend and storage",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 298.94216700000106,
+      "errors": [],
+      "backends": [],
+      "measurements": []
+    },
+    {
+      "name": "native: backend output split across chunks is redacted before the rolling buffer clips it",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 365.21774999999616,
+      "errors": [],
+      "backends": [],
+      "measurements": []
+    }
+  ],
+  "unhandledErrors": []
+}
