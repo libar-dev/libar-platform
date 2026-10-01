@@ -7,11 +7,11 @@ relations:
   refines: spec:command.command-declaration
   verifies: spec:command.command-declaration
 ---
-# Rename a typed handler or break its argument contract
+# Rename a typed handler
 
-Sc L2-4 · build tier, the fifth tier `spec:platform.acceptance-contract` adds under E-14.
+Sc L2-4 · build tier, the fifth tier `spec:platform.acceptance-contract` adds under E-14 · the first of the row's two cases.
 
-The export `placeOrder` is renamed to `submitOrder` without touching its callers. Convex regenerates `api` from the module's exports, so `api.commands.placeOrder` no longer exists and every typed caller fails `tsc`. The registration check would also fail, because the declaration `PlaceOrder` no longer has both exports, but `tsc` runs first.
+The export `placeOrder` is renamed to `submitOrder` without touching its callers. The generated `api` type is built from the module's exports, so `api.ordering.placeOrder` no longer exists and every typed caller fails `tsc`.
 
 ## Intent
 
@@ -27,6 +27,5 @@ And it fails {when: "before any traffic"}
 
 ## Verification — executable
 
-- Runs in the build tier: a test project that compiles the fixture app with the rename applied and asserts a non-zero `tsc` exit naming the caller.
-- The test also breaks the argument contract by removing a required input field from the declaration and asserts that `tsc` fails at the caller before any deployment.
-- The test asserts that the registration check fails when one of the two exports is deleted, so the pair rule has a check of its own.
+- Runs in the build tier with no backend, as a type test of the production composition's generated `api`.
+- The test asserts that `api.ordering.placeOrder` is a public mutation reference and that a reference to a name the module does not export fails `tsc`, through the compiler's expected-error directive, which itself fails the compile when the line stops being an error.

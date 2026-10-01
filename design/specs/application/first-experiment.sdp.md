@@ -28,6 +28,7 @@ relations:
     - spec:facts.f04-nested-calls-cost-more-than-helpers
     - spec:facts.f13-transactions-have-limits
     - spec:facts.f01-serializable-mutations-under-occ
+    - spec:laws.law01-sanctioned-writes-only
   decidedBy:
     - spec:decisions.d03-events-only-source-of-next-state
     - spec:decisions.d10-contexts-meet-in-parent-use-cases
@@ -35,11 +36,11 @@ relations:
 ---
 # The first experiment
 
-Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, D3, D8, D10, F4, F13, Probe 3, OQ1, OQ3, OQ4, Sc L2-3, Sc L2-9, E-46, E-47.
+Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, Law 1, D3, D8, D9, D10, D11, F4, F13, Probe 3, OQ1, OQ3, OQ4, Sc L2-3, Sc L2-9, E-8, E-13, E-15, E-37, E-46, E-47.
 
 The first experiment builds Layers 0 to 2 in a small, clean application, Orders and Inventory, and measures what the design costs. It passes when every Layer 0, 1 and 2 scenario passes on a native backend. It measures orders of 1 line, 10 lines and the chosen maximum, without and with stock contention, and counts top-level commits, function and component calls, documents read and written, and rows left behind, with healthy-path and retry costs reported separately. Semantics come first and speed second; latency and throughput targets are product decisions made before the benchmark. The results feed the open question on component cost and the Layer 3 decisions.
 
-The six cost targets are the constraint Specs this workflow is constrained by. The example domain's terms are `spec:application.orders-inventory-example`. The owner ruled OQ4 on 2026-10-01: the experiment lives in this repository, beside the design.
+The six cost targets are the constraint Specs this workflow is constrained by. The example domain's terms are `spec:application.orders-inventory-example`. The experiment lives in this repository, beside the design, which settles OQ4.
 
 ## Intent
 
@@ -57,7 +58,8 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 - [non-blocking] OQ1: whether a trivial context with no invariants of its own may be plain tables behind lint rules is decided after this experiment measures component call cost (OQ1, Probe 3)
 - [non-blocking] OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum of 100 lines and reports the numbers per line so the owner can choose (OQ3)
 - [non-blocking] Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model, with 100 as the provisional maximum for measurement (E-46, First experiment)
-- [non-blocking] Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log and a fixture counter around component calls, with any count the backend does not expose recorded as a gap (E-47, First experiment)
+- [non-blocking] Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)
+- [non-blocking] Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a run seeds its grants and makes the order summary writable with admin access before its first command, the production composition names no service issuer, its `auth.config.ts` reads its issuer from environment variables, and it is the Convex app whose project directory is `example/`; these are options taken here and the owner has not ruled (E-8, E-13, E-15, E-37, E-46)
 
 ## Workflow
 
@@ -75,9 +77,12 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 - rule: The kernel's fixture app is separate from the example app, and test-only functions never ship (Acceptance scenarios)
 - rule: [extension] The second lifecycle command is `CancelOrder`, the essential summary is the order summary read model, and the provisional maximum is 100 lines (E-46, First experiment)
 - rule: [extension] Each measured run produces one measurement record, and retry cost is the difference between a run with contention and the same run without it (E-47, First experiment)
-- Build Layer 0: the Orders decider with `PlaceOrder` and `CancelOrder`, the Inventory decider with `allocate` and `release`, each pure, with `initial`, `decide` and `evolve`, and the L0 scenarios green (First experiment, D3)
+- rule: [extension] Stock exists only through `ReceiveStock`: every run, test and measurement creates its stock items by sending that command, and no function writes a stock item any other way (E-46, Law 1)
+- rule: [extension] A run seeds its grants by running the production composition's internal grant mutation with admin access before its first command, the read permissions `orders.read` and `inventory.read` among them, as `spec:command.actor-and-scope` pins for a tenant's first grant; the production composition names no service issuer, so every public caller is a human actor (E-37, E-15, D11)
+- rule: [extension] A run makes the order summary writable by running the first activation of `spec:application.generation-registry` with admin access, once, before its first `PlaceOrder` (E-8, D9)
+- Build Layer 0: the Orders decider with `PlaceOrder` and `CancelOrder`, the Inventory decider with `receive`, `allocate` and `release`, each pure, with `initial`, `decide` and `evolve`, and the L0 scenarios green (First experiment, D3)
 - Build Layer 1: the Orders and Inventory context components mounted by the parent, the journal, the command pipeline, receipts and tenancy, with the L1 scenarios green on the native backend (First experiment)
-- Build Layer 2: the `PlaceOrder` use case calling Orders once and Inventory once, the `CancelOrder` use case releasing the allocation, the order summary read model written in both, and journal inspection queries (First experiment, D10, D8, E-46)
+- Build Layer 2: the `PlaceOrder` use case calling Orders once and Inventory once, the `ReceiveStock` command that creates stock, the `CancelOrder` use case releasing the allocation, the order summary read model written in both, and journal inspection queries (First experiment, D10, D8, E-46)
 - Build the rebuild of the order summary as a generation, the order allocation history view of `spec:application.orders-inventory-example` with its write-pause rebuild for Sc L2-6 only, and the restore drill on the experiment's dataset (First experiment, D9, D19, Sc L2-6, E-46)
 - Run every Layer 0, 1 and 2 scenario on a disposable native backend with production configuration and record each run as evidence (First experiment, Sc L2-9, Acceptance scenarios)
 - Measure `PlaceOrder` for 1 line, 10 lines and the provisional maximum without contention, one run each, and record a measurement per run (First experiment, Sc L2-3, E-47)
@@ -87,21 +92,22 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 
 ## Design
 
-The experiment is an application, a test suite and a report. The application is the production composition: two context components, the parent with its pipeline, use cases, read models, registry and gate. The suite is the acceptance scenarios of Layers 0 to 2, run against a disposable local backend as the acceptance contract prescribes. The report is a set of measurement records, one per run, compared against the six constraint targets.
+The experiment is an application, a test suite and a report. The application is the production composition: two context components, the parent with its pipeline, use cases, read models, registry and gate. The suite is the acceptance scenarios of Layers 0 to 2, run against a disposable local backend as the acceptance contract prescribes. The report is a set of measurement records, one per run, compared against the six constraint targets. The production composition is the Convex app whose project directory is `example/`: its functions are in `example/convex/`, its two contexts are the components `example/convex/orders/` and `example/convex/inventory/`, and its deciders are in `example/domain/`.
 
 - typeMeasurement: `[extension] interface Measurement { commit: string; backendVersion: string; convexVersion: string; configuration: "production" | "adjusted"; adjustments?: string; identitySource: "production-issuer" | "fixture-issuer"; dataset: string; command: "PlaceOrder" | "CancelOrder"; lines: number; contention: number; path: "healthy" | "retry"; topLevelCommits: number; functionCalls: number; componentCalls: number; documentsRead: number; documentsWritten: number; bytesRead: number; bytesWritten: number; rowsLeftBehind: number; occRetries: number | "not exposed"; occExhaustions: number; latencyMs: number }` where `contention` is the number of concurrent callers and `occExhaustions` counts commands the engine failed with its documents-changed error (E-47, E-13, First experiment)
 - captureCommits: top-level commits are the successful top-level mutation executions in the backend's function log for the run (E-47, First experiment)
-- captureCalls: function calls are every function execution the log shows; component calls are counted by a fixture wrapper around `ctx.runMutation` and `ctx.runQuery` on component references, and the two are reconciled (E-47, F4)
-- captureDocuments: documents and bytes read and written per function come from the backend's execution records where the local backend exposes them; where it does not, the record says `not exposed` and the dashboard's insights on a cloud run stand in (E-47, First experiment)
+- captureCalls: function calls are the top-level executions the backend's function log shows; the log holds no record for a component call inside a mutation, so the calls a use case makes per context are counted by a pure test that runs the use case's executor against a ctx whose `runMutation` counts by function reference and answers a canned operation outcome (E-47, F4, E-15)
+- captureDocuments: documents and bytes read and written come from the `usageStats` of the command's top-level completion record, `databaseReadDocuments`, `databaseWriteDocuments`, `databaseReadBytes` and `databaseWriteBytes`, which count what the component calls inside the mutation read and wrote; a count the backend does not expose is recorded as `not exposed` (E-47, First experiment, E-15)
 - captureRowsLeftBehind: rows left behind are the documents a run created that are not state, events, receipts or read-model rows: markers, registry rows, gate and audit records, counted by table (E-47, First experiment, D19)
 - captureRetries: optimistic-concurrency retries are not observable from inside a mutation; the contention run reports them from the backend's log where exposed, else the retry path is measured as the difference between the contention run and the healthy run (E-47, F1)
-- datasetSizes: 1 line, 10 lines and 100 lines as the provisional maximum, each against a fresh disposable backend seeded with the stock items the order needs (E-46, Sc L2-3, OQ3)
+- datasetSizes: 1 line, 10 lines and 100 lines as the provisional maximum, each against a fresh disposable backend whose stock items are created through `ReceiveStock` (E-46, Sc L2-3, OQ3)
 - contentionShape: N `PlaceOrder` commands for the same stock item sent concurrently, at N of 2, 8 and 32, with the stock set so that the first is applied and the rest are rejected for short stock, which is Sc L1-11's shape widened into the contention run; the run reports bytes read per call beside documents, the engine's retries where the backend exposes them, and how many commands the engine failed after its bounded retries, which the outcome boundary classifies as technical failures the caller may retry (First experiment, Sc L1-11, F1, E-5, E-47)
 - limitOrderLines: the maximum number of lines per `PlaceOrder` is a product decision, open under OQ3; the experiment measures at 100 and reports documents read and written per line, so the owner can set it under the 1 second timeout and the F13 ceilings (OQ3, F13)
-- limitExpectedDocuments: the design expects one `PlaceOrder` of N lines to read about N + 6 documents and write about 2N + 5 documents: one stock item state and one event per line, the order state, the order event, the receipt, the summary row, the registry read, the gate read and the audit record; the measurement confirms or corrects it (E-47, F13, D10)
+- limitExpectedDocuments: the design expects one `PlaceOrder` of N lines to read about N + 6 documents and write about 2N + 5 documents: one stock item state and one event per line, the order state, the order event, the receipt, the summary row, the caller's grants, the registry read, the gate read and the audit record; the measurement confirms or corrects it (E-47, F13, D10)
 - streamBudgets: the stock item stream declares `budgetBytes` of 16 KiB and the order stream keeps the default 256 KiB, as `spec:application.orders-inventory-example` pins, so the allocation call's byte bound, 8 MiB over the planned streams' budgets, admits 512 stock streams and the adapter's count bound of `min(maxStreams, 256)` admits the 100 of the maximum order with room, while the single order stream costs at most 256 KiB; at the default budget on both stream types the byte bound would admit only 32 stock streams and the maximum run would be rejected `operationTooLarge`, which is why the budget is pinned here and the run at the maximum measures it (E-2, E-22, E-46, F13, Sc L2-3)
 - productDecisions: latency and throughput targets are set by the owner before the benchmark and recorded with the run; the experiment reports latency but does not set a target (First experiment)
-- deliverables: the application in this repository, beside the design, as the owner ruled under OQ4 on 2026-10-01, the evidence records of every scenario run, and the measurement report with the six targets marked held or not held (First experiment, OQ4, Acceptance scenarios)
+- deliverables: the application in this repository, beside the design, which settles OQ4, the evidence records of every scenario run, and the measurement report with the six targets marked held or not held (First experiment, OQ4, Acceptance scenarios)
+- authProvider: [extension] the production composition's `auth.config.ts` declares one `customJwt` provider whose `issuer`, `applicationID` and `jwks` are environment variables of the deployment, as `spec:platform.native-harness` pins for a composition that runs natively (E-13, D11)
 
 ## Example space
 

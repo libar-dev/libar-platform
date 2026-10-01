@@ -21,7 +21,7 @@ The doc's acceptance table is the contract. It lists forty-three scenario rows b
 
 ### Open questions
 
-- [non-blocking] Extension E-14: the doc's four tiers, domain, simulator, native and end to end, name no compile-time check, while Sc L2-4's pass condition is a build, type or registration check that fails before any traffic; the option taken here is a fifth tier, the build tier, a compile of the fixture app with the change applied that asserts a non-zero `tsc` exit or a failed registration check, run as a step of the fixture app's build before the native suite and recorded like any run; the alternative, folding it into the native tier as a compile step that precedes the native run, was not taken because a native run needs a backend and the check needs none; the owner confirms (E-14, Sc L2-4, Acceptance scenarios)
+- [non-blocking] Extension E-14: the doc's four tiers, domain, simulator, native and end to end, name no compile-time check, while Sc L2-4's pass condition is a build, type or registration check that fails before any traffic; the option taken here is a fifth tier, the build tier, a compile, with no backend, of a typed caller that states the change, which asserts that `tsc` refuses it, run with every type check and recorded like any run; the alternative, folding it into the native tier as a compile step that precedes the native run, was not taken because a native run needs a backend and the check needs none; the owner confirms (E-14, Sc L2-4, Acceptance scenarios)
 
 ## Rule
 
@@ -42,7 +42,7 @@ The doc's acceptance table is the contract. It lists forty-three scenario rows b
 - Readiness is stated plainly as specified, implemented, tested under named conditions, or operationally accepted (Acceptance scenarios)
 - The first experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend (First experiment)
 - The one all-layer scenario, breaking metrics and logging and separately breaking mandatory audit, applies to every installed layer (Sc ALL-1)
-- [extension] A build-tier scenario passes when a compile of the fixture app with the change applied fails at `tsc` or at the registration check before any deployment; the build tier is the fifth tier, named by Sc L2-4 alone, and needs no backend (E-14, Sc L2-4)
+- [extension] A build-tier scenario passes when a typed caller that states the change fails `tsc` before any deployment; the build tier is the fifth tier, named by Sc L2-4 alone, and needs no backend (E-14, Sc L2-4)
 
 ## Design
 
@@ -52,7 +52,7 @@ The corpus maps the doc's readiness words onto SDP's rungs without collapsing th
 - tierSimulator: outcome combinations, serialization and classification of the four outcomes and the error codes (Acceptance scenarios, D4)
 - tierNative: a disposable local backend per test, proving component and nested-mutation behavior, scheduling, contention and deployment (Acceptance scenarios, S13)
 - tierEndToEnd: the production composition on a representative dataset; Sc L2-8, L2-9, L3-7, L4-3 (Acceptance scenarios)
-- tierBuild: [extension] a compile of the kernel's fixture app with the change under test applied, asserting a non-zero `tsc` exit naming the caller or a failed registration check, run as a build step before the native suite with no backend; Sc L2-4 (E-14, Sc L2-4)
+- tierBuild: [extension] a type test of a composition's generated `api`: a reference to a name the module does not export, and a call that breaks the argument contract, each marked with the compiler's expected-error directive, so the compile fails when either stops being an error; run by the type check with no backend; Sc L2-4 (E-14, Sc L2-4)
 - evidenceRecord: commit, installed layers, backend and dependency versions, configuration, dataset, command and result, plus the difference from production when configuration was adjusted (Acceptance scenarios)
 - readinessWords: specified, implemented, tested under named conditions, operationally accepted; never a percentage or a score (Acceptance scenarios)
 

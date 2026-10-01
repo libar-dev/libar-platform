@@ -6,12 +6,17 @@ specs:
   - spec:application.parent-use-cases.second-context-throws
   - spec:application.read-models
   - spec:application.read-models.committed-state-visible
+  - spec:application.read-models.query-refused-before-disclosure
+  - spec:application.read-models.query-refused-without-grant
+  - spec:application.read-models.list-pages-by-cursor
   - spec:application.projection-contract
   - spec:application.rebuild
   - spec:application.rebuild.online-rebuild-interrupt-resume
   - spec:application.rebuild.write-pause-rebuild-interrupt
   - spec:application.rebuild.write-pause-rebuild-abort
   - spec:application.generation-registry
+  - spec:application.generation-registry.first-activation-makes-read-model-writable
+  - spec:application.generation-registry.command-without-generation-fails
   - spec:application.write-pause
   - spec:application.restore
   - spec:application.restore.restore-representative-dataset
@@ -40,4 +45,4 @@ modelRefs:
 
 Package D. Layer 2: parent use cases, read models and the projection contract, online rebuild with the generation registry and the write pause, restore, baseline operations, the cost-target constraints and the first experiment, with the Layer 2 scenarios and the all-layers audit scenario.
 
-Membership order follows the plan's inventory with each parent's examples directly after it: parent use cases, read models, the projection contract, rebuild with its registry and gate, restore, the first experiment with the example domain, baseline operations, then the eight constraints. Thirty-one Specs: nine application Specs, one operations Spec, eight constraints and thirteen examples. Two examples are siblings the plan's table did not list, `second-context-throws` and `write-pause-rebuild-abort`, added because each doc row enumerates two cases.
+Membership order follows the plan's inventory with each parent's examples directly after it: parent use cases, read models, the projection contract, rebuild with its registry and gate, restore, the first experiment with the example domain, baseline operations, then the eight constraints. Thirty-six Specs: nine application Specs, one operations Spec, eight constraints and eighteen examples. Two examples are siblings the plan's table did not list, `second-context-throws` and `write-pause-rebuild-abort`, added because each doc row enumerates two cases. Five examples verify no doc row: `first-activation-makes-read-model-writable` and `command-without-generation-fails` verify the generation registry's first activation and its failure under E-8, `query-refused-before-disclosure` and `query-refused-without-grant` verify Law 5 for a parent query, and `list-pages-by-cursor` verifies a parent list under E-24.

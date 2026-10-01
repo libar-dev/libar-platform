@@ -74,6 +74,10 @@ specs:
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-built-in-paginate-throws-in-component
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
   - spec:facts.f17-migrations-fits-generation-backfill
 modelRefs:
@@ -83,4 +87,4 @@ modelRefs:
 
 Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract and the native harness, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
 
-Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Seventy-five Specs.
+Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Seventy-nine Specs.

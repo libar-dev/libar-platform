@@ -24,4 +24,4 @@ The third cost target, the review's addition to the order-size scenario. Context
 - statement: A use case makes exactly one component call per context it involves, whatever the number of lines or items in its input (First experiment, D10)
 - flavor: cost
 - target: component-calls.per-context.per-use-case.eq:1
-- measurableBy: the first experiment's fixture counter around `ctx.runMutation` and `ctx.runQuery` on component references per `PlaceOrder`, reconciled with the function log, for 1 line, 10 lines and the maximum (First experiment, Sc L2-3, E-47)
+- measurableBy: a pure test that runs `PlaceOrder`'s executor against a ctx whose `runMutation` and `runQuery` count calls by function reference and answer a canned operation outcome, for 1 line, 10 lines and the maximum; the backend's function log holds no record for a component call inside a mutation, so it cannot count them (First experiment, Sc L2-3, E-47)

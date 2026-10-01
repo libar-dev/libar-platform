@@ -28,6 +28,7 @@ And the budgets {budgets: "hold"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
-- The test runs `PlaceOrder` with one line, reads the backend's function log, and asserts one top-level mutation execution, no scheduled function, cron or action, and exactly one `ctx.runMutation` on Orders and one on Inventory from the fixture counter.
-- The test records the measurement and asserts documents read and written against the design's expected counts, reporting the actual numbers.
+- Runs in the native tier on the production composition; every test owns its disposable backend.
+- On the production composition, after grants, the first activation and `ReceiveStock` as setup, the test sends `PlaceOrder` with one line, reads the backend's function log, and asserts one top-level mutation execution for the command and no scheduled function, cron or action.
+- The call count is shown by a pure test of the same executor, which asserts one `runMutation` on the Orders operation and one on the Inventory operation for this size.
+- The test records the documents and bytes read and written from the completion record's `usageStats` and asserts them under the transaction ceilings; that the stream rows and the summary row stayed inside their budgets is shown by the command having committed, because a row above its budget fails the command.

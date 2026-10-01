@@ -11,7 +11,7 @@ relations:
 
 Sc L1-2 · native tier · fixture composition · third of three injection points.
 
-The fault sits in the parent, in the fixture composition's executor for `AmendDocument`: after the `depot` context's sub-transaction has returned its DTO and versions, the executor throws a plain Error that names the returned versions while the command's `failBeforeReceipt` switch, a fixture table row the test sets with admin access, is on. Slice S1 builds no read model, so step 9 writes nothing and the throw is the last thing before the receipt insert of step 10. An ordinary client with a grant sends the receipted `AmendDocument` to a document at version 3. This point proves that a component's sub-transaction does not commit on its own: the context call completed without error, and still nothing of it survives the parent's throw.
+The fault sits in the parent, in the fixture composition's executor for `AmendDocument`: after the `depot` context's sub-transaction has returned its DTO and versions, the executor throws a plain Error that names the returned versions while the command's `failBeforeReceipt` switch, a fixture table row the test sets with admin access, is on. The throw ends step 8, so neither step 9 nor the receipt insert of step 10 runs. An ordinary client with a grant sends the receipted `AmendDocument` to a document at version 3. This point proves that a component's sub-transaction does not commit on its own: the context call completed without error, and still nothing of it survives the parent's throw.
 
 ## Intent
 
@@ -33,4 +33,4 @@ And an event from the command exists in the journal {eventExists: false}
 - The test asserts that the thrown error names version 4 of the document, which only the completed context call returned, and that the context's state document is byte-identical to its pre-command value.
 - The test asserts that the function log holds one completion record for the request, the parent mutation's own, carrying the fault's error.
 - The test then turns the switch off, sends the same command with the same request key and asserts that it executes as new intent and returns `replayed` false, because no receipt survived.
-- The assertion that the parent's read-model row for the entity is absent or unchanged, which shows that step 9's read-model write rolled back with the mutation, needs a fault point that the fixture composition supplies after step 9, because the executor's point lies before it.
+- The test shows that step 9's read-model write rolls back with the mutation through the fault point the fixture composition supplies after it: a fixture command declares the fixture read model and, after it, a second binding whose projection throws a plain error once the first binding has written its row, and the test asserts that the caller sees a technical failure and that no row of the read model, no receipt and no event or state change of the context exists for the operation.

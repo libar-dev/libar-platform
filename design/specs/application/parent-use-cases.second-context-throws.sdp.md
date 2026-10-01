@@ -9,7 +9,9 @@ relations:
 ---
 # The first context writes, then the second throws
 
-Sc L2-1 · native tier · the technical-failure case, the doc's second enumerated case of the row.
+Sc L2-1 · native tier · fixture composition · the technical-failure case, the doc's second enumerated case of the row.
+
+The fault needs a part the fixture composition supplies, so the scenario runs there: a fixture command calls the `depot` context, which writes, and then the second fixture context, `yard`, whose operation throws a plain Error after its own state write, through the fault its stream registration carries. The libraries carry no hook.
 
 ## Intent
 
@@ -26,6 +28,6 @@ And the number of stored receipts, events and state changes is {stored: 0}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
-- The test injects a plain throw inside the Inventory component's `allocate` operation after Orders has appended its events.
-- The test asserts that the caller sees a technical failure and not a rejection code, that no receipt, event or state document exists for the operation, and that a retry with the fault removed succeeds.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- The test sends the fixture command with the title that makes the `yard` context's save fail, after the `depot` context's call has returned its versions.
+- The test asserts that the caller sees a technical failure and no rejection data, that no receipt, no event and no stream row of either context exists for the operation, and that the same command without the fault is applied.

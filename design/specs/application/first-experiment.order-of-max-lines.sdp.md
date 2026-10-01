@@ -28,7 +28,9 @@ And the budgets {budgets: "hold"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
-- The test runs `PlaceOrder` at the provisional maximum of 100 lines and asserts the same counts as the smaller sizes, plus that the run finished inside the mutation timeout and under the F13 ceilings for documents read and written.
+- Runs in the native tier on the production composition; every test owns its disposable backend.
+- On the production composition, after grants, the first activation and `ReceiveStock` as setup, the test sends `PlaceOrder` at the provisional maximum of 100 lines, reads the backend's function log, and asserts one top-level mutation execution for the command, no scheduled function, cron or action, and that the run finished inside the mutation timeout.
+- The call count is shown by a pure test of the same executor, which asserts one `runMutation` on the Orders operation and one on the Inventory operation carrying all 100 lines in one list.
+- The test records the documents and bytes read and written from the completion record's `usageStats` and asserts them under the F13 ceilings; that the stream rows and the summary row stayed inside their budgets is shown by the command having committed, because a row above its budget fails the command.
 - The test then runs `PlaceOrder` with one line more than the maximum and asserts the `operationTooLarge` rejection with nothing stored.
 - The measurement records the per-line cost so the owner can decide OQ3 from numbers.

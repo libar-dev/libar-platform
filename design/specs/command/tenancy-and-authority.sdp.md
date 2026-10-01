@@ -34,7 +34,7 @@ This Spec owns the rules of tenant scope, actor establishment, authorization and
 
 ### Open questions
 
-- [non-blocking] Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity becomes an actor or how revocation takes effect; here the public entry maps `ctx.auth.getUserIdentity()` to a human actor, or a service actor when the issuer is a configured service issuer, grants live in a parent table by default and are revoked by deleting the row, with no cache, so a revoked grant fails the next command (E-37, D11)
+- [non-blocking] Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity becomes an actor or how revocation takes effect; here the public entry and a parent query's `authorizeQuery` map `ctx.auth.getUserIdentity()` to a human actor, or a service actor when the issuer is a configured service issuer, grants live in a parent table by default and are revoked by deleting the row, with no cache, so a revoked grant fails the next command (E-37, D11)
 - [non-blocking] Extension E-6: the doc names the actor kinds and the worker's two modes but not the types; the actor, scope, namespace, grant and `Authority` shapes are the design's and are pinned once in `spec:command.actor-and-scope`, which also rules that a derived command's namespace is `worker` (E-6, D11)
 - [non-blocking] Extension E-37: the design takes grants as written by plain library helpers, `insertGrant` and `revokeGrant`, over which the application registers its own internal mutations, with a tenant's first grant created by an operator who runs that internal mutation with admin access; who creates the first grant and who may change grants is a provisional reading the owner rules (E-37, D11, Law 5)
 
@@ -55,6 +55,7 @@ This Spec owns the rules of tenant scope, actor establishment, authorization and
 - flow: The public entry reads `ctx.auth.getUserIdentity()` once; `null` throws rejection `unauthenticated`; an identity becomes an actor of kind `human`, or `service` when its issuer is configured as a service issuer (D11, E-37)
 - flow: The internal entry receives `actor` and `namespace` from its trusted caller, an HTTP action, a worker, a workflow step or an agent runner, which established them from its own provenance (D11, D13)
 - flow: The pipeline reads the actor's grants for the tenant through `by_principal` and evaluates the declaration's permission policy; a denial throws rejection `forbidden` before any execution and before any receipt is read (Law 5, D11)
+- flow: A parent query on tenant data calls `authorizeQuery` before its first read; no identity throws rejection `unauthenticated`, a denial throws rejection `forbidden`, and the query returns nothing and writes nothing before authorization passes (Law 5, D11)
 - flow: A worker whose `Authority` is in `recheckDelegator` mode runs as the captured delegating user, whose `delegationRef` names the obligation, so the grants read is the user's current rights; a worker in `serviceAuthority` mode runs as a service actor whose `onBehalfOf` names the actor that made the promise and whose `delegationRef` names the obligation, under the service actor's own grants (D11, D13, E-6)
 
 ## Design
@@ -64,8 +65,8 @@ Authorization is a helper inside the pipeline's mutation and inside any parent q
 Nothing here signs anything. The internal entry is unreachable by clients because Convex refuses client calls to internal functions; that visibility rule, not a token, is what keeps a client out of the worker and agent namespaces.
 
 - transactionBoundary: grants are read inside the command's mutation or the query that discloses tenant data; no separate authorization transaction (D11, Law 9)
-- convexSurface: the `grants` table and the helpers `establishActor`, `authorize`, `insertGrant` and `revokeGrant`; no registered function of its own (D11, E-37)
-- ctxAuthUse: `ctx.auth.getUserIdentity()` in the public entry only; its `tokenIdentifier` is the actor's `id`, its `issuer` the actor's `issuer` (D11, F11)
+- convexSurface: the `grants` table and the helpers `establishActor`, `authorize`, `authorizeQuery`, `insertGrant` and `revokeGrant`; no registered function of its own (D11, E-37)
+- ctxAuthUse: `ctx.auth.getUserIdentity()` is read in `establishActor` only, which the public entry and `authorizeQuery` call; its `tokenIdentifier` is the actor's `id`, its `issuer` the actor's `issuer`, and a service issuer makes a `service` actor on a query as on a command (D11, F11, E-37)
 - grantsRead: `ctx.db.query("grants").withIndex("by_principal", (q) => q.eq("tenantId", tenantId).eq("principalKind", actor.kind).eq("principalId", actor.id)).take(limitGrantsPerPrincipal + 1)`, followed by a length check that throws a plain `Error` when the result exceeds `limitGrantsPerPrincipal` (D11, Law 11, E-37)
 - revocation: deleting the grant row; the next command's read finds no grant and throws `forbidden`, and a duplicate's stored outcome is not disclosed (D11, Law 5, E-37)
 - namespaceAssignment: the public entry sets `namespace: "public"` in code; the internal entry's `namespace` argument is filled by trusted server code from its own provenance, and the set of namespaces is the closed union in `spec:command.actor-and-scope` (D6, D11)
@@ -91,5 +92,5 @@ And the namespace the server assigned is {namespace:"public"|"worker"|"agent"|"n
 ## Verification — reviewed
 
 - A reviewer confirms that every registered function on tenant data has `tenantId` in its `args` and that every index on a tenant table leads with `tenantId`.
-- A reviewer confirms that `ctx.auth` is read only in the public entry, that no component function reads it or an environment variable, and that of the helpers only `establishActor` reads it.
+- A reviewer confirms that `ctx.auth` is read only through `establishActor`, which the public entry and `authorizeQuery` call, and that no component function reads it or an environment variable.
 - A reviewer confirms that the grants read happens inside the command's transaction and that no read model stands in for it.

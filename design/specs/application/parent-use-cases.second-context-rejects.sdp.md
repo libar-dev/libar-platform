@@ -9,7 +9,7 @@ relations:
 ---
 # The first context writes, then the second rejects
 
-Sc L2-1 · native tier · the rejection case.
+Sc L2-1 · native tier · production composition · the rejection case.
 
 ## Intent
 
@@ -26,7 +26,7 @@ And the number of stored receipts, events and state changes is {stored: 0}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
-- The test drives `PlaceOrder` with a line whose stock is short, so Orders writes `OrderPlaced` and Inventory returns a rejection.
-- The test asserts that the caller's error is a `ConvexError` with the rejection code and data, that no receipt row exists for the request key, and that the Orders context has no stream, event or state document for the order.
-- The test then re-sends the same command after stock is added and asserts that it succeeds, which shows the first attempt left nothing behind.
+- Runs in the native tier on the production composition; every test owns its disposable backend.
+- The test creates stock through `ReceiveStock`, then sends `PlaceOrder` with a line that asks for more than is available, so the Orders context's call returns before the Inventory context throws `insufficientStock`.
+- The test asserts that the caller's error is a `ConvexError` whose data has `kind` `rejection`, `code` `insufficientStock` and `commandType` `PlaceOrder`, that no receipt row exists for the request key, that the Orders context has no stream row and no event for the order, and that no order summary row exists.
+- The test then receives the missing quantity through `ReceiveStock`, re-sends the same command and asserts that it is applied, which shows the first attempt left nothing behind.
