@@ -27,3 +27,4 @@ And the page from the start to the split cursor and the page from the split curs
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - This example reads the relayed pages directly. Whether the client hook acts on the split is the next example's question.
 - The second half ends at the end cursor the page was subscribed with. The capped page's own `continueCursor` sits at the last row it read, and a second half that ends there holds 20 rows and leaves the rest of the range out.
+- On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

@@ -28,4 +28,6 @@ And after the catching parent committed, the throwing mutation's table holds {ch
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The thrown data holds a string, a number, a boolean, a null, an array, a nested object and a 64-bit integer, and the test compares decoded values, not messages.
-- The test also throws an ordinary `Error` with an added property through the same path and records whether the property arrives.
+- The test shows that the thrower had written its row before it threw, so a thrower that never wrote does not pass.
+- The test also throws an ordinary `Error` with an added property through the same path, checks that the error it sees is the thrower's, and records whether the property arrives.
+- On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

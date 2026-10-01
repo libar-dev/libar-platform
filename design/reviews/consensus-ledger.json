@@ -4130,6 +4130,72 @@
    "note": "S0, 2026-10-01. The observation is an open question on `spec:facts.f11-components-have-no-ctx-auth`. No other Spec changed.",
    "slice": "S1",
    "detector": "native backend"
+  },
+  {
+   "round": "S0",
+   "id": "s0-e16-silent-on-a-later-different-run",
+   "lens": "completeness",
+   "severity": "major",
+   "files": [
+    "specs/facts/probe-plan.sdp.md",
+    "specs/platform/native-harness.sdp.md",
+    "specs/facts/f13-transactions-have-limits.probe-4-nesting-depth.sdp.md"
+   ],
+   "issue": "Extension E-16 said what a different first run means and nothing about a different later run. Seven bound values are what one backend release or one package version does (the depth of 9, the hook's 40 shown and 5 missing, the socket wait, two refusal texts, one log record per call), so the next pin bump would turn them red with nothing saying that red is a finding and not a regression. No example whose expectation held said so. The size rule ('an example asserts a size only where the fact states a bound') forbade the depth example's own Then. Opus review of the fold-in, M1 and M5.",
+   "fix": "Say what a red on a new release is; let a reader tell a held expectation from an observed value; rule between the size rule and the depth example.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01. `spec:facts.probe-plan` gains the rule that a later run showing another value is again a finding and the example is rebound, and the size rule now tells a measured size, which is recorded and not asserted, from a limit the backend enforces, which is bound as observed. `spec:platform.native-harness` gains the same rule for the values its four examples bind. Twelve probe examples say their bound values held on the first run; the depth and hook examples already said theirs were observed. The depth example also binds the refusal's text."
+  },
+  {
+   "round": "S0",
+   "id": "s0-fault-rule-contradicts-the-harness-controls",
+   "lens": "sdp",
+   "severity": "major",
+   "files": [
+    "specs/platform/native-harness.sdp.md"
+   ],
+   "issue": "One rule said a fault enters a native run only through something the fixture composition supplies, while other rules and the Design entries give the harness a kill, a closed client and a lost response, and all of Probe 1 injects its fault that way. A slice S1 implementer would read the first rule as forbidding the tools the Spec hands over. Opus review of the fold-in, M2.",
+   "fix": "One statement of which faults come from the harness and which only from fixture code.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01. Two rules: a fault inside a function enters only through what the fixture composition supplies; a fault outside the functions, a killed backend, a closed client or a lost response, comes from the harness's controls."
+  },
+  {
+   "round": "S0",
+   "id": "s0-harness-design-mixes-stubs-detail-and-readings",
+   "lens": "sdp",
+   "severity": "major",
+   "files": [
+    "specs/platform/native-harness.sdp.md"
+   ],
+   "issue": "After the design pass the harness Spec's Design section held about thirty entries under a preamble that called all of them observations: the stubs slice S1 builds on, implementation detail that goes stale at the first code change (system query names, CLI flags, retry counts, thirteen fields copied from the backend's log), and readings of one backend release written as rules. The fixture token was said to yield 'the shape a production token yields' while it carries five claims. Opus review of the fold-in, M3 and minor 10; the owner's direction that a Spec carries the design of its key abstractions.",
+   "fix": "Keep the stubs later slices build on, mark one release's readings as readings, drop the entries whose only reader is the harness's own code.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01. Ten entries are gone: the table-read and log mechanisms, the executable resolver and its type, the pin file, the issuer constructor, `startBackend`, the readiness check, the completion record's full type and the CLI call. Three entries are renamed `observedWriteRate`, `observedFunctionLog` and `observedTableRead` and the preamble says they are readings, not rules. `identity` names the five claims the fixture token carries. `adminReads` names the six fields of a completion record a test may rely on. Left for polish: several rules are still said twice or hold two rules in one bullet (Opus minors 1 and 2)."
+  },
+  {
+   "round": "S0",
+   "id": "s0-socket-route-claimed-as-a-refusal",
+   "lens": "completeness",
+   "severity": "major",
+   "files": [
+    "specs/platform/native-harness.ordinary-client-refused-component-function.sdp.md"
+   ],
+   "issue": "The component refusal example said Convex 'refuses the call on every route', and for the WebSocket route it showed only that a promise stayed pending for three seconds. The test passed when the mutation was never sent, which the behavior review showed, and when the public route called a function that does not exist, which a native mutation showed. Opus review M4, astra review 6, sol review 6.",
+   "fix": "The outcome says what each route showed; the socket step shows that the request left the client and that the backend closed the connection; the public route checks its target.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "native backend",
+   "note": "S0, 2026-10-01. The outcome now reads: refused on the two HTTP routes with its own error, connection closed on the WebSocket route without an answer. The socket step binds the wait and at least one close by the backend, and the verification bullets say what would show a call that ran. The test follows in fold-in 2."
   }
  ],
  "sessions": [

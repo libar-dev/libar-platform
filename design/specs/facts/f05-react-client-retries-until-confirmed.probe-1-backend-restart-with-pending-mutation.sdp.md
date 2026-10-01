@@ -29,3 +29,4 @@ And at least {leastKilledBeforeCommit: 1} trial was killed before its commit and
 - The client is `ConvexClient` from `convex/browser`, which sends mutations through the same `BaseConvexClient` as the React client; the React client itself is not run.
 - The kill is a SIGKILL, sent after a delay that the trials spread from none to a few tens of milliseconds. The test holds the backend's responses back from the client, reads the marker table with admin access after the restart and before the client reconnects, and so tells a kill before the commit from a kill after it.
 - A trial killed after its commit is the one that tests the guarantee: the client never saw the result, sends the mutation again when it reconnects, and the backend must not run it twice.
+- On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

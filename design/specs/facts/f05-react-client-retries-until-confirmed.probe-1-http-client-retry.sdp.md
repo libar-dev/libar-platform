@@ -27,3 +27,4 @@ And the backend holds {markerRows: 2} marker rows
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The transport is the `fetch` the test passes to `ConvexHttpClient`: it performs the request, drops the response and throws, as a connection lost after the commit would.
 - The test also asserts that one call on an unfaulted transport sends one request and leaves one row.
+- On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

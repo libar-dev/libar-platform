@@ -28,3 +28,4 @@ And at least {leastCommittedUnconfirmed: 1} trial leaves its row although its cl
 - The client is `ConvexClient` from `convex/browser`, which sends mutations through the same `BaseConvexClient` as the React client; the React client itself is not run.
 - The test holds the backend's responses back from the client, so every close happens with the mutation pending, and varies the time between the send and the close.
 - The test records how many trials left no row and how many left one, which is the measure of what a closed tab can lose.
+- On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

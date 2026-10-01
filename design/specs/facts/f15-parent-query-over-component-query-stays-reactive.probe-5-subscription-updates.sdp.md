@@ -25,3 +25,4 @@ Then the subscription delivers {updates: 1} changed value without the client ask
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The client is a `ConvexClient` over a WebSocket, and the test fails if no update arrives within a stated wait.
+- On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.
