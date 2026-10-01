@@ -1,0 +1,9 @@
+{
+  "release": "precompiled-2026-09-28-5c7cb5b",
+  "assets": {
+    "convex-local-backend-aarch64-apple-darwin.zip": "c1613bb4a3ac884871184020662c865a045cde95ad781fff002a6bd25f2f2890",
+    "convex-local-backend-x86_64-unknown-linux-gnu.zip": "5b4adbe9fc2f9985c66eb12b19dadedf2700d8796c839ddba09802196099f241",
+    "convex-local-backend-aarch64-unknown-linux-gnu.zip": "d13679e5abb77637218547b8109ec903ae5e9a276addb2bec438d54457a6772c",
+    "convex-local-backend-x86_64-apple-darwin.zip": "8ca9b573069b504ce533394bb126ba2c88529f260138f54171d8f4b39b9ebe3b"
+  }
+}

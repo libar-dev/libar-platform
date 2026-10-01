@@ -5,16 +5,45 @@
   "type": "module",
   "description": "The Convex transactional domain platform: its design as a Software Delivery Protocol corpus, and the code built from it.",
   "engines": {
-    "node": ">=22"
+    "node": "^24.0.0"
   },
   "scripts": {
     "sdp": "sdp",
     "check": "python3 design/tools/check.py",
-    "validate": "sdp validate design",
-    "view": "sdp view design",
-    "census": "sdp census design"
+    "validate": "sdp validate",
+    "view": "sdp view",
+    "census": "sdp census",
+    "sdp:build": "npx sdp build",
+    "typecheck": "npm run sdp:build && tsc",
+    "lint": "eslint fixture harness tests scripts vitest.config.ts eslint.config.js",
+    "format:check": "prettier --check fixture harness tests scripts evidence README.md package.json tsconfig.json vitest.config.ts eslint.config.js .github/workflows/ci.yml .prettierrc.json",
+    "test:types": "npm run sdp:build && vitest run --project types",
+    "test:pure": "vitest run --project pure",
+    "test:simulator": "vitest run --project simulator",
+    "test:native": "npm run sdp:build && vitest run --project native",
+    "codegen": "node scripts/codegen.mjs",
+    "test": "npm run sdp:build && vitest run --project types --project pure --project simulator"
   },
   "devDependencies": {
-    "@libar-dev/software-delivery-protocol": "file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz"
+    "@convex-dev/eslint-plugin": "5.0.0",
+    "@edge-runtime/vm": "5.0.0",
+    "@eslint/js": "10.0.1",
+    "@libar-dev/software-delivery-protocol": "file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.19.0",
+    "@types/react": "19.3.0",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "convex": "1.46.0",
+    "convex-helpers": "0.1.124",
+    "convex-test": "0.0.60",
+    "eslint": "10.11.0",
+    "happy-dom": "20.14.5",
+    "jose": "6.2.12",
+    "prettier": "3.9.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.3"
   }
 }

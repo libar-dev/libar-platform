@@ -1,0 +1,58 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+      - run: npm ci
+      - run: python3 design/tools/check.py
+  compiled:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:types
+      - run: npm run lint
+      - run: npm run format:check
+  pure-and-simulator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:pure
+      - run: npm run test:simulator
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-evidence
+          path: evidence/runs/*.json

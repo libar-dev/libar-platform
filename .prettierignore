@@ -1,0 +1,7 @@
+design/
+docs/
+vendor/
+generated/
+**/_generated/
+evidence/
+package-lock.json
