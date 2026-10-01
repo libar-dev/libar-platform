@@ -1,0 +1,3539 @@
+{
+  "tier": "native",
+  "commit": "ba5edddbda73ce8d2ecd3dd843c497116ee9a762",
+  "clean": true,
+  "command": "vitest run --project native",
+  "startedAt": "2026-10-01T16:29:36.247Z",
+  "finishedAt": "2026-10-01T16:29:58.709Z",
+  "result": "passed",
+  "versions": {
+    "node": "v24.21.0",
+    "convex": "1.46.0",
+    "convex-helpers": "0.1.124",
+    "convex-test": "0.0.60",
+    "vitest": "5.0.3",
+    "typescript": "7.0.2",
+    "react": "19.3.0",
+    "happy-dom": "20.14.5"
+  },
+  "tests": [
+    {
+      "name": "native: stop and kill keep stored rows across restart, and dispose removes storage twice",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 1819.2924580000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://changed-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 4: how deep nested calls may go (spec:facts.f13-transactions-have-limits.probe-4-nesting-depth) > executes the bound example against a fresh world",
+      "file": "tests/native/f13-transactions-have-limits.probe-4-nesting-depth.test.ts",
+      "result": "passed",
+      "durationMs": 1618.2380000000003,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 1,
+            "answer": 1,
+            "error": null,
+            "rows": 1
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 2,
+            "answer": 2,
+            "error": null,
+            "rows": 2
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 3,
+            "answer": 3,
+            "error": null,
+            "rows": 3
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 4,
+            "answer": 4,
+            "error": null,
+            "rows": 4
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 5,
+            "answer": 5,
+            "error": null,
+            "rows": 5
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 6,
+            "answer": 6,
+            "error": null,
+            "rows": 6
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 7,
+            "answer": 7,
+            "error": null,
+            "rows": 7
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 8,
+            "answer": 8,
+            "error": null,
+            "rows": 8
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 9,
+            "answer": 9,
+            "error": null,
+            "rows": 9
+          }
+        },
+        {
+          "name": "stackTrial",
+          "value": {
+            "stack": 10,
+            "answer": null,
+            "error": "Error: [Request ID: 86d42b2304f90e33] Server Error\nUncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Uncaught Error: Cross component call depth limit exceeded. Do you have an infinite loop in your app?\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n\n    at async handler (../fixture/convex/limits.ts:138:12)\n",
+            "rows": 0
+          }
+        },
+        {
+          "name": "depthBoundary",
+          "value": {
+            "deepest": 9,
+            "firstFailure": 10
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 5: the client hook splits a page across the boundary and loses rows (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary.test.ts",
+      "result": "passed",
+      "durationMs": 1786.500959,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "hookBeforeInsert",
+          "value": {
+            "rows": 30,
+            "status": "Exhausted"
+          }
+        },
+        {
+          "name": "hookCappedPage",
+          "value": {
+            "status": "SplitRequired",
+            "rows": 20,
+            "continueCursor": "[4,1790872178299.261,\"jd70p070cnmqgpednbezkgwx118fesvv\"]",
+            "endCursor": "[9,1790872178299.2622,\"jd76wqytnnw0tg2j0f8aje6whd8ffbns\"]"
+          }
+        },
+        {
+          "name": "hookAfterSplit",
+          "value": {
+            "rowsInList": 45,
+            "rowsShown": 40,
+            "status": "Exhausted",
+            "missingPositions": [
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          }
+        },
+        {
+          "name": "hookMissingCursorRange",
+          "value": {
+            "missing": [
+              "jd74w5mtgm9cbb73e30rd0vgzn8ffe55",
+              "jd737rgfne5n8z2bjrnw4kp9558fer1k",
+              "jd70yzvsr06n37v6r1tr0qy05d8femac",
+              "jd7bt6jxamm0451qdkh8ws7vqn8fe7ky",
+              "jd76wqytnnw0tg2j0f8aje6whd8ffbns"
+            ],
+            "betweenCursors": [
+              "jd74w5mtgm9cbb73e30rd0vgzn8ffe55",
+              "jd737rgfne5n8z2bjrnw4kp9558fer1k",
+              "jd70yzvsr06n37v6r1tr0qy05d8femac",
+              "jd7bt6jxamm0451qdkh8ws7vqn8fe7ky",
+              "jd76wqytnnw0tg2j0f8aje6whd8ffbns"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 3: the cost of a component call from a mutation (spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 2953.540167,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "costCall",
+          "value": {
+            "round": 0,
+            "path": "helper",
+            "nonce": 1000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 0,
+            "path": "helper",
+            "nonce": 1000,
+            "executionTimeSeconds": 0.004024417,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.004024417,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 0,
+            "path": "nested",
+            "nonce": 2000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 0,
+            "path": "nested",
+            "nonce": 2000,
+            "executionTimeSeconds": 0.097926958,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.097926958,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 0,
+            "path": "component",
+            "nonce": 3000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 0,
+            "path": "component",
+            "nonce": 3000,
+            "executionTimeSeconds": 0.142766125,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.142766125,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 1,
+            "path": "helper",
+            "nonce": 4000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 1,
+            "path": "helper",
+            "nonce": 4000,
+            "executionTimeSeconds": 0.002380875,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.002380875,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 1,
+            "path": "nested",
+            "nonce": 5000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 1,
+            "path": "nested",
+            "nonce": 5000,
+            "executionTimeSeconds": 0.049924292,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.049924292,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 1,
+            "path": "component",
+            "nonce": 6000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 1,
+            "path": "component",
+            "nonce": 6000,
+            "executionTimeSeconds": 0.086346541,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.086346541,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 2,
+            "path": "helper",
+            "nonce": 7000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 2,
+            "path": "helper",
+            "nonce": 7000,
+            "executionTimeSeconds": 0.002413667,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.002413667,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 2,
+            "path": "nested",
+            "nonce": 8000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 2,
+            "path": "nested",
+            "nonce": 8000,
+            "executionTimeSeconds": 0.057140208,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.057140208,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 2,
+            "path": "component",
+            "nonce": 9000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 2,
+            "path": "component",
+            "nonce": 9000,
+            "executionTimeSeconds": 0.096843584,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.096843584,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 3,
+            "path": "helper",
+            "nonce": 10000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 3,
+            "path": "helper",
+            "nonce": 10000,
+            "executionTimeSeconds": 0.002460667,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.002460667,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 3,
+            "path": "nested",
+            "nonce": 11000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 3,
+            "path": "nested",
+            "nonce": 11000,
+            "executionTimeSeconds": 0.063843583,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.063843583,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 3,
+            "path": "component",
+            "nonce": 12000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 3,
+            "path": "component",
+            "nonce": 12000,
+            "executionTimeSeconds": 0.108685792,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.108685792,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 4,
+            "path": "helper",
+            "nonce": 13000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 4,
+            "path": "helper",
+            "nonce": 13000,
+            "executionTimeSeconds": 0.002062708,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.002062708,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 4,
+            "path": "nested",
+            "nonce": 14000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 4,
+            "path": "nested",
+            "nonce": 14000,
+            "executionTimeSeconds": 0.051022875,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.051022875,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 4,
+            "path": "component",
+            "nonce": 15000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 4,
+            "path": "component",
+            "nonce": 15000,
+            "executionTimeSeconds": 0.074557792,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.074557792,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 5,
+            "path": "helper",
+            "nonce": 16000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 5,
+            "path": "helper",
+            "nonce": 16000,
+            "executionTimeSeconds": 0.001990542,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.001990542,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 5,
+            "path": "nested",
+            "nonce": 17000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 5,
+            "path": "nested",
+            "nonce": 17000,
+            "executionTimeSeconds": 0.050578042,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.050578042,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 5,
+            "path": "component",
+            "nonce": 18000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 5,
+            "path": "component",
+            "nonce": 18000,
+            "executionTimeSeconds": 0.076401459,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.076401459,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 6,
+            "path": "helper",
+            "nonce": 19000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 6,
+            "path": "helper",
+            "nonce": 19000,
+            "executionTimeSeconds": 0.002159875,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.002159875,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 6,
+            "path": "nested",
+            "nonce": 20000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 6,
+            "path": "nested",
+            "nonce": 20000,
+            "executionTimeSeconds": 0.0577745,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.0577745,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 6,
+            "path": "component",
+            "nonce": 21000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 6,
+            "path": "component",
+            "nonce": 21000,
+            "executionTimeSeconds": 0.129952833,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.129952833,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 7,
+            "path": "helper",
+            "nonce": 22000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 7,
+            "path": "helper",
+            "nonce": 22000,
+            "executionTimeSeconds": 0.003563042,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.003563042,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 7,
+            "path": "nested",
+            "nonce": 23000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 7,
+            "path": "nested",
+            "nonce": 23000,
+            "executionTimeSeconds": 0.070735792,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.070735792,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 7,
+            "path": "component",
+            "nonce": 24000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 7,
+            "path": "component",
+            "nonce": 24000,
+            "executionTimeSeconds": 0.093798292,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.093798292,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 8,
+            "path": "helper",
+            "nonce": 25000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 8,
+            "path": "helper",
+            "nonce": 25000,
+            "executionTimeSeconds": 0.002043833,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.002043833,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 8,
+            "path": "nested",
+            "nonce": 26000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 8,
+            "path": "nested",
+            "nonce": 26000,
+            "executionTimeSeconds": 0.055025166,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.055025166,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 8,
+            "path": "component",
+            "nonce": 27000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 8,
+            "path": "component",
+            "nonce": 27000,
+            "executionTimeSeconds": 0.083361167,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaMutation",
+                "componentPath": null,
+                "executionTime": 0.083361167,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costMedians",
+          "value": {
+            "helper": 0.002380875,
+            "nested": 0.057140208,
+            "component": 0.093798292,
+            "componentMinusHelperSeconds": 0.091417417,
+            "componentMinusHelperPerReadSeconds": 0.00182834834
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 3: the cost of a component call from a query (spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query) > executes the bound example against a fresh world",
+      "file": "tests/native/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query.test.ts",
+      "result": "passed",
+      "durationMs": 2976.893833,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "costCall",
+          "value": {
+            "round": 0,
+            "path": "helper",
+            "nonce": 1000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 0,
+            "path": "helper",
+            "nonce": 1000,
+            "executionTimeSeconds": 0.00323125,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.00323125,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 0,
+            "path": "nested",
+            "nonce": 2000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 0,
+            "path": "nested",
+            "nonce": 2000,
+            "executionTimeSeconds": 0.095424125,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.095424125,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 0,
+            "path": "component",
+            "nonce": 3000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 0,
+            "path": "component",
+            "nonce": 3000,
+            "executionTimeSeconds": 0.134757167,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.134757167,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 1,
+            "path": "helper",
+            "nonce": 4000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 1,
+            "path": "helper",
+            "nonce": 4000,
+            "executionTimeSeconds": 0.002450083,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.002450083,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 1,
+            "path": "nested",
+            "nonce": 5000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 1,
+            "path": "nested",
+            "nonce": 5000,
+            "executionTimeSeconds": 0.0514345,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.0514345,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 1,
+            "path": "component",
+            "nonce": 6000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 1,
+            "path": "component",
+            "nonce": 6000,
+            "executionTimeSeconds": 0.083226,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.083226,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 2,
+            "path": "helper",
+            "nonce": 7000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 2,
+            "path": "helper",
+            "nonce": 7000,
+            "executionTimeSeconds": 0.002576833,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.002576833,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 2,
+            "path": "nested",
+            "nonce": 8000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 2,
+            "path": "nested",
+            "nonce": 8000,
+            "executionTimeSeconds": 0.053611292,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.053611292,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 2,
+            "path": "component",
+            "nonce": 9000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 2,
+            "path": "component",
+            "nonce": 9000,
+            "executionTimeSeconds": 0.09331125,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.09331125,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 3,
+            "path": "helper",
+            "nonce": 10000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 3,
+            "path": "helper",
+            "nonce": 10000,
+            "executionTimeSeconds": 0.002431792,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.002431792,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 3,
+            "path": "nested",
+            "nonce": 11000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 3,
+            "path": "nested",
+            "nonce": 11000,
+            "executionTimeSeconds": 0.084872166,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.084872166,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 3,
+            "path": "component",
+            "nonce": 12000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 3,
+            "path": "component",
+            "nonce": 12000,
+            "executionTimeSeconds": 0.083776917,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.083776917,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 4,
+            "path": "helper",
+            "nonce": 13000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 4,
+            "path": "helper",
+            "nonce": 13000,
+            "executionTimeSeconds": 0.00243125,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.00243125,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 4,
+            "path": "nested",
+            "nonce": 14000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 4,
+            "path": "nested",
+            "nonce": 14000,
+            "executionTimeSeconds": 0.053758,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.053758,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 4,
+            "path": "component",
+            "nonce": 15000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 4,
+            "path": "component",
+            "nonce": 15000,
+            "executionTimeSeconds": 0.07368125,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.07368125,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 5,
+            "path": "helper",
+            "nonce": 16000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 5,
+            "path": "helper",
+            "nonce": 16000,
+            "executionTimeSeconds": 0.002000084,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.002000084,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 5,
+            "path": "nested",
+            "nonce": 17000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 5,
+            "path": "nested",
+            "nonce": 17000,
+            "executionTimeSeconds": 0.046178083,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.046178083,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 5,
+            "path": "component",
+            "nonce": 18000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 5,
+            "path": "component",
+            "nonce": 18000,
+            "executionTimeSeconds": 0.090190875,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.090190875,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 6,
+            "path": "helper",
+            "nonce": 19000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 6,
+            "path": "helper",
+            "nonce": 19000,
+            "executionTimeSeconds": 0.002573958,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.002573958,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 6,
+            "path": "nested",
+            "nonce": 20000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 6,
+            "path": "nested",
+            "nonce": 20000,
+            "executionTimeSeconds": 0.066395875,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.066395875,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 6,
+            "path": "component",
+            "nonce": 21000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 6,
+            "path": "component",
+            "nonce": 21000,
+            "executionTimeSeconds": 0.121993208,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.121993208,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 7,
+            "path": "helper",
+            "nonce": 22000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 7,
+            "path": "helper",
+            "nonce": 22000,
+            "executionTimeSeconds": 0.003451167,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.003451167,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 7,
+            "path": "nested",
+            "nonce": 23000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 7,
+            "path": "nested",
+            "nonce": 23000,
+            "executionTimeSeconds": 0.06384675,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.06384675,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 7,
+            "path": "component",
+            "nonce": 24000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 7,
+            "path": "component",
+            "nonce": 24000,
+            "executionTimeSeconds": 0.085675459,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.085675459,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 8,
+            "path": "helper",
+            "nonce": 25000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 8,
+            "path": "helper",
+            "nonce": 25000,
+            "executionTimeSeconds": 0.002171375,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.002171375,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 8,
+            "path": "nested",
+            "nonce": 26000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 8,
+            "path": "nested",
+            "nonce": 26000,
+            "executionTimeSeconds": 0.055667542,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.055667542,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costCall",
+          "value": {
+            "round": 8,
+            "path": "component",
+            "nonce": 27000,
+            "error": null
+          }
+        },
+        {
+          "name": "costSample",
+          "value": {
+            "round": 8,
+            "path": "component",
+            "nonce": 27000,
+            "executionTimeSeconds": 0.079934542,
+            "cachedResult": false,
+            "error": null,
+            "records": [
+              {
+                "identifier": "readCost:viaQuery",
+                "componentPath": null,
+                "executionTime": 0.079934542,
+                "cachedResult": false
+              }
+            ]
+          }
+        },
+        {
+          "name": "costMedians",
+          "value": {
+            "helper": 0.002450083,
+            "nested": 0.055667542,
+            "component": 0.085675459,
+            "componentMinusHelperSeconds": 0.08322537599999999,
+            "componentMinusHelperPerReadSeconds": 0.0016645075199999998
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 5: pages of a component list stay contiguous under live writes (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous.test.ts",
+      "result": "passed",
+      "durationMs": 1025.584708,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "the initial pinned page",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz"
+            ]
+          }
+        },
+        {
+          "name": "the initial pinned page",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7f9qyep5j1ajqt8v6ym3jyv18fey3z",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq"
+            ]
+          }
+        },
+        {
+          "name": "the initial pinned page",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ]
+          }
+        },
+        {
+          "name": "the initial pinned page",
+          "value": {
+            "rows": 0,
+            "status": null,
+            "ids": []
+          }
+        },
+        {
+          "name": "initialPinnedPages",
+          "value": [
+            {
+              "rows": 10,
+              "isDone": false
+            },
+            {
+              "rows": 10,
+              "isDone": false
+            },
+            {
+              "rows": 10,
+              "isDone": false
+            },
+            {
+              "rows": 0,
+              "isDone": true
+            }
+          ]
+        },
+        {
+          "name": "the pages after the insert",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7f9qyep5j1ajqt8v6ym3jyv18fey3z",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq"
+            ]
+          }
+        },
+        {
+          "name": "the pages after the insert",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ]
+          }
+        },
+        {
+          "name": "the pages after the insert",
+          "value": {
+            "rows": 0,
+            "status": null,
+            "ids": []
+          }
+        },
+        {
+          "name": "the pages after the insert",
+          "value": {
+            "rows": 15,
+            "status": "SplitRecommended",
+            "ids": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz"
+            ]
+          }
+        },
+        {
+          "name": "pagesAfterInsert",
+          "value": [
+            [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz"
+            ],
+            [
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7f9qyep5j1ajqt8v6ym3jyv18fey3z",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq"
+            ],
+            [
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ],
+            []
+          ]
+        },
+        {
+          "name": "contiguityAfterInsert",
+          "value": {
+            "actual": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz",
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7f9qyep5j1ajqt8v6ym3jyv18fey3z",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq",
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ],
+            "expected": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz",
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7f9qyep5j1ajqt8v6ym3jyv18fey3z",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq",
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ]
+          }
+        },
+        {
+          "name": "the pages after the deletion",
+          "value": {
+            "rows": 15,
+            "status": "SplitRecommended",
+            "ids": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz"
+            ]
+          }
+        },
+        {
+          "name": "the pages after the deletion",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ]
+          }
+        },
+        {
+          "name": "the pages after the deletion",
+          "value": {
+            "rows": 0,
+            "status": null,
+            "ids": []
+          }
+        },
+        {
+          "name": "the pages after the deletion",
+          "value": {
+            "rows": 9,
+            "status": null,
+            "ids": [
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq"
+            ]
+          }
+        },
+        {
+          "name": "contiguityAfterDelete",
+          "value": {
+            "removed": "jd7f9qyep5j1ajqt8v6ym3jyv18fey3z",
+            "actual": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz",
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq",
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ],
+            "expected": [
+              "jd71thjdvwfwy66650bnas4kxx8ffzds",
+              "jd76tsv7dpsxb07nmwt2x1vwjs8fevtm",
+              "jd7dbyjy6f11jmb6sbqc8kxjw58fey0q",
+              "jd72w1rkw4w705e6jg542stw3h8ff4j6",
+              "jd7bas5aqtx1jtzhvwxrtc695x8ff9sf",
+              "jd72fkrtzdm7swsfya99ac9rks8fepfb",
+              "jd71xqrhn54gnh9pv16d7tkqe18ffxc5",
+              "jd7f3ndwcwswkhpfgqe91ycrv98ffzma",
+              "jd76x07z0mfvq6snde2gzp0mvn8ff34a",
+              "jd7ev7ws81hhha2q6pmkqjf4gs8femyx",
+              "jd7bp82pd7389jznbbx10gjx7n8fe35e",
+              "jd76977bmxkreg7kmgw1xsr1ks8fepsx",
+              "jd731n6dz1sv2p1hphrvr0a6xx8ffdc6",
+              "jd7crhzdrdr8mqs22jq4a18ypx8fehxd",
+              "jd7db3tf5355hr159rk7ee7xph8ffzpz",
+              "jd71zk49xz3x3etxh6972k6mmn8ff319",
+              "jd7apygx6w9fprgrcee3w632m18feztf",
+              "jd714d56znccas8a762ebcah9h8ff3bp",
+              "jd76meh22gcx64j5sdd9h8vs7x8feqcd",
+              "jd7dpyc2s2p7krzs1ryvktynah8ffqv0",
+              "jd795fh2d81mteh0p1ks8wg7t18ff8g1",
+              "jd7ezegq5em9q260k9gah2g2an8fe88m",
+              "jd77g3hdzs3np1ckjz0mxsrfz98ffaf3",
+              "jd7ebvcqgw02qtyj183jkwjsz98feztq",
+              "jd7d89cvg242zjfzdprdr5paf58fe38q",
+              "jd7870v1dn1bpqh5hbwagkntys8ff921",
+              "jd76n3n42vcdpa1bc5p3abst758ff13q",
+              "jd73z5tesrpwtnyz6nfbp9kyz98fedg6",
+              "jd73bwqqqevw857k30mrybrgz18ff2hs",
+              "jd7819d83kywwq6cmwe3tbeasn8ffj5p",
+              "jd724vsfha7keacwajdtt4q7n18feejg",
+              "jd786kay3733hch0ts1j3pxf318fe6wh",
+              "jd7ak6wv8aw4b50znc3tm305sn8fect6",
+              "jd725g5xq8y3n3n99pm6nz5b918fez7t"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 5: a page that outgrows its read cap comes back through the parent as a split (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed.test.ts",
+      "result": "passed",
+      "durationMs": 892.4807079999998,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "the initial pinned page",
+          "value": {
+            "rows": 10,
+            "status": null,
+            "ids": [
+              "jd70wretkydckfygtnqpxqsbyh8ffckj",
+              "jd7bgq7drc4xjzz03ekpj8py2x8fevxq",
+              "jd79jckq534pjdmmqjjaa5j3498fe3kw",
+              "jd70xsv5fa1p2sqnwy8a519afd8fezpa",
+              "jd7a3xey57022d95s775e4acbs8ffa8w",
+              "jd7678wy6p5k4gethrgbz8q0td8ff6zr",
+              "jd78evxc2j4snrzjc2ajs5wwr18fftn0",
+              "jd7fx2mt8ae3ja76d43xss2kn98ff74z",
+              "jd7dn2wxq2x45sh99v75t27yex8ffrwe",
+              "jd71msmk2hm4n3092mhjt2vz918ffkag"
+            ]
+          }
+        },
+        {
+          "name": "a page with split status",
+          "value": {
+            "rows": 20,
+            "status": "SplitRequired",
+            "ids": [
+              "jd70wretkydckfygtnqpxqsbyh8ffckj",
+              "jd7em53da4yfdy0atxg39vgbkn8fe6cz",
+              "jd716ttx59rja0hpqq99nsyxp18ff67e",
+              "jd727fcvr3fzj66p0hp97rm6818ffn7x",
+              "jd771v6sc1veca9t8fgw3v86gd8ffny2",
+              "jd71xr2cx9jwt4n8sq5nykkv998fempb",
+              "jd763tqw8xsq5y3713fm42fkrn8ffs0a",
+              "jd75y1gg0wv3g6arcgm7rjmm8x8ffc2s",
+              "jd7f58wvg9k4r4y81vvm6wad5n8ff6k1",
+              "jd7ce0bpn8xg8t1906trk8bv6s8few85",
+              "jd707ccak14vt7bxc5szsz9w9x8ffxq3",
+              "jd711gsrxkjkg7r85e30jwqjg18fe0fg",
+              "jd75pynky493q4dvse77c4d0798ffx0q",
+              "jd76z7r8zekr8jafb86m97zans8ffqhw",
+              "jd77rn3z2grmq27vdy1f1c911h8fej98",
+              "jd7at2vhps5k9gk57s4jr1vx098ffsqh",
+              "jd7bgq7drc4xjzz03ekpj8py2x8fevxq",
+              "jd79jckq534pjdmmqjjaa5j3498fe3kw",
+              "jd70xsv5fa1p2sqnwy8a519afd8fezpa",
+              "jd7a3xey57022d95s775e4acbs8ffa8w"
+            ]
+          }
+        },
+        {
+          "name": "relayedSplit",
+          "value": {
+            "status": "SplitRequired",
+            "splitCursor": "[0.5625,1790872179911.534,\"jd7ce0bpn8xg8t1906trk8bv6s8few85\"]",
+            "continueCursor": "[4,1790872179859.042,\"jd7a3xey57022d95s775e4acbs8ffa8w\"]",
+            "endCursor": "[9,1790872179859.0432,\"jd71msmk2hm4n3092mhjt2vz918ffkag\"]",
+            "rows": 20
+          }
+        },
+        {
+          "name": "splitHalves",
+          "value": {
+            "left": [
+              "jd70wretkydckfygtnqpxqsbyh8ffckj",
+              "jd7em53da4yfdy0atxg39vgbkn8fe6cz",
+              "jd716ttx59rja0hpqq99nsyxp18ff67e",
+              "jd727fcvr3fzj66p0hp97rm6818ffn7x",
+              "jd771v6sc1veca9t8fgw3v86gd8ffny2",
+              "jd71xr2cx9jwt4n8sq5nykkv998fempb",
+              "jd763tqw8xsq5y3713fm42fkrn8ffs0a",
+              "jd75y1gg0wv3g6arcgm7rjmm8x8ffc2s",
+              "jd7f58wvg9k4r4y81vvm6wad5n8ff6k1",
+              "jd7ce0bpn8xg8t1906trk8bv6s8few85"
+            ],
+            "right": [
+              "jd707ccak14vt7bxc5szsz9w9x8ffxq3",
+              "jd711gsrxkjkg7r85e30jwqjg18fe0fg",
+              "jd75pynky493q4dvse77c4d0798ffx0q",
+              "jd76z7r8zekr8jafb86m97zans8ffqhw",
+              "jd77rn3z2grmq27vdy1f1c911h8fej98",
+              "jd7at2vhps5k9gk57s4jr1vx098ffsqh",
+              "jd7bgq7drc4xjzz03ekpj8py2x8fevxq",
+              "jd79jckq534pjdmmqjjaa5j3498fe3kw",
+              "jd70xsv5fa1p2sqnwy8a519afd8fezpa",
+              "jd7a3xey57022d95s775e4acbs8ffa8w",
+              "jd7678wy6p5k4gethrgbz8q0td8ff6zr",
+              "jd78evxc2j4snrzjc2ajs5wwr18fftn0",
+              "jd7fx2mt8ae3ja76d43xss2kn98ff74z",
+              "jd7dn2wxq2x45sh99v75t27yex8ffrwe",
+              "jd71msmk2hm4n3092mhjt2vz918ffkag"
+            ],
+            "wholeRange": [
+              "jd70wretkydckfygtnqpxqsbyh8ffckj",
+              "jd7em53da4yfdy0atxg39vgbkn8fe6cz",
+              "jd716ttx59rja0hpqq99nsyxp18ff67e",
+              "jd727fcvr3fzj66p0hp97rm6818ffn7x",
+              "jd771v6sc1veca9t8fgw3v86gd8ffny2",
+              "jd71xr2cx9jwt4n8sq5nykkv998fempb",
+              "jd763tqw8xsq5y3713fm42fkrn8ffs0a",
+              "jd75y1gg0wv3g6arcgm7rjmm8x8ffc2s",
+              "jd7f58wvg9k4r4y81vvm6wad5n8ff6k1",
+              "jd7ce0bpn8xg8t1906trk8bv6s8few85",
+              "jd707ccak14vt7bxc5szsz9w9x8ffxq3",
+              "jd711gsrxkjkg7r85e30jwqjg18fe0fg",
+              "jd75pynky493q4dvse77c4d0798ffx0q",
+              "jd76z7r8zekr8jafb86m97zans8ffqhw",
+              "jd77rn3z2grmq27vdy1f1c911h8fej98",
+              "jd7at2vhps5k9gk57s4jr1vx098ffsqh",
+              "jd7bgq7drc4xjzz03ekpj8py2x8fevxq",
+              "jd79jckq534pjdmmqjjaa5j3498fe3kw",
+              "jd70xsv5fa1p2sqnwy8a519afd8fezpa",
+              "jd7a3xey57022d95s775e4acbs8ffa8w",
+              "jd7678wy6p5k4gethrgbz8q0td8ff6zr",
+              "jd78evxc2j4snrzjc2ajs5wwr18fftn0",
+              "jd7fx2mt8ae3ja76d43xss2kn98ff74z",
+              "jd7dn2wxq2x45sh99v75t27yex8ffrwe",
+              "jd71msmk2hm4n3092mhjt2vz918ffkag"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 2: ConvexError data through a component boundary (spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary) > executes the bound example against a fresh world",
+      "file": "tests/native/f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary.test.ts",
+      "result": "passed",
+      "durationMs": 934.3645419999999,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "catchingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            }
+          }
+        },
+        {
+          "name": "rowsAfterCatching",
+          "value": {
+            "child": 0,
+            "parent": 1
+          }
+        },
+        {
+          "name": "passingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            },
+            "text": "ConvexError: [Request ID: 7e06a239bf7d0feb] Server Error\nUncaught ConvexError: Uncaught ConvexError: {\"array\":[\"one\",2,false,null],\"boolean\":true,\"code\":\"staleVersion\",\"int64\":\"9007199254740993n\",\"nested\":{\"count\":3,\"label\":\"nested\"},\"nil\":null,\"number\":17.25}\n    at handler (../fixture/convex/annex/failures.ts:8:11)\n\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtParent",
+          "value": {
+            "property": null,
+            "message": "Error: Uncaught Error: plain failure\n    at handler (../fixture/convex/annex/failures.ts:12:23)\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtClient",
+          "value": {
+            "property": null,
+            "message": "Error: [Request ID: c97518d6d37904b5] Server Error\nUncaught Error: Uncaught Error: plain failure\n    at handler (../fixture/convex/annex/failures.ts:12:23)\n\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 2: ConvexError data through a nested mutation (spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 923.2637500000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "catchingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            }
+          }
+        },
+        {
+          "name": "rowsAfterCatching",
+          "value": {
+            "child": 0,
+            "parent": 1
+          }
+        },
+        {
+          "name": "passingParent",
+          "value": {
+            "isConvexError": true,
+            "data": {
+              "array": [
+                "one",
+                2,
+                false,
+                null
+              ],
+              "boolean": true,
+              "code": "staleVersion",
+              "int64": {
+                "$integer": "AQAAAAAAIAA="
+              },
+              "nested": {
+                "count": 3,
+                "label": "nested"
+              },
+              "nil": null,
+              "number": 17.25
+            },
+            "text": "ConvexError: [Request ID: 7683ffbddcc32d12] Server Error\nUncaught ConvexError: Uncaught ConvexError: {\"array\":[\"one\",2,false,null],\"boolean\":true,\"code\":\"staleVersion\",\"int64\":\"9007199254740993n\",\"nested\":{\"count\":3,\"label\":\"nested\"},\"nil\":null,\"number\":17.25}\n    at handler (../fixture/convex/failures.ts:21:11)\n\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtParent",
+          "value": {
+            "property": null,
+            "message": "Error: Uncaught Error: plain failure\n    at handler (../fixture/convex/failures.ts:25:23)\n"
+          }
+        },
+        {
+          "name": "ordinaryErrorAtClient",
+          "value": {
+            "property": null,
+            "message": "Error: [Request ID: 7445ace0b933ccfa] Server Error\nUncaught Error: Uncaught Error: plain failure\n    at handler (../fixture/convex/failures.ts:25:23)\n\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 5: a subscription to a parent query follows the component's data (spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates) > executes the bound example against a fresh world",
+      "file": "tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates.test.ts",
+      "result": "passed",
+      "durationMs": 950.781833,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "subscriptionUpdates",
+          "value": {
+            "waitMs": 5000,
+            "observationAfterDeliveryMs": 100,
+            "values": [
+              {
+                "id": "jd7fwe7v2a54peqysrtbbndfdn8fe80g",
+                "label": "changed"
+              }
+            ],
+            "error": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: a taken --port causes fresh port pairs and the third start succeeds",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 2748.502667,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "f097e9b7b3004f7c9c85667e251bf2bcb03144cc0f85939c01583d98a4323352",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "An ordinary client cannot call a component's function (spec:platform.native-harness.ordinary-client-refused-component-function) > executes the bound example against a fresh world",
+      "file": "tests/native/ordinary-client-refused-component-function.test.ts",
+      "result": "passed",
+      "durationMs": 4429.579791,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 1: a client closed with a pending mutation (spec:facts.f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 1666.901708,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "trials",
+          "value": [
+            {
+              "trial": "closed 0",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 1",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 2",
+              "gapMs": 2,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 3",
+              "gapMs": 3,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 4",
+              "gapMs": 4,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 5",
+              "gapMs": 5,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 6",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 7",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 8",
+              "gapMs": 2,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 9",
+              "gapMs": 3,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 10",
+              "gapMs": 4,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 11",
+              "gapMs": 5,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 12",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 13",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 14",
+              "gapMs": 2,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 15",
+              "gapMs": 3,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 16",
+              "gapMs": 4,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 17",
+              "gapMs": 5,
+              "confirmed": false,
+              "rows": 1
+            },
+            {
+              "trial": "closed 18",
+              "gapMs": 0,
+              "confirmed": false,
+              "rows": 0
+            },
+            {
+              "trial": "closed 19",
+              "gapMs": 1,
+              "confirmed": false,
+              "rows": 0
+            }
+          ]
+        },
+        {
+          "name": "trialsThatLeftNoRow",
+          "value": 8
+        },
+        {
+          "name": "trialsThatLeftOneRow",
+          "value": 12
+        }
+      ]
+    },
+    {
+      "name": "native: a taken --site-proxy-port causes fresh port pairs and the third start succeeds",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 751.1032500000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "f60b845e3c2ed2acbd58ff9ff528e3f86f1a4b2556112893a01ddcf42652eafa",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "The admin key acting as an identity reaches an internal function (spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function) > executes the bound example against a fresh world",
+      "file": "tests/native/admin-key-acting-as-identity-reaches-internal-function.test.ts",
+      "result": "passed",
+      "durationMs": 931.221708,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 1: the HTTP client and a caller's retry (spec:facts.f05-react-client-retries-until-confirmed.probe-1-http-client-retry) > executes the bound example against a fresh world",
+      "file": "tests/native/f05-react-client-retries-until-confirmed.probe-1-http-client-retry.test.ts",
+      "result": "passed",
+      "durationMs": 953.8106250000001,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "requestsAfterEachCall",
+          "value": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "rowsAfterTheRetry",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "An ordinary client cannot call an internal function (spec:platform.native-harness.ordinary-client-refused-internal-function) > executes the bound example against a fresh world",
+      "file": "tests/native/ordinary-client-refused-internal-function.test.ts",
+      "result": "passed",
+      "durationMs": 916.171458,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "A token signed by the fixture issuer yields the caller's identity (spec:platform.native-harness.fixture-issuer-token-yields-identity) > executes the bound example against a fresh world",
+      "file": "tests/native/fixture-issuer-token-yields-identity.test.ts",
+      "result": "passed",
+      "durationMs": 900.284792,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "native: a component query that calls ctx.auth.getUserIdentity() completes, and its answer is recorded",
+      "file": "tests/native/component-auth.test.ts",
+      "result": "passed",
+      "durationMs": 797.608125,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "identitySeenInsideComponent",
+          "value": {
+            "answered": "an identity",
+            "issuer": "https://fixture-issuer.test",
+            "subject": "user-1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "native: three taken ports fail clearly and remove the failed start's storage",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 3686.9814579999993,
+      "errors": [],
+      "backends": [],
+      "measurements": []
+    },
+    {
+      "name": "Probe 1: a backend restart with a mutation in flight (spec:facts.f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation) > executes the bound example against a fresh world",
+      "file": "tests/native/f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation.test.ts",
+      "result": "passed",
+      "durationMs": 10908.941083,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "trials",
+          "value": [
+            {
+              "trial": "restart 0",
+              "delayMs": 0,
+              "committedBeforeKill": false,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 1",
+              "delayMs": 0,
+              "committedBeforeKill": false,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 2",
+              "delayMs": 0,
+              "committedBeforeKill": false,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 3",
+              "delayMs": 1,
+              "committedBeforeKill": false,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 4",
+              "delayMs": 2,
+              "committedBeforeKill": false,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 5",
+              "delayMs": 4,
+              "committedBeforeKill": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 6",
+              "delayMs": 8,
+              "committedBeforeKill": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 7",
+              "delayMs": 16,
+              "committedBeforeKill": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 8",
+              "delayMs": 32,
+              "committedBeforeKill": true,
+              "resolved": true,
+              "rows": 1
+            },
+            {
+              "trial": "restart 9",
+              "delayMs": 64,
+              "committedBeforeKill": true,
+              "resolved": true,
+              "rows": 1
+            }
+          ]
+        },
+        {
+          "name": "trialsKilledBeforeCommit",
+          "value": 5
+        },
+        {
+          "name": "trialsKilledAfterCommit",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "name": "native: stop escalates to SIGKILL when the owned process ignores SIGINT and keeps its storage",
+      "file": "tests/native/harness-backend.test.ts",
+      "result": "passed",
+      "durationMs": 5358.005041,
+      "errors": [],
+      "backends": [
+        {
+          "composition": null,
+          "installedLayers": [],
+          "executable": {
+            "release": null,
+            "sha256": "a5228305041678f250852956a81d9eeb38a047b98f134be65ae6cc55eb3130a1",
+            "source": "CONVEX_BACKEND_BINARY"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": []
+    },
+    {
+      "name": "Probe 4: a nested call draws on the caller's transaction limits (spec:facts.f13-transactions-have-limits.probe-4-nested-call-shares-limits) > executes the bound example against a fresh world",
+      "file": "tests/native/f13-transactions-have-limits.probe-4-nested-call-shares-limits.test.ts",
+      "result": "passed",
+      "durationMs": 21579.266750000003,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "seededPayloads",
+          "value": {
+            "size": 921600,
+            "parentCount": 10,
+            "childCount": 10
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: f7e4d72f01165636] Server Error\nUncaught Error: Uncaught Error: Too many bytes read in a single function execution (limit: 16777216 bytes). Consider using smaller limits in your queries, paginating your queries, or using indexed queries with a selective index range expressions.\n    at async handler (../fixture/convex/limits.ts:48:11)\n\n    at async handler (../fixture/convex/limits.ts:79:34)\n"
+          }
+        },
+        {
+          "name": "readTogether",
+          "value": "fails on the bytes-read limit"
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "returns",
+            "error": null
+          }
+        },
+        {
+          "name": "readsAlone",
+          "value": {
+            "parent": "commits",
+            "child": "returns",
+            "parentDocuments": 10,
+            "childDocuments": 10,
+            "childPayloadBytes": 9216000
+          }
+        },
+        {
+          "name": "sharedReadMetrics",
+          "value": {
+            "byteGrowth": 921684,
+            "documentGrowth": 1,
+            "childBytes": 921684,
+            "childDocuments": 1,
+            "payloadBytes": 921600
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: 7fa290356516e6ba] Server Error\nUncaught Error: Uncaught Error: Too many bytes written in a single function execution (limit: 16 MiB)\n    at async handler (../fixture/convex/limits.ts:24:8)\n\n    at async handler (../fixture/convex/limits.ts:104:8)\n"
+          }
+        },
+        {
+          "name": "writesTogether",
+          "value": "fails on the bytes-written limit"
+        },
+        {
+          "name": "failedWriteRows",
+          "value": {
+            "count": 0,
+            "actualRows": 0
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "writeHalf",
+          "value": {
+            "half": "parent",
+            "outcome": "commits",
+            "rows": 10,
+            "actualRows": 10
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "writeHalf",
+          "value": {
+            "half": "child",
+            "outcome": "commits",
+            "rows": 20,
+            "actualRows": 20
+          }
+        }
+      ]
+    },
+    {
+      "name": "Probe 4: a component call draws on the caller's transaction limits (spec:facts.f13-transactions-have-limits.probe-4-component-call-shares-limits) > executes the bound example against a fresh world",
+      "file": "tests/native/f13-transactions-have-limits.probe-4-component-call-shares-limits.test.ts",
+      "result": "passed",
+      "durationMs": 21747.446624999997,
+      "errors": [],
+      "backends": [
+        {
+          "composition": "fixture",
+          "installedLayers": [],
+          "executable": {
+            "release": "precompiled-2026-09-28-5c7cb5b",
+            "sha256": "c6290f5a86bc2f6b31a931833c25106ccc06c0c8c9f0894c35f2d7cecf1fd676",
+            "source": "cache"
+          },
+          "identitySource": {
+            "kind": "fixture issuer",
+            "issuer": "https://fixture-issuer.test"
+          },
+          "environment": [
+            "AUTH_APPLICATION_ID",
+            "AUTH_ISSUER",
+            "AUTH_JWKS"
+          ],
+          "dataset": "empty at start"
+        }
+      ],
+      "measurements": [
+        {
+          "name": "seededPayloads",
+          "value": {
+            "size": 921600,
+            "parentCount": 10,
+            "childCount": 10
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: d838c7cbe6eaa630] Server Error\nUncaught Error: Uncaught Error: Too many bytes read in a single function execution (limit: 16777216 bytes). Consider using smaller limits in your queries, paginating your queries, or using indexed queries with a selective index range expressions.\n    at async handler (../fixture/convex/annex/limits.ts:35:11)\n\n    at async handler (../fixture/convex/limits.ts:79:34)\n"
+          }
+        },
+        {
+          "name": "readTogether",
+          "value": "fails on the bytes-read limit"
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "returns",
+            "error": null
+          }
+        },
+        {
+          "name": "readsAlone",
+          "value": {
+            "parent": "commits",
+            "child": "returns",
+            "parentDocuments": 10,
+            "childDocuments": 10,
+            "childPayloadBytes": 9216000
+          }
+        },
+        {
+          "name": "sharedReadMetrics",
+          "value": {
+            "byteGrowth": 921684,
+            "documentGrowth": 1,
+            "childBytes": 921684,
+            "childDocuments": 1,
+            "payloadBytes": 921600
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "failed",
+            "error": "Error: [Request ID: ffa812624100a78e] Server Error\nUncaught Error: Uncaught Error: Too many bytes written in a single function execution (limit: 16 MiB)\n    at async handler (../fixture/convex/annex/limits.ts:9:8)\n\n    at async handler (../fixture/convex/limits.ts:104:8)\n"
+          }
+        },
+        {
+          "name": "writesTogether",
+          "value": "fails on the bytes-written limit"
+        },
+        {
+          "name": "failedWriteRows",
+          "value": {
+            "count": 0,
+            "actualRows": 0
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "writeHalf",
+          "value": {
+            "half": "parent",
+            "outcome": "commits",
+            "rows": 10,
+            "actualRows": 10
+          }
+        },
+        {
+          "name": "functionOutcome",
+          "value": {
+            "outcome": "commits",
+            "error": null
+          }
+        },
+        {
+          "name": "writeHalf",
+          "value": {
+            "half": "child",
+            "outcome": "commits",
+            "rows": 20,
+            "actualRows": 20
+          }
+        }
+      ]
+    }
+  ],
+  "unhandledErrors": []
+}
