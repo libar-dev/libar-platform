@@ -426,6 +426,29 @@ export async function thenEffects(
     expect(
       stored.events.filter((event) => event.operationId === operationId),
     ).toHaveLength(1);
+  // The saved stock agrees with the recorded events: each row holds what its events add up to, at the
+  // version of its last event, and a committed effect left at least one row.
+  const stock = stored.streams.filter((row) => row.streamType === "stock");
+  if (effects > 0) expect(stock.length).toBeGreaterThan(0);
+  for (const row of stock) {
+    const own = stored.events.filter(
+      (event) =>
+        event.tenantId === row.tenantId &&
+        event.streamType === "stock" &&
+        event.streamId === row.streamId,
+    );
+    const onHand = own.reduce(
+      (sum, event) =>
+        sum +
+        (event.eventType === "claimed" ? -1 : 1) *
+          Number((event.payload as { quantity: number }).quantity),
+      0,
+    );
+    expect({ state: row.state, version: row.streamVersion }).toEqual({
+      state: { onHand },
+      version: own.length,
+    });
+  }
 }
 export async function thenReceipts(
   world: ReceiptWorld,

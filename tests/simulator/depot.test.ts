@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { ConvexError, v, type Value } from "convex/values";
+import { ConvexError, getConvexSize, v, type Value } from "convex/values";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test, vi } from "vitest";
@@ -14,6 +14,7 @@ import {
 } from "../../fixture/convex/depot/streams.js";
 import schema from "../../fixture/convex/schema.js";
 import {
+  append,
   createJournal,
   load,
   planned,
@@ -402,6 +403,176 @@ describe("the depot's operations", () => {
 
   test(
     name(
+      "each stock line's quantity is checked before the lines are summed, and each sum again, so no invalid line commits",
+    ),
+    async () => {
+      const t = depot();
+      await t.mutation(
+        api.operations.addStock,
+        call({ lines: [{ productId: "p-1", quantity: 1 }] }),
+      );
+      const before = { streams: await streams(t), events: await events(t) };
+      const refused = [
+        { operation: api.operations.addStock, quantities: [-1, 2], bad: -1 },
+        {
+          operation: api.operations.addStock,
+          quantities: [0.5, 0.5],
+          bad: 0.5,
+        },
+        {
+          operation: api.operations.addStock,
+          quantities: [1.5, 1.5],
+          bad: 1.5,
+        },
+        { operation: api.operations.claimStock, quantities: [6, -5], bad: -5 },
+        {
+          operation: api.operations.addStock,
+          quantities: [Number.MAX_SAFE_INTEGER, 1],
+          bad: Number.MAX_SAFE_INTEGER + 1,
+        },
+      ];
+      for (const { operation, quantities, bad } of refused)
+        expect(
+          await rejection(
+            t.mutation(
+              operation,
+              call({
+                lines: quantities.map((quantity) => ({
+                  productId: "p-1",
+                  quantity,
+                })),
+              }),
+            ),
+          ),
+        ).toMatchObject({
+          code: "invalidQuantity",
+          details: { quantity: bad },
+        });
+      expect({ streams: await streams(t), events: await events(t) }).toEqual(
+        before,
+      );
+    },
+  );
+
+  test(
+    name(
+      "an addition that would take the count on hand past the largest safe whole number is stockLimitExceeded",
+    ),
+    async () => {
+      const t = depot();
+      const add = (quantity: number) =>
+        t.mutation(
+          api.operations.addStock,
+          call({ lines: [{ productId: "p-1", quantity }] }),
+        );
+      await add(Number.MAX_SAFE_INTEGER - 1);
+      await add(1);
+      const before = { streams: await streams(t), events: await events(t) };
+      expect(await rejection(add(1))).toMatchObject({
+        code: "stockLimitExceeded",
+        details: { quantity: 1, onHand: Number.MAX_SAFE_INTEGER },
+      });
+      expect({ streams: await streams(t), events: await events(t) }).toEqual(
+        before,
+      );
+    },
+  );
+
+  test(
+    name(
+      "items on one document become one command on its stream, and two items that differ refuse the call as invalidInput",
+    ),
+    async () => {
+      const t = depot();
+      await created(t);
+      const amend = (titles: string[]) =>
+        t.mutation(
+          api.operations.amendDocuments,
+          call({
+            documents: titles.map((title) => ({ documentId: "doc-1", title })),
+          }),
+        );
+      expect(await amend(["Report, v2", "Report, v2"])).toMatchObject({
+        versions: [{ streamId: "doc-1", version: 2 }],
+        streams: [{ appended: 1 }],
+      });
+      const before = { streams: await streams(t), events: await events(t) };
+      expect(await rejection(amend(["One", "Two"]))).toMatchObject({
+        code: "invalidInput",
+        details: { documentId: "doc-1" },
+      });
+      expect(
+        await rejection(
+          t.mutation(
+            api.operations.submitDocuments,
+            call({
+              documents: [
+                { documentId: "doc-1" },
+                { documentId: "doc-1", expectedVersion: 2 },
+              ],
+            }),
+          ),
+        ),
+      ).toMatchObject({ code: "invalidInput" });
+      expect({ streams: await streams(t), events: await events(t) }).toEqual(
+        before,
+      );
+      expect(
+        await t.mutation(
+          api.operations.submitDocuments,
+          call({
+            documents: [{ documentId: "doc-1" }, { documentId: "doc-1" }],
+          }),
+        ),
+      ).toMatchObject({
+        result: { documents: [{ documentId: "doc-1", status: "submitted" }] },
+        versions: [{ streamId: "doc-1", version: 3 }],
+      });
+    },
+  );
+
+  test(
+    name(
+      "placing orders creates the documents and then claims the stock in one call, and a second create of an order is entityExists",
+    ),
+    async () => {
+      const t = depot();
+      await t.mutation(
+        api.operations.addStock,
+        call({ lines: [{ productId: "p-1", quantity: 1 }] }),
+      );
+      const order = {
+        documents: [{ documentId: "order-1", title: "Order" }],
+        lines: [{ productId: "p-1", quantity: 1 }],
+      };
+      expect(
+        await t.mutation(api.operations.placeOrders, call(order)),
+      ).toMatchObject({
+        kind: "applied",
+        result: {
+          documents: [{ documentId: "order-1", status: "draft" }],
+          lines: [{ productId: "p-1", quantity: 1 }],
+        },
+        versions: [
+          { streamType: "document", streamId: "order-1", version: 1 },
+          { streamType: "stock", streamId: "p-1", version: 2 },
+        ],
+      });
+      const before = { streams: await streams(t), events: await events(t) };
+      expect(
+        await rejection(t.mutation(api.operations.placeOrders, call(order))),
+      ).toMatchObject({
+        code: "entityExists",
+        details: { existing: "order-1" },
+      });
+      expect({ streams: await streams(t), events: await events(t) }).toEqual(
+        before,
+      );
+    },
+  );
+
+  test(
+    name(
       "a list above the operation's maxStreams is operationTooLarge before any write",
     ),
     async () => {
@@ -495,6 +666,8 @@ describe("the adapter's guards", () => {
     kind?: "applied" | "businessFailure";
     deleted?: boolean;
     payload?: Value;
+    schemaVersion?: number;
+    occurredAt?: number;
   };
   type Added = DomainEvent<"added", Value>;
   function counter(
@@ -508,8 +681,11 @@ describe("the adapter's guards", () => {
           kind: command.kind ?? "applied",
           events: command.amounts.map((amount) => ({
             eventType: "added",
-            eventSchemaVersion: 1,
+            eventSchemaVersion: command.schemaVersion ?? 1,
             payload: command.payload ?? { amount },
+            ...(command.occurredAt === undefined
+              ? {}
+              : { occurredAt: command.occurredAt }),
           })),
           result: command.amounts.length,
         }),
@@ -943,6 +1119,296 @@ describe("the adapter's guards", () => {
         "elsewhere",
         "elsewhere",
       ]);
+    },
+  );
+
+  test(
+    name(
+      "every event gets an event ID of its own, across one call and the next, and its ID finds that one event",
+    ),
+    async () => {
+      const t = depot();
+      const registration = counter();
+      await run(t, registration, [{ amounts: [1, 2] }]);
+      await run(t, registration, [{ amounts: [3] }]);
+      const stored = await events(t);
+      expect(stored).toHaveLength(3);
+      expect(new Set(stored.map((event) => event.eventId)).size).toBe(3);
+      for (const { eventId, streamVersion } of stored)
+        expect(
+          (
+            await t.run((ctx) =>
+              ctx.db
+                .query("events")
+                .withIndex("by_event_id", (q) =>
+                  q.eq("tenantId", "t-1").eq("eventId", eventId),
+                )
+                .collect(),
+            )
+          ).map((event) => event.streamVersion),
+        ).toEqual([streamVersion]);
+    },
+  );
+
+  test(
+    name(
+      "an envelope carries the event's own schema version and occurredAt, and no occurredAt when the event has none",
+    ),
+    async () => {
+      const t = depot();
+      const outcome = await run(t, counter(), [
+        { amounts: [1], schemaVersion: 3, occurredAt: 12345 },
+        { amounts: [2], schemaVersion: 7 },
+      ]);
+      const envelopes = outcome.streams.flatMap((stream) => stream.events);
+      expect(
+        envelopes.map((event) => [event.eventSchemaVersion, event.occurredAt]),
+      ).toEqual([
+        [3, 12345],
+        [7, undefined],
+      ]);
+      expect(envelopes[0]?.recordedAt).not.toBe(12345);
+      expect(envelopes[1]).not.toHaveProperty("occurredAt");
+      const stored = await events(t);
+      expect(
+        stored.map((event) => [event.eventSchemaVersion, event.occurredAt]),
+      ).toEqual([
+        [3, 12345],
+        [7, undefined],
+      ]);
+      expect(stored[1]).not.toHaveProperty("occurredAt");
+    },
+  );
+
+  test(
+    name(
+      "an event validator's ID field takes only an ID of its table, so a payload with any other string is a technical failure",
+    ),
+    async () => {
+      const t = depot();
+      await run(t, counter(), [{ amounts: [1] }]);
+      const [row] = await streams(t);
+      const linked = counter({
+        eventValidators: {
+          added: v.object({ ref: v.id("streams") }),
+        },
+      });
+      await technicalFailure(
+        run(t, linked, [{ amounts: [1], payload: { ref: "not-an-id" } }]),
+        /payload does not match its validator/,
+      );
+      expect(await events(t)).toHaveLength(1);
+      expect(
+        await run(t, linked, [
+          { amounts: [1], payload: { ref: row?._id ?? "" } },
+        ]),
+      ).toMatchObject({ kind: "applied" });
+    },
+  );
+
+  test(
+    name(
+      "a stream row whose version has no event in the journal is a technical failure before any append",
+    ),
+    async () => {
+      const t = depot();
+      const registration = counter();
+      await run(t, registration, [{ amounts: [5] }]);
+      await run(t, registration, [{ amounts: [2] }]);
+      await t.run(async (ctx) => {
+        const tail = await ctx.db
+          .query("events")
+          .withIndex("by_stream", (q) =>
+            q
+              .eq("tenantId", "t-1")
+              .eq("streamType", "counter")
+              .eq("streamId", "c-0")
+              .eq("streamVersion", 2),
+          )
+          .unique();
+        if (tail !== null) await ctx.db.delete(tail._id);
+      });
+      await technicalFailure(
+        run(t, registration, [{ amounts: [1] }]),
+        /is at version 2 and its journal holds no event at that version: its row and its events disagree/,
+      );
+      expect((await events(t)).map((event) => event.streamVersion)).toEqual([
+        1,
+      ]);
+      expect((await streams(t))[0]).toMatchObject({
+        streamVersion: 2,
+        state: { total: 7 },
+      });
+    },
+  );
+
+  test(
+    name(
+      "an append whose envelope names another context, tenant, stream type or stream ID than the one loaded throws before any read or insert",
+    ),
+    async () => {
+      const t = depot();
+      const registration = counter();
+      const event = { eventType: "added", eventSchemaVersion: 1, payload: {} };
+      const envelope = {
+        tenantId: "t-1",
+        contextId: journal.contextId,
+        streamType: "counter",
+        streamId: "c-0",
+        operation: operation("op-append"),
+        actor,
+        recordedAt: 1,
+      };
+      for (const other of [
+        { contextId: "elsewhere" },
+        { tenantId: "t-2" },
+        { streamType: "other" },
+        { streamId: "c-1" },
+      ]) {
+        const touched = await t.run(async (ctx) => {
+          const loaded = await load(ctx, journal, registration, "t-1", "c-0");
+          const query = vi.spyOn(ctx.db, "query");
+          const insert = vi.spyOn(ctx.db, "insert");
+          const error = await append(
+            ctx,
+            journal,
+            loaded,
+            { ...envelope, ...other },
+            [event],
+            0,
+          ).then(
+            () => undefined,
+            (thrown: unknown) => thrown,
+          );
+          return {
+            error: String(error),
+            convexError: error instanceof ConvexError,
+            reads: query.mock.calls.length,
+            inserts: insert.mock.calls.length,
+          };
+        });
+        expect(touched).toMatchObject({
+          error: expect.stringMatching(
+            /names a stream other than the one loaded/,
+          ),
+          convexError: false,
+          reads: 0,
+          inserts: 0,
+        });
+      }
+      expect(await events(t)).toEqual([]);
+    },
+  );
+
+  test(
+    name(
+      "a stream row's baselineVersion is loaded and kept when a command saves the row",
+    ),
+    async () => {
+      const t = depot();
+      const registration = counter();
+      await run(t, registration, [{ amounts: [1] }]);
+      const [row] = await streams(t);
+      await t.run(async (ctx) => {
+        if (row !== undefined)
+          await ctx.db.patch(row._id, { baselineVersion: 1 });
+      });
+      expect(
+        (await t.run((ctx) => load(ctx, journal, registration, "t-1", "c-0")))
+          .meta.baselineVersion,
+      ).toBe(1);
+      await run(t, registration, [{ amounts: [1] }]);
+      expect((await streams(t))[0]).toMatchObject({
+        streamVersion: 2,
+        baselineVersion: 1,
+      });
+    },
+  );
+
+  test(
+    name(
+      "a plan of 256 streams commits and one of 257 is operationTooLarge, whatever maxStreams the operation declares",
+    ),
+    async () => {
+      const t = depot();
+      const registration = counter();
+      const wide = (count: number) =>
+        t.run((ctx) =>
+          runOperation(
+            ctx,
+            journal,
+            declaration(
+              registration,
+              (input) =>
+                input.map((command, index) =>
+                  planned(registration, `c-${index}`, command),
+                ),
+              300,
+            ),
+            args(Array.from({ length: count }, () => ({ amounts: [1] }))),
+          ),
+        );
+      expect(await rejection(wide(257))).toMatchObject({
+        code: "operationTooLarge",
+        details: { count: 257, max: 256 },
+      });
+      expect(await streams(t)).toEqual([]);
+      expect(await wide(256)).toMatchObject({ kind: "applied" });
+      expect(await streams(t)).toHaveLength(256);
+    },
+  );
+
+  test(
+    name(
+      "a payload of exactly 16,384 bytes is appended and one of 16,385 is a technical failure",
+    ),
+    async () => {
+      const t = depot();
+      const open = counter({ eventValidators: { added: v.any() } });
+      const payload = (bytes: number) => {
+        const text = "x".repeat(bytes - getConvexSize({ text: "" }));
+        expect(getConvexSize({ text })).toBe(bytes);
+        return { text };
+      };
+      expect(
+        await run(t, open, [{ amounts: [0], payload: payload(16384) }]),
+      ).toMatchObject({ kind: "applied" });
+      await technicalFailure(
+        run(t, open, [{ amounts: [0], payload: payload(16385) }]),
+        /payload of 16385 bytes exceeds the 16384 byte bound/,
+      );
+      expect(await events(t)).toHaveLength(1);
+    },
+  );
+
+  test(
+    name(
+      "a stream row of exactly its budget is saved and one byte over is a technical failure",
+    ),
+    async () => {
+      const t = depot();
+      await run(t, counter(), [{ amounts: [1] }]);
+      const [row] = await streams(t);
+      if (row === undefined) throw new Error("No stream row");
+      const { _id, _creationTime, ...saved } = row;
+      void _id;
+      void _creationTime;
+      // The counter's row has the same size at every version: its fields are numbers and fixed strings.
+      const bytes = getConvexSize(saved);
+      const budgeted = (budgetBytes: number) =>
+        counter({
+          mapping: { kind: "single", budgetBytes, isDeleted: () => false },
+        });
+      expect(await run(t, budgeted(bytes), [{ amounts: [1] }])).toMatchObject({
+        versions: [{ version: 2 }],
+      });
+      await technicalFailure(
+        run(t, budgeted(bytes - 1), [{ amounts: [1] }]),
+        new RegExp(
+          `would be saved at ${bytes} bytes, above its budget of ${bytes - 1}`,
+        ),
+      );
+      expect((await streams(t))[0]?.streamVersion).toBe(2);
     },
   );
 });

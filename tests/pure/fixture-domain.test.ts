@@ -206,6 +206,20 @@ test("pure: a quantity that is not a positive whole number is rejected as invali
     }
 });
 
+test("pure: an addition past the largest safe whole number on hand is rejected as stockLimitExceeded", () => {
+  const state: StockState = { onHand: Number.MAX_SAFE_INTEGER - 1 };
+  const add = (quantity: number): StockCommand => ({
+    commandType: "addStock",
+    quantity,
+  });
+  expect(stockDecider.decide(state, add(1), context).kind).toBe("applied");
+  expect(rejection(stockDecider.decide(state, add(2), context))).toStrictEqual({
+    code: "stockLimitExceeded",
+    message: `Cannot add 2 to the ${Number.MAX_SAFE_INTEGER - 1} on hand`,
+    details: { quantity: 2, onHand: Number.MAX_SAFE_INTEGER - 1 },
+  });
+});
+
 test("pure: the stock invariant fails for a negative or fractional count", () => {
   const invariants = stockDecider.invariants ?? [];
   expect(checkInvariants(invariants, { onHand: 0 })).toEqual([]);

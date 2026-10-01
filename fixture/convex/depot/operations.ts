@@ -1,14 +1,16 @@
 // The depot's sanctioned operations. Each takes a list, so a parent use case makes one call.
-import { v, type Infer, type ObjectType } from "convex/values";
+import { ConvexError, v, type Infer, type ObjectType } from "convex/values";
 import {
   defineOperation,
   planned,
   type StreamResult,
 } from "../../../src/context/index.js";
-import type {
-  DocumentResult,
-  ReferenceResult,
-  StockResult,
+import type { Rejection } from "../../../src/kernel/index.js";
+import {
+  isQuantity,
+  type DocumentResult,
+  type ReferenceResult,
+  type StockResult,
 } from "../../domain/index.js";
 import {
   documentStatusValidator,
@@ -19,6 +21,35 @@ import {
   type DepotDocumentCommand,
 } from "./streams.js";
 const maxStreams = 100;
+// Items on one document become one command on its stream, in the order documents first appear. An
+// item equal to an earlier one adds nothing. One that names the same document with another field
+// refuses the call as invalidInput, because a call makes one command on each stream it touches.
+function byDocument<T extends { documentId: string }>(
+  items: readonly T[],
+): T[] {
+  const first = new Map<string, T>();
+  for (const item of items) {
+    const earlier = first.get(item.documentId);
+    if (earlier === undefined) {
+      first.set(item.documentId, item);
+      continue;
+    }
+    const fields = new Set([...Object.keys(earlier), ...Object.keys(item)]);
+    if (
+      [...fields].some(
+        (field) =>
+          (earlier as Record<string, unknown>)[field] !==
+          (item as Record<string, unknown>)[field],
+      )
+    )
+      throw new ConvexError<Rejection>({
+        code: "invalidInput",
+        message: `Document ${item.documentId} is listed twice with different commands`,
+        details: { documentId: item.documentId },
+      });
+  }
+  return [...first.values()];
+}
 const documentsResult = v.object({
   documents: v.array(
     v.object({ documentId: v.string(), status: documentStatusValidator }),
@@ -55,7 +86,7 @@ function documentOperation(name: string, command: DepotDocumentCommand) {
       input: documentsInput,
       returns: documentsResult,
       plan: ({ documents }) =>
-        documents.map(({ documentId, expectedVersion }) =>
+        byDocument(documents).map(({ documentId, expectedVersion }) =>
           planned(documentStream, documentId, command, expectedVersion),
         ),
       combine: combineDocuments,
@@ -66,6 +97,10 @@ function documentOperation(name: string, command: DepotDocumentCommand) {
 const createDocumentsInput = {
   documents: v.array(v.object({ documentId: v.string(), title: v.string() })),
 };
+const createPlans = (documents: { documentId: string; title: string }[]) =>
+  byDocument(documents).map(({ documentId, title }) =>
+    planned(documentStream, documentId, { commandType: "create", title }, 0),
+  );
 // A create names expected version 0, so a second create of the same ID is answered entityExists.
 export const createDocuments = defineOperation<
   ObjectType<typeof createDocumentsInput>,
@@ -75,10 +110,7 @@ export const createDocuments = defineOperation<
   streams: [documentStream],
   input: createDocumentsInput,
   returns: documentsResult,
-  plan: ({ documents }) =>
-    documents.map(({ documentId, title }) =>
-      planned(documentStream, documentId, { commandType: "create", title }, 0),
-    ),
+  plan: ({ documents }) => createPlans(documents),
   combine: combineDocuments,
   maxStreams,
 });
@@ -109,7 +141,7 @@ export const amendDocuments = defineOperation<
   input: amendDocumentsInput,
   returns: documentsResult,
   plan: ({ documents }) =>
-    documents.map(({ documentId, title, expectedVersion }) =>
+    byDocument(documents).map(({ documentId, title, expectedVersion }) =>
       planned(
         documentStream,
         documentId,
@@ -126,12 +158,32 @@ const stockLines = {
 const stockResult = v.object({
   lines: v.array(v.object({ productId: v.string(), quantity: v.number() })),
 });
-// Lines on one product become one command on its stream, in the order products first appear.
-function byProduct(lines: readonly { productId: string; quantity: number }[]) {
+type StockLine = { productId: string; quantity: number };
+// Lines on one product become one command on its stream, in the order products first appear. Each
+// line's quantity is checked before the sum: a line the decider would refuse is planned alone, so
+// the call is refused with the decider's invalidQuantity, and the decider checks each sum again.
+function byProduct(lines: readonly StockLine[]): [string, number][] {
+  const invalid = lines.find(({ quantity }) => !isQuantity(quantity));
+  if (invalid !== undefined) return [[invalid.productId, invalid.quantity]];
   const totals = new Map<string, number>();
   for (const { productId, quantity } of lines)
     totals.set(productId, (totals.get(productId) ?? 0) + quantity);
   return [...totals];
+}
+const stockPlans = (
+  lines: readonly StockLine[],
+  commandType: "addStock" | "claim",
+) =>
+  byProduct(lines).map(([productId, quantity]) =>
+    planned(stockStream, productId, { commandType, quantity }),
+  );
+function combineStock(results: readonly StreamResult<unknown>[]) {
+  return results
+    .filter((result) => result.version.streamType === "stock")
+    .map((result) => ({
+      productId: result.version.streamId,
+      quantity: (result.result as StockResult).quantity,
+    }));
 }
 function stockOperation(name: string, commandType: "addStock" | "claim") {
   return defineOperation<
@@ -142,16 +194,8 @@ function stockOperation(name: string, commandType: "addStock" | "claim") {
     streams: [stockStream],
     input: stockLines,
     returns: stockResult,
-    plan: ({ lines }) =>
-      byProduct(lines).map(([productId, quantity]) =>
-        planned(stockStream, productId, { commandType, quantity }),
-      ),
-    combine: (results) => ({
-      lines: results.map((result) => ({
-        productId: result.version.streamId,
-        quantity: (result.result as StockResult).quantity,
-      })),
-    }),
+    plan: ({ lines }) => stockPlans(lines, commandType),
+    combine: (results) => ({ lines: combineStock(results) }),
     maxStreams,
   });
 }
@@ -182,7 +226,7 @@ export const registerDocuments = defineOperation<
   input: registerDocumentsInput,
   returns: registerDocumentsResult,
   plan: ({ documents }) =>
-    documents.flatMap(({ documentId, reference, title }) => [
+    byDocument(documents).flatMap(({ documentId, reference, title }) => [
       planned(
         referenceStream,
         reference,
@@ -200,4 +244,31 @@ export const registerDocuments = defineOperation<
       })),
   }),
   maxStreams,
+});
+const placeOrdersInput = { ...createDocumentsInput, ...stockLines };
+const placeOrdersResult = v.object({
+  documents: documentsResult.fields.documents,
+  lines: stockResult.fields.lines,
+});
+// Creates the order documents at expected version 0, then claims the stock lines, so a use case that
+// places an order makes one call. The creates come first, so a second submit of the same order is
+// answered entityExists even when the first submit took the last units.
+export const placeOrders = defineOperation<
+  ObjectType<typeof placeOrdersInput>,
+  Infer<typeof placeOrdersResult>
+>(journal, {
+  name: "placeOrders",
+  streams: [documentStream, stockStream],
+  input: placeOrdersInput,
+  returns: placeOrdersResult,
+  plan: ({ documents, lines }) => [
+    ...createPlans(documents),
+    ...stockPlans(lines, "claim"),
+  ],
+  combine: (results) => ({
+    ...combineDocuments(results),
+    lines: combineStock(results),
+  }),
+  // An order's document and a stream for each of up to maxStreams products.
+  maxStreams: maxStreams + 1,
 });

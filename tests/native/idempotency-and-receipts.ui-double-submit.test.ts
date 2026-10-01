@@ -241,7 +241,7 @@ bindExample(
         unchanged,
       );
       // The double submit again, with stock for one order only: the first submit takes the last unit,
-      // and the second is still entityExists, because PlaceOrder calls the creating operation first.
+      // and the second is still entityExists, because PlaceOrder's depot call creates before it claims.
       await addStock(world, "p-2", 1);
       const lastUnit = [
         await placeOrder(world, "order-7f3b", "p-2"),

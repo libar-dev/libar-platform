@@ -301,6 +301,7 @@ function stockCommand(
 }
 const addStockDeclaration = stockCommand("AddStock", operations.addStock, [
   "invalidQuantity",
+  "stockLimitExceeded",
 ]);
 export const addStock = publicCommand(addStockDeclaration);
 export const addStockInternal = internalCommand(addStockDeclaration);

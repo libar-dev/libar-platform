@@ -82,13 +82,22 @@ export async function insertGrant(
   return ctx.db.insert("grants", { ...grant, grantedAt: Date.now() });
 }
 // Revocation deletes the rows that grant this permission to this principal, on this subject when one
-// is named and otherwise on any; the next command's read finds none. Returns the number deleted.
+// is named and otherwise on any; the next command's read finds none. Returns the number deleted. It
+// reads past the command path's bound of limitGrantsRead, so it can reduce a principal that holds more.
 export async function revokeGrant(
   ctx: { db: MutationCtx["db"] },
   grant: Omit<GrantInput, "grantedBy">,
 ): Promise<number> {
   const rows = (
-    await grantsOf(ctx, grant.tenantId, grant.principalKind, grant.principalId)
+    await ctx.db
+      .query("grants")
+      .withIndex("by_principal", (q) =>
+        q
+          .eq("tenantId", grant.tenantId)
+          .eq("principalKind", grant.principalKind)
+          .eq("principalId", grant.principalId),
+      )
+      .collect()
   ).filter(
     (row) =>
       row.permission === grant.permission &&

@@ -166,7 +166,8 @@ async function executeMeasured<S, C, E extends DomainEvent, R>(
       throw new Error(
         `The ${streamType} registration has no validator for ${event.eventType}`,
       );
-    if (!validate(validator, event.payload))
+    // The db makes an ID validator check that the ID names a document of its table.
+    if (!validate(validator, event.payload, { db: ctx.db }))
       throw new Error(
         `A ${streamType} ${event.eventType} payload does not match its validator`,
       );

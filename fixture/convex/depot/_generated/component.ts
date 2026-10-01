@@ -497,6 +497,105 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         },
         Name
       >;
+      placeOrders: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          actor: {
+            delegationRef?: string;
+            id: string;
+            issuer?: string;
+            kind: "human" | "service" | "agent" | "reviewer" | "operator";
+            onBehalfOf?: {
+              id: string;
+              kind: "human" | "service" | "agent" | "reviewer" | "operator";
+            };
+          };
+          facts?: Record<string, any>;
+          input: {
+            documents: Array<{ documentId: string; title: string }>;
+            lines: Array<{ productId: string; quantity: number }>;
+          };
+          operation: {
+            causedBy:
+              | { commandType: string; kind: "command" }
+              | {
+                  contextId: string;
+                  eventId: string;
+                  kind: "event";
+                  tenantId: string;
+                }
+              | { kind: "migration"; migrationName: string };
+            correlationId?: string;
+            operationId: string;
+          };
+          tenantId: string;
+        },
+        {
+          kind: "applied" | "businessFailure";
+          result: {
+            documents: Array<{
+              documentId: string;
+              status: "none" | "draft" | "submitted" | "shipped";
+            }>;
+            lines: Array<{ productId: string; quantity: number }>;
+          };
+          streams: Array<{
+            appended: number;
+            created: boolean;
+            dto: any;
+            events: Array<{
+              actor: {
+                delegationRef?: string;
+                id: string;
+                issuer?: string;
+                kind: "human" | "service" | "agent" | "reviewer" | "operator";
+                onBehalfOf?: {
+                  id: string;
+                  kind: "human" | "service" | "agent" | "reviewer" | "operator";
+                };
+              };
+              causedBy:
+                | { commandType: string; kind: "command" }
+                | {
+                    contextId: string;
+                    eventId: string;
+                    kind: "event";
+                    tenantId: string;
+                  }
+                | { kind: "migration"; migrationName: string };
+              contextId: string;
+              correlationId?: string;
+              eventId: string;
+              eventSchemaVersion: number;
+              eventType: string;
+              occurredAt?: number;
+              operationId: string;
+              payload: any;
+              recordedAt: number;
+              streamId: string;
+              streamType: string;
+              streamVersion: number;
+              tenantId: string;
+            }>;
+            version: {
+              contextId: string;
+              streamId: string;
+              streamType: string;
+              tenantId: string;
+              version: number;
+            };
+          }>;
+          versions: Array<{
+            contextId: string;
+            streamId: string;
+            streamType: string;
+            tenantId: string;
+            version: number;
+          }>;
+        },
+        Name
+      >;
       registerDocuments: FunctionReference<
         "mutation",
         "internal",

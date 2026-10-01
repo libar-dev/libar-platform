@@ -29,6 +29,8 @@ interface World<S, C, E extends DomainEvent, R> {
   inputs?: DecisionInput<C>[];
   incremental?: { state: S; events: E[] };
   rebuilt?: S;
+  // The events the rebuild handed to evolve, in order.
+  applied?: E[];
   io?: string[];
 }
 // Once per fixture stream type: the rebuild equality is a test for every stream type.
@@ -55,12 +57,21 @@ function bindFor<S, C, E extends DomainEvent, R>(
       const { decider } = world.fixture;
       const state = required(world.state, "state");
       const inputs = required(world.inputs, "inputs");
+      const applied: E[] = [];
+      const watched = {
+        ...decider,
+        evolve: (from: S, event: E) => {
+          applied.push(event);
+          return decider.evolve(from, event);
+        },
+      };
       const observed = observeIo(() => {
         const incremental = runIncrementally(decider, state, inputs);
-        return { incremental, rebuilt: rebuild(decider, incremental.events) };
+        return { incremental, rebuilt: rebuild(watched, incremental.events) };
       });
       world.incremental = observed.value.incremental;
       world.rebuilt = observed.value.rebuilt;
+      world.applied = applied;
       world.io = observed.calls;
     },
     "the rebuilt business state {rebuilt} the incrementally computed state": (
@@ -77,10 +88,13 @@ function bindFor<S, C, E extends DomainEvent, R>(
       else expect(world.rebuilt).not.toStrictEqual(incremental.state);
     },
     "the rebuilt stream version is {version}": (world, { version }) => {
-      // The version is the count of events the rebuild folded.
-      expect(
+      // The version is the count of events the rebuild folded: every recorded event, in order, and
+      // no other, which a final state that a later event overwrites cannot show.
+      const applied = required(world.applied, "events the rebuild applied");
+      expect(applied).toStrictEqual(
         required(world.incremental, "incremental run").events,
-      ).toHaveLength(version);
+      );
+      expect(applied).toHaveLength(version);
     },
     "the number of I/O calls observed is {io}": (world, { io }) => {
       expect(required(world.io, "observed calls")).toHaveLength(io);

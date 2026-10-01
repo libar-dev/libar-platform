@@ -114,7 +114,7 @@ export async function insertReceipt(
     receipt.versions.length > limitAffectedRefs
   )
     throw new Error(
-      `A receipt holds at most ${limitAffectedRefs} affected refs and versions, not ${receipt.versions.length}`,
+      `A receipt holds at most ${limitAffectedRefs} affected refs and versions, not ${receipt.affected.length} affected refs and ${receipt.versions.length} versions`,
     );
   const recordedAt = Date.now();
   return ctx.db.insert("receipts", {

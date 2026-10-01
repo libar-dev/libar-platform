@@ -2,7 +2,7 @@ import { convexTest } from "convex-test";
 import { ConvexError, v, type Value } from "convex/values";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { api, internal } from "../../fixture/convex/_generated/api.js";
 import annexSchema from "../../fixture/convex/annex/schema.js";
 import depotSchema from "../../fixture/convex/depot/schema.js";
@@ -10,12 +10,19 @@ import {
   failIfDecidedMessage,
   faultTitles,
 } from "../../fixture/convex/depot/streams.js";
+import * as depotOperations from "../../fixture/convex/depot/operations.js";
 import { permissions } from "../../fixture/convex/depotCommands.js";
+import { orderPermission } from "../../fixture/convex/orders.js";
 import schema from "../../fixture/convex/schema.js";
 import {
+  authorize,
+  establishActor,
   insertGrant,
+  insertReceipt,
   runPipeline,
   type CommandDeclaration,
+  type PipelineCall,
+  type Retention,
 } from "../../src/command/index.js";
 import type { OperationRef } from "../../src/context/index.js";
 const { version } = JSON.parse(
@@ -101,6 +108,49 @@ const documentVersion = (
   streamId,
   version,
 });
+// A command whose executor counts its runs and answers the outcome kind it is given, with no context call.
+function counted(
+  kind: "applied" | "businessFailure",
+  retention?: Retention,
+): {
+  declaration: CommandDeclaration<{ n: number }, { n: number }>;
+  runs: () => number;
+} {
+  let runs = 0;
+  return {
+    declaration: {
+      name: "Counted",
+      contractVersion: 1,
+      input: v.object({ n: v.number() }),
+      output: v.object({ n: v.number() }),
+      permission: { permission: "probe" },
+      rejections: [],
+      ...(retention === undefined ? {} : { retention }),
+      executor: async (_ctx, { input }) => {
+        runs += 1;
+        return { kind, result: input, versions: [], streams: [] };
+      },
+    },
+    runs: () => runs,
+  };
+}
+const serviceCall: PipelineCall<{ n: number }> = {
+  tenantId: "t-1",
+  namespace: "worker",
+  actor: { kind: "service", id: "svc-1" },
+  requestKey: "k-1",
+  input: { n: 1 },
+};
+const grantProbe = (t: App) =>
+  t.run((ctx) =>
+    insertGrant(ctx, {
+      tenantId: "t-1",
+      principalKind: "service",
+      principalId: "svc-1",
+      permission: "probe",
+      grantedBy: "operator",
+    }),
+  );
 const switchOn = (
   t: App,
   commandType: string,
@@ -369,6 +419,197 @@ describe("the public entry", () => {
       );
     },
   );
+
+  test(
+    name(
+      "a caller whose only grant names another permission is forbidden, stores nothing and cannot replay another caller's receipt",
+    ),
+    async () => {
+      const t = app();
+      const writer = await caller(t, "user-1");
+      const call = { ...report(), requestKey: "k-1" };
+      await writer.mutation(api.depotCommands.createDocument, call);
+      const before = await receipts(t);
+      const stockOnly = await caller(t, "user-2", {
+        permission: permissions.stock,
+      });
+      for (const attempt of [call, { ...report("doc-2"), requestKey: "k-2" }])
+        expect(
+          await errorData(
+            stockOnly.mutation(api.depotCommands.createDocument, attempt),
+          ),
+        ).toMatchObject({ code: "forbidden", details: { reason: "no_grant" } });
+      expect(await receipts(t)).toEqual(before);
+    },
+  );
+
+  test(
+    name(
+      "the public entry makes a caller of a configured service issuer a service actor, whom a service grant authorizes, and any other caller a human",
+    ),
+    async () => {
+      const t = app();
+      await t.run((ctx) =>
+        insertGrant(ctx, {
+          tenantId: "t-1",
+          principalKind: "service",
+          principalId: principalOf("svc-1"),
+          permission: permissions.documents,
+          grantedBy: "operator",
+        }),
+      );
+      const decisions = await t
+        .withIdentity({ issuer, subject: "svc-1" })
+        .run(async (ctx) => {
+          const decide = async (serviceIssuers: Set<string>) => {
+            const actor = await establishActor(ctx, serviceIssuers);
+            if (actor === null) throw new Error("No actor");
+            const decision = await authorize(ctx, {
+              tenantId: "t-1",
+              actor,
+              permission: permissions.documents,
+            });
+            return { kind: actor.kind, allowed: decision.allowed };
+          };
+          return [
+            await decide(new Set([issuer])),
+            await decide(new Set(["https://other-issuer.test"])),
+          ];
+        });
+      expect(decisions).toEqual([
+        { kind: "service", allowed: true },
+        { kind: "human", allowed: false },
+      ]);
+    },
+  );
+
+  test(
+    name(
+      "a caller who holds 500 grants is authorized, and one who holds 501 fails as a technical failure and stores no receipt",
+    ),
+    async () => {
+      const t = app();
+      const user = await caller(t, "user-1");
+      const more = (count: number, from: number) =>
+        t.run(async (ctx) => {
+          for (let index = from; index < from + count; index++)
+            await insertGrant(ctx, {
+              tenantId: "t-1",
+              principalKind: "human",
+              principalId: principalOf("user-1"),
+              permission: `other-${index}`,
+              grantedBy: "operator",
+            });
+        });
+      await more(499, 0);
+      expect(
+        await user.mutation(api.depotCommands.createDocument, {
+          ...report(),
+          requestKey: "k-1",
+        }),
+      ).toMatchObject({ kind: "applied" });
+      const before = await receipts(t);
+      await more(1, 499);
+      await technicalFailure(
+        user.mutation(api.depotCommands.createDocument, {
+          ...report("doc-2"),
+          requestKey: "k-2",
+        }),
+        "holds more than 500 grants",
+      );
+      expect(await receipts(t)).toEqual(before);
+    },
+  );
+
+  test(
+    name("a request key of 256 characters executes and replays"),
+    async () => {
+      const t = app();
+      const user = await caller(t, "user-1");
+      const call = { ...report(), requestKey: "k".repeat(256) };
+      const first = await user.mutation(api.depotCommands.createDocument, call);
+      expect(first.replayed).toBe(false);
+      expect(
+        await user.mutation(api.depotCommands.createDocument, call),
+      ).toMatchObject({ replayed: true, operationId: first.operationId });
+    },
+  );
+
+  test(
+    name(
+      "PlaceOrder makes one call to the depot, and its internal entry places an order under the caller's request key",
+    ),
+    async () => {
+      const t = app();
+      const user = await caller(t, "user-1", { permission: permissions.stock });
+      await user.mutation(api.depotCommands.addStock, {
+        tenantId: "t-1",
+        input: { lines: [{ productId: "p-1", quantity: 2 }] },
+      });
+      await caller(t, "user-1", { permission: orderPermission });
+      const handlers = Object.entries(depotOperations).map(
+        ([operation, registered]) =>
+          [
+            operation,
+            vi.spyOn(
+              registered as unknown as { _handler: () => unknown },
+              "_handler",
+            ),
+          ] as const,
+      );
+      const calls = () =>
+        handlers.flatMap(([operation, spy]) =>
+          spy.mock.calls.map(() => operation),
+        );
+      try {
+        expect(
+          await user.mutation(api.orders.placeOrder, {
+            tenantId: "t-1",
+            input: {
+              orderId: "order-1",
+              title: "Order",
+              lines: [{ productId: "p-1", quantity: 1 }],
+            },
+          }),
+        ).toMatchObject({
+          kind: "applied",
+          result: {
+            orderId: "order-1",
+            lines: [{ productId: "p-1", quantity: 1 }],
+          },
+        });
+        expect(calls()).toEqual(["placeOrders"]);
+      } finally {
+        for (const [, spy] of handlers) spy.mockRestore();
+      }
+      const internalCall = {
+        tenantId: "t-1",
+        namespace: "worker" as const,
+        actor: { kind: "human" as const, id: principalOf("user-1") },
+        requestKey: "k-1",
+        input: {
+          orderId: "order-2",
+          title: "Order",
+          lines: [{ productId: "p-1", quantity: 1 }],
+        },
+      };
+      const placed = await t.mutation(
+        internal.orders.placeOrderInternal,
+        internalCall,
+      );
+      expect(placed).toMatchObject({
+        kind: "applied",
+        replayed: false,
+        versions: [
+          { streamType: "document", streamId: "order-2", version: 1 },
+          { streamType: "stock", streamId: "p-1", version: 3 },
+        ],
+      });
+      expect(
+        await t.mutation(internal.orders.placeOrderInternal, internalCall),
+      ).toMatchObject({ replayed: true, operationId: placed.operationId });
+    },
+  );
 });
 
 describe("receipts", () => {
@@ -574,6 +815,196 @@ describe("receipts", () => {
         details: { reason: "no_grant" },
       });
       expect(await receipts(t)).toEqual(before);
+    },
+  );
+
+  test(
+    name(
+      "a committed business failure is answered businessFailure, stored so on its receipt and replayed as businessFailure with no second execution",
+    ),
+    async () => {
+      const t = app();
+      await grantProbe(t);
+      const { declaration, runs } = counted("businessFailure");
+      const first = await t.run((ctx) =>
+        runPipeline(ctx, declaration, serviceCall),
+      );
+      expect(first).toMatchObject({
+        kind: "businessFailure",
+        result: { n: 1 },
+        replayed: false,
+      });
+      expect(await receipts(t)).toMatchObject([
+        { outcome: "businessFailure", operationId: first.operationId },
+      ]);
+      expect(
+        await t.run((ctx) => runPipeline(ctx, declaration, serviceCall)),
+      ).toEqual({
+        kind: "businessFailure",
+        result: null,
+        operationId: first.operationId,
+        affected: [],
+        versions: [],
+        replayed: true,
+      });
+      expect(runs()).toBe(1);
+    },
+  );
+
+  test(
+    name(
+      "a declaration's own retention window sets the receipt's expiry: the key replays until then and runs as new intent from then",
+    ),
+    async () => {
+      const t = app();
+      await grantProbe(t);
+      const { declaration, runs } = counted("applied", {
+        window: 60000,
+        afterExpiry: "delete",
+      });
+      const first = await t.run((ctx) =>
+        runPipeline(ctx, declaration, serviceCall),
+      );
+      const [stored] = await receipts(t);
+      if (stored === undefined) throw new Error("No receipt");
+      expect(stored.expiresAt - stored.recordedAt).toBe(60000);
+      const at = (now: number) => {
+        const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+        return t
+          .run((ctx) => runPipeline(ctx, declaration, serviceCall))
+          .finally(() => clock.mockRestore());
+      };
+      expect(await at(stored.expiresAt - 1)).toMatchObject({
+        replayed: true,
+        operationId: first.operationId,
+      });
+      const fresh = await at(stored.expiresAt);
+      expect(fresh.replayed).toBe(false);
+      expect(fresh.operationId).not.toBe(first.operationId);
+      expect(runs()).toBe(2);
+    },
+  );
+
+  test(
+    name(
+      "a receipt holds at most 1,000 affected refs and 1,000 versions, each counted on its own, and the error names both counts",
+    ),
+    async () => {
+      const t = app();
+      const ref = { contextId: "depot", streamType: "document", streamId: "d" };
+      const version = { ...ref, tenantId: "t-1", version: 1 };
+      const insert = (requestKey: string, affected: number, versions: number) =>
+        t.run((ctx) =>
+          insertReceipt(ctx, {
+            tenantId: "t-1",
+            namespace: "public",
+            commandType: "Probe",
+            requestKey,
+            fingerprint: "f",
+            contractVersion: 1,
+            outcome: "applied",
+            operationId: `op-${requestKey}`,
+            affected: Array.from({ length: affected }, () => ref),
+            versions: Array.from({ length: versions }, () => version),
+            actorId: "a",
+          }),
+        );
+      await insert("k-a", 1000, 0);
+      await insert("k-v", 0, 1000);
+      await technicalFailure(
+        insert("k-a2", 1001, 0),
+        "not 1001 affected refs and 0 versions",
+      );
+      await technicalFailure(
+        insert("k-v2", 0, 1001),
+        "not 0 affected refs and 1001 versions",
+      );
+      expect((await receipts(t)).map((row) => row.requestKey).sort()).toEqual([
+        "k-a",
+        "k-v",
+      ]);
+    },
+  );
+
+  test(
+    name(
+      "revocation deletes the named permission on the named subject only, or on every subject when none is named",
+    ),
+    async () => {
+      const t = app();
+      const doc = (streamId: string) => ({
+        contextId: "depot",
+        streamType: "document",
+        streamId,
+      });
+      for (const grant of [
+        { permission: permissions.documents, subject: doc("doc-1") },
+        { permission: permissions.documents, subject: doc("doc-2") },
+        { permission: permissions.documents },
+        { permission: permissions.stock, subject: doc("doc-1") },
+        { permission: permissions.stock },
+      ])
+        await caller(t, "user-1", grant);
+      const remaining = async () =>
+        (await t.run((ctx) => ctx.db.query("grants").collect()))
+          .map((row) => `${row.permission} ${row.subject?.streamId ?? "any"}`)
+          .sort();
+      const revoke = (permission: string, subject?: string) =>
+        t.mutation(internal.grants.revoke, {
+          tenantId: "t-1",
+          principalKind: "human",
+          principalId: principalOf("user-1"),
+          permission,
+          ...(subject === undefined ? {} : { subject: doc(subject) }),
+        });
+      expect(await revoke(permissions.documents, "doc-1")).toBe(1);
+      expect(await remaining()).toEqual([
+        "depot.documents any",
+        "depot.documents doc-2",
+        "depot.stock any",
+        "depot.stock doc-1",
+      ]);
+      expect(await revoke(permissions.stock)).toBe(2);
+      expect(await remaining()).toEqual([
+        "depot.documents any",
+        "depot.documents doc-2",
+      ]);
+    },
+  );
+
+  test(
+    name(
+      "revocation reduces a principal that holds more than 500 grants, after which a new grant authorizes again",
+    ),
+    async () => {
+      const t = app();
+      const user = t.withIdentity({ issuer, subject: "user-1" });
+      await t.run(async (ctx) => {
+        for (let index = 0; index < 501; index++)
+          await insertGrant(ctx, {
+            tenantId: "t-1",
+            principalKind: "human",
+            principalId: principalOf("user-1"),
+            permission: permissions.documents,
+            grantedBy: "operator",
+          });
+      });
+      await technicalFailure(
+        user.mutation(api.depotCommands.createDocument, report()),
+        "holds more than 500 grants",
+      );
+      expect(
+        await t.mutation(internal.grants.revoke, {
+          tenantId: "t-1",
+          principalKind: "human",
+          principalId: principalOf("user-1"),
+          permission: permissions.documents,
+        }),
+      ).toBe(501);
+      await caller(t, "user-1");
+      expect(
+        await user.mutation(api.depotCommands.createDocument, report()),
+      ).toMatchObject({ kind: "applied" });
     },
   );
 });

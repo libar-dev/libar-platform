@@ -1,9 +1,10 @@
-// PlaceOrder, a fixture command whose use case calls two depot operations in order: it creates the
-// order as a document under the client-generated order ID at expected version 0, then claims the
-// order's stock lines. The creating call comes first, so a second submit of the same order is
-// answered entityExists even when the first submit took the last units.
+// PlaceOrder, a fixture command whose use case makes one call to the depot's placeOrders operation,
+// which creates the order as a document under the client-generated order ID at expected version 0
+// and then claims the order's stock lines. The create comes first, so a second submit of the same
+// order is answered entityExists even when the first submit took the last units.
 import { v, type Infer } from "convex/values";
 import {
+  internalCommand,
   publicCommand,
   type CommandDeclaration,
 } from "../../src/command/index.js";
@@ -41,29 +42,28 @@ const placeOrderDeclaration: CommandDeclaration<
   admission: switchedAdmission("PlaceOrder"),
   bounds: { maxItems: 100 },
   executor: async (ctx, { tenantId, actor, operation, input }) => {
-    const created = await ctx.runMutation(operations.createDocuments, {
+    const placed = await ctx.runMutation(operations.placeOrders, {
       tenantId,
       actor,
       operation,
-      input: { documents: [{ documentId: input.orderId, title: input.title }] },
+      input: {
+        documents: [{ documentId: input.orderId, title: input.title }],
+        lines: input.lines,
+      },
     });
-    const claimed = await ctx.runMutation(operations.claimStock, {
+    await failBeforeReceiptIfSwitched(
+      ctx,
       tenantId,
-      actor,
-      operation,
-      input: { lines: input.lines },
-    });
-    const versions = [...created.versions, ...claimed.versions];
-    await failBeforeReceiptIfSwitched(ctx, tenantId, "PlaceOrder", versions);
+      "PlaceOrder",
+      placed.versions,
+    );
     return {
-      kind:
-        created.kind === "businessFailure" || claimed.kind === "businessFailure"
-          ? "businessFailure"
-          : "applied",
-      result: { orderId: input.orderId, lines: claimed.result.lines },
-      versions,
-      streams: [...created.streams, ...claimed.streams],
+      kind: placed.kind,
+      result: { orderId: input.orderId, lines: placed.result.lines },
+      versions: placed.versions,
+      streams: placed.streams,
     };
   },
 };
 export const placeOrder = publicCommand(placeOrderDeclaration);
+export const placeOrderInternal = internalCommand(placeOrderDeclaration);

@@ -144,20 +144,29 @@ export async function append<S, E extends DomainEvent>(
     );
   if (events.length === 0)
     throw new Error(`An append to ${streamType}/${streamId} has no events`);
-  // Puts the stream's range in the read set, so the engine serializes concurrent appends.
-  const ahead = await ctx.db
+  // Puts the stream's range in the read set, so the engine serializes concurrent appends. The range
+  // starts at the expected version, so a journal whose last event is not at that version is caught too.
+  const [first, second] = await ctx.db
     .query("events")
     .withIndex("by_stream", (q) =>
       q
         .eq("tenantId", tenantId)
         .eq("streamType", streamType)
         .eq("streamId", streamId)
-        .gt("streamVersion", expectedVersion),
+        .gte("streamVersion", expectedVersion),
     )
-    .first();
-  if (ahead !== null)
+    .take(2);
+  const ahead =
+    first !== undefined && first.streamVersion > expectedVersion
+      ? first
+      : second;
+  if (ahead !== undefined)
     throw new Error(
       `Stream ${streamType}/${streamId} holds version ${ahead.streamVersion} above the expected ${expectedVersion}: its row and its events disagree`,
+    );
+  if (expectedVersion > 0 && first === undefined)
+    throw new Error(
+      `Stream ${streamType}/${streamId} is at version ${expectedVersion} and its journal holds no event at that version: its row and its events disagree`,
     );
   const envelopes: EventEnvelope[] = [];
   for (const [index, event] of events.entries()) {
