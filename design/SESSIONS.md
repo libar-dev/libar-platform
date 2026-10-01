@@ -2,7 +2,7 @@
 
 A session is one Claude Code conversation with Fable 5.1 as the main thread. It does one unit of work and leaves the Specs, the code, `README.md`, the ledger and `STATE.md` agreeing.
 
-The main thread orchestrates. It rules on every finding, writes or approves every Spec sentence, and owns the check and the commit. It delegates reading, checking and bounded building. The design is finished by building it: the doc says detail follows the build, and three review rounds on paper did not converge.
+The main thread coordinates. It rules on every finding, approves every Spec sentence, and owns the check, the push and the merge. It delegates reading, checking, building and the writing of Spec text from its rulings, and it keeps its own context small: a job answers it in a few lines and leaves its report in a file. The design is finished by building it: the doc says detail follows the build, and three review rounds on paper did not converge.
 
 ## What wins when sources disagree
 
@@ -24,9 +24,9 @@ The owner ruled on 2026-10-01 that the session takes tactical decisions on its o
 
 | Work | Who | Effort |
 |---|---|---|
-| Orchestration, rulings, every Spec sentence, the check, commits, merges | Fable 5.1, the main thread | high |
+| Coordination, rulings, approval of every Spec sentence, the check, the push and the merge | Fable 5.1, the main thread | high |
 | The design of a solution's key abstractions before an implementer writes it: interfaces as stubs, names, shapes, and exact text only where a reader sees it | Claude agent, Fable 5.1 | default |
-| Building from a Spec, and folding in ruled findings | Claude agent, Opus 5.5 | default |
+| Building from a Spec, integrating parallel builders, folding in ruled findings, and applying ruled Spec and ledger edits | Claude agent, Opus 5.5, usually inside one Workflow run | default |
 | Read-only scout before a unit; the behavior review lane, which runs things | `gpt-6-astra` | high |
 | The mechanical review lane: every changed line, test and pinned value | `gpt-6.1-sol` | medium |
 | Whole-branch review before a hand-over or a close | `gpt-6-astra` | xhigh |
@@ -37,13 +37,13 @@ Claude models write and GPT models review. The owner ruled it on 2026-10-01, aft
 Four rules from the stop of 2026-09-30, when ten parallel Fable agents hit the usage limit and one left 109 unreported edits:
 
 - One unit per session.
-- One write lane per tree. A second writer gets its own git worktree and files the first does not touch, and the main thread merges its diff. Two writers share one tree only when the two briefs split the files and each names the other's files as forbidden, and then nothing is committed or checked until both are done.
+- One write lane per tree. A second writer gets its own git worktree and files the first does not touch, and an integrator agent or the main thread merges its branch. Two writers share one tree only when the two briefs split the files and each names the other's files as forbidden, and then nothing is committed or checked until both are done.
 - The ledger is written ahead: each finding and each status before the next begins.
 - Every delegated job's report is saved to a file the moment it arrives.
 
 ## Open
 
-1. Read `STATE.md`.
+1. Read `STATE.md`. It is the whole required reading. The orchestration guide and the project notes that `AGENTS.md` names are reference: open the section you need when you start a GPT job, and nothing else of them. Do not read the Specs, the doc or earlier reports as a way of opening: a builder reads the Specs it builds, and a ruling reads the lines it rules on.
 2. Run `npm ci` if `node_modules` is missing, then `python3 design/tools/check.py`. It prints `OK` and the summary lines `STATE.md` records, the corpus digest and the Protocol pin included.
 3. If a line differs, find out whether the corpus or the pin moved. A moved corpus makes the unit `recover`. A moved pin makes it `adopt`. Otherwise take the unit `STATE.md` names, unless the owner asks for another.
 
@@ -51,18 +51,18 @@ Four rules from the stop of 2026-09-30, when ten parallel Fable agents hit the u
 
 ### slice
 
-One slice of the build, as `STATE.md` cuts them. `python3 design/tools/check.py --slice S1` lists the findings it takes.
+One slice of the build, as `STATE.md` cuts them. `python3 design/tools/check.py --slice S2` lists the findings a slice takes. Slice S1 was built this way in one evening, and the owner asked for it to stay the default: most of a thread's work is new design and code, and the main thread coordinates with as little of its own context as it can.
 
-1. **Scout.** One read-only astra job reports, per finding of the slice: the Spec that owns the concept, every other place that restates it, found by searching the whole corpus for each name and signature (recipe 23 finds keyed entries by name), and each conflict with the doc. Its report is a list of leads.
-2. **Settle.** For each ledger finding and each scout lead, look for what would refute it, then trace it to the scenario it breaks. Rule one of three: fix on paper now, let the build decide and say what the build must show, or the owner. A `fix` field in the ledger is a lead; five were found wrong on 2026-10-01. Recipe 21 lists what a Spec rests on, with each target's rung and floor.
-3. **Author.** Change the Spec that owns the concept, then every Spec that restates it. A Spec that names another in prose declares the relation. Fix what the slice cannot be built without and leave the rest open with the note that the build decides. Set each finding's `status` and `note` before starting the next.
-4. **Design.** A Fable agent reads the Specs the slice builds and designs their key abstractions, not every line: the interfaces later work builds on, as signatures without bodies, the data shapes, the names, and each decision with its reason. It proposes them as `## Design` entries and rules for those Specs, in one short design file that also holds what is not a Spec entry: toolchain answers, work packages, spike facts and gaps it found in the Specs. The brief gives it a time bound, about half an hour of work, and says that a spike stays small. It changes no file in the repository. The main thread rules on each proposed entry and writes it into the Spec, so the Spec is what bounds the design and what the implementer builds from. Anything the designer built while designing is kept and handed to the implementer as a patch, each file marked proven with its tier, drafted or not started.
-5. **Build.** One Opus agent per Spec, or one for several, building from the Spec's Design entries and the design file. The agent writes code and tests, binds each example it realizes to its test, gives code built from a Spec a `codeAnchor` that `satisfies` it once the code has bodies, changes no Spec and no stated readiness, and lists everything the design did not say that it had to decide. It runs codegen and every tier itself, the native one included, and reports the output. A second builder works in its own worktree.
-6. **Commit, then review a frozen copy.** The reviews run while the next thing is built. Three lanes read the commit, each with one criterion. Sol reads every changed line, test and pinned value. Astra runs the code against the Spec and looks for consequences elsewhere. An Opus agent asks whether the change added mechanism the scenario does not need and how a reader will misread it. A number in a Claude finding is re-run before anyone acts on it. A reviewer proposes mutations the builder did not try, and the main thread runs the native ones.
-7. **Rule on each gap.** Code wrong becomes one numbered fold-in list for an Opus agent, the one that built the code when it can still be continued, designed first when it reshapes an interface. Spec wrong becomes a Spec edit by the main thread and a ledger entry. A platform decision goes to the owner queue with its provisional reading.
-8. **Review the fixes.** One more read-only pass over the last fold-in. A fix is new work.
+1. **Rule first, in one page.** The main thread writes its rulings on the slice's paper decisions and its thin cut (what the slice builds and what it leaves out) into one rulings file. A platform decision gets its provisional reading there and a line in the owner queue. This file goes into every builder's prompt. The main thread does not read the Specs of the slice to do this: `STATE.md` names the decisions.
+2. **Build as a workflow.** One Workflow run of Opus agents builds the slice from the Specs' `## Design` entries: packages that share files run in sequence in the main tree, each committing its own package as unreviewed work; packages that do not, such as groups of scenario tests, run in parallel, one git worktree and one branch each; one integrator merges, runs every tier including the whole native tier on a clean tree, and writes one list of what needs a ruling. Each agent returns a short structured answer and writes its long report to a file. An agent builds the nearest thing that compiles where a Spec does not, and lists it; it never edits a Spec outside what its prompt allows. Scenario agents may rebind their own example Specs and add the sibling examples the ledger asks for, and they quote every changed line.
+3. **Scouts are optional and run beside the build.** A read-only GPT job that compiles the pinned declarations, checks the Convex claims on the pinned backend, or inventories a finding's restatements costs the thread nothing if its report goes to the builders by path. The main thread reads a verdict line from it, never the report.
+4. **Rule on the integrator's list.** Code wrong becomes one numbered fold-in for an Opus agent. Spec wrong or silent becomes a list of exact rulings that an Opus agent applies to the Specs and the ledger, the main thread approving them through the one review that follows. A Spec names no slice and says nothing about what is built so far: that lives in `STATE.md`, the ledger and the code anchors.
+5. **One review of the slice, on frozen copies, beside the fold-in.** Astra at xhigh runs the whole branch against the doc's rows and the Specs and tries mutations. Sol at medium reads every changed line, split in halves when the diff is large. Each brief asks for a first section of at most fifteen one-line findings on a path a healthy run or an ordinary failure takes; the main thread reads that section and the titles, and rules by class.
+6. **One fold-in, one read of the fold-in, then stop.** Tactical decision 19 in `STATE.md` says when: what is left goes to Leads.
 
-Done when the slice's tests pass at the tier each claims, the check prints `OK`, every finding the slice took has a status other than `open` or a note saying what the build still has to show, and every gap is ruled.
+A Fable design agent comes before the build only for something the Specs do not already pin as signatures. When it does, it proposes `## Design` entries and gets a time bound of about half an hour.
+
+Done when the slice's tests pass at the tier each claims, the check prints `OK`, every finding the slice took has a status other than `open` or has moved to the slice that builds its subject with a note saying what that build must show, and every gap is ruled.
 
 Name the tier behind every claim: compiled, pure test, `convex-test`, native backend. A pass at one tier proves nothing at the next.
 
@@ -121,7 +121,7 @@ A build slice is too long for one conversation. The main thread hands over to a 
 3. Write the handover note beside the unit's reports, in the folder the project notes name. It says what is committed, what each tier showed and at which commit, which findings are ruled and where the rulings are, what is drafted and not applied, the next steps in order, and what waits for the owner. It lists every instruction the owner gave during the conversation, in the owner's words.
 4. Put a short "In progress" block at the top of `STATE.md` that names the unit, the seam and the note. The rest of `STATE.md` waits for the close.
 5. Start the next main thread from this one, over cmux. Two panes of one workspace take turns: the thread that hands over goes idle, and the other pane carries the work until it hands back. `cmux identify --json` names this pane, and the owner or `cmux list-panes` names the other. Read the other pane with `cmux read-screen --surface <ref>` and make sure of three things before prompting it. Claude Code is running there in the repository; if it is not, start it with `cmux send`. The conversation is clear, with an empty context in its status line; if it is not, send `/clear`. A cleared conversation is required: a main thread that inherits a summary of this one inherits its weight. The model is Fable 5.1 at high effort, as its banner and status line show. Then send the prompt as one paragraph with `cmux send --surface <ref>`, because a newline submits, submit it with `cmux send-key --surface <ref> enter`, and read the screen once more to see that it started. The prompt names the unit, the note, and the files to read first.
-6. The next main thread reads `AGENTS.md`, `STATE.md`, this file and the note, runs the check, and confirms with `git status` and `git log` that the tree is what the note says before it does anything else.
+6. The next main thread reads `STATE.md` and the note, runs the check, and confirms with `git status` and `git log` that the tree is what the note says before it does anything else. A note is one page: what is committed, what runs, what is ruled and where, the next steps, and the owner's instructions in the owner's words.
 
 ## When a session runs short
 
