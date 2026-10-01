@@ -28,6 +28,18 @@ What that leaves for the maintainers to decide:
 
 What this corpus does until then: the design agent proposes `## Design` entries and rules for the Specs a slice builds, signatures only, one line each, and the main thread writes them into the Spec. Stub files in code carry no anchor until they have bodies. If the carrier comes to accept a `ts` block, the Design entries that are declarations move into blocks, and the design pass writes its stubs there.
 
+### What the build learned about binding an example to a test
+
+Slice S0 bound eighteen examples to native tests with `bindExample` from the Vitest adapter. Five things cost time. The first two were read in `dist/adapters/vitest.js` of the pinned package, the others met during the build on 2026-10-01.
+
+1. **A step is bound by its exact text.** `planExample` looks a step up as `bindings[step.text]`. When a review rewords a Then, the test stops compiling, because the contract's step type changed, and a run that skips the compiler fails with `bindings[step.text] is not a function`. That is the right alarm when the meaning changed. It is noise when the wording was polished and the meaning stayed. This corpus now changes an example's steps and its test in the same commit. A stable key per step, beside its text, would let prose be reworded without touching the test, and the adapter could then say "no binding for step <key>" in place of the type error.
+2. **`bindExample`'s `after` runs only when every step passed.** The adapter awaits the plan and then `after`, with no `finally`. A test that owns a process cannot clean up there: a failed step would leave the process running. The harness registers its cleanup with Vitest's `onTestFinished` before the first await, and `after` is unused. A `finally` around the plan, or a sentence in the adapter's documentation, would make this plain.
+3. **A test binds only to a Spec under the same root.** The corpus root was `design/`. The tests are outside it, so the root moved to the repository root, and `check.py` and every `sdp` call moved with it.
+4. **A parent with no example space gets no registrar.** The harness Spec and the fact Specs have examples and no `## Example space`. Their tests import the example's step contract from `generated/contracts/` and call `bindExample`. That works, and it means `sdp build` has to run before the compiler: `npm run typecheck` and every test command here start with it.
+5. **`specTest`'s `verifies` takes one `ref`.** A test that covers two examples needs two anchors. That fits one test per example, which is how every native test here is written, and is worth a line in the authoring skill.
+
+One more, about evidence. Twice in this slice a reviewer's mutation showed a bound test that passed while proving less than its example said: of twenty mutations run on a native backend, nine left their test green, three on the first build and six on the second. The binding says which test claims an example. It cannot say whether the test would fail if the example were false. A corpus that leans on `verified` needs mutation runs beside it, and the Protocol's documentation could say so where it defines the term.
+
 ## 2026-10-01, adopting pull request 26 at `5993da7`
 
 The corpus now depends on the Protocol at commit `5993da7b8f61ce00853b790cd9ffb428842b66d0`, the head of `feature/adopter-driven-hardening`.
