@@ -1,8 +1,11 @@
+import { ChildProcess } from "node:child_process";
+import { getEventListeners } from "node:events";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { expect, onTestFinished, test } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 import { redact, redactedBuffer, runChild } from "../../harness/child.js";
 const secret = "0123456789abcdef-instance-secret";
 test("pure: a failed child's error holds its exit code and its output, and neither its arguments nor a secret", async () => {
@@ -235,4 +238,72 @@ test("pure: three configured secrets, one a prefix of another, are all removed",
     buffer.append("\n");
     expect(buffer.text()).toBe(`${expected}\n`);
   }
+});
+
+test("pure: a signal already aborted at the call ends a child that would survive SIGTERM, by SIGKILL", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-child-pre-abort-"));
+  const readyFile = join(directory, "ready");
+  const spawned = vi.spyOn(
+    // Node's declarations leave this internal method out.
+    ChildProcess.prototype as unknown as { spawn(options: object): void },
+    "spawn",
+  );
+  const started: { pid: number | undefined } = { pid: undefined };
+  onTestFinished(async () => {
+    spawned.mockRestore();
+    if (started.pid !== undefined)
+      try {
+        process.kill(started.pid, "SIGKILL");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+      }
+    await rm(directory, { recursive: true, force: true });
+  });
+  const controller = new AbortController();
+  const reason = new Error("stopped before the call");
+  controller.abort(reason);
+  const result = runChild(
+    "the child that handles SIGTERM",
+    process.execPath,
+    [
+      "-e",
+      "process.on('SIGTERM', () => {}); require('node:fs').writeFileSync(process.argv[1], ''); setInterval(() => {}, 1000)",
+      readyFile,
+    ],
+    { timeoutMs: 10000, signal: controller.signal },
+  ).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  const pid = (spawned.mock.contexts[0] as ChildProcess | undefined)?.pid;
+  started.pid = pid;
+  expect(pid).toBeDefined();
+  // Node sends its SIGTERM on the next tick. Hold this thread until the child handles SIGTERM, so
+  // only an immediate SIGKILL can end it; a child killed at once never gets ready.
+  const wait = new Int32Array(new SharedArrayBuffer(4));
+  const readyDeadline = Date.now() + 1500;
+  while (!existsSync(readyFile) && Date.now() < readyDeadline)
+    Atomics.wait(wait, 0, 0, 10);
+  expect(await result).toBe(reason);
+  let gone = false;
+  const exitDeadline = Date.now() + 2000;
+  while (!gone && Date.now() < exitDeadline) {
+    try {
+      process.kill(pid!, 0);
+      await delay(10);
+    } catch (error) {
+      expect((error as NodeJS.ErrnoException).code).toBe("ESRCH");
+      gone = true;
+    }
+  }
+  expect(gone).toBe(true);
+});
+
+test("pure: runChild removes its abort listener when the child exits", async () => {
+  const controller = new AbortController();
+  await runChild("the quick child", process.execPath, ["-e", ""], {
+    timeoutMs: 10000,
+    signal: controller.signal,
+  });
+  expect(getEventListeners(controller.signal, "abort")).toEqual([]);
 });

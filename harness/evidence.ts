@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Reporter, TestCase } from "vitest/node";
@@ -60,6 +60,11 @@ function git(...args: string[]): string | undefined {
   }
 }
 export default class EvidenceReporter implements Reporter {
+  private readonly directory: string;
+  // Vitest passes the reporter's options, an empty object unless the configuration names some.
+  constructor(options: { directory?: string } = {}) {
+    this.directory = options.directory ?? join(repositoryRoot, "evidence/runs");
+  }
   private native = false;
   private startedAt = "";
   private commit = "unknown";
@@ -118,7 +123,7 @@ export default class EvidenceReporter implements Reporter {
       tests: this.tests,
       unhandledErrors: unhandledErrors.map((error) => error.message),
     };
-    const directory = join(repositoryRoot, "evidence/runs");
+    const directory = this.directory;
     await mkdir(directory, { recursive: true });
     const name = await writeRunRecord(directory, record);
     rememberRunRecord(join(directory, name));
@@ -148,21 +153,36 @@ export async function writeRunRecord(
 }
 
 // Vitest ends the run, and the reporter writes its record, before the global teardown sweeps. The
-// path is kept on the process, not in this module, because the reporter and the global setup are
-// loaded as separate module instances.
+// global setup opens a run, the reporter puts its record's path on the open run, and that run's
+// cleanup amends that record only. The open run is kept on the process, not in this module,
+// because the reporter and the global setup are loaded as separate module instances.
+export interface RunRecordSlot {
+  path?: string;
+  swept?: boolean;
+}
 const runRecordKey = Symbol.for("libar-platform.native-run-record");
+const onProcess = globalThis as Record<symbol, RunRecordSlot | undefined>;
+export function openRunRecord(): RunRecordSlot {
+  return (onProcess[runRecordKey] = {});
+}
 export function rememberRunRecord(path: string): void {
-  (globalThis as Record<symbol, unknown>)[runRecordKey] = path;
+  const run = onProcess[runRecordKey];
+  if (run !== undefined) run.path = path;
 }
 // A failure after the record was written, a failed final sweep, makes the run's record a failed
-// one with the failure among its unhandled errors. Returns the record's path, if there is one.
-export function failRunRecord(message: string): string | undefined {
-  const path = (globalThis as Record<symbol, unknown>)[runRecordKey];
-  if (typeof path !== "string") return undefined;
+// one with the failure among its unhandled errors, replacing the old record in one step. Returns
+// the record's path, if the run has one.
+export function failRunRecord(
+  run: RunRecordSlot,
+  message: string,
+): string | undefined {
+  const path = run.path;
+  if (path === undefined) return undefined;
   const record = JSON.parse(readFileSync(path, "utf8")) as NativeRunRecord;
   record.result = "failed";
   if (!record.unhandledErrors.includes(message))
     record.unhandledErrors.push(message);
-  writeFileSync(path, JSON.stringify(record, null, 2) + "\n");
+  writeFileSync(`${path}.next`, JSON.stringify(record, null, 2) + "\n");
+  renameSync(`${path}.next`, path);
   return path;
 }

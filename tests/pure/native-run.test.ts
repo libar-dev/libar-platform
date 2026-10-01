@@ -3,6 +3,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rm,
   stat,
   writeFile,
@@ -16,7 +17,10 @@ vi.mock("node:child_process", async (original) => ({
   execFileSync: vi.fn(),
 }));
 import { finalSweep, sweep } from "../../harness/native-run.js";
-import { rememberRunRecord, writeRunRecord } from "../../harness/evidence.js";
+import EvidenceReporter, {
+  failRunRecord,
+  openRunRecord,
+} from "../../harness/evidence.js";
 import type { NativeRunRecord } from "../../harness/evidence.js";
 import { publishOwnership } from "../../harness/ownership.js";
 
@@ -265,6 +269,14 @@ test("pure: a backend whose process cannot be inspected is kept with its record,
   }
 });
 
+// What ps does for a process id no process has: status 1 and no output.
+function noSuchProcess(): string {
+  throw Object.assign(new Error("Command failed"), {
+    status: 1,
+    stdout: "",
+    stderr: "",
+  });
+}
 test("pure: a name-only ps answer and a failed signal keep the backend; a zombie and a readable other command are absent", async () => {
   const directory = await mkdtemp(join(tmpdir(), "libar-sweep-answers-"));
   const instanceName = "libar-00000000-0000-0000-0000-000000000001";
@@ -273,8 +285,27 @@ test("pure: a name-only ps answer and a failed signal keep the backend; a zombie
   // pid -> ps's command answer, its state answer, and how SIGKILL fails, if it does.
   const cases: Record<
     string,
-    { pid: number; command: string; state: string; killCode?: string }
+    {
+      pid: number;
+      command: string;
+      state: string | (() => string);
+      killCode?: string;
+    }
   > = {
+    "empty-answer": { pid: 209, command: "\n", state: "S" },
+    // The process is reaped between the two inspections: the state query finds no process.
+    "name-only-gone-before-state": {
+      pid: 210,
+      command: "(convex-local-ba)\n",
+      state: noSuchProcess,
+      killCode: "ESRCH",
+    },
+    // The state query fails the same way, but the process table still has the process.
+    "name-only-state-unproven": {
+      pid: 211,
+      command: "(convex-local-ba)\n",
+      state: noSuchProcess,
+    },
     "linux-name-only": { pid: 201, command: "[MainThread]\n", state: "S" },
     "macos-name-only": { pid: 202, command: "(convex-local-ba)\n", state: "S" },
     "linux-zombie": {
@@ -308,7 +339,10 @@ test("pure: a name-only ps answer and a failed signal keep the backend; a zombie
   vi.mocked(execFileSync).mockImplementation((_file, args) => {
     const list = args as string[];
     const entry = byPid.get(Number(list[list.indexOf("-p") + 1]))!;
-    return (list.includes("state=") ? entry.state : entry.command) as never;
+    if (!list.includes("state=")) return entry.command as never;
+    return (
+      typeof entry.state === "string" ? entry.state : entry.state()
+    ) as never;
   });
   const kill = vi.spyOn(process, "kill").mockImplementation((pid) => {
     const code = byPid.get(pid)?.killCode;
@@ -328,7 +362,13 @@ test("pure: a name-only ps answer and a failed signal keep the backend; a zombie
     } catch (error) {
       failure = error as Error;
     }
-    const kept = ["linux-name-only", "macos-name-only", "signal-refused"];
+    const kept = [
+      "linux-name-only",
+      "macos-name-only",
+      "signal-refused",
+      "empty-answer",
+      "name-only-state-unproven",
+    ];
     expect(failure).toBeInstanceOf(Error);
     for (const name of kept) {
       expect(failure!.message).toContain(join(directory, name));
@@ -346,52 +386,80 @@ test("pure: a name-only ps answer and a failed signal keep the backend; a zombie
   }
 });
 
-test("pure: a failed final sweep turns the run's passing record into a failed one carrying the sweep's error", async () => {
+// What the global setup and the reporter do for one native run: the setup opens the run, the
+// reporter writes its record and hands the path over.
+async function reportedRun(records: string) {
+  const run = openRunRecord();
+  const reporter = new EvidenceReporter({ directory: records });
+  reporter.onTestRunStart([{ project: { name: "native" } }] as never);
+  const before = new Set(await readdir(records));
+  await reporter.onTestRunEnd([] as never, [] as never, "passed" as never);
+  const [name] = (await readdir(records)).filter((entry) => !before.has(entry));
+  return { run, path: join(records, name!) };
+}
+async function readRecord(path: string): Promise<NativeRunRecord> {
+  return JSON.parse(await readFile(path, "utf8")) as NativeRunRecord;
+}
+
+test("pure: a failed final sweep fails its own run's record, through the reporter's hand-over, and no other run's", async () => {
   const directory = await mkdtemp(join(tmpdir(), "libar-final-sweep-"));
   const records = await mkdtemp(join(tmpdir(), "libar-final-sweep-records-"));
-  const record: NativeRunRecord = {
-    tier: "native",
-    commit: "abcdefg",
-    clean: true,
-    command: "vitest run --project native",
-    startedAt: "2026-10-01T16:29:36.247Z",
-    finishedAt: "2026-10-01T16:30:36.247Z",
-    result: "passed",
-    versions: { node: "v24" },
-    tests: [],
-    unhandledErrors: ["an earlier error"],
-  };
   vi.mocked(execFileSync).mockImplementation(() => {
     throw Object.assign(new Error("spawnSync ps ENOENT"), { code: "ENOENT" });
   });
-  try {
-    const path = join(records, await writeRunRecord(records, record));
-    rememberRunRecord(path);
-    // A sweep that succeeds leaves the record as it is.
-    const clean = join(directory, "clean");
-    await mkdir(clean);
-    finalSweep(clean);
-    expect(JSON.parse(await readFile(path, "utf8"))).toEqual(record);
-    const storage = join(directory, "uninspectable");
-    await mkdir(join(storage, "storage"), { recursive: true });
+  async function uninspectable(name: string): Promise<string> {
+    const root = join(directory, name);
+    await mkdir(join(root, "backend", "storage"), { recursive: true });
     publishOwnership(
-      storage,
+      join(root, "backend"),
       301,
       "libar-00000000-0000-0000-0000-000000000001",
     );
-    let failure: Error | undefined;
+    return root;
+  }
+  function failureOf(action: () => void): Error | undefined {
     try {
-      finalSweep(directory);
+      action();
     } catch (error) {
-      failure = error as Error;
+      return error as Error;
     }
-    expect(failure).toBeInstanceOf(Error);
-    const amended = JSON.parse(await readFile(path, "utf8")) as NativeRunRecord;
-    expect(amended).toEqual({
-      ...record,
+    return undefined;
+  }
+  try {
+    // Run A: its sweep fails after its record was written.
+    const a = await reportedRun(records);
+    const passed = await readRecord(a.path);
+    expect(passed.result).toBe("passed");
+    const rootA = await uninspectable("a");
+    const failureA = failureOf(() => finalSweep(rootA, a.run));
+    expect(failureA).toBeInstanceOf(Error);
+    expect(await readRecord(a.path)).toEqual({
+      ...passed,
       result: "failed",
-      unhandledErrors: ["an earlier error", failure!.message],
+      unhandledErrors: [failureA!.message],
     });
+    // A's exit handler finds A's cleanup done.
+    expect(failureOf(() => finalSweep(rootA, a.run))).toBeUndefined();
+    // Run B in the same process passes, and A's cleanup does not act again.
+    const b = await reportedRun(records);
+    const clean = join(directory, "b");
+    await mkdir(clean);
+    finalSweep(clean, b.run);
+    expect(failureOf(() => finalSweep(rootA, a.run))).toBeUndefined();
+    expect((await readRecord(b.path)).result).toBe("passed");
+    // Run C's sweep fails before its record was written: it amends nothing.
+    const c = openRunRecord();
+    const rootC = await uninspectable("c");
+    expect(failureOf(() => finalSweep(rootC, c))).toBeInstanceOf(Error);
+    expect((await readRecord(b.path)).result).toBe("passed");
+    expect((await readRecord(a.path)).unhandledErrors).toEqual([
+      failureA!.message,
+    ]);
+    // Amending twice with the same error stores it once.
+    failRunRecord(a.run, failureA!.message);
+    expect((await readRecord(a.path)).unhandledErrors).toEqual([
+      failureA!.message,
+    ]);
   } finally {
     vi.mocked(execFileSync).mockReset();
     await rm(directory, { recursive: true, force: true });

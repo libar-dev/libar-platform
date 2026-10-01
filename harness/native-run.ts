@@ -3,7 +3,8 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { TestProject } from "vitest/node";
-import { failRunRecord } from "./evidence.js";
+import { failRunRecord, openRunRecord } from "./evidence.js";
+import type { RunRecordSlot } from "./evidence.js";
 import { signalOwned } from "./ownership.js";
 import { resolveExecutable } from "./executable.js";
 import type { Executable } from "./executable.js";
@@ -58,25 +59,29 @@ export default async function setup(
 ): Promise<() => Promise<void>> {
   const executable = await resolveExecutable();
   const directory = await mkdtemp(join(tmpdir(), "libar-native-"));
+  const run = openRunRecord();
   project.provide("nativeRun", { directory, executable });
   process.once("exit", () => {
     try {
-      finalSweep(directory);
+      finalSweep(directory, run);
     } catch (error) {
       process.stderr.write(`${(error as Error).message}\n`);
       process.exitCode = 1;
     }
   });
-  return async () => finalSweep(directory);
+  return async () => finalSweep(directory, run);
 }
-// The run's last sweep. Its failure also fails the run's record, which is written before it.
-export function finalSweep(directory: string): void {
+// The run's last sweep, once: the teardown or, without one, the exit. Its failure also fails the
+// run's record, which is written before it.
+export function finalSweep(directory: string, run: RunRecordSlot): void {
+  if (run.swept === true) return;
+  run.swept = true;
   try {
     sweep(directory);
   } catch (error) {
     const message = (error as Error).message;
     try {
-      failRunRecord(message);
+      failRunRecord(run, message);
     } catch (amend) {
       throw new Error(
         `${message} The run record could not be marked failed: ${(amend as Error).message}`,

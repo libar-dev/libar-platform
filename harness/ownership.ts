@@ -63,7 +63,8 @@ function gone(pid: number, error: unknown): boolean {
 // ps answers for a process whose command line it could not read with the name alone, in brackets
 // on Linux procps and in parentheses on macOS. A zombie answers `<defunct>` on macOS and
 // `[name] <defunct>` on Linux procps, which is no backend's command line, so it counts as absent
-// below. A zombie that answers with its name alone is told apart by its state, Z.
+// below. A zombie that answers with its name alone is told apart by its state, Z, and a process
+// gone by then by the same proof as the first inspection.
 function zombie(pid: number): boolean {
   try {
     return execFileSync("ps", ["-p", String(pid), "-o", "state="], {
@@ -72,8 +73,8 @@ function zombie(pid: number): boolean {
     })
       .trim()
       .startsWith("Z");
-  } catch {
-    return false;
+  } catch (error) {
+    return gone(pid, error);
   }
 }
 function unreadable(answer: string): boolean {
@@ -122,8 +123,8 @@ export function signalOwned(directory: string): void {
   try {
     process.kill(record.pid, "SIGKILL");
   } catch (error) {
-    // ESRCH: it exited after the inspection. Any other failure leaves it running, so the caller
-    // keeps the record.
+    // ESRCH: it exited after the inspection. Any other failure does not prove that it exited, so
+    // the caller keeps the directory and the record.
     const code = (error as NodeJS.ErrnoException).code;
     if (code !== "ESRCH")
       throw new Error(
