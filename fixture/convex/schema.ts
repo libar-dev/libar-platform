@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { commandTables } from "../../src/command/index.js";
 export default defineSchema({
   notes: defineTable({ source: v.string() }),
   depthRows: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),
@@ -11,4 +12,17 @@ export default defineSchema({
     "by_group",
     ["group"],
   ),
+  // The command library's receipts and grants.
+  ...commandTables,
+  // A switch a test turns on with admin access to make one fixture command refuse admission or fail
+  // after its context call returned. See switches.ts.
+  switches: defineTable({
+    tenantId: v.string(),
+    commandType: v.string(),
+    name: v.union(
+      v.literal("rateLimited"),
+      v.literal("capacity"),
+      v.literal("failBeforeReceipt"),
+    ),
+  }).index("by_command", ["tenantId", "commandType", "name"]),
 });

@@ -8,14 +8,18 @@
  * @module
  */
 
+import type * as depotCommands from "../depotCommands.js";
 import type * as depotRelay from "../depotRelay.js";
 import type * as failures from "../failures.js";
+import type * as grants from "../grants.js";
 import type * as identity from "../identity.js";
 import type * as limits from "../limits.js";
 import type * as list from "../list.js";
 import type * as markers from "../markers.js";
+import type * as nonUiCaller from "../nonUiCaller.js";
 import type * as notes from "../notes.js";
 import type * as readCost from "../readCost.js";
+import type * as switches from "../switches.js";
 
 import type {
   ApiFromModules,
@@ -24,14 +28,18 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  depotCommands: typeof depotCommands;
   depotRelay: typeof depotRelay;
   failures: typeof failures;
+  grants: typeof grants;
   identity: typeof identity;
   limits: typeof limits;
   list: typeof list;
   markers: typeof markers;
+  nonUiCaller: typeof nonUiCaller;
   notes: typeof notes;
   readCost: typeof readCost;
+  switches: typeof switches;
 }>;
 
 /**
