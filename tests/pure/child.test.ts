@@ -168,3 +168,71 @@ test("pure: aborting the caller's signal rejects with its reason and kills the c
   }
   expect(gone).toBe(true);
 });
+
+test("pure: aborting the caller's signal ends a child that handles SIGTERM, by SIGKILL", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-child-abort-term-"));
+  const pidFile = join(directory, "pid");
+  const controller = new AbortController();
+  let pid: number | undefined;
+  onTestFinished(async () => {
+    if (pid !== undefined) {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+      }
+    }
+    await rm(directory, { recursive: true, force: true });
+  });
+  const result = runChild(
+    "the child that handles SIGTERM",
+    process.execPath,
+    [
+      "-e",
+      // Only SIGKILL ends it: it handles SIGTERM and SIGINT and keeps running.
+      "process.on('SIGTERM', () => {}); process.on('SIGINT', () => {}); require('node:fs').writeFileSync(process.argv[1], String(process.pid)); setInterval(() => {}, 1000)",
+      pidFile,
+    ],
+    { timeoutMs: 10000, signal: controller.signal },
+  ).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  const readyDeadline = Date.now() + 2000;
+  while (pid === undefined && Date.now() < readyDeadline) {
+    const contents = await readFile(pidFile, "utf8").catch(() => "");
+    if (/^\d+$/.test(contents)) pid = Number(contents);
+    else await delay(10);
+  }
+  expect(pid).toBeDefined();
+  const reason = new Error("caller stopped the child");
+  controller.abort(reason);
+  expect(await result).toBe(reason);
+  let gone = false;
+  const exitDeadline = Date.now() + 2000;
+  while (!gone && Date.now() < exitDeadline) {
+    try {
+      process.kill(pid!, 0);
+      await delay(10);
+    } catch (error) {
+      expect((error as NodeJS.ErrnoException).code).toBe("ESRCH");
+      gone = true;
+    }
+  }
+  expect(gone).toBe(true);
+});
+
+test("pure: three configured secrets, one a prefix of another, are all removed", () => {
+  const secrets = ["SECRET-A", "SECRET-A-LONGER", "OTHER-SECRET-B"];
+  const text =
+    "one SECRET-A-LONGER two SECRET-A three OTHER-SECRET-B four SECRET-A-LONGERx";
+  const expected =
+    "one [redacted] two [redacted] three [redacted] four [redacted]x";
+  for (const order of [secrets, [...secrets].reverse()]) {
+    expect(redact(text, order)).toBe(expected);
+    const buffer = redactedBuffer(order, 1000);
+    for (const character of text) buffer.append(character);
+    buffer.append("\n");
+    expect(buffer.text()).toBe(`${expected}\n`);
+  }
+});

@@ -60,6 +60,25 @@ function gone(pid: number, error: unknown): boolean {
     return (probe as NodeJS.ErrnoException).code === "ESRCH";
   }
 }
+// ps answers for a process whose command line it could not read with the name alone, in brackets
+// on Linux procps and in parentheses on macOS. A zombie answers `<defunct>` on macOS and
+// `[name] <defunct>` on Linux procps, which is no backend's command line, so it counts as absent
+// below. A zombie that answers with its name alone is told apart by its state, Z.
+function zombie(pid: number): boolean {
+  try {
+    return execFileSync("ps", ["-p", String(pid), "-o", "state="], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+      .trim()
+      .startsWith("Z");
+  } catch {
+    return false;
+  }
+}
+function unreadable(answer: string): boolean {
+  return answer === "" || /^\[.*\]$/s.test(answer) || /^\(.*\)$/s.test(answer);
+}
 // Kills the backend a directory's ownership record names, when that process is still the backend.
 // A missing or invalid record, a process that is gone and a process that is another program are
 // left alone. Throws when it cannot tell, so the caller keeps the record. The message names the
@@ -85,6 +104,13 @@ export function signalOwned(directory: string): void {
       }`,
     );
   }
+  const answer = command.trim();
+  if (unreadable(answer)) {
+    if (zombie(record.pid)) return;
+    throw new Error(
+      `Could not tell whether backend process ${record.pid} recorded in ${directory} is running: ps could not read its command line`,
+    );
+  }
   // The random instance name and storage path survive a wrapper's exec and distinguish PID reuse.
   // Never print this command: it contains the instance secret.
   if (
@@ -95,7 +121,13 @@ export function signalOwned(directory: string): void {
     return;
   try {
     process.kill(record.pid, "SIGKILL");
-  } catch {
-    // It exited after the inspection.
+  } catch (error) {
+    // ESRCH: it exited after the inspection. Any other failure leaves it running, so the caller
+    // keeps the record.
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== "ESRCH")
+      throw new Error(
+        `Could not stop backend process ${record.pid} recorded in ${directory}: ${String(code)}`,
+      );
   }
 }

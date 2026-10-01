@@ -154,6 +154,7 @@ export async function watch(options: WatchOptions): Promise<number> {
   }
   let backend: Pick<Backend, "url" | "adminKey" | "dispose"> | undefined;
   let home: string | undefined;
+  let homeCreation: Promise<string> | undefined;
   let siteUrl: string | undefined;
   let child: ChildProcess | undefined;
   const relays: Promise<void>[] = [];
@@ -164,7 +165,8 @@ export async function watch(options: WatchOptions): Promise<number> {
     const issuer = await untilAborted(steps.createFixtureIssuer(), signal);
     backend = await steps.startBackend({ executable, issuer, signal });
     secrets.push(backend.adminKey);
-    home = await untilAborted(steps.makeHome(), signal);
+    homeCreation = steps.makeHome();
+    home = await untilAborted(homeCreation, signal);
     siteUrl = await untilAborted(steps.siteUrl(backend, signal), signal);
     signal.throwIfAborted();
     options.stdout.write(
@@ -210,12 +212,18 @@ export async function watch(options: WatchOptions): Promise<number> {
     await exitOf(cli);
     clearTimeout(timer);
   });
-  // A descendant that keeps the CLI's pipes open must not hold the exit.
+  // The relays get a grace period for the CLI's last lines. Then its streams are let go of, so a
+  // descendant that keeps the other ends open cannot keep this process alive.
   await within(Promise.all(relays).then(), 1000);
+  cli?.stdout?.destroy();
+  cli?.stderr?.destroy();
   await step("removing the backend", async () => backend?.dispose());
   const madeHome = home;
+  const creation = homeCreation;
   await step("removing the CLI home", async () => {
-    if (madeHome !== undefined) await steps.removeHome(madeHome);
+    // A creation the interrupt cut short still makes its directory, so it is awaited.
+    const made = madeHome ?? (await creation?.catch(() => undefined));
+    if (made !== undefined) await steps.removeHome(made);
   });
   const url = backend?.url ?? "";
   await step("settling .env.local", async () => {

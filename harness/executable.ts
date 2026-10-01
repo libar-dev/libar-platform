@@ -40,9 +40,13 @@ export function sha256OfFile(path: string): Promise<string> {
       .on("end", () => done(hash.digest("hex")));
   });
 }
-// Settles with the work, or rejects with the signal's reason as soon as it aborts.
+// Settles with the work, or rejects with the signal's reason as soon as it aborts. The work's own
+// rejection is handled either way.
 function untilAborted<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) return Promise.reject(signal.reason as Error);
+  if (signal.aborted) {
+    work.catch(() => undefined);
+    return Promise.reject(signal.reason as Error);
+  }
   return new Promise((done, fail) => {
     const stop = () => fail(signal.reason as Error);
     signal.addEventListener("abort", stop, { once: true });
@@ -99,6 +103,8 @@ export async function resolveExecutable(
   await mkdir(directory, { recursive: true });
   const work = await mkdtemp(join(directory, "download-"));
   try {
+    // An interrupt while the directory was made; the finally removes it.
+    stop.throwIfAborted();
     const response = await untilAborted(
       (options.fetch ?? fetch)(
         `https://github.com/get-convex/convex-backend/releases/download/${pin.release}/${asset.file}`,

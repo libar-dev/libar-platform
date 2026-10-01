@@ -109,8 +109,12 @@ class FakeCli extends EventEmitter {
   stderr = new PassThrough();
   signals: string[] = [];
   ignoreSigint = false;
+  // A descendant that inherited the CLI's output keeps the streams open after the CLI exits.
+  holdStreams = false;
+  killError: Error | undefined;
   kill(signal: NodeJS.Signals): boolean {
     this.signals.push(signal);
+    if (this.killError !== undefined) throw this.killError;
     if (signal === "SIGINT" && this.ignoreSigint) return true;
     this.exit(signal === "SIGINT" ? 130 : null, signal);
     return true;
@@ -119,8 +123,10 @@ class FakeCli extends EventEmitter {
     if (this.exitCode !== null || this.signalCode !== null) return;
     this.exitCode = code;
     this.signalCode = code === null ? signal : null;
-    this.stdout.end();
-    this.stderr.end();
+    if (!this.holdStreams) {
+      this.stdout.end();
+      this.stderr.end();
+    }
     this.emit("exit", code, this.signalCode);
   }
 }
@@ -413,4 +419,72 @@ test("pure: a startup failure that is not an interrupt ends with exit code 1 and
   expect(await run.run()).toBe(1);
   expect(run.disposed()).toBe(true);
   expectOneLine(run.stderr.text(), "site URL read failed for [redacted]");
+});
+
+test("pure: a .env.local with a comment line beside the CLI's lines is the developer's and stays", async () => {
+  const commented = `# my notes\n${written}`;
+  expect(writtenForBackend(commented, { url, siteUrl })).toBe(false);
+  const directory = await scratch();
+  const path = join(directory, ".env.local");
+  await writeFile(path, commented);
+  expect(await settleEnvFile(path, { spawned: true, url, siteUrl })).toBe(
+    "kept",
+  );
+  expect(await readFile(path, "utf8")).toBe(commented);
+});
+
+test("pure: an interrupt while the CLI home is being made still removes the home", async () => {
+  const parent = await scratch();
+  const actual =
+    await vi.importActual<typeof import("node:fs/promises")>(
+      "node:fs/promises",
+    );
+  let made: string | undefined;
+  const run = await harness({
+    makeHome: async () => {
+      run.controller.abort(new Interrupt("SIGINT"));
+      // The directory appears after the interrupt.
+      await new Promise((done) => setTimeout(done, 100));
+      made = await actual.mkdtemp(join(parent, "libar-dev-home-"));
+      return made;
+    },
+    removeHome: (home) => actual.rm(home, { recursive: true, force: true }),
+  });
+  expect(await run.run()).toBe(130);
+  expect(made).toBeDefined();
+  await expect(actual.stat(made!)).rejects.toThrow();
+  expect(await actual.readdir(parent)).toEqual([]);
+  expectOneLine(run.stderr.text(), "stopped by SIGINT.");
+});
+
+test("pure: after the grace period the CLI's streams are let go of, so a descendant holding them cannot keep the run alive", async () => {
+  const run = await harness();
+  run.cli.holdStreams = true;
+  const running = run.run();
+  await waitFor(() => run.stdout.text().includes("pushed with"));
+  run.controller.abort(new Interrupt("SIGINT"));
+  expect(await running).toBe(130);
+  expect(run.cli.stdout.destroyed).toBe(true);
+  expect(run.cli.stderr.destroyed).toBe(true);
+});
+
+test("pure: a failure of the first cleanup step, stopping the CLI, does not skip the later steps", async () => {
+  let removedHome = false;
+  const run = await harness({
+    removeHome: async () => {
+      removedHome = true;
+    },
+  });
+  const running = run.run();
+  await waitFor(() => run.stdout.text().includes("pushed with"));
+  run.cli.killError = new Error("kill refused");
+  run.controller.abort(new Interrupt("SIGINT"));
+  expect(await running).toBe(1);
+  expect(run.disposed()).toBe(true);
+  expect(removedHome).toBe(true);
+  expect(await exists(run.envFile)).toBe(false);
+  expectOneLine(
+    run.stderr.text(),
+    "cleanup failed: stopping convex dev: kill refused",
+  );
 });

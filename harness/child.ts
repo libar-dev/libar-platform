@@ -31,7 +31,7 @@ export function runChild(
   options: ChildOptions,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile(
+    const child = execFile(
       file,
       [...args],
       {
@@ -62,6 +62,15 @@ export function runChild(
         );
       },
     );
+    // On abort Node sends SIGTERM, not killSignal, which a child can handle and outlive.
+    const signal = options.signal;
+    if (signal === undefined) return;
+    const kill = () => child.kill("SIGKILL");
+    if (signal.aborted) kill();
+    else {
+      signal.addEventListener("abort", kill, { once: true });
+      child.once("exit", () => signal.removeEventListener("abort", kill));
+    }
   });
 }
 

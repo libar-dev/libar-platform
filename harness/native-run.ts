@@ -3,6 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { TestProject } from "vitest/node";
+import { failRunRecord } from "./evidence.js";
 import { signalOwned } from "./ownership.js";
 import { resolveExecutable } from "./executable.js";
 import type { Executable } from "./executable.js";
@@ -60,11 +61,27 @@ export default async function setup(
   project.provide("nativeRun", { directory, executable });
   process.once("exit", () => {
     try {
-      sweep(directory);
+      finalSweep(directory);
     } catch (error) {
       process.stderr.write(`${(error as Error).message}\n`);
       process.exitCode = 1;
     }
   });
-  return async () => sweep(directory);
+  return async () => finalSweep(directory);
+}
+// The run's last sweep. Its failure also fails the run's record, which is written before it.
+export function finalSweep(directory: string): void {
+  try {
+    sweep(directory);
+  } catch (error) {
+    const message = (error as Error).message;
+    try {
+      failRunRecord(message);
+    } catch (amend) {
+      throw new Error(
+        `${message} The run record could not be marked failed: ${(amend as Error).message}`,
+      );
+    }
+    throw error;
+  }
 }

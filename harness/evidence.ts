@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Reporter, TestCase } from "vitest/node";
@@ -120,6 +121,7 @@ export default class EvidenceReporter implements Reporter {
     const directory = join(repositoryRoot, "evidence/runs");
     await mkdir(directory, { recursive: true });
     const name = await writeRunRecord(directory, record);
+    rememberRunRecord(join(directory, name));
     console.log(`Native run record: evidence/runs/${name}`);
   }
 }
@@ -143,4 +145,24 @@ export async function writeRunRecord(
     { flag: "wx" },
   );
   return name;
+}
+
+// Vitest ends the run, and the reporter writes its record, before the global teardown sweeps. The
+// path is kept on the process, not in this module, because the reporter and the global setup are
+// loaded as separate module instances.
+const runRecordKey = Symbol.for("libar-platform.native-run-record");
+export function rememberRunRecord(path: string): void {
+  (globalThis as Record<symbol, unknown>)[runRecordKey] = path;
+}
+// A failure after the record was written, a failed final sweep, makes the run's record a failed
+// one with the failure among its unhandled errors. Returns the record's path, if there is one.
+export function failRunRecord(message: string): string | undefined {
+  const path = (globalThis as Record<symbol, unknown>)[runRecordKey];
+  if (typeof path !== "string") return undefined;
+  const record = JSON.parse(readFileSync(path, "utf8")) as NativeRunRecord;
+  record.result = "failed";
+  if (!record.unhandledErrors.includes(message))
+    record.unhandledErrors.push(message);
+  writeFileSync(path, JSON.stringify(record, null, 2) + "\n");
+  return path;
 }
