@@ -9,9 +9,9 @@ relations:
 ---
 # A non-UI caller sends the same command concurrently
 
-Sc L1-3 · native tier · first of two cases.
+Sc L1-3 · native tier · fixture composition · first of two cases.
 
-A worker calls the internal entry twice at once with the same request key and input. Both mutations read the empty key range; one commits its insert, the other's read set is invalidated, the engine retries it, and the retry finds the receipt and answers as a duplicate.
+A worker holding a grant for `depot.stock` calls the internal entry of the depot's `AddStock` command twice at once with the same request key and input, through the fixture action `nonUiCaller:send` that an ordinary client calls; the input f-1 adds 5 units of product p-1. Both mutations read the empty key range; one commits its insert, the other's read set is invalidated, the engine retries it, and the retry finds the receipt and answers as a duplicate.
 
 ## Intent
 
@@ -19,7 +19,7 @@ A worker calls the internal entry twice at once with the same request key and in
 
 ```gwt
 Given a tenant {tenantId: "t-1"} and a caller in namespace {namespace: "worker"}
-And a receipted command {commandType: "PlaceOrder"} with request key {requestKey: "k-1"} and business input fingerprint {fingerprint: "f-1"}
+And a receipted command {commandType: "AddStock"} with request key {requestKey: "k-1"} and business input fingerprint {fingerprint: "f-1"}
 And a receipt for the same key already exists with {priorReceipt: "no receipt"}
 And the admission policy {admission: "admits every call"}
 When the caller sends the command {sends: "twice concurrently"}
@@ -32,6 +32,7 @@ And the original outcome and state are unchanged {unchanged: true}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that both responses carry the same `operationId` and that the journal holds exactly one event set with that operation ID.
 - The test asserts that which call is answered as the duplicate is not fixed; it checks the pair, not the order.
+- The test asserts from the function log that one of the two internal-entry mutations failed its commit on a conflict the engine reports as an OCC conflict with a retry to follow, and that its rerun in the same request completed without error.

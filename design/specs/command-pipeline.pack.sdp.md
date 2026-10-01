@@ -13,6 +13,7 @@ specs:
   - spec:command.idempotency-and-receipts.ui-double-submit
   - spec:command.idempotency-and-receipts.key-reuse-changed-input
   - spec:command.idempotency-and-receipts.rate-refusal-then-retry
+  - spec:command.idempotency-and-receipts.capacity-refusal-then-retry
   - spec:command.receipt-table
   - spec:command.tenancy-and-authority
   - spec:command.tenancy-and-authority.same-key-two-tenants

@@ -108,7 +108,7 @@ Given a tenant {tenantId:string} and a caller in namespace {namespace:"public"|"
 And a receipted command {commandType:string} with request key {requestKey:string} and business input fingerprint {fingerprint:string}
 And a create command from the UI with client-generated entity ID {entityId:string}
 And a receipt for the same key already exists with {priorReceipt:"no receipt"|"the same fingerprint"|"a different fingerprint"}
-And the admission policy {admission:"admits every call"|"refuses the first call as transient and then admits"}
+And the admission policy {admission:"admits every call"|"refuses the first call as transient and then admits"|"refuses the first call for capacity and then admits"}
 When the caller sends the command {sends:"once"|"twice concurrently"|"again after a lost response"|"twice from the UI"|"again after the transient refusal"}
 Then the first answer is {first:"applied"|"conflict"|"transient refusal"}
 And the second answer is {second:"applied"|"replayed"|"conflict"|"entity exists"|"none"}

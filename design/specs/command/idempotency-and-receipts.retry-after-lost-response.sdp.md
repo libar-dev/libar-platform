@@ -9,9 +9,9 @@ relations:
 ---
 # A non-UI caller sends the same command again after a lost response
 
-Sc L1-3 · native tier · second of two cases.
+Sc L1-3 · native tier · fixture composition · second of two cases.
 
-A worker calls the internal entry, the harness drops the response after the mutation committed, and the worker retries with the same request key and input. The retry finds the receipt with the same fingerprint and answers as a duplicate without executing.
+A worker calls the internal entry of the depot's `AddStock` command through the fixture action `nonUiCaller:send` that an ordinary client calls, the harness's transport loses the response after the backend answered, and the worker retries with the same request key and input; the input f-1 adds 5 units of product p-1. The retry finds the receipt with the same fingerprint and answers as a duplicate without executing.
 
 ## Intent
 
@@ -19,7 +19,7 @@ A worker calls the internal entry, the harness drops the response after the muta
 
 ```gwt
 Given a tenant {tenantId: "t-1"} and a caller in namespace {namespace: "worker"}
-And a receipted command {commandType: "PlaceOrder"} with request key {requestKey: "k-1"} and business input fingerprint {fingerprint: "f-1"}
+And a receipted command {commandType: "AddStock"} with request key {requestKey: "k-1"} and business input fingerprint {fingerprint: "f-1"}
 And a receipt for the same key already exists with {priorReceipt: "no receipt"}
 And the admission policy {admission: "admits every call"}
 When the caller sends the command {sends: "again after a lost response"}
@@ -32,6 +32,6 @@ And the original outcome and state are unchanged {unchanged: true}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that the retry's response has `replayed` true, `result` null, and the same `operationId`, affected IDs and versions as the receipt row, and that it arrived as a return value, which proves the entry's `returns` validator admitted the replayed member rather than throwing on the null result.
-- The test asserts that the context operation was not called a second time, by counting events with the operation ID.
+- The test asserts that the context operation was not called a second time: the events with the operation ID still number one, and the retry is sent while the fixture's `failBeforeReceipt` switch for `AddStock` is on, which fails the call once the command's executor has made its context call, so a replayed answer shows that neither ran; with the switch still on, the same input under a new request key fails as a technical failure and stores nothing, which shows on the same deployment that the switch fails a call that executes.
