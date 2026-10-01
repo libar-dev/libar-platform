@@ -73,7 +73,7 @@ Fifteen more findings are `partially-fixed`, each waiting for its slice. Remove 
 
 ## Next unit
 
-`slice` S2, run as `SESSIONS.md` now describes a slice: one page of rulings, one workflow of builders, one review, one fold-in.
+`slice` S2, run as `SESSIONS.md` now describes a slice: one page of rulings, a workflow, one review, one fold-in. Unlike S1, S2 has design to do before its code (the first eight decisions below), so its workflow starts with the design stages: a Fable design review, Spec updates, an implementation plan, then the build, with a handful of Fable agents as advisors and reviewers and no more.
 
 Decisions S2 needs in its rulings file before its code. The first three were already listed for S2; the rest moved from S1 with their subjects:
 
