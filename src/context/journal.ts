@@ -1,6 +1,11 @@
 // The journal of spec:context.journal: a context's events, the stream registration, load and append.
 // Baselines, migrations, rebuild and the maintenance writer are later slices' work.
-import { getConvexSize, type Validator, type Value } from "convex/values";
+import {
+  getConvexSize,
+  type GenericId,
+  type Validator,
+  type Value,
+} from "convex/values";
 import type { Decider, DomainEvent } from "../kernel/index.js";
 import type { EnvelopeInput, EventEnvelope } from "./envelope.js";
 import type { MutationCtx, QueryCtx } from "./tables.js";
@@ -46,11 +51,13 @@ export type StreamMeta = {
   deletedAt?: number;
   baselineVersion?: number;
 };
+// rowId is the stream row's document ID, set when the row exists, so step 9 replaces the row by it.
 export type LoadedStream<S> = {
   state: S;
   version: number;
   exists: boolean;
   meta: StreamMeta;
+  rowId?: GenericId<"streams">;
 };
 export type AppendResult = {
   firstVersion: number;
@@ -112,6 +119,7 @@ export async function load<S, C, E extends DomainEvent, R>(
     version: row.streamVersion,
     exists: true,
     meta,
+    rowId: row._id,
   };
 }
 // Inserts the events at expectedVersion + 1 onward and returns the envelopes it inserted. It writes

@@ -121,7 +121,7 @@ export function publicCommand<I, R>(
           ...(correlationId === undefined ? {} : { correlationId }),
         });
       } catch (error) {
-        normalizeThrown(error, decl.name);
+        normalizeThrown(error, decl.name, decl.rejections);
       }
     },
   }) as RegisteredMutation<"public", PublicCommandArgs<I>, CommandResponse<R>>;
@@ -146,7 +146,7 @@ export function internalCommand<I, R>(
       try {
         return await runPipeline(ctx, decl, call);
       } catch (error) {
-        normalizeThrown(error, decl.name);
+        normalizeThrown(error, decl.name, decl.rejections);
       }
     },
   }) as RegisteredMutation<

@@ -4,7 +4,7 @@ import {
   ref,
 } from "@libar-dev/software-delivery-protocol";
 import { validate } from "convex-helpers/validators";
-import { ConvexError, v, type Value } from "convex/values";
+import { ConvexError, getConvexSize, v, type Value } from "convex/values";
 import { createHash } from "node:crypto";
 import { expect, test } from "vitest";
 import {
@@ -215,13 +215,35 @@ test("pure: reject and refuseTransient throw ConvexErrors whose data fits errorD
     ).toBe(true);
 });
 
+test("pure: reject throws a plain Error when its details measure above 16,384 bytes", () => {
+  const detailsOf = (length: number) => ({ text: "x".repeat(length) });
+  const atBound = detailsOf(16384 - getConvexSize(detailsOf(0)));
+  expect(getConvexSize(atBound)).toBe(16384);
+  const data = {
+    code: "forbidden",
+    commandType: "CreateDocument",
+    message: "No",
+  };
+  expect(thrown(() => reject({ ...data, details: atBound }))).toBeInstanceOf(
+    ConvexError,
+  );
+  const above = thrown(() =>
+    reject({ ...data, details: { ...atBound, text: `${atBound.text}x` } }),
+  );
+  expect(above).not.toBeInstanceOf(ConvexError);
+  expect(above).toBeInstanceOf(Error);
+  expect(String(above)).toContain("16385 bytes of details");
+});
+
 test("pure: normalizeThrown wraps a bare kernel rejection with the discriminator and the command type", () => {
   const bare = new ConvexError({
     code: "invalidTransition",
     message: "A document cannot ship from draft",
     details: { from: "draft", trigger: "ship" },
   });
-  const rethrown = thrown(() => normalizeThrown(bare, "ShipDocument"));
+  const rethrown = thrown(() =>
+    normalizeThrown(bare, "ShipDocument", ["invalidTransition"]),
+  );
   expect(rethrown).toBeInstanceOf(ConvexError);
   expect((rethrown as ConvexError<Value>).data).toEqual({
     kind: "rejection",
@@ -248,7 +270,42 @@ test("pure: normalizeThrown rethrows everything else unchanged, and never turns 
     "a thrown string",
   ];
   for (const error of passed)
-    expect(thrown(() => normalizeThrown(error, "ShipDocument"))).toBe(error);
+    expect(thrown(() => normalizeThrown(error, "ShipDocument", []))).toBe(
+      error,
+    );
+});
+
+test("pure: normalizeThrown wraps a kernel rejection with a platform code that the declaration does not list", () => {
+  const bare = new ConvexError({
+    code: "staleVersion",
+    message: "Stream document/doc-1 is at version 2, not 1",
+    details: { expected: 1, current: 2 },
+  });
+  const rethrown = thrown(() => normalizeThrown(bare, "ShipDocument", []));
+  expect((rethrown as ConvexError<Value>).data).toEqual({
+    kind: "rejection",
+    commandType: "ShipDocument",
+    code: "staleVersion",
+    message: "Stream document/doc-1 is at version 2, not 1",
+    details: { expected: 1, current: 2 },
+  });
+});
+
+test("pure: normalizeThrown rethrows a kernel rejection whose code is neither a platform code nor in rejections as a plain Error naming the code and the command type", () => {
+  const bare = new ConvexError({
+    code: "insufficientStock",
+    message: "Cannot claim 2 when 1 are on hand",
+  });
+  for (const rejections of [[], ["invalidTransition"]]) {
+    const rethrown = thrown(() =>
+      normalizeThrown(bare, "ShipDocument", rejections),
+    );
+    expect(rethrown).not.toBeInstanceOf(ConvexError);
+    expect(rethrown).toBeInstanceOf(Error);
+    expect(String(rethrown)).toContain("insufficientStock");
+    expect(String(rethrown)).toContain("ShipDocument");
+    expect(classifyThrown(rethrown).kind).toBe("technical");
+  }
 });
 
 test("pure: classifyThrown tells a rejection from a transient refusal from a technical failure", () => {

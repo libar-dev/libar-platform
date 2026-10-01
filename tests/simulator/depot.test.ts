@@ -15,6 +15,7 @@ import {
 import schema from "../../fixture/convex/schema.js";
 import {
   createJournal,
+  load,
   planned,
   runOperation,
   type OperationDeclaration,
@@ -711,15 +712,10 @@ describe("the adapter's guards", () => {
 
   test(
     name(
-      "a call that writes more than 800 documents, or more than 8 MiB at the stream budgets, is a technical failure",
+      "a plan at the admitted bound of 8 MiB of stream budgets commits when its saved rows and events are small",
     ),
     async () => {
       const t = depot();
-      await technicalFailure(
-        run(t, counter(), [{ amounts: Array.from({ length: 800 }, () => 0) }]),
-        /wrote 801 documents/,
-      );
-      // 32 streams at 256 KiB are admitted, and their events take the write past 8 MiB.
       const registration = counter({
         mapping: {
           kind: "single",
@@ -727,15 +723,124 @@ describe("the adapter's guards", () => {
           isDeleted: () => false,
         },
       });
-      await technicalFailure(
-        run(
+      expect(
+        await run(
           t,
           registration,
           Array.from({ length: 32 }, () => ({ amounts: [1] })),
         ),
-        /wrote 64 documents and about \d+ bytes/,
+      ).toMatchObject({ kind: "applied" });
+      expect(await streams(t)).toHaveLength(32);
+      expect(await events(t)).toHaveLength(32);
+    },
+  );
+
+  test(
+    name(
+      "a call that writes more than 800 documents, or more than 8 MiB measured over its saved rows and appended events, is a technical failure",
+    ),
+    async () => {
+      const t = depot();
+      await technicalFailure(
+        run(t, counter(), [{ amounts: Array.from({ length: 800 }, () => 0) }]),
+        /wrote 801 documents/,
+      );
+      // 32 streams at 256 KiB are admitted. Each saves a row of about 250,000 bytes and appends an
+      // event of about 16,000, which takes the measured write past 8 MiB.
+      type Filled = { text: string };
+      type Fill = { rowChars: number; eventChars: number };
+      type FillEvent = DomainEvent<
+        "filled",
+        { rowChars: number; text: string }
+      >;
+      const filler: StreamRegistration<Filled, Fill, FillEvent, null> = {
+        decider: {
+          streamType: "filler",
+          initial: () => ({ text: "" }),
+          decide: (_state, { rowChars, eventChars }) => ({
+            kind: "applied",
+            events: [
+              {
+                eventType: "filled",
+                eventSchemaVersion: 1,
+                payload: { rowChars, text: "e".repeat(eventChars) },
+              },
+            ],
+            result: null,
+          }),
+          evolve: (_state, event) => ({
+            text: "r".repeat(event.payload.rowChars),
+          }),
+        },
+        mapping: {
+          kind: "single",
+          budgetBytes: 262144,
+          isDeleted: () => false,
+        },
+        stateSchemaVersion: 1,
+        eventValidators: {
+          filled: v.object({ rowChars: v.number(), text: v.string() }),
+        },
+        dto: v.object({}),
+        toDto: () => ({}),
+      };
+      const fill: OperationDeclaration<Fill[], number> = {
+        name: "fill",
+        streams: [filler],
+        input: {},
+        returns: v.number(),
+        plan: (input) =>
+          input.map((command, index) => planned(filler, `f-${index}`, command)),
+        combine: (results) => results.length,
+        maxStreams: 256,
+      };
+      await technicalFailure(
+        t.run((ctx) =>
+          runOperation(ctx, journal, fill, {
+            ...args([]),
+            input: Array.from({ length: 32 }, () => ({
+              rowChars: 250000,
+              eventChars: 16000,
+            })),
+          }),
+        ),
+        /wrote 64 documents and \d+ bytes/,
       );
       expect(await events(t)).toEqual([]);
+    },
+  );
+
+  test(
+    name(
+      "load carries the stream row's document ID when the row exists, and step 9 replaces the row by it with no second read",
+    ),
+    async () => {
+      const t = depot();
+      const registration = counter();
+      expect(
+        await t.run((ctx) => load(ctx, journal, registration, "t-1", "c-0")),
+      ).not.toHaveProperty("rowId");
+      await run(t, registration, [{ amounts: [1] }]);
+      const [before] = await streams(t);
+      expect(
+        (await t.run((ctx) => load(ctx, journal, registration, "t-1", "c-0")))
+          .rowId,
+      ).toBe(before?._id);
+      const tables = await t.run(async (ctx) => {
+        const query = vi.spyOn(ctx.db, "query");
+        await runOperation(
+          ctx,
+          journal,
+          declaration(registration, (input) =>
+            input.map((command) => planned(registration, "c-0", command)),
+          ),
+          args([{ amounts: [1] }]),
+        );
+        return query.mock.calls.map(([table]) => table);
+      });
+      expect(tables).toEqual(["streams", "events"]);
+      const [after] = await streams(t);
+      expect(after).toMatchObject({ _id: before?._id, streamVersion: 2 });
     },
   );
 

@@ -106,6 +106,15 @@ export async function execute<S, C, E extends DomainEvent, R>(
   registration: StreamRegistration<S, C, E, R>,
   request: ExecuteRequest<C>,
 ): Promise<StreamResult<R>> {
+  return (await executeMeasured(ctx, journal, registration, request)).result;
+}
+// execute, with the size step 9 measured of the saved stream row, which the runner's write bound counts.
+async function executeMeasured<S, C, E extends DomainEvent, R>(
+  ctx: MutationCtx,
+  journal: Journal,
+  registration: StreamRegistration<S, C, E, R>,
+  request: ExecuteRequest<C>,
+): Promise<{ result: StreamResult<R>; rowBytes: number }> {
   const { tenantId, target } = request;
   const streamType = registration.decider.streamType;
   const { streamId } = target;
@@ -213,26 +222,17 @@ export async function execute<S, C, E extends DomainEvent, R>(
       `Stream ${streamType}/${streamId} would be saved at ${bytes} bytes, above its budget of ${registration.mapping.budgetBytes}`,
     );
   if (loaded.exists) {
-    // LoadedStream carries no document ID, so the row is found again by the same index.
-    const saved = await ctx.db
-      .query("streams")
-      .withIndex("by_identity", (q) =>
-        q
-          .eq("tenantId", tenantId)
-          .eq("streamType", streamType)
-          .eq("streamId", streamId),
-      )
-      .unique();
-    if (saved === null)
+    // The row load read, replaced by its document ID with no second read.
+    if (loaded.rowId === undefined)
       throw new Error(
-        `Stream ${streamType}/${streamId} vanished during a call`,
+        `Stream ${streamType}/${streamId} was loaded as existing without its row's document ID`,
       );
-    await ctx.db.replace(saved._id, row);
+    await ctx.db.replace(loaded.rowId, row);
   } else {
     await ctx.db.insert("streams", row);
   }
   // Step 10.
-  return {
+  const result: StreamResult<R> = {
     kind: decision.kind,
     result: decision.result,
     dto: registration.toDto(next, meta),
@@ -247,6 +247,7 @@ export async function execute<S, C, E extends DomainEvent, R>(
     created: !loaded.exists,
     events: appended.envelopes,
   };
+  return { result, rowBytes: bytes };
 }
 // Bounds the plan, executes it in plan order and aggregates the results.
 export async function runOperation<I, O>(
@@ -285,6 +286,7 @@ export async function runOperation<I, O>(
   const now = Date.now();
   const facts = args.facts ?? {};
   const results: StreamResult<unknown>[] = [];
+  let rowBytes = 0;
   for (const command of plan) {
     const target: StreamCommand<unknown> =
       command.expectedVersion === undefined
@@ -294,18 +296,18 @@ export async function runOperation<I, O>(
             command: command.command,
             expectedVersion: command.expectedVersion,
           };
-    results.push(
-      await execute(ctx, journal, command.registration, {
-        tenantId: args.tenantId,
-        actor: args.actor,
-        operation: args.operation,
-        now,
-        facts,
-        target,
-      }),
-    );
+    const executed = await executeMeasured(ctx, journal, command.registration, {
+      tenantId: args.tenantId,
+      actor: args.actor,
+      operation: args.operation,
+      now,
+      facts,
+      target,
+    });
+    results.push(executed.result);
+    rowBytes += executed.rowBytes;
   }
-  // The write bound, counting stream rows at their budgets and events at their size.
+  // The write bound, counting each saved stream row and each appended event at its measured size.
   const documents = results.reduce(
     (sum, result) => sum + result.appended + 1,
     0,
@@ -317,14 +319,14 @@ export async function runOperation<I, O>(
         (eventBytes, event) => eventBytes + getConvexSize(event as Value),
         0,
       ),
-    bytes,
+    rowBytes,
   );
   if (
     documents > limitDocumentsWrittenPerCall ||
     written > limitBytesWrittenPerCall
   )
     throw new Error(
-      `Operation ${declaration.name} wrote ${documents} documents and about ${written} bytes, above ${limitDocumentsWrittenPerCall} documents or ${limitBytesWrittenPerCall} bytes`,
+      `Operation ${declaration.name} wrote ${documents} documents and ${written} bytes, above ${limitDocumentsWrittenPerCall} documents or ${limitBytesWrittenPerCall} bytes`,
     );
   return {
     kind: results.some((result) => result.kind === "businessFailure")
