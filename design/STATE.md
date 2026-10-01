@@ -11,7 +11,7 @@ open questions: 67 Specs, 126 questions, 10 blocking; extensions registered: 50
 stated readiness: {'defined': 180, 'scoped': 10}
 ledger: 245 findings, {'fixed': 129, 'open': 100, 'owner': 1, 'partially-fixed': 15}
 open findings by slice: {'L3': 22, 'P': 18, 'S2': 12, 'S3': 1, 'S4': 30, 'S5': 17}
-corpus digest: dfd98edc5c2eee36
+corpus digest: 6de41fa7a4183365
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
