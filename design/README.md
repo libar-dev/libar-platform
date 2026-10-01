@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-187 specs · 5 packs · 38 anchors → 230 nodes · 975 edges (0 errors, 0 warnings)
+190 specs · 5 packs · 56 anchors → 251 nodes · 1002 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -140,11 +140,11 @@ Every row of the doc's acceptance table is an example Spec that `refines` and `v
 | L1-4 | The UI submits the same create twice | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.ui-double-submit`](specs/command/idempotency-and-receipts.ui-double-submit.sdp.md) | native |
 | L1-5 | Reuse a key with changed business input | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.key-reuse-changed-input`](specs/command/idempotency-and-receipts.key-reuse-changed-input.sdp.md) | native |
 | L1-6 | Two tenants use the same request key and local ID | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.same-key-two-tenants`](specs/command/tenancy-and-authority.same-key-two-tenants.sdp.md) | native |
-| L1-7 | A client claims a worker or agent namespace | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.client-claims-system-namespace`](specs/command/tenancy-and-authority.client-claims-system-namespace.sdp.md) | native |
+| L1-7 | A client claims a worker or agent namespace | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.client-claims-system-namespace`](specs/command/tenancy-and-authority.client-claims-system-namespace.sdp.md), [`.client-claims-agent-namespace`](specs/command/tenancy-and-authority.client-claims-agent-namespace.sdp.md) | native |
 | L1-8 | Authorization is revoked, then a successful command is retried | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.revoked-then-retried`](specs/command/tenancy-and-authority.revoked-then-retried.sdp.md) | native |
-| L1-9 | Rate or capacity refusal, then a retry of the same intent | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.rate-refusal-then-retry`](specs/command/idempotency-and-receipts.rate-refusal-then-retry.sdp.md) | native |
+| L1-9 | Rate or capacity refusal, then a retry of the same intent | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.rate-refusal-then-retry`](specs/command/idempotency-and-receipts.rate-refusal-then-retry.sdp.md), [`.capacity-refusal-then-retry`](specs/command/idempotency-and-receipts.capacity-refusal-then-retry.sdp.md) | native |
 | L1-10 | A command names a stale, explicitly reviewed version | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.stale-version-rejected`](specs/context/context-component.stale-version-rejected.sdp.md) | native |
-| L1-11 | Two commands compete for the same stock or unique value | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.competing-commands`](specs/context/context-component.competing-commands.sdp.md) | native |
+| L1-11 | Two commands compete for the same stock or unique value | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.competing-commands`](specs/context/context-component.competing-commands.sdp.md), [`.competing-unique-value`](specs/context/context-component.competing-unique-value.sdp.md) | native |
 | L1-12 | A rejected command's response is lost, and it is retried after state changed | [`spec:command.outcome-boundary`](specs/command/outcome-boundary.sdp.md) | [`.rejected-then-retried-after-change`](specs/command/outcome-boundary.rejected-then-retried-after-change.sdp.md) | native |
 | L2-1 | The first context writes, then the second rejects or throws | [`spec:application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | [`.second-context-rejects`](specs/application/parent-use-cases.second-context-rejects.sdp.md), [`.second-context-throws`](specs/application/parent-use-cases.second-context-throws.sdp.md) | native |
 | L2-2 | A successful command, then a query or subscription | [`spec:application.read-models`](specs/application/read-models.sdp.md) | [`.committed-state-visible`](specs/application/read-models.committed-state-visible.sdp.md) | native |
@@ -289,6 +289,16 @@ Four example IDs were added beyond the plan's section 4, each because the doc's 
 | L3-6 | `spec:effects.external-effects.stale-worker-after-cancellation` | the row says "after a new attempt or a cancellation" |
 
 No inventory ID was renamed or split. Package D therefore has 13 examples instead of 11, Package E has 22 instead of 20, and the corpus has 54.
+
+Slice S1 added three more for the same reason, when its scenario tests bound the Layer 1 rows:
+
+| Sc | Added example | Reason |
+|---|---|---|
+| L1-7 | `spec:command.tenancy-and-authority.client-claims-agent-namespace` | the row says "a worker or agent namespace" |
+| L1-9 | `spec:command.idempotency-and-receipts.capacity-refusal-then-retry` | the row says "rate or capacity refusal" |
+| L1-11 | `spec:context.context-component.competing-unique-value` | the row says "the same stock or unique value" |
+
+Package B therefore has 7 examples, Package C has 15, and the corpus has 57.
 
 ## Integration notes
 

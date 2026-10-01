@@ -53,14 +53,15 @@ const placeOrderDeclaration: CommandDeclaration<
       operation,
       input: { lines: input.lines },
     });
-    await failBeforeReceiptIfSwitched(ctx, tenantId, "PlaceOrder");
+    const versions = [...created.versions, ...claimed.versions];
+    await failBeforeReceiptIfSwitched(ctx, tenantId, "PlaceOrder", versions);
     return {
       kind:
         created.kind === "businessFailure" || claimed.kind === "businessFailure"
           ? "businessFailure"
           : "applied",
       result: { orderId: input.orderId, lines: claimed.result.lines },
-      versions: [...created.versions, ...claimed.versions],
+      versions,
       streams: [...created.streams, ...claimed.streams],
     };
   },
