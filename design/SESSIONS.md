@@ -106,7 +106,7 @@ The owner rules. The session applies each ruling at the Spec that owns the quest
 1. `python3 design/tools/check.py` prints `OK`.
 2. Rewrite `STATE.md` under its existing headings, with the check's summary lines copied in. It describes the present. Git holds the history.
 3. Add each delegated job to the run log in the project notes: model, effort, scope, time, outcome.
-4. Commit as `design: <unit> <scope>` or `build: <slice> <scope>`, on the unit's branch, push it and open a pull request. While the owner's mandate of 2026-10-01 holds, the session merges the pull request itself once CI is green on the last commit. `STATE.md` says whether it still holds.
+4. Commit as `design: <unit> <scope>` or `build: <slice> <scope>`, on the unit's branch, and push it. CI runs on every push. While the owner's mandate of 2026-10-01 holds, the session fast-forwards `main` to the branch once CI is green on the last commit, at the close and at any seam where the branch is green, and opens no pull request: the owner found on 2026-10-01 that a pull request per unit slows the design and build cycles at this stage. `STATE.md` says whether both still hold.
 
 ## Consensus
 

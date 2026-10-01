@@ -1,8 +1,8 @@
 name: CI
+# Every push runs CI, on any branch, so a unit needs no pull request to be checked.
 on:
-  pull_request:
   push:
-    branches: [main]
+  workflow_dispatch:
 jobs:
   checks:
     runs-on: ubuntu-latest
