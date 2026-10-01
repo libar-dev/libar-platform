@@ -1,6 +1,6 @@
-// The watch mode behind `npm run dev`: one disposable backend, `convex dev` bound to it, until an
-// interrupt or until the CLI exits. scripts/dev.mjs supplies the real steps; the pure tests supply
-// their own.
+// The watch mode behind `npm run dev`: one disposable backend, `convex dev` bound to it in one
+// composition's project directory, until an interrupt or until the CLI exits. scripts/dev.mjs
+// supplies the real steps; the pure tests supply their own.
 import type { ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
@@ -10,6 +10,7 @@ import { convexCli } from "./admin.js";
 import type { CliCall } from "./admin.js";
 import type { Backend, StartOptions } from "./backend.js";
 import { redact } from "./child.js";
+import type { Composition } from "./composition.js";
 import type { Executable } from "./executable.js";
 import type { FixtureIssuer } from "./identity.js";
 
@@ -99,6 +100,9 @@ export interface WatchSteps {
   spawn(call: CliCall): ChildProcess;
 }
 export interface WatchOptions {
+  // The composition convex dev watches. It runs in that composition's project directory, where it
+  // writes envFile.
+  composition: Composition;
   envFile: string;
   signal: AbortSignal;
   steps: WatchSteps;
@@ -176,7 +180,15 @@ export async function watch(options: WatchOptions): Promise<number> {
     if (existsSync(envFile)) throw new Error(refusal);
     signal.throwIfAborted();
     child = steps.spawn(
-      convexCli({ url: backend.url, adminKey: backend.adminKey, home }, "dev"),
+      convexCli(
+        {
+          url: backend.url,
+          adminKey: backend.adminKey,
+          home,
+          composition: options.composition,
+        },
+        "dev",
+      ),
     );
     let spawnError: Error | undefined;
     child.once("error", (error) => (spawnError = error));

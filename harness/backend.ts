@@ -10,15 +10,12 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { createAdminAccess } from "./admin.js";
 import type { AdminAccess, AdminState } from "./admin.js";
 import { redact, redactedBuffer, runChild } from "./child.js";
+import { fixtureComposition } from "./composition.js";
+import type { Composition } from "./composition.js";
 import type { Executable } from "./executable.js";
 import type { FixtureIssuer } from "./identity.js";
-export const fixtureComposition = {
-  name: "fixture",
-  functions: "fixture/convex",
-  installedLayers: [] as readonly string[],
-} as const;
 export interface BackendFacts {
-  composition: "fixture" | null;
+  composition: Composition["name"] | null;
   installedLayers: string[];
   executable: Pick<Executable, "release" | "sha256" | "source">;
   identitySource: { kind: "fixture issuer"; issuer: string };
@@ -28,6 +25,8 @@ export interface BackendFacts {
 export interface StartOptions {
   executable: Executable;
   issuer: FixtureIssuer;
+  // The composition that admin.deploy and admin.codegen act on. The fixture composition by default.
+  composition?: Composition;
   parentDirectory?: string;
   signal?: AbortSignal;
 }
@@ -79,7 +78,10 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
   let sitePort = 0;
   let disposed = false;
   let identityIssuer = options.issuer.issuer;
-  const state: AdminState = { deployed: false, environment: new Set() };
+  const state: AdminState = {
+    deployed: undefined,
+    environment: new Set(),
+  };
   const assertLive = () => {
     if (disposed) throw new Error("The backend is disposed");
   };
@@ -226,6 +228,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
         url,
         adminKey,
         home,
+        composition: options.composition ?? fixtureComposition,
         secrets,
         ...(options.signal === undefined ? {} : { signal: options.signal }),
       },
@@ -277,10 +280,8 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
       },
       dispose,
       facts: () => ({
-        composition: state.deployed ? fixtureComposition.name : null,
-        installedLayers: state.deployed
-          ? [...fixtureComposition.installedLayers]
-          : [],
+        composition: state.deployed?.name ?? null,
+        installedLayers: [...(state.deployed?.installedLayers ?? [])],
         executable: {
           release: options.executable.release,
           sha256: options.executable.sha256,

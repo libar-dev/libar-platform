@@ -4,15 +4,20 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { redact, runChild } from "./child.js";
+import { projectDirectory } from "./composition.js";
+import type { Composition } from "./composition.js";
 export interface AdminTarget {
   url: string;
   adminKey: string;
   home: string;
+  // The composition that deploy and codegen act on.
+  composition: Composition;
   secrets: readonly string[];
   signal?: AbortSignal;
 }
 export interface AdminState {
-  deployed: boolean;
+  // The composition last deployed to the backend, if any.
+  deployed: Composition | undefined;
   environment: Set<string>;
   logProcess?: object | undefined;
 }
@@ -74,8 +79,9 @@ const commandTimeoutMs = {
   codegen: 120000,
   dev: Number.POSITIVE_INFINITY,
 } as const;
+// The CLI runs in the composition's project directory, the one place it reads convex.json from.
 export function convexCli(
-  target: Pick<AdminTarget, "url" | "adminKey" | "home">,
+  target: Pick<AdminTarget, "url" | "adminKey" | "home" | "composition">,
   command: "deploy" | "codegen" | "dev",
 ): CliCall {
   const selection = ["--url", target.url, "--admin-key", target.adminKey];
@@ -86,7 +92,7 @@ export function convexCli(
       ...commandArgs[command],
       ...selection,
     ],
-    cwd: repositoryRoot,
+    cwd: projectDirectory(target.composition),
     env: { PATH: process.env.PATH ?? "", HOME: target.home, TMPDIR: tmpdir() },
     timeoutMs: commandTimeoutMs[command],
   };
@@ -179,7 +185,7 @@ export function createAdminAccess(
   return {
     async deploy() {
       await cli("deploy");
-      state.deployed = true;
+      state.deployed = target.composition;
     },
     codegen: () => cli("codegen"),
     async setEnvironment(variables) {

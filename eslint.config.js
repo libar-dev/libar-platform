@@ -1,5 +1,44 @@
+import { dirname, relative, resolve } from "node:path";
 import tseslint from "typescript-eslint";
 import convex from "@convex-dev/eslint-plugin";
+const repositoryRoot = import.meta.dirname;
+// The production composition ships no test code: no module under example/ imports one under
+// fixture/, harness/ or tests/. The rule resolves each relative import against the importing file,
+// so a path that climbs out of example/ and into one of them is caught however it is spelled.
+const testCodeDirectories = /^(?:fixture|harness|tests)(?:\/|$)/;
+const production = {
+  rules: {
+    "no-test-code": {
+      meta: { type: "problem", schema: [] },
+      create(context) {
+        function check(source) {
+          if (
+            source?.type !== "Literal" ||
+            typeof source.value !== "string" ||
+            !source.value.startsWith(".")
+          )
+            return;
+          const target = relative(
+            repositoryRoot,
+            resolve(dirname(context.filename), source.value),
+          ).replaceAll("\\", "/");
+          if (testCodeDirectories.test(target))
+            context.report({
+              node: source,
+              message:
+                "The production composition imports nothing from fixture/, harness/ or tests/.",
+            });
+        }
+        return {
+          ImportDeclaration: (node) => check(node.source),
+          ExportNamedDeclaration: (node) => check(node.source),
+          ExportAllDeclaration: (node) => check(node.source),
+          ImportExpression: (node) => check(node.source),
+        };
+      },
+    },
+  },
+};
 const noModuleLoading = [
   "error",
   {
@@ -30,12 +69,17 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...convex.configs.recommended.map((config) => ({
     ...config,
-    files: ["fixture/convex/**/*.ts"],
+    files: ["fixture/convex/**/*.ts", "example/convex/**/*.ts"],
   })),
   // A composition that runs natively reads its auth provider from the deployment's environment.
   {
-    files: ["fixture/convex/auth.config.ts"],
+    files: ["fixture/convex/auth.config.ts", "example/convex/auth.config.ts"],
     rules: { "@convex-dev/no-process-env": "off" },
+  },
+  {
+    files: ["example/**/*.ts"],
+    plugins: { production },
+    rules: { "production/no-test-code": "error" },
   },
   // The kernel imports its own modules and, for Rejection.details, the type Value; nothing else.
   {
@@ -74,9 +118,9 @@ export default tseslint.config(
       ],
     },
   },
-  // A fixture decider is pure domain code: it imports the kernel and its own modules only.
+  // A decider is pure domain code: it imports the kernel and its own modules only.
   {
-    files: ["fixture/domain/**/*.ts"],
+    files: ["fixture/domain/**/*.ts", "example/domain/**/*.ts"],
     rules: {
       "no-restricted-syntax": noModuleLoading,
       "@typescript-eslint/no-restricted-imports": [
@@ -86,16 +130,20 @@ export default tseslint.config(
             {
               regex: "^(?!\\./(?!\\.)|\\.\\./\\.\\./src/kernel/index\\.js$)",
               message:
-                "A fixture decider imports only src/kernel/index.js and its own modules.",
+                "A decider imports only src/kernel/index.js and its own modules.",
             },
           ],
         },
       ],
     },
   },
-  // The context library and every component of the fixture composition.
+  // The context library and every component of both compositions.
   {
-    files: ["src/context/**/*.ts", "fixture/convex/*/**/*.ts"],
+    files: [
+      "src/context/**/*.ts",
+      "fixture/convex/*/**/*.ts",
+      "example/convex/*/**/*.ts",
+    ],
     rules: { "no-restricted-syntax": noAuthNoEnv },
   },
   // S0's probe of what ctx.auth answers inside a component, which is the one reason it is read there.

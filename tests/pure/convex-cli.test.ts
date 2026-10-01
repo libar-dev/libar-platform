@@ -3,12 +3,13 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
 import { convexCli } from "../../harness/admin.js";
-import { fixtureComposition } from "../../harness/backend.js";
+import { compositions, fixtureComposition } from "../../harness/composition.js";
 import { runChild } from "../../harness/child.js";
 const target = {
   url: "http://127.0.0.1:1",
   adminKey: "the-admin-key",
   home: "/the/backend/home",
+  composition: fixtureComposition,
 };
 afterEach(() => vi.unstubAllEnvs());
 test.each(["deploy", "codegen", "dev"] as const)(
@@ -77,10 +78,19 @@ test("pure: runChild refuses the long-lived dev call before it starts a process"
     spawned.mockRestore();
   }
 });
-test("pure: the CLI runs in the repository root, where convex.json names the fixture composition's functions", async () => {
-  const { cwd } = convexCli(target, "deploy");
-  const config = JSON.parse(
-    await readFile(join(cwd, "convex.json"), "utf8"),
-  ) as { functions: string };
-  expect(config.functions).toBe(`${fixtureComposition.functions}/`);
-});
+test.each(compositions)(
+  "pure: every CLI call for the $name composition runs in its project directory, where convex.json names its functions",
+  async (composition) => {
+    const root = join(import.meta.dirname, "../..");
+    for (const command of ["deploy", "codegen", "dev"] as const) {
+      const { cwd } = convexCli({ ...target, composition }, command);
+      expect(cwd).toBe(join(root, composition.project));
+      const config = JSON.parse(
+        await readFile(join(cwd, "convex.json"), "utf8"),
+      ) as { functions: string };
+      expect(join(composition.project, config.functions)).toBe(
+        `${composition.functions}/`,
+      );
+    }
+  },
+);

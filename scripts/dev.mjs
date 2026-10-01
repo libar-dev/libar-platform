@@ -1,7 +1,8 @@
-// Watch mode. Starts one disposable backend and runs `convex dev` against it, so that
-// fixture/convex/_generated and fixture/convex/annex/_generated follow every change to a fixture
-// file. Runs until SIGINT or SIGTERM, or until convex dev exits, then removes what it started.
-// The lifecycle is harness/watch.ts; this file supplies the real steps.
+// Watch mode. Starts one disposable backend and runs `convex dev` against it in the project
+// directory of the composition the argument names, the fixture composition with none, so that its
+// generated files follow every change to one of its files: `npm run dev -- production`. Runs until
+// SIGINT or SIGTERM, or until convex dev exits, then removes what it started. The lifecycle is
+// harness/watch.ts; this file supplies the real steps.
 import { spawn } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { registerHooks } from "node:module";
@@ -27,6 +28,9 @@ const { resolveExecutable } = await import("../harness/executable.ts");
 const { createFixtureIssuer } = await import("../harness/identity.ts");
 const { startBackend } = await import("../harness/backend.ts");
 const { Interrupt, watch } = await import("../harness/watch.ts");
+const { compositionNamed, projectDirectory } =
+  await import("../harness/composition.ts");
+const composition = compositionNamed(process.argv.slice(2));
 
 const controller = new AbortController();
 const onInt = () => controller.abort(new Interrupt("SIGINT"));
@@ -35,7 +39,9 @@ process.on("SIGINT", onInt);
 process.on("SIGTERM", onTerm);
 try {
   process.exitCode = await watch({
-    envFile: join(import.meta.dirname, "..", ".env.local"),
+    composition,
+    // convex dev writes .env.local in its working directory.
+    envFile: join(projectDirectory(composition), ".env.local"),
     signal: controller.signal,
     stdout: process.stdout,
     stderr: process.stderr,

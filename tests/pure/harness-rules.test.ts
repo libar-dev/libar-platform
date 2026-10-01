@@ -14,6 +14,7 @@ vi.mock("node:timers/promises", async (original) => ({
 import { redactedBuffer } from "../../harness/child.js";
 import { invocation } from "../../harness/evidence.js";
 import { createAdminAccess } from "../../harness/admin.js";
+import { fixtureComposition } from "../../harness/composition.js";
 import {
   localWriteRateBytesPerSecond,
   paceAfterWrite,
@@ -119,7 +120,7 @@ test("pure: the effective vitest invocation keeps forwarded arguments under npm"
 
 test("pure: function log marks reject a changed process even when the predicate already matches", async () => {
   const state = {
-    deployed: false,
+    deployed: undefined,
     environment: new Set<string>(),
     logProcess: {},
   };
@@ -128,6 +129,7 @@ test("pure: function log marks reject a changed process even when the predicate 
       url: "http://127.0.0.1:1",
       adminKey: "dummy",
       home: "unused",
+      composition: fixtureComposition,
       secrets: [],
     },
     state,

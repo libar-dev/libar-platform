@@ -6,6 +6,12 @@ import { join } from "node:path";
 import { PassThrough, Writable } from "node:stream";
 import { expect, onTestFinished, test, vi } from "vitest";
 import type { CliCall } from "../../harness/admin.js";
+import {
+  fixtureComposition,
+  productionComposition,
+  projectDirectory,
+} from "../../harness/composition.js";
+import type { Composition } from "../../harness/composition.js";
 import type { Executable } from "../../harness/executable.js";
 import type { FixtureIssuer } from "../../harness/identity.js";
 import {
@@ -149,6 +155,7 @@ async function harness(
     _cli,
     envFile,
   ) => writeFile(envFile, written),
+  composition: Composition = fixtureComposition,
 ): Promise<Harness> {
   const directory = await scratch();
   const envFile = join(directory, ".env.local");
@@ -218,6 +225,7 @@ async function harness(
     stderr,
     run: () =>
       watch({
+        composition,
         envFile,
         signal: controller.signal,
         steps,
@@ -325,6 +333,18 @@ test("pure: SIGINT while the CLI runs stops it, removes the .env.local it wrote,
   ]);
   expectOneLine(run.stderr.text(), "stopped by SIGINT.");
 });
+
+test.each([fixtureComposition, productionComposition])(
+  "pure: convex dev for the $name composition runs in its project directory",
+  async (composition) => {
+    const run = await harness({}, undefined, composition);
+    const running = run.run();
+    await waitFor(() => run.spawnedCalls.length === 1);
+    run.controller.abort(new Interrupt("SIGINT"));
+    expect(await running).toBe(130);
+    expect(run.spawnedCalls[0]?.cwd).toBe(projectDirectory(composition));
+  },
+);
 
 test("pure: a CLI that ignores SIGINT is killed after the grace period", async () => {
   const run = await harness();

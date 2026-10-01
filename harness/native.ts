@@ -5,6 +5,8 @@ import {
 } from "@libar-dev/software-delivery-protocol";
 import { TestRunner, inject, onTestFinished } from "vitest";
 import { startBackend } from "./backend.js";
+import { fixtureComposition, productionComposition } from "./composition.js";
+import type { Composition } from "./composition.js";
 import type { Executable } from "./executable.js";
 import type { Backend } from "./backend.js";
 import type { JsonValue, NativeTestFacts } from "./evidence.js";
@@ -19,20 +21,40 @@ void anchor;
 function current() {
   const test = TestRunner.getCurrentTest();
   if (test === undefined)
-    throw new Error("fixtureBackend() and measure() must run inside a test");
+    throw new Error(
+      "fixtureBackend(), productionBackend() and measure() must run inside a test",
+    );
   const facts: NativeTestFacts = (test.meta.native ??= {
     backends: [],
     measurements: [],
   });
   return { test, facts };
 }
-export async function fixtureBackend(
+export function fixtureBackend(
   options: {
     issuer?: string;
     executable?: Executable;
     parentDirectory?: string;
     deploy?: boolean;
   } = {},
+): Promise<Backend> {
+  return compositionBackend(fixtureComposition, options);
+}
+export function productionBackend(
+  options: { issuer?: string; deploy?: boolean } = {},
+): Promise<Backend> {
+  return compositionBackend(productionComposition, options);
+}
+// Starts a backend for the composition, deploys it unless deploy is false, and removes the backend
+// when the test finishes, however it finishes.
+async function compositionBackend(
+  composition: Composition,
+  options: {
+    issuer?: string;
+    executable?: Executable;
+    parentDirectory?: string;
+    deploy?: boolean;
+  },
 ): Promise<Backend> {
   const { test, facts } = current();
   const run = inject("nativeRun");
@@ -41,6 +63,7 @@ export async function fixtureBackend(
   const starting = startBackend({
     executable: options.executable ?? run.executable,
     issuer,
+    composition,
     parentDirectory: options.parentDirectory ?? run.directory,
     signal: test.context.signal,
   }).then(async (backend) => {

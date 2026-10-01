@@ -34,8 +34,10 @@ jobs:
           path: .cache
           key: convex-local-backend-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('harness/backend-release.json') }}
       - run: npm ci
+      # Codegen rewrites both compositions' generated files. A changed or a new file fails the job.
       - run: npm run codegen
-      - run: git diff --exit-code -- fixture/convex
+      - run: git diff --exit-code -- fixture/convex example/convex
+      - run: test -z "$(git status --porcelain -- fixture/convex example/convex)"
       - run: npm run test:native
       - uses: actions/upload-artifact@v7
         if: always()
