@@ -22,7 +22,8 @@
     "test:simulator": "vitest run --project simulator",
     "test:native": "npm run sdp:build && vitest run --project native",
     "test": "npm run sdp:build && vitest run --project types --project pure --project simulator",
-    "codegen": "node scripts/codegen.mjs"
+    "codegen": "node scripts/codegen.mjs",
+    "dev": "node scripts/dev.mjs"
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "5.0.0",

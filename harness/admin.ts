@@ -60,26 +60,35 @@ export interface CliCall {
   args: string[];
   cwd: string;
   env: Record<string, string>;
+  // Infinity for a call that runs until it is stopped. runChild refuses it.
   timeoutMs: number;
 }
 const repositoryRoot = join(import.meta.dirname, "..");
+const commandArgs = {
+  deploy: ["deploy", "--yes", "--codegen", "disable", "--typecheck", "disable"],
+  codegen: ["codegen", "--typecheck", "disable"],
+  dev: ["dev", "--typecheck", "disable", "--tail-logs", "pause-on-deploy"],
+} as const;
+const commandTimeoutMs = {
+  deploy: 60000,
+  codegen: 120000,
+  dev: Number.POSITIVE_INFINITY,
+} as const;
 export function convexCli(
   target: Pick<AdminTarget, "url" | "adminKey" | "home">,
-  command: "deploy" | "codegen",
+  command: "deploy" | "codegen" | "dev",
 ): CliCall {
   const selection = ["--url", target.url, "--admin-key", target.adminKey];
   return {
     file: process.execPath,
     args: [
       join(repositoryRoot, "node_modules/convex/bin/main.js"),
-      ...(command === "deploy"
-        ? ["deploy", "--yes", "--codegen", "disable", "--typecheck", "disable"]
-        : ["codegen", "--typecheck", "disable"]),
+      ...commandArgs[command],
       ...selection,
     ],
     cwd: repositoryRoot,
     env: { PATH: process.env.PATH ?? "", HOME: target.home, TMPDIR: tmpdir() },
-    timeoutMs: command === "deploy" ? 60000 : 120000,
+    timeoutMs: commandTimeoutMs[command],
   };
 }
 // Convex 1.46.0 implements these members and strips them from its declarations.

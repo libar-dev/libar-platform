@@ -45,4 +45,6 @@ The harness gives every Convex CLI call the address and the admin key of the bac
 
 `npm run codegen` starts a disposable backend and rewrites `fixture/convex/_generated` and `fixture/convex/annex/_generated`. Run it after you add or rename a fixture function or change its arguments, and commit the result. CI fails when the committed files differ from what codegen writes.
 
+`npm run dev` starts one disposable backend and runs `convex dev` against it. Each time you save a file under `fixture/convex`, it rewrites both `_generated` directories. It runs until you press Ctrl-C, then stops the backend and removes it. Commit the generated files as with `npm run codegen`: CI still fails when they are stale. It refuses to start when a `.env.local` file exists in the repository root, because `convex dev` would write the backend's URL into it.
+
 Every native run writes a record to `evidence/runs/`. [`evidence/README.md`](evidence/README.md) says what a record holds and which records are kept.
