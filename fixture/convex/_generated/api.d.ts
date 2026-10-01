@@ -18,6 +18,7 @@ import type * as list from "../list.js";
 import type * as markers from "../markers.js";
 import type * as nonUiCaller from "../nonUiCaller.js";
 import type * as notes from "../notes.js";
+import type * as orders from "../orders.js";
 import type * as readCost from "../readCost.js";
 import type * as switches from "../switches.js";
 
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   markers: typeof markers;
   nonUiCaller: typeof nonUiCaller;
   notes: typeof notes;
+  orders: typeof orders;
   readCost: typeof readCost;
   switches: typeof switches;
 }>;
