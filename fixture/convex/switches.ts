@@ -6,6 +6,7 @@ import type {
   AdmissionPolicy,
   MutationCtx as CommandCtx,
 } from "../../src/command/index.js";
+import type { StreamVersion } from "../../src/kernel/index.js";
 import type { DatabaseReader } from "./_generated/server.js";
 import { internalMutation } from "./_generated/server.js";
 const switchName = v.union(
@@ -63,14 +64,21 @@ export const switchedAdmission =
     return { admitted: true };
   };
 // Fails the command after its context call returned and before the receipt insert, while the
-// command's failBeforeReceipt switch is on.
+// command's failBeforeReceipt switch is on. The error names the versions the context call returned,
+// which only a call that completed can know.
 export async function failBeforeReceiptIfSwitched(
   ctx: CommandCtx,
   tenantId: string,
   commandType: string,
+  versions: readonly StreamVersion[],
 ) {
   if ((await switchesOn(ctx, tenantId, commandType)).has("failBeforeReceipt"))
     throw new Error(
-      `Fault injected: ${commandType} failed after its context call returned`,
+      `Fault injected: ${commandType} failed after its context call returned ${versions
+        .map(
+          ({ streamType, streamId, version }) =>
+            `${streamType}/${streamId} at version ${version}`,
+        )
+        .join(", ")}`,
     );
 }

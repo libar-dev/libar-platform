@@ -37,7 +37,12 @@ async function settle<O, R>(
   outcome: ContextOutcome<O>,
   result: (depotResult: O) => R,
 ): Promise<ExecutorResult<R>> {
-  await failBeforeReceiptIfSwitched(ctx, tenantId, commandType);
+  await failBeforeReceiptIfSwitched(
+    ctx,
+    tenantId,
+    commandType,
+    outcome.versions,
+  );
   return {
     kind: outcome.kind,
     result: result(outcome.result),

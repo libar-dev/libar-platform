@@ -9,9 +9,9 @@ relations:
 ---
 # Inject a failure after the state write
 
-Sc L1-2 · native tier · first of three injection points.
+Sc L1-2 · native tier · fixture composition · first of three injection points.
 
-The fixture context's adapter `execute` saves the folded state and then throws on a fault flag the test sets. The throw happens inside the component's sub-transaction, so the sub-transaction rolls back and, uncaught by the parent, the whole mutation with it.
+The fixture context `depot` registers its document stream with a `toDto` that throws a plain Error for a document whose title is the fixture's after-state-write fault title. The adapter's `execute` calls `toDto` at its step 10, after it appended the event and saved the folded state, so an ordinary client with a grant sends a receipted `AmendDocument` with that title to a document at version 3. The throw happens inside the component's sub-transaction, so the sub-transaction rolls back and, uncaught by the parent, the whole mutation with it.
 
 ## Intent
 
@@ -29,6 +29,7 @@ And an event from the command exists in the journal {eventExists: false}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that the context's state document is byte-identical to its pre-command value, not only that the version is unchanged.
 - The test asserts that the thrown error is not a `ConvexError`, so the client cannot mistake the technical failure for a rejection.
+- The test asserts that the function log holds one completion record for the request, the parent mutation's own, carrying the fault's error.
