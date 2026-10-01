@@ -83,6 +83,12 @@ The doc is `docs/convex-transactional-domain-platform-decisions.md`, committed a
 
 One Convex page was read this session: audit logging (docs.convex.dev/production/integrations/audit-logging, 2026-10-01). `log.audit(params)` blocks the commit on log persistence, needs an Enterprise plan and a dedicated deployment, emits on failed mutations and possibly on retries, and delivers to an S3 bucket. It is the evidence for `r3-architecture-audit-do-nothing-option-unrecorded`.
 
+`docs/sdp-development-from-application-platform.md` was written on 2026-10-01 by a fifth agent the owner asked for. It proposes how to develop SDP further, with this corpus as the evidence, and it is addressed to the SDP project. No Spec cites it. Three things in it bear on this corpus:
+
+- It classified the 136 findings of the ledger at `f44cad4`. 53 of them, and 23 of the 56 majors and blockers, are one concept stated in two or more Specs that disagree, which validate cannot see. Round 3's `sdp` findings are 35 of 38 of the same kind. The fix units should expect this class to come back after every fix round until references between Specs can be checked.
+- Four conventions the plan invented have a ruled home in SDP that the plan did not use: a deferral is a blocking open question that names its trigger; a ruling beyond the doc is a decision Spec below `ready`; a probe is an example that verifies its fact; the README census is `sdp census`. Its appendix B has `q` bodies that produce the open-question table and the extension register and match `check.py`'s numbers. Adopting any of these changes `PLAN.md`, so it is in the owner queue.
+- It found nine type names used in pinned signatures and declared by no Spec: `Journal`, `GetArgs`, `ListArgs`, `HistoryArgs`, `WriteBaselineArgs`, `WriteBaselineResult`, `DiagnosticSink`, `AuditRecordInput`, `BatchCursor`. Round 3 filed two of them. Fix unit 8 should take the list as a lead.
+
 Pages read on 2026-10-01: Convex audit logging by the main thread, the evidence for `r3-architecture-audit-do-nothing-option-unrecorded`; and the pages, component READMEs and source files the `convex` reviewer cites in its findings and in the `checked` records of `reviews/r3-convex.jsonl`.
 
 ## Owner queue
@@ -93,8 +99,9 @@ Nothing here blocks a fix session.
 2. The 129 open questions in `README.md`, the twelve ambiguities of `PLAN.md` 11, and three product decisions listed in `README.md`.
 3. The seven probes. None has run. Round 3 found two of them largely answered by the docs: the using-components page says queries into components are reactive, which is F15 and half of Probe 5, and the docs say nested calls share the transaction limits, which is most of Probe 4. The corpus cannot change the doc's statuses; the owner decides whether the doc follows.
 4. From `docs/modern-ts.md`: ESM only or dual ESM and CommonJS; the Node floor; whether package and release design becomes a sixth pack in the corpus or stays outside it.
-5. Whether agent-run reviews become a standing option in `SESSIONS.md`, with the per-lens write-ahead file as their record, or stay an exception.
-6. Rulings the round-3 findings will ask for when their fix unit reaches them:
+5. From `docs/sdp-development-from-application-platform.md`: which of its proposals go to the SDP project, and whether this corpus adopts the SDP idioms it names, which would change `PLAN.md` 3.2, 6.5 and 8 and remove five checks from `tools/check.py`.
+6. Whether agent-run reviews become a standing option in `SESSIONS.md`, with the per-lens write-ahead file as their record, or stay an exception.
+7. Rulings the round-3 findings will ask for when their fix unit reaches them:
    - D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt, since the obligation's fence already gives one execution (`r3-fidelity-derived-command-receipt-question-not-on-a-spec`).
    - D3 and a history-reading migration: whether a command may read past events to migrate a stream on load, or such a migration must run as a sweep only (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
    - Restore policy: whether a failed check keeps every writer out with no override, and whether the drill runs before every release; the doc says neither (`r3-fidelity-restore-policies-cited-to-the-doc`).
@@ -106,4 +113,3 @@ Nothing here blocks a fix session.
 
 - `.claude/agents/fable-xhigh.md` is the agent definition the four round-3 reviewers ran as. It is committed.
 - `design/generated/gen-a.py` is a throwaway generator in a gitignored directory.
-- `docs/sdp-development-from-application-platform.md` is being written by a fifth agent the owner asked for: proposals for developing SDP further, with this corpus as the evidence. It is an input for the SDP project, not part of the corpus, and no Spec cites it.
