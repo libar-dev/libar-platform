@@ -28,10 +28,10 @@ The owner ruled on 2026-10-01 that the session takes tactical decisions on its o
 | Read-only scout before a unit; reviews that run things | `gpt-6-astra` | high |
 | Bounded building from a Spec; mechanical edits from an exact text; the mechanical review lane | `gpt-6.1-sol` | medium |
 | Review of balance and of how a reader will take the text | Claude agent, Opus 5.5 | default |
-| A design pass over interfaces that several Specs share | Claude agent, Fable 5.1 | default |
+| The design of a solution before an implementer writes it: interfaces, names, shapes, exact text | Claude agent, Fable 5.1 | default |
 | Whole-branch review before a hand-over | `gpt-6-astra` | xhigh |
 
-GPT capacity is the abundant side, so reading, checking and building go there. Claude agents are the scarce side: start one only for a role in the table. Design judgment and the project's vocabulary stay with Claude. The mechanics of reaching GPT models, briefing each family and calibrating a reviewer are in the orchestration guide, and this project's commands, brief fragments and job log are in its notes file. `AGENTS.md` names both.
+GPT capacity is the abundant side, so reading, checking and building go there. Claude agents are the scarce side: start one only for a role in the table. Design judgment and the project's vocabulary stay with Claude. The owner ruled three things on 2026-10-01. A Fable agent, not the main thread inside a brief, designs a solution before any implementer writes it, whichever model implements. Taste review goes to a Claude model only, and solution design to Fable only. And a job is sized to its model: sol takes what an Opus agent would take, astra what a Fable agent would, in width and in depth. The mechanics of reaching GPT models, briefing each family and calibrating a reviewer are in the orchestration guide, and this project's commands, brief fragments and job log are in its notes file. `AGENTS.md` names both.
 
 Four rules from the stop of 2026-09-30, when ten parallel Fable agents hit the usage limit and one left 109 unreported edits:
 
@@ -55,10 +55,11 @@ One slice of the build, as `STATE.md` cuts them. `python3 design/tools/check.py 
 1. **Scout.** One read-only astra job reports, per finding of the slice: the Spec that owns the concept, every other place that restates it, found by searching the whole corpus for each name and signature, and each conflict with the doc. Its report is a list of leads.
 2. **Settle.** For each ledger finding and each scout lead, look for what would refute it, then trace it to the scenario it breaks. Rule one of three: fix on paper now, let the build decide and say what the build must show, or the owner. A `fix` field in the ledger is a lead; five were found wrong on 2026-10-01.
 3. **Author.** Change the Spec that owns the concept, then every Spec that restates it. A Spec that names another in prose declares the relation. Fix what the slice cannot be built without and leave the rest open with the note that the build decides. Set each finding's `status` and `note` before starting the next.
-4. **Build.** One sol job per Spec, or one job for several when an exact design exists. The job writes code and tests, binds each example it realizes to its test, changes no Spec and no stated readiness, and lists everything the Spec did not say that it had to decide.
-5. **Commit, then review a frozen copy.** Three lanes read the commit, each with one criterion. Sol reads every changed line, test and pinned value. Astra runs the code against the Spec and looks for consequences elsewhere. An Opus agent asks whether the change added mechanism the scenario does not need and how a reader will misread it. A number in a Claude finding is re-run before anyone acts on it.
-6. **Rule on each gap.** Code wrong becomes one numbered fold-in job. Spec wrong becomes a Spec edit by the main thread and a ledger entry. A platform decision goes to the owner queue with its provisional reading.
-7. **Review the fixes.** One more read-only pass over the last fold-in. A fix is new work.
+4. **Design.** A Fable agent reads the Specs the slice builds and writes one design file: interfaces, names, shapes, the order of work and exact text where text matters. It changes no file in the repository. The main thread rules on the design before anyone builds from it.
+5. **Build.** One sol job per Spec, or one job for several, applying the design. The job writes code and tests, binds each example it realizes to its test, changes no Spec and no stated readiness, and lists everything the design did not say that it had to decide. A GPT job cannot resolve a host, listen on a local port or reach Docker, so the main thread runs installs, codegen and the native tier and hands the output back.
+6. **Commit, then review a frozen copy.** Three lanes read the commit, each with one criterion. Sol reads every changed line, test and pinned value. Astra runs the code against the Spec and looks for consequences elsewhere. An Opus agent asks whether the change added mechanism the scenario does not need and how a reader will misread it. A number in a Claude finding is re-run before anyone acts on it.
+7. **Rule on each gap.** Code wrong becomes one numbered fold-in job, designed first when it reshapes an interface. Spec wrong becomes a Spec edit by the main thread and a ledger entry. A platform decision goes to the owner queue with its provisional reading.
+8. **Review the fixes.** One more read-only pass over the last fold-in. A fix is new work.
 
 Done when the slice's tests pass at the tier each claims, the check prints `OK`, every finding the slice took has a status other than `open` or a note saying what the build still has to show, and every gap is ruled.
 
@@ -110,6 +111,17 @@ The owner rules. The session applies each ruling at the Spec that owns the quest
 
 Consensus holds for Layers 0 to 2 when the first experiment passes on a native backend and each of the five lenses has `approve` as its latest verdict covering `HEAD`. `STATE.md` then names `owner` as the next unit. Layers 3 to 6 are written from what the experiment shows and reach consensus the same way afterwards.
 
+## Handing over inside a unit
+
+A build slice is too long for one conversation. The main thread hands over to a fresh main thread at a seam, before its own context gets in the way: after a commit, with no delegated job running and every report saved.
+
+1. Reach the seam. Wait for or stop every delegated job. A job that dies with the conversation leaves no report, and the Codex job index does not follow a restarted conversation: read the job's log under the plugin's state directory.
+2. Commit what is in the tree on the unit's branch, as work in progress if it is not reviewed, and say so in the message.
+3. Write the handover note beside the unit's reports, in the folder the project notes name. It says what is committed, what each tier showed and at which commit, which findings are ruled and where the rulings are, what is drafted and not applied, the next steps in order, and what waits for the owner. It lists every instruction the owner gave during the conversation, in the owner's words.
+4. Put a short "In progress" block at the top of `STATE.md` that names the unit, the seam and the note. The rest of `STATE.md` waits for the close.
+5. Start the next main thread in a fresh conversation in the repository, Fable 5.1 at high effort, and check both in its status line before prompting it. The prompt names the unit, the note, and the files to read first. A cleared conversation is required: a main thread that inherits a summary of this one inherits its weight.
+6. The next main thread reads `AGENTS.md`, `STATE.md`, this file and the note, runs the check, and confirms with `git status` and `git log` that the tree is what the note says before it does anything else.
+
 ## When a session runs short
 
-The ledger is at most one finding behind. Stop, write `STATE.md` with what is done and what is not, and let the next session open with `recover`.
+The ledger is at most one finding behind. Stop, write `STATE.md` with what is done and what is not, and let the next session open with `recover`. Hand over as above when there is still room to write the note.

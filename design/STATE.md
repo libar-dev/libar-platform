@@ -2,6 +2,17 @@
 
 Written on 2026-10-01 at the close of the `adopt` unit. `SESSIONS.md` says how to use this file. Every close rewrites it.
 
+## In progress
+
+Slice S0 is open on branch `slice/s0` and was handed over inside the unit on 2026-10-01, as `SESSIONS.md` describes. Everything below this block describes the corpus before S0 and waits for the close.
+
+- Done and committed: the four harness decisions on the acceptance contract (E-13 changed, E-15 new), seventeen example Specs for the harness and for probes 1 to 5, the Protocol's root moved to the repository root, the toolchain, the fixture app, the native harness, four test tiers and CI.
+- Committed as work in progress, unreviewed and partly red: the thirteen probe tests.
+- Not done: the fold-in of three reviews of the foundation, the reviews of the probes, the probe results recorded on the facts, the close.
+- The seam: after the first native run of the probes, before the design of the fold-in.
+- The handover note is `HANDOVER.md` in `~/dev-libar/calibration/application-platform-s0/`, with the reports, the rulings and the drafts. The project notes file named in `AGENTS.md` lists that folder.
+- The summary lines under "Measured at close" are the `adopt` unit's. Run the check for today's.
+
 ## Measured at close
 
 ```
