@@ -9,9 +9,9 @@ relations:
 ---
 # Inject a failure after the journal append
 
-Sc L1-2 · native tier · second of three injection points.
+Sc L1-2 · native tier · fixture composition · second of three injection points.
 
-The fixture context's adapter `execute` appends the new events to the journal and then throws on a fault flag. The append and the state save sit in one sub-transaction, so a throw after the append rolls back the events together with the state.
+The fixture context `depot` registers its document stream with a mapping whose `isDeleted` throws a plain Error for a document whose title is the fixture's after-journal-append fault title. The adapter's `execute` calls `isDeleted` at its step 9, after `append` inserted the new event and before the stream row is written, so an ordinary client with a grant sends a receipted `AmendDocument` with that title to a document at version 3. The append and the state save sit in one sub-transaction, so a throw after the append rolls back the events together with the state.
 
 ## Intent
 
@@ -29,6 +29,7 @@ And an event from the command exists in the journal {eventExists: false}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
-- The test reads the journal by the stream replay index after the failure and asserts that no event with the command's operation ID exists.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- The test reads the depot's events table after the failure and asserts that the stream holds exactly the three events of its setup commands, each under an operation ID a setup response returned, because the failed command's operation ID never reaches the caller.
 - The test asserts that the stream's metadata still names version 3, so a later command with expected version 3 succeeds.
+- The test asserts that the function log holds one completion record for the request, the parent mutation's own, carrying the fault's error.
