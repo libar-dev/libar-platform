@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-187 specs · 5 packs · 18 anchors → 210 nodes · 955 edges (0 errors, 0 warnings)
+187 specs · 5 packs · 22 anchors → 214 nodes · 959 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 

@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
-import { mkdir, mkdtemp, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -126,5 +126,132 @@ test("pure: empty, partial, invalid and stale pid files never signal", async () 
   } finally {
     kill.mockRestore();
     sweep(directory);
+  }
+});
+
+test("pure: a backend whose process cannot be inspected is kept with its record, the rest is swept, and the sweep fails naming it", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-sweep-kept-"));
+  const secret = "ab".repeat(32);
+  const instanceName = "libar-00000000-0000-0000-0000-000000000001";
+  const command = (storage: string) =>
+    `convex-local-backend --instance-name ${instanceName} --instance-secret ${secret} --local-storage ${join(storage, "storage")} ${join(storage, "backend.sqlite3")}`;
+  // pid -> what ps does for it, and whether the process table still has it.
+  const cases: Record<
+    string,
+    { pid: number; ps: () => string; alive: boolean }
+  > = {
+    "ps-missing": {
+      pid: 101,
+      ps: () => {
+        throw Object.assign(new Error("spawnSync ps ENOENT"), {
+          code: "ENOENT",
+        });
+      },
+      alive: true,
+    },
+    "ps-failed": {
+      pid: 102,
+      ps: () => {
+        throw Object.assign(new Error("Command failed"), {
+          status: 2,
+          stdout: "",
+          stderr: `ps: ${secret}`,
+        });
+      },
+      alive: true,
+    },
+    "ps-silent-but-alive": {
+      pid: 103,
+      ps: () => {
+        throw Object.assign(new Error("Command failed"), {
+          status: 1,
+          stdout: "",
+          stderr: "",
+        });
+      },
+      alive: true,
+    },
+    "nested/ps-missing": {
+      pid: 104,
+      ps: () => {
+        throw Object.assign(new Error("spawnSync ps ENOENT"), {
+          code: "ENOENT",
+        });
+      },
+      alive: true,
+    },
+    gone: {
+      pid: 105,
+      ps: () => {
+        throw Object.assign(new Error("Command failed"), {
+          status: 1,
+          stdout: "",
+          stderr: "",
+        });
+      },
+      alive: false,
+    },
+    "another-program": { pid: 106, ps: () => "vim notes.txt", alive: true },
+    owned: {
+      pid: 107,
+      ps: () => command(join(directory, "owned")),
+      alive: true,
+    },
+  };
+  const byPid = new Map(
+    Object.values(cases).map((entry) => [entry.pid, entry]),
+  );
+  vi.mocked(execFileSync).mockImplementation(
+    (_file, args) => byPid.get(Number((args as string[])[2]))!.ps() as never,
+  );
+  const kill = vi.spyOn(process, "kill").mockImplementation((pid) => {
+    if (byPid.get(pid)?.alive === false)
+      throw Object.assign(new Error("kill ESRCH"), { code: "ESRCH" });
+    return true;
+  });
+  try {
+    for (const [name, { pid }] of Object.entries(cases)) {
+      const storage = join(directory, name);
+      await mkdir(join(storage, "storage"), { recursive: true });
+      publishOwnership(storage, pid, instanceName);
+    }
+    await writeFile(join(directory, "nested", "loose"), "");
+    await mkdir(join(directory, "no-record"));
+    let failure: Error | undefined;
+    try {
+      sweep(directory);
+    } catch (error) {
+      failure = error as Error;
+    }
+    expect(failure).toBeInstanceOf(Error);
+    for (const name of [
+      "ps-missing",
+      "ps-failed",
+      "ps-silent-but-alive",
+      "nested/ps-missing",
+    ]) {
+      expect(failure!.message).toContain(join(directory, name));
+      expect((await stat(join(directory, name, "pid"))).isFile()).toBe(true);
+      expect((await stat(join(directory, name, "storage"))).isDirectory()).toBe(
+        true,
+      );
+    }
+    expect(failure!.message).not.toContain(secret);
+    expect(failure!.message).not.toContain("--instance-name");
+    for (const name of [
+      "gone",
+      "another-program",
+      "owned",
+      "no-record",
+      "nested/loose",
+    ])
+      await expect(stat(join(directory, name))).rejects.toThrow();
+    expect(kill.mock.calls.filter((call) => call[1] === "SIGKILL")).toEqual([
+      [107, "SIGKILL"],
+    ]);
+  } finally {
+    kill.mockRestore();
+    vi.mocked(execFileSync).mockReset();
+    await rm(directory, { recursive: true, force: true });
   }
 });

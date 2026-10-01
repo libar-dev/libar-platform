@@ -32,10 +32,11 @@ process.on("SIGTERM", onTerm);
 let backend;
 try {
   backend = await startBackend({
-    executable: await resolveExecutable(),
+    executable: await resolveExecutable({ signal: controller.signal }),
     issuer: await createFixtureIssuer(),
     signal: controller.signal,
   });
+  controller.signal.throwIfAborted();
   await backend.admin.codegen();
 } finally {
   await backend?.dispose();

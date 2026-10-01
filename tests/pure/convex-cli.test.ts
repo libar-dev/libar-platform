@@ -1,3 +1,4 @@
+import { ChildProcess } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
@@ -38,26 +39,43 @@ test.each(["deploy", "codegen", "dev"] as const)(
 test("pure: convex dev keeps codegen on, so a changed fixture file rewrites the generated files", () => {
   const { args } = convexCli(target, "dev");
   expect(args).not.toContain("--codegen");
-  expect(args).not.toContain("--once");
 });
-test("pure: deploy and codegen are bounded in time and dev is not", () => {
-  for (const command of ["deploy", "codegen"] as const) {
-    const { timeoutMs } = convexCli(target, command);
-    expect(Number.isFinite(timeoutMs) && timeoutMs > 0).toBe(true);
-  }
+test("pure: convex dev keeps watching: it carries neither --once nor --until-success", () => {
+  const { args } = convexCli(target, "dev");
+  expect(args).not.toContain("--once");
+  expect(args).not.toContain("--until-success");
+});
+test("pure: deploy is limited to 60000 ms, codegen to 120000 ms, and dev runs until it is stopped", () => {
+  expect(convexCli(target, "deploy").timeoutMs).toBe(60000);
+  expect(convexCli(target, "codegen").timeoutMs).toBe(120000);
   expect(convexCli(target, "dev").timeoutMs).toBe(Number.POSITIVE_INFINITY);
 });
 test("pure: runChild refuses the long-lived dev call before it starts a process", async () => {
-  const call = convexCli(target, "dev");
-  // Without this guard a finite timeout would let runChild start convex dev.
-  expect(call.timeoutMs).toBe(Number.POSITIVE_INFINITY);
-  await expect(
-    runChild("convex dev", call.file, call.args, {
-      cwd: call.cwd,
-      env: call.env,
-      timeoutMs: call.timeoutMs,
-    }),
-  ).rejects.toThrow(/timeout/);
+  // Every child_process function starts its process through ChildProcess.prototype.spawn.
+  const spawned = vi.spyOn(
+    // Node's declarations leave this internal method out.
+    ChildProcess.prototype as unknown as { spawn(options: object): void },
+    "spawn",
+  );
+  try {
+    // The spy sees a process that runChild starts.
+    await runChild("node", process.execPath, ["-e", ""], { timeoutMs: 10000 });
+    expect(spawned).toHaveBeenCalledTimes(1);
+    spawned.mockClear();
+    const call = convexCli(target, "dev");
+    // Without this guard a finite limit would let runChild start convex dev.
+    expect(call.timeoutMs).toBe(Number.POSITIVE_INFINITY);
+    await expect(
+      runChild("convex dev", call.file, call.args, {
+        cwd: call.cwd,
+        env: call.env,
+        timeoutMs: call.timeoutMs,
+      }),
+    ).rejects.toMatchObject({ code: "ERR_OUT_OF_RANGE" });
+    expect(spawned).not.toHaveBeenCalled();
+  } finally {
+    spawned.mockRestore();
+  }
 });
 test("pure: the CLI runs in the repository root, where convex.json names the fixture composition's functions", async () => {
   const { cwd } = convexCli(target, "deploy");

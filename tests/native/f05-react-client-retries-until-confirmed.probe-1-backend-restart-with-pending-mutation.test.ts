@@ -28,8 +28,17 @@ interface Trial {
   delayMs: number;
   // Whether the row was stored when the backend came back, before the client could send again.
   committedBeforeKill: boolean;
+  // Whether the mutation's promise was still unresolved once the killed process had exited.
+  pendingAtKill: boolean;
+  // Whether it was still unresolved just before the held responses were released.
+  pendingAtRelease: boolean;
+  // Whether it resolved at all, within 15 seconds of the release.
   resolved: boolean;
   rows: number;
+}
+// The promise resolved after the restart: it was unresolved at the kill and at the release.
+function resolvedAfterRestart(trial: Trial): boolean {
+  return trial.pendingAtKill && trial.pendingAtRelease && trial.resolved;
 }
 interface World {
   backend?: Backend;
@@ -70,6 +79,8 @@ bindExample(contract, (): World => ({}), {
           trial: `restart ${index}`,
           delayMs: killDelayMs(index, trials),
           committedBeforeKill: false,
+          pendingAtKill: false,
+          pendingAtRelease: false,
           resolved: false,
           rows: 0,
         };
@@ -80,9 +91,11 @@ bindExample(contract, (): World => ({}), {
           });
         if (trial.delayMs > 0) await sleep(trial.delayMs);
         await backend.kill();
+        trial.pendingAtKill = !trial.resolved;
         await backend.restart();
         trial.committedBeforeKill =
           ((await markerRows(backend)).get(trial.trial) ?? 0) > 0;
+        trial.pendingAtRelease = !trial.resolved;
         held.release();
         await within(result, `${trial.trial} to resolve`, 15000).catch(
           () => undefined,
@@ -98,7 +111,10 @@ bindExample(contract, (): World => ({}), {
       );
       measure("restartSummary", {
         trials: restarted.length,
-        resolved: restarted.filter((trial) => trial.resolved).length,
+        resolvedAfterRestart: restarted.filter(resolvedAfterRestart).length,
+        resolvedBeforeRelease: restarted.filter(
+          (trial) => !trial.pendingAtRelease,
+        ).length,
         killedBeforeCommit: restarted.filter(
           (trial) => !trial.committedBeforeKill,
         ).length,
@@ -111,8 +127,10 @@ bindExample(contract, (): World => ({}), {
   "the mutation's promise resolves after the restart in {resolvedTrials} trials":
     (world, { resolvedTrials }) => {
       const trials = required(world.trials, "the trials");
+      // A promise that resolved before the kill, or before the release, did not resolve after
+      // the restart, and does not count.
       expect(
-        trials.filter((trial) => trial.resolved).length,
+        trials.filter(resolvedAfterRestart).length,
         JSON.stringify(trials),
       ).toBe(resolvedTrials);
     },

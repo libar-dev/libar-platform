@@ -7,9 +7,21 @@ export interface ChildOptions {
   signal?: AbortSignal;
 }
 export function redact(text: string, secrets: readonly string[]): string {
-  let result = text;
-  for (const secret of secrets)
-    if (secret !== "") result = result.split(secret).join("[redacted]");
+  const keys = secrets
+    .filter((secret) => secret !== "")
+    .sort((a, b) => b.length - a.length);
+  let result = "";
+  let consumed = 0;
+  while (consumed < text.length) {
+    const match = keys.find((key) => text.startsWith(key, consumed));
+    if (match !== undefined) {
+      result += "[redacted]";
+      consumed += match.length;
+    } else {
+      result += text[consumed];
+      consumed++;
+    }
+  }
   return result;
 }
 export function runChild(
@@ -63,7 +75,9 @@ export function redactedBuffer(
 } {
   let safe = "";
   const tails = new Map<string, string>();
-  const keys = secrets.filter((secret) => secret !== "");
+  const keys = secrets
+    .filter((secret) => secret !== "")
+    .sort((a, b) => b.length - a.length);
   return {
     append(chunk, stream = "stdout") {
       let pending = (tails.get(stream) ?? "") + chunk;
@@ -71,6 +85,10 @@ export function redactedBuffer(
       let complete = "";
       while (consumed < pending.length) {
         const rest = pending.slice(consumed);
+        if (
+          keys.some((key) => key.length > rest.length && key.startsWith(rest))
+        )
+          break;
         const match = keys.find((key) => rest.startsWith(key));
         if (match !== undefined) {
           complete += "[redacted]";

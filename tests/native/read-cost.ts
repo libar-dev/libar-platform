@@ -47,7 +47,7 @@ export async function sampleCost(world: CostWorld, kind: "mutation" | "query") {
           cacheBuster: (round * 3 + index + 1) * 1000,
         };
         let callError: unknown;
-        let result: { reads: number; id: string; valueSum: number } | undefined;
+        let result: { documentsRead: number; id: string } | undefined;
         try {
           if (kind === "mutation")
             result = await client.mutation(api.readCost.viaMutation, args);
@@ -92,10 +92,11 @@ export async function sampleCost(world: CostWorld, kind: "mutation" | "query") {
         expect(callError, String(callError)).toBeUndefined();
         expect(parent.error, JSON.stringify(parent)).toBeNull();
         expect(parent.cachedResult, JSON.stringify(parent)).toBe(false);
-        expect(result).toEqual({
-          reads: args.reads,
+        // The sample counts only when the backend's own count of documents read on the path, from
+        // the parent's transaction metrics, is the bound number.
+        expect(result, JSON.stringify(result)).toEqual({
+          documentsRead: args.reads,
           id: path === "component" ? args.annex : args.own,
-          valueSum: args.reads * 7,
         });
         samples[path].push(parent.executionTime);
         if (path === "component")

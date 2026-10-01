@@ -1,9 +1,21 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { TestRunner, inject, onTestFinished } from "vitest";
 import { startBackend } from "./backend.js";
 import type { Executable } from "./executable.js";
 import type { Backend } from "./backend.js";
 import type { JsonValue, NativeTestFacts } from "./evidence.js";
 import { createFixtureIssuer } from "./identity.js";
+// Binds the code under harness/ to its Spec in the corpus graph.
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness"),
+  label: "the native harness",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 function current() {
   const test = TestRunner.getCurrentTest();
   if (test === undefined)

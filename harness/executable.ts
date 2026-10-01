@@ -20,6 +20,8 @@ export interface Executable {
 export interface ResolveOptions {
   cacheRoot?: string;
   fetch?: typeof globalThis.fetch;
+  // Stops a download in progress; the call then rejects with the signal's reason.
+  signal?: AbortSignal;
 }
 interface ReleasePin {
   release: string;
@@ -38,9 +40,22 @@ export function sha256OfFile(path: string): Promise<string> {
       .on("end", () => done(hash.digest("hex")));
   });
 }
+// Settles with the work, or rejects with the signal's reason as soon as it aborts.
+function untilAborted<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason as Error);
+  return new Promise((done, fail) => {
+    const stop = () => fail(signal.reason as Error);
+    signal.addEventListener("abort", stop, { once: true });
+    work.then(done, fail).finally(() => {
+      signal.removeEventListener("abort", stop);
+    });
+  });
+}
 export async function resolveExecutable(
   options: ResolveOptions = {},
 ): Promise<Executable> {
+  const stop = options.signal ?? new AbortController().signal;
+  stop.throwIfAborted();
   const pin = JSON.parse(
     await readFile(join(import.meta.dirname, "backend-release.json"), "utf8"),
   ) as ReleasePin;
@@ -80,18 +95,22 @@ export async function resolveExecutable(
   // A cache entry is used only when its hash is the pinned one. Anything else is replaced.
   const cached = await sha256OfFile(path).catch(() => undefined);
   if (cached === asset.executableSha256) return pinned;
+  stop.throwIfAborted();
   await mkdir(directory, { recursive: true });
   const work = await mkdtemp(join(directory, "download-"));
   try {
-    const response = await (options.fetch ?? fetch)(
-      `https://github.com/get-convex/convex-backend/releases/download/${pin.release}/${asset.file}`,
-      { signal: AbortSignal.timeout(300000) },
+    const response = await untilAborted(
+      (options.fetch ?? fetch)(
+        `https://github.com/get-convex/convex-backend/releases/download/${pin.release}/${asset.file}`,
+        { signal: AbortSignal.any([stop, AbortSignal.timeout(300000)]) },
+      ),
+      stop,
     );
     if (!response.ok)
       throw new Error(
         `Backend download failed with status ${response.status}: ${asset.file}`,
       );
-    const bytes = Buffer.from(await response.arrayBuffer());
+    const bytes = Buffer.from(await untilAborted(response.arrayBuffer(), stop));
     const zipSha256 = createHash("sha256").update(bytes).digest("hex");
     if (zipSha256 !== asset.zipSha256)
       throw new Error(
@@ -101,6 +120,7 @@ export async function resolveExecutable(
     await writeFile(zip, bytes);
     await runChild("unzip", "unzip", ["-q", zip, "-d", work], {
       timeoutMs: 60000,
+      signal: stop,
     });
     const extracted = join(work, "convex-local-backend");
     const sha256 = await sha256OfFile(extracted);
@@ -109,6 +129,7 @@ export async function resolveExecutable(
         `The executable inside ${asset.file} has SHA-256 ${sha256}; harness/backend-release.json pins ${asset.executableSha256}`,
       );
     await chmod(extracted, 0o755);
+    stop.throwIfAborted();
     // Rename within one directory, so no reader sees a partial file.
     const staged = join(directory, `staged-${randomUUID()}`);
     await rename(extracted, staged);

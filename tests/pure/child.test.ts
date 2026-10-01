@@ -1,5 +1,9 @@
-import { expect, test } from "vitest";
-import { redact, runChild } from "../../harness/child.js";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+import { expect, onTestFinished, test } from "vitest";
+import { redact, redactedBuffer, runChild } from "../../harness/child.js";
 const secret = "0123456789abcdef-instance-secret";
 test("pure: a failed child's error holds its exit code and its output, and neither its arguments nor a secret", async () => {
   const error: unknown = await runChild(
@@ -81,4 +85,86 @@ test("pure: a failed child redacts a split stderr secret with stdout between its
   expect(String(error)).toBe(
     "Error: interleaved child failed with exit code 1: [redacted]",
   );
+});
+
+const overlappingSecrets = ["DUMMY", "DUMMYSECRET0123456789abcdef"];
+for (const secrets of [overlappingSecrets, [...overlappingSecrets].reverse()]) {
+  test(`pure: redaction chooses the longest secret with ${secrets[0]} configured first`, () => {
+    const text = `${overlappingSecrets[1]} DUMMY ${overlappingSecrets[1]}`;
+    expect(redact(text, [...secrets, ""])).toBe(
+      "[redacted] [redacted] [redacted]",
+    );
+    const whole = redactedBuffer([...secrets, ""], 1000);
+    whole.append(text);
+    // A trailing delimiter resolves any prefix still held by the buffer.
+    whole.append("!");
+    expect(whole.text()).toBe("[redacted] [redacted] [redacted]!");
+    for (let split = 1; split < overlappingSecrets[1]!.length; split++) {
+      const buffer = redactedBuffer(secrets, 1000);
+      buffer.append(overlappingSecrets[1]!.slice(0, split));
+      expect(buffer.text()).toBe("");
+      buffer.append(overlappingSecrets[1]!.slice(split) + "!");
+      expect(buffer.text()).toBe("[redacted]!");
+    }
+    const shorter = redactedBuffer(secrets, 1000);
+    shorter.append("DUMMY");
+    expect(shorter.text()).toBe("");
+    shorter.append("!");
+    expect(shorter.text()).toBe("[redacted]!");
+  });
+}
+
+test("pure: aborting the caller's signal rejects with its reason and kills the child", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-child-abort-"));
+  const pidFile = join(directory, "pid");
+  const controller = new AbortController();
+  let pid: number | undefined;
+  onTestFinished(async () => {
+    controller.abort();
+    if (pid !== undefined) {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+      }
+    }
+    await rm(directory, { recursive: true, force: true });
+  });
+  const result = runChild(
+    "the aborted child",
+    process.execPath,
+    [
+      "-e",
+      "require('node:fs').writeFileSync(process.argv[1], String(process.pid)); setInterval(() => {}, 1000)",
+      pidFile,
+    ],
+    { timeoutMs: 10000, signal: controller.signal },
+  ).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  const readyDeadline = Date.now() + 2000;
+  while (pid === undefined && Date.now() < readyDeadline) {
+    const contents = await readFile(pidFile, "utf8").catch(() => "");
+    if (/^\d+$/.test(contents)) pid = Number(contents);
+    else await delay(10);
+  }
+  expect(pid).toBeDefined();
+  const reason = new Error("caller stopped the child");
+  controller.abort(reason);
+  const deadline = Symbol("abort deadline");
+  expect(await Promise.race([result, delay(2000, deadline)])).toBe(reason);
+  // The abort callback can precede the operating system reaping the child.
+  let gone = false;
+  const exitDeadline = Date.now() + 2000;
+  while (!gone && Date.now() < exitDeadline) {
+    try {
+      process.kill(pid!, 0);
+      await delay(10);
+    } catch (error) {
+      expect((error as NodeJS.ErrnoException).code).toBe("ESRCH");
+      gone = true;
+    }
+  }
+  expect(gone).toBe(true);
 });

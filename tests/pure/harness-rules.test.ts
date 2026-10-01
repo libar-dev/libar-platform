@@ -1,3 +1,8 @@
+import {
+  ref,
+  specTest,
+  testAnchorId,
+} from "@libar-dev/software-delivery-protocol";
 import { readdir, readFile } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import { join } from "node:path";
@@ -14,6 +19,12 @@ import {
   paceAfterWrite,
 } from "../../harness/local-write-rate.js";
 import * as wait from "../../harness/wait.js";
+// Binds this file to the harness Spec, whose rules it checks directly.
+const anchor = specTest({
+  id: testAnchorId("test:platform.native-harness.rules"),
+  verifies: ref("spec:platform.native-harness"),
+});
+void anchor;
 
 test("pure: native sources read adminKey only in the acting-as demonstration", async () => {
   const directory = join(import.meta.dirname, "../native");

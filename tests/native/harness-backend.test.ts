@@ -1,3 +1,8 @@
+import {
+  ref,
+  specTest,
+  testAnchorId,
+} from "@libar-dev/software-delivery-protocol";
 import { spawn } from "node:child_process";
 import { waitUntil } from "../../harness/wait.js";
 import { sweep } from "../../harness/native-run.js";
@@ -14,6 +19,12 @@ import { join } from "node:path";
 import { expect, inject, onTestFinished, test, TestRunner } from "vitest";
 import { sha256OfFile } from "../../harness/executable.js";
 import { fixtureBackend, measure } from "../../harness/native.js";
+// Binds this file to the harness Spec, whose rules it checks directly.
+const anchor = specTest({
+  id: testAnchorId("test:platform.native-harness.backend-lifecycle"),
+  verifies: ref("spec:platform.native-harness"),
+});
+void anchor;
 
 async function scratch() {
   // The run directory comes from os.tmpdir(); keep these under it so the parent can sweep them.

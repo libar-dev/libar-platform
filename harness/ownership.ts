@@ -16,36 +16,86 @@ export function publishOwnership(
   });
   renameSync(staged, join(directory, "pid"));
 }
-export function signalOwned(directory: string): void {
+interface OwnershipRecord {
+  pid: number;
+  instanceName: string;
+  directory: string;
+}
+function readRecord(directory: string): OwnershipRecord | undefined {
   try {
-    const record = JSON.parse(readFileSync(join(directory, "pid"), "utf8")) as {
-      pid: number;
-      instanceName: string;
-      directory: string;
-    };
+    const record = JSON.parse(
+      readFileSync(join(directory, "pid"), "utf8"),
+    ) as Partial<OwnershipRecord> | null;
     if (
+      typeof record !== "object" ||
+      record === null ||
+      typeof record.pid !== "number" ||
       !Number.isSafeInteger(record.pid) ||
       record.pid <= 0 ||
       record.directory !== directory ||
       typeof record.instanceName !== "string" ||
       !/^libar-[0-9a-f-]{36}$/.test(record.instanceName)
     )
-      return;
-    // The random instance name and storage path survive a wrapper's exec and distinguish PID reuse.
-    // Never print this command: it contains the instance secret.
-    const command = execFileSync(
+      return undefined;
+    return record as OwnershipRecord;
+  } catch {
+    return undefined;
+  }
+}
+// ps -p exits with status 1 and prints nothing when no process has the id, on macOS and on Linux
+// procps. The process table confirms it, so a ps that fails in that same way for another reason
+// is not taken as absence.
+function gone(pid: number, error: unknown): boolean {
+  const failure = error as {
+    status?: unknown;
+    stdout?: unknown;
+    stderr?: unknown;
+  };
+  if (failure.status !== 1 || failure.stdout !== "" || failure.stderr !== "")
+    return false;
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (probe) {
+    return (probe as NodeJS.ErrnoException).code === "ESRCH";
+  }
+}
+// Kills the backend a directory's ownership record names, when that process is still the backend.
+// A missing or invalid record, a process that is gone and a process that is another program are
+// left alone. Throws when it cannot tell, so the caller keeps the record. The message names the
+// process id and the directory, never the command line, which holds the instance secret.
+export function signalOwned(directory: string): void {
+  const record = readRecord(directory);
+  if (record === undefined) return;
+  let command: string;
+  try {
+    command = execFileSync(
       "ps",
       ["-ww", "-p", String(record.pid), "-o", "command="],
-      { encoding: "utf8" },
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
     );
-    if (
-      !command.includes(`--instance-name ${record.instanceName} `) ||
-      !command.includes(`--local-storage ${join(directory, "storage")} `) ||
-      !command.trimEnd().endsWith(join(directory, "backend.sqlite3"))
-    )
-      return;
+  } catch (error) {
+    if (gone(record.pid, error)) return;
+    const { code, status } = error as { code?: unknown; status?: unknown };
+    throw new Error(
+      `Could not tell whether backend process ${record.pid} recorded in ${directory} is running: ${
+        typeof status === "number"
+          ? `ps exited with status ${status}`
+          : `ps could not run (${String(code)})`
+      }`,
+    );
+  }
+  // The random instance name and storage path survive a wrapper's exec and distinguish PID reuse.
+  // Never print this command: it contains the instance secret.
+  if (
+    !command.includes(`--instance-name ${record.instanceName} `) ||
+    !command.includes(`--local-storage ${join(directory, "storage")} `) ||
+    !command.trimEnd().endsWith(join(directory, "backend.sqlite3"))
+  )
+    return;
+  try {
     process.kill(record.pid, "SIGKILL");
   } catch {
-    // Missing, partial or stale ownership, failed inspection, or an already exited process.
+    // It exited after the inspection.
   }
 }

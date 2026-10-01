@@ -15,20 +15,42 @@ declare module "vitest" {
     nativeRun: NativeRun;
   }
 }
+// Kills every owned backend under a directory and removes the directory. A backend directory
+// whose process cannot be inspected is kept with its ownership record, the rest is removed, and
+// the sweep then fails naming what it kept.
 export function sweep(directory: string): void {
-  function killOwned(root: string): void {
-    signalOwned(root);
+  const reasons: string[] = [];
+  // Returns whether root or anything under it is kept.
+  function killOwned(root: string): boolean {
+    try {
+      signalOwned(root);
+    } catch (error) {
+      reasons.push((error as Error).message);
+      return true;
+    }
     let entries;
     try {
       entries = readdirSync(root, { withFileTypes: true });
     } catch {
-      return;
+      return false;
     }
+    const keeping = new Set<string>();
     for (const entry of entries)
-      if (entry.isDirectory()) killOwned(join(root, entry.name));
+      if (entry.isDirectory() && killOwned(join(root, entry.name)))
+        keeping.add(entry.name);
+    if (keeping.size === 0) return false;
+    for (const entry of entries)
+      if (!keeping.has(entry.name))
+        rmSync(join(root, entry.name), { recursive: true, force: true });
+    return true;
   }
-  killOwned(directory);
-  rmSync(directory, { recursive: true, force: true });
+  if (!killOwned(directory)) {
+    rmSync(directory, { recursive: true, force: true });
+    return;
+  }
+  throw new Error(
+    `The sweep kept ${reasons.length === 1 ? "a backend directory" : `${reasons.length} backend directories`} with the ownership record, because it could not tell whether the backend is running. ${reasons.join(". ")}.`,
+  );
 }
 export default async function setup(
   project: TestProject,
@@ -36,6 +58,13 @@ export default async function setup(
   const executable = await resolveExecutable();
   const directory = await mkdtemp(join(tmpdir(), "libar-native-"));
   project.provide("nativeRun", { directory, executable });
-  process.once("exit", () => sweep(directory));
+  process.once("exit", () => {
+    try {
+      sweep(directory);
+    } catch (error) {
+      process.stderr.write(`${(error as Error).message}\n`);
+      process.exitCode = 1;
+    }
+  });
   return async () => sweep(directory);
 }
