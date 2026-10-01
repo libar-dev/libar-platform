@@ -5,3 +5,4 @@ generated/
 **/_generated/
 evidence/**/*.json
 package-lock.json
+**/*.test.generated.ts

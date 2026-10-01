@@ -4,3 +4,4 @@ generated/
 .cache/
 evidence/runs/
 .env.local
+*.test.generated.ts
