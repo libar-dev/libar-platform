@@ -1,0 +1,72 @@
+---
+id: spec:facts.probe-plan
+kind: workflow
+altitude: feature
+readiness: defined
+relations:
+  refines: spec:facts.fact-ledger
+  dependsOn:
+    - spec:facts.f14-convex-error-survives-nested-and-component-boundary
+    - spec:facts.f15-parent-query-over-component-query-stays-reactive
+    - spec:facts.f16-scheduled-functions-table-shows-failed-runs
+    - spec:facts.f17-migrations-fits-generation-backfill
+  constrainedBy:
+    - spec:facts.f04-nested-calls-cost-more-than-helpers
+    - spec:facts.f05-react-client-retries-until-confirmed
+    - spec:facts.f12-backups-exclude-pending-scheduled-functions
+    - spec:facts.f13-transactions-have-limits
+---
+# The probe plan
+
+Feature · Detail: full transcription · Traces: Probe 1 to Probe 7, F4, F5, F12, F13, F14, F15, F16, F17, S13.
+
+Seven probes, in the order the decisions need them, each one small test on a native backend. A probe turns an assumed fact into a probed one, or measures a size the docs leave open. The recheck of 2026-09-30 narrowed two of them and left the rest standing: the limits page states no limit on nested calls, so Probe 4 stands; the application-errors page does not state that `ConvexError` data survives a component boundary, so Probe 2 stands; the scheduling page documents the states and the 7-day retention of `_scheduled_functions`, so Probe 7 need only confirm them and answer what a restore leaves; the backup page says nothing about component data or the scheduler, so that half of Probe 7 stands.
+
+The probes are not the first experiment. The experiment builds Layers 0 to 2 and measures cost; the probes settle single facts and can run before it, in a fixture app that is separate from the example app.
+
+## Intent
+
+- actor: The platform maintainer who runs the probes before the decisions they serve are trusted (Probes)
+- problem: A mechanism justified by a fact the docs do not state is v0.1's order in a new shape; without the probes the assumed facts stay assumed and the designs on them cannot be refuted or confirmed (Decision method rule 1)
+- outcome: Each assumed fact has one small native test that settles it, and each open size has one measurement, before the decision that rests on it is trusted (Probes)
+- value: Probes are cheaper than the mechanisms they may remove; a passing Probe 7 could replace the obligation table for local reactions with a scheduled mutation and a system-table scan (D13, Probe 7)
+- risk: Probe results are tied to the pinned Convex version and must be rerun when it changes (Acceptance scenarios)
+- assumption: A local native backend is available for every probe run, as S13 describes (S13)
+
+### Open questions
+
+- [non-blocking] Probe 1 pending: it must show where the client's exactly-once guarantee ends, for a tab closed with a pending mutation, a server restart and the HTTP client (Probe 1, D6)
+- [non-blocking] Probe 2 pending: it must show that `ConvexError` data arrives intact through a nested mutation and through a component boundary (Probe 2, F14, D7)
+- [non-blocking] Probe 3 pending: it must give the cost of one component call in latency and function-call quota (Probe 3, F4, D2, D8)
+- [non-blocking] Probe 4 pending: it must show whether transaction limits add up across nested calls and components (Probe 4, F13, D10)
+- [non-blocking] Probe 5 pending: it must show that a parent query over component queries stays reactive, and whether a component list paginated with `paginator` from `convex-helpers`, the documented replacement for the built-in `.paginate()` that S4 says does not work in a component, stays contiguous across the boundary when the client passes the end cursor and splits correctly when the component's `maximumRowsRead` or `maximumBytesRead` caps a re-run; that the cap exists is read in the helper's source and is not the probe's question (Probe 5, F15, S4, D8)
+- [non-blocking] Probe 6 pending: it must show a backfill batch racing a live command under optimistic concurrency, and that the migrations component fits a generation backfill (Probe 6, F17, D9)
+- [non-blocking] Probe 7 pending: before Layer 3, it must show what a restore leaves of Workpool and Workflow state and confirm the states and retention of `_scheduled_functions` on a native backend (Probe 7, F12, F16, D13, D19)
+
+## Workflow
+
+- rule: Each probe is one small test on a native backend (Probes)
+- rule: Probes run in the order the decisions need them (Probes)
+- rule: A probe result changes a fact's status to probed; it never changes a decision by itself, and the decision Spec records what changed (Probes, Decision method rule 1)
+- rule: A probe run records the commit, backend and dependency versions, configuration, command and result, like any acceptance run (Acceptance scenarios)
+- Probe 1 sends a mutation from a tab that closes while it is pending, across a server restart, and from the HTTP client, and records for each whether the backend executed it once, more than once or not at all; it serves D6 (Probe 1, F5, F6)
+- Probe 2 throws a `ConvexError` carrying structured data from a nested mutation and from a mutation inside a component, and checks that the parent and then the client read the same data; it serves D7 (Probe 2, F14)
+- Probe 3 measures one component call from a parent mutation and from a parent query in latency and in function-call quota, and reports the difference from a plain helper; it serves D2 and D8 (Probe 3, F4)
+- Probe 4 reads and writes near the per-transaction limits from a parent, from a nested mutation and from a component, and records whether the limits add up across the boundaries or apply per call; it serves D10 (Probe 4, F13)
+- Probe 5 subscribes to a parent query that calls a component query, changes the component's data, and checks that the subscription updates; it then pages a component list built with `paginator` through the parent while live writes land inside the paged range, with the client passing the end cursor as `convex-helpers` describes, records whether the pages stay contiguous, and fills one page's range past the component's `maximumRowsRead` so that a re-run comes back `SplitRequired`, recording whether the `convex-helpers/react` hook splits it across the boundary without a gap; it serves D8 (Probe 5, F15, S4)
+- Probe 6 runs a backfill batch through the migrations component while a live command writes the same read-model row, and checks that neither overwrites newer data and that the batch resumes after interruption; it serves D9 (Probe 6, F1, F17)
+- Probe 7, before Layer 3, takes a backup with pending scheduled functions, Workpool jobs and a Workflow run in flight, restores it, and records what survives; it reads `_scheduled_functions` for a failed run and confirms the states and the retention window; it serves D13 and D19 (Probe 7, F12, F16)
+
+## Design
+
+Each probe is a fixture-app test on a disposable backend. The probe app is separate from the example app and ships no test-only function to production. Where the probes live is an open question of the doc that the corpus does not decide.
+
+- backend: one disposable native backend per probe run, from the same local backend S13 describes (Acceptance scenarios, S13)
+- fixtureApp: the probe app is the kernel's fixture app, separate from the example app, and test-only functions never ship (Acceptance scenarios)
+- evidence: each run records commit, backend and dependency versions, configuration, command and result, and states any difference from production configuration (Acceptance scenarios)
+- probe7Narrowed: the states and the 7-day retention of `_scheduled_functions` were found documented on 2026-09-30, so the probe confirms them and spends its effort on what a restore leaves (F16, S6, S8)
+- location: where the probe app lives is OQ4 and stays with the owner (OQ4)
+
+## Verification — reviewed
+
+- A reviewer confirms that every assumed fact (F14, F15, F17) and the rechecked F16 name a probe in this plan, and that every decision Spec with a Probe line records it as an open question naming the same probe number.

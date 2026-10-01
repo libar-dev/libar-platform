@@ -1,0 +1,406 @@
+# Design corpus: Convex transactional domain platform
+
+## What this is
+
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 168 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol and [`STATE.md`](STATE.md) says where the work stands.
+
+The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
+
+The owner has ruled on nothing. Every decision is a proposal, every extension is provisional, and no Spec states `ready`.
+
+## How to read
+
+Run the review and open its index:
+
+```sh
+SDP=/Users/darkomijic/dev-libar/software-delivery-protocol/dist/cli/sdp.js
+node $SDP view design            # from the repository root
+open design/generated/design-review/index.md
+```
+
+The index lists every Spec with its kind, altitude, stated readiness and the floor its structure reaches. Each Spec has one page under `generated/design-review/spec/`, each pack under `generated/design-review/pack/`. The directory is gitignored; regenerate it after any edit.
+
+A reading order that works. Start with the epic ([`transactional-domain-platform`](specs/platform/transactional-domain-platform.sdp.md)) and three of its five platform children ([`layers-and-profiles`](specs/platform/layers-and-profiles.sdp.md), [`decision-method`](specs/platform/decision-method.sdp.md), [`vocabulary`](specs/platform/vocabulary.sdp.md)); the other two, [`acceptance-contract`](specs/platform/acceptance-contract.sdp.md) and [`existing-systems`](specs/platform/existing-systems.sdp.md), are best read before the scenario table below. Then the twelve laws in [`specs/laws/`](specs/laws/) and decisions D1 to D12 in [`specs/decisions/`](specs/decisions/). Then go up the layers: the kernel ([`outcome-model`](specs/kernel/outcome-model.sdp.md) first, then [`decider-contract`](specs/kernel/decider-contract.sdp.md) and [`domain-kernel`](specs/kernel/domain-kernel.sdp.md)), the context component and its children in [`specs/context/`](specs/context/), the command pipeline in [`specs/command/`](specs/command/) (read [`actor-and-scope`](specs/command/actor-and-scope.sdp.md) before [`command-pipeline`](specs/command/command-pipeline.sdp.md)), and the composed application in [`specs/application/`](specs/application/). Read the fact ledger and the probe plan in [`specs/facts/`](specs/facts/) before the Layer 3 material, because the obligation module's justification is a probe that has not run. Layers 4 to 6 are trigger, promise and rules only.
+
+Questions the graph answers better than the files. Pass a recipe body from the Protocol's catalog, `docs/agent-surface/recipes.md`, to `sdp q` with this corpus as the root:
+
+```sh
+node $SDP q '<recipe body>' --root design --json
+```
+
+Recipe 3 gives one Spec's sections, relations and verifiers. Recipe 5 reviews a pack. Recipe 6 finds a concept by phrase, so `D7` or `staleVersion` lands on every Spec that carries it. Recipe 7 lists Specs whose stated readiness their structure does not earn; it returns `[]` on this corpus. Recipe 8 returns the warnings as data. Recipe 9 is the promotion preflight for one Spec. Recipe 11 lists every non-ready Spec by family with its floor.
+
+## How to validate
+
+```sh
+# from the repository root
+node $SDP validate design
+
+# or from design/
+cd design && node $SDP validate .
+```
+
+Expected result on the integrated corpus:
+
+```
+168 specs · 5 packs · 0 anchors → 173 nodes · 881 edges (0 errors, 0 warnings)
+validate: 0 errors · 54 warnings (conformance + honesty over the one graph)
+```
+
+The 54 warnings are all `conformance/verifies-linkage`, one per example Spec. Every example declares `verifies` toward its parent for fidelity to the acceptance contract, and no test anchor exists yet to bind it. They go away as tests land. Any other warning, and any error, is a defect. `node $SDP validate design --watch` is the authoring loop.
+
+## The component map
+
+Detail follows the build (decision method, rule 4). Full means interfaces, TypeScript signatures, Convex tables and indexes, transaction boundaries, error codes, step sequences and limits. Proportional means trigger, promise, rules and scenarios at the depth the doc gives, with `[deferred]` on what the build will write.
+
+| # | Component | Layer | Detail | Specs |
+|---|---|---|---|---|
+| 1 | Foundation: thesis, layers and profiles, decision method, laws, decisions, fact ledger and probes, acceptance contract, existing systems, vocabulary | all | full transcription | [`specs/platform/`](specs/platform/), [`specs/laws/`](specs/laws/), [`specs/decisions/`](specs/decisions/), [`specs/facts/`](specs/facts/) |
+| 2 | Domain kernel: pure `decide`, `evolve`, `initial()`, the fold, the four outcomes as a type | 0 | full | [`domain-kernel`](specs/kernel/domain-kernel.sdp.md), [`decider-contract`](specs/kernel/decider-contract.sdp.md), [`outcome-model`](specs/kernel/outcome-model.sdp.md), [`initial-state`](specs/kernel/initial-state.sdp.md), [`state-document-mapping`](specs/kernel/state-document-mapping.sdp.md) |
+| 3 | Context component: one Convex component per bounded context, sanctioned operations only, DTOs out, actor and scope in | 1 | full | [`context-component`](specs/context/context-component.sdp.md) |
+| 4 | Journal and event envelope: append with expected version, per-stream order, the fifteen fields, baseline events | 1 | full | [`journal`](specs/context/journal.sdp.md), [`event-envelope`](specs/context/event-envelope.sdp.md) |
+| 5 | Persistence adapter, tables, queries, batch API | 1 | full | [`persistence-adapter`](specs/context/persistence-adapter.sdp.md), [`tables`](specs/context/tables.sdp.md), [`queries`](specs/context/queries.sdp.md), [`batch-shaped-api`](specs/context/batch-shaped-api.sdp.md) |
+| 6 | Command pipeline: the one top-level mutation, eleven steps, a throw on failure | 1 | full | [`command-pipeline`](specs/command/command-pipeline.sdp.md) |
+| 7 | Outcome and rejection boundary: the wire shape of the four outcomes, the closed code list, the conditional dispatcher | 1 | full | [`outcome-boundary`](specs/command/outcome-boundary.sdp.md) |
+| 8 | Idempotency and receipts: where receipts are required, key, fingerprint, conflict, expiry, tombstones, the table | 1 | full | [`idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md), [`receipt-table`](specs/command/receipt-table.sdp.md) |
+| 9 | Tenancy and authority: tenant on everything, actor vocabulary, grants, namespaces, worker provenance | 1 | full | [`tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md), [`actor-and-scope`](specs/command/actor-and-scope.sdp.md) |
+| 10 | Command declaration and bindings: one declaration per command, two static exports, generation later | 1 to 2 | full | [`command-declaration`](specs/command/command-declaration.sdp.md) |
+| 11 | Parent use cases: contexts meet only in the parent, in one transaction, one call per context | 2 | full | [`parent-use-cases`](specs/application/parent-use-cases.sdp.md) |
+| 12 | Read models and projection contract: reads inside the command, the read-need table, one projection for live update and rebuild | 2 | full | [`read-models`](specs/application/read-models.sdp.md), [`projection-contract`](specs/application/projection-contract.sdp.md) |
+| 13 | Rebuild: generations, backfill, write pause | 2 | full | [`rebuild`](specs/application/rebuild.sdp.md), [`generation-registry`](specs/application/generation-registry.sdp.md), [`write-pause`](specs/application/write-pause.sdp.md) |
+| 14 | Restore and baseline operations: the restore drill, audit fails closed, diagnostics never abort, bounds, retention | 2 | full | [`restore`](specs/application/restore.sdp.md), [`baseline-operations`](specs/operations/baseline-operations.sdp.md), [`events-stay-small`](specs/constraints/events-stay-small.sdp.md), [`bulk-operations-bounded`](specs/constraints/bulk-operations-bounded.sdp.md) |
+| 15 | First experiment and cost budgets: Orders and Inventory, the measurements, the six cost targets | 2 | full | [`first-experiment`](specs/application/first-experiment.sdp.md), [`orders-inventory-example`](specs/application/orders-inventory-example.sdp.md), the six cost constraints in [`specs/constraints/`](specs/constraints/) |
+| 16 | Obligations: the record, lifecycle, wrapper, sweeper, operator operations, fan-out, retention, restore, the do-nothing check | 3 | full where D13 rules | [`obligation-module`](specs/obligations/obligation-module.sdp.md) and its eight children in [`specs/obligations/`](specs/obligations/) |
+| 17 | External effects and retry ownership: claim, call, settle; the repetition policies; one retry owner | 3 | full where D14, D15 rule | [`external-effects`](specs/effects/external-effects.sdp.md), [`claim-call-settle`](specs/effects/claim-call-settle.sdp.md), [`retry-ownership`](specs/effects/retry-ownership.sdp.md) |
+| 18 | Workflow processes and approvals | 4 | proportional, deferred | [`workflow-processes`](specs/processes/workflow-processes.sdp.md), [`approvals`](specs/processes/approvals.sdp.md), [`start-checkout-example`](specs/processes/start-checkout-example.sdp.md) |
+| 19 | Agents | 5 | proportional, deferred | [`agent-runs`](specs/agents/agent-runs.sdp.md), [`budget-accounting`](specs/agents/budget-accounting.sdp.md) |
+| 20 | Advanced reads and deferred capabilities | 6 | proportional, deferred | [`trigger-table`](specs/advanced/trigger-table.sdp.md), [`coalesced-recomputation`](specs/advanced/coalesced-recomputation.sdp.md), [`ordered-consumer`](specs/advanced/ordered-consumer.sdp.md), [`cross-stream-online-rebuild`](specs/advanced/cross-stream-online-rebuild.sdp.md) |
+
+## The layers and packages
+
+| Layer | Families | Pack | Specs |
+|---|---|---|---|
+| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 56 |
+| 0 | `kernel` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) | 7 |
+| 1 | `context`, `command` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) (18 with the kernel), [`command-pipeline`](specs/command-pipeline.pack.sdp.md) | 11 + 20 |
+| 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 31 |
+| 3 | `obligations`, `effects` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 22 (of the pack's 43) |
+| 4 | `processes` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 6 |
+| 5 | `agents` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 7 |
+| 6 | `advanced` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 8 |
+
+Census: 168 Specs, of which 54 are examples; by kind, 15 behavior, 6 workflow, 27 rule, 25 constraint, 22 decision, 17 contract, 2 model, 54 example. Readiness: 159 `defined`, 9 `scoped` (every Layer 4 to 6 non-example Spec), none `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
+
+What each layer fixes, in one paragraph each.
+
+Layer 0 is pure TypeScript with no Convex import and no import from the command family: the decision context's actor is the kernel's own structural `DecisionActor`, which the command family's `Actor` satisfies. A `Decider⟨S, C, E, R⟩` declares `initial`, `decide` and `evolve`; `decide` returns events and a result or a rejection, never a state patch; the next state is `fold(evolve, state, newEvents)` and nothing else. The `Outcome⟨R⟩` union and `AffectedRef` are defined once, in [`outcome-model`](specs/kernel/outcome-model.sdp.md): applied and business failure travel as values and commit, rejection travels as a `ConvexError` and commits nothing, technical failure is any other throw. Three rejection codes are reserved for the adapter, `staleVersion`, `operationTooLarge` and `entityExists`, the last being the adapter's answer to a create planned at expected version 0 whose stream already exists, which is how scenario L1-4's double submit resolves to one entity. Two gaps the doc names are ruled provisionally: `initial()` over evolve-from-empty (E-1), and one document per stream under a 256 KiB budget, or a smaller `budgetBytes` the stream type declares, with a derived mapping of at most 512 KiB above it (E-2).
+
+Layer 1, context side. A bounded context is one Convex component with `streams` and `events` tables, four indexes that all lead with `tenantId`, and one registered mutation per sanctioned operation built by `defineOperation`, taking `{ tenantId, actor, operation, input, facts }` where `operation` is the `OperationRef` the parent minted and `facts` the outside facts its executor captured. The persistence adapter loads, decides, folds, appends with an indexed expected-version check and saves, once per planned stream, inside the component's sub-transaction, and returns beside the kernel's outcome one `streams` entry per stream with its DTO, version and created flag. A version conflict is the `staleVersion` rejection and is raised only for a caller-named version; an engine retry under optimistic concurrency is invisible and the loser is decided again against fresh state, which is what scenario L1-11 turns on; when the engine's bounded retries are exhausted the mutation fails as a technical failure the caller may retry. Every bound on streams per call, list page and written documents is derived from the stream type's byte budget so that the 16 MiB read and write ceilings bind in bytes, and a fold is refused above 600 events since the latest baseline. Queries are `get`, `list`, `history` and `rebuild` per stream type plus `operations.byOperation`, all taking `tenantId` and `scope`, all returning DTOs that carry their stream version; `list` and `history` paginate through `paginator` from `convex-helpers`, because the built-in `.paginate()` does not work in a component, and they cap every page through the helper's `maximumRowsRead` and `maximumBytesRead`, because a reactive re-run with an end cursor ignores `numItems`. A baseline is an event of reserved type `baseline` from which rebuild starts; its payload is the migrated state, exempt from the 16 KiB payload bound and bounded by the stream type's `budgetBytes`, and every baseline bumps its stream's version.
+
+Layer 1, parent side. Every command runs through one top-level mutation with eleven steps: parse, authenticate, establish scope, authorize, look up the receipt, admit, read the maintenance gate and mint the whole `OperationRef`, execute the contexts through `ctx.runMutation` on their operations with the facts the executor captured, update read models from the `streams` the executor returned, insert the receipt and the audit record, emit a diagnostic and return. The only catch is an outermost rethrow that gives a context's bare `Rejection` and the pipeline's own rejections one wire shape. Each command has one declaration and two static exports: `publicCommand` (a `mutation`, namespace fixed to `public`, reads `ctx.auth`) and `internalCommand` (an `internalMutation` that trusted server code calls with `actor`, `namespace` and a required `requestKey`); the doubled function count and the single-export alternative it beat are recorded under E-7. Receipts are thin, keyed by four indexed fields, guarded by a SHA-256 fingerprint that excludes captured facts, read and inserted in the same transaction; a rejection or transient refusal writes none, and the second UI submit of a create is answered with `entityExists`, not an idempotent success (E-39). The declaration's `bounds` is the one input bound, checked at step 1, and its `writes` names the stream types the executor may write. The internal entry takes an optional `causedBy`, which is how a reaction's derived command names its publication event (E-31), and a derived command carries the `worker` namespace (E-6). The actor, tenant scope, caller namespace, the worker's `Authority` and the grants table are defined once in [`actor-and-scope`](specs/command/actor-and-scope.sdp.md) and reused by the envelope, the receipts table and the obligation record.
+
+Layer 2. A use case calls each context once with a list, applies the cross-context rule to the DTOs it gets back, and returns the union of stream versions with every context call's `streams` entries; the pipeline's step 9 writes the read models the declaration lists from those entries through one `applyProjection` shared with rebuild, and a rejection or throw from the second context rolls back the first. Rebuild is a new numbered generation: live commands write it too, backfill batches of at most 100 entities, capped by the context's byte-derived page bound, write only where the target is missing or older, verification precedes a one-write switch, and the old generation stays for 7 days. Cross-stream history views rebuild under the write pause, one gate document the pipeline reads for every command, with the generation's fence for background writers. Such a view is a `HistoryProjection` that folds events into its row; its paused rebuild closes the view's source stream types, so every writer of those streams is held whether or not it maintains the view, and its backfill pages each source's history. Restore closes writers through `MAINTENANCE_MODE`, restores the snapshot, runs four checkpointed checks (journal, domain, read model, receipt), reopens only on zero findings, and only then hands over to the durable profile's schedule rebuild. Audit is written inside the transaction and fails closed; diagnostics go through a sink that never throws. The first experiment is Orders and Inventory with `PlaceOrder`, `CancelOrder`, the order summary and the order allocation history view that Sc L2-6 builds; its six cost targets are constraint Specs, and its native runs authenticate through the local backend's admin key acting as the production issuer's identity, the one named difference from production (E-13).
+
+Layer 3. An obligation is one recorded promise that commits with the business change and whose first dispatch is scheduled in the same transaction. The module lives in the parent as a library plus the `obligations` and `obligationRepairs` tables. A command's static reactions are the `createObligation` calls of its executor body, not a field of its declaration, and the record stores the one `Authority` shape of the actor and scope contract. A local reaction is a scheduled wrapper that runs the body as a nested mutation, so the effect and its completion commit together or the wrapper records the attempt after the body failed; a body refused by the write pause or a capacity policy is deferred without counting an attempt. A cron sweeper reads `_scheduled_functions`, whose `state.kind` is a lowercase literal, to tell a queued dispatch from a dead one, rearms at most five times, and escalates. External effects claim in a mutation, call in an action that makes exactly one provider call, and settle in a second mutation under one of four repetition policies; a stale worker's late evidence is kept and reconciled. Retention never erases unresolved work; restore starts with `OBLIGATIONS_DISPATCH` off and rebuilds schedules from the obligations after the transactional restore has reopened writers. All of it is gated on Probe 7 through the [`do-nothing-check`](specs/obligations/do-nothing-check.sdp.md) decision, made once for the durable profile and not per reaction, and every numeric default in the layer is provisional until the first experiment, which each Layer 3 Spec records against decision method rule 4.
+
+Layers 4 to 6 carry the doc's rules and scenarios, open with a deferral line, state `scoped`, and design no table, step signature or sequence allocation. The Workflow component is the process engine and only waits and external effects are steps; approvals bind to the exact proposal; agents produce proposals that the ordinary command boundary executes under the `agent` namespace; the twelve Layer 6 capabilities each wait for a named trigger and an activation record.
+
+## The numbering key
+
+The doc numbers its decisions, laws, sources and probes. The plan numbers everything else in table order so that every citation is one token; the owner is asked to adopt the numbers (section 11 of the plan, item 3).
+
+| Token | Meaning |
+|---|---|
+| `D1` to `D19` | decision, in the doc's order |
+| `Law 1` to `Law 12` | law |
+| `F1` to `F17` | fact-ledger row, in table order |
+| `Probe 1` to `Probe 7` | probe, in list order |
+| `S1` to `S15` | source |
+| `Sc L0-1` to `Sc L6-4`, `Sc ALL-1` | acceptance scenario, by layer then table order |
+| `OQ1` to `OQ6` | open question of the doc, in bullet order |
+| `E-1` to `E-58` | design extension beyond the doc, register below |
+| `Vocab: term` | a term of the vocabulary Spec |
+| `Thesis`, `Decision method rule n`, `Fact ledger`, `Probes`, `Acceptance scenarios`, `First experiment`, `Existing systems`, `Vocabulary`, `Sources` | an unnumbered section of the doc, cited by name |
+
+The last row is a convention the packages added; the plan's section 1 does not list it.
+
+## The scenario table
+
+Every row of the doc's acceptance table is an example Spec that `refines` and `verifies` its parent and binds one point in the parent's example space (Layers 0 to 3) or writes free-form steps (Layers 4 to 6). Where a row enumerates cases, each case is a sibling. The tier is the acceptance contract's: domain, simulator, native, end to end, plus one build-tier check.
+
+| Sc | Scenario | Parent Spec | Examples | Tier |
+|---|---|---|---|---|
+| L0-1 | Evaluate a decision twice with identical inputs | [`spec:kernel.domain-kernel`](specs/kernel/domain-kernel.sdp.md) | [`.evaluate-twice`](specs/kernel/domain-kernel.evaluate-twice.sdp.md) | domain |
+| L0-2 | Run commands incrementally, then rebuild the stream from its events | [`spec:kernel.domain-kernel`](specs/kernel/domain-kernel.sdp.md) | [`.incremental-then-rebuild`](specs/kernel/domain-kernel.incremental-then-rebuild.sdp.md) | domain |
+| L1-1 | A command asks for an invalid state transition | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.invalid-transition`](specs/context/context-component.invalid-transition.sdp.md) | native |
+| L1-2 | Inject a failure after the state write, after the journal append, and before the receipt | [`spec:command.command-pipeline`](specs/command/command-pipeline.sdp.md) | [`.failure-after-state-write`](specs/command/command-pipeline.failure-after-state-write.sdp.md), [`.failure-after-journal-append`](specs/command/command-pipeline.failure-after-journal-append.sdp.md), [`.failure-before-receipt`](specs/command/command-pipeline.failure-before-receipt.sdp.md) | native |
+| L1-3 | A non-UI caller sends the same command concurrently, and again after a lost response | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.concurrent-non-ui-calls`](specs/command/idempotency-and-receipts.concurrent-non-ui-calls.sdp.md), [`.retry-after-lost-response`](specs/command/idempotency-and-receipts.retry-after-lost-response.sdp.md) | native |
+| L1-4 | The UI submits the same create twice | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.ui-double-submit`](specs/command/idempotency-and-receipts.ui-double-submit.sdp.md) | native |
+| L1-5 | Reuse a key with changed business input | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.key-reuse-changed-input`](specs/command/idempotency-and-receipts.key-reuse-changed-input.sdp.md) | native |
+| L1-6 | Two tenants use the same request key and local ID | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.same-key-two-tenants`](specs/command/tenancy-and-authority.same-key-two-tenants.sdp.md) | native |
+| L1-7 | A client claims a worker or agent namespace | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.client-claims-system-namespace`](specs/command/tenancy-and-authority.client-claims-system-namespace.sdp.md) | native |
+| L1-8 | Authorization is revoked, then a successful command is retried | [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | [`.revoked-then-retried`](specs/command/tenancy-and-authority.revoked-then-retried.sdp.md) | native |
+| L1-9 | Rate or capacity refusal, then a retry of the same intent | [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | [`.rate-refusal-then-retry`](specs/command/idempotency-and-receipts.rate-refusal-then-retry.sdp.md) | native |
+| L1-10 | A command names a stale, explicitly reviewed version | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.stale-version-rejected`](specs/context/context-component.stale-version-rejected.sdp.md) | native |
+| L1-11 | Two commands compete for the same stock or unique value | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.competing-commands`](specs/context/context-component.competing-commands.sdp.md) | native |
+| L1-12 | A rejected command's response is lost, and it is retried after state changed | [`spec:command.outcome-boundary`](specs/command/outcome-boundary.sdp.md) | [`.rejected-then-retried-after-change`](specs/command/outcome-boundary.rejected-then-retried-after-change.sdp.md) | native |
+| L2-1 | The first context writes, then the second rejects or throws | [`spec:application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | [`.second-context-rejects`](specs/application/parent-use-cases.second-context-rejects.sdp.md), [`.second-context-throws`](specs/application/parent-use-cases.second-context-throws.sdp.md) | native |
+| L2-2 | A successful command, then a query or subscription | [`spec:application.read-models`](specs/application/read-models.sdp.md) | [`.committed-state-visible`](specs/application/read-models.committed-state-visible.sdp.md) | native |
+| L2-3 | Orders of 1 line, 10 lines and the maximum | [`spec:application.first-experiment`](specs/application/first-experiment.sdp.md) | [`.order-of-1-line`](specs/application/first-experiment.order-of-1-line.sdp.md), [`.order-of-10-lines`](specs/application/first-experiment.order-of-10-lines.sdp.md), [`.order-of-max-lines`](specs/application/first-experiment.order-of-max-lines.sdp.md) | native |
+| L2-4 | Rename a typed handler or break its argument contract | [`spec:command.command-declaration`](specs/command/command-declaration.sdp.md) | [`.renamed-handler-fails-build`](specs/command/command-declaration.renamed-handler-fails-build.sdp.md) | build |
+| L2-5 | Rebuild a per-entity read model online while commands run; interrupt and resume | [`spec:application.rebuild`](specs/application/rebuild.sdp.md) | [`.online-rebuild-interrupt-resume`](specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md) | native |
+| L2-6 | Rebuild a cross-stream history view under a write pause; interrupt | [`spec:application.rebuild`](specs/application/rebuild.sdp.md) | [`.write-pause-rebuild-interrupt`](specs/application/rebuild.write-pause-rebuild-interrupt.sdp.md), [`.write-pause-rebuild-abort`](specs/application/rebuild.write-pause-rebuild-abort.sdp.md) | native |
+| L2-7 | Rebuild a stream that has a baseline event | [`spec:context.journal`](specs/context/journal.sdp.md) | [`.rebuild-from-baseline`](specs/context/journal.rebuild-from-baseline.sdp.md) | native |
+| L2-8 | Restore a representative dataset with matching code and configuration | [`spec:application.restore`](specs/application/restore.sdp.md) | [`.restore-representative-dataset`](specs/application/restore.restore-representative-dataset.sdp.md) | end to end |
+| L2-9 | Run native acceptance with production configuration | [`spec:application.first-experiment`](specs/application/first-experiment.sdp.md) | [`.native-acceptance-production-configuration`](specs/application/first-experiment.native-acceptance-production-configuration.sdp.md) | end to end |
+| L3-1 | Duplicate a local worker and lose any completion callback | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.duplicate-worker-lost-callback`](specs/obligations/obligation-module.duplicate-worker-lost-callback.sdp.md) | native |
+| L3-2 | Kill a dispatch before work, or fail the scheduled wrapper | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.dispatch-killed-rearmed`](specs/obligations/obligation-module.dispatch-killed-rearmed.sdp.md), [`.wrapper-failed-rearmed`](specs/obligations/obligation-module.wrapper-failed-rearmed.sdp.md) | native |
+| L3-3 | Legitimate backlog builds up | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.backlog-left-alone`](specs/obligations/obligation-module.backlog-left-alone.sdp.md) | native |
+| L3-4 | Exhaust retries, including failures of recovery itself | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.exhausted-needs-attention`](specs/obligations/obligation-module.exhausted-needs-attention.sdp.md) | native |
+| L3-5 | The provider succeeds but the reply is lost | [`spec:effects.external-effects`](specs/effects/external-effects.sdp.md) | [`.provider-success-reply-lost`](specs/effects/external-effects.provider-success-reply-lost.sdp.md) | native |
+| L3-6 | An old worker reports after a new attempt or a cancellation | [`spec:effects.external-effects`](specs/effects/external-effects.sdp.md) | [`.stale-worker-late-evidence`](specs/effects/external-effects.stale-worker-late-evidence.sdp.md), [`.stale-worker-after-cancellation`](specs/effects/external-effects.stale-worker-after-cancellation.sdp.md) | native |
+| L3-7 | Restore while provider state has moved past the backup | [`spec:obligations.retention-and-restore`](specs/obligations/retention-and-restore.sdp.md) | [`.restore-behind-provider`](specs/obligations/retention-and-restore.restore-behind-provider.sdp.md) | end to end |
+| L3-8 | Retention runs while retries or redelivery are still possible | [`spec:obligations.retention-and-restore`](specs/obligations/retention-and-restore.sdp.md) | [`.retention-keeps-unresolved`](specs/obligations/retention-and-restore.retention-keeps-unresolved.sdp.md) | native |
+| L4-1 | Restart a process after an external step completed | [`spec:processes.workflow-processes`](specs/processes/workflow-processes.sdp.md) | [`.restart-after-external-step`](specs/processes/workflow-processes.restart-after-external-step.sdp.md) | native |
+| L4-2 | Race approval, expiry, revocation and execution | [`spec:processes.approvals`](specs/processes/approvals.sdp.md) | [`.approval-races`](specs/processes/approvals.approval-races.sdp.md) | native |
+| L4-3 | Deploy while an old process is in flight | [`spec:processes.workflow-processes`](specs/processes/workflow-processes.sdp.md) | [`.deploy-with-process-in-flight`](specs/processes/workflow-processes.deploy-with-process-in-flight.sdp.md) | end to end |
+| L5-1 | An agent proposes a valid-looking unauthorized command | [`spec:agents.agent-runs`](specs/agents/agent-runs.sdp.md) | [`.unauthorized-proposal-rejected`](specs/agents/agent-runs.unauthorized-proposal-rejected.sdp.md) | native |
+| L5-2 | Proposal input changes after approval, or the run exceeds its budget | [`spec:agents.agent-runs`](specs/agents/agent-runs.sdp.md) | [`.changed-input-voids-approval`](specs/agents/agent-runs.changed-input-voids-approval.sdp.md), [`.budget-exceeded-blocks-execution`](specs/agents/agent-runs.budget-exceeded-blocks-execution.sdp.md) | native |
+| L5-3 | A paid call times out and usage arrives later | [`spec:agents.budget-accounting`](specs/agents/budget-accounting.sdp.md) | [`.timed-out-paid-call-settles-once`](specs/agents/budget-accounting.timed-out-paid-call-settles-once.sdp.md) | native |
+| L5-4 | A retrieved document or prompt tries to widen the agent's rights | [`spec:agents.agent-runs`](specs/agents/agent-runs.sdp.md) | [`.untrusted-input-cannot-widen`](specs/agents/agent-runs.untrusted-input-cannot-widen.sdp.md) | native |
+| L6-1 | Source changes during a coalesced recompute | [`spec:advanced.coalesced-recomputation`](specs/advanced/coalesced-recomputation.sdp.md) | [`.source-changes-during-recompute`](specs/advanced/coalesced-recomputation.source-changes-during-recompute.sdp.md) | native |
+| L6-2 | Duplicate and out-of-order events reach a noncommutative consumer | [`spec:advanced.ordered-consumer`](specs/advanced/ordered-consumer.sdp.md) | [`.duplicate-out-of-order-applied-once`](specs/advanced/ordered-consumer.duplicate-out-of-order-applied-once.sdp.md) | native |
+| L6-3 | One ordered partition fails | [`spec:advanced.ordered-consumer`](specs/advanced/ordered-consumer.sdp.md) | [`.partition-failure-isolated`](specs/advanced/ordered-consumer.partition-failure-isolated.sdp.md) | native |
+| L6-4 | A cross-stream backfill races live writes and new subjects, then cuts over | [`spec:advanced.cross-stream-online-rebuild`](specs/advanced/cross-stream-online-rebuild.sdp.md) | [`.backfill-races-live-writes`](specs/advanced/cross-stream-online-rebuild.backfill-races-live-writes.sdp.md) | native |
+| ALL-1 | Break metrics and logging; separately, break mandatory audit | [`spec:operations.baseline-operations`](specs/operations/baseline-operations.sdp.md) | [`.broken-metrics-never-abort`](specs/operations/baseline-operations.broken-metrics-never-abort.sdp.md), [`.broken-audit-aborts`](specs/operations/baseline-operations.broken-audit-aborts.sdp.md) | native |
+
+## The extension register
+
+An extension is a design claim the doc does not make. Each one is three things together: a bullet that starts with `[extension]` and cites its E-number, and a `[non-blocking] Extension E-n` open question in the Intent of the Spec that owns it. The register lists every E-number once. "Owned by" names the Specs that carry the open question and the ruling; other Specs cite the number as a cross-reference without repeating the question. Every extension is a provisional ruling the owner confirms, changes or rejects; none is blocking, because each has a working default. E-15 to E-19, E-27 to E-29, E-48, E-49 and E-59 are unused; E-13 and E-39 were assigned by the integration round from the unassigned and the Package C range, and E-14 by review round 2.
+
+| E | Owned by | What the doc leaves open, and the option taken |
+|---|---|---|
+| E-1 | [`kernel.initial-state`](specs/kernel/initial-state.sdp.md), [`kernel.domain-kernel`](specs/kernel/domain-kernel.sdp.md) | `initial()` on the decider, over an `evolve` that accepts an empty state; a stream with no row loads as `initial()` at version 0 |
+| E-2 | [`kernel.state-document-mapping`](specs/kernel/state-document-mapping.sdp.md) | `StateDocumentMapping⟨S⟩` is `single` (default) or `derived` (head plus named parts); `budgetBytes` is one number per stream type meaning the whole stream, at most 256 KiB for `single` and at most 512 KiB over at most 32 parts for `derived`, the derived cap being half the document ceiling because a baseline event holds the whole migrated state in one document; every streams-per-call, list-page, backfill and baseline-batch bound is derived from it so that the 16 MiB ceilings bind in bytes |
+| E-3 | [`context.tables`](specs/context/tables.sdp.md) | The `streams`, `events` and `streamParts` tables; indexes `by_identity`, `by_stream`, `by_event_id`, `by_operation`, `by_stream_part`; `deletedAt` as the deleted-subject marker |
+| E-4 | [`command.receipt-table`](specs/command/receipt-table.sdp.md) | Receipt fields; indexes `by_key`, `by_operation`, `by_tenant_expiry`; the tombstone shape; a 7-day default window and a tombstone horizon of never |
+| E-5 | [`command.outcome-boundary`](specs/command/outcome-boundary.sdp.md) | `RejectionData` and `TransientData`; the platform codes `invalidInput`, `unauthenticated`, `forbidden`, `idempotencyConflict`, `staleVersion`, `entityExists`, `operationTooLarge`, `unsupportedContractVersion` and the transient `rateLimited`, `capacity`, `writePaused`; `normalizeThrown`; the engine's OCC-retry exhaustion as a retryable technical failure; the conditional dispatcher |
+| E-6 | [`command.actor-and-scope`](specs/command/actor-and-scope.sdp.md), [`command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | `Actor`, `ActorRef`, `TenantScope`, `CallerNamespace` (`public`, `service`, `worker`, `agent`, `system`), the `authorize` signature, the `grants` table; the worker's two modes as one `Authority` shape, `{ actor, scope, mode }` with `recheckDelegator` and `serviceAuthority`, stored on the obligation record and never restated; a derived command carries `worker`, and `system` is reserved for the platform's own maintenance chains and operator operations |
+| E-7 | [`command.command-declaration`](specs/command/command-declaration.sdp.md) | `CommandDeclaration`, `publicCommand` and `internalCommand`, the executor that takes the minted `OperationRef` and returns the kernel's outcome plus `streams`, the read-model binding with its `source` and projection, the registry, the registration check, what generation emits; the cost of two registered mutations per command and the single-export dispatcher alternative it beat |
+| E-8 | [`application.generation-registry`](specs/application/generation-registry.sdp.md), [`application.write-pause`](specs/application/write-pause.sdp.md), [`application.rebuild`](specs/application/rebuild.sdp.md) | The `generations` table with seven states and their transitions, one building generation per read model, the `projectionMarkers` table; a 7-day rollback period in which the retired generation is kept but not written, and a rollback reopens it as `verifying` for one verify pass, with write-through as the recorded alternative; one generation per read model spanning every tenant, so the registry's two indexes lead with the read model name and not `tenantId`, a recorded deviation from Law 11's index rule; one gate document per deployment with scope keys, read by the pipeline's step 7, with no fence or drain of its own because optimistic concurrency and the generation's fence already serialize; a paused rebuild closes the view's source stream types, one `source:` scope per binding, so every writer of those streams is held; gate changes treated as mandatory audit |
+| E-9 | [`application.projection-contract`](specs/application/projection-contract.sdp.md) | `Projection⟨D, Row⟩`, `AggregateProjection⟨D⟩` and `HistoryProjection⟨Row⟩`, the last folding events into the prior row for a view that depends on history across streams; `applyProjection` with modes `live-created`, `live-updated`, `backfill`, `applyAggregate` and `applyHistoryProjection`, called by the pipeline's step 9 and the rebuild's batches only; row conventions `tenantId`, `generation`, `key`, `projectionVersion`, `sourceVersions`; the `by_key` index; the created flag and the appended events read from the operation outcome's `streams` entry |
+| E-10 | [`obligations.lifecycle-transitions`](specs/obligations/lifecycle-transitions.sdp.md), [`obligations.record-contract`](specs/obligations/record-contract.sdp.md) | The allowed transitions between the six states and who causes each; the `obligations` and `obligationRepairs` tables with seven and two indexes; a 64 KiB inline payload bound; ten late-evidence entries; two attention reasons beyond D13's four, `recoveryFailing` and `chainBound` |
+| E-11 | [`effects.claim-call-settle`](specs/effects/claim-call-settle.sdp.md) | The signatures of `claimAttempt`, `readForCall`, `callProvider`, `reconcileAttempt`, `settleAttempt`, `expireLease`; the `RepetitionPolicy` union with a fourth value `none` |
+| E-12 | [`constraints.events-stay-small`](specs/constraints/events-stay-small.sdp.md) | A 16 KiB payload bound measured by the journal's `append`, so a fold of 600 events since the latest baseline stays near 10 MiB under the 16 MiB read ceiling; the reserved `baseline` event is exempt and bounded by its stream type's `budgetBytes`; the 1 second query timeout binds first and the first experiment measures it |
+| E-13 | [`platform.acceptance-contract`](specs/platform/acceptance-contract.sdp.md) | The native tier's identity comes from the local backend's admin key acting as an identity with the production issuer's name and the test subject, the mechanism S13's guide uses; parity for Sc L2-9 is code path, schema, concurrency and the authority model, and the identity source is the one named difference on every evidence record |
+| E-14 | [`platform.acceptance-contract`](specs/platform/acceptance-contract.sdp.md) | A fifth tier, the build tier: a compile of the fixture app with the change applied that must fail at `tsc` or at the registration check, run before the native suite with no backend; Sc L2-4 is its one scenario |
+| E-20 | [`kernel.decider-contract`](specs/kernel/decider-contract.sdp.md), [`kernel.domain-kernel`](specs/kernel/domain-kernel.sdp.md) | The concrete generics, `DomainEvent`, `DecisionActor` as the kernel's structural view of the actor, `DecisionContext { now, actor, facts }`, `DecideResult`, `Invariant`, `Transitions` and `transition`; the kernel imports nothing from Convex and nothing from the command family |
+| E-21 | [`kernel.outcome-model`](specs/kernel/outcome-model.sdp.md) | `Outcome⟨R⟩`, `Rejection`, `CommittedOutcome⟨R⟩`, `AffectedRef`; a committed outcome carries at least one event; the reserved codes `staleVersion`, `operationTooLarge` and `entityExists`, the last raised by the adapter for a create planned at expected version 0 whose stream exists |
+| E-22 | [`context.context-component`](specs/context/context-component.sdp.md) | One registered mutation per sanctioned operation via `defineOperation` with args `{ tenantId, actor, operation, input, facts }`; `contextId` as a code constant equal to the mount name; 256 streams, 800 written documents and 8 MiB of stream documents read or written per call, derived from each stream type's byte budget; `convex-helpers` as the component's dependency; the query and maintenance surface |
+| E-23 | [`context.persistence-adapter`](specs/context/persistence-adapter.sdp.md) | The request and result types, the `plan` and `combine` runner, per-stream outcome aggregation with one `streams` entry per stream carrying its DTO, version, created flag and appended events, caller-named expected version semantics including expected version 0 as the create's uniqueness check, byte-derived bounds, internal guards as technical failures |
+| E-24 | [`context.queries`](specs/context/queries.sdp.md) | `get`, `list`, `history`, `rebuild` per stream type and `operations.byOperation`; the `scope` argument; `toDto` with `version: StreamVersion` on every DTO; `list` and `history` through `paginator` from `convex-helpers` because `.paginate()` does not work in a component, relayed unchanged with `pageStatus` and `splitCursor` and read with `usePaginatedQuery` from `convex-helpers/react`; a list page of at most `min(200, 8 MiB / budgetBytes)` rows and 500 events per page, passed as `maximumRowsRead` and `maximumBytesRead` because a reactive re-run with an end cursor ignores `numItems`; the `rebuild` query's `tailTooLong` refusal, its `maxEvents` argument and the `budgetExhausted` refusal for a batching caller |
+| E-25 | [`context.journal`](specs/context/journal.sdp.md) | A baseline is a reserved `eventType: "baseline"` whose payload holds `{ state, stateSchemaVersion }` and is bounded by the stream's `budgetBytes`, not the payload bound; `baselineVersion` on the stream row; a `BaselineMigration` registered on the stream type; the `writeBaseline` maintenance mutation, declared with the component's public `mutation` builder because internal functions are not exposed to the parent (S4), and the parent-side scheduled chain that drives it and reads the write pause's gate before every batch; a batch bound derived from `budgetBytes`; the upcasting rule; the fold bound of 600 events with `rebuildStream`'s refusal above it; the payload byte check in `append`; every baseline bumps its stream's version |
+| E-26 | [`context.event-envelope`](specs/context/event-envelope.sdp.md) | The `CausedBy` union with a `migration` variant; `OperationRef`; `eventId` from `crypto.randomUUID()` |
+| E-30 | [`command.command-pipeline`](specs/command/command-pipeline.sdp.md) | The `CommandResponse` shape with a `replayed` flag and `AffectedRef` as an application ID |
+| E-31 | [`command.command-pipeline`](specs/command/command-pipeline.sdp.md) | The operation ID is minted once per top-level mutation with `crypto.randomUUID()`; the internal entry takes an optional `causedBy`, which step 7 copies onto the `OperationRef`, so a reaction's derived command names its publication event and the envelope's `event` variant has one producer |
+| E-32 | [`command.command-pipeline`](specs/command/command-pipeline.sdp.md) | Admission is an optional per-command policy in the declaration, absent by default |
+| E-33 | [`command.command-pipeline`](specs/command/command-pipeline.sdp.md), [`command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | A public caller may supply a request key to opt into a receipt; the internal entry requires one |
+| E-34 | [`command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | Lazy expiry at lookup; a per-tenant sweep of at most 1,000 rows; request keys of at most 256 characters; at most 1,000 affected refs per receipt |
+| E-35 | [`command.outcome-boundary`](specs/command/outcome-boundary.sdp.md) | The transient code `writePaused`, reserved for the write pause and confirmed by it |
+| E-36 | [`command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | The fingerprint is the SHA-256 digest of the canonical JSON of the business input followed by the contract version; the outside facts the executor captures travel beside the input and are excluded, so a retry that captures a fresher fact is not a conflict |
+| E-37 | [`command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | Identity to actor mapping from `tokenIdentifier`, `subject` and `issuer`; revocation by deleting the grant row, with no cache; a 500-grant read bound |
+| E-38 | [`command.command-declaration`](specs/command/command-declaration.sdp.md) | The declaration also carries `contractVersion`, `retention`, `irreversible`, `admission`, `bounds`, `rejections`, `audit` and `writes`; `bounds` is the one input bound, checked at the pipeline's step 1; `writes` names the context and stream type pairs the executor may write, from which step 7 derives the write pause's source scopes and which step 9 proves; the declaration has no reactions field |
+| E-39 | [`command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | The second UI submit of a create is answered with the rejection `entityExists`, not an idempotent success, because the UI path writes no receipt to replay from and the client holds the entity ID |
+| E-40 | [`application.rebuild`](specs/application/rebuild.sdp.md), [`application.generation-registry`](specs/application/generation-registry.sdp.md) | A batch is one mutation, one cursor, at most 100 entities capped by the context's byte-derived page bound, a design number not attributed to the component; `@convex-dev/migrations` drives parent-table batches and a self-scheduled internal mutation drives context-enumerated ones until Probe 6 shows the component can; all-tenants iteration over the parent's tenant list |
+| E-41 | [`application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | The caller-driven import command with an `imports` progress row; the input bound itself is the declaration's `bounds.maxItems` under E-38 |
+| E-42 | [`application.restore`](specs/application/restore.sdp.md), [`application.generation-registry`](specs/application/generation-registry.sdp.md) | Four checks (journal, domain, read model, receipt) as checkpointed batches, the stream check bounded through the `rebuild` query's `maxEvents` so its worst case is one fold, and a refused fold counted as a journal finding; a fifth step that inventories the closed gate entries, the generations in flight and the running imports the snapshot restored; the `restoreRuns` record; an accepted branch that resumes every stranded generation, proven by the generation row's fence; `MAINTENANCE_MODE=restore` as the writer door, read by the write pause's check before the gate document and cleared before the durable profile's schedule rebuild runs |
+| E-43 | [`operations.baseline-operations`](specs/operations/baseline-operations.sdp.md) | The `auditRecords` table that fails closed; a 4 KiB diagnostic record through a sink that never throws; the `personalData` reference table |
+| E-44 | [`application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | `BusinessFailurePolicy` (`carry` or `reject`) per context call, applied in the executor body through the pinned helper `carryOrReject` |
+| E-45 | [`application.read-models`](specs/application/read-models.sdp.md) | At most 8 component reads per parent query and 4 read-model rows per command |
+| E-46 | [`application.first-experiment`](specs/application/first-experiment.sdp.md), [`application.orders-inventory-example`](specs/application/orders-inventory-example.sdp.md) | `CancelOrder` as the second lifecycle command, the order summary as the essential read model, a provisional maximum of 100 lines; a 16 KiB budget on the stock item stream and the default on the order stream; `PlaceOrder` calls Orders first; the order allocation history view that Sc L2-6 builds |
+| E-47 | [`application.first-experiment`](specs/application/first-experiment.sdp.md) | The `Measurement` record and how each count is captured |
+| E-50 | [`obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | The module is a parent-side library plus two parent tables with a static handler registry, not a component |
+| E-51 | [`obligations.lifecycle-transitions`](specs/obligations/lifecycle-transitions.sdp.md), [`obligations.local-reaction-wrapper`](specs/obligations/local-reaction-wrapper.sdp.md), [`effects.external-effects`](specs/effects/external-effects.sdp.md) | A body's business failure settles `succeeded` with event evidence; a thrown rejection or a declined report settles `cancelled` with `businessRejection` evidence; backoff 1 s times 2 capped at 1 h; 8 attempts by default; a transient `writePaused` or `capacity` refusal defers the same attempt after `retryAfterMs` or 60 s without counting it |
+| E-52 | [`obligations.sweeper`](specs/obligations/sweeper.sdp.md) | A cron every 60 s, a grace of 120 s, 100 candidates per scan, 5 rearms, per-candidate nested-mutation isolation, plus a 500 ms elapsed guard by `performance.now()`; the 100 bound provisional on Probe 3; dispatch state read from the system row's lowercase `state.kind` with the failed row's error kept on the rearmed record |
+| E-53 | [`obligations.operator-operations`](specs/obligations/operator-operations.sdp.md) | The five operations as authorized parent functions; cancel and reconcile refused while a lease is live; reconcile mints a reconcile attempt that the claim mutation dispatches, or accepts supplied provider evidence from needs attention |
+| E-54 | [`obligations.fan-out-and-chains`](specs/obligations/fan-out-and-chains.sdp.md) | 16 obligations per publishing transaction, 500 per fan-out page, a causation depth of 8; a command's static reactions are the `createObligation` calls of its executor body, not a declaration field |
+| E-55 | [`obligations.retention-and-restore`](specs/obligations/retention-and-restore.sdp.md) | A completed-work horizon of the larger of 30 days and the longest provider-key validity; compaction after 7 days; 500 rows per retention run |
+| E-56 | [`obligations.retention-and-restore`](specs/obligations/retention-and-restore.sdp.md) | External dispatch switched by the `OBLIGATIONS_DISPATCH` environment variable, read only in the parent; the cursor-driven `rebuildSchedules` operation, which refuses while `MAINTENANCE_MODE` is `restore`; the switch order, dispatch off before the snapshot and on last, after the transactional restore has reopened writers |
+| E-57 | [`obligations.record-contract`](specs/obligations/record-contract.sdp.md), [`obligations.sweeper`](specs/obligations/sweeper.sdp.md) | Three deployment-wide indexes lead with `status`, not `tenantId`; a recorded deviation from the review rubric's item 25 |
+| E-58 | [`effects.claim-call-settle`](specs/effects/claim-call-settle.sdp.md), [`effects.external-effects`](specs/effects/external-effects.sdp.md) | The lease is the runtime's action timeout plus 5 minutes; the provider key is `tenantId:effectKey`; ten late reports kept; a reconcile returns the same report union; plus three bounded repeats of a thrown settle call with a duplicate rule in the settle, so a repeat is not an attempt under Law 12 |
+
+## Open questions for the owner
+
+Nothing in the corpus is `[blocking]`. Every open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
+
+The doc's own open questions:
+
+| OQ | Question | Provisional reading | Recorded on |
+|---|---|---|---|
+| OQ1 | May a trivial context with no invariants of its own be plain tables in the parent behind lint rules? | A component per context everywhere; the first experiment measures component call cost (Probe 3) and decides | [`context-component`](specs/context/context-component.sdp.md), [`first-experiment`](specs/application/first-experiment.sdp.md), [`obligation-module`](specs/obligations/obligation-module.sdp.md), [`d02`](specs/decisions/d02-context-owns-state-and-journal.sdp.md) |
+| OQ2 | Does the product need a record of refused commands, for security audit or agent proposals? | No command uses the generic internal dispatcher; it is carried as a conditional design | [`outcome-boundary`](specs/command/outcome-boundary.sdp.md), [`agent-runs`](specs/agents/agent-runs.sdp.md), [`d07`](specs/decisions/d07-rejections-thrown-not-stored.sdp.md) |
+| OQ3 | One document per stream as the default, and the largest order the placement command supports | One document per stream under a 256 KiB budget (E-2); the maximum is `MAX_ORDER_LINES`, measured at 100 | [`state-document-mapping`](specs/kernel/state-document-mapping.sdp.md), [`batch-shaped-api`](specs/context/batch-shaped-api.sdp.md), [`parent-use-cases`](specs/application/parent-use-cases.sdp.md), [`first-experiment`](specs/application/first-experiment.sdp.md), [`d10`](specs/decisions/d10-contexts-meet-in-parent-use-cases.sdp.md) |
+| OQ4 | Where the probe app and the experiment live | Not decided by the corpus | [`first-experiment`](specs/application/first-experiment.sdp.md), [`probe-plan`](specs/facts/probe-plan.sdp.md) |
+| OQ5 | Whether the decisions move into SDP carriers | This corpus is that move; facts as constraint Specs with an evidence-status target | [`transactional-domain-platform`](specs/platform/transactional-domain-platform.sdp.md) |
+| OQ6 | The vocabulary clashes on receipt and generation | Receipt is the stored idempotency outcome; the row that proves an effect happened is completion evidence; generation is a read-model build; the attempt number is the attempt | [`vocabulary`](specs/platform/vocabulary.sdp.md) |
+
+The plan's section 11, the ambiguities neither the doc nor SDP rules on, carried on the provisional reading shown:
+
+1. Vocabulary clashes (OQ6), as above.
+2. Facts as constraints (OQ5). Confirm, or choose `rule` Specs; the change is mechanical.
+3. Plan-imposed numbering. F1 to F17, Sc L0-1 to ALL-1, OQ1 to OQ6 and the E-numbers exist only in the plan and this corpus; the doc should adopt them or the citations stay plan-relative.
+4. Refused-command records (OQ2), as above.
+5. Trivial contexts as plain tables (OQ1), as above.
+6. One document per stream and the maximum order size (OQ3), as above.
+7. Where the experiment lives (OQ4), as above.
+8. Readiness. No agent states `ready`. After review the owner may state it on Layer 0 to 2 Specs whose floor clears; the Design Review index shows the floor each Spec reaches, and most Layer 0 to 2 Specs already reach `ready` structurally.
+9. `verifies` on examples before tests exist. Kept for fidelity to the acceptance contract at the cost of one warning per example. The alternative (`refines` only until a test anchor binds) removes the 54 warnings and the trace.
+10. Layer 3 depth. The doc says Layer 3 is written from what the experiment shows; the corpus carries D13 to D15 at `defined` now because the doc is specific there, and every numeric default of E-51, E-52, E-54, E-55, E-57 and E-58 is marked provisional. Confirm that this does not pre-empt the experiment; the question is recorded in the graph on [`obligation-module`](specs/obligations/obligation-module.sdp.md) and [`external-effects`](specs/effects/external-effects.sdp.md) against decision method rule 4, and the [`do-nothing-check`](specs/obligations/do-nothing-check.sdp.md) decision keeps the activation gated on Probe 7, made once for the durable profile rather than per reaction.
+11. F16 changes status. The lead read S6 on 2026-09-30 and found the states and the 7-day retention of `_scheduled_functions` documented. The corpus records the recheck on [`f16`](specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md); the doc is not edited. The owner decides whether the doc follows.
+12. Component call cost (F4, Probe 3). Layer 1 puts every context read behind a component call. If the probe shows a cost that breaks the read budgets, OQ1's answer changes the context component's shape; [`context-component`](specs/context/context-component.sdp.md) flags the dependency and does not pre-decide it.
+
+Beyond the plan's list, three product decisions the packages surfaced:
+
+- The retention and deletion policy's periods and which historical claims survive deletion ([`baseline-operations`](specs/operations/baseline-operations.sdp.md)); the design gives the hooks and no numbers.
+- The late-payment policy of `StartCheckout`: reallocate, ask a person, or refund as a separate operation ([`start-checkout-example`](specs/processes/start-checkout-example.sdp.md)).
+- Whether an old process run is kept, migrated or blocked on a given deploy ([`workflow-processes`](specs/processes/workflow-processes.sdp.md)).
+
+The seven probes are pending, not rulings. Each is recorded on the Specs that rest on it and on [`probe-plan`](specs/facts/probe-plan.sdp.md): Probe 1 (where the client guarantee ends, D6), Probe 2 (`ConvexError` data across a component boundary, F14, D7), Probe 3 (cost of a component call, F4, D2, D8), Probe 4 (whether transaction limits add up across nested calls, F13, D10), Probe 5 (reactivity and pagination of a parent query over a component query, F15, D8), Probe 6 (a backfill batch racing a live command; the migrations component, F17, D9), Probe 7 (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
+
+Every open question in the corpus, by Spec. 67 Specs carry 129 questions, all `[non-blocking]`; "deferred to the build" is the Layer 4 to 6 deferral, which needs no ruling before its trigger fires.
+
+| Spec | Open questions |
+|---|---|
+| [`spec:platform.transactional-domain-platform`](specs/platform/transactional-domain-platform.sdp.md) | OQ5 |
+| [`spec:platform.vocabulary`](specs/platform/vocabulary.sdp.md) | OQ6 receipt; OQ6 generation |
+| [`spec:platform.acceptance-contract`](specs/platform/acceptance-contract.sdp.md) | E-13; E-14 |
+| [`spec:decisions.d02-context-owns-state-and-journal`](specs/decisions/d02-context-owns-state-and-journal.sdp.md) | Probe 3; OQ1 |
+| [`spec:decisions.d03-events-only-source-of-next-state`](specs/decisions/d03-events-only-source-of-next-state.sdp.md) | Gap, initial state (E-1); Gap, state across several documents (E-2, OQ3) |
+| [`spec:decisions.d06-idempotency-client-and-receipts`](specs/decisions/d06-idempotency-client-and-receipts.sdp.md) | Probe 1 |
+| [`spec:decisions.d07-rejections-thrown-not-stored`](specs/decisions/d07-rejections-thrown-not-stored.sdp.md) | Probe 2; OQ2 |
+| [`spec:decisions.d08-read-models-in-command`](specs/decisions/d08-read-models-in-command.sdp.md) | Probe 5 |
+| [`spec:decisions.d09-rebuild-online-by-default`](specs/decisions/d09-rebuild-online-by-default.sdp.md) | Probe 6 |
+| [`spec:decisions.d10-contexts-meet-in-parent-use-cases`](specs/decisions/d10-contexts-meet-in-parent-use-cases.sdp.md) | Probe 4; OQ3 |
+| [`spec:decisions.d13-deferred-work-is-an-obligation`](specs/decisions/d13-deferred-work-is-an-obligation.sdp.md) | Probe 7 |
+| [`spec:decisions.d19-operations-travel-with-capability`](specs/decisions/d19-operations-travel-with-capability.sdp.md) | Probe 7 |
+| [`spec:facts.f14-convex-error-survives-nested-and-component-boundary`](specs/facts/f14-convex-error-survives-nested-and-component-boundary.sdp.md) | Probe 2 |
+| [`spec:facts.f15-parent-query-over-component-query-stays-reactive`](specs/facts/f15-parent-query-over-component-query-stays-reactive.sdp.md) | Probe 5 |
+| [`spec:facts.f16-scheduled-functions-table-shows-failed-runs`](specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md) | Probe 7 |
+| [`spec:facts.f17-migrations-fits-generation-backfill`](specs/facts/f17-migrations-fits-generation-backfill.sdp.md) | Probe 6 |
+| [`spec:facts.probe-plan`](specs/facts/probe-plan.sdp.md) | Probe 1; Probe 2; Probe 3; Probe 4; Probe 5; Probe 6; Probe 7 |
+| [`spec:kernel.decider-contract`](specs/kernel/decider-contract.sdp.md) | E-20 |
+| [`spec:kernel.domain-kernel`](specs/kernel/domain-kernel.sdp.md) | E-20; E-1 |
+| [`spec:kernel.initial-state`](specs/kernel/initial-state.sdp.md) | E-1 |
+| [`spec:kernel.outcome-model`](specs/kernel/outcome-model.sdp.md) | E-21; Probe 2 |
+| [`spec:kernel.state-document-mapping`](specs/kernel/state-document-mapping.sdp.md) | E-2; OQ3 |
+| [`spec:context.batch-shaped-api`](specs/context/batch-shaped-api.sdp.md) | Probe 4; OQ3 |
+| [`spec:context.context-component`](specs/context/context-component.sdp.md) | OQ1; Probe 3; E-22 |
+| [`spec:context.event-envelope`](specs/context/event-envelope.sdp.md) | E-26 |
+| [`spec:context.journal`](specs/context/journal.sdp.md) | E-25 |
+| [`spec:context.persistence-adapter`](specs/context/persistence-adapter.sdp.md) | E-23 |
+| [`spec:context.queries`](specs/context/queries.sdp.md) | Probe 5; E-24 |
+| [`spec:context.tables`](specs/context/tables.sdp.md) | E-3 |
+| [`spec:command.actor-and-scope`](specs/command/actor-and-scope.sdp.md) | E-6 |
+| [`spec:command.command-declaration`](specs/command/command-declaration.sdp.md) | E-7; E-38 |
+| [`spec:command.command-pipeline`](specs/command/command-pipeline.sdp.md) | E-30; E-31; E-32; E-33; Probe 4 |
+| [`spec:command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | Probe 1; E-33; E-34; E-36; E-39 |
+| [`spec:command.outcome-boundary`](specs/command/outcome-boundary.sdp.md) | E-5; E-35; OQ2; Probe 2 |
+| [`spec:command.receipt-table`](specs/command/receipt-table.sdp.md) | E-4 |
+| [`spec:command.tenancy-and-authority`](specs/command/tenancy-and-authority.sdp.md) | E-37; E-6 |
+| [`spec:application.first-experiment`](specs/application/first-experiment.sdp.md) | OQ4; OQ1; OQ3; E-46; E-47 |
+| [`spec:application.generation-registry`](specs/application/generation-registry.sdp.md) | E-8 rollback; E-8 reach of a generation; E-42; E-40 |
+| [`spec:application.orders-inventory-example`](specs/application/orders-inventory-example.sdp.md) | E-46 |
+| [`spec:application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | OQ3; Probe 4; E-41; E-44 |
+| [`spec:application.projection-contract`](specs/application/projection-contract.sdp.md) | E-9 |
+| [`spec:application.read-models`](specs/application/read-models.sdp.md) | Probe 5; Probe 3; E-45 |
+| [`spec:application.rebuild`](specs/application/rebuild.sdp.md) | Probe 6; E-40; E-8 |
+| [`spec:application.restore`](specs/application/restore.sdp.md) | Probe 7; E-42 |
+| [`spec:application.write-pause`](specs/application/write-pause.sdp.md) | E-8 |
+| [`spec:operations.baseline-operations`](specs/operations/baseline-operations.sdp.md) | E-43; the retention and deletion policy's content |
+| [`spec:constraints.events-stay-small`](specs/constraints/events-stay-small.sdp.md) | E-12 |
+| [`spec:obligations.do-nothing-check`](specs/obligations/do-nothing-check.sdp.md) | Probe 7 |
+| [`spec:obligations.fan-out-and-chains`](specs/obligations/fan-out-and-chains.sdp.md) | E-54 |
+| [`spec:obligations.lifecycle-transitions`](specs/obligations/lifecycle-transitions.sdp.md) | E-10; E-51 |
+| [`spec:obligations.local-reaction-wrapper`](specs/obligations/local-reaction-wrapper.sdp.md) | E-51 |
+| [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | Probe 7; E-50; OQ1 dependency; Decision method rule 4 |
+| [`spec:obligations.operator-operations`](specs/obligations/operator-operations.sdp.md) | E-53 |
+| [`spec:obligations.record-contract`](specs/obligations/record-contract.sdp.md) | E-10; E-57 |
+| [`spec:obligations.retention-and-restore`](specs/obligations/retention-and-restore.sdp.md) | E-55; E-56; Probe 7 |
+| [`spec:obligations.sweeper`](specs/obligations/sweeper.sdp.md) | E-52; Probe 3; E-57 |
+| [`spec:effects.claim-call-settle`](specs/effects/claim-call-settle.sdp.md) | E-11; E-58 |
+| [`spec:effects.external-effects`](specs/effects/external-effects.sdp.md) | E-58; E-51; Decision method rule 4 |
+| [`spec:processes.approvals`](specs/processes/approvals.sdp.md) | deferred to the build |
+| [`spec:processes.start-checkout-example`](specs/processes/start-checkout-example.sdp.md) | the late-payment policy |
+| [`spec:processes.workflow-processes`](specs/processes/workflow-processes.sdp.md) | deferred to the build; keep, migrate or block per deploy |
+| [`spec:agents.agent-runs`](specs/agents/agent-runs.sdp.md) | deferred to the build; OQ2 dependency |
+| [`spec:agents.budget-accounting`](specs/agents/budget-accounting.sdp.md) | deferred to the build |
+| [`spec:advanced.coalesced-recomputation`](specs/advanced/coalesced-recomputation.sdp.md) | deferred to the build |
+| [`spec:advanced.cross-stream-online-rebuild`](specs/advanced/cross-stream-online-rebuild.sdp.md) | deferred to the build |
+| [`spec:advanced.ordered-consumer`](specs/advanced/ordered-consumer.sdp.md) | deferred to the build |
+| [`spec:advanced.trigger-table`](specs/advanced/trigger-table.sdp.md) | deferred to the build |
+
+## ID changes
+
+Four example IDs were added beyond the plan's section 4, each because the doc's scenario row enumerates two cases and SDP's point-per-example law gives each case its own example:
+
+| Sc | Added example | Reason |
+|---|---|---|
+| L2-1 | `spec:application.parent-use-cases.second-context-throws` | the row says "rejects or throws"; the throw case is a technical failure, not the rejection |
+| L2-6 | `spec:application.rebuild.write-pause-rebuild-abort` | the row's pass condition says "resume or abort safely" |
+| L3-2 | `spec:obligations.obligation-module.wrapper-failed-rearmed` | the row says "kill a dispatch before work, or fail the scheduled wrapper" |
+| L3-6 | `spec:effects.external-effects.stale-worker-after-cancellation` | the row says "after a new attempt or a cancellation" |
+
+No inventory ID was renamed or split. Package D therefore has 13 examples instead of 11, Package E has 22 instead of 20, and the corpus has 54.
+
+## Integration notes
+
+What the integration pass changed after the five packages landed, and what it left for the owner or the plan.
+
+Cross-package fixes made at the source Specs:
+
+- The context call shape. Package B registers one mutation per sanctioned operation, `components.⟨context⟩.operations.⟨name⟩` with `{ tenantId, actor, operation, input }`, which follows the doc's `inventory.allocate({ lines })`. Packages C and D described a generic `execute` with `{ tenantId, scope, actor, operationId, command }`. The pipeline's step 8 and `contextCall`, the use case's flows and `typeContextCall`, and the examples and reviewer bullets that named `execute` now use B's operations; the adapter's per-stream function is still called `execute` and the L1-2 examples say so.
+- The `writePaused` refusal. Package D threw `{ code, retryable: true, scopeKey, reason }`; the outcome boundary's transient shape is `TransientData` with `kind: "transient"`. The write pause now throws through `refuseTransient`, and the L2-6 example asserts `data.kind`.
+- Created-stream detection for the projection's live-created mode. Package D read `version.version === appended` off a `StreamResult` the parent never sees; the adapter now returns one `streams` entry per planned stream with its DTO, version and `created` flag beside the kernel's outcome, the executor forwards them, and the pipeline's step 9 picks the mode from the flag.
+- Who writes a read model. The pipeline said the executor runs the projections at step 9, the declaration gave `ReadModelBinding` an `update` function over the use case's result, and parent use cases had the body call `applyProjection`; the pipeline's step 9 is now the one live writer, from the executor's `streams`, and the binding names its source context and stream type and its projection.
+- The captured facts D3 makes inputs had no path: `DecisionContext.facts` existed but no validator, context call or executor carried them. The operation's `args` take `facts`, the executor captures them and passes them on every context call, and the fingerprint excludes them.
+- The gate, the audit record and the diagnostic were required of every use case by Package D and absent from the pipeline's eleven steps; they now sit at steps 7, 10 and 11, each a no-op in a deployment without read models, closed gates or audited declarations.
+- The `entityExists` code had three owners. It is now the kernel's third reserved code, raised by the adapter's step 3 for a create planned at expected version 0 whose stream exists; the initial-state decision, the receipts rules and the L1-4 example say the same, and E-39 registers that the second submit is a rejection rather than an idempotent success.
+- Pagination inside a component. The queries contract used the built-in `.paginate()`, which the components page says does not work in a component; `list` and `history` now use `paginator` from `convex-helpers`, the parent relays its page, the client hook is the one from `convex-helpers/react`, and Probe 5 is narrowed to contiguity across the boundary.
+- Byte budgets. Every bound on streams per call, list page, backfill batch, written documents and fold length is now derived from a stream type's byte budget or the 16 KiB payload bound so that the 16 MiB ceilings bind in bytes, not only in documents; the fold bound is 600 events with headroom, and a longer tail is refused rather than read.
+- A write pause or a restore no longer exhausts local reactions: the wrapper defers an attempt refused with `writePaused` or `capacity` without counting it, and `rebuildSchedules` runs only after the transactional restore has cleared `MAINTENANCE_MODE`.
+- The operation query path is `queries.operations.byOperation` everywhere (restore's receipt check and read-models' surface said `queries.order.byOperation`).
+- A derived command's events carry the envelope's existing `causedBy` of kind `event`; Package E's `Causation` type no longer implies a fourth envelope variant.
+- The kernel's `DecideResult` rejection member is `kind: "rejection"`, the same word the `Outcome` union uses.
+- The context component's `noAuthNoEnv` bullet now matches its own `args`: operations take `tenantId` and `actor`, queries take `tenantId` and `scope`.
+- Rubric item 16. Every law and fact cited in a typed bullet of a Spec in the four design packs now appears in that Spec's `constrainedBy`. The nineteen decisions and the foundation pack's own law, fact, ledger, probe and vocabulary Specs cite laws and facts without the edge, which the plan's section 3.3 allows. The graph has 881 edges.
+
+Cross-package fixes made in review round 2:
+
+- A derived command. It carries the `worker` namespace (E-6), its cause reaches the pipeline through the internal entry's optional `causedBy` (E-31), and a command's static reactions are the `createObligation` calls of its executor body, so the declaration has no reactions field (E-54).
+- Worker authority. Three shapes became one `Authority`, pinned in the actor and scope contract and imported by the obligation record, the wrapper and the claim.
+- The input bound. It is the declaration's `bounds`, checked once at the pipeline's step 1; `maxInputItems` and the body-side check are gone.
+- Baselines in bytes. The derived mapping is capped at 512 KiB, a baseline payload is bounded by `budgetBytes` and exempt from the 16 KiB bound, the `writeBaseline` batch is derived from bytes, the driver reads the write pause's gate, and the version bump a baseline causes is a stated risk.
+- Pagination caps. `list` and `history` pass `maximumRowsRead` and `maximumBytesRead`, because a reactive re-run with an end cursor ignores `numItems`; the restore's stream check passes `maxEvents` to the `rebuild` query and treats `budgetExhausted` as a resume point.
+- History views. `HistoryProjection` folds events, the adapter's `streams` entry carries the appended events, the rebuild's pause path pages each source's history, and the example domain has the order allocation history view that both Sc L2-6 examples build.
+- The write pause's scope. A paused rebuild closes the view's source stream types, and the declaration's `writes` lets the pipeline hold every writer of them.
+- The example domain. The stock item stream declares a 16 KiB budget so the maximum order fits one allocation call, and `PlaceOrder` calls Orders first so a double submit is answered `entityExists`.
+- The build tier is the acceptance contract's fifth tier (E-14), and the three Layer 4 to 6 Specs that lacked a `deferred:` Design bullet have one.
+
+Things in the plan that the packages found wrong, and the convention adopted:
+
+- `<product decision>` (plan 6.3) is refused by the carrier's HTML guard; the placeholder is written in prose as `MAX_ORDER_LINES`, a product decision under OQ3.
+- A `workflow` Spec needs rules or examples to reach `defined`; every workflow carries `- rule:` bullets under `## Workflow`.
+- Unnumbered sections of the doc are cited by name (the last row of the numbering key); the plan's section 1 should list them.
+- The composition helper returns two static exports per command, not one; a public mutation cannot take a server-assigned namespace without letting a client claim it (Sc L1-7).
+- The receipt sweep is per tenant (`by_tenant_expiry`), because rubric item 25 forbids a non-tenant-leading index; the obligation module's three sweeper and retention indexes break that rule deliberately and record it as E-57. The `generations` table also has no `tenantId` lead, because a generation spans all tenants; the registry's E-8 question on the reach of a generation records that deviation.
+- Sc L2-4 runs in a build tier the doc's four tiers do not name; the acceptance contract now carries it as a fifth tier under E-14.
+- Layer 4 to 6 open questions are `[non-blocking]`; the deferral already forces `scoped`, and nothing there needs a ruling before its trigger.
+- A `contract` Spec clears `defined` through its Contract bullets; no example children are needed.
+- Package B's pack lists each parent's examples directly after it, as do the others.
+
+Residual items, none of which fails validate or the rubric:
+
+- Two environment variables gate a restore: `MAINTENANCE_MODE=restore` closes writers (transactional profile, E-42) and `OBLIGATIONS_DISPATCH=off` closes external dispatch (durable profile, E-56). Both are set before the snapshot is restored; `MAINTENANCE_MODE` is cleared first, in the transactional restore's accepted branch, then the schedule rebuild and reconcile pass run, and `OBLIGATIONS_DISPATCH` moves last. A single switch would be simpler and is the owner's call.
+- Packages B and C cite the Convex runtimes page by name inside E-26 and E-36 rather than by an S-number; the plan's Sources may want it.
+- Package E cites Workflow and Workpool README facts as S11 and S12 with the read date, beyond what the plan's section 9 records for those pages; the reviewer of rubric item 35 should confirm them against the READMEs.
+- The Design Review pages live under `generated/design-review/spec/` and `generated/design-review/pack/`, not one flat directory as the plan's section 0 implies.

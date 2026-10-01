@@ -1,0 +1,112 @@
+---
+id: spec:command.outcome-boundary
+kind: contract
+altitude: story
+readiness: defined
+relations:
+  refines: spec:command.command-pipeline
+  dependsOn: spec:kernel.outcome-model
+  constrainedBy:
+    - spec:laws.law06-technical-failure-never-a-rejection
+    - spec:facts.f03-nested-run-mutation-partial-rollback
+    - spec:facts.f14-convex-error-survives-nested-and-component-boundary
+    - spec:laws.law05-authorization-before-execution-and-disclosure
+    - spec:facts.f13-transactions-have-limits
+    - spec:facts.f01-serializable-mutations-under-occ
+  decidedBy:
+    - spec:decisions.d04-four-outcomes
+    - spec:decisions.d07-rejections-thrown-not-stored
+---
+# The outcome and rejection boundary
+
+Layer 1 · Detail: full · Traces: D4, D7, Law 6, F3, F14, OQ2, Probe 2, Sc L1-12, Sc L1-1, Sc L1-5, Sc L1-8, Sc L1-9, Sc L1-10.
+
+This contract pins how the kernel's four outcomes cross the wire at the public boundary. Applied and business failure are returned as values and both commit. A rejection is thrown as a `ConvexError` whose data carries a closed code, and the mutation does not commit. A technical failure is any other throw; everything rolls back and nothing is stored as a business outcome. A transient refusal is a `ConvexError` of a second, retryable kind, and nothing is stored either. The `Outcome⟨R⟩` union itself is defined once, in `spec:kernel.outcome-model`; this contract maps it and adds nothing to it.
+
+The closed code list has two halves. The platform codes below are closed here and include the three codes the kernel reserves for the persistence adapter, `staleVersion`, `operationTooLarge` and `entityExists`. Domain codes, the documented rejections a context's `decide` can return such as `invalidTransition`, are the context's own and are closed per command by its declaration's `rejections` field, so the union a client sees is closed at build time and no code reaches the wire that no declaration names. Every code is lower camel case, as the kernel writes its reserved ones. A context throws the kernel's bare `Rejection` as `ConvexError` data; the boundary's one catch, at the outermost level of the pipeline's handler, rethrows it in the wire shape below with the discriminator and the command type added, and never continues past it. The generic internal dispatcher that D7 allows for a boundary which must record a refusal is carried as a conditional design, gated on the doc's open question about refused-command records.
+
+## Intent
+
+- outcome: Pin the wire shape of the four outcomes and the closed error-code list, so that a client can tell a rejection from a transient refusal from a technical failure without parsing messages, and so that nothing but applied and business failure ever commits (D4, D7)
+- value: A lost rejection followed by a retry is correct by construction, the public path carries no nested mutation and no rejection receipt, and a reviewer can check the code list against the declarations in one place (D7)
+- risk: The data of a `ConvexError` thrown inside a component is assumed to arrive intact; until Probe 2 runs, the pipeline also throws on a rejection returned as a value, which costs nothing but keeps the boundary correct under either answer (F14, Probe 2)
+- assumption: `ctx.runMutation` inside a mutation gives partial rollback and the parent can catch and continue, which the conditional dispatcher relies on (F3)
+- assumption: `ConvexError` data survives a nested mutation and a component boundary (F14)
+
+### Open questions
+
+- [non-blocking] Extension E-5: the doc fixes the four outcomes and that a rejection is a structured `ConvexError`, but not the data shape or the code list; the shape and the platform codes below are the design's, and the domain codes are closed per declaration (E-5, D4, D7)
+- [non-blocking] Extension E-35: the write pause of D9 refuses writers in its scope while a cross-stream history view rebuilds; the doc does not say how a refused writer is answered; this contract reserves the transient code `writePaused` for Package D so the refusal is retryable and stores nothing, which Package D confirms or replaces (E-35, D9, D4)
+- [non-blocking] OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides whether the generic internal dispatcher below exists; until then it is a conditional design and no command uses it (OQ2, D7)
+- [non-blocking] Probe 2 pending: it must show that a `ConvexError` thrown inside a context operation reaches the parent and the client with its `data` intact; until it does, the rejection relay rests on an assumed fact (Probe 2, F14)
+
+## Contract
+
+- Applied and business failure are returned as a `CommandResponse⟨R⟩` value whose `kind` is `"applied"` or `"businessFailure"`; both commit, because a business failure is something meaningful that belongs in history (D4)
+- A rejection is thrown as `new ConvexError(data)` with `data.kind` equal to `"rejection"` and a code from the closed list; the throw prevents the mutation from committing and nothing is stored (D7, D4)
+- A technical failure is any throw that is not a `ConvexError` of this contract, such as a plain `Error`, a validator failure inside a component or an unexpected exception; everything rolls back, nothing is stored as a business outcome, and the boundary never converts it into a rejection (D4, Law 6)
+- A transient refusal is thrown as `new ConvexError(data)` with `data.kind` equal to `"transient"`; the caller may retry the same intent with the same request key, nothing is stored, and a valid retry can succeed (D4, D6, Sc L1-9)
+- The `data` of every `ConvexError` this contract throws is a value the `v` validators accept, so `errorDataValidator` below describes it exactly and a client reads it as `error.data` after `error instanceof ConvexError` (D7)
+- Keeping a refused request as a fact is a business policy chosen per command; a command that waits for stock is a different command from one that rejects when stock is short, and this boundary never makes that choice by accident (D4)
+- A rejection thrown inside a context operation rolls that sub-transaction back; the pipeline's outermost catch rethrows it as `RejectionData`, so the whole mutation still commits nothing and the caller reads one wire shape whether the rejection came from a context or from the pipeline (F3, D7, F14)
+- The outermost catch never continues, never wraps anything but a `ConvexError` carrying the kernel's `Rejection`, and passes every other throw through unchanged, so it is not the catch-and-continue that D7 reserves for the nested mutation (D7, Law 6)
+- If Probe 2 shows that `ConvexError` data does not survive the component boundary, contexts return the kernel's rejection outcome as a value instead and the pipeline throws it through the same `reject` helper; the wire shape is unchanged either way (D7, Probe 2, F14)
+- If the response to a rejection is lost and the command runs again, the retry runs against current state and nothing of the first attempt remains; if it now succeeds, the intent ran once (D7, Sc L1-12)
+- A transient refusal or a rejection never leaves a receipt, so its idempotency key stays unused and the same key can carry a later successful execution (D6, D7)
+- The code list is closed: the platform codes are the `errorCode` entries below, the domain codes are the `rejections` a command's declaration names, and a code outside both is a technical failure by definition (D4, D12, E-5)
+- The generic internal dispatcher exists only if OQ2 is answered yes; it is one `internalMutation` for every command that needs a refusal record, its nested body is the command's existing internal entry and never a registered body per command, and it returns the rejection as a value because throwing would roll the record back (D7, OQ2, F3, D12)
+
+## Design
+
+The kernel's `Outcome⟨R⟩` maps one-to-one. Applied and business failure become the `CommandResponse⟨R⟩` of the pipeline. Rejection becomes the rejection `ConvexError`. Technical failure is not a kernel outcome at all; it is whatever escapes as a plain throw. The transient kind is the pipeline's own: it comes from admission or from a maintenance gate, never from `decide`. The one catch on the public path is `normalizeThrown` at the top of the pipeline's handler: it rethrows every error, wrapping a bare kernel `Rejection` into `RejectionData` and passing everything else through unchanged, so it never continues and never turns a technical failure into a rejection.
+
+The conditional dispatcher is the one place on the parent side where D7's nested mutation form appears. It runs the command's existing internal entry through `ctx.runMutation` so that a rejection rolls back only that nested body, then writes the refusal record through the normal command path of the context that owns that fact, and returns the rejection as a value. It costs one nested call per dispatched command and exists for no command until the product answers OQ2.
+
+- transactionBoundary: the pipeline's one top-level mutation; the conditional dispatcher adds one nested `ctx.runMutation` around the body for the commands that need a refusal record (D7, F3)
+- convexSurface: no registered function of its own; the error classes and validators are a library the pipeline imports; the dispatcher, if OQ2 says yes, is one `internalMutation` (D7, OQ2)
+- typeOutcomeMapping: `Outcome⟨R⟩` of `spec:kernel.outcome-model` maps as applied → `CommandResponse` kind `"applied"`, businessFailure → `CommandResponse` kind `"businessFailure"`, rejection → thrown `ConvexError⟨RejectionData⟩`; technical failure is any other throw (D4, D7)
+- typeRejectionData: `type RejectionData = Rejection & { kind: "rejection"; code: RejectionCode; commandType: string }` where `Rejection` is the kernel's `{ code: string; message: string; details?: Record⟨string, Value⟩ }` from `spec:kernel.outcome-model`, never redefined here (D7, E-5)
+- typeTransientData: `type TransientData = { kind: "transient"; code: TransientCode; message: string; retryAfterMs?: number }` (D4, E-5)
+- typeRejectionCode: `type RejectionCode = PlatformRejectionCode | DomainRejectionCode` where `DomainRejectionCode` is the union of every code the command's declaration names in `rejections` (D4, D12, E-5)
+- typePlatformRejectionCode: `type PlatformRejectionCode = "invalidInput" | "unauthenticated" | "forbidden" | "idempotencyConflict" | "staleVersion" | "entityExists" | "operationTooLarge" | "unsupportedContractVersion"` (E-5)
+- typeTransientCode: `type TransientCode = "rateLimited" | "capacity" | "writePaused"` (D4, D6, E-35)
+- validatorErrorData: `errorDataValidator = v.union(v.object({ kind: v.literal("rejection"), code: v.string(), message: v.string(), commandType: v.string(), details: v.optional(v.record(v.string(), v.any())) }), v.object({ kind: v.literal("transient"), code: v.union(v.literal("rateLimited"), v.literal("capacity"), v.literal("writePaused")), message: v.string(), retryAfterMs: v.optional(v.number()) }))` where the rejection branch is the kernel's `rejectionValidator` plus `kind` and `commandType`, and `code` is `v.string()` at the validator and the closed union at the type, because the domain half is closed per declaration (D7, E-5)
+- fnNormalizeThrown: `normalizeThrown(error: unknown, commandType: string): never` rethrows: a `ConvexError` whose `data` matches the kernel's `rejectionValidator` and carries no `kind` is rethrown as `new ConvexError({ kind: "rejection", commandType, ...data })`; a `ConvexError` already carrying `kind` and every other error are rethrown unchanged; it is called once, in the pipeline handler's outermost catch (D7, F14, E-5)
+- fnReject: `reject(data: Omit⟨RejectionData, "kind"⟩): never` throws `new ConvexError({ kind: "rejection", ...data })` (D7)
+- fnRefuseTransient: `refuseTransient(data: Omit⟨TransientData, "kind"⟩): never` throws `new ConvexError({ kind: "transient", ...data })` (D4)
+- fnClassify: `classifyThrown(error: unknown): { kind: "rejection"; data: RejectionData } | { kind: "transient"; data: TransientData } | { kind: "technical"; error: unknown }` used by tests, the dispatcher and the obligation wrapper, never by the public pipeline, which relays every throw (D7, Law 6)
+- errorCodeInvalidInput: thrown at step 1 when the declaration's refinement over validated input fails; carries the failing path in `details` (D12, D4)
+- errorCodeUnauthenticated: thrown at step 2 by the public entry when `ctx.auth.getUserIdentity()` returns `null` (D11)
+- errorCodeForbidden: thrown at step 4 when the permission policy denies the actor for this command in this tenant, and on a duplicate whose caller no longer holds authorization, so nothing stored is disclosed (Law 5, Sc L1-8)
+- errorCodeIdempotencyConflict: thrown at step 5 when the key exists with a different fingerprint; carries the stored `operationId` in `details` so the caller can find the original, and never the original input (D6, Sc L1-5)
+- errorCodeStaleVersion: the kernel's reserved code, thrown by the persistence adapter when a command names an expected stream version that the indexed read shows is behind the current one; the command is rejected as stale and never reinterpreted against fresh state (D2, Sc L1-10)
+- errorCodeEntityExists: the kernel's third reserved code, thrown by the persistence adapter at its step 3 when a create, planned at expected version 0, finds the stream already present; carries `details.existing`, the entity ID the create named, and `details.current`, so a UI double submit resolves to one entity and the decider never decides a create against an existing state (D6, Sc L1-4, E-21)
+- occExhaustion: the engine's bounded optimistic-concurrency retries, when every retry conflicts, end the mutation with the engine's plain documents-changed error, which is not a `ConvexError` and reaches the caller as a technical failure; nothing committed, so the caller may retry the same intent unchanged, and the boundary does not map it to the transient `capacity` because the error carries no stable code to match on; the first experiment's contention run measures how often it happens (Law 6, F1, E-5, E-47)
+- errorCodeOperationTooLarge: the kernel's reserved code, thrown at step 1 when the input exceeds the declaration's bound and by the adapter when a list exceeds the operation's bound; the operation is rejected rather than split (D10, F13)
+- errorCodeUnsupportedContractVersion: thrown at step 5 when the receipt found for the key was recorded under a `contractVersion` other than the declaration's, so its fingerprint cannot be compared; carries the stored version, the declaration's version and the stored `operationId` in `details`, so a retry after a contract change is refused explicitly instead of conflicting silently or replaying blindly; no entry argument carries a version, the receipt is its only source (D6, E-5)
+- errorCodeRateLimited: transient, thrown at step 6 for new intent only, carries `retryAfterMs` when the policy knows it (D4, D6, Sc L1-9)
+- errorCodeCapacity: transient, thrown at step 6 when a declared capacity policy refuses new intent; a full pool delays work and never turns valid intent into a rejection (D4, D13)
+- errorCodeWritePaused: transient, reserved for a writer refused by the maintenance gate of a write pause (D9, E-35)
+- fnDispatchRecordingRefusal: `export const dispatchRecordingRefusal = internalMutation({ args: { tenantId: v.string(), namespace: callerNamespaceValidator, actor: actorValidator, requestKey: v.string(), commandType: v.string(), input: v.any() }, returns: dispatchResultValidator, handler })`, conditional on OQ2 (D7, OQ2)
+- typeDispatchResult: `type DispatchResult⟨R⟩ = { kind: "committed"; response: CommandResponse⟨R⟩ } | { kind: "refused"; rejection: RejectionData; refusalRecordId: string }` (D7, OQ2, E-5)
+- step1Dispatcher: the dispatcher resolves the command's `internalEntry` reference and declaration by `commandType` from `commandRegistry` and runs the existing internal entry, `⟨name⟩Internal`, through `ctx.runMutation(entry, { tenantId, namespace, actor, requestKey, input })` with the trusted namespace and the same request key, so the whole pipeline is the nested body, a rejection rolls back only that body, and no body function is registered per command (D7, F3, D12)
+- step2Dispatcher: on a rejection `ConvexError`, the dispatcher writes the refusal as a business fact through the normal command path of the context that owns refusals, with the original actor, operation ID and rejection code (D7)
+- step3Dispatcher: the dispatcher returns `{ kind: "refused" }` as a value; it never rethrows, because the throw would roll the record back, and it never records a technical failure as a refusal (D7, Law 6)
+- limitErrorData: the `details` value of a rejection is bounded to 16 KiB serialized, so error data never carries a payload or personal data; the message is one sentence and holds no raw input (D19, E-5)
+
+## Example space
+
+```gwt-vocabulary
+Given a receipted command with request key {requestKey:string} against a stream at version {version:number}
+And the command is rejected on its first run and the response is lost
+And the stream then advances to version {newVersion:number} by another command
+When the caller retries the same command with the same key and input
+Then the retry runs against version {ranAgainst:number} and the outcome is {outcome:"applied"|"rejection"}
+And a receipt or record of the first attempt exists {firstAttemptRecorded:boolean}
+```
+
+## Verification — reviewed
+
+- A reviewer confirms that every rejection and transient refusal is a `ConvexError` whose `data` fits `errorDataValidator`, and that a technical failure is never wrapped into one.
+- A reviewer confirms that every platform code has one `errorCode` bullet naming the step that throws it, and that every domain code a declaration names appears in that declaration's `rejections`.
+- A reviewer confirms that no command binds to `dispatchRecordingRefusal` while OQ2 stands open.

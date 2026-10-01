@@ -1,0 +1,114 @@
+---
+id: spec:context.persistence-adapter
+kind: contract
+altitude: story
+readiness: defined
+relations:
+  refines: spec:context.context-component
+  dependsOn:
+    - spec:kernel.decider-contract
+    - spec:kernel.state-document-mapping
+    - spec:context.tables
+  decidedBy:
+    - spec:decisions.d03-events-only-source-of-next-state
+    - spec:decisions.d04-four-outcomes
+    - spec:decisions.d10-contexts-meet-in-parent-use-cases
+  constrainedBy:
+    - spec:facts.f01-serializable-mutations-under-occ
+    - spec:facts.f02-component-calls-commit-with-caller
+    - spec:facts.f13-transactions-have-limits
+    - spec:laws.law02-state-and-events-commit-together
+    - spec:laws.law03-events-only-source-of-state
+    - spec:laws.law06-technical-failure-never-a-rejection
+    - spec:laws.law11-tenant-scope-named
+---
+# The persistence adapter
+
+Layer 1 · Detail: full · Traces: D2, D3, D4, D5, D7, D10, D12, Law 2, Law 3, Law 6, F1, F2, F13, Sc L1-1, Sc L1-10, Sc L1-11, E-2, E-21, E-22, E-23, E-25.
+
+The adapter is the one piece of code that turns a decision into stored state. Inside the context's sub-transaction it loads current state, calls `decide`, folds the new events with `evolve`, appends them with an expected-version check and saves the folded state, then returns the result DTO and the affected stream versions. It is the only writer of the stream and event tables and the only production caller of the decider. It has three answers at its boundary: a committed outcome it returns, a rejection it throws, and a technical failure it lets propagate. A version conflict is a rejection the caller sees only when the caller named a version; an engine retry under optimistic concurrency is invisible and is not an outcome at all. When the loaded row was saved under an older meaning than the registration's, the adapter runs the registered baseline chain on the stream first, in the same sub-transaction and through the journal's one baseline writer, so a decision is never taken against a state of the wrong meaning and a deploy that changes meaning needs no pause.
+
+An operation is a list-shaped call over one or more streams of the stream types it declares, all in its own context. The adapter's `execute` runs once per planned stream against that stream's registration, and the operation runner plans the streams from the input, runs them in order, and combines their results, so a use case makes one call per context even when it claims a unique value and creates its subject in the same call.
+
+## Intent
+
+- outcome: Pin the load, decide, fold, append and save sequence, its request and result types, the three boundary answers and the distinction between a logical version conflict and an engine retry (D3, D4, F1)
+- value: One authority writes state and events together, and the caller can tell a stale reviewed version from a business rejection and both from a retry it never saw (D3, Law 2, Sc L1-11)
+- risk: The adapter runs once per stream inside one call; a large list is bounded by the operation's declaration and the transaction limits, and above the bound the whole call is rejected rather than split (D10, F13)
+- assumption: Mutations are serializable under optimistic concurrency, so a concurrent append to the same stream causes an invisible rerun of the loser rather than an interleaving (F1)
+- assumption: The sub-transaction the adapter runs in commits or rolls back with the calling mutation (F2)
+
+### Open questions
+
+- [non-blocking] Extension E-23: the doc gives the sequence and the one-authority rule; this Spec fixes the request and result types, the operation runner with `plan` and `combine`, the aggregation of per-stream outcomes, the per-stream `dto` and `created` flag that the operation returns beside the kernel's outcome so the parent's projections and the backfill take one DTO shape, the semantics of a caller-named expected version including expected version 0 as the create's uniqueness check, the byte-derived bounds on streams and writes per call, the on-load baseline migration of step 3a whose rules `spec:context.journal` carries under E-25, and the internal guards that turn a defect into a technical failure; the owner confirms (D3, D6, E-23, E-25)
+
+## Contract
+
+- `execute` loads current state, calls `decide`, computes `fold(evolve, state, newEvents)`, appends the events with the expected version and saves the folded state, in that order and in one sub-transaction (D3, Law 2)
+- The decider never returns a state patch, and the adapter never computes state any other way than the fold (D3, Law 3)
+- Commands load current state and apply only the new events; the adapter never replays history on a command (D3)
+- A rejection from `decide` is thrown as a `ConvexError` whose data is the `Rejection`; nothing is written (D4, D7)
+- A version conflict is a rejection with the reserved code `staleVersion`, thrown when the caller named an expected version and the indexed read shows the stream is past it; the command is never reinterpreted against fresh state (Sc L1-10, D2)
+- A create names expected version 0 in its plan; when the identity read finds the stream already present, the adapter throws the reserved `entityExists` naming the existing stream before `decide` runs, so a duplicate create with a client-generated entity ID is refused by an indexed read in the same transaction and the decider always decides a create against `initial()` (D6, E-21, Sc L1-4)
+- An engine retry under optimistic concurrency is invisible to the caller; the loser of a race reruns from the start against fresh state, and what it then reports is its own decision, never a version conflict (F1, Sc L1-11)
+- [extension] When the loaded row's `stateSchemaVersion` is behind the registration's, the adapter runs the registered baseline chain on the stream after the expected-version check and before `decide`, appending one baseline event per step ahead of the command's events in the same sub-transaction, so the command decides against state of the current meaning and the driver's sweep is left with the streams no command reaches (E-25, D3, D5, Law 2)
+- [extension] A row whose `stateSchemaVersion` is ahead of the registration's is data saved by newer code, and a chain that does not reach the registration's version is a missing migration; both are plain errors and technical failures, never rejections (E-25, Law 6)
+- A technical failure is any other throw; it propagates, the sub-transaction rolls back, and nothing is stored as a business outcome (D4, Law 6)
+- The committed outcome carries the result DTO and the affected stream versions (D2, D8)
+- [extension] The committed outcome also carries one `streams` entry per planned stream, in plan order, with the stream's DTO as `toDto(next, meta)` maps it, its version, the number of events appended, whether the call created the stream, and the envelopes the call appended to it, so the parent's projections take the same DTO on the live path that the `list` query gives the backfill and a history projection takes the same events on the live path that the `history` query gives the backfill (E-23, D8, D9)
+- [extension] The engine's optimistic-concurrency retries are bounded; when a mutation keeps conflicting the engine fails it with a plain error, which is a technical failure the caller may retry unchanged because nothing committed (E-23, F1, Law 6)
+- An operation makes one adapter call per stream it touches and returns once; a use case therefore makes one call per context (D10)
+- An operation too large for its declared bound is rejected with `operationTooLarge` before any read (D10, F13)
+- [extension] Per-stream outcomes aggregate as follows: any rejection rejects the whole call and nothing commits; otherwise any business failure makes the call a business failure; otherwise the call is applied (E-23, D4)
+- [extension] A decider that returns zero events for an applied or business-failure result, or whose folded state violates a declared invariant, or whose stream row and events index disagree on the current version, is a defect; the adapter throws a plain error and the call is a technical failure (E-23, D4)
+- [extension] The streams of one call are executed in the order `plan` returns them, and the returned versions are listed in that order (E-23, D10)
+- [extension] An operation declares the stream types it may touch, all in its own context, and every planned command names one of their registrations; a creating operation therefore claims a unique value on a claim stream and creates its subject in one call, which keeps one call per context (E-23, D10, Sc L1-11)
+
+## Design
+
+Everything below runs in the component's mutation context. `MutationCtx` is the component's own generated type. The adapter never reads `ctx.auth`, never schedules, and never calls another component.
+
+- transactionBoundary: the component sub-transaction of the operation mutation that calls the adapter; every read and write of one call commits or rolls back together with the parent's mutation (F2, D1)
+- typeStreamCommand: `type StreamCommand⟨C⟩ = { streamId: string; expectedVersion?: number; command: C }` is the target of one `execute` call (D2, E-23)
+- typePlannedCommand: `type PlannedCommand = { registration: StreamRegistration⟨any, any, any, any⟩; streamId: string; expectedVersion?: number; command: unknown }` is one element of a plan and is built only through `planned`, which types the command against its registration (D10, E-23)
+- fnPlanned: `planned⟨S, C, E extends DomainEvent, R⟩(registration: StreamRegistration⟨S, C, E, R⟩, streamId: string, command: C, expectedVersion?: number): PlannedCommand` (E-23)
+- typeExecuteRequest: `type ExecuteRequest⟨C⟩ = { tenantId: string; actor: Actor; operation: OperationRef; now: number; facts: Readonly⟨Record⟨string, unknown⟩⟩; target: StreamCommand⟨C⟩ }` (D3, D11, E-23)
+- typeStreamResult: `type StreamResult⟨R⟩ = { kind: "applied" | "businessFailure"; result: R; dto: Value; version: StreamVersion; appended: number; created: boolean; events: EventEnvelope[] }` where `dto` is `registration.toDto(next, meta)`, `appended` counts every event the call inserted on the stream, the baselines of step 3a included, `created` is true when the stream had no row before the call, and `events` holds the envelopes `append` inserted, in version order, baselines included (D4, D8, E-23, E-25)
+- typeStreamDto: `type StreamDto = { dto: Value; version: StreamVersion; appended: number; created: boolean; events: EventEnvelope[] }` is the per-stream part of `StreamResult` that leaves the component (D8, E-23)
+- typeOperationOutcome: `type OperationOutcome⟨O⟩ = CommittedOutcome⟨O⟩ & { streams: StreamDto[] }` is what a context operation returns to the parent; `versions` stays the kernel's list and `streams` adds the DTO, the created flag and the appended events per stream in the same order (D4, D8, E-23)
+- validatorOperationOutcome: `const operationOutcomeValidator = (result: Validator⟨unknown⟩) => v.object({ kind: v.union(v.literal("applied"), v.literal("businessFailure")), result, versions: v.array(streamVersionValidator), streams: v.array(v.object({ dto: v.any(), version: streamVersionValidator, appended: v.number(), created: v.boolean(), events: v.array(eventEnvelopeValidator) })) })` where `eventEnvelopeValidator` is the envelope's (D4, E-23)
+- fnExecute: `execute⟨S, C, E extends DomainEvent, R⟩(ctx: MutationCtx, journal: Journal, registration: StreamRegistration⟨S, C, E, R⟩, request: ExecuteRequest⟨C⟩): Promise⟨StreamResult⟨R⟩⟩` (D3, E-23)
+- step1: bound check; the runner rejects with `operationTooLarge` when `plan(input).length` exceeds `min(declaration.maxStreams, 256)` or when the sum of `registration.mapping.budgetBytes` over the planned commands exceeds 8 MiB, and throws a plain error when a planned command's registration is not among `declaration.streams`, which is a defect (D10, F13, E-2, E-22, E-23)
+- step2: load; `load(ctx, journal, registration, tenantId, target.streamId)` reads the stream row by `by_identity` with its `stateSchemaVersion` and `baselineVersion` on `meta`, assembles a derived state from its parts, or returns `initial()` at version 0 (D3, E-1, E-2, E-25)
+- step3: expected version; `expected = target.expectedVersion ?? loaded.version`; when `target.expectedVersion === 0` and `loaded.exists`, throw `new ConvexError({ code: "entityExists", message, details: { existing: target.streamId, current: loaded.version } })`; otherwise when `target.expectedVersion` is set and differs from `loaded.version`, throw `new ConvexError({ code: "staleVersion", message, details: { expected: target.expectedVersion, current: loaded.version } })`; both before `decide` runs and both against the version as loaded, before any baseline of step 3a, so a reviewed version is compared with what the caller could have seen (Sc L1-10, Sc L1-4, E-21, E-25)
+- step3a: migrate on load; when `loaded.exists` and `loaded.meta.stateSchemaVersion` is below `registration.stateSchemaVersion`, `loaded = await migrateToSchemaVersion(ctx, journal, registration, loaded, envelopeInput, registration.stateSchemaVersion)` of `spec:context.journal`, which appends one baseline event per registered step at `loaded.version + 1` onward with `causedBy: { kind: "migration", migrationName }`, the command's `operationId` and actor, and returns the migrated state at the advanced version with `baselineVersion` and `stateSchemaVersion` updated on `meta`; `expected` advances by the number of baselines so the command's events follow them; when `loaded.meta.stateSchemaVersion` is above `registration.stateSchemaVersion`, or the chain has a gap, the helper throws a plain error and the call is a technical failure (E-25, D3, D5, Law 2, Law 6)
+- step4: decide; `registration.decider.decide(loaded.state, target.command, { now: request.now, actor: request.actor, facts: request.facts })` against the state of the current meaning (D3, E-25)
+- step5: rejection; when the result's `kind` is `rejection`, throw `new ConvexError(result.rejection)` and write nothing (D4, D7, Sc L1-1)
+- step6: guards; when `result.events.length === 0` throw a plain error; validate each event's payload with `registration.eventValidators[event.eventType]` (E-23, D2)
+- step7: fold; `next = fold(registration.decider.evolve, loaded.state, result.events)`; when `checkInvariants(registration.decider.invariants ?? [], next)` is non-empty throw a plain error naming the invariants (D3, E-20, E-23)
+- step8: append; `append(ctx, journal, loaded, envelopeInput, result.events, expected)` performs the indexed read for any version above `expected` on `by_stream`, throws a plain error on a hit, since the caller-named case was answered in step 3 and a hit here means the row and the index disagree, then inserts the events at `expected + 1` onward (D2, F1, E-23)
+- step9: save; write the stream row with `streamVersion: expected + n`, `stateSchemaVersion: registration.stateSchemaVersion`, which step 3a made the loaded row's version too so the stamp always follows the baselines it implies, `baselineVersion` from `loaded.meta` after step 3a, `state` or `head` and parts from `mapping`, `deletedAt` from `mapping.isDeleted(next)`, `lastOperationId: request.operation.operationId`, `updatedAt: request.now`, inserting the row when the stream did not exist (D3, Law 2, E-2, E-25)
+- step10: return; `{ kind: result.kind, result: result.result, dto: registration.toDto(next, meta), version: { tenantId, contextId, streamType, streamId, version: expected + n }, appended: k + n, created: !loaded.exists, events }` where `k` is the number of baselines step 3a appended, usually zero, `events` is the `k + n` envelopes in version order as `append` built them, and `meta` is the saved row's metadata at the new version (D4, D8, E-23, E-25)
+- limitReturnedEvents: the `events` an operation returns are the envelopes it wrote, already counted under `limitDocumentsWrittenPerCall`'s 8 MiB, so the return value of one operation stays under the 16 MiB function return ceiling with the DTOs beside it; the parent reads them from memory and never re-reads the events table for a live projection (F13, E-12, E-23)
+- typeOperationDeclaration: `type OperationDeclaration⟨I, O⟩ = { name: string; streams: readonly StreamRegistration⟨any, any, any, any⟩[]; input: PropertyValidators; returns: Validator⟨O⟩; plan: (input: I) => readonly PlannedCommand[]; combine: (results: readonly StreamResult⟨unknown⟩[]) => O; maxStreams: number }` where `streams` lists the registrations of this context the operation may touch (D10, D12, E-22, E-23)
+- fnRunOperation: `runOperation⟨I, O⟩(ctx: MutationCtx, journal: Journal, declaration: OperationDeclaration⟨I, O⟩, args: OperationArgs⟨I⟩): Promise⟨OperationOutcome⟨O⟩⟩` runs step 1, then `execute` per planned command in plan order against that command's registration with `now: Date.now()` and `facts: args.facts ?? {}`, then aggregates (D10, E-23)
+- typeOperationArgs: `type OperationArgs⟨I⟩ = { tenantId: string; actor: Actor; operation: OperationRef; input: I; facts?: Readonly⟨Record⟨string, unknown⟩⟩ }` where `facts` is the record the parent's executor captured, carried on the registered operation's `args` as `spec:context.context-component` fixes them (Law 11, D11, D3, E-22, E-23)
+- aggregation: a thrown rejection from any stream propagates unchanged, so nothing of the call commits; with no throw, `kind` is `businessFailure` when any stream result is, otherwise `applied`; `result` is `combine(results)`, where each result's `version.streamType` tells the combiner which stream type it came from; `versions` lists every stream's version in plan order and `streams` lists every stream's `{ dto, version, appended, created }` in the same order (D4, D8, E-23)
+- versionConflictVersusOccRetry: a version conflict is the `staleVersion` rejection of step 3, visible to the caller and raised only for a caller-named version; an engine retry is the rerun Convex performs when a read-set version changed before commit, invisible to the caller while it succeeds, after which step 2 loads fresh state and step 4 decides again; the engine's retries are bounded, and a mutation that conflicts on every retry fails with the engine's plain documents-changed error, a technical failure under Law 6 that the caller may retry unchanged, which the first experiment's contention run measures (F1, Law 6, Sc L1-10, Sc L1-11, E-23)
+- competingCommandsWorked: two callers claim the last unit of stock; both load version 1; the first commits version 2; the second's commit finds its read of the stream row stale and reruns; it loads version 2 with stock 0, `decide` returns the context's `insufficientStock` rejection, and the caller sees a rejection from fresh state and no version conflict (Sc L1-11, F1)
+- uniqueValueWorked: a unique value such as a username is a claim stream of its own, of a second stream type in the same context, keyed by the value and with one command that claims it for a subject; the creating operation declares both registrations in `streams` and plans the claim at expected version 0 before the subject, so two competing creates race on the claim stream, the loser reruns, loads the claimed row and is answered `entityExists` by step 3, and no subject is created without its claim because both streams sit in one sub-transaction (Sc L1-11, Sc L1-4, D10, E-21, E-23)
+- errorCodeStaleVersion: thrown in step 3 with `details.expected` and `details.current`; the caller reads the current version from the details and re-reviews (Sc L1-10, E-21)
+- errorCodeEntityExists: thrown in step 3 with `details.existing`, the stream ID the create named, and `details.current`; a UI that double-submitted a create resolves to that one entity and reads it through a query (D6, Sc L1-4, E-21)
+- errorCodeOperationTooLarge: thrown in step 1 with `details.count` and `details.max`, or `details.bytes` and `details.maxBytes` when the byte bound bit first; the caller splits into a separate import command with honest partial progress or reduces the list (D10, E-21)
+- errorCodeContextOwned: every other rejection code comes from `decide` and is documented by the context (D4)
+- limitStreamsPerCall: `min(declaration.maxStreams, 256)` streams and, in bytes, the sum of the planned streams' `budgetBytes`, each counting its row and parts together, at most 8 MiB, half the read ceiling, so a call at the default 256 KiB budget admits 32 streams, a derived stream type at the 512 KiB cap admits 16, and a stock stream declared at 4 KiB admits the full 256 (D10, F13, E-2, E-22)
+- limitDocumentsWrittenPerCall: 800 documents and 8 MiB estimated, checked by the runner as `sum(appended) + streams + parts written` against 800 and as the sum of the saved streams' `budgetBytes` plus every appended event's serialized size, baselines of step 3a included at up to `budgetBytes` each, against 8 MiB, before returning; exceeding either throws a plain error so the call is a technical failure and the bound is lowered, never silently split (F13, D19, E-12, E-22, E-25)
+- migrationOnLoadCost: a stream migrated at step 3a costs its command one baseline event per step, at most `budgetBytes` each, counted against the write bound above, and when a step reads history a tail of at most `maxFoldEvents`; an operation that plans many streams of a stream type under a history-reading migration can therefore exceed the read ceiling on its first call after the deploy, which fails as a technical failure until the sweep has reached those streams, so a history-reading migration is the exception and the window is the sweep's duration (E-25, F13, Law 6)
+- limitTimeout: the whole parent mutation has 1 second; the runner records nothing about time, and the first experiment measures the order sizes that fit (F13, First experiment, Sc L2-3)
+- noSchedulingNoNesting: the adapter schedules nothing and calls no `ctx.runMutation`; helpers are plain functions inside the sub-transaction (S10, D7)
+
+## Verification — reviewed
+
+- A reviewer confirms that the adapter is the only code writing the streams, events and parts tables and the only production caller of `decide` and `evolve`.
+- A reviewer confirms that the competing-commands example asserts a `decide` rejection on the loser and the absence of `staleVersion`, and that the stale-version example asserts `staleVersion` with `decide` never called.
+- A reviewer confirms that step 3a runs before every `decide` and that step 9 is the only place the adapter stamps `stateSchemaVersion`, after the chain step 3a wrote.

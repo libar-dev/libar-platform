@@ -1,0 +1,67 @@
+---
+id: pack:foundation
+specs:
+  - spec:platform.transactional-domain-platform
+  - spec:platform.layers-and-profiles
+  - spec:platform.decision-method
+  - spec:platform.vocabulary
+  - spec:platform.acceptance-contract
+  - spec:platform.existing-systems
+  - spec:laws.law01-sanctioned-writes-only
+  - spec:laws.law02-state-and-events-commit-together
+  - spec:laws.law03-events-only-source-of-state
+  - spec:laws.law04-server-scoped-idempotency-key
+  - spec:laws.law05-authorization-before-execution-and-disclosure
+  - spec:laws.law06-technical-failure-never-a-rejection
+  - spec:laws.law07-deferred-work-never-reported-early
+  - spec:laws.law08-durable-capability-ships-operations
+  - spec:laws.law09-no-invariant-on-late-read-model
+  - spec:laws.law10-replay-never-runs-commands-or-effects
+  - spec:laws.law11-tenant-scope-named
+  - spec:laws.law12-one-retry-owner
+  - spec:decisions.d01-one-mutation-per-operation
+  - spec:decisions.d02-context-owns-state-and-journal
+  - spec:decisions.d03-events-only-source-of-next-state
+  - spec:decisions.d04-four-outcomes
+  - spec:decisions.d05-rebuildable-history-with-baselines
+  - spec:decisions.d06-idempotency-client-and-receipts
+  - spec:decisions.d07-rejections-thrown-not-stored
+  - spec:decisions.d08-read-models-in-command
+  - spec:decisions.d09-rebuild-online-by-default
+  - spec:decisions.d10-contexts-meet-in-parent-use-cases
+  - spec:decisions.d11-tenant-scope-and-authority
+  - spec:decisions.d12-one-declaration-per-command
+  - spec:decisions.d13-deferred-work-is-an-obligation
+  - spec:decisions.d14-external-effects-declare-safe-repetition
+  - spec:decisions.d15-one-retry-owner-per-obligation
+  - spec:decisions.d16-processes-use-workflow
+  - spec:decisions.d17-agents-use-the-command-path
+  - spec:decisions.d18-everything-else-waits-for-trigger
+  - spec:decisions.d19-operations-travel-with-capability
+  - spec:facts.fact-ledger
+  - spec:facts.probe-plan
+  - spec:facts.f01-serializable-mutations-under-occ
+  - spec:facts.f02-component-calls-commit-with-caller
+  - spec:facts.f03-nested-run-mutation-partial-rollback
+  - spec:facts.f04-nested-calls-cost-more-than-helpers
+  - spec:facts.f05-react-client-retries-until-confirmed
+  - spec:facts.f06-client-mutations-run-in-order
+  - spec:facts.f07-queries-reactive-not-durable-delivery
+  - spec:facts.f08-scheduling-commits-with-mutation
+  - spec:facts.f09-scheduled-mutation-and-action-retry-semantics
+  - spec:facts.f10-action-mutation-calls-are-separate-transactions
+  - spec:facts.f11-components-have-no-ctx-auth
+  - spec:facts.f12-backups-exclude-pending-scheduled-functions
+  - spec:facts.f13-transactions-have-limits
+  - spec:facts.f14-convex-error-survives-nested-and-component-boundary
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive
+  - spec:facts.f16-scheduled-functions-table-shows-failed-runs
+  - spec:facts.f17-migrations-fits-generation-backfill
+modelRefs:
+  - spec:platform.vocabulary
+---
+# Foundation
+
+Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
+
+Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Fifty-six Specs.
