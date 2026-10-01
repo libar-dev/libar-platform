@@ -52,6 +52,22 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     list: {
+      builtinPage: FunctionReference<
+        "query",
+        "internal",
+        {
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+        },
+        any,
+        Name
+      >;
       first: FunctionReference<"query", "internal", {}, any, Name>;
       insert: FunctionReference<
         "mutation",

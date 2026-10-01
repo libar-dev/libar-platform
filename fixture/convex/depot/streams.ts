@@ -37,6 +37,9 @@ export const faultTitles = {
   // toDto runs in step 10, after the row is written.
   afterStateWrite: "fault: after the state write",
 } as const;
+// How many times the copyTitles operation repeats each title in its result, so a call that writes
+// little returns more than the library's bound on what a call returns.
+export const titleCopies = 64;
 // A command whose decide fails the call if it is reached, so a rejection from an earlier step shows
 // that decide did not run, and the same command at the right version shows that it does.
 export type DepotDocumentCommand =

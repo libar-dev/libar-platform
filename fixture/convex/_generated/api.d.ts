@@ -9,6 +9,7 @@
  */
 
 import type * as depotCommands from "../depotCommands.js";
+import type * as depotQueries from "../depotQueries.js";
 import type * as depotRelay from "../depotRelay.js";
 import type * as failures from "../failures.js";
 import type * as grants from "../grants.js";
@@ -19,6 +20,7 @@ import type * as markers from "../markers.js";
 import type * as nonUiCaller from "../nonUiCaller.js";
 import type * as notes from "../notes.js";
 import type * as orders from "../orders.js";
+import type * as parentList from "../parentList.js";
 import type * as readCost from "../readCost.js";
 import type * as switches from "../switches.js";
 
@@ -30,6 +32,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   depotCommands: typeof depotCommands;
+  depotQueries: typeof depotQueries;
   depotRelay: typeof depotRelay;
   failures: typeof failures;
   grants: typeof grants;
@@ -40,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   nonUiCaller: typeof nonUiCaller;
   notes: typeof notes;
   orders: typeof orders;
+  parentList: typeof parentList;
   readCost: typeof readCost;
   switches: typeof switches;
 }>;

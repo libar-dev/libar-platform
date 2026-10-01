@@ -8,6 +8,11 @@ export default defineSchema({
   throwerWrites: defineTable({ by: v.string() }).index("by_by", ["by"]),
   parentWrites: defineTable({ by: v.string() }),
   samples: defineTable({ value: v.number() }),
+  // A parent table read by the built-in paginate, as a read-model list reads one. See parentList.ts.
+  parentRows: defineTable({ position: v.number(), label: v.string() }).index(
+    "by_position",
+    ["position"],
+  ),
   blobs: defineTable({ group: v.string(), bytes: v.bytes() }).index(
     "by_group",
     ["group"],

@@ -36,3 +36,4 @@ export const failIfDecided = relay(operations.failIfDecided);
 export const addStock = relay(operations.addStock);
 export const claimStock = relay(operations.claimStock);
 export const registerDocuments = relay(operations.registerDocuments);
+export const copyTitles = relay(operations.copyTitles);

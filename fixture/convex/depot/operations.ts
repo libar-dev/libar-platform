@@ -18,6 +18,7 @@ import {
   journal,
   referenceStream,
   stockStream,
+  titleCopies,
   type DepotDocumentCommand,
 } from "./streams.js";
 const maxStreams = 100;
@@ -112,6 +113,28 @@ export const createDocuments = defineOperation<
   returns: documentsResult,
   plan: ({ documents }) => createPlans(documents),
   combine: combineDocuments,
+  maxStreams,
+});
+const copyTitlesResult = v.object({ titles: v.array(v.string()) });
+// A create whose result repeats each document's title titleCopies times, so an operation that writes
+// little can return more than the library's bound on what a call returns.
+export const copyTitles = defineOperation<
+  ObjectType<typeof createDocumentsInput>,
+  Infer<typeof copyTitlesResult>
+>(journal, {
+  name: "copyTitles",
+  streams: [documentStream],
+  input: createDocumentsInput,
+  returns: copyTitlesResult,
+  plan: ({ documents }) => createPlans(documents),
+  combine: (results) => ({
+    titles: results.flatMap((result) =>
+      Array.from(
+        { length: titleCopies },
+        () => (result.dto as { title: string }).title,
+      ),
+    ),
+  }),
   maxStreams,
 });
 export const submitDocuments = documentOperation("submitDocuments", {

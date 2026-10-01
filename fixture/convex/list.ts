@@ -25,6 +25,12 @@ export const page = query({
       },
     }),
 });
+export const builtinPage = query({
+  args: { paginationOpts: paginationOptsValidator },
+  returns: v.any(),
+  handler: (ctx, args): Promise<ListPage> =>
+    ctx.runQuery(components.annex.list.builtinPage, args),
+});
 export const first = query({
   args: {},
   returns: v.any(),

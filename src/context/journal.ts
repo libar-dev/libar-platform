@@ -1,5 +1,5 @@
 // The journal of spec:context.journal: a context's events, the stream registration, load and append.
-// Baselines, migrations, rebuild and the maintenance writer are later slices' work.
+import type { DocumentByName as Doc } from "convex/server";
 import {
   getConvexSize,
   type GenericId,
@@ -8,7 +8,7 @@ import {
 } from "convex/values";
 import type { Decider, DomainEvent } from "../kernel/index.js";
 import type { EnvelopeInput, EventEnvelope } from "./envelope.js";
-import type { MutationCtx, QueryCtx } from "./tables.js";
+import type { ContextDataModel, MutationCtx, QueryCtx } from "./tables.js";
 // The Spec uses Journal without declaring it; this is the configuration createJournal is given.
 export type Journal = {
   readonly contextId: string;
@@ -98,13 +98,27 @@ export async function load<S, C, E extends DomainEvent, R>(
         stateSchemaVersion: registration.stateSchemaVersion,
       },
     };
+  return {
+    state: row.state as S,
+    version: row.streamVersion,
+    exists: true,
+    meta: metaOf(registration, row),
+    rowId: row._id,
+  };
+}
+// The metadata of a stream row as read, for load and for a list that holds rows already.
+export function metaOf<S, C, E extends DomainEvent, R>(
+  registration: StreamRegistration<S, C, E, R>,
+  row: Doc<ContextDataModel, "streams">,
+): StreamMeta {
+  const { streamType, streamId } = row;
   // Data saved by newer code: the remedy is to redeploy that code, never to decide on it here.
   if (row.stateSchemaVersion > registration.stateSchemaVersion)
     throw new Error(
       `Stream ${streamType}/${streamId} was saved under state schema version ${row.stateSchemaVersion}, newer than this code's ${registration.stateSchemaVersion}`,
     );
   const meta: StreamMeta = {
-    tenantId,
+    tenantId: row.tenantId,
     contextId: row.contextId,
     streamType,
     streamId,
@@ -114,13 +128,7 @@ export async function load<S, C, E extends DomainEvent, R>(
   if (row.deletedAt !== undefined) meta.deletedAt = row.deletedAt;
   if (row.baselineVersion !== undefined)
     meta.baselineVersion = row.baselineVersion;
-  return {
-    state: row.state as S,
-    version: row.streamVersion,
-    exists: true,
-    meta,
-    rowId: row._id,
-  };
+  return meta;
 }
 // Inserts the events at expectedVersion + 1 onward and returns the envelopes it inserted. It writes
 // no stream row: the adapter saves the row once, after the append.

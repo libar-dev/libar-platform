@@ -12,6 +12,13 @@ export const page = query({
       .withIndex("by_position")
       .paginate(paginationOpts),
 });
+// The built-in paginate inside a component, which Convex refuses there.
+export const builtinPage = query({
+  args: { paginationOpts: paginationOptsValidator },
+  returns: v.any(),
+  handler: (ctx, { paginationOpts }) =>
+    ctx.db.query("rows").withIndex("by_position").paginate(paginationOpts),
+});
 export const first = query({
   args: {},
   returns: v.any(),

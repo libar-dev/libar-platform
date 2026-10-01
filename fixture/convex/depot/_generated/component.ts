@@ -305,6 +305,96 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         },
         Name
       >;
+      copyTitles: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          actor: {
+            delegationRef?: string;
+            id: string;
+            issuer?: string;
+            kind: "human" | "service" | "agent" | "reviewer" | "operator";
+            onBehalfOf?: {
+              id: string;
+              kind: "human" | "service" | "agent" | "reviewer" | "operator";
+            };
+          };
+          facts?: Record<string, any>;
+          input: { documents: Array<{ documentId: string; title: string }> };
+          operation: {
+            causedBy:
+              | { commandType: string; kind: "command" }
+              | {
+                  contextId: string;
+                  eventId: string;
+                  kind: "event";
+                  tenantId: string;
+                }
+              | { kind: "migration"; migrationName: string };
+            correlationId?: string;
+            operationId: string;
+          };
+          tenantId: string;
+        },
+        {
+          kind: "applied" | "businessFailure";
+          result: { titles: Array<string> };
+          streams: Array<{
+            appended: number;
+            created: boolean;
+            dto: any;
+            events: Array<{
+              actor: {
+                delegationRef?: string;
+                id: string;
+                issuer?: string;
+                kind: "human" | "service" | "agent" | "reviewer" | "operator";
+                onBehalfOf?: {
+                  id: string;
+                  kind: "human" | "service" | "agent" | "reviewer" | "operator";
+                };
+              };
+              causedBy:
+                | { commandType: string; kind: "command" }
+                | {
+                    contextId: string;
+                    eventId: string;
+                    kind: "event";
+                    tenantId: string;
+                  }
+                | { kind: "migration"; migrationName: string };
+              contextId: string;
+              correlationId?: string;
+              eventId: string;
+              eventSchemaVersion: number;
+              eventType: string;
+              occurredAt?: number;
+              operationId: string;
+              payload: any;
+              recordedAt: number;
+              streamId: string;
+              streamType: string;
+              streamVersion: number;
+              tenantId: string;
+            }>;
+            version: {
+              contextId: string;
+              streamId: string;
+              streamType: string;
+              tenantId: string;
+              version: number;
+            };
+          }>;
+          versions: Array<{
+            contextId: string;
+            streamId: string;
+            streamType: string;
+            tenantId: string;
+            version: number;
+          }>;
+        },
+        Name
+      >;
       createDocuments: FunctionReference<
         "mutation",
         "internal",
@@ -888,5 +978,63 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         },
         Name
       >;
+    };
+    queries: {
+      document: {
+        get: FunctionReference<
+          "query",
+          "internal",
+          { streamId: string; tenantId: string },
+          {
+            amendments: number;
+            documentId: string;
+            status: "none" | "draft" | "submitted" | "shipped";
+            title: string;
+            version: {
+              contextId: string;
+              streamId: string;
+              streamType: string;
+              tenantId: string;
+              version: number;
+            };
+          } | null,
+          Name
+        >;
+        list: FunctionReference<
+          "query",
+          "internal",
+          {
+            paginationOpts: {
+              cursor: string | null;
+              endCursor?: string | null;
+              id?: number;
+              maximumBytesRead?: number;
+              maximumRowsRead?: number;
+              numItems: number;
+            };
+            tenantId: string;
+          },
+          {
+            continueCursor: string;
+            isDone: boolean;
+            page: Array<{
+              amendments: number;
+              documentId: string;
+              status: "none" | "draft" | "submitted" | "shipped";
+              title: string;
+              version: {
+                contextId: string;
+                streamId: string;
+                streamType: string;
+                tenantId: string;
+                version: number;
+              };
+            }>;
+            pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+            splitCursor?: string | null;
+          },
+          Name
+        >;
+      };
     };
   };

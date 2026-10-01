@@ -96,6 +96,8 @@ export const limitStreamsPerCall = 256;
 export const limitStreamBytesPerCall = 8 * mebibyte;
 export const limitDocumentsWrittenPerCall = 800;
 export const limitBytesWrittenPerCall = 8 * mebibyte;
+// Half of the 16 MiB return ceiling, so a use case of two contexts holds both returns inside one.
+export const limitReturnBytesPerCall = 8 * mebibyte;
 function reject(rejection: Rejection): never {
   throw new ConvexError(rejection);
 }
@@ -137,7 +139,7 @@ async function executeMeasured<S, C, E extends DomainEvent, R>(
       details: { expected: target.expectedVersion, current: loaded.version },
     });
   const expected = target.expectedVersion ?? loaded.version;
-  // Where step 3a would migrate a row saved under an older meaning. Migrations are not built yet.
+  // Where step 3a would migrate a row saved under an older meaning: with no migration here, a failure.
   if (loaded.meta.stateSchemaVersion !== registration.stateSchemaVersion)
     throw new Error(
       `Stream ${streamType}/${streamId} was saved under state schema version ${loaded.meta.stateSchemaVersion}, not ${registration.stateSchemaVersion}, and no migration is built`,
@@ -329,7 +331,7 @@ export async function runOperation<I, O>(
     throw new Error(
       `Operation ${declaration.name} wrote ${documents} documents and ${written} bytes, above ${limitDocumentsWrittenPerCall} documents or ${limitBytesWrittenPerCall} bytes`,
     );
-  return {
+  const outcome: OperationOutcome<O> = {
     kind: results.some((result) => result.kind === "businessFailure")
       ? "businessFailure"
       : "applied",
@@ -343,4 +345,11 @@ export async function runOperation<I, O>(
       events,
     })),
   };
+  // The return bound, measured over the whole value: events, DTOs, versions and the combined result.
+  const returned = getConvexSize(outcome as Value);
+  if (returned > limitReturnBytesPerCall)
+    throw new Error(
+      `Operation ${declaration.name} would return ${returned} bytes, above ${limitReturnBytesPerCall}`,
+    );
+  return outcome;
 }

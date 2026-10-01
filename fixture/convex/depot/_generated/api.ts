@@ -9,6 +9,7 @@
  */
 
 import type * as operations from "../operations.js";
+import type * as queries_document from "../queries/document.js";
 import type * as streams from "../streams.js";
 
 import type {
@@ -20,6 +21,7 @@ import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
   operations: typeof operations;
+  "queries/document": typeof queries_document;
   streams: typeof streams;
 }> = anyApi as any;
 

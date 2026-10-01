@@ -19,7 +19,13 @@ export {
 } from "./outcome.js";
 export { contextTables } from "./tables.js";
 export type { ContextDataModel, MutationCtx, QueryCtx } from "./tables.js";
-export { append, createJournal, limitPayloadBytes, load } from "./journal.js";
+export {
+  append,
+  createJournal,
+  limitPayloadBytes,
+  load,
+  metaOf,
+} from "./journal.js";
 export type {
   AppendResult,
   Journal,
@@ -32,6 +38,7 @@ export {
   execute,
   limitBytesWrittenPerCall,
   limitDocumentsWrittenPerCall,
+  limitReturnBytesPerCall,
   limitStreamBytesPerCall,
   limitStreamsPerCall,
   planned,
@@ -49,3 +56,11 @@ export type {
   StreamResult,
 } from "./adapter.js";
 export { defineOperation, operationArgsValidators } from "./operation.js";
+export {
+  boundedPage,
+  defineGet,
+  defineList,
+  limitListBytes,
+  limitListPage,
+} from "./queries.js";
+export type { GetArgs, ListArgs, PageLimit } from "./queries.js";
