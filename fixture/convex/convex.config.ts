@@ -1,5 +1,5 @@
 import { defineApp } from "convex/server";
-import probe from "./probe/convex.config.js";
+import annex from "./annex/convex.config.js";
 const app = defineApp();
-app.use(probe);
+app.use(annex);
 export default app;

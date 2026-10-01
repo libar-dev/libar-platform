@@ -1,16 +1,24 @@
 import { expectTypeOf, test } from "vitest";
-import { api, internal } from "../../fixture/convex/_generated/api.js";
 import type { FunctionReference } from "convex/server";
-test("compiled: generated API exposes public fixture functions and excludes internal functions", () => {
-  expectTypeOf(api.inspection.identity).toExtend<
+import {
+  api,
+  components,
+  internal,
+} from "../../fixture/convex/_generated/api.js";
+test("compiled: the generated API exposes the fixture's public functions and keeps its internal and component functions out of the public API", () => {
+  expectTypeOf(api.identity.caller).toExtend<
     FunctionReference<"query", "public">
   >();
-  expectTypeOf(api.inspection.catchFailure).toExtend<
+  expectTypeOf(api.failures.catching).toExtend<
     FunctionReference<"mutation", "public">
   >();
-  expectTypeOf(internal.inspection.writeInternal).toExtend<
+  expectTypeOf(internal.notes.addInternal).toExtend<
     FunctionReference<"mutation", "internal">
   >();
-  expectTypeOf<"writeInternal">().not.toExtend<keyof typeof api.inspection>();
-  expectTypeOf<"failInternal">().not.toExtend<keyof typeof api.inspection>();
+  expectTypeOf(components.annex.notes.add).toExtend<
+    FunctionReference<"mutation", "internal">
+  >();
+  expectTypeOf<"throwAfterWrite">().not.toExtend<keyof typeof api.failures>();
+  expectTypeOf<"notes">().not.toExtend<keyof typeof api>();
+  expectTypeOf<"annex">().not.toExtend<keyof typeof api>();
 });

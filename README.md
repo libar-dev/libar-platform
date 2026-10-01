@@ -26,11 +26,21 @@ The design has been through three review rounds and carries open findings, all l
 
 ## Running the code
 
-Use Node 24 and run `npm ci` in the repository root. Each tier has its own command:
+Use Node 24 and run `npm ci` in the repository root. The repository has one `package.json`. The root `convex.json` names `fixture/convex` as the function directory of the fixture app.
 
-- Compiled: `npm run typecheck` and `npm run test:types`.
-- Pure: `npm run test:pure`.
-- Simulator: `npm run test:simulator`, using `convex-test`.
-- Native backend: `npm run test:native`, with a disposable backend per test.
+Each tier has its own command and its own directory:
 
-`npm test` runs the three tiers that need no backend. `npm run codegen` starts a disposable backend, deploys the fixture app, regenerates both Convex API directories and stops the backend. Native commands download the pinned backend into `.cache/`, or use the binary named by `CONVEX_BACKEND_BINARY`. The Linux asset hash must be filled in `harness/backend-release.json` before its first download. Native runs write evidence under `evidence/runs/`.
+- Domain tier: `npm run test:pure` runs `tests/pure`. These tests need no backend and no simulator. Until slice S1 adds a domain, they test the pure parts of the harness.
+- Simulator tier: `npm run test:simulator` runs `tests/simulator` on `convex-test`. Every test name starts with `convex-test` and the version it ran on. A simulator pass is not native proof.
+- Native tier: `npm run test:native` runs `tests/native`. Every test starts its own disposable Convex backend, deploys the fixture app to it and removes it when the test ends.
+- Compile check: `npm run typecheck` compiles the fixture app, the harness and the tests. `npm run test:types` runs the type tests in `tests/types`. A compile check says nothing about a running backend.
+
+`npm test` runs the type tests, the domain tier and the simulator tier. None of them needs a backend.
+
+The native tier downloads the pinned backend release into `.cache/` on first use and checks the hash of the executable on every run. `harness/backend-release.json` pins the release for macOS on Apple silicon and for Linux on x86-64. On another platform, or to run another build, set `CONVEX_BACKEND_BINARY` to a `convex-local-backend` executable. The run's record then names the release only when the executable's hash is the pinned one.
+
+The harness gives every Convex CLI call the address and the admin key of the backend it started, and an environment of its own. A deploy key or a deployment named in your shell or in a `.env` file is never used.
+
+`npm run codegen` starts a disposable backend and rewrites `fixture/convex/_generated` and `fixture/convex/annex/_generated`. Run it after you add or rename a fixture function or change its arguments, and commit the result. CI fails when the committed files differ from what codegen writes.
+
+Every native run writes a record to `evidence/runs/`. [`evidence/README.md`](evidence/README.md) says what a record holds and which records are kept.

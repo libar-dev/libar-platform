@@ -1,3 +1,5 @@
+import type { ConvexHttpClient } from "convex/browser";
+import type { UserIdentity } from "convex/server";
 import { expect } from "vitest";
 import {
   ref,
@@ -6,56 +8,74 @@ import {
 } from "@libar-dev/software-delivery-protocol";
 import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { api } from "../../fixture/convex/_generated/api.js";
-import { httpClient } from "../../harness/clients.js";
-import { backend, client, fixture } from "./world.js";
-import type { World } from "./world.js";
-import { createIdentity } from "../../harness/identity.js";
-import { fixtureIssuerTokenYieldsIdentityContract } from "../../generated/contracts/platform.native-harness.fixture-issuer-token-yields-identity.contract.js";
+import { fixtureIssuerTokenYieldsIdentityContract as contract } from "../../generated/contracts/platform.native-harness.fixture-issuer-token-yields-identity.contract.js";
+import type { Backend } from "../../harness/backend.js";
+import { ordinaryClient } from "../../harness/clients.js";
+import { createFixtureIssuer } from "../../harness/identity.js";
+import { fixtureBackend, required } from "../../harness/native.js";
 const anchor = specTest({
-  id: testAnchorId("test:platform.fixture-issuer-token-yields-identity"),
+  id: testAnchorId(
+    "test:platform.native-harness.fixture-issuer-token-yields-identity",
+  ),
   verifies: ref(
     "spec:platform.native-harness.fixture-issuer-token-yields-identity",
   ),
 });
 void anchor;
-bindExample(fixtureIssuerTokenYieldsIdentityContract, (): World => ({}), {
+interface World {
+  backend?: Backend;
+  subject?: string;
+  client?: ConvexHttpClient;
+  identity?: UserIdentity | null;
+}
+bindExample(contract, (): World => ({}), {
   "a disposable backend whose environment variables name the fixture issuer {issuer} and its data-URI key set":
-    (world, { issuer }) => fixture(world, issuer),
+    async (world, { issuer }) => {
+      world.backend = await fixtureBackend({ issuer });
+      const environment = await world.backend.admin.environment();
+      expect(environment.AUTH_ISSUER).toBe(issuer);
+      expect(environment.AUTH_JWKS).toMatch(/^data:/);
+    },
   "an ordinary client carrying a token the harness signed for subject {subject}":
     async (world, { subject }) => {
+      const backend = required(world.backend, "the backend");
       world.subject = subject;
-      world.client = httpClient(
-        backend(world).url,
-        await backend(world).identity.token(subject),
-      );
+      world.client = ordinaryClient(backend.url, {
+        token: await backend.issuer.token(subject),
+      });
     },
   "the client calls a public query that returns the caller's identity": async (
     world,
   ) => {
-    world.identity = await client(world).query(api.inspection.identity, {});
+    world.identity = (await required(world.client, "the client").query(
+      api.identity.caller,
+      {},
+    )) as UserIdentity | null;
   },
-  "the identity names issuer {identityIssuer} and subject {identitySubject}":
-    async (world, { identityIssuer, identitySubject }) => {
-      expect(world.identity?.issuer).toBe(identityIssuer);
-      expect(world.identity?.subject).toBe(identitySubject);
-      expect(world.identity?.tokenIdentifier).toBe(
-        `${identityIssuer}|${identitySubject}`,
-      );
-      const outsider = await createIdentity(backend(world).identity.issuer);
-      const invalid = httpClient(
-        backend(world).url,
-        await outsider.token(world.subject!),
-      );
-      await expect(
-        invalid.query(api.inspection.identity, {}),
-      ).rejects.toThrow();
-    },
-  "the same query from a client with no token returns an identity {anonymousHasIdentity}":
-    async (world, { anonymousHasIdentity }) => {
-      const identity = await httpClient(backend(world).url).query(
-        api.inspection.identity,
-        {},
-      );
-      expect(identity !== null).toBe(anonymousHasIdentity);
-    },
+  "the identity names issuer {identityIssuer} and subject {identitySubject}": (
+    world,
+    { identityIssuer, identitySubject },
+  ) => {
+    expect(world.identity).toMatchObject({
+      issuer: identityIssuer,
+      subject: identitySubject,
+      tokenIdentifier: `${identityIssuer}|${identitySubject}`,
+    });
+  },
+  "the same query from a client with no token returns no identity": async (
+    world,
+  ) => {
+    const backend = required(world.backend, "the backend");
+    expect(
+      await ordinaryClient(backend.url).query(api.identity.caller, {}),
+    ).toBeNull();
+    // A key outside the key set: the same issuer URL, another key pair.
+    const outsider = await createFixtureIssuer(backend.issuer.issuer);
+    const outside = ordinaryClient(backend.url, {
+      token: await outsider.token(required(world.subject, "the subject")),
+    });
+    await expect(outside.query(api.identity.caller, {})).rejects.toThrow(
+      "InvalidAuthHeader",
+    );
+  },
 });

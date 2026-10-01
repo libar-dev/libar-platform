@@ -1,8 +1,0 @@
-{
-  "name": "libar-platform-fixture",
-  "private": true,
-  "type": "module",
-  "devDependencies": {
-    "convex": "1.46.0"
-  }
-}

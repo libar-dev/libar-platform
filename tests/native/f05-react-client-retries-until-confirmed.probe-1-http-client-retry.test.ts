@@ -1,3 +1,4 @@
+import type { ConvexHttpClient } from "convex/browser";
 import { expect } from "vitest";
 import {
   ref,
@@ -6,14 +7,12 @@ import {
 } from "@libar-dev/software-delivery-protocol";
 import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { api } from "../../fixture/convex/_generated/api.js";
-import { recordMeasurement } from "../../harness/evidence.js";
-import { backend, client, fixture } from "./world.js";
-import type { World } from "./world.js";
-
-import type { HarnessHttpClient } from "../../harness/clients.js";
-import { ConvexHttpClient } from "convex/browser";
-
 import { probe1HttpClientRetryContract as contract } from "../../generated/contracts/facts.f05-react-client-retries-until-confirmed.probe-1-http-client-retry.contract.js";
+import type { Backend } from "../../harness/backend.js";
+import { countingFetch, ordinaryClient } from "../../harness/clients.js";
+import type { CountingFetch } from "../../harness/clients.js";
+import { fixtureBackend, measure, required } from "../../harness/native.js";
+import { markerRows } from "./marker-rows.js";
 const anchor = specTest({
   id: testAnchorId(
     "test:facts.f05-react-client-retries-until-confirmed.probe-1-http-client-retry",
@@ -23,58 +22,69 @@ const anchor = specTest({
   ),
 });
 void anchor;
-interface ProbeWorld extends World {
-  requests?: number;
-  trials?: {
-    key: string;
-    count: number;
-    resolved: boolean;
-    existedBeforeReplay?: boolean;
-    gapMs: number;
-  }[];
+interface World {
+  backend?: Backend;
+  transport?: CountingFetch;
+  client?: ConvexHttpClient;
+  // Requests the client had sent when each of the caller's two calls had failed.
+  requestsAfterCall?: number[];
 }
-async function measure(name: string, value: unknown) {
-  await recordMeasurement(contract.title, `probe1.${name}`, value);
-}
-async function count(w: ProbeWorld, key: string) {
-  return (await backend(w).readTable("markers")).filter(
-    (row) => (row as { trial: string }).trial === key,
-  ).length;
-}
-
-bindExample(contract, (): ProbeWorld => ({}), {
-  "an HTTP client whose caller sends a mutation which inserts one marker row and discards the response":
-    async (w) => {
-      await fixture(w);
-      let requests = 0;
-      const ordinary = new ConvexHttpClient(backend(w).url, {
-        fetch: async (input, init) => {
-          requests++;
-          w.requests = requests;
-          await measure("http.request", {
-            number: requests,
-            url: String(input),
-          });
-          return fetch(input, init);
-        },
+const failureOf = (call: Promise<unknown>) =>
+  call.then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+bindExample(contract, (): World => ({}), {
+  "an HTTP client, ConvexHttpClient, whose transport delivers each request to the backend and then fails as a lost response would":
+    async (world) => {
+      const backend = await fixtureBackend();
+      const transport = countingFetch({ loseResponses: true });
+      Object.assign(world, {
+        backend,
+        transport,
+        client: ordinaryClient(backend.url, { fetch: transport.fetch }),
       });
-      w.client = ordinary as HarnessHttpClient;
-      await ordinary.mutation(api.probe1.marker, { trial: "single" });
-      const single = await count(w, "single");
-      await measure("http.singleCall", { requests, rows: single });
-      expect(single).toBe(1);
-      expect(requests).toBe(1);
-      await ordinary.mutation(api.probe1.marker, { trial: "retry" });
-      await measure("http.discardedResponseRequests", requests);
     },
-  "the caller sends the same mutation again": async (w) => {
-    await client(w).mutation(api.probe1.marker, { trial: "retry" });
+  "its caller sends a mutation which inserts one marker row, sees the call fail, and sends the same mutation again":
+    async (world) => {
+      const client = required(world.client, "the client");
+      const transport = required(world.transport, "the transport");
+      world.requestsAfterCall = [];
+      for (let call = 0; call < 2; call++) {
+        const failure = await failureOf(
+          client.mutation(api.markers.insert, { trial: "response lost" }),
+        );
+        expect(String(failure)).toContain("The response was lost");
+        world.requestsAfterCall.push(transport.requests());
+      }
+    },
+  "the client sent {requestsPerCall} request for each call": (
+    world,
+    { requestsPerCall },
+  ) => {
+    const [afterFirst, afterSecond] = required(
+      world.requestsAfterCall,
+      "the request counts",
+    );
+    measure("requestsAfterEachCall", [afterFirst ?? null, afterSecond ?? null]);
+    expect(afterFirst).toBe(requestsPerCall);
+    expect((afterSecond ?? 0) - (afterFirst ?? 0)).toBe(requestsPerCall);
   },
-  "the backend holds {markerRows} marker rows": async (w, { markerRows }) => {
-    const rows = await count(w, "retry");
-    await measure("http.retriedRows", rows);
-    expect(rows).toBe(markerRows);
-    expect(w.requests).toBe(markerRows + 1);
-    await measure("http.totalRequests", w.requests);
+  "the backend holds {markerRows} marker rows": async (
+    world,
+    { markerRows: expected },
+  ) => {
+    const backend = required(world.backend, "the backend");
+    const rows = (await markerRows(backend)).get("response lost") ?? 0;
+    measure("rowsAfterTheRetry", rows);
+    expect(rows).toBe(expected);
+    // With no fault in the transport, one call sends one request and leaves one row.
+    const kept = countingFetch({ loseResponses: false });
+    await ordinaryClient(backend.url, { fetch: kept.fetch }).mutation(
+      api.markers.insert,
+      { trial: "response kept" },
+    );
+    expect(kept.requests()).toBe(1);
+    expect((await markerRows(backend)).get("response kept")).toBe(1);
   },
 });

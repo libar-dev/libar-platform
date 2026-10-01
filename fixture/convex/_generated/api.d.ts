@@ -8,12 +8,13 @@
  * @module
  */
 
-import type * as inspection from "../inspection.js";
-import type * as probe1 from "../probe1.js";
-import type * as probe2 from "../probe2.js";
-import type * as probe3 from "../probe3.js";
-import type * as probe4 from "../probe4.js";
-import type * as probe5 from "../probe5.js";
+import type * as failures from "../failures.js";
+import type * as identity from "../identity.js";
+import type * as limits from "../limits.js";
+import type * as list from "../list.js";
+import type * as markers from "../markers.js";
+import type * as notes from "../notes.js";
+import type * as readCost from "../readCost.js";
 
 import type {
   ApiFromModules,
@@ -22,12 +23,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  inspection: typeof inspection;
-  probe1: typeof probe1;
-  probe2: typeof probe2;
-  probe3: typeof probe3;
-  probe4: typeof probe4;
-  probe5: typeof probe5;
+  failures: typeof failures;
+  identity: typeof identity;
+  limits: typeof limits;
+  list: typeof list;
+  markers: typeof markers;
+  notes: typeof notes;
+  readCost: typeof readCost;
 }>;
 
 /**
@@ -57,5 +59,5 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  probe: import("../probe/_generated/component.js").ComponentApi<"probe">;
+  annex: import("../annex/_generated/component.js").ComponentApi<"annex">;
 };

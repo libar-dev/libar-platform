@@ -1,4 +1,5 @@
-import { setTimeout as delay } from "node:timers/promises";
+import { setTimeout as sleep } from "node:timers/promises";
+export const localWriteRateBytesPerSecond = 4 * 1024 * 1024;
 export async function waitUntil(
   description: string,
   condition: () => boolean | Promise<boolean>,
@@ -7,7 +8,7 @@ export async function waitUntil(
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (await condition()) return;
-    await delay(10);
+    await sleep(10);
   }
   throw new Error(`Timed out after ${timeoutMs} ms waiting for ${description}`);
 }
@@ -35,4 +36,9 @@ export async function within<T>(
   } finally {
     clearTimeout(timer);
   }
+}
+export async function paceAfterWrite(bytesWritten: number): Promise<void> {
+  await sleep(
+    Math.ceil((bytesWritten / localWriteRateBytesPerSecond) * 1000 * 1.25),
+  );
 }

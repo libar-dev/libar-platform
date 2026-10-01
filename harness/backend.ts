@@ -1,89 +1,45 @@
-import { spawn, execFile as execFileCallback } from "node:child_process";
+import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
-import { promisify } from "node:util";
+import { randomBytes, randomUUID } from "node:crypto";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
-import { createHash, randomBytes, randomUUID } from "node:crypto";
-import {
-  chmod,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-  access,
-} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { setTimeout as delay } from "node:timers/promises";
-import { createIdentity } from "./identity.js";
-import type { FixtureIdentity } from "./identity.js";
-
-const execFile = promisify(execFileCallback);
-export const root = fileURLToPath(new URL("../", import.meta.url));
-const cli = join(root, "node_modules/convex/bin/main.js");
-export interface BackendRelease {
-  release: string;
-  assets: Record<string, string | null>;
+import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
+import { createAdminAccess } from "./admin.js";
+import type { AdminAccess, AdminState } from "./admin.js";
+import { redact, runChild } from "./child.js";
+import type { Executable } from "./executable.js";
+import type { FixtureIssuer } from "./identity.js";
+export const fixtureComposition = {
+  name: "fixture",
+  functions: "fixture/convex",
+  installedLayers: [] as readonly string[],
+} as const;
+export interface BackendFacts {
+  composition: "fixture" | null;
+  installedLayers: string[];
+  executable: Pick<Executable, "release" | "sha256" | "source">;
+  identitySource: { kind: "fixture issuer"; issuer: string };
+  environment: string[];
+  dataset: "empty at start";
 }
-export async function backendRelease(): Promise<BackendRelease> {
-  return JSON.parse(
-    await readFile(join(root, "harness/backend-release.json"), "utf8"),
-  ) as BackendRelease;
+export interface StartOptions {
+  executable: Executable;
+  issuer: FixtureIssuer;
+  parentDirectory?: string;
+  signal?: AbortSignal;
 }
-export async function backendBinary(): Promise<string> {
-  if (process.env.CONVEX_BACKEND_BINARY)
-    return resolve(process.env.CONVEX_BACKEND_BINARY);
-  const asset =
-    process.platform === "darwin" && process.arch === "arm64"
-      ? "convex-local-backend-aarch64-apple-darwin.zip"
-      : process.platform === "linux" && process.arch === "x64"
-        ? "convex-local-backend-x86_64-unknown-linux-gnu.zip"
-        : undefined;
-  if (!asset)
-    throw new Error(
-      `Unsupported backend platform: ${process.platform}/${process.arch}`,
-    );
-  const release = await backendRelease();
-  const hash = release.assets[asset];
-  if (!hash)
-    throw new Error(
-      `Missing SHA-256 for backend asset ${asset}; the orchestrator must supply it in harness/backend-release.json`,
-    );
-  const cache = join(root, ".cache", release.release, asset);
-  const binary = join(cache, "convex-local-backend");
-  try {
-    await access(binary);
-    return binary;
-  } catch {
-    /* download below */
-  }
-  await mkdir(cache, { recursive: true });
-  // Each downloader extracts in its own directory. Parallel tests never see a partial binary.
-  const work = await mkdtemp(join(cache, "download-"));
-  try {
-    const response = await fetch(
-      `https://github.com/get-convex/convex-backend/releases/download/${release.release}/${asset}`,
-    );
-    if (!response.ok)
-      throw new Error(`Backend download failed: ${response.status} ${asset}`);
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (createHash("sha256").update(bytes).digest("hex") !== hash)
-      throw new Error(`SHA-256 mismatch for ${asset}`);
-    const zip = join(work, "backend.zip");
-    await writeFile(zip, bytes);
-    await execFile("unzip", ["-q", zip, "-d", work]);
-    const extracted = join(work, "convex-local-backend");
-    await chmod(extracted, 0o755);
-    const { copyFile, rename } = await import("node:fs/promises");
-    const staging = join(cache, `binary-${randomUUID()}`);
-    await copyFile(extracted, staging);
-    await chmod(staging, 0o755);
-    await rename(staging, binary);
-    return binary;
-  } finally {
-    await rm(work, { recursive: true, force: true });
-  }
+export interface Backend {
+  readonly url: string;
+  readonly adminKey: string;
+  readonly issuer: FixtureIssuer;
+  readonly admin: AdminAccess;
+  stop(): Promise<void>;
+  kill(): Promise<void>;
+  restart(): Promise<void>;
+  dispose(): Promise<void>;
+  facts(): BackendFacts;
 }
 async function freePort(): Promise<number> {
   const server = createServer();
@@ -92,289 +48,213 @@ async function freePort(): Promise<number> {
     server.listen(0, "127.0.0.1", ok);
   });
   const address = server.address();
-  if (!address || typeof address === "string")
-    throw new Error("No allocated TCP port");
-  await new Promise<void>((ok, fail) =>
-    server.close((error) => (error ? fail(error) : ok())),
-  );
+  await new Promise<void>((ok) => server.close(() => ok()));
+  if (address === null || typeof address === "string")
+    throw new Error("The operating system gave no port");
   return address.port;
 }
-function exited(child: ChildProcess): Promise<void> {
+function exitOf(child: ChildProcess, timeoutMs: number): Promise<boolean> {
   if (child.exitCode !== null || child.signalCode !== null)
-    return Promise.resolve();
-  return new Promise((ok, fail) => {
-    child.once("exit", () => ok());
-    child.once("error", fail);
+    return Promise.resolve(true);
+  return new Promise((done) => {
+    const timer = setTimeout(() => done(false), timeoutMs);
+    child.once("exit", () => {
+      clearTimeout(timer);
+      done(true);
+    });
   });
 }
-export interface FunctionLogRecord {
-  identifier?: string;
-  componentPath?: string;
-  executionTime?: number;
-  usageStats?: unknown;
-  [key: string]: unknown;
-}
-export class Backend {
-  private child?: ChildProcess;
-  private output = "";
-  private logProcesses = new Set<ChildProcess>();
-  private constructor(
-    readonly binary: string,
-    readonly directory: string,
-    readonly port: number,
-    readonly sitePort: number,
-    readonly instanceName: string,
-    private readonly secret: string,
-    readonly adminKey: string,
-    readonly identity: FixtureIdentity,
-  ) {}
-  get url() {
-    return `http://127.0.0.1:${this.port}`;
-  }
-  get environment() {
-    return {
-      ...process.env,
-      CONVEX_SELF_HOSTED_URL: this.url,
-      CONVEX_SELF_HOSTED_ADMIN_KEY: this.adminKey,
-    };
-  }
-  static async start(issuer?: string): Promise<Backend> {
-    const binary = await backendBinary();
-    const directory = await mkdtemp(join(tmpdir(), "libar-backend-"));
-    try {
-      const port = await freePort();
-      let sitePort = await freePort();
-      while (sitePort === port) sitePort = await freePort();
-      const name = `fixture-${randomUUID()}`;
-      const secret = randomBytes(32).toString("hex");
-      const { stdout } = await execFile(binary, [
-        "keygen",
-        "admin-key",
-        "--instance-name",
-        name,
-        "--instance-secret",
-        secret,
-      ]);
-      const backend = new Backend(
-        binary,
-        directory,
-        port,
-        sitePort,
-        name,
-        secret,
-        stdout.trim(),
-        await createIdentity(issuer),
-      );
-      try {
-        await backend.restart();
-        return backend;
-      } catch (error) {
-        await backend.stop();
-        throw error;
-      }
-    } catch (error) {
-      await rm(directory, { recursive: true, force: true });
-      throw error;
-    }
-  }
-  async restart(): Promise<void> {
-    if (
-      this.child &&
-      this.child.exitCode === null &&
-      this.child.signalCode === null
-    )
-      throw new Error("Backend is already running");
-    this.output = "";
-    const child = spawn(
-      this.binary,
+export async function startBackend(options: StartOptions): Promise<Backend> {
+  const directory = await mkdtemp(
+    join(options.parentDirectory ?? tmpdir(), "backend-"),
+  );
+  const home = join(directory, "home");
+  const instanceName = `libar-${randomUUID()}`;
+  const instanceSecret = randomBytes(32).toString("hex");
+  const secrets: string[] = [instanceSecret];
+  let child: ChildProcess | undefined;
+  let output = "";
+  let port = 0;
+  let sitePort = 0;
+  let disposed = false;
+  const state: AdminState = { deployed: false, environment: new Set() };
+  const running = () =>
+    child !== undefined && child.exitCode === null && child.signalCode === null;
+  async function spawnAndWait(): Promise<"ready" | "port taken"> {
+    output = "";
+    const spawned = spawn(
+      options.executable.path,
       [
         "--port",
-        String(this.port),
+        String(port),
         "--site-proxy-port",
-        String(this.sitePort),
+        String(sitePort),
         "--interface",
         "127.0.0.1",
         "--instance-name",
-        this.instanceName,
+        instanceName,
         "--instance-secret",
-        this.secret,
+        instanceSecret,
         "--local-storage",
-        join(this.directory, "storage"),
-        join(this.directory, "backend.sqlite3"),
+        join(directory, "storage"),
+        "--disable-beacon",
+        join(directory, "backend.sqlite3"),
       ],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
-    this.child = child;
-    let spawnError: Error | undefined;
-    child.on("error", (error) => {
-      spawnError = error;
-    });
-    child.stdout?.on("data", (chunk: Buffer) => {
-      this.output = (this.output + chunk.toString()).slice(-16000);
-    });
-    child.stderr?.on("data", (chunk: Buffer) => {
-      this.output = (this.output + chunk.toString()).slice(-16000);
-    });
+    child = spawned;
+    const keep = (chunk: Buffer) => {
+      output = (output + chunk.toString()).slice(-16000);
+    };
+    spawned.stdout?.on("data", keep);
+    spawned.stderr?.on("data", keep);
+    spawned.on("error", (error) => keep(Buffer.from(String(error))));
+    if (spawned.pid !== undefined)
+      await writeFile(join(directory, "pid"), String(spawned.pid));
     const deadline = Date.now() + 30000;
     while (Date.now() < deadline) {
-      if (spawnError) throw spawnError;
-      if (child.exitCode !== null || child.signalCode !== null)
-        throw new Error(`Backend exited before /version: ${this.output}`);
+      options.signal?.throwIfAborted();
+      if (spawned.exitCode !== null || spawned.signalCode !== null) {
+        if (output.includes("Address already in use")) return "port taken";
+        throw new Error(
+          `The backend exited with code ${spawned.exitCode} before it was ready: ${redact(output, secrets)}`,
+        );
+      }
       try {
+        const response = await fetch(`http://127.0.0.1:${port}/instance_name`, {
+          signal: AbortSignal.timeout(1000),
+        });
         if (
-          (
-            await fetch(`${this.url}/version`, {
-              signal: AbortSignal.timeout(1000),
-            })
-          ).ok
+          response.ok &&
+          (await response.text()) === instanceName &&
+          spawned.exitCode === null
         )
-          return;
+          return "ready";
       } catch {
-        /* not ready */
+        // Not listening yet.
       }
-      await delay(50);
+      await sleep(50);
     }
-    throw new Error(`Backend /version timed out: ${this.output}`);
-  }
-  async command(args: string[]): Promise<string> {
-    const { stdout } = await execFile(process.execPath, [cli, ...args], {
-      cwd: join(root, "fixture"),
-      env: this.environment,
-      maxBuffer: 16 * 1024 * 1024,
-    });
-    return stdout;
-  }
-  async deploy(): Promise<void> {
-    const envFile = join(this.directory, "auth.env");
-    await writeFile(
-      envFile,
-      `AUTH_ISSUER=${this.identity.issuer}\nAUTH_APPLICATION_ID=${this.identity.applicationID}\nAUTH_JWKS=${this.identity.jwks}\n`,
-      { mode: 0o600 },
+    throw new Error(
+      `The backend was not ready in 30000 ms: ${redact(output, secrets)}`,
     );
-    await this.command(["env", "set", "--from-file", envFile]);
-    await this.command([
-      "deploy",
-      "-y",
-      "--codegen",
-      "disable",
-      "--typecheck",
-      "disable",
-    ]);
   }
-  async readTable(table: string, componentPath?: string): Promise<unknown[]> {
-    const component = componentPath ? ["--component", componentPath] : [];
-    const output = await this.command([
-      "data",
-      table,
-      "--format",
-      "json",
-      ...component,
-    ]);
-    if (output.trim()) return JSON.parse(output) as unknown[];
-    // The CLI prints nothing for an empty table and nothing for a table that does not exist.
-    const tables = (await this.command(["data", ...component])).split("\n");
-    if (!tables.includes(table))
+  async function end(signal: "SIGINT" | "SIGKILL"): Promise<void> {
+    if (child === undefined || !running()) return;
+    child.kill(signal);
+    if (await exitOf(child, 5000)) return;
+    if (signal === "SIGINT") {
+      child.kill("SIGKILL");
+      if (await exitOf(child, 5000)) return;
+    }
+    throw new Error(
+      `Backend process ${child.pid} did not exit within 5000 ms after SIGKILL`,
+    );
+  }
+  async function dispose(): Promise<void> {
+    if (disposed) return;
+    disposed = true;
+    const left: string[] = [];
+    await end("SIGKILL").catch((error: Error) => left.push(error.message));
+    await rm(directory, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    }).catch((error: Error) =>
+      left.push(`could not remove ${directory}: ${error.message}`),
+    );
+    if (left.length > 0)
       throw new Error(
-        `No table ${table} in ${componentPath ?? "the app"}: ${tables.join(" ")}`,
+        `Backend disposal left something behind: ${left.join("; ")}`,
       );
-    return [];
   }
-  logs() {
-    const records: FunctionLogRecord[] = [];
-    const errors: string[] = [];
-    const child = spawn(
-      process.execPath,
-      [cli, "logs", "--success", "--jsonl"],
+  try {
+    await mkdir(home);
+    const adminKey = (
+      await runChild(
+        "convex-local-backend keygen",
+        options.executable.path,
+        [
+          "keygen",
+          "admin-key",
+          "--instance-name",
+          instanceName,
+          "--instance-secret",
+          instanceSecret,
+        ],
+        {
+          timeoutMs: 10000,
+          secrets,
+          ...(options.signal === undefined ? {} : { signal: options.signal }),
+        },
+      )
+    ).trim();
+    secrets.push(adminKey);
+    for (let attempt = 1; ; attempt++) {
+      port = await freePort();
+      do sitePort = await freePort();
+      while (sitePort === port);
+      if ((await spawnAndWait()) === "ready") break;
+      if (attempt === 3)
+        throw new Error(
+          `The backend could not bind its ports in 3 attempts: ${redact(output, secrets)}`,
+        );
+    }
+    const url = `http://127.0.0.1:${port}`;
+    const admin = createAdminAccess(
       {
-        cwd: join(root, "fixture"),
-        env: this.environment,
-        stdio: ["ignore", "pipe", "pipe"],
+        url,
+        adminKey,
+        home,
+        secrets,
+        ...(options.signal === undefined ? {} : { signal: options.signal }),
       },
+      state,
     );
-    this.logProcesses.add(child);
-    let pending = "";
-    child.on("error", (error) => errors.push(String(error)));
-    child.stderr?.on("data", (chunk: Buffer) => errors.push(chunk.toString()));
-    child.stdout?.on("data", (chunk: Buffer) => {
-      pending += chunk.toString();
-      const lines = pending.split("\n");
-      pending = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          records.push(JSON.parse(line) as FunctionLogRecord);
-        } catch {
-          errors.push(`Invalid function log JSON: ${line}`);
-        }
-      }
+    await admin.setEnvironment({
+      AUTH_ISSUER: options.issuer.issuer,
+      AUTH_APPLICATION_ID: options.issuer.applicationID,
+      AUTH_JWKS: options.issuer.jwks,
     });
     return {
-      records,
-      errors,
-      async waitFor(
-        predicate: (record: FunctionLogRecord) => boolean,
-        timeout = 10000,
-      ) {
-        const deadline = Date.now() + timeout;
-        while (Date.now() < deadline) {
-          const record = records.find(predicate);
-          if (record) return record;
-          if (child.exitCode !== null || child.signalCode !== null)
-            throw new Error(`Function log stream exited: ${errors.join("\n")}`);
-          await delay(25);
-        }
-        throw new Error(`Function log record timed out: ${errors.join("\n")}`);
+      url,
+      adminKey,
+      issuer: options.issuer,
+      admin,
+      stop: () => end("SIGINT"),
+      kill: () => end("SIGKILL"),
+      async restart() {
+        if (running())
+          throw new Error(
+            "The backend is still running. Stop or kill it before restart.",
+          );
+        if ((await spawnAndWait()) === "port taken")
+          throw new Error(
+            `The backend could not restart on port ${port}: ${redact(output, secrets)}`,
+          );
       },
-      stop: async () => {
-        child.kill("SIGINT");
-        await exited(child);
-        this.logProcesses.delete(child);
-      },
+      dispose,
+      facts: () => ({
+        composition: state.deployed ? fixtureComposition.name : null,
+        installedLayers: state.deployed
+          ? [...fixtureComposition.installedLayers]
+          : [],
+        executable: {
+          release: options.executable.release,
+          sha256: options.executable.sha256,
+          source: options.executable.source,
+        },
+        identitySource: {
+          kind: "fixture issuer",
+          issuer: options.issuer.issuer,
+        },
+        environment: [...state.environment].sort(),
+        dataset: "empty at start",
+      }),
     };
-  }
-  async kill(): Promise<void> {
-    if (this.child) {
-      this.child.kill("SIGKILL");
-      await exited(this.child);
-    }
-  }
-  async stop(): Promise<void> {
-    for (const child of this.logProcesses) {
-      child.kill("SIGINT");
-      await exited(child);
-    }
-    this.logProcesses.clear();
-    if (this.child) {
-      const child = this.child;
-      child.kill("SIGINT");
-      const timer = setTimeout(() => child.kill("SIGKILL"), 5000);
-      try {
-        await exited(child);
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-    await rm(this.directory, { recursive: true, force: true });
-  }
-}
-export async function startFixture(issuer?: string): Promise<Backend> {
-  const backend = await Backend.start(issuer);
-  try {
-    await backend.deploy();
-    return backend;
   } catch (error) {
-    await backend.stop();
+    await dispose().catch(() => undefined);
     throw error;
-  }
-}
-export async function withBackend<T>(
-  run: (backend: Backend) => Promise<T>,
-  issuer?: string,
-): Promise<T> {
-  const backend = await startFixture(issuer);
-  try {
-    return await run(backend);
-  } finally {
-    await backend.stop();
   }
 }

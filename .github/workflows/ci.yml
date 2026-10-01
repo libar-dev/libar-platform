@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
 jobs:
-  design:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -17,30 +17,10 @@ jobs:
           python-version: "3.x"
       - run: npm ci
       - run: python3 design/tools/check.py
-  compiled:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
       - run: npm run typecheck
-      - run: npm run test:types
       - run: npm run lint
       - run: npm run format:check
-  pure-and-simulator:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run test:pure
-      - run: npm run test:simulator
+      - run: npm test
   native:
     runs-on: ubuntu-latest
     steps:
@@ -49,9 +29,15 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/cache@v6
+        with:
+          path: .cache
+          key: convex-local-backend-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('harness/backend-release.json') }}
       - run: npm ci
+      - run: npm run codegen
+      - run: git diff --exit-code -- fixture/convex
       - run: npm run test:native
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: native-evidence

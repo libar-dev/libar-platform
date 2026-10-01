@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import { expect } from "vitest";
 import {
   ref,
@@ -6,18 +7,11 @@ import {
 } from "@libar-dev/software-delivery-protocol";
 import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { api } from "../../fixture/convex/_generated/api.js";
-import { recordMeasurement } from "../../harness/evidence.js";
-import { backend, fixture } from "./world.js";
-import type { World } from "./world.js";
-
-import { ConvexClient } from "convex/browser";
-import { onTestFinished } from "vitest";
-
-import { setTimeout as delay } from "node:timers/promises";
-import { waitUntil } from "../../harness/wait.js";
-import { controlledTransport } from "./probe1-transport.js";
-
 import { probe1ClientClosedWithPendingMutationContract as contract } from "../../generated/contracts/facts.f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation.contract.js";
+import type { Backend } from "../../harness/backend.js";
+import { heldWebSocket, ordinarySocketClient } from "../../harness/clients.js";
+import { fixtureBackend, measure, required } from "../../harness/native.js";
+import { connected, markerRows } from "./marker-rows.js";
 const anchor = specTest({
   id: testAnchorId(
     "test:facts.f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation",
@@ -27,96 +21,90 @@ const anchor = specTest({
   ),
 });
 void anchor;
-interface ProbeWorld extends World {
-  trials?: {
-    key: string;
-    count: number;
-    resolved: boolean;
-    existedBeforeReplay?: boolean;
-    gapMs: number;
-  }[];
+interface Trial {
+  trial: string;
+  // Milliseconds between the send and the close.
+  gapMs: number;
+  // Whether the client received the mutation's result.
+  confirmed: boolean;
+  rows: number;
 }
-async function measure(name: string, value: unknown) {
-  await recordMeasurement(contract.title, `probe1.${name}`, value);
+interface World {
+  backend?: Backend;
+  trials?: Trial[];
 }
-async function count(w: ProbeWorld, key: string) {
-  return (await backend(w).readTable("markers")).filter(
-    (row) => (row as { trial: string }).trial === key,
-  ).length;
-}
-async function connected(ws: ConvexClient) {
-  await waitUntil(
-    "WebSocket connected before marker send",
-    () => ws.connectionState().isWebSocketConnected,
-    5000,
-  );
-}
-
-bindExample(contract, (): ProbeWorld => ({}), {
-  "a WebSocket client that sends a mutation which inserts one marker row":
-    async (w) => {
-      await fixture(w);
+bindExample(contract, (): World => ({}), {
+  "a WebSocket client, the ConvexClient of convex/browser, that sends a mutation which inserts one marker row":
+    async (world) => {
+      const backend = await fixtureBackend();
+      world.backend = backend;
+      // Left open, such a client gets its result and leaves one row.
+      const client = ordinarySocketClient(backend.url);
+      await client.mutation(api.markers.insert, { trial: "left open" });
+      await client.close();
+      expect((await markerRows(backend)).get("left open")).toBe(1);
     },
-  "the client is closed before the mutation's result arrives, in each of {trials} trials":
-    async (w, { trials }) => {
-      w.trials = [];
-      for (let i = 0; i < trials; i++) {
-        const transport = controlledTransport();
-        const ws = new ConvexClient(backend(w).url, {
-          webSocketConstructor: transport.constructor,
+  "the client is closed before the mutation's result reaches it, in each of {trials} trials":
+    async (world, { trials }) => {
+      const backend = required(world.backend, "the backend");
+      const closed: Trial[] = [];
+      for (let index = 0; index < trials; index++) {
+        const held = heldWebSocket();
+        const client = ordinarySocketClient(backend.url, {
+          webSocket: held.WebSocket,
         });
-        onTestFinished(() => ws.close());
-        await connected(ws);
-        if (i === 0)
-          await measure("closed.transportTiming", {
-            responsesHeld: true,
-            settleWindowMs: 100,
-            gapsMs: [0, 1, 2, 3, 4, 5],
-          });
-        const key = `closed-${i}`;
-        transport.holdResponses();
-        let resolved = false;
-        void ws.mutation(api.probe1.marker, { trial: key }).then(
+        await connected(client);
+        // From here no response reaches the client, so the mutation stays pending until the close.
+        held.holdResponses();
+        const trial: Trial = {
+          trial: `closed ${index}`,
+          gapMs: index % 6,
+          confirmed: false,
+          rows: 0,
+        };
+        void client.mutation(api.markers.insert, { trial: trial.trial }).then(
           () => {
-            resolved = true;
+            trial.confirmed = true;
           },
-          () => {},
+          () => undefined,
         );
-        const gapMs = i % 6;
-        if (gapMs > 0) await delay(gapMs);
-        expect(
-          resolved,
-          "mutation must still be pending when client closes",
-        ).toBe(false);
-        await ws.close();
-        // With no client left to confirm an uncommitted send, absence has no event.
-        // Observe for a bounded 100 ms settle window, then take the admin snapshot.
-        await delay(100);
-        const rows = await count(w, key);
-        const observation = { key, count: rows, resolved, gapMs };
-        w.trials.push(observation);
-        await measure("closed.trial", observation);
+        if (trial.gapMs > 0) await sleep(trial.gapMs);
+        await client.close();
+        closed.push(trial);
       }
-      await measure(
-        "closed.trialsWithNoRow",
-        w.trials.filter((t) => t.count === 0).length,
+      // A closed client reports nothing more, so there is no event to wait for. Give the backend
+      // time to finish what it had received, then read once.
+      await sleep(500);
+      const rows = await markerRows(backend);
+      for (const trial of closed) trial.rows = rows.get(trial.trial) ?? 0;
+      world.trials = closed;
+      measure(
+        "trials",
+        closed.map((trial) => ({ ...trial })),
       );
-      await measure(
-        "closed.trialsWithOneRow",
-        w.trials.filter((t) => t.count === 1).length,
-      );
-      await measure(
-        "closed.distribution",
-        w.trials.map((t) => t.count),
+      measure("trialsThatLeftNoRow", closed.filter((t) => t.rows === 0).length);
+      measure(
+        "trialsThatLeftOneRow",
+        closed.filter((t) => t.rows === 1).length,
       );
     },
   "no trial leaves more than {mostMarkerRows} marker row": (
-    w,
+    world,
     { mostMarkerRows },
   ) => {
-    for (const trial of w.trials!)
-      expect(trial.count, JSON.stringify(trial)).toBeLessThanOrEqual(
+    for (const trial of required(world.trials, "the trials"))
+      expect(trial.rows, JSON.stringify(trial)).toBeLessThanOrEqual(
         mostMarkerRows,
       );
   },
+  "at least {leastCommittedUnconfirmed} trial leaves its row although its client never received the result":
+    (world, { leastCommittedUnconfirmed }) => {
+      const trials = required(world.trials, "the trials");
+      // Every close came with the mutation pending.
+      expect(trials.filter((trial) => trial.confirmed)).toEqual([]);
+      expect(
+        trials.filter((trial) => trial.rows > 0).length,
+        JSON.stringify(trials),
+      ).toBeGreaterThanOrEqual(leastCommittedUnconfirmed);
+    },
 });

@@ -3,5 +3,5 @@ docs/
 vendor/
 generated/
 **/_generated/
-evidence/
+evidence/**/*.json
 package-lock.json

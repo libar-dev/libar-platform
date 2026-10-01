@@ -3,9 +3,11 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "moduleSuffixes": [".d", ""],
     "strict": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "erasableSyntaxOnly": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noEmit": true,
@@ -15,7 +17,6 @@
   "include": [
     "fixture/**/*.ts",
     "harness/**/*.ts",
-    "scripts/**/*.ts",
     "tests/**/*.ts",
     "vitest.config.ts"
   ],

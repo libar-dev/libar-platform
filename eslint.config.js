@@ -7,7 +7,7 @@ export default tseslint.config(
     ...config,
     files: ["fixture/convex/**/*.ts"],
   })),
-  // The acceptance contract requires this deployment-time config to read process.env.
+  // A composition that runs natively reads its auth provider from the deployment's environment.
   {
     files: ["fixture/convex/auth.config.ts"],
     rules: { "@convex-dev/no-process-env": "off" },

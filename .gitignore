@@ -3,4 +3,4 @@ node_modules/
 generated/
 .cache/
 evidence/runs/
-fixture/.env.local
+.env.local
