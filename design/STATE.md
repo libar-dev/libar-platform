@@ -1,80 +1,90 @@
 # State of the design corpus
 
-Written on 2026-10-01 at the close of the `adopt` unit. `SESSIONS.md` says how to use this file. Every close rewrites it.
-
-## In progress
-
-Slice S0 is open on branch `slice/s0`, published as draft pull request 1, and was handed over inside the unit a second time on 2026-10-01, as `SESSIONS.md` describes. Everything below this block describes the corpus before S0 and waits for the close.
-
-- Done and committed: `spec:platform.native-harness` with E-13 and E-15 and the harness's key abstractions as Design entries; extension E-16 on the probe plan; four harness examples and fourteen probe examples, each bound to a native test; the harness, the fixture app, four test tiers and CI; probes 1 to 5 recorded on their facts, with F14 and F15 `probed` and `defined`; two fold-ins of review findings.
-- What ran on the last commit of code, `5f63f97`, on 2026-10-01 with backend `precompiled-2026-09-28-5c7cb5b`, macOS on Apple silicon: the compiled, pure test and `convex-test` tiers, 34 tests, pass; the native tier, 21 files and 30 tests, passes on the clean commit, and the record is `evidence/native-20261001T175157Z-5f63f97-cda79359-9825-4d43-af3d-4c271931c2a7.json`. CI passed on Linux at `07b1d0f`, before the second fold-in.
-- Not done: the review of the second fold-in, which nobody has read; a run of CI on the second fold-in; the close.
-- The seam: after the second fold-in was committed and proven on a native backend, before the review of the fixes.
-- The handover note is `HANDOVER-2.md` in `~/dev-libar/calibration/application-platform-s0/`, with the briefs, the reports, the four rulings files and the tools. The project notes file named in `AGENTS.md` lists that folder.
-- The summary lines under "Measured at close" are the `adopt` unit's. Run the check for today's.
+Written on 2026-10-01 at the close of slice S0. `SESSIONS.md` says how to use this file. Every close rewrites it.
 
 ## Measured at close
 
 ```
-168 specs · 5 packs · 0 anchors → 173 nodes · 881 edges (0 errors, 0 warnings)
+187 specs · 5 packs · 22 anchors → 214 nodes · 959 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings; readiness divergence: []
-open questions: 67 Specs, 129 questions, 12 blocking; extensions registered: 48
-stated readiness: {'defined': 156, 'scoped': 12}
-ledger: 231 findings, {'fixed': 111, 'open': 116, 'partially-fixed': 4}
-open findings by slice: {'L3': 22, 'P': 18, 'S0': 6, 'S1': 17, 'S2': 7, 'S3': 1, 'S4': 30, 'S5': 15}
-corpus digest: 6f0b395c30948893
+open questions: 67 Specs, 122 questions, 10 blocking; extensions registered: 50
+stated readiness: {'defined': 177, 'scoped': 10}
+ledger: 245 findings, {'fixed': 125, 'open': 111, 'owner': 1, 'partially-fixed': 8}
+open findings by slice: {'L3': 22, 'P': 18, 'S1': 17, 'S2': 8, 'S3': 1, 'S4': 30, 'S5': 15}
+corpus digest: 4a84dfa83427d329
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
-The default branch is `main`, published at `github.com/libar-dev/libar-platform`. The owner fast-forwarded it to the corpus on 2026-10-01. Each unit works on its own branch, named for the unit, and opens a pull request. The session commits and pushes its branch; merging to `main` stays with the owner.
+The default branch is `main`, published at `github.com/libar-dev/libar-platform`. Each unit works on its own branch, named for the unit, so that `main` stays green. The owner gave the session a mandate on 2026-10-01 to merge at this early stage, and said the same day that a pull request per unit was not a good idea while the design is iterated quickly. So from slice S1 on there is no pull request: CI runs on every push, and the session fast-forwards `main` once CI is green on the last commit. Slice S0 was the one unit merged through a pull request. The mandate has no stated end: ask when a release or an outside user appears.
 
 ## Where the work stands
 
-Review round 3 is complete for all five lenses at `f44cad4`. No lens approved. It left 116 open findings: 1 blocker, 36 majors, 79 minors. Three round-2 fixes are `partially-fixed`, each carried by a round-3 finding.
+Slice S0 is built. The repository now holds code beside the design: a native test harness (`harness/`), a fixture Convex app with one component (`fixture/convex/`), four test tiers (`tests/`), a codegen script and a watch mode (`scripts/`), CI, and evidence records (`evidence/`). The root `README.md` says how to run each.
 
-The owner changed the plan on 2026-10-01. A final design cannot be reached by design work alone, so the design is now finished by building it, one slice at a time. The numbers agree. Each fix round added names that the next round found defects in. A blind GPT read of one area found about 15 defects that three review rounds had not recorded. And of the 37 open blockers and majors, a read-only analysis predicts that code would catch 28: 6 at the compiler, 2 in a pure test, 16 in `convex-test`, 3 on a native backend, 1 in a measurement. The other 9, and 49 of the 79 minors, are judgment that no code catches, so review continues beside the build.
+What passed, and at which tier, on 2026-10-01 with backend release `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helpers` 0.1.124, `convex-test` 0.0.60:
 
-Every open finding carries a `slice` and a `detector` field in the ledger. The detector is that analysis's prediction of the cheapest thing that would catch the finding. Nothing was compiled or run to produce it.
+- Compiled, pure test and `convex-test` tiers at `61c3879`: 14 files, 80 tests. Typecheck, lint and format pass.
+- Native tier at `61c3879`, on a clean tree, macOS on Apple silicon: 21 files, 31 tests. The record is `evidence/native-20261001T195108Z-61c3879-e2da54b9-e845-4fa6-bc1d-2449482970dc.json`.
+- CI on Linux at `bf80ec4`, which is `61c3879` plus that record: both jobs pass, the native one included. CI also passed at each of the three fold-ins before it.
+- Thirty-seven native mutations proposed by reviewers were run across three review rounds. Twelve left their test green when first run. The three of the first round were ruled and fixed in the first fold-in. The six of the second round and two of the third were rerun after their fixes and turn their tests red. The last one is no finding: a page size no example binds.
+
+What each probe showed on the native tier. The fact Specs hold the details and the measured sizes.
+
+- Probe 1 (F5). Across a backend kill and restart on the same storage every mutation's promise stayed pending through the kill, resolved after the restart and left one row, whether the kill came before the commit or after it. A closed client left its row once or not at all. `ConvexHttpClient` sent one request per call, and a caller's retry left two rows.
+- Probe 2 (F14, now `probed`). `ConvexError` data reached the parent's catch and the client unchanged through a nested mutation and through a component boundary. The child's write rolled back and the parent committed. An ordinary `Error`'s added property did not arrive.
+- Probe 3 (F4). Fifty reads took about 3 ms through a helper, about 50 ms nested and about 80 ms through a component, with a factor of two between runs. The backend's own `documentsRead` metric counted one document per read on all three paths, in a query and in a mutation. Local time only: the quota half needs a hosted deployment.
+- Probe 4 (F13). 16 MiB read and 16 MiB written are each one budget across a nested call and a component call. A stack of 9 functions commits and 10 fails with "Cross component call depth limit exceeded".
+- Probe 5 (F15, now `probed`). A parent query over a component query stays reactive. Pinned pages stay contiguous. A capped page comes back as `SplitRequired` and both halves hold every row. The `usePaginatedQuery` hook of `convex-helpers/react` shows 40 of 45 rows after a capped split.
+- Not a probe: `ctx.auth.getUserIdentity()` inside a component returned the caller's identity, against the documentation. `convex-test` 0.0.60 returns null.
+
+What changed in the Specs during S0, and why:
+
+- `spec:platform.native-harness` is new. It took extensions E-13 and E-15 out of the acceptance contract, because the doc says what native tests prove and not how a test gets an identity, what the fixture holds, how a fault enters or what a test controls. Its Design holds the harness's interface as stubs.
+- The first reading of E-13, the admin key acting as an identity, was dropped: such a caller passes Convex's visibility check for internal functions. A fixture issuer replaced it. One example shows why.
+- `spec:facts.probe-plan` carries extension E-16: how a probe states its expectation, what a later different run is, and that a size is recorded and not asserted.
+- Eighteen examples are new or rewritten, four for the harness and fourteen for probes 1 to 5, each bound to a native test. Review rounds reworded several of them, each time because a review or a mutation showed the test proved less than the text said.
+- F14 and F15 state `defined` and are `probed`. F13, F5 and F4 carry what their probes showed. F11 carries an open question for the owner.
+- Fourteen findings entered the ledger with `round: "S0"`. The slice has no `open` finding of its own.
+
+Review of S0. The foundation and the first fold-in each had three lanes (sol mechanical, astra behavior, Opus taste). The second fold-in was read by astra at xhigh over the whole branch, the watch mode by sol, and the third and fourth fold-ins by astra and sol again. Every review of a fold-in found defects, and each time some were ones the fold-in itself had introduced, in a cleanup or failure path the fix had added: eight findings on the second fold-in, eleven on the third, eight on the fourth. The probes were confirmed closed at the third. What the fourth review found was in the handling of failed cleanup, and the fifth fold-in closed it. The slice then stopped on tactical decision 19. A review of the fifth fold-in was started as the slice closed and gates nothing: its report is `jobs/review-ai-fold-in-5.report.md` in the S0 folder the project notes name, and the thread that opens S1 rules on it first.
+
+Fourteen findings of slice S0 are `fixed` and carry `unreviewed: true`: no lens has confirmed them in the Spec text. They stay flagged until a `review` unit reads them.
+
+Review round 3 stands as it was for the rest of the corpus: no lens approved, and its open findings are sorted by slice and by the cheapest thing that would catch each. A final design cannot be reached by design work alone, so the design is finished by building it, one slice at a time.
 
 | Slice | Builds | Open findings | Blocker, major, minor |
 |---|---|---|---|
-| S0 | Repository layout, toolchain, fixture app, test tiers; probes 2 to 5 | 6 | 0, 3, 3 |
 | S1 | Layers 0 and 1, thin: deciders, kernel types, one context component, journal and adapter, command pipeline, receipts, actor and tenancy, the minimal grant bootstrap | 17 | 0, 4, 13 |
-| S2 | Layer 2, thin: `PlaceOrder` over Orders and Inventory, a legal way to create stock, the summary written in the command with its first active generation, queries and lists | 7 | 1, 3, 3 |
+| S2 | Layer 2, thin: `PlaceOrder` over Orders and Inventory, a legal way to create stock, the summary written in the command with its first active generation, queries and lists | 8 | 1, 4, 3 |
 | S3 | Measurement: 1, 10 and 100 lines, without and with contention. Repeated after S4 and S5 | 1 | 0, 0, 1 |
 | S4 | Generations and rebuild, the history view and the write pause, with the tenant list, operator entry points and gate audit the rebuild uses; Probe 6 | 30 | 0, 14, 16 |
 | S5 | Baseline migration, restore, the rest of operators and audit, maintenance jobs; the transactional part of Probe 7 | 15 | 0, 7, 8 |
 | L3 | Layers 3 to 6, written from what the experiment shows | 22 | 0, 5, 17 |
 | P | Polish with no effect on what is built: citations, markers, stale sentences, README | 18 | 0, 0, 18 |
 
-Aggregate and cross-context projections sit in S4 and are not part of the pinned experiment. Remove an unsupported generic promise before designing a helper no view needs.
-
-What the `adopt` unit did, on the Protocol at `5993da7` (pull request 26):
-
-- The Protocol is a pinned dependency in `package.json`, from a tarball under `vendor/`, because the commit hash installs no CLI. `docs/sdp-feedback.md` has the reason and the rest of the feedback.
-- Generics use real angle brackets: 248 pairs on 114 lines of 29 Specs.
-- Validate expects 0 warnings. Five checks left `tools/check.py`.
-- F14, F15 and F17 state `scoped` behind a blocking question naming the probe. Nine deferred Specs carry a blocking question naming the trigger.
-- The README's census sentence and open-question table are gone. `sdp census` and recipe 20 derive them.
-- OQ4 is ruled: the experiment lives in this repository.
+Eight more findings are `partially-fixed`, each carried by a later finding or waiting for its slice. Aggregate and cross-context projections sit in S4 and are not part of the pinned experiment. Remove an unsupported generic promise before designing a helper no view needs.
 
 ## Next unit
 
-`slice` S0.
+`slice` S1. Before its scout, rule on the review of S0's fifth fold-in (see "Where the work stands") and fold in only what a healthy run or an ordinary failure would hit.
 
-Four decisions come before any code, all from fix unit 7's findings. Settle them on paper first:
+Decisions S1 needs on paper before its code:
 
-1. What time and interruption controls the native tier has, and how a run with adjusted time differs from production (`r3-architecture-native-tier-cannot-move-time-or-interrupt`).
-2. The fixture composition, its fault seams, and the production acceptance path that stays unmodified (`r3-completeness-test-seams-and-fixture-app-undefined`).
-3. Admin setup access against ordinary-client authority in visibility tests (`r3-convex-admin-acting-identity-bypasses-visibility`). The earlier platform's native tests sign ordinary JWTs from a fixture issuer with a data-URI key set, and that passed on its native backend on 2026-09-27.
-4. Which acceptance alternatives the harness must cover, so it does not prove only the convenient cases (`r3-completeness-or-rows-bound-to-one-point`).
+- Who creates the first grant and changes grants (`r3-completeness-grants-have-no-writer`).
+- One source for tenant scope (`r3-sdp-tenant-scope-passed-two-ways`).
+- Drop the standing command registry unless a reader needs it (`r3-fidelity-command-registry-standing-without-a-reader`).
+- Whether a Spec may say `ctx.auth` is unavailable in a component, given what S0 observed (`s0-f11-documented-unavailable-observed-available`, status `owner`).
+- Whether callers of `ConvexHttpClient` must supply a request key on the public entry, given Probe 1 (the question is on D6 and on `spec:command.idempotency-and-receipts`).
 
-Then S0 lays out the repository, pins the toolchain and runs probes 2 to 5. Each probe becomes an `example` Spec that `verifies` its fact, bound to its test, which is the Protocol's home for a checked statement. Probe 1 runs before S1 relies on receipt boundaries.
+What S0 leaves for S1's opening:
+
+- Start `npm run dev` in a background shell before the first build job. It keeps `fixture/convex/_generated` current while agents write functions.
+- `tsconfig.json` sets `moduleSuffixes: [".d", ""]` and `erasableSyntaxOnly` for the whole repository. The library S1 starts meets both. Decide then whether the library gets a `tsconfig` of its own.
+- `r3-completeness-test-seams-and-fixture-app-undefined` and `r3-completeness-or-rows-bound-to-one-point` are `partially-fixed`: the harness side is done, and the part that needs a kernel waits for S1.
 
 Decisions each later slice needs on paper before its code:
 
-- S1: who creates the first grant and changes grants (`r3-completeness-grants-have-no-writer`); one source for tenant scope (`r3-sdp-tenant-scope-passed-two-ways`); drop the standing command registry unless a reader needs it (`r3-fidelity-command-registry-standing-without-a-reader`).
-- S2: stock created through a domain operation (`r3-architecture-example-domain-cannot-create-stock`); the transition that makes the first summary writable (`r3-completeness-first-generation-has-no-bootstrap`).
+- S2: stock created through a domain operation (`r3-architecture-example-domain-cannot-create-stock`); the transition that makes the first summary writable (`r3-completeness-first-generation-has-no-bootstrap`); what a list uses in place of the helper hook that loses rows after a capped split (`s0-helper-hook-loses-rows-after-a-capped-split`).
 - S4: order-independent cross-stream folds and whether deletion keeps fold memory (`r3-architecture-history-fold-order-and-deletion`); who owns the tenant list (`r3-architecture-tenant-list-undefined`); operator authority and entry points (`r3-completeness-operator-entry-points-undefined`); refusal or a paused catch-up for history rollback (`r3-architecture-history-generation-rollback-unpaused`).
 - S5: history-reading migrations off the command path unless the owner changes D3 (`r3-fidelity-migrate-on-load-replays-history-against-d3`); whether paused migrations are supported (`r3-fidelity-baseline-sweep-and-the-pause-contradict`); reopening authority, failure scope and drill cadence as explicit extensions (`r3-fidelity-restore-policies-cited-to-the-doc`).
 
@@ -82,34 +92,52 @@ Eighteen findings are listed in the sorting report as wasted effort on paper bef
 
 ## Tactical decisions taken on 2026-10-01
 
-The owner accepted these on the session's recommendation. Any of them can be reopened.
+The owner accepted the first nine on the session's recommendation. The session took the rest during S0. Any of them can be reopened.
 
 1. Slices replace the eight fix units of the previous plan.
 2. A slice is built on Specs at `defined` with no open blocker inside the slice. The owner states `ready` after the slice passes.
 3. Layer 3 and later wait for the experiment. Their 22 findings are not fixed on paper first.
-4. ESM only, Node 22 or later, one supported compiler. Dual builds, compatibility matrices and publishing wait for a first release.
+4. ESM only, Node 24, one supported compiler. Dual builds, compatibility matrices and publishing wait for a first release.
 5. npm, with one `package.json` at the repository root, as the Convex component template has it.
 6. The main thread settles a GPT finding before it enters the ledger. An `unreviewed` flag still waits for its lens.
 7. A lens verdict for `sdp`, `convex` and buildability may rest on a GPT read once that reviewer has caught a planted defect in a Spec.
-8. Sessions delegate. `SESSIONS.md` is rewritten for it.
-9. Two Protocol idioms are adopted later, when their moment comes. An extension becomes a decision Spec when the owner takes it up, and until then the E-register stays. A probe becomes an example that verifies its fact when S0 builds it.
+8. Sessions delegate. Since the owner's ruling during S0, Claude models write and GPT models review: `SESSIONS.md` has the role table.
+9. Two Protocol idioms. An extension becomes a decision Spec when the owner takes it up, and until then the E-register stays. A probe is an example that verifies its fact, which S0 did for probes 1 to 5.
+10. The fixture's component is mounted as `annex`. A fixture context gets its own name when a slice adds it.
+11. `moduleSuffixes: [".d", ""]` and `erasableSyntaxOnly` hold for the whole repository, so that Node 24 can run the harness's TypeScript by stripping its types, and so that the compiler reads the declarations of `convex-helpers` and not the source it ships.
+12. Evidence records are kept by hand: every native run writes one under `evidence/runs/`, which git ignores, and the record of a run a Spec or a commit cites is copied to `evidence/` in a commit of its own.
+13. A design pass designs the key abstractions as proposed Spec entries, with a time bound, and anything it built is handed on as a patch.
+14. A GPT job is started with the launcher beside the orchestration guide, on a frozen copy, and its session id is kept. Builders work in one worktree each.
+15. `npm run dev` is the watch mode: one disposable backend with `convex dev` bound to it.
+16. The day-one order "component codegen before the build" is met by two things together: the generated files are committed, so the `checks` job compiles what the repository holds, and the `native` job runs codegen and fails when the committed files differ.
+17. Code built from a Spec carries a `codeAnchor` that `satisfies` it. The harness has one, so the Protocol's drift alarm (recipe 2) lists what is built and does not state `ready`.
+18. No pull request per unit. A unit has its branch, CI runs on every push, and the session fast-forwards `main` at the close or at a green seam.
+19. A slice stops reviewing its fixes when a review finds no defect on a path a healthy run or an ordinary failure takes. What is left, a hole in the handling of a failed failure path or a test that would not catch a removal, is tracked under Leads and goes to the next slice.
 
 ## Owner queue
 
-Platform decisions. None blocks S0.
+Platform decisions. None blocks S1's opening, and the first five bear on S1's paper decisions.
 
-1. The 129 open questions (recipe 20), the twelve ambiguities of `PLAN.md` 11 and three product decisions listed in `README.md`.
-2. The seven probes. None has run. The earlier platform's evidence partly answers probes 1, 2, 3, 4 and 7 and does not touch 5 or 6.
-3. Rulings the round-3 findings ask for:
-   - D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt (`r3-fidelity-derived-command-receipt-question-not-on-a-spec`).
-   - D3 and a history-reading migration (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
-   - Restore policy: whether a failed check keeps every writer out with no override, and how often the drill runs (`r3-fidelity-restore-policies-cited-to-the-doc`).
-   - The `[extension]` marker: `PLAN.md` 6.5 asks for it on every extension bullet and 167 of 903 carry it (`r3-fidelity-extension-marker-applied-to-a-fifth-of-citations`).
-   - D2's premise: Convex documents a commit timestamp that increases in commit order (`r3-convex-commit-timestamp-not-weighed`).
-4. What code cannot choose, each at the slice named above: the grant bootstrap trust model, deployment-wide operator authority, tenant creation during a scan, the acceptable length of a write pause, history-deletion semantics, the restore override policy.
-5. The maximum order size and the latency and throughput targets, before S3 benchmarks.
-6. Whether the doc's statuses follow what round 3 found documented: F15's reactivity and most of Probe 4.
-7. A license. The repository is public and has no license file.
+1. `ready` on `spec:platform.native-harness`. It is built, its tests pass, and recipe 2 lists it as waiting.
+2. E-13, both halves: the fixture issuer for tests, and what it means for production's `auth.config.ts`, which must then be a `customJwt` provider whose trust root the deployment's environment names.
+3. E-15: the harness rules, the reading of Sc L2-9 as the scenarios routed to the production composition, and evidence records kept in the repository.
+4. E-16: how a probe states its expectation and records a different result.
+5. F11: documented as unavailable in a component, observed as available. And D6 after Probe 1: whether a caller of `ConvexHttpClient` must supply a request key.
+6. The doc disagrees with what the probes showed in eleven places. The list is in the S0 reports the project notes name (the facts-pass scout, section 3). Only the owner edits the doc.
+7. Probe 3's quota half needs a hosted deployment. OQ1 has its first number: a component call costs 1.5 to 2.4 ms more than a helper call on a local backend, across three runs on one machine.
+8. The 122 open questions (recipe 20), the twelve ambiguities of `PLAN.md` 11 and three product decisions listed in `README.md`.
+9. Probes 6 and 7 have not run. They sit in S4 and S5.
+10. Rulings the round-3 findings ask for:
+    - D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt (`r3-fidelity-derived-command-receipt-question-not-on-a-spec`).
+    - D3 and a history-reading migration (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
+    - Restore policy: whether a failed check keeps every writer out with no override, and how often the drill runs (`r3-fidelity-restore-policies-cited-to-the-doc`).
+    - The `[extension]` marker: `PLAN.md` 6.5 asks for it on every extension bullet and about a fifth carry it (`r3-fidelity-extension-marker-applied-to-a-fifth-of-citations`).
+    - D2's premise: Convex documents a commit timestamp that increases in commit order (`r3-convex-commit-timestamp-not-weighed`).
+11. What code cannot choose, each at its slice: the grant bootstrap trust model, deployment-wide operator authority, tenant creation during a scan, the acceptable length of a write pause, history-deletion semantics, the restore override policy.
+12. The maximum order size and the latency and throughput targets, before S3 benchmarks.
+13. `AGENTS.md` names two files by their path on the owner's machine, in a public repository. A reviewer flagged it. The section is the owner's.
+14. A license. The repository is public and has no license file.
+15. Four proposals on how sessions are run, in the orchestration guide under "Proposals not yet ruled".
 
 ## Leads
 
@@ -133,14 +161,17 @@ A session confirms or drops each. None is a finding yet.
    - A fence does not limit how many batches are scheduled.
 2. Five `fix` fields in the ledger are wrong as written: a timestamp-only rebuild cursor skips ties; `floor(4 MiB / 64 KiB)` is 64 and payload size is not row cost; transaction metrics are `{ used, remaining }` behind an async call; Workpool 0.4.7 does not hand `onComplete` the final attempt count; a Node handler needs its own `"use node"` action file.
 3. Two Convex facts no Spec covers. Nested calls draw on a system-operation time budget that byte and document bounds do not see: 605 calls used 14.8 s of a transaction that failed at 15.1 s on the earlier platform's native backend, in test mode, on 2026-09-26. And `convex-helpers` checks `maximumBytesRead` after it has read the row.
-4. F11 as stated. One of the earlier platform's tests observes the parent's identity inside a component on its pinned native backend. Recheck before a Spec says `ctx.auth` is unavailable there.
-5. Convex ships `getConvexSize` and `getDocumentSize`. They answer the two byte-bound findings of S1.
+4. The local backend refuses writes past 4 MiB a second. That bounds what slice S3 can measure on it, and a throughput number from it states the limit.
+5. Convex ships `getConvexSize` and `getDocumentSize`. They answer the two byte-bound findings of S1. And `ctx.meta.getTransactionMetrics()` counts documents read and written across nested and component calls, in queries and mutations: S0 used it in two probes, and it is a cheap way for S1 to measure what a command reads.
 6. Fifteen places where the design or a proposed fix repeats a shape the earlier platform regretted, each with the Spec line: progress kept on a row every command reads, work repeated per entry or per boundary, a stored maximum version taken as proof of coverage, a closed state with no route out, bookkeeping on the healthy path with no bounded lifetime, nested command calls where a helper would do, a recovery scan blocked by healthy work, registries with no reader.
-7. Nine type names used in pinned signatures and declared by no Spec: `Journal`, `GetArgs`, `ListArgs`, `HistoryArgs`, `WriteBaselineArgs`, `WriteBaselineResult`, `DiagnosticSink`, `AuditRecordInput`, `BatchCursor`.
+7. Nine type names used in pinned signatures and declared by no Spec: `Journal`, `GetArgs`, `ListArgs`, `HistoryArgs`, `WriteBaselineArgs`, `WriteBaselineResult`, `DiagnosticSink`, `AuditRecordInput`, `BatchCursor`. Recipe 23 finds where each is used.
 8. `dispatchId` on the obligation row is `v.id("_scheduled_functions")`. Nothing shows whether such an ID validates after a restore into another deployment. It belongs in Probe 7.
 9. The mention audit (recipe 22) gives 78 unbacked pairs, 50 of them declared from neither side. Each slice checks the ones in its families.
+10. Using the Protocol more, from a side thread's read on 2026-10-01. A local query for the build backlog at `defined` (recipe 1 reads stated `ready`, which no Spec here has before its slice passes; the same question at `defined` with a clear floor gave 80 Specs). A Pack per slice, so that "which Specs does S1 build" is a graph read. `check.py` counting open questions through recipe 20 in place of its own expression. The carrier grammar restated in `PLAN.md` 6.2, which can drift from the authoring skill's table.
+11. Small things in the harness that no finding carries. The sweep signals by process id after reading the process table, and the Spec says the interval is not closed. A `convex dev` child killed with SIGKILL leaves a temporary directory behind, which a `TMPDIR` inside the watch mode's own home would remove. The scripts' hand-over of the interrupt to executable resolution is tested by reading their source. The admin read's page size of 10 in the shared-limits helper is not needed for the read to succeed. Inside a Codex sandbox `ps` cannot inspect other processes, so the sweep tests fail there and pass outside it.
+12. Left by the last review of S0 on purpose. Redaction of a failed child's output scans a character at a time: 901 ms and about 725 MiB at peak for a 16 MiB output, where the version before the overlapping-secret fix took 3 ms. No pure test covers the accepting path of the download's hash check; it needs a real archive as a fixture, and the path runs for real whenever the cache is cold. Four mutations survive with no test: the interrupt not passed to `unzip`, the SQLite-path match dropped from the ownership check, SIGTERM mapped to SIGINT in `scripts/dev.mjs`, and a global teardown that does nothing. The test that both scripts hand their interrupt to executable resolution parses their source, and a shadowed variable or a later spread that overrides the step passes it. A failed amendment of a run record leaves a `.next` file beside the whole record.
 
-The reports behind leads 1 to 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them.
+The reports behind leads 1 to 3 and 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them, with the reports, briefs and rulings of S0.
 
 ## Inputs
 
