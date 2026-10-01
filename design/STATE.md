@@ -4,13 +4,13 @@ Written on 2026-10-01 at the close of the `adopt` unit. `SESSIONS.md` says how t
 
 ## In progress
 
-Slice S0 is open on branch `slice/s0` and was handed over inside the unit on 2026-10-01, as `SESSIONS.md` describes. Everything below this block describes the corpus before S0 and waits for the close.
+Slice S0 is open on branch `slice/s0`, published as draft pull request 1, and was handed over inside the unit a second time on 2026-10-01, as `SESSIONS.md` describes. Everything below this block describes the corpus before S0 and waits for the close.
 
-- Done and committed: the four harness decisions on the acceptance contract (E-13 changed, E-15 new), seventeen example Specs for the harness and for probes 1 to 5, the Protocol's root moved to the repository root, the toolchain, the fixture app, the native harness, four test tiers and CI.
-- Committed as work in progress, unreviewed and partly red: the thirteen probe tests.
-- Not done: the fold-in of three reviews of the foundation, the reviews of the probes, the probe results recorded on the facts, the close.
-- The seam: after the first native run of the probes, before the design of the fold-in.
-- The handover note is `HANDOVER.md` in `~/dev-libar/calibration/application-platform-s0/`, with the reports, the rulings and the drafts. The project notes file named in `AGENTS.md` lists that folder.
+- Done and committed: `spec:platform.native-harness` with E-13 and E-15 and the harness's key abstractions as Design entries; extension E-16 on the probe plan; four harness examples and fourteen probe examples, each bound to a native test; the harness, the fixture app, four test tiers and CI; probes 1 to 5 recorded on their facts, with F14 and F15 `probed` and `defined`; two fold-ins of review findings.
+- What ran on the last commit of code, `5f63f97`, on 2026-10-01 with backend `precompiled-2026-09-28-5c7cb5b`, macOS on Apple silicon: the compiled, pure test and `convex-test` tiers, 34 tests, pass; the native tier, 21 files and 30 tests, passes on the clean commit, and the record is `evidence/native-20261001T175157Z-5f63f97-cda79359-9825-4d43-af3d-4c271931c2a7.json`. CI passed on Linux at `07b1d0f`, before the second fold-in.
+- Not done: the review of the second fold-in, which nobody has read; a run of CI on the second fold-in; the close.
+- The seam: after the second fold-in was committed and proven on a native backend, before the review of the fixes.
+- The handover note is `HANDOVER-2.md` in `~/dev-libar/calibration/application-platform-s0/`, with the briefs, the reports, the four rulings files and the tools. The project notes file named in `AGENTS.md` lists that folder.
 - The summary lines under "Measured at close" are the `adopt` unit's. Run the check for today's.
 
 ## Measured at close
