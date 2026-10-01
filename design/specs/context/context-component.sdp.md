@@ -117,13 +117,13 @@ One component per context, one mount per context in the parent, and the parent a
 ## Example space
 
 ```gwt-vocabulary
-Given a context component mounted by the parent with a stream at version {version:number} in state {state:"draft"|"submitted"|"stock of 1"}
+Given a context component mounted by the parent with a stream at version {version:number} in state {state:"draft"|"submitted"|"stock of 1"|"a unique value nobody holds"}
 And the caller last reviewed the stream at version {reviewed:number}
 And {callers:number} callers send the same kind of command at the same time
-When the parent calls the context operation {operation:"ship"|"amend naming the reviewed version"|"claim one unit"} through the component API
+When the parent calls the context operation {operation:"ship"|"amend naming the reviewed version"|"claim one unit"|"create a document claiming the unique value"} through the component API
 Then the first caller's outcome is {first:"applied"|"rejection"}
 And the second caller's outcome is {second:"applied"|"rejection"|"absent"}
-And the rejection code is {code:"invalidTransition"|"staleVersion"|"insufficientStock"|"none"}
+And the rejection code is {code:"invalidTransition"|"staleVersion"|"insufficientStock"|"entityExists"|"none"}
 And the stream version afterwards is {after:number}
 And the number of events appended is {appended:number}
 And decide ran against {evaluated:"the fresh state"|"nothing"}

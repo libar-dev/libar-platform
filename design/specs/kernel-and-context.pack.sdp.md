@@ -12,6 +12,7 @@ specs:
   - spec:context.context-component.invalid-transition
   - spec:context.context-component.stale-version-rejected
   - spec:context.context-component.competing-commands
+  - spec:context.context-component.competing-unique-value
   - spec:context.journal
   - spec:context.journal.rebuild-from-baseline
   - spec:context.event-envelope
