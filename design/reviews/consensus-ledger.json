@@ -4245,6 +4245,11 @@
    "date": "2026-10-01",
    "unit": "slice",
    "summary": "Slice S0, three main threads. Built the native harness, the fixture app with one component, four test tiers, codegen, a watch mode and CI, and ran probes 1 to 5 as eighteen example Specs bound to native tests. spec:platform.native-harness is new and owns E-13 and E-15; the probe plan carries E-16; F14 and F15 are probed. Fourteen findings entered with round S0: twelve fixed and unreviewed, one open for S2 (the helper hook loses rows after a capped split), one for the owner (F11 observed available in a component). Two round-3 findings of the slice are fixed and unreviewed, and three are partially-fixed with the kernel half waiting for S1. Five fold-ins, each reviewed by GPT lanes on a frozen copy; thirty-seven native mutations run by the main thread. The slice stopped on tactical decision 19, with what was left tracked in STATE.md under Leads. Native tier at 61c3879 on a clean tree: 21 files, 31 tests."
+  },
+  {
+   "date": "2026-10-02",
+   "unit": "slice S1",
+   "summary": "Layers 0 and 1 built in src/kernel, src/context and src/command with the depot fixture context, by one workflow of Opus agents from one page of rulings. All fourteen Layer 0 and Layer 1 scenario rows pass, Sc L1-1 to L1-12 natively through eighteen examples. One review of the whole build, one fold-in, one read of the fold-in. Of the twenty findings the slice took: four fixed, nine partially fixed, six moved to S2 or S5, one with the owner."
   }
  ]
 }

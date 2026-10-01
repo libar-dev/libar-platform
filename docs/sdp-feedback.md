@@ -76,3 +76,13 @@ Five checks left this corpus's check script because the Protocol now covers them
 
 - Authored order for `design` entries (`spec:extraction.open-section-order`). The Design Review still shows this corpus's pinned declarations alphabetized inside a JSON block, which is how a reviewer reads its 762 keyed Design entries today.
 - Checked mentions (`spec:decisions.checked-mentions`). One concept stated in two Specs that disagree is still this corpus's largest class of defect, and the validator cannot see it.
+
+## 2026-10-02, from slice S1
+
+Slice S1 built Layers 0 and 1 from the Specs' `## Design` entries with seven agents in an hour. What the Protocol did and did not carry:
+
+- **Pinned signatures were buildable.** Every kernel declaration compiled as written, and the builders reported each context and command declaration that did not, with file and line. A one-line Design entry was enough for an agent to build from.
+- **A code anchor cannot live in code that may not import the Protocol.** The kernel imports nothing but a type, and the anchor builder comes from the Protocol's package, whose entry imports `fs`, `path` and `ts-morph`. The kernel's anchor sits in a test file, so the graph cannot say what a change under `src/kernel` reaches. An anchor that is a comment, or an import with no runtime, would fix it.
+- **`sdp build` writes outside `generated/`.** For a suite that binds an example whose parent has an example space it writes a `*.test.generated.ts` file beside the suite. The repository ignores those files in git, Prettier and ESLint.
+- **Build status has no home in the graph.** The thread recorded what the slice built as Design entries in the Specs, and the owner ruled that temporal information is not part of a Spec. What is built is derivable from anchors only for whole Specs; "this Spec is half built, these entries exist" has no carrier, so it lives in the project's state file.
+- **An example written before its composition existed had to be rebound.** Eighteen examples bound values of an application that is not built yet (`PlaceOrder`) and were rebound to the fixture's commands. Nothing in the graph says which composition an example runs on; the corpus says it in prose.

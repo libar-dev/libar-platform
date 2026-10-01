@@ -1,17 +1,17 @@
 # State of the design corpus
 
-Written on 2026-10-01 at the close of slice S0. `SESSIONS.md` says how to use this file. Every close rewrites it.
+Written on 2026-10-02 at the close of slice S1. `SESSIONS.md` says how to use this file. Every close rewrites it.
 
 ## Measured at close
 
 ```
-187 specs · 5 packs · 22 anchors → 214 nodes · 959 edges (0 errors, 0 warnings)
+190 specs · 5 packs · 56 anchors → 251 nodes · 1002 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings; readiness divergence: []
-open questions: 67 Specs, 122 questions, 10 blocking; extensions registered: 50
-stated readiness: {'defined': 177, 'scoped': 10}
-ledger: 245 findings, {'fixed': 125, 'open': 111, 'owner': 1, 'partially-fixed': 8}
-open findings by slice: {'L3': 22, 'P': 18, 'S1': 17, 'S2': 8, 'S3': 1, 'S4': 30, 'S5': 15}
-corpus digest: 4a84dfa83427d329
+open questions: 67 Specs, 126 questions, 10 blocking; extensions registered: 50
+stated readiness: {'defined': 180, 'scoped': 10}
+ledger: 245 findings, {'fixed': 129, 'open': 100, 'owner': 1, 'partially-fixed': 15}
+open findings by slice: {'L3': 22, 'P': 18, 'S2': 12, 'S3': 1, 'S4': 30, 'S5': 17}
+corpus digest: dfd98edc5c2eee36
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
@@ -19,80 +19,88 @@ The default branch is `main`, published at `github.com/libar-dev/libar-platform`
 
 ## Where the work stands
 
-Slice S0 is built. The repository now holds code beside the design: a native test harness (`harness/`), a fixture Convex app with one component (`fixture/convex/`), four test tiers (`tests/`), a codegen script and a watch mode (`scripts/`), CI, and evidence records (`evidence/`). The root `README.md` says how to run each.
+Slices S0 and S1 are built. S0 gave the repository a native test harness (`harness/`), a fixture Convex app (`fixture/convex/`), four test tiers (`tests/`), a codegen script, a watch mode, CI and evidence records. S1 gave it Layers 0 and 1 of the platform. The root `README.md` says how to run each tier.
 
-What passed, and at which tier, on 2026-10-01 with backend release `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helpers` 0.1.124, `convex-test` 0.0.60:
+What S1 built, in one evening on 2026-10-01, about 12,000 lines:
 
-- Compiled, pure test and `convex-test` tiers at `61c3879`: 14 files, 80 tests. Typecheck, lint and format pass.
-- Native tier at `61c3879`, on a clean tree, macOS on Apple silicon: 21 files, 31 tests. The record is `evidence/native-20261001T195108Z-61c3879-e2da54b9-e845-4fa6-bc1d-2449482970dc.json`.
-- CI on Linux at `bf80ec4`, which is `61c3879` plus that record: both jobs pass, the native one included. CI also passed at each of the three fold-ins before it.
-- Thirty-seven native mutations proposed by reviewers were run across three review rounds. Twelve left their test green when first run. The three of the first round were ruled and fixed in the first fold-in. The six of the second round and two of the third were rerun after their fixes and turn their tests red. The last one is no finding: a page size no example binds.
+- `src/kernel`: the outcome and decider types, `fold`, `rebuild`, `transition`, `checkInvariants`. A lint rule keeps Convex and Node imports out of it.
+- `src/context`: the code that runs inside a context component. The envelope, the `streams` and `events` tables as a schema fragment, `createJournal`, `load`, `append`, the persistence adapter (`planned`, `execute`, `runOperation`), `defineOperation`.
+- `src/command`: the parent side. Actor, authorization and the grants table, the outcome boundary, receipts, the declaration types, `publicCommand`, `internalCommand` and `runPipeline`.
+- `fixture/domain` and `fixture/convex/depot/`: three fixture deciders (document, stock, reference) and the fixture context component `depot` built on them. `fixture/convex/` holds the fixture commands, the two internal grant mutations and the fixture parts that inject faults.
 
-What each probe showed on the native tier. The fact Specs hold the details and the measured sizes.
+What passed, and at which tier, with backend release `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helpers` 0.1.124, `convex-test` 0.0.60:
 
-- Probe 1 (F5). Across a backend kill and restart on the same storage every mutation's promise stayed pending through the kill, resolved after the restart and left one row, whether the kill came before the commit or after it. A closed client left its row once or not at all. `ConvexHttpClient` sent one request per call, and a caller's retry left two rows.
-- Probe 2 (F14, now `probed`). `ConvexError` data reached the parent's catch and the client unchanged through a nested mutation and through a component boundary. The child's write rolled back and the parent committed. An ordinary `Error`'s added property did not arrive.
-- Probe 3 (F4). Fifty reads took about 3 ms through a helper, about 50 ms nested and about 80 ms through a component, with a factor of two between runs. The backend's own `documentsRead` metric counted one document per read on all three paths, in a query and in a mutation. Local time only: the quota half needs a hosted deployment.
-- Probe 4 (F13). 16 MiB read and 16 MiB written are each one budget across a nested call and a component call. A stack of 9 functions commits and 10 fails with "Cross component call depth limit exceeded".
-- Probe 5 (F15, now `probed`). A parent query over a component query stays reactive. Pinned pages stay contiguous. A capped page comes back as `SplitRequired` and both halves hold every row. The `usePaginatedQuery` hook of `convex-helpers/react` shows 40 of 45 rows after a capped split.
-- Not a probe: `ctx.auth.getUserIdentity()` inside a component returned the caller's identity, against the documentation. `convex-test` 0.0.60 returns null.
+- Compiled, pure test and `convex-test` tiers at `ee9a813`: 26 files, 202 tests. Typecheck, lint and format pass.
+- Native tier at `ee9a813`, on a clean tree, macOS on Apple silicon: 42 files, 52 tests. The record is `evidence/native-20261001T222459Z-ee9a813-c1c5ae96-8564-4f9b-ad78-cf1951bd8ce9.json`.
+- CI on Linux passed at every push of the slice, the native job included.
+- All fourteen rows of the doc's acceptance table for Layers 0 and 1 have a bound test that passes: Sc L0-1 and L0-2 in the pure tier, Sc L1-1 to L1-12 on the native backend through eighteen example Specs. Three of those examples are new siblings for the second case of a row: `competing-unique-value` (L1-11), `capacity-refusal-then-retry` (L1-9) and `client-claims-agent-namespace` (L1-7).
 
-What changed in the Specs during S0, and why:
+Every Layer 1 scenario runs on the fixture composition. The production composition, Orders and Inventory, does not exist yet.
 
-- `spec:platform.native-harness` is new. It took extensions E-13 and E-15 out of the acceptance contract, because the doc says what native tests prove and not how a test gets an identity, what the fixture holds, how a fault enters or what a test controls. Its Design holds the harness's interface as stubs.
-- The first reading of E-13, the admin key acting as an identity, was dropped: such a caller passes Convex's visibility check for internal functions. A fixture issuer replaced it. One example shows why.
-- `spec:facts.probe-plan` carries extension E-16: how a probe states its expectation, what a later different run is, and that a size is recorded and not asserted.
-- Eighteen examples are new or rewritten, four for the harness and fourteen for probes 1 to 5, each bound to a native test. Review rounds reworded several of them, each time because a review or a mutation showed the test proved less than the text said.
-- F14 and F15 state `defined` and are `probed`. F13, F5 and F4 carry what their probes showed. F11 carries an open question for the owner.
-- Fourteen findings entered the ledger with `round: "S0"`. The slice has no `open` finding of its own.
+What the code has and what it does not have yet. The Specs pin all of it and say nothing about which part is built: the owner's direction of 2026-10-01 is that a Spec carries no temporal information.
 
-Review of S0. The foundation and the first fold-in each had three lanes (sol mechanical, astra behavior, Opus taste). The second fold-in was read by astra at xhigh over the whole branch, the watch mode by sol, and the third and fourth fold-ins by astra and sol again. Every review of a fold-in found defects, and each time some were ones the fold-in itself had introduced, in a cleanup or failure path the fix had added: eight findings on the second fold-in, eleven on the third, eight on the fourth. The probes were confirmed closed at the third. What the fourth review found was in the handling of failed cleanup, and the fifth fold-in closed it. The slice then stopped on tactical decision 19. A review of the fifth fold-in was started as the slice closed. The thread that opened S1 ruled on it: it found no defect on a path a healthy run or an ordinary failure takes, nothing was folded in, and its six findings are lead 13.
+- Pipeline: both entries, steps 1 to 6, the mint of the `OperationRef` at step 7, step 8, the receipt insert of step 10 and the return of step 11. Not yet: the gate read of step 7, step 9 with the `writes` check, the audit record, the diagnostic.
+- Declaration: no `readModels`, `writes`, `audit` or `irreversible` field yet, and `retention.afterExpiry` is `"delete"` only. No `commandRegistry`, no registration check, no generation.
+- Receipts: the key, the fingerprint, lookup, classification and insert. An expired receipt is treated as absent and deleted in the same mutation. Not yet: tombstones and the sweep.
+- Outcome boundary: the wire shapes, `reject`, `refuseTransient`, `normalizeThrown` with the closed code list, `classifyThrown`. Not yet: the conditional dispatcher.
+- Context: operations only. Not yet: the queries (`get`, `list`, `history`, `rebuild`, `byOperation`) and `maintenance.writeBaseline`.
+- Journal and adapter: the single mapping only. Not yet: baselines and migrations (step 3a, `migrateToSchemaVersion`, `defineMaintenance`, the driver), `rebuildStream`, the derived mapping and `streamParts`. A stream row behind the registration's `stateSchemaVersion` is a plain error for now.
+- Authority: `establishActor`, `authorize`, the grants table and helpers that insert and delete a grant. The library registers no grant function.
 
-Fourteen findings of slice S0 are `fixed` and carry `unreviewed: true`: no lens has confirmed them in the Spec text. They stay flagged until a `review` unit reads them.
+What changed in the Specs during S1, and why:
 
-Review round 3 stands as it was for the rest of the corpus: no lens approved, and its open findings are sorted by slice and by the cheapest thing that would catch each. A final design cannot be reached by design work alone, so the design is finished by building it, one slice at a time.
+- The Specs of the three families now say what compiles and what was ruled: signatures widened where the pinned form did not compile, sizes measured with `getConvexSize`, `append` returning its envelopes and writing events only, the code list closed against the declaration's `rejections`, the public entry authenticating before the bound and refinement checks, the unique-value loser answered `entityExists` before `decide`.
+- Sentences that stated "a component has no `ctx.auth`" or "cannot read the environment" as Convex facts now state the design's rule: no component function reads either, and a check enforces it. Scout C saw `ctx.auth` readable in a component mutation too, and a component reading a variable it declares.
+- The eighteen Layer 1 examples name the fixture composition and bind the depot's own commands.
+- Of the twenty findings S1 took, four are `fixed`, nine are `partially-fixed` with the slice that builds the rest, six moved to S2 or S5 because S1 did not build their subject, and one is with the owner.
+
+Review of S1. One review read the whole build at `935711e`: astra at xhigh on behavior, sol at medium on every changed line in two halves. None found a defect in the library on a path a healthy run or an ordinary failure takes. They found five such defects in the fixture composition, one wrong count in an error message, two library behaviors worth fixing, and about twenty mutations that no test caught. One fold-in closed the defects and added a test for each surviving mutation under `src/`. One read of the fold-in followed. It found one more defect on a healthy path, in a path the fold-in itself had added: the bound on a rejection's details held for the parent's rejections and not for a context's. That was fixed, and the slice stopped on tactical decision 19. The rulings and the reports are in the S1 folder the project notes name.
+
+Eighteen findings are `fixed` and carry `unreviewed: true`, fourteen from S0 and four from S1: no lens has confirmed them in the Spec text.
+
+Review round 3 stands as it was for the rest of the corpus: no lens approved. The design is finished by building it, one slice at a time.
 
 | Slice | Builds | Open findings | Blocker, major, minor |
 |---|---|---|---|
-| S1 | Layers 0 and 1, thin: deciders, kernel types, one context component, journal and adapter, command pipeline, receipts, actor and tenancy, the minimal grant bootstrap | 17 | 0, 4, 13 |
-| S2 | Layer 2, thin: `PlaceOrder` over Orders and Inventory, a legal way to create stock, the summary written in the command with its first active generation, queries and lists | 8 | 1, 4, 3 |
+| S2 | Layer 2, thin: `PlaceOrder` over Orders and Inventory, a legal way to create stock, the summary written in the command with its first active generation, queries and lists, the command registry question | 12 | 1, 5, 6 |
 | S3 | Measurement: 1, 10 and 100 lines, without and with contention. Repeated after S4 and S5 | 1 | 0, 0, 1 |
 | S4 | Generations and rebuild, the history view and the write pause, with the tenant list, operator entry points and gate audit the rebuild uses; Probe 6 | 30 | 0, 14, 16 |
-| S5 | Baseline migration, restore, the rest of operators and audit, maintenance jobs; the transactional part of Probe 7 | 15 | 0, 7, 8 |
+| S5 | Baseline migration, restore, the rest of operators and audit, diagnostics, the receipts sweep, maintenance jobs; the transactional part of Probe 7 | 17 | 0, 7, 10 |
 | L3 | Layers 3 to 6, written from what the experiment shows | 22 | 0, 5, 17 |
 | P | Polish with no effect on what is built: citations, markers, stale sentences, README | 18 | 0, 0, 18 |
 
-Eight more findings are `partially-fixed`, each carried by a later finding or waiting for its slice. Aggregate and cross-context projections sit in S4 and are not part of the pinned experiment. Remove an unsupported generic promise before designing a helper no view needs.
+Fifteen more findings are `partially-fixed`, each waiting for its slice. Remove an unsupported generic promise before designing a helper no view needs.
 
 ## Next unit
 
-`slice` S1, opened on 2026-10-01 on the branch `slice/s1`. The review of S0's fifth fold-in is ruled (lead 13).
+`slice` S2, run as `SESSIONS.md` now describes a slice: one page of rulings, one workflow of builders, one review, one fold-in.
 
-Decisions S1 needs on paper before its code:
+Decisions S2 needs in its rulings file before its code. The first three were already listed for S2; the rest moved from S1 with their subjects:
 
-- Who creates the first grant and changes grants (`r3-completeness-grants-have-no-writer`).
-- One source for tenant scope (`r3-sdp-tenant-scope-passed-two-ways`).
-- Drop the standing command registry unless a reader needs it (`r3-fidelity-command-registry-standing-without-a-reader`).
-- Whether a Spec may say `ctx.auth` is unavailable in a component, given what S0 observed (`s0-f11-documented-unavailable-observed-available`, status `owner`).
-- Whether callers of `ConvexHttpClient` must supply a request key on the public entry, given Probe 1 (the question is on D6 and on `spec:command.idempotency-and-receipts`).
+- Stock created through a domain operation (`r3-architecture-example-domain-cannot-create-stock`, the slice's one blocker).
+- The transition that makes the first summary writable (`r3-completeness-first-generation-has-no-bootstrap`).
+- What a list uses in place of the helper hook that loses rows after a capped split (`s0-helper-hook-loses-rows-after-a-capped-split`), and whether a full page should always come back `SplitRequired` (`r3-convex-full-page-always-split-required`). Scout C measured the helper: its report is in the S1 folder.
+- Where the production composition lives. `convex.json` names one functions directory, `fixture/convex/`. Scout C's report, section 3, has what a second composition needs and what the Convex component template does.
+- A parent query's actor comes from `establishActor`, and its refusal needs a wire shape (`r3-sdp-parent-query-builds-actor-by-hand`, `r3-sdp-query-refusal-shape-unpinned`). Whether a context query takes a `scope` beside `tenantId` (`r3-sdp-tenant-scope-passed-two-ways`): S1 ruled one `tenantId` argument for operations.
+- Whether `commandRegistry` exists (`r3-fidelity-command-registry-standing-without-a-reader`): its one reader today is the conditional dispatcher, and the build-tier check of Sc L2-4 decides whether a registration check needs it.
+- How the experiment seeds its grants (`r3-completeness-grants-have-no-writer`): S1's helpers and an internal mutation run with admin access are the provisional answer.
+- Step 9, `readModels` and `writes` on the declaration, and the row budget check for read models (`r3-completeness-budgets-declared-never-measured`).
 
-What S0 leaves for S1's opening:
+What S1 leaves for S2's opening:
 
-- Start `npm run dev` in a background shell before the first build job. It keeps `fixture/convex/_generated` current while agents write functions.
-- `tsconfig.json` sets `moduleSuffixes: [".d", ""]` and `erasableSyntaxOnly` for the whole repository. The library S1 starts meets both. Decide then whether the library gets a `tsconfig` of its own.
-- `r3-completeness-test-seams-and-fixture-app-undefined` and `r3-completeness-or-rows-bound-to-one-point` are `partially-fixed`: the harness side is done, and the part that needs a kernel waits for S1.
+- The fixture commands in `fixture/convex/orders.ts` include a fixture `PlaceOrder` over the depot. S2's `PlaceOrder` is the example application's, over two contexts.
+- The pipeline's steps for Layer 2 are absent, not stubbed: adding step 9 and the gate read is S2's and S4's work in `src/command/pipeline.ts`.
+- Two design questions the review raised and S1 left: bound the whole return of an operation, DTOs and `combine` result included; enforce an ID length or a measured ceiling on a receipt row.
+- `npm run dev` keeps `_generated` current while agents write functions. S1's builders ran `npm run codegen` themselves and did not need it.
 
 Decisions each later slice needs on paper before its code:
 
-- S2: stock created through a domain operation (`r3-architecture-example-domain-cannot-create-stock`); the transition that makes the first summary writable (`r3-completeness-first-generation-has-no-bootstrap`); what a list uses in place of the helper hook that loses rows after a capped split (`s0-helper-hook-loses-rows-after-a-capped-split`).
 - S4: order-independent cross-stream folds and whether deletion keeps fold memory (`r3-architecture-history-fold-order-and-deletion`); who owns the tenant list (`r3-architecture-tenant-list-undefined`); operator authority and entry points (`r3-completeness-operator-entry-points-undefined`); refusal or a paused catch-up for history rollback (`r3-architecture-history-generation-rollback-unpaused`).
-- S5: history-reading migrations off the command path unless the owner changes D3 (`r3-fidelity-migrate-on-load-replays-history-against-d3`); whether paused migrations are supported (`r3-fidelity-baseline-sweep-and-the-pause-contradict`); reopening authority, failure scope and drill cadence as explicit extensions (`r3-fidelity-restore-policies-cited-to-the-doc`).
-
-Eighteen findings are listed in the sorting report as wasted effort on paper before the code exists, such as the carrier for appended envelopes and the restore checkpoint. Leave those `open` with a note that the build decides.
+- S5: history-reading migrations off the command path unless the owner changes D3 (`r3-fidelity-migrate-on-load-replays-history-against-d3`); whether paused migrations are supported (`r3-fidelity-baseline-sweep-and-the-pause-contradict`); reopening authority, failure scope and drill cadence as explicit extensions (`r3-fidelity-restore-policies-cited-to-the-doc`); which diagnostic outcomes are emitted and where a duration comes from.
 
 ## Tactical decisions taken on 2026-10-01
 
-The owner accepted the first nine on the session's recommendation. The session took the rest during S0. Any of them can be reopened.
+The owner accepted the first nine on the session's recommendation. The session took 10 to 19 during S0 and 20 to 23 during S1. Any of them can be reopened.
 
 1. Slices replace the eight fix units of the previous plan.
 2. A slice is built on Specs at `defined` with no open blocker inside the slice. The owner states `ready` after the slice passes.
@@ -113,10 +121,24 @@ The owner accepted the first nine on the session's recommendation. The session t
 17. Code built from a Spec carries a `codeAnchor` that `satisfies` it. The harness has one, so the Protocol's drift alarm (recipe 2) lists what is built and does not state `ready`.
 18. No pull request per unit. A unit has its branch, CI runs on every push, and the session fast-forwards `main` at the close or at a green seam.
 19. A slice stops reviewing its fixes when a review finds no defect on a path a healthy run or an ordinary failure takes. What is left, a hole in the handling of a failed failure path or a test that would not catch a removal, is tracked under Leads and goes to the next slice.
+20. A slice is built by one Workflow run of Opus agents from one page of rulings. Agents commit their own package on the unit's branch as unreviewed work. The main thread pushes, rules and merges, and keeps its own context small. Taken during S1 after the owner said that new design and code were a tenth of a thread's work and agreed to a workflow.
+21. An agent applies Spec and ledger edits from the main thread's exact rulings, and scenario agents rebind their own example Specs. The main thread approves the lines through the slice's one review.
+22. The library lives in `src/kernel`, `src/context` and `src/command`. The fixture context is the component `depot`. A component's code may import shared code outside the functions directory: scout C showed it on the pinned backend.
+23. `STATE.md` is the whole required reading at an opening. The guide, the notes, the Specs and earlier reports are opened where a job or a ruling needs them.
+24. The owner's direction of 2026-10-01: temporal information, such as a slice's name or what is built so far, is not part of the domain language or of a Spec. It lives here, in the ledger's notes and in the code anchors. `CONTEXT.md` sorts words into domain, design and work words, and the last kind stays out of Specs and code names.
 
 ## Owner queue
 
-Platform decisions. None blocks S1's opening, and the first five bear on S1's paper decisions.
+Platform decisions. None blocks S2's opening.
+
+0. From S1, each a provisional reading that the code now rests on:
+    - `ready` on the Specs S1 built and passed. Recipe 2 lists them as built and not `ready`.
+    - Who creates a tenant's first grant. Taken: the library registers no grant function; an operator runs an internal mutation with admin access.
+    - The tenant scope as the one `tenantId` argument, with no separate `scope`.
+    - `ctx.auth` and the environment in a component as the design's rule and not a Convex fact (F11). D10 and D11 still carry the doc's sentence.
+    - The request key stays optional on the public entry, so a caller of `ConvexHttpClient` that retries must supply one.
+    - The language. `CONTEXT.md` at the repository root is its first version, written on 2026-10-02, and `AGENTS.md` points every reader at it. Six terms wait for a ruling, each with the reading the file took: operation against context operation, command against stream command, subject against entity, actor against principal, receipt and generation (which the code now names), duplicate against replay. And whether `CONTEXT.md` or `spec:platform.vocabulary` leads. Nothing in the code or the Specs is renamed yet.
+    - `fixture/convex/nonUiCaller.ts`, a fixture action that stands for trusted server code and lets an ordinary client reach an internal entry. It must never leave the fixture composition.
 
 1. `ready` on `spec:platform.native-harness`. It is built, its tests pass, and recipe 2 lists it as waiting.
 2. E-13, both halves: the fixture issuer for tests, and what it means for production's `auth.config.ts`, which must then be a `customJwt` provider whose trust root the deployment's environment names.
@@ -172,6 +194,15 @@ A session confirms or drops each. None is a finding yet.
 12. Left by the last review of S0 on purpose. Redaction of a failed child's output scans a character at a time: 901 ms and about 725 MiB at peak for a 16 MiB output, where the version before the overlapping-secret fix took 3 ms. No pure test covers the accepting path of the download's hash check; it needs a real archive as a fixture, and the path runs for real whenever the cache is cold. Four mutations survive with no test: the interrupt not passed to `unzip`, the SQLite-path match dropped from the ownership check, SIGTERM mapped to SIGINT in `scripts/dev.mjs`, and a global teardown that does nothing. The test that both scripts hand their interrupt to executable resolution parses their source, and a shadowed variable or a later spread that overrides the step passes it. A failed amendment of a run record leaves a `.next` file beside the whole record.
 
 13. From the review of S0's fifth fold-in, ruled at the opening of S1 with nothing folded in. Each needs a failed cleanup, a setup the repository does not have, or is a test gap. In a Vitest watch session the global setup runs once, so a failed final sweep marks the last rerun's record failed and not the record of the rerun that left a backend behind; a record that is cited therefore comes from one `vitest run`. A second Vitest project that adopts the native global setup would take the first project's record slot, so the slot becomes one per project before a slice adds such a project. A reporter that throws before it writes its record lets the next sweep amend an earlier run's record. Three more mutations survive: production setup's `openRunRecord()` replaced by an empty object, the reporter's default directory changed, and the `ESRCH` guard removed from the second inspection's existence probe. A finished setup keeps its exit listener until the process ends, and eleven setups in one process draw Node's listener warning.
+
+14. Left by the review of S1 on purpose. Tests of fixture code that would not catch a removal: the evaluate-twice test compares its two outputs only after the second evaluation, states that `evolve` produces are never frozen, the reference stream has no purity or rebuild example, and the submitted event's schema stamp is pinned by no test. `tests/native/depot-operation-commits.test.ts` sends its calls with admin access, and the pure guard that forbids it looks only for the token `adminKey`. The rule for repeated document items in one call (identical items merge, items that differ are `invalidInput`) is the fixture's and no Spec states a general one.
+15. The native tests of S1 read function-log fields no Convex page promises: `willRetry` and `occInfo`, the absence of a record for a component sub-call, `usageStats.databaseReadDocuments`. They are `observed` entries of the native harness Spec and are read again when the backend pin moves. The two race tests rerun on a fresh key until the log shows an engine retry, up to twenty rounds.
+16. About ten older Spec sentences still name a slice or a date, such as "slice S2 decides" in `spec:context.queries` and "ran on 2026-10-01" in open questions. The owner's direction is against them; a unit that touches those Specs moves them out, and a sweep waits for the owner's word.
+17. The kernel's code anchor lives in `tests/pure/kernel.test.ts`, because the kernel may not import the Protocol package, so the graph cannot say what a change under `src/kernel` reaches. `npx sdp build` writes `*.test.generated.ts` files beside a suite that binds an example whose parent has an example space; they are ignored by git, Prettier and ESLint. Both are in `docs/sdp-feedback.md`.
+18. `append` refuses a stream row whose version has no event in the journal. A later audit-only context that imports rows with incomplete history would trip it.
+19. The root `README.md` says `npm run dev` rewrites all three `_generated` directories; nobody ran it to see. `scripts/dev.mjs` names only `annex/_generated` in a comment.
+
+20. Left by the read of S1's fold-in. Revocation reads every grant of a principal, so a principal with more than 500 grants whose fields are very large passes the transaction's read limit and cannot be revoked: a bounded, resumable revocation and a bound on a grant's field sizes would close it. Seven tests would not catch a removal: tenant routing in the revocation tests, the service-issuer test that never calls a public entry, the stock-overflow code in a declaration's list, grouping inside `placeOrders`, acceptance at exactly 8 MiB of measured writes, both receipt arrays filled at once, and the `invalidInput` path from a context through the closed code list.
 
 The reports behind leads 1 to 3 and 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them, with the reports, briefs and rulings of S0.
 
