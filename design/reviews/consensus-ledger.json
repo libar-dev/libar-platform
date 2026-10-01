@@ -4196,6 +4196,22 @@
    "slice": "S0",
    "detector": "native backend",
    "note": "S0, 2026-10-01. The outcome now reads: refused on the two HTTP routes with its own error, connection closed on the WebSocket route without an answer. The socket step binds the wait and at least one close by the backend, and the verification bullets say what would show a call that ran. The test follows in fold-in 2."
+  },
+  {
+   "round": "S0",
+   "id": "s0-sweep-rule-promises-more-than-a-process-id-allows",
+   "lens": "convex",
+   "severity": "minor",
+   "files": [
+    "specs/platform/native-harness.sdp.md"
+   ],
+   "issue": "The harness rule said a run 'never signals a process it did not start'. The sweep signals by process id after reading the process table, and between the read and the signal a process id can change hands. The review of the second fold-in showed the interleaving on a model of the code (astra, report U, finding 1), and showed on a real child process that a failed inspection left the process alive, removed its directory and reported success (finding 2).",
+   "fix": "The rule says what the harness does before a signal and what it does when it cannot inspect a process; a Design entry says the interval between read and signal is not closed.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "pure test",
+   "note": "S0, 2026-10-01, third main thread. The rule is split in two: cleanup, and inspection before a signal with the failed-inspection case. Design entry `sweepOwnership` states the open interval and why it matters only for a backend that exits during the sweep. The code follows in fold-in 3, list A, item A1."
   }
  ],
  "sessions": [

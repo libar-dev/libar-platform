@@ -19,7 +19,8 @@ Other verbs, same path and root rules:
 
 - `npx sdp validate --watch` is the authoring loop; it re-runs on carrier changes and stays alive.
 - `npx sdp view` writes the Design Review to `generated/design-review/` (an index plus one page per Spec and Pack). This is the human-readable rendering of the corpus.
-- `npx sdp q '<body>' --json` evaluates a recipe body from the package's `docs/agent-surface/recipes.md` against this corpus. Recipes 3 (one Spec's guarantees), 5 (Pack review), 6 (concept search), 7 (readiness divergence), 8 (warnings as data), 9 (promotion preflight) and 11 (the lower ladder) are the useful ones here.
+- `npx sdp q '<body>' --json` evaluates a recipe body from the package's `docs/agent-surface/recipes.md` against this corpus. Recipes 3 (one Spec's guarantees), 5 (Pack review), 6 (concept search), 7 (readiness divergence), 8 (orphans and gaps), 9 (promotion preflight) and 11 (the lower ladder) are the useful ones on paper. With code in the tree these join them: 2 (the drift alarm, which lists what is built and does not state `ready`), 4 (what a changed file reaches), 10 (declared against enabled verifiers), 20 (the open-question register), 21 (what a Spec rests on, with each target's rung and floor), 22 (the mention audit) and 23 (entry search by name).
+- `npx sdp q '<body>' --root node_modules/@libar-dev/software-delivery-protocol/specs --json` asks the same questions of the Protocol's own Specs, which the authoring skill cites.
 - `npx sdp new spec design/specs/<family>/<name>.sdp.md --id ID --kind KIND --altitude ALT --title TITLE --outcome OUTCOME` scaffolds an idea-rung stub. PATH is relative to the current directory, so from the repository root it starts with `design/specs/`.
 
 Exit code 1 means an error; warnings exit 0. The corpus must exit 0 with zero errors and zero warnings.
