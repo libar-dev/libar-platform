@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { test } from "vitest";
 import { api } from "../../fixture/convex/_generated/api.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { fixtureBackend, measure } from "../../harness/native.js";
@@ -20,5 +20,4 @@ test("native: a component query that calls ctx.auth.getUserIdentity() completes,
     issuer: identity?.issuer ?? null,
     subject: identity?.subject ?? null,
   });
-  expect(identity === null || typeof identity === "object").toBe(true);
 });

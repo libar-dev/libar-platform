@@ -15,22 +15,22 @@ declare module "vitest" {
   }
 }
 export function sweep(directory: string): void {
-  let entries: string[] = [];
-  try {
-    entries = readdirSync(directory);
-  } catch {
-    return;
-  }
-  for (const entry of entries) {
+  function killOwned(root: string): void {
     try {
-      process.kill(
-        Number(readFileSync(join(directory, entry, "pid"), "utf8")),
-        "SIGKILL",
-      );
+      process.kill(Number(readFileSync(join(root, "pid"), "utf8")), "SIGKILL");
     } catch {
       // No pid file, or the process is gone.
     }
+    let entries;
+    try {
+      entries = readdirSync(root, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries)
+      if (entry.isDirectory()) killOwned(join(root, entry.name));
   }
+  killOwned(directory);
   rmSync(directory, { recursive: true, force: true });
 }
 export default async function setup(

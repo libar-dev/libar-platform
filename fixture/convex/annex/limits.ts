@@ -5,8 +5,13 @@ export const insertBlobs = mutation({
   args: { group: v.string(), count: v.number(), size: v.number() },
   returns: v.null(),
   handler: async (ctx, { group, count, size }) => {
-    for (let i = 0; i < count; i++)
-      await ctx.db.insert("blobs", { group, bytes: new ArrayBuffer(size) });
+    for (let i = 0; i < count; i++) {
+      const blob = await ctx.db.insert("blobs", {
+        group,
+        bytes: new ArrayBuffer(size),
+      });
+      await ctx.db.insert("blobCounts", { group, blob });
+    }
     return null;
   },
 });
@@ -39,11 +44,14 @@ export const readBlobs = query({
 export const countBlobs = query({
   args: { group: v.string() },
   returns: v.number(),
-  handler: async (ctx, { group }) =>
-    (
-      await ctx.db
-        .query("blobs")
-        .withIndex("by_group", (q) => q.eq("group", group))
-        .collect()
-    ).length,
+  handler: async (ctx, { group }) => {
+    let count = 0;
+    for await (const row of ctx.db
+      .query("blobCounts")
+      .withIndex("by_group", (q) => q.eq("group", group))) {
+      void row;
+      count++;
+    }
+    return count;
+  },
 });

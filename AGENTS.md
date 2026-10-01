@@ -1,6 +1,6 @@
 # libar-platform
 
-The Convex transactional domain platform. `docs/` holds the inputs. `design/` holds the design as a Software Delivery Protocol corpus of Specs. The code built from the design sits beside them; there is none yet.
+The Convex transactional domain platform. `docs/` holds the inputs. `design/` holds the design as a Software Delivery Protocol corpus of Specs. The code built from the design sits beside them: `harness/`, `fixture/` and `tests/`.
 
 ## Which reader you are
 

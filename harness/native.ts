@@ -19,12 +19,14 @@ export async function fixtureBackend(
   const { test, facts } = current();
   const run = inject("nativeRun");
   const issuer = await createFixtureIssuer(options.issuer);
+  let owned: Backend | undefined;
   const starting = startBackend({
     executable: run.executable,
     issuer,
     parentDirectory: run.directory,
     signal: test.context.signal,
   }).then(async (backend) => {
+    owned = backend;
     try {
       await backend.admin.deploy();
       return backend;
@@ -36,10 +38,10 @@ export async function fixtureBackend(
   // Registered before the first await on the start, so a test that times out during the start
   // still has its backend removed.
   onTestFinished(async () => {
-    const backend = await starting.catch(() => undefined);
-    if (backend === undefined) return;
-    facts.backends.push(backend.facts());
-    await backend.dispose();
+    await starting.catch(() => undefined);
+    if (owned === undefined) return;
+    facts.backends.push(owned.facts());
+    await owned.dispose();
   });
   return starting;
 }

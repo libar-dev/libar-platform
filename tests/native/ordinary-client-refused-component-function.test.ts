@@ -1,6 +1,8 @@
+import { BaseConvexClient } from "convex/browser";
 import type { ConvexHttpClient } from "convex/browser";
+import { setTimeout as sleep } from "node:timers/promises";
 import { makeFunctionReference } from "convex/server";
-import { expect } from "vitest";
+import { expect, onTestFinished } from "vitest";
 import {
   ref,
   specTest,
@@ -20,7 +22,7 @@ const anchor = specTest({
   ),
 });
 void anchor;
-// Both refused routes and the admin call are built from these two names.
+// All three refused routes and the admin call use these names.
 const component = "annex";
 const target = "notes:add";
 const refusalOf = (call: Promise<unknown>) =>
@@ -47,10 +49,12 @@ const byComponentPath = (client: ConvexHttpClient) =>
     ).function(target, component, {}) as Promise<unknown>,
   );
 interface World {
+  subject?: string;
   backend?: Backend;
   client?: ConvexHttpClient;
   publicRouteError?: unknown;
   componentRouteError?: unknown;
+  socketCall?: Promise<"answered" | "rejected">;
 }
 bindExample(contract, (): World => ({}), {
   "a disposable backend running the fixture composition, which mounts a component with a mutation that writes one row":
@@ -59,16 +63,46 @@ bindExample(contract, (): World => ({}), {
     },
   "an ordinary client carrying a token the harness signed for subject {subject}":
     async (world, { subject }) => {
+      world.subject = subject;
       const backend = required(world.backend, "the backend");
       world.client = ordinaryClient(backend.url, {
         token: await backend.issuer.token(subject),
       });
     },
-  "the client calls the component's mutation by each of the two routes a client has":
+  "the client calls the component's mutation by each of the three routes a client has":
     async (world) => {
       const client = required(world.client, "the client");
       world.publicRouteError = await byQualifiedName(client);
       world.componentRouteError = await byComponentPath(client);
+      const backend = required(world.backend, "the backend");
+      const socket = new BaseConvexClient(backend.url, () => {}, {
+        unsavedChangesWarning: false,
+      });
+      onTestFinished(() => socket.close());
+      const token = await backend.issuer.token(
+        // Use the same subject as the HTTP client's signed token.
+        required(world.subject, "the subject"),
+      );
+      socket.setAuth(
+        async () => token,
+        () => {},
+      );
+      // Convex 1.46.0 strips this internal protocol entry from its declarations.
+      world.socketCall = (
+        socket as unknown as {
+          mutationInternal(
+            name: string,
+            args: object,
+            options: undefined,
+            componentPath: string,
+          ): Promise<unknown>;
+        }
+      )
+        .mutationInternal(target, {}, undefined, component)
+        .then(
+          () => "answered" as const,
+          () => "rejected" as const,
+        );
     },
   "the call to the public endpoint with a component-qualified name fails with an error whose text holds {publicRouteRefusal}":
     async (world, { publicRouteRefusal }) => {
@@ -93,6 +127,15 @@ bindExample(contract, (): World => ({}), {
       expect(String(await byComponentPath(noToken))).toContain(
         componentRouteRefusal,
       );
+    },
+  "the call over the WebSocket protocol with a component path gets no answer within {socketWaitMs} ms":
+    async (world, { socketWaitMs }) => {
+      expect(
+        await Promise.race([
+          required(world.socketCall, "the socket call"),
+          sleep(socketWaitMs, "no answer"),
+        ]),
+      ).toBe("no answer");
     },
   "the table the component's mutation writes holds {rowsAfterRefusal} rows":
     async (world, { rowsAfterRefusal }) => {

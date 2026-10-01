@@ -1,3 +1,5 @@
+import { watchQuery } from "../../harness/clients.js";
+import { measure } from "../../harness/native.js";
 import type { ConvexHttpClient } from "convex/browser";
 import { api } from "../../fixture/convex/_generated/api.js";
 import type { ListPage, ListRow } from "../../fixture/convex/list.js";
@@ -51,4 +53,31 @@ export function loadPage(
     paginationOpts,
     ...(maximumRowsRead === undefined ? {} : { maximumRowsRead }),
   });
+}
+
+// Record all deliveries before asserting or rethrowing a wait failure.
+export async function observedPage(
+  watch: ReturnType<typeof watchQuery<typeof api.list.page>>,
+  matches: (page: ListPage) => boolean,
+  description: string,
+): Promise<ListPage> {
+  try {
+    const page = await watch.until(matches, description, 5000);
+    measure(description, {
+      rows: page.page.length,
+      status: page.pageStatus ?? null,
+      ids: idsOf(page.page),
+    });
+    return page;
+  } catch (error) {
+    measure(description, {
+      deliveries: watch.values.map((page) => ({
+        rows: page.page.length,
+        status: page.pageStatus ?? null,
+        ids: idsOf(page.page),
+      })),
+      error: String(error),
+    });
+    throw error;
+  }
 }

@@ -77,6 +77,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
   let port = 0;
   let sitePort = 0;
   let disposed = false;
+  let identityIssuer = options.issuer.issuer;
   const state: AdminState = { deployed: false, environment: new Set() };
   const running = () =>
     child !== undefined && child.exitCode === null && child.signalCode === null;
@@ -127,7 +128,8 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
         if (
           response.ok &&
           (await response.text()) === instanceName &&
-          spawned.exitCode === null
+          spawned.exitCode === null &&
+          spawned.signalCode === null
         )
           return "ready";
       } catch {
@@ -191,10 +193,19 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
       )
     ).trim();
     secrets.push(adminKey);
+    const usedPorts = new Set<number>();
+    async function freshPort(): Promise<number> {
+      for (let pick = 0; pick < 100; pick++) {
+        const candidate = await freePort();
+        if (usedPorts.has(candidate)) continue;
+        usedPorts.add(candidate);
+        return candidate;
+      }
+      throw new Error("The operating system gave no fresh port in 100 picks");
+    }
     for (let attempt = 1; ; attempt++) {
-      port = await freePort();
-      do sitePort = await freePort();
-      while (sitePort === port);
+      port = await freshPort();
+      sitePort = await freshPort();
       if ((await spawnAndWait()) === "ready") break;
       if (attempt === 3)
         throw new Error(
@@ -202,7 +213,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
         );
     }
     const url = `http://127.0.0.1:${port}`;
-    const admin = createAdminAccess(
+    const access = createAdminAccess(
       {
         url,
         adminKey,
@@ -212,6 +223,13 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
       },
       state,
     );
+    const admin: AdminAccess = {
+      ...access,
+      async setEnvironment(variables) {
+        await access.setEnvironment(variables);
+        identityIssuer = variables.AUTH_ISSUER ?? identityIssuer;
+      },
+    };
     await admin.setEnvironment({
       AUTH_ISSUER: options.issuer.issuer,
       AUTH_APPLICATION_ID: options.issuer.applicationID,
@@ -247,7 +265,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
         },
         identitySource: {
           kind: "fixture issuer",
-          issuer: options.issuer.issuer,
+          issuer: identityIssuer,
         },
         environment: [...state.environment].sort(),
         dataset: "empty at start",

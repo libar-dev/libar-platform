@@ -2,7 +2,7 @@
 
 A transactional domain platform for Convex. Bounded contexts own their state and their journal, one business operation is one mutation, and work leaves the transaction only when something has to wait, spread load or reach an external system.
 
-This repository holds the design and, from the first build slice on, the code built from it. There is no code yet.
+This repository holds the design and, from the first build slice on, the code built from it. The first slice built the test harness, the fixture app and the probes.
 
 ## Where to start
 
@@ -32,8 +32,10 @@ Each tier has its own command and its own directory:
 
 - Domain tier: `npm run test:pure` runs `tests/pure`. These tests need no backend and no simulator. Until slice S1 adds a domain, they test the pure parts of the harness.
 - Simulator tier: `npm run test:simulator` runs `tests/simulator` on `convex-test`. Every test name starts with `convex-test` and the version it ran on. A simulator pass is not native proof.
-- Native tier: `npm run test:native` runs `tests/native`. Every test starts its own disposable Convex backend, deploys the fixture app to it and removes it when the test ends.
+- Native tier: `npm run test:native` runs `tests/native`. Every test owns its processes and temporary storage, stops its processes and removes its storage when it ends. Bound examples deploy the fixture app.
 - Compile check: `npm run typecheck` compiles the fixture app, the harness and the tests. `npm run test:types` runs the type tests in `tests/types`. A compile check says nothing about a running backend.
+
+The claim tiers in `AGENTS.md` map to these names: compiled means compile check, pure test means domain tier, `convex-test` means simulator tier, and native backend means native tier.
 
 `npm test` runs the type tests, the domain tier and the simulator tier. None of them needs a backend.
 

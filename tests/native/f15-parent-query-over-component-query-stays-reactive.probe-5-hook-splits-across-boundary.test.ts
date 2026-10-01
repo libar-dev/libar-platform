@@ -8,7 +8,7 @@ import {
 } from "@libar-dev/software-delivery-protocol";
 import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { api } from "../../fixture/convex/_generated/api.js";
-import type { ListRow } from "../../fixture/convex/list.js";
+import type { ListPage, ListRow } from "../../fixture/convex/list.js";
 import { probe5HookSplitsAcrossBoundaryContract as contract } from "../../generated/contracts/facts.f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary.contract.js";
 import type { Backend } from "../../harness/backend.js";
 import {
@@ -46,7 +46,10 @@ interface World {
   maximumRowsRead?: number;
   // What the hook returned on its latest render.
   hook?: () => Hook | undefined;
-  splitRequired?: () => Promise<unknown>;
+  splitRequired?: () => Promise<ListPage>;
+  endCursor?: string;
+  capped?: ListPage;
+  missing?: ListRow[];
 }
 // Waits until the hook's latest render satisfies `done`. React renders on its own schedule here,
 // as it does in a browser, so this polls.
@@ -139,6 +142,10 @@ bindExample(contract, (): World => ({}), {
           (next.status === "CanLoadMore" && next.results.length > shown),
       );
     }
+    measure("hookBeforeInsert", {
+      rows: hook.results.length,
+      status: hook.status,
+    });
     expect(hook.status).toBe("Exhausted");
     expect(hook.results).toHaveLength(required(world.rows, "the row count"));
   },
@@ -153,6 +160,7 @@ bindExample(contract, (): World => ({}), {
         cursor: null,
         numItems: pageSize,
       });
+      world.endCursor = first.continueCursor;
       const socket = ordinarySocketClient(backend.url);
       onTestFinished(() => socket.close());
       const capped = watchQuery(socket, api.list.page, {
@@ -175,32 +183,68 @@ bindExample(contract, (): World => ({}), {
       // One mutation, so the page jumps past its cap in one step.
       await insertInsideFirstRange(client, rowsInRange - pageSize);
     },
-  "the hook's results hold {rowsShown} rows, every row of the list once and in order":
-    async (world, { rowsShown }) => {
-      await required(world.splitRequired, "the second subscription")();
-      const list = await wholeList(required(world.backend, "the backend"));
-      // Give the hook the full wait to reach the bound count, then read what it shows whether or
-      // not it got there, so the measurement is recorded before the assertion.
-      await settled(
-        world,
-        `${rowsShown} rows`,
-        (hook) =>
-          hook.status === "Exhausted" && hook.results.length === rowsShown,
-      ).catch(() => undefined);
-      const hook = required(
-        required(world.hook, "the hook")(),
-        "the hook's first render",
-      );
-      const shown = new Set(idsOf(hook.results));
-      measure("hookAfterSplit", {
-        rowsInList: list.length,
-        rowsShown: hook.results.length,
-        status: hook.status,
-        missingPositions: list
-          .filter((row) => !shown.has(row._id))
-          .map((row) => row.position),
+  "the hook's results hold {rowsShown} rows, in order and each once": async (
+    world,
+    { rowsShown },
+  ) => {
+    world.capped = await required(
+      world.splitRequired,
+      "the second subscription",
+    )();
+    measure("hookCappedPage", {
+      status: world.capped.pageStatus ?? null,
+      rows: world.capped.page.length,
+      continueCursor: world.capped.continueCursor,
+      endCursor: required(world.endCursor, "the pinned end cursor"),
+    });
+    expect(world.capped.pageStatus).toBe("SplitRequired");
+    const list = await wholeList(required(world.backend, "the backend"));
+    // Give the hook the full wait to reach the bound count, then read what it shows whether or
+    // not it got there, so the measurement is recorded before the assertion.
+    await settled(
+      world,
+      `${rowsShown} rows`,
+      (hook) =>
+        hook.status === "Exhausted" && hook.results.length === rowsShown,
+    ).catch(() => undefined);
+    const hook = required(
+      required(world.hook, "the hook")(),
+      "the hook's first render",
+    );
+    const shown = new Set(idsOf(hook.results));
+    world.missing = list.filter((row) => !shown.has(row._id));
+    measure("hookAfterSplit", {
+      rowsInList: list.length,
+      rowsShown: hook.results.length,
+      status: hook.status,
+      missingPositions: list
+        .filter((row) => !shown.has(row._id))
+        .map((row) => row.position),
+    });
+    expect(hook.status, `Observed hook status: ${hook.status}`).toBe(
+      "Exhausted",
+    );
+    expect(hook.results).toHaveLength(rowsShown);
+    expect(idsOf(hook.results)).toEqual(
+      idsOf(list.filter((row) => shown.has(row._id))),
+    );
+  },
+  "{rowsMissing} rows of the list are not shown, the ones between the capped page's continue cursor and its end cursor":
+    async (world, { rowsMissing }) => {
+      const capped = required(world.capped, "the capped page");
+      const gap = await loadPage(required(world.client, "the client"), {
+        cursor: capped.continueCursor,
+        numItems: required(world.pageSize, "the page size"),
+        endCursor: required(world.endCursor, "the pinned end cursor"),
       });
-      expect(hook.results).toHaveLength(rowsShown);
-      expect(idsOf(hook.results)).toEqual(idsOf(list));
+      const missing = required(world.missing, "the missing rows");
+      measure("hookMissingCursorRange", {
+        missing: idsOf(missing),
+        betweenCursors: idsOf(gap.page),
+      });
+      expect(missing, `Observed ${missing.length} missing rows`).toHaveLength(
+        rowsMissing,
+      );
+      expect(idsOf(missing)).toEqual(idsOf(gap.page));
     },
 });
