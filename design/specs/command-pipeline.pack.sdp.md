@@ -17,6 +17,7 @@ specs:
   - spec:command.tenancy-and-authority
   - spec:command.tenancy-and-authority.same-key-two-tenants
   - spec:command.tenancy-and-authority.client-claims-system-namespace
+  - spec:command.tenancy-and-authority.client-claims-agent-namespace
   - spec:command.tenancy-and-authority.revoked-then-retried
   - spec:command.actor-and-scope
   - spec:command.command-declaration
