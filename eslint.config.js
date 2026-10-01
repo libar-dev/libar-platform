@@ -7,6 +7,22 @@ const noModuleLoading = [
     message: "Pure domain code loads no module at run time.",
   },
 ];
+// spec:context.context-component: no component function reads ctx.auth or the environment. The
+// parent passes the actor and the tenant as arguments.
+const noAuthNoEnvMessage =
+  "Code that runs inside a context component reads neither ctx.auth nor the environment.";
+const noAuthNoEnv = [
+  "error",
+  ...[
+    "MemberExpression[property.name='auth']",
+    "MemberExpression[property.value='auth']",
+    "ObjectPattern > Property[key.name='auth']",
+    "MemberExpression[property.name='env']",
+    "MemberExpression[property.value='env']",
+    "ObjectPattern > Property[key.name='env']",
+    "ImportSpecifier[imported.name='env']",
+  ].map((selector) => ({ selector, message: noAuthNoEnvMessage })),
+];
 export default tseslint.config(
   {
     ignores: ["**/_generated/**", "generated/**", "**/*.test.generated.ts"],
@@ -76,5 +92,15 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  // The context library and every component of the fixture composition.
+  {
+    files: ["src/context/**/*.ts", "fixture/convex/*/**/*.ts"],
+    rules: { "no-restricted-syntax": noAuthNoEnv },
+  },
+  // S0's probe of what ctx.auth answers inside a component, which is the one reason it is read there.
+  {
+    files: ["fixture/convex/annex/identity.ts"],
+    rules: { "no-restricted-syntax": "off" },
   },
 );

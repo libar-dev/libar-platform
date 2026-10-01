@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as depotRelay from "../depotRelay.js";
 import type * as failures from "../failures.js";
 import type * as identity from "../identity.js";
 import type * as limits from "../limits.js";
@@ -23,6 +24,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  depotRelay: typeof depotRelay;
   failures: typeof failures;
   identity: typeof identity;
   limits: typeof limits;
@@ -60,4 +62,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   annex: import("../annex/_generated/component.js").ComponentApi<"annex">;
+  depot: import("../depot/_generated/component.js").ComponentApi<"depot">;
 };

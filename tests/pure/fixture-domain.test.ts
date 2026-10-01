@@ -9,6 +9,7 @@ import {
 } from "../../src/kernel/index.js";
 import {
   documentDecider,
+  referenceDecider,
   stockDecider,
   type DocumentCommand,
   type DocumentState,
@@ -213,5 +214,59 @@ test("pure: the stock invariant fails for a negative or fractional count", () =>
   ]);
   expect(checkInvariants(invariants, { onHand: 0.5 })).toEqual([
     "onHandIsAWholeNumberNotBelowZero",
+  ]);
+});
+
+test("pure: a reference is claimed once, for the subject named, with one referenceClaimed event", () => {
+  const decision = referenceDecider.decide(
+    referenceDecider.initial(),
+    { commandType: "claim", holder: "doc-1" },
+    context,
+  );
+  expect(decision).toStrictEqual({
+    kind: "applied",
+    events: [
+      {
+        eventType: "referenceClaimed",
+        eventSchemaVersion: 1,
+        payload: { holder: "doc-1" },
+        occurredAt: context.now,
+      },
+    ],
+    result: { holder: "doc-1" },
+  });
+  const claimed = after(referenceDecider, [
+    { commandType: "claim", holder: "doc-1" },
+  ]);
+  expect(claimed).toStrictEqual({ holder: "doc-1" });
+  expect(
+    rejection(
+      referenceDecider.decide(
+        claimed,
+        { commandType: "claim", holder: "doc-2" },
+        context,
+      ),
+    ),
+  ).toStrictEqual({
+    code: "referenceTaken",
+    message: "The reference is held by doc-1",
+    details: { holder: "doc-1" },
+  });
+});
+
+test("pure: a claim for a blank holder is rejected as holderRequired, and the invariant names it", () => {
+  expect(
+    rejection(
+      referenceDecider.decide(
+        referenceDecider.initial(),
+        { commandType: "claim", holder: " " },
+        context,
+      ),
+    ).code,
+  ).toBe("holderRequired");
+  const invariants = referenceDecider.invariants ?? [];
+  expect(checkInvariants(invariants, { holder: null })).toEqual([]);
+  expect(checkInvariants(invariants, { holder: "" })).toEqual([
+    "aHolderIsNamed",
   ]);
 });
