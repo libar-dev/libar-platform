@@ -3708,9 +3708,9 @@
    ],
    "issue": "The corpus treats whether transaction limits add up across nested calls as unknown: F13 `limitNestedCalls` ('does not say whether the per-transaction limits add up across nested calls and components; Probe 4 stands'), batch-shaped-api ('Probe 4 pending ... the bounds here assume they do'), command-pipeline `subTransactionLimits` ('the design passes none until Probe 4 says whether limits add up across the boundary'). The limits page links to the answer: 'These limits apply to each `query` or `mutation` function. To ensure you're within the limits, there are tools to calculate and limit consumption within a transaction', and that section states 'a mutation or query called by another mutation or query share the overall transaction limits' (docs.convex.dev/production/state/limits#transactions and docs.convex.dev/database/writing-data#write-performance-and-limits, read 2026-10-01). So the corpus's worst-case assumption is the documented behavior for nested calls; a component call is a `ctx.runMutation`, though the page does not name components. The same section documents two tools no Spec uses. `ctx.meta.getTransactionMetrics()` returns `{ used, remaining }` for bytes read, bytes written, documents read, documents written, database queries and scheduled functions. `transactionLimits` on a nested call exists to 'reserve space for work after the nested function call, even if the child reads or writes too much', and the docs' example is a wrapper that runs a nested mutation in a try block and records the failure, which is the local reaction wrapper's shape. Three places pay for not using them: the wrapper's `limitBodyBudget` leaves the settle write unprotected, so a body that exhausts the shared budget makes the catch path fail too and the attempt is spent as a rearm, not recorded as a retryable attempt; every batch stops on hand-derived byte arithmetic where it could stop on measured headroom; and first-experiment `captureDocuments` plans to read documents and bytes 'from the backend's execution records where the local backend exposes them' and records `not exposed` otherwise, while the mutation can read its own totals at step 11. The page states no nesting depth; the open-source backend bounds it at 8 (`MAX_REACTOR_CALL_DEPTH`, crates/common/src/knobs.rs, read 2026-10-01), which the deepest chain here, 4, fits.",
    "fix": "In `spec:facts.f13-transactions-have-limits` replace `limitNestedCalls` with the documented statement and its URL, add the depth bound as read from source, and narrow Probe 4 in `spec:facts.probe-plan` to confirming the sharing across a component boundary and the depth. Drop 'until Probe 4 answers' from the bounds that already assume sharing. In `spec:obligations.local-reaction-wrapper` pass `transactionLimits` to the body call, computed from `ctx.meta.getTransactionMetrics()` minus a stated reserve for the settle patch and the next schedule, and say so in `limitBodyBudget`; do the same for the sweeper's `recoverOne` calls. In `spec:application.first-experiment` make `ctx.meta.getTransactionMetrics()` at the pipeline's step 11 the source of `documentsRead`, `documentsWritten`, `bytesRead` and `bytesWritten`, emitted on the diagnostic record. Record under E-22 or E-40 that a batch may stop on measured headroom, with the byte arithmetic kept as the planning bound.",
-   "status": "open",
-   "note": "",
-   "slice": "S0",
+   "status": "partially-fixed",
+   "note": "S0, 2026-10-01. Done: `spec:facts.f13-transactions-have-limits` records the documented sharing with its page and date, the result of Probe 4 on a native backend (16 MiB read and 16 MiB written are each one budget across a nested call and across a component boundary), the depth the pinned backend allows (a stack of nine functions, a backend default, where the fix said eight from source) and a new Design key `transactionMetrics`. The 'until Probe 4 answers' wording is gone from `batch-shaped-api`, `context-component`, `command-pipeline`, `parent-use-cases`, `restore`, D10 and F2. Corrections to the fix as written: `getTransactionMetrics()` is asynchronous and returns `used` and `remaining` per metric, and the depth is not an immutable contract. Still to do, each with the slice that builds it: S1 decides whether a pipeline call reserves room with `transactionLimits` (the question is on `command-pipeline`); S3 makes `ctx.meta.getTransactionMetrics()` the source of the experiment's read and write counts, which also needs fields on the diagnostic record in `baseline-operations`; Layer 3 passes `transactionLimits` to the wrapper's body call and the sweeper's `recoverOne` calls.",
+   "slice": "S3",
    "detector": "judgement"
   },
   {
@@ -3726,10 +3726,11 @@
    ],
    "issue": "F15 is carried as assumed: 'Nothing read so far states or denies it', `measurableBy: no page states it; S2 and S5 describe reactivity and component isolation separately`. A docs page states it: 'Queries, mutations, and action rules still apply - queries can only call component queries, mutations can also call component mutations, and actions can also call component actions. As a result, queries into components are reactive by default, and mutations have the same transaction guarantees' (docs.convex.dev/components/using#using-the-components-api-directly, read 2026-10-01). The system tables page adds that queries on system tables are 'reactive and realtime just like queries reading from all other tables'. The doc's ledger lists F15 as assumed and only the owner edits the doc, but the corpus records rechecks on the fact, as it did for F16. What stays open is the second half of Probe 5: whether the `paginator` page relayed by the parent stays contiguous under live writes and whether the split path works across the boundary.",
    "fix": "On `spec:facts.f15-parent-query-over-component-query-stays-reactive` record the recheck the way F16 does: status rechecked, the using page as `measurableBy`, the doc's own status left for the owner. Move F15 from `factsAssumed` to `factsRechecked` in `spec:facts.fact-ledger`, and narrow Probe 5 in `spec:facts.probe-plan` and the Probe 5 question in `spec:context.queries` to the pagination half.",
-   "status": "open",
-   "note": "",
+   "status": "fixed",
+   "note": "S0, 2026-10-01. F15 states `probed` and `defined`: the page on using components states the reactivity and Probe 5 showed it on a native backend. Its blocking question is gone. Restated in `fact-ledger` (`factsAssumed`, `factsProbed`), `probe-plan`, `context.queries`, `application.read-models`, `application.rebuild`, D8, the platform root, README and PLAN's rubric items 21 and 34; the fix's file list missed the last five. The doc keeps F15 as assumed until the owner edits it. The pagination half of Probe 5 ran too and is recorded on F15; what it found about the client hook is finding `s0-helper-hook-loses-rows-after-a-capped-split`.",
    "slice": "S0",
-   "detector": "judgement"
+   "detector": "judgement",
+   "unreviewed": true
   },
   {
    "round": 3,
@@ -4108,6 +4109,26 @@
    "status": "open",
    "note": "",
    "slice": "S2",
+   "detector": "native backend"
+  },
+  {
+   "round": "S0",
+   "id": "s0-f11-documented-unavailable-observed-available",
+   "lens": "convex",
+   "severity": "minor",
+   "files": [
+    "specs/facts/f11-components-have-no-ctx-auth.sdp.md",
+    "specs/decisions/d11-tenant-scope-and-authority.sdp.md",
+    "specs/command/tenancy-and-authority.sdp.md",
+    "specs/command/command-pipeline.sdp.md",
+    "specs/context/context-component.sdp.md",
+    "specs/context/queries.sdp.md"
+   ],
+   "issue": "F11, 'Components have no `ctx.auth`', is listed by the doc as documented, and the components page says `ctx.auth` is not available within a component. On a native backend, release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `ctx.auth.getUserIdentity()` inside a component query returned the caller's identity (the unbound native test `component-auth.test.ts` records it; the run's record is `evidence/native-20261001T162936Z-ba5eddd.json`). `convex-test` 0.0.60 returns null for the same call. Six Specs state as fact that components have no `ctx.auth` or never see it. The design does not depend on which holds: D11 passes the actor explicitly and no component function reads `ctx.auth`. But a reader takes 'cannot read the caller's identity' as an isolation guarantee, and on this backend it is a convention. Opus review of the foundation, M1; ruling O2.",
+   "fix": "The owner rules whether F11's wording and status follow the documentation or the backend. Provisional reading, recorded as an open question on F11: the documentation's sentence stands as the fact, the observation is recorded beside it, and the rule that no component function reads `ctx.auth` is a design rule under D11 and not a consequence of the platform.",
+   "status": "owner",
+   "note": "S0, 2026-10-01. The observation is an open question on `spec:facts.f11-components-have-no-ctx-auth`. No other Spec changed.",
+   "slice": "S1",
    "detector": "native backend"
   }
  ],

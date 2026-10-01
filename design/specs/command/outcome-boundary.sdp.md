@@ -29,7 +29,7 @@ The closed code list has two halves. The platform codes below are closed here an
 
 - outcome: Pin the wire shape of the four outcomes and the closed error-code list, so that a client can tell a rejection from a transient refusal from a technical failure without parsing messages, and so that nothing but applied and business failure ever commits (D4, D7)
 - value: A lost rejection followed by a retry is correct by construction, the public path carries no nested mutation and no rejection receipt, and a reviewer can check the code list against the declarations in one place (D7)
-- risk: The data of a `ConvexError` thrown inside a component is assumed to arrive intact; until Probe 2 runs, the pipeline also throws on a rejection returned as a value, which costs nothing but keeps the boundary correct under either answer (F14, Probe 2)
+- risk: The data of a `ConvexError` thrown inside a component arrives intact on the pinned backend, as Probe 2 showed, and no Convex page promises it, so a later release could change it; the pipeline still throws on a rejection returned as a value, which costs nothing, until slice S1 decides whether that path stays (F14, Probe 2)
 - assumption: `ctx.runMutation` inside a mutation gives partial rollback and the parent can catch and continue, which the conditional dispatcher relies on (F3)
 - assumption: `ConvexError` data survives a nested mutation and a component boundary (F14)
 
@@ -38,7 +38,6 @@ The closed code list has two halves. The platform codes below are closed here an
 - [non-blocking] Extension E-5: the doc fixes the four outcomes and that a rejection is a structured `ConvexError`, but not the data shape or the code list; the shape and the platform codes below are the design's, and the domain codes are closed per declaration (E-5, D4, D7)
 - [non-blocking] Extension E-35: the write pause of D9 refuses writers in its scope while a cross-stream history view rebuilds; the doc does not say how a refused writer is answered; this contract reserves the transient code `writePaused` for Package D so the refusal is retryable and stores nothing, which Package D confirms or replaces (E-35, D9, D4)
 - [non-blocking] OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides whether the generic internal dispatcher below exists; until then it is a conditional design and no command uses it (OQ2, D7)
-- [non-blocking] Probe 2 pending: it must show that a `ConvexError` thrown inside a context operation reaches the parent and the client with its `data` intact; until it does, the rejection relay rests on an assumed fact (Probe 2, F14)
 
 ## Contract
 
@@ -50,7 +49,7 @@ The closed code list has two halves. The platform codes below are closed here an
 - Keeping a refused request as a fact is a business policy chosen per command; a command that waits for stock is a different command from one that rejects when stock is short, and this boundary never makes that choice by accident (D4)
 - A rejection thrown inside a context operation rolls that sub-transaction back; the pipeline's outermost catch rethrows it as `RejectionData`, so the whole mutation still commits nothing and the caller reads one wire shape whether the rejection came from a context or from the pipeline (F3, D7, F14)
 - The outermost catch never continues, never wraps anything but a `ConvexError` carrying the kernel's `Rejection`, and passes every other throw through unchanged, so it is not the catch-and-continue that D7 reserves for the nested mutation (D7, Law 6)
-- If Probe 2 shows that `ConvexError` data does not survive the component boundary, contexts return the kernel's rejection outcome as a value instead and the pipeline throws it through the same `reject` helper; the wire shape is unchanged either way (D7, Probe 2, F14)
+- Probe 2 showed that `ConvexError` data survives the component boundary, so contexts throw the kernel's rejection; had it not, contexts would return the rejection outcome as a value and the pipeline would throw it through the same `reject` helper, with the wire shape unchanged (D7, Probe 2, F14)
 - If the response to a rejection is lost and the command runs again, the retry runs against current state and nothing of the first attempt remains; if it now succeeds, the intent ran once (D7, Sc L1-12)
 - A transient refusal or a rejection never leaves a receipt, so its idempotency key stays unused and the same key can carry a later successful execution (D6, D7)
 - The code list is closed: the platform codes are the `errorCode` entries below, the domain codes are the `rejections` a command's declaration names, and a code outside both is a technical failure by definition (D4, D12, E-5)

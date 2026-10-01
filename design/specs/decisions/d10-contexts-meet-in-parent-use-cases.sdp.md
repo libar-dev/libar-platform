@@ -28,7 +28,6 @@ Contexts never read each other's tables and never call each other. A rule linkin
 
 ### Open questions
 
-- [non-blocking] Probe 4 pending: whether transaction limits add up across nested calls and components decides how large one use case may be (Probe 4, F13, D10)
 - [non-blocking] OQ3: the largest order the placement command supports is a product decision; until it is made the limit is a placeholder in the first experiment (OQ3, D10)
 
 ## Decision

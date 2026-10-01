@@ -40,11 +40,11 @@ This Spec carries the read-need table as rules, the properties of a projection, 
 - risk: Every parent read of context data is a component call whose cost Probe 3 measures; if it breaks the read budgets, OQ1 changes the context component's shape and this Spec's defaults move with it (D8, F4, Probe 3, OQ1)
 - risk: A read model written in every command is one more write per command, counted against the command's budget (D8, Sc L2-3)
 - assumption: Queries are reactive; subscriptions synchronize state and are not durable event delivery (F7)
-- assumption: A parent query calling a component query stays reactive, and a component's paginated list, built with `paginator` from `convex-helpers` because the built-in `.paginate()` does not work in a component, stays contiguous across the boundary in the way Probe 5 shows (F15, Probe 5, S4)
+- assumption: A parent query calling a component query stays reactive, which the docs state and Probe 5 showed, and a component's paginated list, built with `paginator` from `convex-helpers` because the built-in `.paginate()` does not work in a component, stays contiguous across the boundary when each page is pinned by its end cursor, as Probe 5 showed on the pinned backend (F15, Probe 5, S4)
 
 ### Open questions
 
-- [non-blocking] Probe 5 pending: a parent query over component queries must stay reactive, and the probe shows whether a component list's `paginator` page relayed by the parent stays contiguous under live writes when the client passes the end cursor; until then the small cross-context view is designed as a parent query over a bounded number of component reads (Probe 5, F15, S4, D8)
+- [non-blocking] Probe 5 ran on 2026-10-01: pinned pages stay contiguous under live writes, and the `usePaginatedQuery` hook of `convex-helpers/react` lost rows after a page capped by `maximumRowsRead` split; until slice S2 decides how a context list is capped, the small cross-context view stays a parent query over a bounded number of component reads (Probe 5, F15, S4, D8)
 - [non-blocking] Probe 3 pending: the cost of one component call in latency and function-call quota decides whether one entity's detail stays a component query or hot reads move, which is OQ1 (Probe 3, F4, OQ1)
 - [non-blocking] Extension E-45: the doc says a small cross-context view is a parent query over bounded component reads and does not give the bound; the option taken here is at most 8 component reads per parent query and at most 4 read-model rows written per command, both measured by the first experiment (E-45, D8)
 
@@ -114,4 +114,4 @@ And the number of workers, jobs or queues that ran is {workers:number}
 - A reviewer confirms that every read need in the first experiment maps to one row of the read-need table and names its default.
 - A reviewer confirms that no scheduled function, cron, action or component maintains a read model on the core path.
 - A reviewer confirms that every read-model index leads with `tenantId` and that every query over a read model takes `tenantId` in its `args`.
-- A reviewer confirms that F15 is named as an assumption with Probe 5 wherever a parent query calls a component query.
+- A reviewer confirms that F15 is cited wherever a parent query calls a component query.

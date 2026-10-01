@@ -91,7 +91,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 | 5 | `agents` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 7 |
 | 6 | `advanced` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 8 |
 
-Counts by kind and by stated readiness are derived, not kept here: `npx sdp census` writes the census, and the session check prints the readiness tally. Three groups state `scoped`: every Layer 4 to 6 non-example Spec, held by its deferral, and the three assumed facts F14, F15 and F17, each held by its probe. Nothing states `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
+Counts by kind and by stated readiness are derived, not kept here: `npx sdp census` writes the census, and the session check prints the readiness tally. Two groups state `scoped`: every Layer 4 to 6 non-example Spec, held by its deferral, and the assumed fact F17, held by its probe. Nothing states `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
 
 What each layer fixes, in one paragraph each.
 
@@ -235,7 +235,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 
 ## Open questions for the owner
 
-A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact (F14, F15, F17) names the probe that would settle it. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
+A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact (F17) names the probe that would settle it. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
 
 The doc's own open questions:
 
@@ -269,7 +269,7 @@ Beyond the plan's list, three product decisions the packages surfaced:
 - The late-payment policy of `StartCheckout`: reallocate, ask a person, or refund as a separate operation ([`start-checkout-example`](specs/processes/start-checkout-example.sdp.md)).
 - Whether an old process run is kept, migrated or blocked on a given deploy ([`workflow-processes`](specs/processes/workflow-processes.sdp.md)).
 
-The seven probes are pending, not rulings. Each is recorded on the Specs that rest on it and on [`probe-plan`](specs/facts/probe-plan.sdp.md): Probe 1 (where the client guarantee ends, D6), Probe 2 (`ConvexError` data across a component boundary, F14, D7), Probe 3 (cost of a component call, F4, D2, D8), Probe 4 (whether transaction limits add up across nested calls, F13, D10), Probe 5 (reactivity and pagination of a parent query over a component query, F15, D8), Probe 6 (a backfill batch racing a live command; the migrations component, F17, D9), Probe 7 (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
+Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is recorded on its fact and on the Specs that rest on it, and [`probe-plan`](specs/facts/probe-plan.sdp.md) says what stays open: Probe 1 (the client guarantee holds across a restart, a closed client can lose a command, and the HTTP client does not retry, D6), Probe 2 (`ConvexError` data survives a nested mutation and a component boundary, F14, D7), Probe 3 (a component call costs about 2 ms more than a helper call on a local backend, with hosted cost and quota open, F4, D2, D8), Probe 4 (transaction limits are one budget across nested calls and components, F13, D10), Probe 5 (a parent query over a component query stays reactive and pinned pages stay contiguous, and the client hook loses rows after a capped split, F15, D8). Two are pending: Probe 6 (a backfill batch racing a live command; the migrations component, F17, D9) and Probe 7 (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
 
 Every open question in the corpus, by Spec, is recipe 20 of the Protocol's catalog, the open-question register. It lists the Specs that hold a blocking question first and reports the totals, so no table is kept here:
 
@@ -303,7 +303,7 @@ Cross-package fixes made at the source Specs:
 - The captured facts D3 makes inputs had no path: `DecisionContext.facts` existed but no validator, context call or executor carried them. The operation's `args` take `facts`, the executor captures them and passes them on every context call, and the fingerprint excludes them.
 - The gate, the audit record and the diagnostic were required of every use case by Package D and absent from the pipeline's eleven steps; they now sit at steps 7, 10 and 11, each a no-op in a deployment without read models, closed gates or audited declarations.
 - The `entityExists` code had three owners. It is now the kernel's third reserved code, raised by the adapter's step 3 for a create planned at expected version 0 whose stream exists; the initial-state decision, the receipts rules and the L1-4 example say the same, and E-39 registers that the second submit is a rejection rather than an idempotent success.
-- Pagination inside a component. The queries contract used the built-in `.paginate()`, which the components page says does not work in a component; `list` and `history` now use `paginator` from `convex-helpers`, the parent relays its page, the client hook is the one from `convex-helpers/react`, and Probe 5 is narrowed to contiguity across the boundary.
+- Pagination inside a component. The queries contract used the built-in `.paginate()`, which the components page says does not work in a component; `list` and `history` now use `paginator` from `convex-helpers`, the parent relays its page, the client hook is the one from `convex-helpers/react`, and Probe 5 showed contiguity across the boundary and the hook losing rows after a capped split.
 - Byte budgets. Every bound on streams per call, list page, backfill batch, written documents and fold length is now derived from a stream type's byte budget or the 16 KiB payload bound so that the 16 MiB ceilings bind in bytes, not only in documents; the fold bound is 600 events with headroom, and a longer tail is refused rather than read.
 - A write pause or a restore no longer exhausts local reactions: the wrapper defers an attempt refused with `writePaused` or `capacity` without counting it, and `rebuildSchedules` runs only after the transactional restore has cleared `MAINTENANCE_MODE`.
 - The operation query path is `queries.operations.byOperation` everywhere (restore's receipt check and read-models' surface said `queries.order.byOperation`).
@@ -347,7 +347,7 @@ Adopted from the Protocol on 2026-10-01, at the commit `package.json` pins:
 
 - Generics are written with real angle brackets inside inline code. The Unicode brackets the carrier once forced, 248 pairs on 114 lines of 29 Specs, are gone, so every pinned declaration can be pasted into source.
 - An unbound example below `ready` no longer warns. The expected validate verdict is 0 errors and 0 warnings.
-- The `ready` floor reads `constrainedBy` and `decidedBy` as well as `refines` and `dependsOn`. The assumed facts F14, F15 and F17 state `scoped` behind a blocking question that names their probe, so no Spec resting on one can state `ready` until the probe has run. F16 stays `defined`: its states and retention are documented.
+- The `ready` floor reads `constrainedBy` and `decidedBy` as well as `refines` and `dependsOn`. The assumed fact F17 states `scoped` behind a blocking question that names its probe, so no Spec resting on it can state `ready` until the probe has run; F14 and F15 did the same until their probes ran in slice S0. F16 stays `defined`: its states and retention are documented.
 - A deferral is a blocking open question that names its trigger, on the nine Layer 4 to 6 Specs.
 - The census sentence and the open-question table are no longer kept by hand. `sdp census` and recipe 20 derive them.
 - The extension register stays in this file. It is this project's policy, and `design/tools/check.py` keeps it honest.

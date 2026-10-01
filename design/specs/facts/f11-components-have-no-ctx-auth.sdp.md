@@ -16,6 +16,10 @@ Code inside a component cannot read data that is not explicitly provided to it, 
 
 - outcome: Record that components have no `ctx.auth`, with its evidence status as a target, so that every design resting on it is found by its `constrainedBy` edge (F11)
 
+### Open questions
+
+- [non-blocking] Observed against the documentation on 2026-10-01: the components page says `ctx.auth` is not available within a component; on the pinned native backend, release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `ctx.auth.getUserIdentity()` inside a component query returned the caller's identity, and `convex-test` 0.0.60 returns null for the same call; the design does not depend on which holds, because D11 passes the actor explicitly and no component function reads `ctx.auth`; whether this fact's wording and status follow the documentation or the backend is the owner's ruling (F11, D11)
+
 ## Constraints
 
 - statement: Components have no `ctx.auth` (F11)

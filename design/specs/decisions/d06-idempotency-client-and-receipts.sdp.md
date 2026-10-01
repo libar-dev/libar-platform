@@ -30,7 +30,7 @@ The Convex React client retries a mutation until it is confirmed, and the backen
 
 ### Open questions
 
-- [non-blocking] Probe 1 pending: where the client guarantee ends, for a tab closed with a pending mutation, a server restart and the HTTP client; the answer fixes the exact list of callers that need receipts (Probe 1, D6)
+- [non-blocking] Probe 1 ran on 2026-10-01: the guarantee holds across a backend restart, a closed client leaves its mutation executed once or not at all, and the HTTP client does not retry; `ConvexHttpClient` is a Convex client the guarantee does not reach, so whether its callers join the callers that need receipts is the owner's ruling (Probe 1, D6)
 
 ## Decision
 

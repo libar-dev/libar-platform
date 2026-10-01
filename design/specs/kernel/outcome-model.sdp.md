@@ -28,12 +28,11 @@ The kernel defines the shapes and does not define wire codes. The closed error-c
 - outcome: One `Outcome` union, defined here and nowhere else, gives every command exactly one of applied, business failure, rejection or technical failure, each with its commit behavior fixed (D4)
 - value: Whether a refused request becomes a fact is visible in the command's name, never hidden in error handling; the boundary maps one union and every caller learns one shape (D4)
 - risk: The standing cost is one closed union and one reserved-code convention that every context, the adapter and the boundary must honor (D4)
-- assumption: A rejection thrown inside a context component arrives at the parent with its `data` intact; this is F14, assumed, and Probe 2 settles it (F14, Probe 2)
+- assumption: A rejection thrown inside a context component arrives at the parent with its `data` intact; this is F14, which Probe 2 showed on the pinned backend (F14, Probe 2)
 
 ### Open questions
 
 - [non-blocking] Extension E-21: the doc names the four outcomes and their commit behavior but not their TypeScript shape; this Spec fixes `Outcome<R>`, `Rejection`, `CommittedOutcome<R>`, `AffectedRef`, the rule that a committed outcome carries at least one event, and the three rejection codes the adapter reserves, `staleVersion`, `operationTooLarge` and `entityExists`, the last being the adapter's answer to a create planned at expected version 0 whose stream already exists, which is the uniqueness check D6 names for a client-generated entity ID; the owner confirms the shapes or renames the reserved codes before code names them (D4, D6, E-21)
-- [non-blocking] Probe 2 pending: until it runs, the claim that a `ConvexError` thrown by a context operation reaches the parent and the client with the same `Rejection` data rests on the author's reading of the pages (F14, Probe 2)
 
 ## Rule
 
@@ -68,7 +67,7 @@ The union below is the kernel's. Applied and business failure are the value a co
 - validatorRejection: `const rejectionValidator = v.object({ code: v.string(), message: v.string(), details: v.optional(v.record(v.string(), v.any())) })` (D7, E-21)
 - validatorCommittedOutcome: `const committedOutcomeValidator = v.object({ kind: v.union(v.literal("applied"), v.literal("businessFailure")), result: v.any(), versions: v.array(streamVersionValidator) })` (D4)
 - throwShape: `throw new ConvexError(rejection)` with the `Rejection` value as the error's `data`, which must be a Convex value and is (D7, F14)
-- assumptionAcrossBoundary: the `data` of a thrown `ConvexError` arriving intact through a component boundary is F14, assumed; the application-errors page states only that the exception bubbles through `runQuery`, `runMutation` and `runAction`, so Probe 2 stands (F14, Probe 2)
+- assumptionAcrossBoundary: the `data` of a thrown `ConvexError` arriving intact through a component boundary is F14; the application-errors page states only that the exception bubbles through `runQuery`, `runMutation` and `runAction`, and Probe 2 showed the data intact on the pinned backend (F14, Probe 2)
 
 ## Verification — reviewed
 

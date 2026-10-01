@@ -28,7 +28,6 @@ A rejected command throws a structured `ConvexError`. The whole mutation rolls b
 
 ### Open questions
 
-- [non-blocking] Probe 2 pending: `ConvexError` data must arrive intact through a nested mutation and a component boundary; until it does, the closed error-code list at the boundary rests on an assumed fact (Probe 2, F14)
 - [non-blocking] OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides where the nested mutation is required and whether the generic internal dispatcher exists (OQ2, D7)
 
 ## Decision

@@ -18,12 +18,11 @@ Context APIs take lists, such as `inventory.allocate({ lines })`, so a use case 
 
 - outcome: Every context operation takes and returns lists, a use case makes one call per context, and a list above the operation's declared bound is rejected rather than split (D10)
 - value: The first experiment can count one call per context per use case and hold it for orders of 1 line, 10 lines and the maximum (D10, Sc L2-3)
-- risk: Whether the transaction limits add up across nested calls and components is Probe 4's question; until it answers, every bound assumes the worst case, that they add up (F13, Probe 4)
+- risk: The transaction limits are one budget across nested calls and components, as Probe 4 showed, so every bound here is checked against the sum (F13, Probe 4)
 - assumption: Transactions have limits, and platform limits are ceilings, not batch sizes (F13, D19)
 
 ### Open questions
 
-- [non-blocking] Probe 4 pending: whether transaction limits add up across nested calls and components decides how large one use case may be; the bounds here assume they do (Probe 4, F13, D10)
 - [non-blocking] OQ3: the largest order the placement command supports is a product decision; each operation's `maxStreams` is set from it and the default ceiling of 256 stands until then (OQ3, D10)
 
 ## Rule

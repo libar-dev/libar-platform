@@ -45,13 +45,12 @@ The boundary sits at the component API. The use case sees DTOs and stream versio
 - risk: The parent grows with each cross-context rule, so use cases are grouped by business flow (D10)
 - risk: An operation too large for one transaction is rejected or becomes a separate import command with honest partial progress, and the largest order the placement command supports is still a product decision (D10, F13, OQ3)
 - assumption: Component calls commit or roll back with the calling mutation, and each call is a sub-transaction isolated from other calls (F2, S2)
-- assumption: A `ConvexError` thrown inside a component sub-transaction reaches the use case with its data intact; Probe 2 confirms it (F14, Probe 2)
-- assumption: Transactions have limits, and whether they add up across nested calls and components is what Probe 4 shows (F13, Probe 4)
+- assumption: A `ConvexError` thrown inside a component sub-transaction reaches the use case with its data intact, which Probe 2 showed on the pinned backend (F14, Probe 2)
+- assumption: Transactions have limits, and they are one budget across nested calls and components, as the docs state for nested calls and Probe 4 showed for both (F13, Probe 4)
 
 ### Open questions
 
 - [non-blocking] OQ3: the largest order `PlaceOrder` supports is a product decision; the limit bullet below carries a placeholder and the first experiment measures with a provisional maximum (OQ3, D10)
-- [non-blocking] Probe 4 pending: whether transaction limits add up across nested calls and components decides how large one use case may be and therefore where the too-large rule bites (Probe 4, F13, D10)
 - [non-blocking] Extension E-41: the doc says a too-large operation is rejected or becomes a separate import command with honest partial progress; it does not say what the import command records. The option taken here: the input bound is the declaration's `bounds.maxItems` of `spec:command.command-declaration` under E-38, checked by the pipeline's step 1 and by no body, the rejection is the outcome boundary's reserved `operationTooLarge`, and this extension owns only the import command, a caller-driven sequence of bounded batch commands that record progress on an `imports` row (E-41, E-38, D10)
 - [non-blocking] Extension E-44: the doc says keeping a refused request as a fact is a business policy chosen per command, and the executor signature is pinned by `spec:command.command-declaration`; what neither says is how a use case declares what a context's business failure means to it. The option taken here is a `BusinessFailurePolicy` per context call, carry or reject, applied inside the executor body through the pinned helper `carryOrReject` right after the context call, because the executor is a plain function and the declaration carries no slot for it; `reject` rolls back the events the context recorded as its business failure, which D4 says belong in history, and the doc's per-command choice is read as the use case's because D10 makes the use case the command, so the owner confirms that a context's business failure may be overridden by its caller (E-44, D4, D10)
 

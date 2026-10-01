@@ -21,13 +21,13 @@ The core path runs zero projection jobs and the simplest read that works wins. O
 - problem: A successful command followed by a query or subscription must show committed state without any worker; a projection job between the write and the read makes essential screens depend on queue recovery, and an invariant that reads such a view decides on stale data (Sc L2-2, Law 9)
 - outcome: The core path runs zero projection jobs; the simplest read that works wins, and after a successful command an authorized query sees the committed state or a later one (D8)
 - value: No event-to-WebSocket layer, no queue recovery for essential reads and no second copy of every field; reactive queries carry the freshness (D8, F7)
-- risk: Every parent read of context data is a component call whose cost Probe 3 measures, and reactivity across that boundary is assumed until Probe 5 runs (D8, F4, F15)
+- risk: Every parent read of context data is a component call; Probe 3 gave its cost a first reading on a local backend, and its hosted cost is still open (D8, F4, F15)
 - assumption: Queries are reactive; subscriptions synchronize state and are not durable event delivery (F7)
 - assumption: A parent query calling a component query stays reactive (F15)
 
 ### Open questions
 
-- [non-blocking] Probe 5 pending: a parent query over component queries must stay reactive, and the probe shows how pagination crosses the boundary (Probe 5, F15, D8)
+- [non-blocking] Probe 5 ran on 2026-10-01: a parent query over component queries stays reactive, and pagination crosses the boundary with pages pinned by their end cursors; the client hook lost rows after a capped page split, which slice S2 settles before it builds a list (Probe 5, F15, D8)
 
 ## Decision
 

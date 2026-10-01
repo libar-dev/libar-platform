@@ -27,7 +27,7 @@ The wrapper is the scheduled mutation that carries out one attempt of a local re
 ## Intent
 
 - outcome: Pin the wrapper as a step sequence with the outcome table: success commits effect and completion together; a known rejection settles; a retryable failure rolls the body back and records the next attempt; a maintenance refusal reschedules the same attempt without counting it; a wrapper failure leaves nothing and the sweeper rearms (D13, F3, F9)
-- assumption: A `ConvexError` thrown by the body inside its nested mutation reaches the wrapper's catch with its `data` intact, which `errorClassification` rests on; this is F14, assumed, and Probe 2 settles it (F14, Probe 2)
+- assumption: A `ConvexError` thrown by the body inside its nested mutation reaches the wrapper's catch with its `data` intact, which `errorClassification` rests on; this is F14, which Probe 2 showed on the pinned backend (F14, Probe 2)
 
 ### Open questions
 

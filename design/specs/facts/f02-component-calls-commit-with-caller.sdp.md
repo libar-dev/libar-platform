@@ -21,4 +21,4 @@ The components page states that each mutation call to a component is a sub-trans
 - statement: Component calls commit or roll back with the calling mutation (F2)
 - flavor: convex-fact
 - target: evidence.status:documented
-- measurableBy: S2 https://docs.convex.dev/components/understanding; doc status Documented, S2; no probe assigned; Probe 4 checks whether limits add up across the boundary (F2, D1, D2)
+- measurableBy: S2 https://docs.convex.dev/components/understanding; doc status Documented, S2; no probe assigned; Probe 4 showed that the transaction limits are shared across the boundary (F2, D1, D2)

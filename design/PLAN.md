@@ -162,7 +162,7 @@ Relations shown are the minimum. `epic` means `spec:platform.transactional-domai
 | `spec:platform.existing-systems` | rule | feature | defined | refines epic | No deletion or migration authorized; the five bullets |
 | `spec:laws.law01-sanctioned-writes-only` ... `spec:laws.law12-one-retry-owner` | rule | feature | defined | refines epic (Law 4 also decidedBy D6) | One law each, the sentence verbatim in `## Rule`, the reworded note in narrative |
 | `spec:decisions.d01-one-mutation-per-operation` ... `spec:decisions.d19-operations-travel-with-capability` | decision | feature | defined | refines epic; dependsOn per table below | Provenance line in narrative; `context` = the concern and the do-nothing option; first `alternative` = the do-nothing option; further `alternative`s = the doc's rejected options; `decision` = the ruling; `rationale`; `consequence` = costs, gaps, open items; the doc's "Probe" lines as `[non-blocking]` open questions naming the probe number |
-| `spec:facts.fact-ledger` | rule | feature | defined | refines epic | Statuses; nothing probed yet; sources support facts not the design; each fact names its decisions |
+| `spec:facts.fact-ledger` | rule | feature | defined | refines epic | Statuses; the probes that have run; sources support facts not the design; each fact names its decisions |
 | `spec:facts.probe-plan` | workflow | feature | defined | refines fact-ledger; dependsOn F14 to F17 | Seven flows, one per probe, each ending with the decisions it serves |
 | `spec:facts.f01-serializable-mutations-under-occ` ... `spec:facts.f17-migrations-fits-generation-backfill` | constraint | story | defined | refines fact-ledger | statement = the fact; `flavor: convex-fact`; `target` per 3.2; `measurableBy` = source and probe |
 
@@ -602,7 +602,7 @@ Completeness:
 18. All 43 scenario rows of the doc have examples per section 4, with the enumerated cases split into siblings.
 19. Every component in section 2 has its Specs; every Spec in 3.4 exists.
 20. Every open question of the doc (OQ1 to OQ6) is recorded on the Spec section 3.4 assigns it to.
-21. Every assumed fact (F14, F15, F17) states `scoped` behind a `[blocking]` question that names its probe, is named as an `assumption` or open question on each Spec that relies on it, and has its probe in the probe plan. F16 was found documented and states `defined`.
+21. Every assumed fact (F17; F14 and F15 until their probes ran in slice S0) states `scoped` behind a `[blocking]` question that names its probe, is named as an `assumption` or open question on each Spec that relies on it, and has its probe in the probe plan. F16 was found documented and states `defined`.
 
 Convex correctness, checked against the sources the doc lists (S1 to S15) and the recheck in section 9, never from memory:
 
@@ -617,8 +617,8 @@ Convex correctness, checked against the sources the doc lists (S1 to S15) and th
 30. Scheduling: `ctx.scheduler` calls from a mutation commit with it (F8); at most 1000 per mutation; a scheduled action is never retried by Convex (F9), so external calls are claim, call, settle with retries owned by the obligation module; scheduled functions carry no auth, so the obligation record carries authority (D13).
 31. `_scheduled_functions`: the design uses only the documented states (Pending, InProgress, Success, Failed, Canceled) and the 7-day retention, and never assumes `cancel` stops an in-flight action.
 32. Restore: backups exclude pending scheduled functions (F12), so restore rebuilds dispatch from obligations and starts with dispatch off (D19).
-33. `ConvexError`: rejection data uses values the `v` validators accept; the design states that a throw in a mutation prevents the commit and that data intact across a component boundary is F14, assumed, with Probe 2 named.
-34. Reactivity of a parent query over a component query is stated as F15, assumed, with Probe 5 named.
+33. `ConvexError`: rejection data uses values the `v` validators accept; the design states that a throw in a mutation prevents the commit and that data intact across a component boundary is F14, probed by Probe 2.
+34. Reactivity of a parent query over a component query is stated as F15, documented and probed by Probe 5.
 35. Workflow component: only waits and external effects are steps; per-step retries are off or ownership is passed deliberately; the definition version is saved at start; deploy behavior is stated as trigger and promise (D16). `@convex-dev/migrations`: a batch is a checkpointed mutation, so backfill versus live commands is an OCC race per batch (D9, Probe 6).
 36. Timeouts: queries and mutations have 1 second; the max-lines limit and every per-command bound respect it; actions have 30 minutes (Convex runtime) or 10 minutes (Node).
 

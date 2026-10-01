@@ -37,7 +37,7 @@ Citations in this corpus use the tokens the plan fixes: D for a decision, Law fo
 - risk: Every read of context data from the parent is a component call whose cost the first experiment must measure; if it breaks the read budgets, the shape of the context component changes before Layer 3 is designed (D2, Probe 3, OQ1)
 - risk: Nothing has run yet; the sources support the Convex facts, not the correctness or performance of the design (Sources)
 - assumption: Mutations are serializable under optimistic concurrency, and component calls commit or roll back with the calling mutation (F1, F2)
-- assumption: Four ledger facts are assumed rather than documented; each Spec that rests on one names it and the probe plan names the probe (F14, F15, F16, F17)
+- assumption: One ledger fact is still assumed, and three that the doc lists as assumed are rechecked or probed in the corpus; each Spec that rests on one names it and the probe plan names the probe (F14, F15, F16, F17)
 
 ### Open questions
 
