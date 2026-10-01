@@ -53,6 +53,40 @@ test("pure: a rolling buffer redacts a secret split at every chunk boundary befo
   }
 });
 
+test("pure: the backend buffer redacts secrets across interleaved stdout, stderr and errors", () => {
+  const key = "DUMMYSECRET0123456789abcdef";
+  const reproduction = redactedBuffer([key], 16000);
+  reproduction.append("DUMMYSECRET01", "stdout");
+  reproduction.append("status ok\n", "stderr");
+  expect(reproduction.text()).toBe("status ok\n");
+  reproduction.append("23456789abcdef", "stdout");
+  expect(reproduction.text()).toBe("status ok\n[redacted]");
+
+  // All six orders that preserve the order within each two-chunk stream.
+  const orders = ["ooss", "osos", "osso", "soos", "soso", "ssoo"];
+  for (let split = 1; split < key.length; split++) {
+    for (const order of orders) {
+      for (let errorAt = 0; errorAt <= order.length; errorAt++) {
+        const buffer = redactedBuffer([key], 16000);
+        const offsets = { stdout: 0, stderr: 0 };
+        for (let index = 0; index <= order.length; index++) {
+          if (index === errorAt) buffer.append("status ok\n", "error");
+          if (index === order.length) break;
+          const stream = order[index] === "o" ? "stdout" : "stderr";
+          const chunk =
+            offsets[stream]++ === 0 ? key.slice(0, split) : key.slice(split);
+          buffer.append(chunk, stream);
+          expect(buffer.text().replaceAll("[redacted]", "")).toBe(
+            index >= errorAt ? "status ok\n" : "",
+          );
+        }
+        expect(buffer.text().match(/\[redacted\]/g)).toHaveLength(2);
+        expect(buffer.text().replaceAll("[redacted]", "")).toBe("status ok\n");
+      }
+    }
+  }
+});
+
 test("pure: the effective vitest invocation keeps forwarded arguments under npm", () => {
   vi.stubEnv("npm_command", "run-script");
   vi.stubEnv("npm_lifecycle_event", "test:native");

@@ -76,7 +76,13 @@ bindExample(contract, (): World => ({}), {
   ) => {
     const backend = required(world.backend, "the backend");
     const rows = (await markerRows(backend)).get("response lost") ?? 0;
-    measure("rowsAfterTheRetry", rows);
+    measure("httpRetrySummary", {
+      rows,
+      requestsAfterCall: required(
+        world.requestsAfterCall,
+        "the request counts",
+      ),
+    });
     expect(rows).toBe(expected);
     // With no fault in the transport, one call sends one request and leaves one row.
     const kept = countingFetch({ loseResponses: false });

@@ -60,17 +60,18 @@ export async function observedPage(
   watch: ReturnType<typeof watchQuery<typeof api.list.page>>,
   matches: (page: ListPage) => boolean,
   description: string,
+  measurementName: string,
 ): Promise<ListPage> {
   try {
     const page = await watch.until(matches, description, 5000);
-    measure(description, {
+    measure(measurementName, {
       rows: page.page.length,
       status: page.pageStatus ?? null,
       ids: idsOf(page.page),
     });
     return page;
   } catch (error) {
-    measure(description, {
+    measure(measurementName, {
       deliveries: watch.values.map((page) => ({
         rows: page.page.length,
         status: page.pageStatus ?? null,

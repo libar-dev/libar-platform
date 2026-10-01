@@ -82,11 +82,12 @@ bindExample(contract, (): World => ({}), {
         "trials",
         closed.map((trial) => ({ ...trial })),
       );
-      measure("trialsThatLeftNoRow", closed.filter((t) => t.rows === 0).length);
-      measure(
-        "trialsThatLeftOneRow",
-        closed.filter((t) => t.rows === 1).length,
-      );
+      measure("closedClientSummary", {
+        trials: closed.length,
+        confirmed: closed.filter((trial) => trial.confirmed).length,
+        noRow: closed.filter((trial) => trial.rows === 0).length,
+        oneRow: closed.filter((trial) => trial.rows === 1).length,
+      });
     },
   "no trial leaves more than {mostMarkerRows} marker row": (
     world,

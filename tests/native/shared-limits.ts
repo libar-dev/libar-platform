@@ -36,13 +36,6 @@ async function outcome(
       ? `fails on the bytes-${limit} limit`
       : `fails with: ${text}`;
   }
-  measure("limitSummary", {
-    boundary: through,
-    combinedRead: world.together ?? null,
-    combinedWrite: together,
-    failedWriteRows: failedRows,
-    committedRows: await writtenRows(world, "halves"),
-  });
 }
 export async function seedLimits(
   world: LimitsWorld,

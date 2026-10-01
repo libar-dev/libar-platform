@@ -15,12 +15,9 @@ export const seed = mutation({
   }),
 });
 export const readOne = internalQuery({
-  args: { id: v.id("samples"), call: v.number() },
-  returns: v.null(),
-  handler: async (ctx, { id }) => {
-    await readSample(ctx, id);
-    return null;
-  },
+  args: { id: v.id("samples"), cacheBuster: v.number() },
+  returns: v.any(),
+  handler: (ctx, { id }) => readSample(ctx, id),
 });
 const parentArgs = {
   path: v.union(
@@ -31,7 +28,7 @@ const parentArgs = {
   reads: v.number(),
   own: v.id("samples"),
   annex: v.string(),
-  nonce: v.number(),
+  cacheBuster: v.number(),
 };
 async function readRepeatedly(
   ctx: QueryCtx,
@@ -40,31 +37,48 @@ async function readRepeatedly(
     reads: number;
     own: Id<"samples">;
     annex: string;
-    nonce: number;
+    cacheBuster: number;
   },
-): Promise<null> {
+): Promise<{ reads: number; id: string; valueSum: number }> {
+  const id = a.path === "component" ? a.annex : a.own;
+  let reads = 0;
+  let valueSum = 0;
   for (let call = 0; call < a.reads; call++) {
-    if (a.path === "helper") await readSample(ctx, a.own);
+    let document: { _id: string; value: number } | null;
+    if (a.path === "helper") document = await readSample(ctx, a.own);
     else if (a.path === "nested")
-      await ctx.runQuery(internal.readCost.readOne, {
+      document = await ctx.runQuery(internal.readCost.readOne, {
         id: a.own,
-        call: a.nonce + call,
+        cacheBuster: a.cacheBuster + call,
       });
     else
-      await ctx.runQuery(components.annex.readCost.readOne, {
+      document = await ctx.runQuery(components.annex.readCost.readOne, {
         id: a.annex,
-        call: a.nonce + call,
+        cacheBuster: a.cacheBuster + call,
       });
+    if (document === null || document._id !== id || document.value !== 7)
+      throw new Error("The read path did not return the seeded document");
+    reads++;
+    valueSum += document.value;
   }
-  return null;
+  return { reads, id, valueSum };
 }
+
 export const viaMutation = mutation({
   args: parentArgs,
-  returns: v.null(),
+  returns: v.object({
+    reads: v.number(),
+    id: v.string(),
+    valueSum: v.number(),
+  }),
   handler: readRepeatedly,
 });
 export const viaQuery = query({
   args: parentArgs,
-  returns: v.null(),
+  returns: v.object({
+    reads: v.number(),
+    id: v.string(),
+    valueSum: v.number(),
+  }),
   handler: readRepeatedly,
 });

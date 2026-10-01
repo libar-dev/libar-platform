@@ -1,4 +1,3 @@
-import { BaseConvexClient } from "convex/browser";
 import type { ConvexHttpClient } from "convex/browser";
 import { setTimeout as sleep } from "node:timers/promises";
 import { makeFunctionReference } from "convex/server";
@@ -11,8 +10,8 @@ import {
 import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { ordinaryClientRefusedComponentFunctionContract as contract } from "../../generated/contracts/platform.native-harness.ordinary-client-refused-component-function.contract.js";
 import type { Backend } from "../../harness/backend.js";
-import { ordinaryClient } from "../../harness/clients.js";
-import { fixtureBackend, required } from "../../harness/native.js";
+import { ordinaryClient, ordinarySocketClient } from "../../harness/clients.js";
+import { fixtureBackend, measure, required } from "../../harness/native.js";
 const anchor = specTest({
   id: testAnchorId(
     "test:platform.native-harness.ordinary-client-refused-component-function",
@@ -55,6 +54,7 @@ interface World {
   publicRouteError?: unknown;
   componentRouteError?: unknown;
   socketCall?: Promise<"answered" | "rejected">;
+  socketObservation?: { sends: number; backendCloses: number };
 }
 bindExample(contract, (): World => ({}), {
   "a disposable backend running the fixture composition, which mounts a component with a mutation that writes one row":
@@ -75,21 +75,52 @@ bindExample(contract, (): World => ({}), {
       world.publicRouteError = await byQualifiedName(client);
       world.componentRouteError = await byComponentPath(client);
       const backend = required(world.backend, "the backend");
-      const socket = new BaseConvexClient(backend.url, () => {}, {
-        unsavedChangesWarning: false,
+      const observation = { sends: 0, backendCloses: 0 };
+      world.socketObservation = observation;
+      class ObservedWebSocket extends globalThis.WebSocket {
+        private sentTarget = false;
+        private locallyClosed = false;
+        constructor(url: string | URL, protocols?: string | string[]) {
+          super(url, protocols);
+          this.addEventListener("close", () => {
+            if (this.sentTarget && !this.locallyClosed)
+              observation.backendCloses++;
+          });
+        }
+        override send(data: Parameters<WebSocket["send"]>[0]) {
+          super.send(data);
+          if (typeof data !== "string") return;
+          const message = JSON.parse(data) as {
+            type?: string;
+            udfPath?: string;
+            componentPath?: string;
+            args?: unknown[];
+          };
+          if (
+            message.type === "Mutation" &&
+            message.udfPath === target &&
+            message.componentPath === component &&
+            JSON.stringify(message.args) === "[{}]"
+          ) {
+            this.sentTarget = true;
+            observation.sends++;
+          }
+        }
+        override close(code?: number, reason?: string) {
+          this.locallyClosed = true;
+          super.close(code, reason);
+        }
+      }
+      const socket = ordinarySocketClient(backend.url, {
+        token: await backend.issuer.token(
+          required(world.subject, "the subject"),
+        ),
+        webSocket: ObservedWebSocket,
       });
       onTestFinished(() => socket.close());
-      const token = await backend.issuer.token(
-        // Use the same subject as the HTTP client's signed token.
-        required(world.subject, "the subject"),
-      );
-      socket.setAuth(
-        async () => token,
-        () => {},
-      );
       // Convex 1.46.0 strips this internal protocol entry from its declarations.
       world.socketCall = (
-        socket as unknown as {
+        socket.client as unknown as {
           mutationInternal(
             name: string,
             args: object,
@@ -107,12 +138,14 @@ bindExample(contract, (): World => ({}), {
   "the call to the public endpoint with a component-qualified name fails with an error whose text holds {publicRouteRefusal}":
     async (world, { publicRouteRefusal }) => {
       expect(world.publicRouteError).toBeInstanceOf(Error);
-      expect(String(world.publicRouteError)).toContain(publicRouteRefusal);
+      expect(String(world.publicRouteError)).toContain(
+        `${publicRouteRefusal} for '${component}/${target}'`,
+      );
       const noToken = ordinaryClient(
         required(world.backend, "the backend").url,
       );
       expect(String(await byQualifiedName(noToken))).toContain(
-        publicRouteRefusal,
+        `${publicRouteRefusal} for '${component}/${target}'`,
       );
     },
   "the call to the endpoint that takes a component path fails with an error whose text holds {componentRouteRefusal}":
@@ -128,14 +161,26 @@ bindExample(contract, (): World => ({}), {
         componentRouteRefusal,
       );
     },
-  "the call over the WebSocket protocol with a component path gets no answer within {socketWaitMs} ms":
-    async (world, { socketWaitMs }) => {
-      expect(
-        await Promise.race([
-          required(world.socketCall, "the socket call"),
-          sleep(socketWaitMs, "no answer"),
-        ]),
-      ).toBe("no answer");
+  "the call over the WebSocket protocol with a component path is sent, gets no answer within {socketWaitMs} ms, and the backend closes the connection at least {leastSocketCloses} time":
+    async (world, { socketWaitMs, leastSocketCloses }) => {
+      const answer = await Promise.race([
+        required(world.socketCall, "the socket call"),
+        sleep(socketWaitMs, "no answer"),
+      ]);
+      const observation = required(
+        world.socketObservation,
+        "the socket observations",
+      );
+      measure("componentSocketSummary", {
+        ...observation,
+        answer,
+        socketWaitMs,
+      });
+      expect(observation.sends).toBeGreaterThan(0);
+      expect(answer).toBe("no answer");
+      expect(observation.backendCloses).toBeGreaterThanOrEqual(
+        leastSocketCloses,
+      );
     },
   "the table the component's mutation writes holds {rowsAfterRefusal} rows":
     async (world, { rowsAfterRefusal }) => {

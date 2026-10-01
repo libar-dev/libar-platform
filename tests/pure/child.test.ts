@@ -65,3 +65,20 @@ test("pure: redaction precedes the child error's truncation", async () => {
   expect(String(error)).not.toContain("6789abcdef");
   expect(String(error)).toContain("redacted]");
 });
+
+test("pure: a failed child redacts a split stderr secret with stdout between its halves", async () => {
+  const key = "DUMMYSECRET0123456789abcdef";
+  const error = await runChild(
+    "interleaved child",
+    process.execPath,
+    [
+      "-e",
+      "process.stderr.write(process.argv[1].slice(0, 13), () => process.stdout.write('status ok\\n', () => process.stderr.write(process.argv[1].slice(13), () => process.exit(1))))",
+      key,
+    ],
+    { timeoutMs: 10000, secrets: [key] },
+  ).catch((error: Error) => error);
+  expect(String(error)).toBe(
+    "Error: interleaved child failed with exit code 1: [redacted]",
+  );
+});

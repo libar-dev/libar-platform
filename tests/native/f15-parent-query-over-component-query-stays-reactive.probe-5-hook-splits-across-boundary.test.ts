@@ -213,7 +213,7 @@ bindExample(contract, (): World => ({}), {
     );
     const shown = new Set(idsOf(hook.results));
     world.missing = list.filter((row) => !shown.has(row._id));
-    measure("hookAfterSplit", {
+    measure("hookSplitSummary", {
       rowsInList: list.length,
       rowsShown: hook.results.length,
       status: hook.status,

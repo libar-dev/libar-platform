@@ -96,14 +96,17 @@ bindExample(contract, (): World => ({}), {
         "trials",
         restarted.map((trial) => ({ ...trial })),
       );
-      measure(
-        "trialsKilledBeforeCommit",
-        restarted.filter((trial) => !trial.committedBeforeKill).length,
-      );
-      measure(
-        "trialsKilledAfterCommit",
-        restarted.filter((trial) => trial.committedBeforeKill).length,
-      );
+      measure("restartSummary", {
+        trials: restarted.length,
+        resolved: restarted.filter((trial) => trial.resolved).length,
+        killedBeforeCommit: restarted.filter(
+          (trial) => !trial.committedBeforeKill,
+        ).length,
+        killedAfterCommit: restarted.filter(
+          (trial) => trial.committedBeforeKill,
+        ).length,
+        rowCounts: restarted.map((trial) => trial.rows),
+      });
     },
   "the mutation's promise resolves after the restart in {resolvedTrials} trials":
     (world, { resolvedTrials }) => {

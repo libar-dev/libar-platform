@@ -110,13 +110,13 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
       { stdio: ["ignore", "pipe", "pipe"] },
     );
     child = spawned;
-    const keep = (chunk: Buffer) => {
-      buffer.append(chunk.toString());
+    const keep = (chunk: Buffer, stream: "stdout" | "stderr" | "error") => {
+      buffer.append(chunk.toString(), stream);
       output = buffer.text();
     };
-    spawned.stdout?.on("data", keep);
-    spawned.stderr?.on("data", keep);
-    spawned.on("error", (error) => keep(Buffer.from(String(error))));
+    spawned.stdout?.on("data", (chunk: Buffer) => keep(chunk, "stdout"));
+    spawned.stderr?.on("data", (chunk: Buffer) => keep(chunk, "stderr"));
+    spawned.on("error", (error) => keep(Buffer.from(String(error)), "error"));
     if (spawned.pid !== undefined)
       publishOwnership(directory, spawned.pid, instanceName);
     const deadline = Date.now() + 30000;

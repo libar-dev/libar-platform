@@ -28,8 +28,13 @@ export const throwAfterWrite = internalMutation({
       .withIndex("by_by", (q) => q.eq("by", "thrower"))
       .take(2);
     // This guard runs inside the transaction, before the throw rolls the row back.
-    if (after.documentsWritten.used - before.documentsWritten.used !== 1 || rows.length !== 1)
-      throw new Error("The thrower did not write exactly one row before throwing");
+    if (
+      after.documentsWritten.used - before.documentsWritten.used !== 1 ||
+      rows.length !== 1
+    )
+      throw new Error(
+        "The thrower did not write exactly one row before throwing",
+      );
     if (kind === "plainError")
       throw Object.assign(new Error(`plain failure: ${String(data)}`), {
         addedProperty: "present",

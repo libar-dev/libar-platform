@@ -30,6 +30,6 @@ bindExample(contract, (): World => ({}), {
   "the median execution time through the component is {componentAgainstHelper} than through the helper":
     (world, { componentAgainstHelper }) =>
       assertCost(world, componentAgainstHelper),
-  "the function log holds {recordsPerCall} completion record for one parent call through the component":
+  "the local function log holds {recordsPerCall} completion record for one parent call through the component, the parent's own":
     (world, { recordsPerCall }) => assertRecords(world, recordsPerCall),
 });

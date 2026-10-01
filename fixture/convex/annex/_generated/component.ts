@@ -36,13 +36,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       caller: FunctionReference<"query", "internal", {}, any, Name>;
     };
     limits: {
-      countBlobs: FunctionReference<
-        "query",
-        "internal",
-        { group: string },
-        number,
-        Name
-      >;
       insertBlobs: FunctionReference<
         "mutation",
         "internal",
@@ -105,8 +98,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       readOne: FunctionReference<
         "query",
         "internal",
-        { call: number; id: string },
-        null,
+        { cacheBuster: number; id: string },
+        any,
         Name
       >;
       seed: FunctionReference<"mutation", "internal", {}, string, Name>;

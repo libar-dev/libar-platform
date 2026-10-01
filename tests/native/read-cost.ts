@@ -34,76 +34,89 @@ export async function sampleCost(world: CostWorld, kind: "mutation" | "query") {
     nested: [],
     component: [],
   };
+  const observations: Parameters<typeof measure>[1][] = [];
   world.componentRecords = [];
-  for (let round = 0; round < 9; round++) {
-    for (const [index, path] of paths.entries()) {
-      const mark = await backend.admin.logMark();
-      const args = {
-        ...required(world.seeds, "the seeded documents"),
-        path,
-        reads: required(world.reads, "the read count"),
-        nonce: (round * 3 + index + 1) * 1000,
-      };
-      let callError: unknown;
-      try {
-        if (kind === "mutation")
-          await client.mutation(api.readCost.viaMutation, args);
-        else await client.query(api.readCost.viaQuery, args);
-      } catch (error) {
-        callError = error;
+  try {
+    for (let round = 0; round < 9; round++) {
+      for (const [index, path] of paths.entries()) {
+        const mark = await backend.admin.logMark();
+        const args = {
+          ...required(world.seeds, "the seeded documents"),
+          path,
+          reads: required(world.reads, "the read count"),
+          cacheBuster: (round * 3 + index + 1) * 1000,
+        };
+        let callError: unknown;
+        let result: { reads: number; id: string; valueSum: number } | undefined;
+        try {
+          if (kind === "mutation")
+            result = await client.mutation(api.readCost.viaMutation, args);
+          else result = await client.query(api.readCost.viaQuery, args);
+        } catch (error) {
+          callError = error;
+        }
+        const identifier =
+          kind === "mutation" ? "readCost:viaMutation" : "readCost:viaQuery";
+        const records = await backend.admin.completionsSince(mark, (entries) =>
+          entries.some(
+            (entry) =>
+              entry.identifier === identifier && entry.componentPath === null,
+          ),
+        );
+        const parent = required(
+          records.find(
+            (entry) =>
+              entry.identifier === identifier && entry.componentPath === null,
+          ),
+          "the parent's completion",
+        );
+        const sharingRequest = records.filter(
+          (entry) => entry.requestId === parent.requestId,
+        );
+        observations.push({
+          round,
+          path,
+          cacheBuster: args.cacheBuster,
+          result: result ?? null,
+          callError: callError === undefined ? null : String(callError),
+          executionTimeSeconds: parent.executionTime,
+          cachedResult: parent.cachedResult,
+          error: parent.error,
+          records: sharingRequest.map((entry) => ({
+            identifier: entry.identifier,
+            componentPath: entry.componentPath,
+            executionTime: entry.executionTime,
+            cachedResult: entry.cachedResult,
+          })),
+        });
+        expect(callError, String(callError)).toBeUndefined();
+        expect(parent.error, JSON.stringify(parent)).toBeNull();
+        expect(parent.cachedResult, JSON.stringify(parent)).toBe(false);
+        expect(result).toEqual({
+          reads: args.reads,
+          id: path === "component" ? args.annex : args.own,
+          valueSum: args.reads * 7,
+        });
+        samples[path].push(parent.executionTime);
+        if (path === "component")
+          world.componentRecords.push(sharingRequest.length);
       }
-      measure("costCall", {
-        round,
-        path,
-        nonce: args.nonce,
-        error: callError === undefined ? null : String(callError),
-      });
-      const identifier =
-        kind === "mutation" ? "readCost:viaMutation" : "readCost:viaQuery";
-      const records = await backend.admin.completionsSince(mark, (entries) =>
-        entries.some(
-          (entry) =>
-            entry.identifier === identifier && entry.componentPath === null,
-        ),
-      );
-      const parent = required(
-        records.find(
-          (entry) =>
-            entry.identifier === identifier && entry.componentPath === null,
-        ),
-        "the parent's completion",
-      );
-      const sharingRequest = records.filter(
-        (entry) => entry.requestId === parent.requestId,
-      );
-      measure("costSample", {
-        round,
-        path,
-        nonce: args.nonce,
-        executionTimeSeconds: parent.executionTime,
-        cachedResult: parent.cachedResult,
-        error: parent.error,
-        records: sharingRequest.map((entry) => ({
-          identifier: entry.identifier,
-          componentPath: entry.componentPath,
-          executionTime: entry.executionTime,
-          cachedResult: entry.cachedResult,
-        })),
-      });
-      expect(callError, String(callError)).toBeUndefined();
-      expect(parent.error, JSON.stringify(parent)).toBeNull();
-      expect(parent.cachedResult, JSON.stringify(parent)).toBe(false);
-      samples[path].push(parent.executionTime);
-      if (path === "component")
-        world.componentRecords.push(sharingRequest.length);
     }
+  } finally {
+    measure("costSamples", observations);
   }
   world.medians = {
     helper: median(samples.helper),
     nested: median(samples.nested),
     component: median(samples.component),
   };
-  measure("costMedians", {
+  measure("readCostSummary", {
+    kind,
+    readsPerSample: required(world.reads, "the read count"),
+    acceptedSamples: Object.fromEntries(
+      paths.map((path) => [path, samples[path].length]),
+    ),
+    componentCompletionRecords: world.componentRecords,
     ...world.medians,
     componentMinusHelperSeconds: world.medians.component - world.medians.helper,
     componentMinusHelperPerReadSeconds:

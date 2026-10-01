@@ -53,20 +53,20 @@ export function runChild(
   });
 }
 
-// Keep a raw tail only while it could still become a secret split across chunks.
+// Keep each stream's possible secret prefix separate from the other streams.
 export function redactedBuffer(
   secrets: readonly string[],
   limit: number,
 ): {
-  append(chunk: string): void;
+  append(chunk: string, stream?: "stdout" | "stderr" | "error"): void;
   text(): string;
 } {
   let safe = "";
-  let pending = "";
+  const tails = new Map<string, string>();
   const keys = secrets.filter((secret) => secret !== "");
   return {
-    append(chunk) {
-      pending += chunk;
+    append(chunk, stream = "stdout") {
+      let pending = (tails.get(stream) ?? "") + chunk;
       let consumed = 0;
       let complete = "";
       while (consumed < pending.length) {
@@ -83,6 +83,7 @@ export function redactedBuffer(
         }
       }
       pending = pending.slice(consumed);
+      tails.set(stream, pending);
       safe = (safe + complete).slice(-limit);
     },
     text: () => safe,

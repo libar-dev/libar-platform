@@ -6,10 +6,9 @@ export const seed = mutation({
   handler: (ctx) => ctx.db.insert("samples", { value: 7 }),
 });
 export const readOne = query({
-  args: { id: v.id("samples"), call: v.number() },
-  returns: v.null(),
+  args: { id: v.id("samples"), cacheBuster: v.number() },
+  returns: v.any(),
   handler: async (ctx, { id }) => {
-    await ctx.db.get("samples", id);
-    return null;
+    return await ctx.db.get("samples", id);
   },
 });

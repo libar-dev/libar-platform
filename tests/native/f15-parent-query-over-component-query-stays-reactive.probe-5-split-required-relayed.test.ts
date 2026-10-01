@@ -69,6 +69,7 @@ bindExample(contract, (): World => ({}), {
         watch,
         (page) => page.page.length === pageSize,
         "the initial pinned page",
+        "initialPinnedPage",
       );
       Object.assign(world, {
         backend,
@@ -91,6 +92,7 @@ bindExample(contract, (): World => ({}), {
         required(world.watches?.[0], "the subscription"),
         (page) => page.pageStatus !== null && page.pageStatus !== undefined,
         "a page with split status",
+        "splitPage",
       );
       measure("relayedSplit", {
         status: world.split.pageStatus ?? null,
@@ -133,7 +135,8 @@ bindExample(contract, (): World => ({}), {
         endCursor,
       });
       const joined = [...left.page, ...right.page];
-      measure("splitHalves", {
+      measure("splitSummary", {
+        pageStatus: world.split?.pageStatus ?? null,
         left: idsOf(left.page),
         right: idsOf(right.page),
         wholeRange: idsOf(wholeRange.page),

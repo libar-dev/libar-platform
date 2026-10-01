@@ -74,6 +74,7 @@ bindExample(contract, (): World => ({}), {
             watch,
             (page) => idsOf(page.page).join() === idsOf(first.page).join(),
             "the initial pinned page",
+            `initialPinnedPage${index}`,
           ),
         );
         if (first.isDone) break;
@@ -107,6 +108,7 @@ bindExample(contract, (): World => ({}), {
             required(world.pages?.[index], "the initial page").page.length +
               (index === 0 ? inserted : 0),
           "the pages after the insert",
+          `pinnedPageAfterInsert${index}`,
         ),
       ),
     );
@@ -148,11 +150,15 @@ bindExample(contract, (): World => ({}), {
             required(pages[index], "the old page").page.length -
               (index === 1 ? 1 : 0),
           "the pages after the deletion",
+          `pinnedPageAfterDelete${index}`,
         ),
       ),
     );
     const list = await wholeList(backend);
-    measure("contiguityAfterDelete", {
+    measure("contiguitySummary", {
+      pages: after.length,
+      rowsAfterInsert: pages.flatMap((page) => page.page).length,
+      rowsAfterDelete: list.length,
       removed: removed._id,
       actual: idsOf(after.flatMap((page) => page.page)),
       expected: idsOf(list),

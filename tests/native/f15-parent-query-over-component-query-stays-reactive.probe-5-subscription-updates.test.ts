@@ -78,7 +78,7 @@ bindExample(contract, (): World => ({}), {
       const values = watch.values.slice(
         required(world.before, "the initial delivery count"),
       );
-      measure("subscriptionUpdates", {
+      measure("subscriptionSummary", {
         waitMs: 5000,
         observationAfterDeliveryMs: 100,
         values: values.map((row) =>

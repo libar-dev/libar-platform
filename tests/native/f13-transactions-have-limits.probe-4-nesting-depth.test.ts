@@ -44,7 +44,9 @@ bindExample(contract, (): World => ({}), {
       } catch (caught) {
         error = caught;
       }
-      const rows = (await backend.admin.readTable("depthRows")).filter((row) => row.trial === label).length;
+      const rows = (await backend.admin.readTable("depthRows")).filter(
+        (row) => row.trial === label,
+      ).length;
       measure(`stack${stack}Trial`, {
         stack,
         answer: answer ?? null,
@@ -64,6 +66,7 @@ bindExample(contract, (): World => ({}), {
     measure("depthBoundary", {
       deepest: world.deepest,
       firstFailure: world.failed ?? null,
+      refusal: world.failure === undefined ? null : String(world.failure),
     });
     expect(world.failed, "No stack failed through depth 16").toBeDefined();
   },
