@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -104,19 +105,11 @@ export default class EvidenceReporter implements Reporter {
           ),
         ) as { version: string }
       ).version;
-    // npm sets both for `npm run <script>`. Under npx the event is "npx" and names no script.
-    const script =
-      process.env.npm_command === "run-script"
-        ? process.env.npm_lifecycle_event
-        : undefined;
     const record: NativeRunRecord = {
       tier: "native",
       commit: this.commit,
       clean: this.clean,
-      command:
-        script === undefined
-          ? `vitest ${process.argv.slice(2).join(" ")}`
-          : `npm run ${script}`,
+      command: invocation(process.argv.slice(2)),
       startedAt: this.startedAt,
       finishedAt: new Date().toISOString(),
       result: reason,
@@ -126,11 +119,28 @@ export default class EvidenceReporter implements Reporter {
     };
     const directory = join(repositoryRoot, "evidence/runs");
     await mkdir(directory, { recursive: true });
-    const name = `native-${this.startedAt.replace(/[-:]|\.\d+/g, "")}-${this.commit.slice(0, 7)}.json`;
-    await writeFile(
-      join(directory, name),
-      JSON.stringify(record, null, 2) + "\n",
-    );
+    const name = await writeRunRecord(directory, record);
     console.log(`Native run record: evidence/runs/${name}`);
   }
+}
+
+export function invocation(args: readonly string[]): string {
+  const quote = (arg: string) =>
+    /^[a-zA-Z0-9_./=:-]+$/.test(arg)
+      ? arg
+      : "'" + arg.replaceAll("'", "'\\''") + "'";
+  return ["vitest", ...args].map(quote).join(" ");
+}
+
+export async function writeRunRecord(
+  directory: string,
+  record: NativeRunRecord,
+): Promise<string> {
+  const name = `native-${record.startedAt.replace(/[-:]|\.\d+/g, "")}-${record.commit.slice(0, 7)}-${randomUUID()}.json`;
+  await writeFile(
+    join(directory, name),
+    JSON.stringify(record, null, 2) + "\n",
+    { flag: "wx" },
+  );
+  return name;
 }

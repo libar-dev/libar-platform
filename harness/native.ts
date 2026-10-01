@@ -1,5 +1,6 @@
 import { TestRunner, inject, onTestFinished } from "vitest";
 import { startBackend } from "./backend.js";
+import type { Executable } from "./executable.js";
 import type { Backend } from "./backend.js";
 import type { JsonValue, NativeTestFacts } from "./evidence.js";
 import { createFixtureIssuer } from "./identity.js";
@@ -14,21 +15,26 @@ function current() {
   return { test, facts };
 }
 export async function fixtureBackend(
-  options: { issuer?: string } = {},
+  options: {
+    issuer?: string;
+    executable?: Executable;
+    parentDirectory?: string;
+    deploy?: boolean;
+  } = {},
 ): Promise<Backend> {
   const { test, facts } = current();
   const run = inject("nativeRun");
   const issuer = await createFixtureIssuer(options.issuer);
   let owned: Backend | undefined;
   const starting = startBackend({
-    executable: run.executable,
+    executable: options.executable ?? run.executable,
     issuer,
-    parentDirectory: run.directory,
+    parentDirectory: options.parentDirectory ?? run.directory,
     signal: test.context.signal,
   }).then(async (backend) => {
     owned = backend;
     try {
-      await backend.admin.deploy();
+      if (options.deploy !== false) await backend.admin.deploy();
       return backend;
     } catch (error) {
       await backend.dispose().catch(() => undefined);

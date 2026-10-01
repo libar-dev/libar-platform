@@ -80,7 +80,6 @@ export async function resolveExecutable(
   // A cache entry is used only when its hash is the pinned one. Anything else is replaced.
   const cached = await sha256OfFile(path).catch(() => undefined);
   if (cached === asset.executableSha256) return pinned;
-  await rm(path, { force: true });
   await mkdir(directory, { recursive: true });
   const work = await mkdtemp(join(directory, "download-"));
   try {

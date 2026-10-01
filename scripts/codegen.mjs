@@ -22,12 +22,23 @@ const { resolveExecutable } = await import("../harness/executable.ts");
 const { createFixtureIssuer } = await import("../harness/identity.ts");
 const { startBackend } = await import("../harness/backend.ts");
 
-const backend = await startBackend({
-  executable: await resolveExecutable(),
-  issuer: await createFixtureIssuer(),
-});
+const controller = new AbortController();
+const interrupt = (signal) =>
+  controller.abort(new Error(`Codegen interrupted by ${signal}`));
+const onInt = () => interrupt("SIGINT");
+const onTerm = () => interrupt("SIGTERM");
+process.on("SIGINT", onInt);
+process.on("SIGTERM", onTerm);
+let backend;
 try {
+  backend = await startBackend({
+    executable: await resolveExecutable(),
+    issuer: await createFixtureIssuer(),
+    signal: controller.signal,
+  });
   await backend.admin.codegen();
 } finally {
-  await backend.dispose();
+  await backend?.dispose();
+  process.off("SIGINT", onInt);
+  process.off("SIGTERM", onTerm);
 }

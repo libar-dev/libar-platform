@@ -1,14 +1,15 @@
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { publishOwnership } from "./ownership.js";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { createAdminAccess } from "./admin.js";
 import type { AdminAccess, AdminState } from "./admin.js";
-import { redact, runChild } from "./child.js";
+import { redact, redactedBuffer, runChild } from "./child.js";
 import type { Executable } from "./executable.js";
 import type { FixtureIssuer } from "./identity.js";
 export const fixtureComposition = {
@@ -79,10 +80,15 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
   let disposed = false;
   let identityIssuer = options.issuer.issuer;
   const state: AdminState = { deployed: false, environment: new Set() };
+  const assertLive = () => {
+    if (disposed) throw new Error("The backend is disposed");
+  };
   const running = () =>
     child !== undefined && child.exitCode === null && child.signalCode === null;
   async function spawnAndWait(): Promise<"ready" | "port taken"> {
     output = "";
+    state.logProcess = {};
+    const buffer = redactedBuffer(secrets, 16000);
     const spawned = spawn(
       options.executable.path,
       [
@@ -105,13 +111,14 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
     );
     child = spawned;
     const keep = (chunk: Buffer) => {
-      output = (output + chunk.toString()).slice(-16000);
+      buffer.append(chunk.toString());
+      output = buffer.text();
     };
     spawned.stdout?.on("data", keep);
     spawned.stderr?.on("data", keep);
     spawned.on("error", (error) => keep(Buffer.from(String(error))));
     if (spawned.pid !== undefined)
-      await writeFile(join(directory, "pid"), String(spawned.pid));
+      publishOwnership(directory, spawned.pid, instanceName);
     const deadline = Date.now() + 30000;
     while (Date.now() < deadline) {
       options.signal?.throwIfAborted();
@@ -156,6 +163,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
   async function dispose(): Promise<void> {
     if (disposed) return;
     disposed = true;
+    state.logProcess = undefined;
     const left: string[] = [];
     await end("SIGKILL").catch((error: Error) => left.push(error.message));
     await rm(directory, {
@@ -240,17 +248,32 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
       adminKey,
       issuer: options.issuer,
       admin,
-      stop: () => end("SIGINT"),
-      kill: () => end("SIGKILL"),
+      async stop() {
+        assertLive();
+        state.logProcess = undefined;
+        await end("SIGINT");
+      },
+      async kill() {
+        assertLive();
+        state.logProcess = undefined;
+        await end("SIGKILL");
+      },
       async restart() {
+        assertLive();
         if (running())
           throw new Error(
             "The backend is still running. Stop or kill it before restart.",
           );
-        if ((await spawnAndWait()) === "port taken")
-          throw new Error(
-            `The backend could not restart on port ${port}: ${redact(output, secrets)}`,
-          );
+        try {
+          if ((await spawnAndWait()) === "port taken")
+            throw new Error(
+              `The backend could not restart on port ${port}: ${redact(output, secrets)}`,
+            );
+        } catch (error) {
+          state.logProcess = undefined;
+          await end("SIGKILL");
+          throw error;
+        }
       },
       dispose,
       facts: () => ({

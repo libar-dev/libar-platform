@@ -52,3 +52,43 @@ test("pure: a backend whose deploy fails is disposed and still contributes its f
   expect(context.current.meta.native?.backends).toEqual([facts]);
   expect(dispose).toHaveBeenCalledTimes(2);
 });
+
+test("pure: fixtureBackend owns an overridden executable and can skip deploy", async () => {
+  context.current.meta = {};
+  context.finished = [];
+  const deploy = vi.fn(async () => {});
+  const dispose = vi.fn(async () => {});
+  const backend = {
+    admin: { deploy },
+    dispose,
+    facts: () => ({ composition: null }),
+  } as unknown as Backend;
+  vi.mocked(startBackend).mockResolvedValue(backend);
+  const executable = {
+    path: "synthetic",
+    sha256: "hash",
+    release: null,
+    source: "CONVEX_BACKEND_BINARY" as const,
+  };
+  expect(
+    await fixtureBackend({
+      executable,
+      parentDirectory: "owned-directory",
+      deploy: false,
+    }),
+  ).toBe(backend);
+  expect(startBackend).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      executable,
+      parentDirectory: "owned-directory",
+      signal: context.current.context.signal,
+    }),
+  );
+  expect(deploy).not.toHaveBeenCalled();
+  expect(context.finished).toHaveLength(1);
+  await context.finished[0]!();
+  expect(dispose).toHaveBeenCalledOnce();
+  expect(context.current.meta.native?.backends).toEqual([
+    { composition: null },
+  ]);
+});

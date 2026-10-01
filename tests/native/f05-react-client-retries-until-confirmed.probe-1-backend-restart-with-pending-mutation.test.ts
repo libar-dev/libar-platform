@@ -37,7 +37,7 @@ interface World {
 }
 // No delay for the first three trials in ten, then 1, 2, 4 and so on. On the pinned release a
 // local mutation commits a few milliseconds after the send, so the trials fall on both sides.
-export function killDelayMs(index: number, trials: number): number {
+function killDelayMs(index: number, trials: number): number {
   const immediate = Math.ceil(trials * 0.3);
   return index < immediate ? 0 : 2 ** (index - immediate);
 }

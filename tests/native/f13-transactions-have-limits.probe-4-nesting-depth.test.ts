@@ -10,7 +10,6 @@ import { api } from "../../fixture/convex/_generated/api.js";
 import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { fixtureBackend, measure, required } from "../../harness/native.js";
-import { markerRows } from "./marker-rows.js";
 const anchor = specTest({
   id: testAnchorId(
     "test:facts.f13-transactions-have-limits.probe-4-nesting-depth",
@@ -24,6 +23,7 @@ interface World {
   backend?: Backend;
   deepest?: number;
   failed?: number;
+  failure?: unknown;
 }
 bindExample(contract, (): World => ({}), {
   "a mutation that calls itself through ctx.runMutation until its call stack holds a requested number of functions":
@@ -44,8 +44,8 @@ bindExample(contract, (): World => ({}), {
       } catch (caught) {
         error = caught;
       }
-      const rows = (await markerRows(backend)).get(label) ?? 0;
-      measure("stackTrial", {
+      const rows = (await backend.admin.readTable("depthRows")).filter((row) => row.trial === label).length;
+      measure(`stack${stack}Trial`, {
         stack,
         answer: answer ?? null,
         error: error === undefined ? null : String(error),
@@ -54,6 +54,7 @@ bindExample(contract, (): World => ({}), {
       if (error !== undefined) {
         expect(rows, String(error)).toBe(0);
         world.failed = stack;
+        world.failure = error;
         break;
       }
       expect(answer).toBe(stack);
@@ -66,6 +67,11 @@ bindExample(contract, (): World => ({}), {
     });
     expect(world.failed, "No stack failed through depth 16").toBeDefined();
   },
+  "the first stack that does not commit is refused with an error whose text holds {depthRefusal}":
+    (world, { depthRefusal }) => {
+      expect(world.failure).toBeInstanceOf(Error);
+      expect(String(world.failure)).toContain(depthRefusal);
+    },
   "the deepest call stack that commits holds {deepestStack} functions, the top-level mutation included":
     (world, { deepestStack }) => {
       expect(

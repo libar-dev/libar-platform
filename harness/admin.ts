@@ -14,6 +14,7 @@ export interface AdminTarget {
 export interface AdminState {
   deployed: boolean;
   environment: Set<string>;
+  logProcess?: object | undefined;
 }
 export interface LogMark {
   readonly cursorMs: number;
@@ -104,11 +105,13 @@ export function createAdminAccess(
   target: AdminTarget,
   state: AdminState,
 ): AdminAccess {
+  const marks = new WeakMap<LogMark, object | undefined>();
   const http = new ConvexHttpClient(target.url) as AdminHttpClient;
   http.setAdminAuth(target.adminKey);
   const authorization = { Authorization: `Convex ${target.adminKey}` };
   async function cli(command: "deploy" | "codegen") {
     const call = convexCli(target, command);
+    // CLI children are short and bounded; they lose their backend when a run is swept.
     await runChild(`convex ${command}`, call.file, call.args, {
       cwd: call.cwd,
       env: call.env,
@@ -242,15 +245,26 @@ export function createAdminAccess(
     async logMark() {
       // The log's cursor is a time in milliseconds on this machine's clock. Round up, then wait
       // past it, so that every earlier record is at or before the mark and every later one after.
+      const process = state.logProcess;
       const cursorMs = Date.now() + 1;
       await sleep(2);
-      return { cursorMs };
+      const mark = { cursorMs };
+      marks.set(mark, process);
+      return mark;
     },
     async completionsSince(mark, until, timeoutMs = 10000) {
+      const assertProcess = () => {
+        if (!marks.has(mark) || marks.get(mark) !== state.logProcess)
+          throw new Error(
+            "The function log mark belongs to another backend process",
+          );
+      };
+      assertProcess();
       const records: CompletionRecord[] = [];
       const deadline = Date.now() + timeoutMs;
       let cursor = mark.cursorMs;
       while (!until(records)) {
+        assertProcess();
         const left = deadline - Date.now();
         if (left <= 0)
           throw new Error(
@@ -266,6 +280,7 @@ export function createAdminAccess(
           if ((error as Error).name === "TimeoutError") continue;
           throw error;
         }
+        assertProcess();
         if (!response.ok)
           throw new Error(
             `Reading the function log failed with status ${response.status}`,
@@ -283,6 +298,7 @@ export function createAdminAccess(
             records.push(entry as CompletionRecord);
         cursor = body.newCursor;
       }
+      assertProcess();
       return records;
     },
   };

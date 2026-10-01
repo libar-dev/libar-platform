@@ -41,13 +41,50 @@ export function runChild(
           return reject(
             new Error(`${name} could not start: ${String(error.code)}`),
           );
-        const output = (stderr.trim() === "" ? stdout : stderr).slice(-4000);
+        const output = redact(
+          stderr.trim() === "" ? stdout : stderr,
+          options.secrets ?? [],
+        ).slice(-4000);
         reject(
-          new Error(
-            `${name} failed with exit code ${error.code}: ${redact(output, options.secrets ?? [])}`,
-          ),
+          new Error(`${name} failed with exit code ${error.code}: ${output}`),
         );
       },
     );
   });
+}
+
+// Keep a raw tail only while it could still become a secret split across chunks.
+export function redactedBuffer(
+  secrets: readonly string[],
+  limit: number,
+): {
+  append(chunk: string): void;
+  text(): string;
+} {
+  let safe = "";
+  let pending = "";
+  const keys = secrets.filter((secret) => secret !== "");
+  return {
+    append(chunk) {
+      pending += chunk;
+      let consumed = 0;
+      let complete = "";
+      while (consumed < pending.length) {
+        const rest = pending.slice(consumed);
+        const match = keys.find((key) => rest.startsWith(key));
+        if (match !== undefined) {
+          complete += "[redacted]";
+          consumed += match.length;
+        } else if (keys.some((key) => key.startsWith(rest))) {
+          break;
+        } else {
+          complete += pending[consumed];
+          consumed++;
+        }
+      }
+      pending = pending.slice(consumed);
+      safe = (safe + complete).slice(-limit);
+    },
+    text: () => safe,
+  };
 }

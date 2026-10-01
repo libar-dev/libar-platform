@@ -1,5 +1,8 @@
 import { setTimeout as sleep } from "node:timers/promises";
-export const localWriteRateBytesPerSecond = 4 * 1024 * 1024;
+export {
+  localWriteRateBytesPerSecond,
+  paceAfterWrite,
+} from "./local-write-rate.js";
 export async function waitUntil(
   description: string,
   condition: () => boolean | Promise<boolean>,
@@ -36,9 +39,4 @@ export async function within<T>(
   } finally {
     clearTimeout(timer);
   }
-}
-export async function paceAfterWrite(bytesWritten: number): Promise<void> {
-  await sleep(
-    Math.ceil((bytesWritten / localWriteRateBytesPerSecond) * 1000 * 1.25),
-  );
 }

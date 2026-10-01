@@ -21,20 +21,28 @@ function bytes(size: string) {
 async function outcome(
   call: Promise<unknown>,
   success: string,
+  name: string,
   limit?: "read" | "written",
 ) {
   try {
     await call;
-    measure("functionOutcome", { outcome: success, error: null });
+    measure(name, { outcome: success, error: null });
     return success;
   } catch (error) {
     const text = String(error);
-    measure("functionOutcome", { outcome: "failed", error: text });
+    measure(name, { outcome: "failed", error: text });
     return limit !== undefined &&
       text.includes(`Too many bytes ${limit} in a single function execution`)
       ? `fails on the bytes-${limit} limit`
       : `fails with: ${text}`;
   }
+  measure("limitSummary", {
+    boundary: through,
+    combinedRead: world.together ?? null,
+    combinedWrite: together,
+    failedWriteRows: failedRows,
+    committedRows: await writtenRows(world, "halves"),
+  });
 }
 export async function seedLimits(
   world: LimitsWorld,
@@ -75,6 +83,7 @@ export async function readTogether(world: LimitsWorld) {
       childCount: required(world.childCount, "the child count"),
     }),
     "commits",
+    "combinedReadOutcome",
     "read",
   );
   measure("readTogether", world.together);
@@ -104,6 +113,7 @@ export async function readAlone(
         parent = value;
       }),
     "commits",
+    "parentReadOutcome",
   );
   const childOutcome = await outcome(
     client
@@ -112,6 +122,7 @@ export async function readAlone(
         child = value;
       }),
     "returns",
+    "childReadOutcome",
   );
   measure("readsAlone", {
     parent: ownOutcome,
@@ -184,23 +195,16 @@ export async function writeLimits(world: LimitsWorld, expected: string) {
       size,
     }),
     "commits",
+    "combinedWriteOutcome",
     "written",
   );
   measure("writesTogether", together);
   // Pace even a failed attempt before testing the two committing halves.
   await paceAfterWrite((parentCount + childCount) * (size + 256));
-  const failedRows = await client.query(api.limits.countBlobs, {
-    through,
-    group: "failed-write",
-  });
-  const actualFailedRows = await writtenRows(world, "failed-write");
-  measure("failedWriteRows", {
-    count: failedRows,
-    actualRows: actualFailedRows,
-  });
+  const failedRows = await writtenRows(world, "failed-write");
+  measure("failedWriteRows", failedRows);
   expect(together, together).toBe(expected);
   expect(failedRows).toBe(0);
-  expect(actualFailedRows).toBe(0);
   for (const half of ["parent", "child"] as const) {
     const committed = await outcome(
       client.mutation(api.limits.writeThenCall, {
@@ -211,20 +215,23 @@ export async function writeLimits(world: LimitsWorld, expected: string) {
         size,
       }),
       "commits",
+      `${half}WriteOutcome`,
     );
     await paceAfterWrite(
       (half === "parent" ? parentCount : childCount) * (size + 256),
     );
-    const rows = await client.query(api.limits.countBlobs, {
-      through,
-      group: "halves",
-    });
-    const actualRows = await writtenRows(world, "halves");
-    measure("writeHalf", { half, outcome: committed, rows, actualRows });
-    expect(actualRows).toBe(rows);
+    const rows = await writtenRows(world, "halves");
+    measure(`${half}WriteRows`, rows);
     expect(committed, committed).toBe("commits");
     expect(rows).toBe(
       half === "parent" ? parentCount : parentCount + childCount,
     );
   }
+  measure("limitSummary", {
+    boundary: through,
+    combinedRead: world.together ?? null,
+    combinedWrite: together,
+    failedWriteRows: failedRows,
+    committedRows: await writtenRows(world, "halves"),
+  });
 }

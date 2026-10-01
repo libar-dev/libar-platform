@@ -49,3 +49,19 @@ test("pure: redact replaces every occurrence of every secret", () => {
     "a [redacted] b [redacted] c [redacted]",
   );
 });
+
+test("pure: redaction precedes the child error's truncation", async () => {
+  const key = "REVIEW_DUMMY_SECRET_0123456789abcdef";
+  const error = await runChild(
+    "synthetic child",
+    process.execPath,
+    [
+      "-e",
+      "process.stderr.write(process.argv[1] + 'x'.repeat(3990)); process.exit(1)",
+      key,
+    ],
+    { timeoutMs: 10000, secrets: [key] },
+  ).catch((error: Error) => error);
+  expect(String(error)).not.toContain("6789abcdef");
+  expect(String(error)).toContain("redacted]");
+});

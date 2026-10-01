@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { ConvexError, convexToJson } from "convex/values";
 import { expect } from "vitest";
 import { api } from "../../fixture/convex/_generated/api.js";
@@ -103,14 +104,17 @@ export async function assertRows(
   const args = {
     boundary: required(world.boundary, "the boundary"),
     kind: "plainError" as const,
-    data: null,
+    data: `thrower-${world.boundary}-${randomUUID()}`,
   };
   const caught = await client.mutation(api.failures.catching, args);
+  expect(caught.message).toContain(`plain failure: ${args.data}`);
   measure("ordinaryErrorAtParent", {
     property: caught.addedProperty,
     message: caught.message,
   });
   const error = await failureOf(client.mutation(api.failures.passing, args));
+  expect(error, String(error)).toBeInstanceOf(Error);
+  expect(String(error)).toContain(`plain failure: ${args.data}`);
   measure("ordinaryErrorAtClient", {
     property:
       (error as { addedProperty?: string } | undefined)?.addedProperty ?? null,
@@ -118,5 +122,13 @@ export async function assertRows(
   });
   expect(caught.isConvexError, caught.message).toBe(false);
   expect(caught.message).toContain("plain failure");
-  expect(error, String(error)).toBeInstanceOf(Error);
+  measure("throwBoundarySummary", {
+    boundary: args.boundary,
+    caughtDataUnchanged: world.caught?.isConvexError === true,
+    passedDataUnchanged: world.error instanceof ConvexError,
+    childRows: world.childRows ?? null,
+    parentRows: world.parentRows ?? null,
+    plainErrorFromThrower: true,
+    writeGuardReached: true,
+  });
 }

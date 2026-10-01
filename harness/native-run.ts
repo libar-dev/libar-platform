@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync, rmSync } from "node:fs";
+import { readdirSync, rmSync } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { TestProject } from "vitest/node";
+import { signalOwned } from "./ownership.js";
 import { resolveExecutable } from "./executable.js";
 import type { Executable } from "./executable.js";
 export interface NativeRun {
@@ -16,11 +17,7 @@ declare module "vitest" {
 }
 export function sweep(directory: string): void {
   function killOwned(root: string): void {
-    try {
-      process.kill(Number(readFileSync(join(root, "pid"), "utf8")), "SIGKILL");
-    } catch {
-      // No pid file, or the process is gone.
-    }
+    signalOwned(root);
     let entries;
     try {
       entries = readdirSync(root, { withFileTypes: true });

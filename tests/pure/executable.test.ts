@@ -1,11 +1,4 @@
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, onTestFinished, test, vi } from "vitest";
@@ -45,7 +38,7 @@ test("pure: CONVEX_BACKEND_BINARY that names no file fails", async () => {
   );
 });
 test.skipIf(asset === undefined)(
-  "pure: a cache entry whose hash is not the pinned one is removed and downloaded again",
+  "pure: a cache entry whose hash is not the pinned one survives a failed repair and a concurrent publication",
   async () => {
     vi.stubEnv("CONVEX_BACKEND_BINARY", "");
     const cacheRoot = await scratch();
@@ -56,6 +49,8 @@ test.skipIf(asset === undefined)(
     const requested: string[] = [];
     const refuse: typeof fetch = async (input) => {
       requested.push(String(input));
+      expect(await readFile(cached, "utf8")).toBe("a damaged executable");
+      await writeFile(cached, "another run published this executable");
       return new Response("", { status: 404 });
     };
     await expect(
@@ -64,6 +59,8 @@ test.skipIf(asset === undefined)(
     expect(requested).toEqual([
       `https://github.com/get-convex/convex-backend/releases/download/${pin.release}/${asset?.file}`,
     ]);
-    await expect(stat(cached)).rejects.toThrow();
+    expect(await readFile(cached, "utf8")).toBe(
+      "another run published this executable",
+    );
   },
 );

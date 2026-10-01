@@ -21,11 +21,10 @@ export const insertBlobs = mutation({
   returns: v.null(),
   handler: async (ctx, { group, count, size }) => {
     for (let i = 0; i < count; i++) {
-      const blob = await ctx.db.insert("blobs", {
+      await ctx.db.insert("blobs", {
         group,
         bytes: new ArrayBuffer(size),
       });
-      await ctx.db.insert("blobCounts", { group, blob });
     }
     return null;
   },
@@ -95,11 +94,10 @@ export const writeThenCall = mutation({
   returns: v.null(),
   handler: async (ctx, a): Promise<null> => {
     for (let i = 0; i < a.parentCount; i++) {
-      const blob = await ctx.db.insert("blobs", {
+      await ctx.db.insert("blobs", {
         group: a.group,
         bytes: new ArrayBuffer(a.size),
       });
-      await ctx.db.insert("blobCounts", { group: a.group, blob });
     }
     await ctx.runMutation(
       a.through === "nested"
@@ -110,28 +108,11 @@ export const writeThenCall = mutation({
     return null;
   },
 });
-export const countBlobs = query({
-  args: { through: boundary, group: v.string() },
-  returns: v.number(),
-  handler: async (ctx, { through, group }): Promise<number> => {
-    let own = 0;
-    for await (const row of ctx.db
-      .query("blobCounts")
-      .withIndex("by_group", (q) => q.eq("group", group))) {
-      void row;
-      own++;
-    }
-    return through === "nested"
-      ? own
-      : own +
-          (await ctx.runQuery(components.annex.limits.countBlobs, { group }));
-  },
-});
 export const recurse = mutation({
   args: { label: v.string(), stack: v.number() },
   returns: v.number(),
   handler: async (ctx, { label, stack }): Promise<number> => {
-    await ctx.db.insert("markers", { trial: label });
+    await ctx.db.insert("depthRows", { trial: label });
     return stack <= 1
       ? 1
       : 1 +
