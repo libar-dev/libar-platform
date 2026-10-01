@@ -1,4 +1,4 @@
-// Rewrites fixture/convex/_generated and fixture/convex/annex/_generated.
+// Rewrites fixture/convex/_generated, fixture/convex/annex/_generated and fixture/convex/depot/_generated.
 // Convex's codegen analyzes the functions on a deployment, so this starts a disposable backend,
 // runs codegen against it and removes it.
 import { registerHooks } from "node:module";

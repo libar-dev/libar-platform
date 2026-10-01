@@ -287,11 +287,11 @@ Every row of the doc's acceptance table becomes at least one `example` Spec. Whe
 | L1-4 | The UI submits the same create twice | `spec:command.idempotency-and-receipts` | `.ui-double-submit` | native | C |
 | L1-5 | Reuse a key with changed business input | `spec:command.idempotency-and-receipts` | `.key-reuse-changed-input` | native | C |
 | L1-6 | Two tenants use the same request key and local ID | `spec:command.tenancy-and-authority` | `.same-key-two-tenants` | native | C |
-| L1-7 | A client claims a worker or agent namespace | `spec:command.tenancy-and-authority` | `.client-claims-system-namespace` | native | C |
+| L1-7 | A client claims a worker or agent namespace | `spec:command.tenancy-and-authority` | `.client-claims-system-namespace`, `.client-claims-agent-namespace` | native | C |
 | L1-8 | Authorization is revoked, then a successful command is retried | `spec:command.tenancy-and-authority` | `.revoked-then-retried` | native | C |
-| L1-9 | Rate or capacity refusal, then a retry of the same intent | `spec:command.idempotency-and-receipts` | `.rate-refusal-then-retry` | native | C |
+| L1-9 | Rate or capacity refusal, then a retry of the same intent | `spec:command.idempotency-and-receipts` | `.rate-refusal-then-retry`, `.capacity-refusal-then-retry` | native | C |
 | L1-10 | A command names a stale, explicitly reviewed version | `spec:context.context-component` | `.stale-version-rejected` | native | B |
-| L1-11 | Two commands compete for the same stock or unique value | `spec:context.context-component` | `.competing-commands` | native | B |
+| L1-11 | Two commands compete for the same stock or unique value | `spec:context.context-component` | `.competing-commands`, `.competing-unique-value` | native | B |
 | L1-12 | A rejected command's response is lost, and it is retried after state changed | `spec:command.outcome-boundary` | `.rejected-then-retried-after-change` | native | C |
 | L2-1 | The first context writes, then the second rejects or throws | `spec:application.parent-use-cases` | `.second-context-rejects` | native | D |
 | L2-2 | A successful command, then a query or subscription | `spec:application.read-models` | `.committed-state-visible` | native | D |
@@ -353,7 +353,7 @@ Cross-package IDs A may reference: none. A is referenced by everyone.
 
 Scope: `specs/kernel/`, `specs/context/`, `specs/kernel-and-context.pack.sdp.md`.
 
-Deliverables: 5 kernel Specs, 7 context Specs, 6 examples (L0-1, L0-2, L1-1, L1-10, L1-11, L2-7).
+Deliverables: 5 kernel Specs, 7 context Specs, 7 examples (L0-1, L0-2, L1-1, L1-10, L1-11 as two, L2-7).
 
 Brief. Layer 0 and Layer 1, full detail. The kernel is a pure TypeScript module and its Design section says so; the decider contract pins `Decider<S, C, E, R>`, `DecisionContext`, `DecideResult<E, R>` and `fold`, one Design bullet per declaration. The outcome model's `Outcome` union is the single type the boundary (Package C) maps to the wire; write it once here. E-1 and E-2 are decision Specs with the do-nothing option first. The context component describes one Convex component (`convex.config.ts` with `defineComponent`, mounted per context by the parent's `app.use`), its function surface (`execute` as a mutation, queries), and states explicitly that the parent calls it through `ctx.runMutation` on the component API so each call is an isolated sub-transaction that commits with the caller (F2, S2 wording in section 9). The tables contract carries `streams` and `events` as pasteable `defineTable` expressions with every index the doc names (replay, identity, enumeration) plus the operation index the doc implies, and states the document size budget for one-document-per-stream. The persistence adapter is the step sequence load, decide, fold, append with expected-version check, save, and it names the three outcomes at its boundary: version conflict (an indexed read finds a newer version), rejection (from `decide`), throw. Distinguish a version conflict, which is a logical answer the caller sees, from an engine OCC retry, which is invisible (F1); scenario L1-11 turns on that distinction. The journal Spec carries the baseline-event rules and its example space holds L2-7. Batch-shaped API is a rule Spec: one call per context per use case.
 
@@ -363,7 +363,7 @@ Cross-package IDs B may reference: `spec:command.actor-and-scope` (dependsOn fro
 
 Scope: `specs/command/`, `specs/command-pipeline.pack.sdp.md`.
 
-Deliverables: 7 Specs, 13 examples (L1-2 as three, L1-3 as two, L1-4, L1-5, L1-6, L1-7, L1-8, L1-9, L1-12, L2-4).
+Deliverables: 7 Specs, 15 examples (L1-2 as three, L1-3 as two, L1-4, L1-5, L1-6, L1-7 as two, L1-8, L1-9 as two, L1-12, L2-4).
 
 Brief. The parent-side Layer 1 path, full detail. The pipeline is a `workflow` Spec whose flows are the steps in order, each with its citation, and whose Design bullets state the transaction boundary (one top-level mutation; component calls as sub-transactions; no nested `runMutation` on the happy path), the parent's `ctx.auth` use, and what the mutation returns (result, operation ID, affected stream versions). The outcome boundary pins the `ConvexError` data shape and a closed error-code list as one Design bullet per code, and records OQ2 with the dispatcher design as a conditional. Receipts: derive the key exactly as D6 says (tenant, caller namespace, command type, request key), state the fingerprint's inputs and its exclusions, give the conflict semantics, expiry and tombstone rules, and put the read-check-insert in one mutation; the receipts table is a pasteable `defineTable` with the key index. Tenancy: the actor type covers human, service, agent, reviewer and operator; grants are a table read in the transaction, never a read model; namespaces are server-assigned and a client cannot supply one. Declaration: the composition helper takes the declaration and returns a static Convex `mutation` export; say what code generation would emit and that it waits for two real modules.
 

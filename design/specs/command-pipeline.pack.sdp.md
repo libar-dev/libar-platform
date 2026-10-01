@@ -30,4 +30,4 @@ modelRefs:
 
 Package C. Layer 1's parent-side path: the one-mutation command pipeline, the outcome and rejection boundary, idempotency receipts and their table, tenancy and authority, the actor and scope contract, and the command declaration, with the Layer 1 scenarios those components own.
 
-Membership order follows the plan's inventory, parents before children: the pipeline and its three L1-2 injection points, the outcome boundary and L1-12, receipts with L1-3 as two cases, L1-4, L1-5 and L1-9, the receipts table, tenancy with L1-6, L1-7 and L1-8, the actor and scope contract, and the declaration with L2-4. Seven Specs and thirteen examples.
+Membership order follows the plan's inventory, parents before children: the pipeline and its three L1-2 injection points, the outcome boundary and L1-12, receipts with L1-3 as two cases, L1-4, L1-5 and L1-9 as two cases, the receipts table, tenancy with L1-6, L1-7 as two cases and L1-8, the actor and scope contract, and the declaration with L2-4. Seven Specs and fifteen examples.

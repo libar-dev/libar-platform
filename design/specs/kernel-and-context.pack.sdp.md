@@ -27,4 +27,4 @@ modelRefs:
 
 Package B. Layer 0, the pure domain kernel (decide, evolve, initial state, outcomes), and Layer 1's context component (state, journal, stream metadata, tables and indexes, the persistence adapter, queries, batch-shaped APIs), with the Layer 0 and Layer 1 scenarios those components own.
 
-Membership order follows the plan's inventory, each parent directly followed by its examples: the domain kernel with L0-1 and L0-2, the decider contract, the outcome model, the two extension decisions E-1 and E-2, the context component with L1-1, L1-10 and L1-11, the journal with L2-7, the event envelope, the tables, the persistence adapter, the queries and the batch-shaped API rule. Eighteen Specs.
+Membership order follows the plan's inventory, each parent directly followed by its examples: the domain kernel with L0-1 and L0-2, the decider contract, the outcome model, the two extension decisions E-1 and E-2, the context component with L1-1, L1-10 and L1-11 as two cases, the journal with L2-7, the event envelope, the tables, the persistence adapter, the queries and the batch-shaped API rule. Nineteen Specs.

@@ -19,7 +19,7 @@ relations:
 
 Layer 1 · Detail: full · Traces: D11, D6, D2, Law 5, Law 9, Law 11, F11, F13, Sc L1-6, Sc L1-7, Sc L1-8.
 
-Every tenant-owned record, and every command and query on tenant data, names its tenant, even in a single-tenant deployment. The parent authenticates and authorizes, then passes a server-established actor and tenant scope into components, which have no `ctx.auth`. One authorization vocabulary covers humans, services, agents, reviewers and operators. Grants are authoritative data read inside the transaction. The trust boundary is one trusted deployment: component privacy and type brands stop unauthorized clients and accidental cross-module access, not a malicious administrator, and no parent-signed token claims to.
+Every tenant-owned record, and every command and query on tenant data, names its tenant, even in a single-tenant deployment. The parent authenticates and authorizes, then passes a server-established actor and tenant scope into components, which by this design's rule read no `ctx.auth`. One authorization vocabulary covers humans, services, agents, reviewers and operators. Grants are authoritative data read inside the transaction. The trust boundary is one trusted deployment: component privacy and type brands stop unauthorized clients and accidental cross-module access, not a malicious administrator, and no parent-signed token claims to.
 
 This Spec owns the rules of tenant scope, actor establishment, authorization and namespaces. The types, the `authorize` signature and the `grants` table are pinned in `spec:command.actor-and-scope`. The pipeline runs these rules at its steps 2 to 5.
 
@@ -30,18 +30,19 @@ This Spec owns the rules of tenant scope, actor establishment, authorization and
 - outcome: Every record, command and query names its tenant; the parent establishes the actor and namespace and authorizes from grants read in the transaction before execution and before disclosure; components receive actor and scope as arguments (D11, Law 5, Law 11)
 - value: Tenancy is never retrofitted, one vocabulary covers every kind of actor, and a reviewer can find every authorization read in one helper (D11)
 - risk: The standing cost is a `tenantId` on every record and in every function's arguments and index, a grants read in every command, and captured provenance on every worker (D11, Law 11)
-- assumption: Components have no `ctx.auth` and cannot read data not explicitly provided to them (F11)
+- assumption: Components cannot read data not explicitly provided to them, and the documentation says they have no `ctx.auth`; the design does not rest on the second, because no component function reads `ctx.auth` (F11, D11)
 
 ### Open questions
 
 - [non-blocking] Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity becomes an actor or how revocation takes effect; here the public entry maps `ctx.auth.getUserIdentity()` to a human actor, or a service actor when the issuer is a configured service issuer, grants live in a parent table by default and are revoked by deleting the row, with no cache, so a revoked grant fails the next command (E-37, D11)
 - [non-blocking] Extension E-6: the doc names the actor kinds and the worker's two modes but not the types; the actor, scope, namespace, grant and `Authority` shapes are the design's and are pinned once in `spec:command.actor-and-scope`, which also rules that a derived command's namespace is `worker` (E-6, D11)
+- [non-blocking] Extension E-37: slice S1 took grants as written by plain library helpers, `insertGrant` and `revokeGrant`, over which the application registers its own internal mutations, with a tenant's first grant created by an operator who runs that internal mutation with admin access; who creates the first grant and who may change grants is a provisional reading the owner rules (E-37, D11, Law 5)
 
 ## Behavior
 
 - rule: Every tenant-owned record, and every command and query on tenant data, names its tenant, even in a single-tenant deployment (D11, Law 11)
 - rule: An absent tenant is never a wildcard; a function whose `args` lack `tenantId` cannot touch tenant data, and an index on tenant data leads with `tenantId` (D11, Law 11)
-- rule: The parent authenticates and authorizes, then passes a server-established actor and scope into components, which have no `ctx.auth` (D11, F11)
+- rule: The parent authenticates and authorizes, then passes a server-established actor and scope into components, whose functions read no `ctx.auth`, a rule of this design that a lint check enforces (D11, F11)
 - rule: One authorization vocabulary covers humans, services, agents, reviewers and operators (D11)
 - rule: Grants are authoritative data, read in the same transaction as the command they authorize, never a read model that updates later (D11, Law 9)
 - rule: Authorization comes before execution and before any stored outcome is disclosed; a duplicate is disclosed only after the current call's authorization passed (Law 5, Sc L1-8)
@@ -63,7 +64,7 @@ Authorization is a helper inside the pipeline's mutation and inside any parent q
 Nothing here signs anything. The internal entry is unreachable by clients because Convex refuses client calls to internal functions; that visibility rule, not a token, is what keeps a client out of the worker and agent namespaces.
 
 - transactionBoundary: grants are read inside the command's mutation or the query that discloses tenant data; no separate authorization transaction (D11, Law 9)
-- convexSurface: the `grants` table and the helpers `establishActor` and `authorize`; no registered function of its own (D11)
+- convexSurface: the `grants` table and the helpers `establishActor`, `authorize`, `insertGrant` and `revokeGrant`; no registered function of its own (D11, E-37)
 - ctxAuthUse: `ctx.auth.getUserIdentity()` in the public entry only; its `tokenIdentifier` is the actor's `id`, its `issuer` the actor's `issuer` (D11, F11)
 - grantsRead: `ctx.db.query("grants").withIndex("by_principal", (q) => q.eq("tenantId", tenantId).eq("principalKind", actor.kind).eq("principalId", actor.id)).take(limitGrantsPerPrincipal + 1)`, followed by a length check that throws a plain `Error` when the result exceeds `limitGrantsPerPrincipal` (D11, Law 11, E-37)
 - revocation: deleting the grant row; the next command's read finds no grant and throws `forbidden`, and a duplicate's stored outcome is not disclosed (D11, Law 5, E-37)
@@ -90,5 +91,5 @@ And the namespace the server assigned is {namespace:"public"|"worker"|"agent"|"n
 ## Verification — reviewed
 
 - A reviewer confirms that every registered function on tenant data has `tenantId` in its `args` and that every index on a tenant table leads with `tenantId`.
-- A reviewer confirms that `ctx.auth` is read only in the public entry and that no component function or helper reads it or an environment variable.
+- A reviewer confirms that `ctx.auth` is read only in the public entry, that no component function reads it or an environment variable, and that of the helpers only `establishActor` reads it.
 - A reviewer confirms that the grants read happens inside the command's transaction and that no read model stands in for it.

@@ -53,7 +53,7 @@ Retention and restore are the two operations that make the obligation table earn
 
 ## Design
 
-Retention and rebuild are batches with cursors, not sweeps; each run is one mutation with one cursor and a bound below the F13 ceilings. The dispatch switch is an environment variable because environment variables are not part of a backup, so the switch survives the restore and is set before it, and because the parent may read `process.env` while a component may not.
+Retention and rebuild are batches with cursors, not sweeps; each run is one mutation with one cursor and a bound below the F13 ceilings. The dispatch switch is an environment variable because environment variables are not part of a backup, so the switch survives the restore and is set before it, and because the parent may read `process.env` while a context component, by this design's rule, reads none.
 
 - fnRetain: `export const retain = internalMutation({ args: { cursor: v.optional(v.string()) }, returns: v.object({ deleted: v.number(), compacted: v.number(), cursor: v.optional(v.string()) }), handler })` (D19)
 - cronRetain: `crons.interval("obligation retention", { hours: 1 }, internal.obligations.retain, {})` (D19, E-55)

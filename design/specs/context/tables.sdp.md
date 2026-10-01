@@ -40,7 +40,7 @@ Each context component owns a `streams` table and an `events` table, and a conte
 - Every index leads with `tenantId`; no query on tenant data runs without it (Law 11, D11)
 - No query orders on `_creationTime` or `recordedAt`; order within a stream is `streamVersion` (D2)
 - A deleted subject keeps its stream row with `deletedAt` set, so enumeration includes it and rebuild covers it (D2, E-3)
-- [extension] A stream row stays under 256 KiB and a part under 256 KiB, and a stream's row and parts together stay under its mapping's `budgetBytes`, at most 256 KiB for a single mapping and 512 KiB for a derived one, the budgets of `spec:kernel.state-document-mapping` (E-2, F13)
+- [extension] A stream row stays under 256 KiB and a part under 256 KiB, and a stream's row and parts together stay under its mapping's `budgetBytes`, at most 256 KiB for a single mapping and 512 KiB for a derived one, the budgets of `spec:kernel.state-document-mapping`; the adapter's step 9 measures the row it writes and throws a plain error above the budget (E-2, F13)
 
 ## Design
 
@@ -61,6 +61,7 @@ Each context component owns a `streams` table and an `events` table, and a conte
 - limitPartDocument: 256 KiB per part and at most 32 parts per stream, with row and parts together at most the mapping's `budgetBytes`, which is at most 512 KiB for a derived mapping, so one load reads at most `budgetBytes` over at most 33 documents (F13, E-2)
 - limitIndexes: four indexes across two tables, or five with the parts table, against 32 per table and 16 fields per index (F13, S9)
 - noCreationTimeOrder: `_creationTime` and `recordedAt` are never used as an order across streams or as proof of delivery (D2)
+- builtInS1: slice S1 built `streams` and `events` with their four indexes; `streamParts` and `by_stream_part` wait for the slice that builds the derived mapping, and `baselineVersion` stays on the stream row, carried forward by the adapter's step 9 until baselines are built (E-2, E-3, E-25)
 
 ## Verification — reviewed
 

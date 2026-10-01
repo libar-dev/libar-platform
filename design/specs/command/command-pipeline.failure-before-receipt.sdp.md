@@ -33,3 +33,4 @@ And an event from the command exists in the journal {eventExists: false}
 - The test asserts that the thrown error names version 4 of the document, which only the completed context call returned, and that the context's state document is byte-identical to its pre-command value.
 - The test asserts that the function log holds one completion record for the request, the parent mutation's own, carrying the fault's error.
 - The test then turns the switch off, sends the same command with the same request key and asserts that it executes as new intent and returns `replayed` false, because no receipt survived.
+- The assertion that the parent's read-model row for the entity is absent or unchanged, which shows that step 9's read-model write rolled back with the mutation, waits for slice S2, which builds read models; it then needs a fault point that the fixture composition supplies after step 9, because the executor's point lies before it.

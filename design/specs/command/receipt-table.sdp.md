@@ -34,7 +34,7 @@ The `receipts` table lives in the parent, as the doc's ownership table assigns i
 - The key is the four fields `tenantId`, `namespace`, `commandType` and `requestKey`, indexed together, so the pipeline's lookup is one index range read with `.unique()` (D6)
 - A row holds the outcome kind, the operation ID, the affected application IDs and the stream versions, and never the full original result (D6)
 - A row holds the fingerprint and the contract version it was computed under, so a conflict is detected without the original input and a retry recorded under another contract version is refused explicitly as `unsupportedContractVersion` instead of compared (D6, E-5)
-- A row holds `recordedAt` and `expiresAt`; a lookup treats a row past `expiresAt` as expired (D6, E-4)
+- A row holds `recordedAt` and `expiresAt`; a lookup treats a row at or past `expiresAt` as expired (D6, E-4)
 - A tombstone is a row with `tombstone` true, `affected` and `versions` empty, and `expiresAt` at the tombstone horizon (D6, E-4)
 - Rows are found for diagnosis by operation ID through `by_operation`, because stored receipts are the authority for what committed (D19)
 - The per-tenant sweep reads `by_tenant_expiry` up to the current time and handles at most 1,000 rows per run (D19, F13, E-4)
@@ -56,6 +56,7 @@ The `receipts` table lives in the parent, as the doc's ownership table assigns i
 - expiryDefaults: `expiresAt = recordedAt + retention.window` with a default window of 7 days; `tombstoneHorizon` defaults to `Number.MAX_SAFE_INTEGER`, meaning never, and a declaration may set a finite horizon (D6, E-4)
 - limitRowSize: with at most 1,000 affected refs and 1,000 versions of under 200 bytes each, 2,000 entries keep a row under 400 KiB, below the 1 MiB document limit with room for the key fields; this is the one figure for receipt size in the corpus, and `spec:command.idempotency-and-receipts` cites it rather than restating it (F13, E-4)
 - limitIndexes: three indexes of at most four fields, within the 32 indexes and 16 fields per index the platform allows (F13)
+- builtInS1: slice S1 built the table with its three indexes and writes `tombstone` false on every row; the tombstone shape, the tombstone horizon and `sweep` are not built and wait for the slice that builds maintenance jobs (D6, E-4)
 - fnSweep: `export const sweep = internalMutation({ args: { tenantId: v.string(), now: v.number(), limit: v.number() }, returns: v.object({ deleted: v.number(), compacted: v.number(), more: v.boolean() }), handler })` with `limit` capped at 1,000 (D19, E-4)
 
 ## Verification — reviewed

@@ -60,7 +60,7 @@ Every event carries the fifteen fields the doc fixes: a stable application ident
 - recordedAtSource: `Date.now()` in the mutation, which Convex freezes for the whole function, so every event of one call carries the same `recordedAt` (D2)
 - occurredAtSource: copied from the domain event when the decider set it, otherwise absent (D2)
 - limitPayloadStructure: a payload is a Convex value inside a document of at most 1 MiB, 1024 fields, nesting depth 16 and 8192 array elements; the design bound in bytes is E-12, and the journal's `append` is the one place that measures it (F13, E-12)
-- payloadValidation: `registration.eventValidators[event.eventType]` is applied to `event.payload` before the insert, and a missing validator for an event type is a defect that throws (D2, D12)
+- payloadValidation: `registration.eventValidators[event.eventType]` is applied to `event.payload` before the insert through `validate` of `convex-helpers/validators`, because `convex/values` exports no run-time validator, and a payload it refuses or a missing validator for an event type is a defect that throws (D2, D12)
 
 ## Verification — reviewed
 

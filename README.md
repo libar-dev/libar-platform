@@ -30,7 +30,7 @@ Use Node 24 and run `npm ci` in the repository root. The repository has one `pac
 
 Each tier has its own command and its own directory:
 
-- Domain tier: `npm run test:pure` runs `tests/pure`. These tests need no backend and no simulator. Until slice S1 adds a domain, they test the pure parts of the harness.
+- Domain tier: `npm run test:pure` runs `tests/pure`. These tests need no backend and no simulator. They test the kernel, the fixture domain and the pure parts of the harness.
 - Simulator tier: `npm run test:simulator` runs `tests/simulator` on `convex-test`. Every test name starts with `convex-test` and the version it ran on. A simulator pass is not native proof.
 - Native tier: `npm run test:native` runs `tests/native`. Every test owns its processes and temporary storage, stops its processes and removes its storage when it ends. Bound examples deploy the fixture app.
 - Compile check: `npm run typecheck` compiles the fixture app, the harness and the tests. `npm run test:types` runs the type tests in `tests/types`. A compile check says nothing about a running backend.
@@ -43,8 +43,8 @@ The native tier downloads the pinned backend release into `.cache/` on first use
 
 The harness gives every Convex CLI call the address and the admin key of the backend it started, and an environment of its own. A deploy key or a deployment named in your shell or in a `.env` file is never used.
 
-`npm run codegen` starts a disposable backend and rewrites `fixture/convex/_generated` and `fixture/convex/annex/_generated`. Run it after you add or rename a fixture function or change its arguments, and commit the result. CI fails when the committed files differ from what codegen writes.
+`npm run codegen` starts a disposable backend and rewrites `fixture/convex/_generated`, `fixture/convex/annex/_generated` and `fixture/convex/depot/_generated`. Run it after you add or rename a fixture function or change its arguments, and commit the result. CI fails when the committed files differ from what codegen writes.
 
-`npm run dev` starts one disposable backend and runs `convex dev` against it. Each time you save a file under `fixture/convex`, it rewrites both `_generated` directories. It runs until you press Ctrl-C, then stops the backend and removes it. Commit the generated files as with `npm run codegen`: CI still fails when they are stale. It refuses to start when a `.env.local` file exists in the repository root, because `convex dev` would write the backend's URL into it.
+`npm run dev` starts one disposable backend and runs `convex dev` against it. Each time you save a file under `fixture/convex`, it rewrites the three `_generated` directories. It runs until you press Ctrl-C, then stops the backend and removes it. Commit the generated files as with `npm run codegen`: CI still fails when they are stale. It refuses to start when a `.env.local` file exists in the repository root, because `convex dev` would write the backend's URL into it.
 
 Every native run writes a record to `evidence/runs/`. [`evidence/README.md`](evidence/README.md) says what a record holds and which records are kept.
