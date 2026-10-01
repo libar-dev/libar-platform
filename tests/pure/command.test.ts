@@ -308,6 +308,30 @@ test("pure: normalizeThrown rethrows a kernel rejection whose code is neither a 
   }
 });
 
+test("pure: normalizeThrown rethrows a kernel rejection whose details measure above 16,384 bytes as a plain Error naming the code and the command type", () => {
+  const bare = (documentId: string) =>
+    new ConvexError({
+      code: "invalidInput",
+      message: "Document listed twice with different commands",
+      details: { documentId },
+    });
+  const size = (documentId: string) => getConvexSize({ documentId });
+  const atBound = "d".repeat(16384 - size(""));
+  expect(size(atBound)).toBe(16384);
+  expect(
+    thrown(() => normalizeThrown(bare(atBound), "AmendDocument", [])),
+  ).toBeInstanceOf(ConvexError);
+  const rethrown = thrown(() =>
+    normalizeThrown(bare(`${atBound}d`), "AmendDocument", []),
+  );
+  expect(rethrown).not.toBeInstanceOf(ConvexError);
+  expect(rethrown).toBeInstanceOf(Error);
+  expect(String(rethrown)).toContain(
+    "A invalidInput rejection of AmendDocument carries 16385 bytes of details",
+  );
+  expect(classifyThrown(rethrown).kind).toBe("technical");
+});
+
 test("pure: classifyThrown tells a rejection from a transient refusal from a technical failure", () => {
   const rejection = thrown(() =>
     reject({ code: "forbidden", commandType: "C", message: "No" }),

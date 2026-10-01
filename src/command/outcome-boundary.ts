@@ -62,14 +62,17 @@ export const errorDataValidator = v.union(
 );
 // The bound on a rejection's details, measured as Convex measures a value.
 const limitDetailsBytes = 16384;
+// Throws a plain Error, a technical failure, when the details measure above the bound.
+function checkDetails(rejection: Rejection, commandType: string) {
+  if (rejection.details === undefined) return;
+  const bytes = getConvexSize(rejection.details);
+  if (bytes > limitDetailsBytes)
+    throw new Error(
+      `A ${rejection.code} rejection of ${commandType} carries ${bytes} bytes of details, above ${limitDetailsBytes}`,
+    );
+}
 export function reject(data: Omit<RejectionData, "kind">): never {
-  if (data.details !== undefined) {
-    const bytes = getConvexSize(data.details);
-    if (bytes > limitDetailsBytes)
-      throw new Error(
-        `A ${data.code} rejection of ${data.commandType} carries ${bytes} bytes of details, above ${limitDetailsBytes}`,
-      );
-  }
+  checkDetails(data, data.commandType);
   throw new ConvexError<RejectionData>({ kind: "rejection", ...data });
 }
 export function refuseTransient(data: Omit<TransientData, "kind">): never {
@@ -77,8 +80,8 @@ export function refuseTransient(data: Omit<TransientData, "kind">): never {
 }
 // Rethrows every error. A bare kernel Rejection, as a context throws it, gains the discriminator and the
 // command type when its code is a platform code or one the declaration lists in rejections; any other
-// code is a technical failure, rethrown as a plain Error. Everything else, a ConvexError of this
-// boundary included, passes through unchanged.
+// code is a technical failure, rethrown as a plain Error, and so are details above reject's bound.
+// Everything else, a ConvexError of this boundary included, passes through unchanged.
 export function normalizeThrown(
   error: unknown,
   commandType: string,
@@ -99,6 +102,7 @@ export function normalizeThrown(
       throw new Error(
         `${commandType} was rejected with the code ${code}, which is neither a platform code nor one its declaration lists in rejections`,
       );
+    checkDetails(error.data, commandType);
     throw new ConvexError<RejectionData>({
       kind: "rejection",
       commandType,
