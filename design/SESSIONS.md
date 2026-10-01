@@ -104,7 +104,7 @@ The owner rules. The session applies each ruling at the Spec that owns the quest
 1. `python3 design/tools/check.py` prints `OK`.
 2. Rewrite `STATE.md` under its existing headings, with the check's summary lines copied in. It describes the present. Git holds the history.
 3. Add each delegated job to the run log in the project notes: model, effort, scope, time, outcome.
-4. Commit on the branch `STATE.md` names, as `design: <unit> <scope>` or `build: <slice> <scope>`.
+4. Commit as `design: <unit> <scope>` or `build: <slice> <scope>`, on the unit's branch, push it and open a pull request. `STATE.md` says who merges.
 
 ## Consensus
 

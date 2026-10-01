@@ -11,11 +11,11 @@ open questions: 67 Specs, 129 questions, 12 blocking; extensions registered: 48
 stated readiness: {'defined': 156, 'scoped': 12}
 ledger: 231 findings, {'fixed': 111, 'open': 116, 'partially-fixed': 4}
 open findings by slice: {'L3': 22, 'P': 18, 'S0': 6, 'S1': 17, 'S2': 7, 'S3': 1, 'S4': 30, 'S5': 15}
-corpus digest: 2b75b7fa70f3e9ec
+corpus digest: 6f0b395c30948893
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
-The branch is `design-corpus`. The owner allows session commits. Whether and when the branch merges to `main` stays with the owner.
+The default branch is `main`, published at `github.com/libar-dev/libar-platform`. The owner fast-forwarded it to the corpus on 2026-10-01. Each unit works on its own branch, named for the unit, and opens a pull request. The session commits and pushes its branch; merging to `main` stays with the owner.
 
 ## Where the work stands
 
@@ -98,7 +98,7 @@ Platform decisions. None blocks S0.
 4. What code cannot choose, each at the slice named above: the grant bootstrap trust model, deployment-wide operator authority, tenant creation during a scan, the acceptable length of a write pause, history-deletion semantics, the restore override policy.
 5. The maximum order size and the latency and throughput targets, before S3 benchmarks.
 6. Whether the doc's statuses follow what round 3 found documented: F15's reactivity and most of Probe 4.
-7. When the `design-corpus` branch merges to `main`.
+7. A license. The repository is public and has no license file.
 
 ## Leads
 
