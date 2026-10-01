@@ -68,7 +68,7 @@ The kernel is one TypeScript package per context, or one module inside the conte
 
 - transactionBoundary: none; the kernel runs inside whichever transaction calls it and opens none of its own (D3)
 - convexSurface: none; the kernel registers no Convex function and imports no Convex module at runtime (D3, E-20)
-- convexTypeImport: the kernel package lists `convex` under `devDependencies` only and compiles with `verbatimModuleSyntax`, so `import type { Value } from "convex/values"` is the only form the compiler accepts for the type and the emitted module carries no `convex` import; a value import of `convex/values` or `convex/server` is a type error and a dependency-check failure (E-20, E-21, D3)
+- convexTypeImport: the kernel package lists `convex` under `devDependencies` only and compiles with `verbatimModuleSyntax`, so `import type { Value } from "convex/values"` is the only form the compiler accepts for the type and the emitted module carries no `convex` import; a value import of `convex/values` or `convex/server` compiles and is refused by the ESLint rule `@typescript-eslint/no-restricted-imports` over the kernel's sources, which CI runs (E-20, E-21, D3)
 - moduleShape: one module per context exporting its deciders and types, plus the shared kernel library that exports the contract types and `fold`, `rebuild`, `transition` and `checkInvariants` (D3, E-20)
 - actorView: the decision context's actor is the kernel's structural `DecisionActor`, which the command family's `Actor` satisfies; the kernel therefore depends on no Layer 1 Spec and stays usable before Layer 1 exists (E-20, Thesis)
 - purityCheck: a domain test evaluates `decide` twice on frozen inputs and asserts deep equality of the outputs and of the inputs before and after, with an I/O spy that observes zero calls (Sc L0-1)
@@ -93,5 +93,5 @@ And the rebuilt stream version is {version:number}
 
 ## Verification — reviewed
 
-- A reviewer confirms that the kernel package has no runtime import from `convex/server`, `convex/values` or any I/O library, by a dependency check in CI that reads the emitted modules and the package's `dependencies`, and that its only compile-time Convex import is the type-only `Value`.
+- A reviewer confirms that the kernel package has no runtime import from `convex/server`, `convex/values` or any I/O library, by the ESLint rule `@typescript-eslint/no-restricted-imports` that CI runs over the kernel's sources, and that its only compile-time Convex import is the type-only `Value`.
 - A reviewer confirms that every decider in the example application declares `initial`, `decide` and `evolve` and no state patch, and that the rebuild equality test exists for every stream type.

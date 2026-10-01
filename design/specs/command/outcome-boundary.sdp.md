@@ -29,7 +29,7 @@ The closed code list has two halves. The platform codes below are closed here an
 
 - outcome: Pin the wire shape of the four outcomes and the closed error-code list, so that a client can tell a rejection from a transient refusal from a technical failure without parsing messages, and so that nothing but applied and business failure ever commits (D4, D7)
 - value: A lost rejection followed by a retry is correct by construction, the public path carries no nested mutation and no rejection receipt, and a reviewer can check the code list against the declarations in one place (D7)
-- risk: The data of a `ConvexError` thrown inside a component arrives intact on the pinned backend, as Probe 2 showed, and no Convex page promises it, so a later release could change it; the pipeline still throws on a rejection returned as a value, which costs nothing, until slice S1 decides whether that path stays (F14, Probe 2)
+- risk: The data of a `ConvexError` thrown inside a component arrives intact on the pinned backend, as Probe 2 showed, and no Convex page promises it, so a later release could change it; contexts throw their rejections, and the pipeline has no path for a rejection returned as a value (F14, Probe 2)
 - assumption: `ctx.runMutation` inside a mutation gives partial rollback and the parent can catch and continue, which the conditional dispatcher relies on (F3)
 - assumption: `ConvexError` data survives a nested mutation and a component boundary (F14)
 
@@ -92,7 +92,6 @@ The conditional dispatcher is the one place on the parent side where D7's nested
 - step2Dispatcher: on a rejection `ConvexError`, the dispatcher writes the refusal as a business fact through the normal command path of the context that owns refusals, with the original actor, operation ID and rejection code (D7)
 - step3Dispatcher: the dispatcher returns `{ kind: "refused" }` as a value; it never rethrows, because the throw would roll the record back, and it never records a technical failure as a refusal (D7, Law 6)
 - limitErrorData: the `details` value of a rejection is bounded to 16,384 bytes measured with `getConvexSize`, which `reject` checks, throwing a plain error above it, so error data never carries a payload or personal data; the message is one sentence and holds no raw input (D19, E-5)
-- builtInS1: slice S1 built the wire shapes, `reject`, `refuseTransient`, `normalizeThrown` and `classifyThrown`; `dispatchRecordingRefusal` and its steps are not built, as no command uses them while OQ2 stands open (D7, OQ2, E-5)
 
 ## Example space
 

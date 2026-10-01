@@ -53,7 +53,6 @@ Folding is simple when a stream's state is one document. When state spans severa
 - limitStreamDocument: 256 KiB per stream document by default, one quarter of the 1 MiB ceiling; the `budgetBytes` of a single mapping is at most that, and a stream type whose state can exceed it declares the derived mapping, whose `budgetBytes` covers head and parts together (F13, OQ3, E-2)
 - limitPartsPerStream: at most 32 parts of at most 256 KiB each, and head and parts together at most `budgetBytes`, which is at most 512 KiB for the derived mapping, half the document ceiling, because a baseline event holds the whole migrated state in one document; one load therefore reads at most `budgetBytes` over at most 33 documents, a call at that cap admits 16 such streams, a list page 16 rows and a baseline batch 8, and a state that needs more is the snapshot or archive tier trigger (F13, D18, E-2, E-25)
 - budgetCheck: a native test writes the largest state the product allows for each stream type and asserts that the saved document, or head and parts together, stays under the stream type's `budgetBytes`; at run time the adapter's step 9 enforces it, measuring the row it writes with `getConvexSize` and throwing a plain error, a technical failure, above `budgetBytes` (OQ3, Sc L2-3, E-2)
-- builtInS1: slice S1 built the `single` mapping only, as `StateDocumentMapping<S> = { kind: "single"; budgetBytes: number; isDeleted: (state: S) => boolean }`; the `derived` mapping and its parts wait for the slice that builds them (D3, E-2)
 
 ## Verification — reviewed
 

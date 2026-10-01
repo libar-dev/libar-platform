@@ -117,7 +117,6 @@ The library is generic over the component's data model and is instantiated once 
 - noGlobalOrder: the library exposes no query across streams ordered by anything but `streamVersion` within one stream; `by_operation` returns an operation's events in no promised order (D2)
 - crossStreamRelation: `operationId` and `causedBy` on every envelope; a receipt may list the affected stream versions the operation returned (D2)
 - schemaMigration: a change of representation without a change of meaning, such as a renamed field of the saved state or a switch from the single to the derived mapping, rewrites stream rows and parts through the new mapping in bounded batches, with a mapping that reads the old shape until the rewrite is done; it touches no event, writes no baseline and does not move `stateSchemaVersion`, which counts meaning only, so the adapter's on-load comparison never mistakes a representation change for a change of meaning (D5, E-2, E-25)
-- builtInS1: slice S1 built `createJournal`, `load` and `append` over the single mapping, and the registration without `baselineMigrations`; `rebuildStream`, `migrateToSchemaVersion`, `defineMaintenance`, `writeBaseline`, the driver and the parts read of `load` are not built and wait for the slices that build baseline migrations, rebuild and the derived mapping; `load` throws a plain error for a row ahead of the registration's `stateSchemaVersion`, and nothing yet checks a value `toDto` returns against `dto`, which waits for the queries (D5, E-2, E-24, E-25)
 
 ## Example space
 

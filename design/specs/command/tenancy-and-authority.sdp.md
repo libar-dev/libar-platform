@@ -36,7 +36,7 @@ This Spec owns the rules of tenant scope, actor establishment, authorization and
 
 - [non-blocking] Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity becomes an actor or how revocation takes effect; here the public entry maps `ctx.auth.getUserIdentity()` to a human actor, or a service actor when the issuer is a configured service issuer, grants live in a parent table by default and are revoked by deleting the row, with no cache, so a revoked grant fails the next command (E-37, D11)
 - [non-blocking] Extension E-6: the doc names the actor kinds and the worker's two modes but not the types; the actor, scope, namespace, grant and `Authority` shapes are the design's and are pinned once in `spec:command.actor-and-scope`, which also rules that a derived command's namespace is `worker` (E-6, D11)
-- [non-blocking] Extension E-37: slice S1 took grants as written by plain library helpers, `insertGrant` and `revokeGrant`, over which the application registers its own internal mutations, with a tenant's first grant created by an operator who runs that internal mutation with admin access; who creates the first grant and who may change grants is a provisional reading the owner rules (E-37, D11, Law 5)
+- [non-blocking] Extension E-37: the design takes grants as written by plain library helpers, `insertGrant` and `revokeGrant`, over which the application registers its own internal mutations, with a tenant's first grant created by an operator who runs that internal mutation with admin access; who creates the first grant and who may change grants is a provisional reading the owner rules (E-37, D11, Law 5)
 
 ## Behavior
 

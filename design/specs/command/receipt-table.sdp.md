@@ -21,7 +21,7 @@ The `receipts` table lives in the parent, as the doc's ownership table assigns i
 
 - outcome: Pin the `receipts` table, its indexes, the tombstone shape and the expiry defaults, so that the pipeline's lookup and the sweep are answered by one index each (D6, E-4)
 - value: A reviewer can check that the key index supports the pipeline's lookup and that every index leads with the tenant (D6, Law 11)
-- risk: A receipt with many affected refs grows; the bound of 1,000 refs keeps it far under the document limit, and a command that touches more streams is too large for one transaction anyway (F13, D10)
+- risk: A receipt with many affected refs grows; the bound of 1,000 refs keeps it under the document limit only while each ref's IDs stay short, which nothing enforces, and a command that touches more streams is too large for one transaction anyway (F13, D10)
 
 ### Open questions
 
@@ -54,9 +54,8 @@ The `receipts` table lives in the parent, as the doc's ownership table assigns i
 - typeReceipt: `type Receipt = Doc<"receipts">` (D6)
 - tombstoneShape: the same document with `tombstone: true`, `affected: []`, `versions: []`, `expiresAt: tombstoneHorizon`, and every key, fingerprint, outcome and operation field unchanged (D6, E-4)
 - expiryDefaults: `expiresAt = recordedAt + retention.window` with a default window of 7 days; `tombstoneHorizon` defaults to `Number.MAX_SAFE_INTEGER`, meaning never, and a declaration may set a finite horizon (D6, E-4)
-- limitRowSize: with at most 1,000 affected refs and 1,000 versions of under 200 bytes each, 2,000 entries keep a row under 400 KiB, below the 1 MiB document limit with room for the key fields; this is the one figure for receipt size in the corpus, and `spec:command.idempotency-and-receipts` cites it rather than restating it (F13, E-4)
+- limitRowSize: at most 1,000 affected refs and 1,000 versions, the counts `insertReceipt` checks, keep a row under 400 KiB, below the 1 MiB document limit with room for the key fields, only while each entry measures under 200 bytes; no validator bounds the length of an entry's IDs and nothing measures the row, so the counts alone do not keep a receipt under the document limit; this is the one figure for receipt size in the corpus, and `spec:command.idempotency-and-receipts` cites it rather than restating it (F13, E-4)
 - limitIndexes: three indexes of at most four fields, within the 32 indexes and 16 fields per index the platform allows (F13)
-- builtInS1: slice S1 built the table with its three indexes and writes `tombstone` false on every row; the tombstone shape, the tombstone horizon and `sweep` are not built and wait for the slice that builds maintenance jobs (D6, E-4)
 - fnSweep: `export const sweep = internalMutation({ args: { tenantId: v.string(), now: v.number(), limit: v.number() }, returns: v.object({ deleted: v.number(), compacted: v.number(), more: v.boolean() }), handler })` with `limit` capped at 1,000 (D19, E-4)
 
 ## Verification — reviewed

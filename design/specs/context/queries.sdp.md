@@ -80,7 +80,6 @@ The four stream queries are built once per stream type by `defineStreamQueries`,
 - limitHistoryBytes: 9 MiB, passed as `maximumBytesRead` on every `history` page, under the 16 MiB ceiling with room for the stream row a parent reads beside it (F13, E-12, E-24)
 - limitRebuildRead: the rebuild query reads the stream row first, refuses with `awaitingBaseline` when its `stateSchemaVersion` is behind the registration's, and refuses with `tailTooLong` when the events after the latest baseline exceed the journal's `maxFoldEvents` of 600; a fold that runs reads at most 600 events of at most 17 KiB each with the row and the baseline event of at most `budgetBytes`, about 10 MiB, and the 1 second query timeout, not the read ceiling, is the limit that binds first, which the first experiment measures (F13, E-2, E-12, E-25, D5)
 - registeredFunctions: four queries per stream type and one `byOperation` per context (Decision method rule 2, E-22)
-- builtInS1: slice S1 built none of these queries; `get`, `list`, `history`, `rebuild` and `byOperation` wait for the slices that build queries, lists and rebuild (E-24, D8)
 
 ## Verification — reviewed
 
