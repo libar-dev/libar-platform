@@ -16,13 +16,16 @@ Probe 1 · native tier · fixture composition.
 - outcome: The client retries until confirmed and the backend executes the call once. (Probe 1, F5)
 
 ```gwt
-Given a WebSocket client that sends a mutation which inserts one marker row
+Given a WebSocket client, the ConvexClient of convex/browser, that sends a mutation which inserts one marker row
 When the backend process is killed and restarted on the same storage while the client stays open, in each of {trials: 10} trials
-Then the mutation's promise resolves after the restart {resolves: true}
+Then the mutation's promise resolves after the restart in {resolvedTrials: 10} trials
 And every trial leaves exactly {markerRows: 1} marker row
+And at least {leastKilledBeforeCommit: 1} trial was killed before its commit and at least {leastKilledAfterCommit: 1} after it
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The kill is a SIGKILL sent a short random time after the send, so that some trials die before the commit and some after it, and the test records the split.
+- The client is `ConvexClient` from `convex/browser`, which sends mutations through the same `BaseConvexClient` as the React client; the React client itself is not run.
+- The kill is a SIGKILL, sent after a delay that the trials spread from none to a few tens of milliseconds. The test holds the backend's responses back from the client, reads the marker table with admin access after the restart and before the client reconnects, and so tells a kill before the commit from a kill after it.
+- A trial killed after its commit is the one that tests the guarantee: the client never saw the result, sends the mutation again when it reconnects, and the backend must not run it twice.

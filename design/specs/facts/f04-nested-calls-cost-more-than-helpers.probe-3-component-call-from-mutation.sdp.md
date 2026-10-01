@@ -19,11 +19,12 @@ Probe 3 · native tier · fixture composition.
 Given a parent mutation that reads the same document {reads: 50} times in a row through one of three paths: a helper function, a nested query, a component query
 When a client calls the parent mutation once for each path, several times over
 Then the median execution time through the component is {componentAgainstHelper: "higher"} than through the helper
-And the function log holds {recordsPerCall: 1} execution record for one parent call through the component
+And the function log holds {recordsPerCall: 1} completion record for one parent call through the component
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The execution time is the one the backend's function log reports for the parent call; the test records the three medians and the cost per call in the run's evidence.
-- The test records what the function log shows of the nested and the component calls, which is all a local backend can say about function-call quota.
+- The execution time is the one the backend's function log reports for the parent call; the run's evidence holds the three medians and the difference per call.
+- The size is recorded and not asserted. It is a local backend's time on one machine, a first reading for OQ1 and not a hosted deployment's cost.
+- Function-call quota is not measured. A local backend has none, and its function log holds one completion record for the parent call and none for the calls inside it, which does not say how a hosted deployment counts them. That half of Probe 3 needs a hosted deployment and stays open on F4.

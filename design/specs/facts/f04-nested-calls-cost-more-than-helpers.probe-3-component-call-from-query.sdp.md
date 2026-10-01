@@ -19,10 +19,12 @@ Probe 3 · native tier · fixture composition.
 Given a parent query that reads the same document {reads: 50} times in a row through one of three paths: a helper function, a nested query, a component query
 When a client calls the parent query once for each path, several times over, with arguments that defeat the query cache
 Then the median execution time through the component is {componentAgainstHelper: "higher"} than through the helper
-And the function log holds {recordsPerCall: 1} execution record for one parent call through the component
+And the function log holds {recordsPerCall: 1} completion record for one parent call through the component
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The execution time is the one the backend's function log reports for the parent call, because the clock inside a query does not advance; the test records the three medians and the cost per call in the run's evidence.
+- The execution time is the one the backend's function log reports for the parent call, because the clock inside a query does not advance; the run's evidence holds the three medians and the difference per call.
+- The size is recorded and not asserted. It is a local backend's time on one machine, a first reading for OQ1 and not a hosted deployment's cost.
+- Function-call quota is not measured, for the reason the mutation example gives.

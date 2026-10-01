@@ -9,11 +9,11 @@ import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { httpClient } from "../../harness/clients.js";
 import { backend, client, fixture } from "./world.js";
 import type { World } from "./world.js";
-import { ordinaryClientRefusedInternalFunctionContract } from "../../generated/contracts/platform.acceptance-contract.ordinary-client-refused-internal-function.contract.js";
+import { ordinaryClientRefusedInternalFunctionContract } from "../../generated/contracts/platform.native-harness.ordinary-client-refused-internal-function.contract.js";
 const anchor = specTest({
   id: testAnchorId("test:platform.ordinary-client-refused-internal-function"),
   verifies: ref(
-    "spec:platform.acceptance-contract.ordinary-client-refused-internal-function",
+    "spec:platform.native-harness.ordinary-client-refused-internal-function",
   ),
 });
 void anchor;

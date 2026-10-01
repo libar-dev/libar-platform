@@ -27,3 +27,5 @@ And the same split of bytes written by a parent mutation and a component mutatio
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - The test also reads `ctx.meta.getTransactionMetrics()` in the parent before and after a component read that stays under the limit and asserts that `bytesRead.used` and `documentsRead.used` grew by what the component read.
+- The test also shows that each half of the write commits alone, so the failure is the sum.
+- The local backend refuses writes past a rate, with `TooManyWrites` and the text "limited to 4 MiB bytes written per 1 second", so the test paces the transactions that seed and write its documents.

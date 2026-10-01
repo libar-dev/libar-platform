@@ -1,11 +1,11 @@
 ---
-id: spec:platform.acceptance-contract.fixture-issuer-token-yields-identity
+id: spec:platform.native-harness.fixture-issuer-token-yields-identity
 kind: example
 altitude: story
 readiness: defined
 relations:
-  refines: spec:platform.acceptance-contract
-  verifies: spec:platform.acceptance-contract
+  refines: spec:platform.native-harness
+  verifies: spec:platform.native-harness
 ---
 # A token signed by the fixture issuer yields the caller's identity
 
@@ -20,7 +20,7 @@ Given a disposable backend whose environment variables name the fixture issuer {
 And an ordinary client carrying a token the harness signed for subject {subject: "user-1"}
 When the client calls a public query that returns the caller's identity
 Then the identity names issuer {identityIssuer: "https://fixture-issuer.test"} and subject {identitySubject: "user-1"}
-And the same query from a client with no token returns an identity {anonymousHasIdentity: false}
+And the same query from a client with no token returns no identity
 ```
 
 ## Verification — executable

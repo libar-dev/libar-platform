@@ -3956,6 +3956,141 @@
    "note": "",
    "slice": "S4",
    "detector": "judgement"
+  },
+  {
+   "round": "S0",
+   "id": "s0-harness-rules-sit-on-the-acceptance-contract",
+   "lens": "sdp",
+   "severity": "minor",
+   "files": [
+    "specs/platform/acceptance-contract.sdp.md",
+    "specs/platform/native-harness.sdp.md",
+    "specs/foundation.pack.sdp.md",
+    "README.md"
+   ],
+   "issue": "Slice S0 wrote the harness rules of E-13 and E-15 into `spec:platform.acceptance-contract` as seven bullets, several holding two or three rules, and bound the four harness examples to it with `verifies`. The graph then showed the acceptance contract as verified by tests that touch no scenario row, and the issuer as 'the one difference' was stated three times in one Spec. Found by the Opus review of commits a6889c1 and 951874d (minors 2 and 17).",
+   "fix": "Move the harness rules to a Spec of their own that refines the acceptance contract, one rule per bullet, and re-parent the four examples.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01, ruling S1. `spec:platform.native-harness` now owns E-13 and E-15, their two open questions, 23 rules and the Design keys `backend`, `identity`, `adminReads`, `localWriteRate` and `evidenceKept`. The acceptance contract keeps the doc's rules and E-14, and one sentence that points at the new Spec. The four examples are `spec:platform.native-harness.<slug>`; their test anchors and contract imports follow. Restated in `tenancy-and-authority` (`nativeTierIdentity`), `first-experiment` (the identity rule), the L2-9 example, the foundation pack, README's register and PLAN's inventory, which cite E-13 or E-15 and no longer name the acceptance contract as the owner."
+  },
+  {
+   "round": "S0",
+   "id": "s0-issuer-is-both-the-one-difference-and-an-adjustment",
+   "lens": "sdp",
+   "severity": "major",
+   "files": [
+    "specs/platform/native-harness.sdp.md",
+    "specs/application/first-experiment.sdp.md",
+    "specs/application/first-experiment.native-acceptance-production-configuration.sdp.md"
+   ],
+   "issue": "The acceptance contract called the fixture issuer 'the one difference from production' and also required the production-configuration run of Sc L2-9 to have 'no adjusted configuration', while the harness wrote the issuer under `adjustments`. If the issuer is an adjustment, no production-configuration run can satisfy the rule. Opus review, M3.",
+   "fix": "State once what the issuer is, and have the evidence record follow.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01, ruling S2. `spec:platform.native-harness`: 'The fixture issuer is the identity source of a native run and its one named difference from production; it is recorded as the identity source and is not an adjusted configuration.' `first-experiment`'s `typeMeasurement` already keeps `identitySource` apart from `adjustments`. The evidence module follows in the fold-in (code ruling C12)."
+  },
+  {
+   "round": "S0",
+   "id": "s0-fixture-composition-claims-the-same-schemas",
+   "lens": "fidelity",
+   "severity": "major",
+   "files": [
+    "specs/platform/native-harness.sdp.md",
+    "specs/platform/acceptance-contract.sdp.md",
+    "specs/application/first-experiment.native-acceptance-production-configuration.sdp.md"
+   ],
+   "issue": "The contract said a scenario on the fixture composition 'runs the same libraries, schemas and authority model', and `tierNative` said 'production schemas and authority', while the fixture composition mounts fixture contexts with their own schemas. An owner reads production parity into fixture runs. Opus review, M4.",
+   "fix": "Name which tables are shared and which are the fixture's.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01, ruling S3. The rule now reads: a scenario on the fixture composition 'runs the shared libraries with their own tables and the same authority model, beside fixture contexts whose state is the fixture's own'. `tierNative` on the acceptance contract is back to the doc's sentence. The L2-9 example says the same."
+  },
+  {
+   "round": "S0",
+   "id": "s0-test-hook-and-replaceable-part-undefined",
+   "lens": "completeness",
+   "severity": "minor",
+   "files": [
+    "specs/platform/native-harness.sdp.md"
+   ],
+   "issue": "The contract said the shared libraries 'carry no test hook' and allowed 'a replaceable part it wires in place of the production one, such as the audit destination and the diagnostic sink'. The boundary between a hook and a replaceable part was undefined, and the line settled the mechanism of Sc ALL-1 ahead of slice S5. Opus review, minor 3.",
+   "fix": "Define a hook, and say what a composition may supply without naming S5's mechanism.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01, ruling S4. Two rules: 'The shared libraries carry no test hook: they read no flag and take no callback that exists only for a test', and a fault enters only through 'a fixture context's declaration, a fixture function, or a dependency the libraries take from every composition'. The audit destination and the diagnostic sink are no longer named here; S5 decides how Sc ALL-1 breaks them."
+  },
+  {
+   "round": "S0",
+   "id": "s0-refusal-examples-pass-when-the-target-is-missing",
+   "lens": "completeness",
+   "severity": "major",
+   "files": [
+    "specs/platform/native-harness.sdp.md",
+    "specs/platform/native-harness.ordinary-client-refused-internal-function.sdp.md",
+    "specs/platform/native-harness.ordinary-client-refused-component-function.sdp.md"
+   ],
+   "issue": "The two refusal examples claimed 'Convex refuses the call before a handler runs' and showed only that the call failed and no row existed. Three native mutations survived on commit 951874d: the tests pass when the function or the component they call does not exist. The internal-function example cited Sc L1-7, so a reader could count the namespace scenario as covered by Convex's visibility check. Opus review minors 1 and 7, sol review 1 and 2, astra review 8.",
+   "fix": "A refusal example states what it shows: the refusal's own error, nothing stored, and the target existing on the same deployment.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "native backend",
+   "note": "S0, 2026-10-01, ruling S5. The rule on `spec:platform.native-harness` and both examples now require the error text (`Could not find public function`; `BadDeployKey` on the endpoint that takes a component path), zero rows, and one row after the same function is called with admin access on the same deployment. The component example covers both routes a client has. The Sc L1-7 citation is gone. The tests follow in the fold-in (code ruling C8), which reruns the three mutations."
+  },
+  {
+   "round": "S0",
+   "id": "s0-example-steps-negated-by-a-boolean",
+   "lens": "sdp",
+   "severity": "minor",
+   "files": [
+    "specs/platform/native-harness.fixture-issuer-token-yields-identity.sdp.md",
+    "specs/facts/f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation.sdp.md",
+    "specs/facts/f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary.sdp.md"
+   ],
+   "issue": "Several example steps were positive sentences whose bound value negated them: 'is stored {stored: false}', 'returns an identity {anonymousHasIdentity: false}', 'is stored after the parent caught the error and committed {childRowStored: false}'. A reader takes the sentence for the claim. The Probe 2 examples also named 'a client whose parent lets the error pass', a second parent no Given set up. Opus review, minors 4 and 5.",
+   "fix": "Reword with counts, and set up every actor in a Given.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "judgement",
+   "note": "S0, 2026-10-01, ruling S6. Steps now bind counts ('holds {rows: 0} rows') or carry no slot ('returns no identity'). Both Probe 2 examples have a Given for the two parents, the one that catches and the one that lets the error pass."
+  },
+  {
+   "round": "S0",
+   "id": "s0-probe-examples-bind-the-answer-and-can-miss-the-boundary",
+   "lens": "completeness",
+   "severity": "major",
+   "files": [
+    "specs/facts/probe-plan.sdp.md",
+    "specs/facts/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation.sdp.md",
+    "specs/facts/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query.sdp.md",
+    "specs/facts/f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation.sdp.md",
+    "specs/facts/f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation.sdp.md",
+    "specs/facts/f05-react-client-retries-until-confirmed.probe-1-http-client-retry.sdp.md",
+    "specs/facts/f13-transactions-have-limits.probe-4-nesting-depth.sdp.md",
+    "specs/facts/f13-transactions-have-limits.probe-4-nested-call-shares-limits.sdp.md",
+    "specs/facts/f13-transactions-have-limits.probe-4-component-call-shares-limits.sdp.md",
+    "specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates.sdp.md",
+    "specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed.sdp.md",
+    "specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary.sdp.md",
+    "README.md"
+   ],
+   "issue": "The probe examples wrote the expected answer in as the pass condition with nothing saying it was a hypothesis, so a contrary result would read as a red test to repair: the depth example bound 8 and the first native run showed 9. Probe 3 dropped function-call quota without saying so and its local timings would feed OQ1 unmarked. Probe 5's question, whether the client hook splits a page, sat in a verification bullet that allowed the run to skip it. Probe 1's Thens passed without reaching the guarantee's boundary: twenty trials with no row passed, the HTTP example lost no response, and a random kill might never land before the commit; the examples said 'WebSocket client' for a fact about the React client. The subscription example did not require a parent that reads no table of its own. Opus review, M5 to M8 and minors 5, 6 and 16; the first native run of the probes on 2026-10-01.",
+   "fix": "Say in the probe plan what a bound value is and what follows a different result; make each example fail when its boundary is not reached; name the client; give the hook its own example; say what a local backend cannot answer.",
+   "status": "fixed",
+   "unreviewed": true,
+   "slice": "S0",
+   "detector": "native backend",
+   "note": "S0, 2026-10-01, ruling S7. `spec:facts.probe-plan` carries extension E-16 with six rules: a probe is example Specs that verify its fact; bound values are the expectation written before the first run; a different first result is recorded on the fact and the example is then bound to what the release does and says so; an example fails when its run did not reach its boundary; sizes are recorded and not asserted; what a local backend cannot answer stays open on the fact. Probe 1's three examples name `ConvexClient` or `ConvexHttpClient`, require a trial committed without confirmation, a kill on each side of the commit, and a lost response with one request per call. Probe 3 says quota is not measured and the time is a local backend's. Probe 4's depth binds 9 as observed and calls it a backend default; the shared-limit examples say the seeding is paced under the local backend's write rate and that each half of the write commits alone. Probe 5 gains `probe-5-hook-splits-across-boundary`; the subscription example's parent reads no table of its own. Opus minor 16, drop the depth example, is rejected: the round-3 finding on nested limits asks for the depth and the test is small."
   }
  ],
  "sessions": [

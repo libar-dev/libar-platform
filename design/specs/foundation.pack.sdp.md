@@ -6,10 +6,11 @@ specs:
   - spec:platform.decision-method
   - spec:platform.vocabulary
   - spec:platform.acceptance-contract
-  - spec:platform.acceptance-contract.fixture-issuer-token-yields-identity
-  - spec:platform.acceptance-contract.ordinary-client-refused-internal-function
-  - spec:platform.acceptance-contract.ordinary-client-refused-component-function
-  - spec:platform.acceptance-contract.admin-key-acting-as-identity-reaches-internal-function
+  - spec:platform.native-harness
+  - spec:platform.native-harness.fixture-issuer-token-yields-identity
+  - spec:platform.native-harness.ordinary-client-refused-internal-function
+  - spec:platform.native-harness.ordinary-client-refused-component-function
+  - spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function
   - spec:platform.existing-systems
   - spec:laws.law01-sanctioned-writes-only
   - spec:laws.law02-state-and-events-commit-together
@@ -72,6 +73,7 @@ specs:
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
   - spec:facts.f17-migrations-fits-generation-backfill
 modelRefs:
@@ -79,6 +81,6 @@ modelRefs:
 ---
 # Foundation
 
-Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
+Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract and the native harness, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
 
-Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the four harness examples after the acceptance contract, and each probe's examples after the fact they verify. Seventy-three Specs.
+Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Seventy-five Specs.

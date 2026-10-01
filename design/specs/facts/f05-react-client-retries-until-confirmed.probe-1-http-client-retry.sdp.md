@@ -13,15 +13,17 @@ Probe 1 · native tier · fixture composition.
 
 ## Intent
 
-- outcome: The backend executes each call once, and a caller's retry is a second call. (Probe 1, F5)
+- outcome: The HTTP client sends each call once, and a caller's retry after a lost response is a second execution. (Probe 1, F5)
 
 ```gwt
-Given an HTTP client whose caller sends a mutation which inserts one marker row and discards the response
-When the caller sends the same mutation again
-Then the backend holds {markerRows: 2} marker rows
+Given an HTTP client, ConvexHttpClient, whose transport delivers each request to the backend and then fails as a lost response would
+When its caller sends a mutation which inserts one marker row, sees the call fail, and sends the same mutation again
+Then the client sent {requestsPerCall: 1} request for each call
+And the backend holds {markerRows: 2} marker rows
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The test asserts that one call with no retry leaves exactly one row, and records that `ConvexHttpClient` sends each mutation in one request with no retry of its own.
+- The transport is the `fetch` the test passes to `ConvexHttpClient`: it performs the request, drops the response and throws, as a connection lost after the commit would.
+- The test also asserts that one call on an unfaulted transport sends one request and leaves one row.

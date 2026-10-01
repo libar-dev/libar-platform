@@ -13,15 +13,16 @@ Probe 4 · native tier · fixture composition.
 
 ## Intent
 
-- outcome: Nested calls have a depth bound, and the run records it. (Probe 4, F13)
+- outcome: Nested calls have a depth bound, which this backend release sets at eight calls below the top-level function. (Probe 4, F13)
 
 ```gwt
 Given a mutation that calls itself through ctx.runMutation until its call stack holds a requested number of functions
 When a client asks for each number from 1 upward
-Then the deepest call stack that commits holds {deepestStack: 8} functions, the top-level mutation included
+Then the deepest call stack that commits holds {deepestStack: 9} functions, the top-level mutation included
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The test records the error text of the first depth that fails.
+- The value is observed, not expected: the expectation written before the first run was 8 functions, and the run on release `precompiled-2026-09-28-5c7cb5b` showed 9.
+- The bound is a backend default and not a platform contract. The test records the error text of the first depth that fails, which on this release is "Cross component call depth limit exceeded".

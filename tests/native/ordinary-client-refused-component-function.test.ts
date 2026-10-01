@@ -8,11 +8,11 @@ import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
 import { httpClient } from "../../harness/clients.js";
 import { backend, client, fixture } from "./world.js";
 import type { World } from "./world.js";
-import { ordinaryClientRefusedComponentFunctionContract } from "../../generated/contracts/platform.acceptance-contract.ordinary-client-refused-component-function.contract.js";
+import { ordinaryClientRefusedComponentFunctionContract } from "../../generated/contracts/platform.native-harness.ordinary-client-refused-component-function.contract.js";
 const anchor = specTest({
   id: testAnchorId("test:platform.ordinary-client-refused-component-function"),
   verifies: ref(
-    "spec:platform.acceptance-contract.ordinary-client-refused-component-function",
+    "spec:platform.native-harness.ordinary-client-refused-component-function",
   ),
 });
 void anchor;

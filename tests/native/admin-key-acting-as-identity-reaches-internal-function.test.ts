@@ -10,13 +10,13 @@ import { api } from "../../fixture/convex/_generated/api.js";
 import { adminClient } from "../../harness/clients.js";
 import { backend, client, fixture } from "./world.js";
 import type { World } from "./world.js";
-import { adminKeyActingAsIdentityReachesInternalFunctionContract } from "../../generated/contracts/platform.acceptance-contract.admin-key-acting-as-identity-reaches-internal-function.contract.js";
+import { adminKeyActingAsIdentityReachesInternalFunctionContract } from "../../generated/contracts/platform.native-harness.admin-key-acting-as-identity-reaches-internal-function.contract.js";
 const anchor = specTest({
   id: testAnchorId(
     "test:platform.admin-key-acting-as-identity-reaches-internal-function",
   ),
   verifies: ref(
-    "spec:platform.acceptance-contract.admin-key-acting-as-identity-reaches-internal-function",
+    "spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function",
   ),
 });
 void anchor;

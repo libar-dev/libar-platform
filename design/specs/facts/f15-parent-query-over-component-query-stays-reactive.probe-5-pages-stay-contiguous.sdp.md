@@ -19,7 +19,7 @@ Probe 5 · native tier · fixture composition.
 Given a component list of {rows: 30} rows that a parent query relays from paginator, read in pages of {pageSize: 10}
 And a client subscribed to every page, each bounded by the end cursor its first load returned
 When {inserted: 5} rows are inserted inside the first page's range
-Then the subscribed pages together hold every row exactly once and in order {contiguous: true}
+Then the subscribed pages together hold {rowsHeld: 35} rows, every row of the list once and in order
 And the first page now holds {firstPageRows: 15} rows
 ```
 

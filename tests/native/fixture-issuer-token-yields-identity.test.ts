@@ -10,11 +10,11 @@ import { httpClient } from "../../harness/clients.js";
 import { backend, client, fixture } from "./world.js";
 import type { World } from "./world.js";
 import { createIdentity } from "../../harness/identity.js";
-import { fixtureIssuerTokenYieldsIdentityContract } from "../../generated/contracts/platform.acceptance-contract.fixture-issuer-token-yields-identity.contract.js";
+import { fixtureIssuerTokenYieldsIdentityContract } from "../../generated/contracts/platform.native-harness.fixture-issuer-token-yields-identity.contract.js";
 const anchor = specTest({
   id: testAnchorId("test:platform.fixture-issuer-token-yields-identity"),
   verifies: ref(
-    "spec:platform.acceptance-contract.fixture-issuer-token-yields-identity",
+    "spec:platform.native-harness.fixture-issuer-token-yields-identity",
   ),
 });
 void anchor;

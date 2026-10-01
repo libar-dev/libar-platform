@@ -16,9 +16,9 @@ Probe 5 · native tier · fixture composition.
 - outcome: The subscription updates. (Probe 5, F15)
 
 ```gwt
-Given a client subscribed to a parent query that returns what a component query reads
+Given a client subscribed to a parent query that reads no table of its own and returns what a component query reads
 When a mutation changes the document inside the component
-Then the subscription delivers the changed value without the client asking again {updated: true}
+Then the subscription delivers {updates: 1} changed value without the client asking again
 ```
 
 ## Verification — executable

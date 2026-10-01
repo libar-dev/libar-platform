@@ -17,10 +17,11 @@ Probe 2 · native tier · fixture composition.
 
 ```gwt
 Given a mutation inside a component that writes one row and then throws a ConvexError carrying structured data with code {code: "staleVersion"}
-When a parent mutation calls it through the component API and a client calls the parent
-Then the parent's catch reads the thrown data unchanged {parentReadsData: true}
-And a client whose parent lets the error pass reads the thrown data unchanged {clientReadsData: true}
-And the row the component's mutation wrote is stored after the parent caught the error and committed {childRowStored: false}
+And two parent mutations that call it through the component API, one that writes a row of its own, catches the error and returns its data, and one that lets the error pass
+When a client calls each parent
+Then the catching parent returns the thrown data unchanged
+And the client of the other parent reads the thrown data unchanged from the error it receives
+And after the catching parent committed, the component mutation's table holds {childRows: 0} rows and the parent's own table holds {parentRows: 1} row
 ```
 
 ## Verification — executable
