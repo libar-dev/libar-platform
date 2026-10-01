@@ -4091,6 +4091,24 @@
    "slice": "S0",
    "detector": "native backend",
    "note": "S0, 2026-10-01, ruling S7. `spec:facts.probe-plan` carries extension E-16 with six rules: a probe is example Specs that verify its fact; bound values are the expectation written before the first run; a different first result is recorded on the fact and the example is then bound to what the release does and says so; an example fails when its run did not reach its boundary; sizes are recorded and not asserted; what a local backend cannot answer stays open on the fact. Probe 1's three examples name `ConvexClient` or `ConvexHttpClient`, require a trial committed without confirmation, a kill on each side of the commit, and a lost response with one request per call. Probe 3 says quota is not measured and the time is a local backend's. Probe 4's depth binds 9 as observed and calls it a backend default; the shared-limit examples say the seeding is paced under the local backend's write rate and that each half of the write commits alone. Probe 5 gains `probe-5-hook-splits-across-boundary`; the subscription example's parent reads no table of its own. Opus minor 16, drop the depth example, is rejected: the round-3 finding on nested limits asks for the depth and the test is small."
+  },
+  {
+   "round": "S0",
+   "id": "s0-helper-hook-loses-rows-after-a-capped-split",
+   "lens": "convex",
+   "severity": "major",
+   "files": [
+    "specs/context/queries.sdp.md",
+    "specs/application/read-models.sdp.md",
+    "specs/facts/f15-parent-query-over-component-query-stays-reactive.sdp.md",
+    "specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-hook-splits-across-boundary.sdp.md"
+   ],
+   "issue": "`spec:context.queries` relays a component list's `paginator` page through the parent and relies on the client hook to split a page the helper marks `SplitRequired` (`componentPagination`, `paginationShape`, `parentPassThrough`). On a native backend, release `precompiled-2026-09-28-5c7cb5b`, with `convex-helpers` 0.1.124, the `usePaginatedQuery` hook of `convex-helpers/react` showed 40 of 45 rows after a page of 10 grew to 25 rows under `maximumRowsRead` 20: the five rows between the capped page's `continueCursor` and its end cursor were never loaded, and the hook reported no error. Read in the helper's source by the design agent: a capped page returns `continueCursor` at the last row it read, and the hook ends the second half of the split there. Reading the two halves directly, from the start to the split cursor and from the split cursor to the page's own end cursor, gives all 25 rows. So a list that is capped by `maximumRowsRead` and read with this hook can lose rows without a sign. Found by the design agent's bound test in slice S0, 2026-10-01, run twice; the orchestrator reran it after applying the prototype.",
+   "fix": "Slice S2 decides before it builds lists: whether a context list sets `maximumRowsRead` at all, whether the parent or the client closes the range to the page's end cursor, or whether the client uses another hook. The Probe 5 example keeps the observed value so a later helper release that fixes it turns the test red.",
+   "status": "open",
+   "note": "",
+   "slice": "S2",
+   "detector": "native backend"
   }
  ],
  "sessions": [

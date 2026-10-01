@@ -16,13 +16,14 @@ Probe 5 · native tier · fixture composition.
 - outcome: The parent relays the split, and the pages on either side of it leave no gap. (Probe 5, F15, S4)
 
 ```gwt
-Given a subscribed page of a component list, bounded by an end cursor and read through the parent with maximumRowsRead {maximumRowsRead: 20}
+Given a component list of {rows: 30} rows and a subscribed page of {pageSize: 10}, bounded by its end cursor and read through the parent with maximumRowsRead {maximumRowsRead: 20}
 When rows are inserted inside the page's range until it holds {rowsInRange: 25} rows
 Then the page the parent relays carries pageStatus {pageStatus: "SplitRequired"} and a split cursor
-And the two pages on either side of the split cursor together hold {rowsHeld: 25} rows, every row of the range once and in order
+And the page from the start to the split cursor and the page from the split cursor to the first page's end cursor together hold {rowsHeld: 25} rows, every row of the range once and in order
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
 - This example reads the relayed pages directly. Whether the client hook acts on the split is the next example's question.
+- The second half ends at the end cursor the page was subscribed with. The capped page's own `continueCursor` sits at the last row it read, and a second half that ends there holds 20 rows and leaves the rest of the range out.
