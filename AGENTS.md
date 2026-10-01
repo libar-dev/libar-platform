@@ -19,6 +19,18 @@ The Convex transactional domain platform. `docs/` holds the inputs. `design/` ho
 - `design/reviews/r3-*.jsonl` are records of a finished review round and keep their text.
 - Prose uses plain words, sentence-case headings and no em dashes.
 
+## The language
+
+`CONTEXT.md` is the platform's ubiquitous language: one word for each concept, with the words it replaces. Read it before you name anything or write a sentence about the platform: a type, a table, an event, an error code, a Spec bullet, a scenario step.
+
+It sorts words three ways, and the sorting is the rule:
+
+- **Domain words** say what the platform is: command, event, context, receipt. Code names and Specs are written in them.
+- **Design words** say how the platform is specified and proven: layer, probe, scenario, tier. They appear in Specs and name nothing in the code.
+- **Work words** say when and by whom something was done: slice, session, fold-in, a date, "built so far". They are true for a while and then stale, so they live in `design/STATE.md`, the review ledger, commit messages and reports.
+
+A word you need that is missing, or one word used for two things, is a gap in the language: report it. The owner rules on a term.
+
 ## On the owner's machine
 
 - How one Claude thread works with Claude and GPT agents: `~/dev-libar/gpt-models-from-the-claude-main-thread.md`.
