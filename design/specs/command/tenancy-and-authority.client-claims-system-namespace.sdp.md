@@ -31,4 +31,4 @@ And the namespace the server assigned is {namespace: "none"}
 
 - Runs in the native tier; every test owns its disposable backend.
 - The test asserts that no receipt, event or read-model row was written and that the error is not a `ConvexError` of the outcome boundary.
-- The test also calls the internal entry from the client with namespace `agent` and asserts that Convex refuses the call, so both routes to a system namespace are closed.
+- The test also calls the internal entry from the same ordinary client, which holds no admin key, with namespace `agent` and asserts that Convex refuses the call, so both routes to a system namespace are closed.

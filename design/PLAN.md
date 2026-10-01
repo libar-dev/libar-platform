@@ -10,17 +10,17 @@ The CLI is the `sdp` binary of the pinned `@libar-dev/software-delivery-protocol
 
 ```sh
 # from the repository root
-npx sdp validate design
+npx sdp validate
 ```
 
-Both forms were run against the scaffold in this directory on 2026-09-30 and printed `validate: 0 errors · 0 warnings`. No `--exclude` is needed; `design/` carries no fixtures. Output goes to `design/generated/` (graph, contracts, registrar manifest), which `design/.gitignore` ignores.
+The Protocol's root is the repository root since slice S0, so that one graph holds the Specs under `design/specs/` and the test anchors that verify them, which live outside `design/`. No `--exclude` is needed. Output goes to `generated/` at the repository root (graph, contracts, registrar manifest), which `.gitignore` ignores. A test imports its example's step contract from `generated/contracts/`, so `npx sdp build` runs before the tests.
 
 Other verbs, same path and root rules:
 
-- `npx sdp validate design --watch` is the authoring loop; it re-runs on carrier changes and stays alive.
-- `npx sdp view design` writes the Design Review to `design/generated/design-review/` (an index plus one page per Spec and Pack). This is the human-readable rendering of the corpus.
-- `npx sdp q '<body>' --root design --json` evaluates a recipe body from the package's `docs/agent-surface/recipes.md` against this corpus. Recipes 3 (one Spec's guarantees), 5 (Pack review), 6 (concept search), 7 (readiness divergence), 8 (warnings as data), 9 (promotion preflight) and 11 (the lower ladder) are the useful ones here.
-- `npx sdp new spec specs/<family>/<name>.sdp.md --id ID --kind KIND --altitude ALT --title TITLE --outcome OUTCOME` scaffolds an idea-rung stub. PATH is relative to the current directory, so run it from `design/`.
+- `npx sdp validate --watch` is the authoring loop; it re-runs on carrier changes and stays alive.
+- `npx sdp view` writes the Design Review to `generated/design-review/` (an index plus one page per Spec and Pack). This is the human-readable rendering of the corpus.
+- `npx sdp q '<body>' --json` evaluates a recipe body from the package's `docs/agent-surface/recipes.md` against this corpus. Recipes 3 (one Spec's guarantees), 5 (Pack review), 6 (concept search), 7 (readiness divergence), 8 (warnings as data), 9 (promotion preflight) and 11 (the lower ladder) are the useful ones here.
+- `npx sdp new spec design/specs/<family>/<name>.sdp.md --id ID --kind KIND --altitude ALT --title TITLE --outcome OUTCOME` scaffolds an idea-rung stub. PATH is relative to the current directory, so from the repository root it starts with `design/specs/`.
 
 Exit code 1 means an error; warnings exit 0. The corpus must exit 0 with zero errors and zero warnings.
 
@@ -273,7 +273,7 @@ Fact slugs: `f01-serializable-mutations-under-occ`, `f02-component-calls-commit-
 
 ## 4. Scenarios to examples
 
-Every row of the doc's acceptance table becomes at least one `example` Spec. When a row enumerates cases (three injection points, three order sizes, two broken subsystems), each case is one sibling example binding a different point, per SDP's point-per-example law. Titles are the doc's scenario text. The tier comes from the acceptance contract: domain (pure), simulator, native, or end to end.
+Every row of the doc's acceptance table becomes at least one `example` Spec. When a row enumerates cases (three injection points, three order sizes, two broken subsystems), each case is one sibling example binding a different point, per SDP's point-per-example law. An "or" in the scenario's text enumerates cases the same way (a worker or agent namespace, rate or capacity refusal). An "or" in the pass condition does not: the example binds the alternative its design produces. A verification bullet adds assertions to a case and never stands in for one. Titles are the doc's scenario text. The tier comes from the acceptance contract: domain (pure), simulator, native, or end to end.
 
 | Sc | Scenario (doc text) | Parent Spec | Example ID | Tier | Pkg |
 |---|---|---|---|---|---|
@@ -329,7 +329,7 @@ Five packages, disjoint by directory. Sequence: A first, because every other pac
 
 Definition of done, every package:
 
-1. `npx sdp validate design` exits 0 on the merged corpus. While a foreign ID from the package's cross-package list is not yet authored, the only tolerated error is `conformance/referential-integrity` naming that ID.
+1. `npx sdp validate` exits 0 on the merged corpus. While a foreign ID from the package's cross-package list is not yet authored, the only tolerated error is `conformance/referential-integrity` naming that ID.
 2. No warning. An example with no test bound is data below `ready`, not a warning.
 3. Every Spec in the package's inventory exists with the stated kind, altitude, readiness and minimum relations; every scenario assigned to the package has its example(s).
 4. The pack manifest lists every Spec of the package in inventory order.

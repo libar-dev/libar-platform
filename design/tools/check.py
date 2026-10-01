@@ -3,7 +3,11 @@
 
 Exits 0 when the corpus, README.md and the review ledger agree; prints each failure and exits 1 otherwise.
 SESSIONS.md says when to run it.
-`python3 design/tools/check.py --slice S1` lists the findings a slice takes and exits.
+`python3 design/tools/check.py --slice S1` lists the findings a slice takes and exits. It reads the
+ledger only and writes nothing, so a read-only job can run it.
+
+The Protocol's root is the repository root: the graph holds the Specs under design/specs and the
+test anchors that verify them, which live outside design/. Output goes to generated/ at the root.
 
 The Protocol's CLI is the pinned dependency in the repository's package.json; run `npm ci` once.
 What `sdp validate` checks is the Protocol's. What this script adds is this project's policy:
@@ -39,19 +43,27 @@ def fail(msg):
 
 
 def run(args):
-    return subprocess.run(["node", SDP] + args, capture_output=True, text=True, cwd=DESIGN)
+    return subprocess.run(["node", SDP] + args, capture_output=True, text=True, cwd=ROOT)
+
+
+if "--slice" in sys.argv:
+    wanted = sys.argv[sys.argv.index("--slice") + 1]
+    for item in json.load(open(os.path.join(DESIGN, "reviews", "consensus-ledger.json"), encoding="utf-8"))["ledger"]:
+        if item.get("slice") == wanted and item["status"] in ("open", "partially-fixed", "owner"):
+            print(f"{item['id']} | {item['severity']} | {item['status']} | caught by: {item.get('detector', '?')} | {', '.join(item['files'])}")
+    sys.exit(0)
 
 
 # 1. The graph: validate and readiness divergence.
 out = run(["validate", "."])
 text = out.stdout + out.stderr
-graph = re.search(r"(\d+) specs · (\d+) packs · \d+ anchors → (\d+) nodes · (\d+) edges", text)
+graph = re.search(r"(\d+) specs · (\d+) packs · (\d+) anchors → (\d+) nodes · (\d+) edges", text)
 verdict = re.search(r"validate: (\d+) errors · (\d+) warnings", text)
 if not graph or not verdict:
     fail("validate printed no summary line; run `npm ci` at the repository root, then check " + SDP)
     print("\n".join(failures))
     sys.exit(1)
-n_specs, n_packs, n_nodes, n_edges = (int(x) for x in graph.groups())
+n_specs, n_packs, n_anchors, n_nodes, n_edges = (int(x) for x in graph.groups())
 n_errors, n_warnings = (int(x) for x in verdict.groups())
 warnings = [l for l in text.splitlines() if "[warning]" in l]
 if n_errors:
@@ -115,7 +127,7 @@ for gap in edge_gaps:
 
 # 3. README.md against the Specs.
 readme = open(os.path.join(DESIGN, "README.md"), encoding="utf-8").read()
-expected_line = f"{n_specs} specs · {n_packs} packs · 0 anchors → {n_nodes} nodes · {n_edges} edges (0 errors, 0 warnings)"
+expected_line = f"{n_specs} specs · {n_packs} packs · {n_anchors} anchors → {n_nodes} nodes · {n_edges} edges (0 errors, 0 warnings)"
 if expected_line not in readme:
     fail("README's expected validate output is stale; it should read: " + expected_line)
 if "validate: 0 errors · 0 warnings" not in readme:
@@ -139,12 +151,6 @@ for item in ledger:
         fail(f"ledger item {item['id']} has status {item['status']!r}; allowed: {sorted(LEDGER_STATUSES)}")
     by_status[item["status"]] += 1
 
-if "--slice" in sys.argv:
-    wanted = sys.argv[sys.argv.index("--slice") + 1]
-    for item in ledger:
-        if item.get("slice") == wanted and item["status"] in ("open", "partially-fixed", "owner"):
-            print(f"{item['id']} | {item['severity']} | {item['status']} | caught by: {item.get('detector', '?')} | {', '.join(item['files'])}")
-    sys.exit(0)
 by_slice = collections.Counter(item.get("slice", "none") for item in ledger if item["status"] == "open")
 
 digest = hashlib.sha256()

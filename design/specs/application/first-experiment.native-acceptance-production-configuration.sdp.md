@@ -25,6 +25,6 @@ Then authority, schemas, concurrency and code path {parity: "match a release"}
 ## Verification — executable
 
 - Runs in the end-to-end tier on the production composition; every test owns its disposable backend.
-- The test deploys the release build, not a test build, with the production `auth.config.ts`, grants, namespaces and entry points and the production schema, and runs the full Layer 0 to 2 suite against it.
-- The test obtains each identity through the local backend's admin key acting as an identity whose `issuer` and `subject` are the production issuer's, because a production issuer cannot mint tokens for a disposable backend; the evidence record names the identity source as the one difference from production, under E-13 of the acceptance contract.
+- The test deploys the release build, not a test build, with the production `auth.config.ts`, grants, namespaces and entry points and the production schema, and runs against it every Layer 0 to 2 scenario that the acceptance contract routes to the production composition under E-15; the scenarios it routes to the fixture composition run there with the same libraries, schemas and authority model.
+- The test obtains each identity from a token the harness signs for the fixture issuer that the deployment's environment variables name, carried by an ordinary client, because a production issuer cannot mint tokens for a disposable backend; the evidence record names that issuer as the one difference from production, under E-13 of the acceptance contract.
 - The test asserts that no test-only function is registered in the deployment and that the evidence record of the run states no configuration difference from production other than the identity source.

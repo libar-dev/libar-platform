@@ -6,6 +6,10 @@ specs:
   - spec:platform.decision-method
   - spec:platform.vocabulary
   - spec:platform.acceptance-contract
+  - spec:platform.acceptance-contract.fixture-issuer-token-yields-identity
+  - spec:platform.acceptance-contract.ordinary-client-refused-internal-function
+  - spec:platform.acceptance-contract.ordinary-client-refused-component-function
+  - spec:platform.acceptance-contract.admin-key-acting-as-identity-reaches-internal-function
   - spec:platform.existing-systems
   - spec:laws.law01-sanctioned-writes-only
   - spec:laws.law02-state-and-events-commit-together
@@ -44,7 +48,12 @@ specs:
   - spec:facts.f02-component-calls-commit-with-caller
   - spec:facts.f03-nested-run-mutation-partial-rollback
   - spec:facts.f04-nested-calls-cost-more-than-helpers
+  - spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation
+  - spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query
   - spec:facts.f05-react-client-retries-until-confirmed
+  - spec:facts.f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation
+  - spec:facts.f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation
+  - spec:facts.f05-react-client-retries-until-confirmed.probe-1-http-client-retry
   - spec:facts.f06-client-mutations-run-in-order
   - spec:facts.f07-queries-reactive-not-durable-delivery
   - spec:facts.f08-scheduling-commits-with-mutation
@@ -53,8 +62,16 @@ specs:
   - spec:facts.f11-components-have-no-ctx-auth
   - spec:facts.f12-backups-exclude-pending-scheduled-functions
   - spec:facts.f13-transactions-have-limits
+  - spec:facts.f13-transactions-have-limits.probe-4-nested-call-shares-limits
+  - spec:facts.f13-transactions-have-limits.probe-4-component-call-shares-limits
+  - spec:facts.f13-transactions-have-limits.probe-4-nesting-depth
   - spec:facts.f14-convex-error-survives-nested-and-component-boundary
+  - spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation
+  - spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary
   - spec:facts.f15-parent-query-over-component-query-stays-reactive
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-subscription-updates
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-pages-stay-contiguous
+  - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-split-required-relayed
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
   - spec:facts.f17-migrations-fits-generation-backfill
 modelRefs:
@@ -64,4 +81,4 @@ modelRefs:
 
 Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
 
-Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Fifty-six Specs.
+Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the four harness examples after the acceptance contract, and each probe's examples after the fact they verify. Seventy-three Specs.
