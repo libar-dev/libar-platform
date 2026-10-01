@@ -2,7 +2,7 @@
 id: spec:facts.f17-migrations-fits-generation-backfill
 kind: constraint
 altitude: story
-readiness: defined
+readiness: scoped
 relations:
   refines: spec:facts.fact-ledger
 ---
@@ -19,7 +19,7 @@ Online rebuild registers a new generation and backfills it in batches that read 
 
 ### Open questions
 
-- [non-blocking] Probe 6 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D9) rest on the author's reading of the pages (F17, Probe 6)
+- [blocking] Probe 6 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D9) rest on the author's reading of the pages (F17, Probe 6)
 
 ## Constraints
 

@@ -39,7 +39,7 @@ Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, D3, D
 
 The first experiment builds Layers 0 to 2 in a small, clean application, Orders and Inventory, and measures what the design costs. It passes when every Layer 0, 1 and 2 scenario passes on a native backend. It measures orders of 1 line, 10 lines and the chosen maximum, without and with stock contention, and counts top-level commits, function and component calls, documents read and written, and rows left behind, with healthy-path and retry costs reported separately. Semantics come first and speed second; latency and throughput targets are product decisions made before the benchmark. The results feed the open question on component cost and the Layer 3 decisions.
 
-The six cost targets are the constraint Specs this workflow is constrained by. The example domain's terms are `spec:application.orders-inventory-example`. Where the experiment lives is OQ4 and stays with the owner.
+The six cost targets are the constraint Specs this workflow is constrained by. The example domain's terms are `spec:application.orders-inventory-example`. The owner ruled OQ4 on 2026-10-01: the experiment lives in this repository, beside the design.
 
 ## Intent
 
@@ -54,7 +54,6 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 
 ### Open questions
 
-- [non-blocking] OQ4: where the probe app and the experiment live is not decided by this corpus; `lap/` holds only documents and is not a git repository (OQ4)
 - [non-blocking] OQ1: whether a trivial context with no invariants of its own may be plain tables behind lint rules is decided after this experiment measures component call cost (OQ1, Probe 3)
 - [non-blocking] OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum of 100 lines and reports the numbers per line so the owner can choose (OQ3)
 - [non-blocking] Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model, with 100 as the provisional maximum for measurement (E-46, First experiment)
@@ -102,7 +101,7 @@ The experiment is an application, a test suite and a report. The application is 
 - limitExpectedDocuments: the design expects one `PlaceOrder` of N lines to read about N + 6 documents and write about 2N + 5 documents: one stock item state and one event per line, the order state, the order event, the receipt, the summary row, the registry read, the gate read and the audit record; the measurement confirms or corrects it (E-47, F13, D10)
 - streamBudgets: the stock item stream declares `budgetBytes` of 16 KiB and the order stream keeps the default 256 KiB, as `spec:application.orders-inventory-example` pins, so the allocation call's byte bound, 8 MiB over the planned streams' budgets, admits 512 stock streams and the adapter's count bound of `min(maxStreams, 256)` admits the 100 of the maximum order with room, while the single order stream costs at most 256 KiB; at the default budget on both stream types the byte bound would admit only 32 stock streams and the maximum run would be rejected `operationTooLarge`, which is why the budget is pinned here and the run at the maximum measures it (E-2, E-22, E-46, F13, Sc L2-3)
 - productDecisions: latency and throughput targets are set by the owner before the benchmark and recorded with the run; the experiment reports latency but does not set a target (First experiment)
-- deliverables: the application in a repository the owner names under OQ4, the evidence records of every scenario run, and the measurement report with the six targets marked held or not held (First experiment, OQ4, Acceptance scenarios)
+- deliverables: the application in this repository, beside the design, as the owner ruled under OQ4 on 2026-10-01, the evidence records of every scenario run, and the measurement report with the six targets marked held or not held (First experiment, OQ4, Acceptance scenarios)
 
 ## Example space
 

@@ -1,115 +1,150 @@
 # State of the design corpus
 
-Written on 2026-10-01 at the close of review round 3. `SESSIONS.md` says how to use this file. Every close rewrites it.
+Written on 2026-10-01 at the close of the `adopt` unit. `SESSIONS.md` says how to use this file. Every close rewrites it.
 
 ## Measured at close
 
 ```
 168 specs · 5 packs · 0 anchors → 173 nodes · 881 edges (0 errors, 0 warnings)
-validate: 0 errors · 54 warnings; readiness divergence: []
-open questions: 67 Specs, 129 questions; extensions registered: 48
+validate: 0 errors · 0 warnings; readiness divergence: []
+open questions: 67 Specs, 129 questions, 12 blocking; extensions registered: 48
+stated readiness: {'defined': 156, 'scoped': 12}
 ledger: 231 findings, {'fixed': 111, 'open': 116, 'partially-fixed': 4}
-corpus digest: dd53321cebaf3b45
+open findings by slice: {'L3': 22, 'P': 18, 'S0': 6, 'S1': 17, 'S2': 7, 'S3': 1, 'S4': 30, 'S5': 15}
+corpus digest: 2b75b7fa70f3e9ec
+protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
-The owner allows session commits: on 2026-10-01 the owner gave the session the decision on when a commit is needed. The branch is `design-corpus`, cut from `main` at `abfa444`. Commit `f44cad4` is the corpus as every round-3 reviewer read it. No Spec has changed since; the commits after it change the ledger, this file and the review files only.
+The branch is `design-corpus`. The owner allows session commits. Whether and when the branch merges to `main` stays with the owner.
 
-## Where the review stands
+## Where the work stands
 
-Round 3 is complete for all five lenses, full scope, at `f44cad4`. No lens approved.
+Review round 3 is complete for all five lenses at `f44cad4`. No lens approved. It left 116 open findings: 1 blocker, 36 majors, 79 minors. Three round-2 fixes are `partially-fixed`, each carried by a round-3 finding.
 
-| Lens | Round 1 | Round 2 | Round 3 | Verdict |
-|---|---|---|---|---|
-| `fidelity` | 0 blocker, 4 major, 5 minor | 0, 3, 5 | 0, 3, 13 | not approved |
-| `convex` | 1, 2, 4 | 0, 3, 2 | 1, 6, 15 | not approved |
-| `sdp` | 0, 7, 11 | 0, 5, 9 | 0, 7, 31 | not approved |
-| `architecture` | 0, 4, 14 | 0, 7, 4 | 0, 10, 11 | not approved |
-| `completeness` | 0, 7, 8 | 0, 3, 7 | 0, 10, 9 | not approved |
+The owner changed the plan on 2026-10-01. A final design cannot be reached by design work alone, so the design is now finished by building it, one slice at a time. The numbers agree. Each fix round added names that the next round found defects in. A blind GPT read of one area found about 15 defects that three review rounds had not recorded. And of the 37 open blockers and majors, a read-only analysis predicts that code would catch 28: 6 at the compiler, 2 in a pure test, 16 in `convex-test`, 3 on a native backend, 1 in a measurement. The other 9, and 49 of the 79 minors, are judgment that no code catches, so review continues beside the build.
 
-Round 3 added 116 findings: 1 blocker, 36 majors, 79 minors. All are `open` in the ledger under ids that start `r3-<lens>-`.
+Every open finding carries a `slice` and a `detector` field in the ledger. The detector is that analysis's prediction of the cheapest thing that would catch the finding. Nothing was compiled or run to produce it.
 
-How the round was run. `architecture` was read in the main thread, as `SESSIONS.md` asks. The other four were read by four `fable-xhigh` agents in parallel, because the owner asked for agents on 2026-10-01 to use the weekly limit before it reset. That is a one-off departure from the main-thread rule, not a change to it. Each agent edited no Spec and appended to its own file, `reviews/r3-<lens>.jsonl`, one record per line, and the main thread merged the four files into the ledger. The files are kept: they hold the reviewers' progress records, and `r3-convex.jsonl` holds 25 `checked` records, Convex claims that hold with the page and read date, so round 4 need not fetch them again.
+| Slice | Builds | Open findings | Blocker, major, minor |
+|---|---|---|---|
+| S0 | Repository layout, toolchain, fixture app, test tiers; probes 2 to 5 | 6 | 0, 3, 3 |
+| S1 | Layers 0 and 1, thin: deciders, kernel types, one context component, journal and adapter, command pipeline, receipts, actor and tenancy, the minimal grant bootstrap | 17 | 0, 4, 13 |
+| S2 | Layer 2, thin: `PlaceOrder` over Orders and Inventory, a legal way to create stock, the summary written in the command with its first active generation, queries and lists | 7 | 1, 3, 3 |
+| S3 | Measurement: 1, 10 and 100 lines, without and with contention. Repeated after S4 and S5 | 1 | 0, 0, 1 |
+| S4 | Generations and rebuild, the history view and the write pause, with the tenant list, operator entry points and gate audit the rebuild uses; Probe 6 | 30 | 0, 14, 16 |
+| S5 | Baseline migration, restore, the rest of operators and audit, maintenance jobs; the transactional part of Probe 7 | 15 | 0, 7, 8 |
+| L3 | Layers 3 to 6, written from what the experiment shows | 22 | 0, 5, 17 |
+| P | Polish with no effect on what is built: citations, markers, stale sentences, README | 18 | 0, 0, 18 |
 
-The one blocker is `r3-convex-read-model-list-returns-rejects-paginate-result`: the read model's list query declares a return validator the built-in `.paginate` result does not fit, so it throws on every call and Sc L2-2 cannot pass. The fix is one line.
+Aggregate and cross-context projections sit in S4 and are not part of the pinned experiment. Remove an unsupported generic promise before designing a helper no view needs.
 
-The round-2 fixes are all reviewed now. Of the 48, 45 are confirmed. Three are `partially-fixed`, each with a round-3 finding that carries the rest: `r2-architecture-history-and-cross-context-projection-has-no-input`, `r2-completeness-aggregate-row-shape-unpinned` and `r2-convex-convex-restore-stream-check-bytes`. The fourth `partially-fixed` item is the round-1 minor whose remaining part was rejected with a reason. Nothing carries `unreviewed`.
+What the `adopt` unit did, on the Protocol at `5993da7` (pull request 26):
 
-What the round says, across lenses:
-
-- The carrier is sound. Validate, readiness, templates, IDs, packs and the extension register hold, and README matches the corpus on counts and tables.
-- Layers 0 and 1 hold up apart from single defects. The weight of the findings is in what round 2 added in a hurry: the baseline migration, the history view, the write pause's source scopes, generations across tenants and the restore's pending-work step.
-- Layers 0 to 2 cannot yet be built from the Specs without guessing. The largest holes: no first generation, no operator actor and no operator entry points, no writer for grants, no tenant list, no test seams, a baseline driver that is named and not designed.
-- Several findings are one defect seen by two lenses. A fix closes both: active against building generation (`completeness`, `sdp`), the operator actor (`completeness`, `sdp`), the audit record's input (`completeness`, `sdp`), the envelopes `append` does not return (`sdp`, `completeness`), the restore batch's baseline reads (`sdp`, `convex`), the nested derived command (`architecture`, `fidelity`), the list return validator (`convex`, `sdp`).
+- The Protocol is a pinned dependency in `package.json`, from a tarball under `vendor/`, because the commit hash installs no CLI. `docs/sdp-feedback.md` has the reason and the rest of the feedback.
+- Generics use real angle brackets: 248 pairs on 114 lines of 29 Specs.
+- Validate expects 0 warnings. Five checks left `tools/check.py`.
+- F14, F15 and F17 state `scoped` behind a blocking question naming the probe. Nine deferred Specs carry a blocking question naming the trigger.
+- The README's census sentence and open-question table are gone. `sdp census` and recipe 20 derive them.
+- OQ4 is ruled: the experiment lives in this repository.
 
 ## Next unit
 
-`fix`, unit 1 below. Then the other fix units in order, one session each. A unit that cannot finish leaves the rest `open` and says so here.
+`slice` S0.
 
-Each unit is a set of findings that touch the same Specs, so a session reads those Specs once. The ids are written without their `r3-` prefix. Where a fix needs a ruling, the session sets `owner`, keeps the provisional reading in the Spec, and adds the question to the owner queue.
+Four decisions come before any code, all from fix unit 7's findings. Settle them on paper first:
 
-1. Read models and generations (1 blocker, 9 major, 7 minor). Scope `application/` projection-contract, generation-registry, read-models, rebuild, and `command/` command-pipeline step 9 and command-declaration bindings. It holds the blocker. `architecture-one-projection-writes-every-generation`, `completeness-apply-projection-cannot-tell-active-from-building`, `sdp-generations-to-write-loses-active-and-building`, `completeness-first-generation-has-no-bootstrap`, `convex-generation-checkpoint-on-the-row-commands-read`, `architecture-cross-context-current-state-row-has-no-write-form`, `completeness-aggregate-key-change-miscounts`, `sdp-aggregate-entity-key-has-no-source`, `convex-read-model-list-returns-rejects-paginate-result`, `sdp-list-result-validator-two-shapes`, `sdp-registry-reads-per-command-two-counts`, `convex-aggregate-row-is-a-write-hot-spot`, `architecture-rollback-keeps-rows-of-deleted-subjects`, `convex-migrations-binding-cannot-run`, `fidelity-migrations-fit-stated-two-ways`, `convex-scheduled-mutation-occ-never-fails`, `sdp-index-does-not-carry-the-stated-query`.
-2. The history view and the write pause (0 blocker, 3 major, 5 minor). Scope `application/` projection-contract, rebuild, write-pause, orders-inventory-example and the two L2-6 examples. Do it after unit 1, which changes the same helpers. `architecture-history-fold-order-and-deletion`, `architecture-history-backfill-cursor-and-verify`, `architecture-history-generation-rollback-unpaused`, `architecture-history-view-live-cost`, `architecture-paused-rebuild-one-stream-per-batch`, `sdp-history-batch-size-two-numbers`, `sdp-history-projection-loose-ends`, `sdp-read-model-scope-and-allow-generation-never-match`.
-3. Journal, adapter, queries and the baseline migration (0 blocker, 6 major, 11 minor). Scope `context/` and `kernel/state-document-mapping`. `architecture-reads-of-streams-awaiting-baseline`, `fidelity-migrate-on-load-replays-history-against-d3`, `fidelity-baseline-sweep-and-the-pause-contradict`, `completeness-baseline-driver-unpinned`, `sdp-appended-envelopes-have-no-carrier`, `completeness-adapter-events-not-returned-by-append`, `completeness-budgets-declared-never-measured`, `convex-byte-bounds-measured-in-json`, `architecture-write-bound-refuses-what-stream-bound-admits`, `sdp-append-writes-stream-row-twice-stated`, `sdp-streams-entry-listed-without-events`, `sdp-rebuild-query-typed-with-get-args`, `convex-full-page-always-split-required`, `sdp-tenant-scope-passed-two-ways`, `sdp-context-queries-said-to-take-an-actor`, `sdp-example-domain-terms-drift`, `fidelity-import-progress-two-homes`.
-4. Restore (0 blocker, 3 major, 6 minor). Scope `application/restore` and its example, after units 1 and 3, whose helpers it calls. `architecture-restore-and-baseline-migration-disagree`, `completeness-restore-checks-have-no-runner-or-usable-cursor`, `fidelity-restore-policies-cited-to-the-doc`, `sdp-restore-compare-mode-undefined`, `sdp-restore-batch-arithmetic-omits-baseline-events`, `convex-restore-check-omits-baseline-reads`, `sdp-restore-run-checkpoint-does-not-fit-the-batches`, `convex-restore-states-undocumented-behavior-as-fact`, `convex-env-switches-untyped-and-uncited`.
-5. Authority, operators, tenants and audit (0 blocker, 6 major, 13 minor). Scope `command/` and `operations/baseline-operations`, then every Spec that takes an operator actor or iterates tenants. `architecture-tenant-list-undefined`, `completeness-operator-entry-points-undefined`, `sdp-operator-actor-cannot-be-established`, `completeness-grants-have-no-writer`, `sdp-parent-query-builds-actor-by-hand`, `completeness-audit-record-fields-have-no-source`, `sdp-audit-record-input-unpinned-and-gate-audit-has-no-shape`, `architecture-audit-do-nothing-option-unrecorded`, `completeness-diagnostic-record-outcomes-never-emitted`, `convex-diagnostic-counter-and-duration`, `completeness-maintenance-jobs-without-trigger`, `sdp-grants-limit-two-names`, `sdp-receipts-actor-id-claimed-as-actor-validator`, `sdp-insert-receipt-cannot-compute-expiry`, `sdp-subject-ref-duplicates-affected-ref`, `sdp-query-refusal-shape-unpinned`, `sdp-carry-or-reject-throw-shape`, `fidelity-command-registry-standing-without-a-reader`, `fidelity-index-rule-attributed-to-law-11`.
-6. Obligations and effects (0 blocker, 5 major, 15 minor). Scope `obligations/` and `effects/`. Independent of units 1 to 5. `architecture-lease-outlives-running`, `sdp-late-evidence-field-cannot-hold-what-is-written`, `sdp-chain-bound-has-no-writer`, `convex-node-runtime-handler-has-no-action`, `convex-obligation-list-returns-rejects-paginate-result`, `architecture-sweeper-runs-under-the-restore-door`, `architecture-sweeper-scan-blocked-by-backlog`, `architecture-derived-command-nested-where-a-helper-suffices`, `fidelity-nested-derived-command-credited-to-d7`, `architecture-events-evidence-needs-ids-the-command-does-not-return`, `architecture-authority-recheck-names-no-permission`, `fidelity-derived-command-receipt-question-not-on-a-spec`, `sdp-handler-registry-three-shapes`, `sdp-lifecycle-writer-lists-disagree`, `sdp-terminal-patches-omit-what-lifecycle-requires`, `sdp-rearm-bound-off-by-one`, `sdp-completion-query-two-shapes`, `convex-obligation-dispatch-args-lack-tenant`, `convex-rebuild-schedules-cursor`, `convex-sweeper-reads-conflict-with-dispatches`.
-7. Acceptance, the experiment and the example domain (0 blocker, 3 major, 3 minor). Scope `platform/acceptance-contract`, `application/first-experiment`, orders-inventory-example and the examples that need a seam. `architecture-native-tier-cannot-move-time-or-interrupt`, `completeness-test-seams-and-fixture-app-undefined`, `convex-admin-acting-identity-bypasses-visibility`, `architecture-example-domain-cannot-create-stock`, `fidelity-third-cost-target-substituted`, `completeness-or-rows-bound-to-one-point`.
-8. Bounds, facts, citations and polish across the corpus (0 blocker, 1 major, 19 minor). Last, because it sweeps Specs the other units edit, and it ends with README. `convex-remaining-batches-bounded-in-documents-only`, `convex-nested-limits-are-documented-and-unused`, `convex-f15-reactivity-is-documented`, `convex-commit-timestamp-not-weighed`, `convex-component-env-read-as-forbidden`, `fidelity-readme-register-rows-behind-their-questions`, `fidelity-doc-citations-on-extension-content`, `fidelity-extension-marker-applied-to-a-fifth-of-citations`, `fidelity-layer-4-5-rulings-beyond-d16-d17`, `fidelity-scenario-text-marked-extension`, `fidelity-stale-sentences-after-round-2`, `completeness-small-unpinned-names`, `completeness-defined-but-never-used`, `completeness-readme-stale-against-specs`, `completeness-assumed-facts-not-named-on-every-spec`, `completeness-polish`, `sdp-intent-citations-without-constrained-by`, `sdp-contracts-compose-without-depends-on`, `sdp-application-pack-child-before-parent`, `sdp-small-naming-and-stale-sentences`.
+1. What time and interruption controls the native tier has, and how a run with adjusted time differs from production (`r3-architecture-native-tier-cannot-move-time-or-interrupt`).
+2. The fixture composition, its fault seams, and the production acceptance path that stays unmodified (`r3-completeness-test-seams-and-fixture-app-undefined`).
+3. Admin setup access against ordinary-client authority in visibility tests (`r3-convex-admin-acting-identity-bypasses-visibility`). The earlier platform's native tests sign ordinary JWTs from a fixture issuer with a data-URI key set, and that passed on its native backend on 2026-09-27.
+4. Which acceptance alternatives the harness must cover, so it does not prove only the convenient cases (`r3-completeness-or-rows-bound-to-one-point`).
 
-After the eight units, round 4. No lens approved round 3, so every lens reviews again. With the corpus committed, delta scope is now computable: `git diff --name-only f44cad4..HEAD -- design/specs` plus what those Specs relate to. The fixes will touch most Layer 1 to 3 Specs, so expect the delta to be close to full scope for `sdp` and `completeness`.
+Then S0 lays out the repository, pins the toolchain and runs probes 2 to 5. Each probe becomes an `example` Spec that `verifies` its fact, bound to its test, which is the Protocol's home for a checked statement. Probe 1 runs before S1 relies on receipt boundaries.
 
-## Leads for round 4
+Decisions each later slice needs on paper before its code:
 
-These are not findings. A reviewer confirms or drops each.
+- S1: who creates the first grant and changes grants (`r3-completeness-grants-have-no-writer`); one source for tenant scope (`r3-sdp-tenant-scope-passed-two-ways`); drop the standing command registry unless a reader needs it (`r3-fidelity-command-registry-standing-without-a-reader`).
+- S2: stock created through a domain operation (`r3-architecture-example-domain-cannot-create-stock`); the transition that makes the first summary writable (`r3-completeness-first-generation-has-no-bootstrap`).
+- S4: order-independent cross-stream folds and whether deletion keeps fold memory (`r3-architecture-history-fold-order-and-deletion`); who owns the tenant list (`r3-architecture-tenant-list-undefined`); operator authority and entry points (`r3-completeness-operator-entry-points-undefined`); refusal or a paused catch-up for history rollback (`r3-architecture-history-generation-rollback-unpaused`).
+- S5: history-reading migrations off the command path unless the owner changes D3 (`r3-fidelity-migrate-on-load-replays-history-against-d3`); whether paused migrations are supported (`r3-fidelity-baseline-sweep-and-the-pause-contradict`); reopening authority, failure scope and drill cadence as explicit extensions (`r3-fidelity-restore-policies-cited-to-the-doc`).
 
-1. `convex`. `dispatchId` on the obligation row is `v.id("_scheduled_functions")`. The docs do not say whether such an ID still validates after a restore into a different deployment. The round-3 reviewer could not establish it either way; it belongs in Probe 7.
-2. `convex`. The retry-exhaustion rate in `r3-convex-generation-checkpoint-on-the-row-commands-read` is an estimate. Probe 6 or the experiment's contention run has to measure it.
-3. `convex`. The reviewer read most pages as the `.md` form of each docs URL with `curl`, and backend and helper source from GitHub. Three findings rest on source, not on a docs page: the admin acting-as identity and visibility, the nesting depth, and when a changed environment variable is seen. A source reading can change between versions; pin the version when the experiment's repository exists.
-4. All lenses. The fix units will add names again. The round-2 fixers added `HistoryProjection`, `gateAllows`, `resumeChain`, `pendingWorkBatch` and `writes` in a hurry, and most round-3 majors sit on them. Read what the fix units add first.
+Eighteen findings are listed in the sorting report as wasted effort on paper before the code exists, such as the carrier for appended envelopes and the restore checkpoint. Leave those `open` with a note that the build decides.
 
-## Inputs
+## Tactical decisions taken on 2026-10-01
 
-The doc is `docs/convex-transactional-domain-platform-decisions.md`, committed and unchanged since `abfa444`. It spent a day at the repository root and is back in `docs/`; `README.md` and `PLAN.md` point there.
+The owner accepted these on the session's recommendation. Any of them can be reopened.
 
-`docs/modern-ts.md` arrived on 2026-10-01. It is a research report on building and shipping the TypeScript library, written against the doc. No Spec cites it. The read of 2026-10-01:
-
-- Its architecture half restates the doc and adds nothing. Where the two differ, the doc wins.
-- Its engineering half covers ground the corpus does not: package boundaries and subpaths, module format, `tsconfig`, the build tool, a test catalogue, the CI matrix, publishing, and a compatibility policy that treats error codes, persisted handler keys and event schemas as contracts. Use it when the first experiment's repository is laid out (OQ4) and when the build tier of E-14 and the test tiers get their tooling.
-- Its claims on the Convex component template, TypeScript 7, npm trusted publishing and tsup's end of maintenance check out against their sources, read 2026-10-01.
-- Three things in it are wrong or missing. The dates it gives as end of life for Node 18 and Node 20 are those lines' last release dates; both are end of life, so its conclusion stands. It never mentions tsdown, the replacement tsup's own README names. Its six citations of the doc are broken placeholders, and each code block carries a stray language label above it.
-- Do not copy its repository blueprint. It puts journal, streams, receipts and obligations into one component, which is the central store D2 rejects, and it puts receipts and obligations inside a component, where D2 and E-50 put them in the parent.
-- Smaller conflicts, all resolved for the corpus: its error codes and obligation statuses are spelled differently, and its actor kinds leave out the reviewer of D11.
-- Its Node 18 and CommonJS baseline came from the prompt it was given, not from the doc. The owner decides.
-
-One Convex page was read this session: audit logging (docs.convex.dev/production/integrations/audit-logging, 2026-10-01). `log.audit(params)` blocks the commit on log persistence, needs an Enterprise plan and a dedicated deployment, emits on failed mutations and possibly on retries, and delivers to an S3 bucket. It is the evidence for `r3-architecture-audit-do-nothing-option-unrecorded`.
-
-`docs/sdp-development-from-application-platform.md` was written on 2026-10-01 by a fifth agent the owner asked for. It proposes how to develop SDP further, with this corpus as the evidence, and it is addressed to the SDP project. No Spec cites it. Three things in it bear on this corpus:
-
-- It classified the 136 findings of the ledger at `f44cad4`. 53 of them, and 23 of the 56 majors and blockers, are one concept stated in two or more Specs that disagree, which validate cannot see. Round 3's `sdp` findings are 35 of 38 of the same kind. The fix units should expect this class to come back after every fix round until references between Specs can be checked.
-- Four conventions the plan invented have a ruled home in SDP that the plan did not use: a deferral is a blocking open question that names its trigger; a ruling beyond the doc is a decision Spec below `ready`; a probe is an example that verifies its fact; the README census is `sdp census`. Its appendix B has `q` bodies that produce the open-question table and the extension register and match `check.py`'s numbers. Adopting any of these changes `PLAN.md`, so it is in the owner queue.
-- It found nine type names used in pinned signatures and declared by no Spec: `Journal`, `GetArgs`, `ListArgs`, `HistoryArgs`, `WriteBaselineArgs`, `WriteBaselineResult`, `DiagnosticSink`, `AuditRecordInput`, `BatchCursor`. Round 3 filed two of them. Fix unit 8 should take the list as a lead.
-
-Pages read on 2026-10-01: Convex audit logging by the main thread, the evidence for `r3-architecture-audit-do-nothing-option-unrecorded`; and the pages, component READMEs and source files the `convex` reviewer cites in its findings and in the `checked` records of `reviews/r3-convex.jsonl`.
+1. Slices replace the eight fix units of the previous plan.
+2. A slice is built on Specs at `defined` with no open blocker inside the slice. The owner states `ready` after the slice passes.
+3. Layer 3 and later wait for the experiment. Their 22 findings are not fixed on paper first.
+4. ESM only, Node 22 or later, one supported compiler. Dual builds, compatibility matrices and publishing wait for a first release.
+5. npm, with one `package.json` at the repository root, as the Convex component template has it.
+6. The main thread settles a GPT finding before it enters the ledger. An `unreviewed` flag still waits for its lens.
+7. A lens verdict for `sdp`, `convex` and buildability may rest on a GPT read once that reviewer has caught a planted defect in a Spec.
+8. Sessions delegate. `SESSIONS.md` is rewritten for it.
+9. Two Protocol idioms are adopted later, when their moment comes. An extension becomes a decision Spec when the owner takes it up, and until then the E-register stays. A probe becomes an example that verifies its fact when S0 builds it.
 
 ## Owner queue
 
-Nothing here blocks a fix session.
+Platform decisions. None blocks S0.
 
-1. Session commits: answered on 2026-10-01, the session decides, on `design-corpus`. Whether and when that branch merges to `main` stays with the owner.
-2. The 129 open questions in `README.md`, the twelve ambiguities of `PLAN.md` 11, and three product decisions listed in `README.md`.
-3. The seven probes. None has run. Round 3 found two of them largely answered by the docs: the using-components page says queries into components are reactive, which is F15 and half of Probe 5, and the docs say nested calls share the transaction limits, which is most of Probe 4. The corpus cannot change the doc's statuses; the owner decides whether the doc follows.
-4. From `docs/modern-ts.md`: ESM only or dual ESM and CommonJS; the Node floor; whether package and release design becomes a sixth pack in the corpus or stays outside it.
-5. From `docs/sdp-development-from-application-platform.md`: which of its proposals go to the SDP project, and whether this corpus adopts the SDP idioms it names, which would change `PLAN.md` 3.2, 6.5 and 8 and remove five checks from `tools/check.py`.
-6. Whether agent-run reviews become a standing option in `SESSIONS.md`, with the per-lens write-ahead file as their record, or stay an exception.
-7. Rulings the round-3 findings will ask for when their fix unit reaches them:
-   - D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt, since the obligation's fence already gives one execution (`r3-fidelity-derived-command-receipt-question-not-on-a-spec`).
-   - D3 and a history-reading migration: whether a command may read past events to migrate a stream on load, or such a migration must run as a sweep only (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
-   - Restore policy: whether a failed check keeps every writer out with no override, and whether the drill runs before every release; the doc says neither (`r3-fidelity-restore-policies-cited-to-the-doc`).
-   - The `[extension]` marker: `PLAN.md` 6.5 asks for it on every extension bullet and 167 of 903 carry it. Amend the plan or mark the bullets (`r3-fidelity-extension-marker-applied-to-a-fifth-of-citations`).
-   - D2's premise: Convex now documents a commit timestamp that increases in commit order, so "Convex gives no global sequence" is no longer true as written. Nothing fails; the reason for rejecting a global position needs restating (`r3-convex-commit-timestamp-not-weighed`).
-   - The native tier's identity: the admin key acting as a user passes Convex's visibility check for internal functions, so E-13 has a second difference from production. A test issuer with its keys in a data URI removes both (`r3-convex-admin-acting-identity-bypasses-visibility`).
+1. The 129 open questions (recipe 20), the twelve ambiguities of `PLAN.md` 11 and three product decisions listed in `README.md`.
+2. The seven probes. None has run. The earlier platform's evidence partly answers probes 1, 2, 3, 4 and 7 and does not touch 5 or 6.
+3. Rulings the round-3 findings ask for:
+   - D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt (`r3-fidelity-derived-command-receipt-question-not-on-a-spec`).
+   - D3 and a history-reading migration (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
+   - Restore policy: whether a failed check keeps every writer out with no override, and how often the drill runs (`r3-fidelity-restore-policies-cited-to-the-doc`).
+   - The `[extension]` marker: `PLAN.md` 6.5 asks for it on every extension bullet and 167 of 903 carry it (`r3-fidelity-extension-marker-applied-to-a-fifth-of-citations`).
+   - D2's premise: Convex documents a commit timestamp that increases in commit order (`r3-convex-commit-timestamp-not-weighed`).
+4. What code cannot choose, each at the slice named above: the grant bootstrap trust model, deployment-wide operator authority, tenant creation during a scan, the acceptable length of a write pause, history-deletion semantics, the restore override policy.
+5. The maximum order size and the latency and throughput targets, before S3 benchmarks.
+6. Whether the doc's statuses follow what round 3 found documented: F15's reactivity and most of Probe 4.
+7. When the `design-corpus` branch merges to `main`.
+
+## Leads
+
+A session confirms or drops each. None is a finding yet.
+
+1. A blind astra read of fix unit 1's Specs on 2026-10-01 returned 35 findings. About 20 match the ledger. These match nothing in it. The four marked checked were confirmed against the Spec text:
+   - An existing stream cannot regain a row in the active generation once its projection went to null.
+   - A null aggregate contribution with no marker creates a phantom entity.
+   - Aggregate verification and the restore check call a contract aggregates do not implement.
+   - The standalone baseline writer changes projection sources without maintaining their read models.
+   - Two checkpoint owners for migrations-driven batches.
+   - Purging a deployment-wide generation has no tenant iteration and no continuation.
+   - `startGeneration` accepts a batch size of zero. Checked.
+   - The gate exemption admits an ordinary writer when both generation fields are absent. Checked.
+   - Overlapping paused rebuilds have no ownership rule for a shared source scope.
+   - `rollbackGeneration` has no rule for which retired generation it picks. Checked.
+   - The one-write switch spans two rows. Checked.
+   - History queries return stored documents against an envelope-only validator.
+   - Two acceptance examples require version equalities their contracts cannot produce.
+   - History batch byte estimates leave out baseline events.
+   - A fence does not limit how many batches are scheduled.
+2. Five `fix` fields in the ledger are wrong as written: a timestamp-only rebuild cursor skips ties; `floor(4 MiB / 64 KiB)` is 64 and payload size is not row cost; transaction metrics are `{ used, remaining }` behind an async call; Workpool 0.4.7 does not hand `onComplete` the final attempt count; a Node handler needs its own `"use node"` action file.
+3. Two Convex facts no Spec covers. Nested calls draw on a system-operation time budget that byte and document bounds do not see: 605 calls used 14.8 s of a transaction that failed at 15.1 s on the earlier platform's native backend, in test mode, on 2026-09-26. And `convex-helpers` checks `maximumBytesRead` after it has read the row.
+4. F11 as stated. One of the earlier platform's tests observes the parent's identity inside a component on its pinned native backend. Recheck before a Spec says `ctx.auth` is unavailable there.
+5. Convex ships `getConvexSize` and `getDocumentSize`. They answer the two byte-bound findings of S1.
+6. Fifteen places where the design or a proposed fix repeats a shape the earlier platform regretted, each with the Spec line: progress kept on a row every command reads, work repeated per entry or per boundary, a stored maximum version taken as proof of coverage, a closed state with no route out, bookkeeping on the healthy path with no bounded lifetime, nested command calls where a helper would do, a recovery scan blocked by healthy work, registries with no reader.
+7. Nine type names used in pinned signatures and declared by no Spec: `Journal`, `GetArgs`, `ListArgs`, `HistoryArgs`, `WriteBaselineArgs`, `WriteBaselineResult`, `DiagnosticSink`, `AuditRecordInput`, `BatchCursor`.
+8. `dispatchId` on the obligation row is `v.id("_scheduled_functions")`. Nothing shows whether such an ID validates after a restore into another deployment. It belongs in Probe 7.
+9. The mention audit (recipe 22) gives 78 unbacked pairs, 50 of them declared from neither side. Each slice checks the ones in its families.
+
+The reports behind leads 1 to 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them.
+
+## Inputs
+
+The doc is `docs/convex-transactional-domain-platform-decisions.md`, unchanged since `abfa444`.
+
+`docs/modern-ts.md` is the owner's research on building and shipping the TypeScript library. Where it differs from the doc, the doc wins. Its sources were rechecked on 2026-10-01.
+
+- Day one: ESM, a strict `tsconfig` with `NodeNext`, `verbatimModuleSyntax`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; a `tsc` build as the Convex component template has it, with component codegen before the build and one dependency graph for the library and the example; the kernel free of any Convex runtime import and of Node built-ins; static declarations with no registry, decorators or reflection; Vitest for domain, replay and type tests; `convex-test`; a disposable native backend run by a script; a fixture composition apart from the production path; the measurement list, which matches the first experiment's; typed deployment environment variables for the maintenance switches.
+- First release: dual ESM and CJS, `publint` and the type-resolution check, packed-consumer fixtures, the Node and TypeScript matrix, changesets, trusted publishing, the compatibility policy for error codes, handler versions and event schema versions.
+- Not taken: its repository blueprint, which puts journal, receipts and obligations in one component against D2; the Node 18 floor and the TypeScript 5 promise, which came from its prompt; its sample types and error codes, which differ from what the corpus pins; test functions shipped behind a runtime guard; its sample CI, which builds before component codegen.
+
+`docs/sdp-development-from-application-platform.md` is the first report to the Protocol's maintainers. `docs/sdp-feedback.md` is the running file that follows it; the `adopt` unit and each slice add to it.
 
 ## Leftovers
 
-- `.claude/agents/fable-xhigh.md` is the agent definition the four round-3 reviewers ran as. It is committed.
-- `design/generated/gen-a.py` is a throwaway generator in a gitignored directory.
+- The tarball under `vendor/` goes when the Protocol installs with its CLI from a commit hash or a registry.
+- `.claude/agents/fable-xhigh.md` is the agent definition the round-3 reviewers ran as.
+- `design/generated/` is ignored and regenerated by `npx sdp view design`.

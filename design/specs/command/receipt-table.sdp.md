@@ -51,7 +51,7 @@ The `receipts` table lives in the parent, as the doc's ownership table assigns i
 - indexReceiptsByOperationUse: diagnosis by operation ID and the conflict response's pointer to the original (D19, D6)
 - indexReceiptsByTenantExpiry: `.index("by_tenant_expiry", ["tenantId", "expiresAt"])` (E-4)
 - indexReceiptsByTenantExpiryUse: the sweep's range read of rows with `expiresAt` at or below now, one tenant per run (D19, E-4)
-- typeReceipt: `type Receipt = Doc⟨"receipts"⟩` (D6)
+- typeReceipt: `type Receipt = Doc<"receipts">` (D6)
 - tombstoneShape: the same document with `tombstone: true`, `affected: []`, `versions: []`, `expiresAt: tombstoneHorizon`, and every key, fingerprint, outcome and operation field unchanged (D6, E-4)
 - expiryDefaults: `expiresAt = recordedAt + retention.window` with a default window of 7 days; `tombstoneHorizon` defaults to `Number.MAX_SAFE_INTEGER`, meaning never, and a declaration may set a finite horizon (D6, E-4)
 - limitRowSize: with at most 1,000 affected refs and 1,000 versions of under 200 bytes each, 2,000 entries keep a row under 400 KiB, below the 1 MiB document limit with room for the key fields; this is the one figure for receipt size in the corpus, and `spec:command.idempotency-and-receipts` cites it rather than restating it (F13, E-4)

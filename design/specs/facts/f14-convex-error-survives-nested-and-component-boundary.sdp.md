@@ -2,7 +2,7 @@
 id: spec:facts.f14-convex-error-survives-nested-and-component-boundary
 kind: constraint
 altitude: story
-readiness: defined
+readiness: scoped
 relations:
   refines: spec:facts.fact-ledger
 ---
@@ -19,7 +19,7 @@ The design throws a rejection as a structured `ConvexError` from inside a contex
 
 ### Open questions
 
-- [non-blocking] Probe 2 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D7) rest on the author's reading of the pages (F14, Probe 2)
+- [blocking] Probe 2 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D7) rest on the author's reading of the pages (F14, Probe 2)
 
 ## Constraints
 

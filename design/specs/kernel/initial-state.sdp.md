@@ -38,7 +38,7 @@ The v0.1 interface had no initial state, so a rebuild from the creation event ha
 
 ## Design
 
-- fnInitial: `initial: () => S` on `Decider⟨S, C, E, R⟩`, called by the adapter when the identity index finds no stream row and by `rebuild` when no baseline exists (D3, E-1)
+- fnInitial: `initial: () => S` on `Decider<S, C, E, R>`, called by the adapter when the identity index finds no stream row and by `rebuild` when no baseline exists (D3, E-1)
 - loadedVersionForNewStream: a stream with no row loads as `{ state: initial(), version: 0, exists: false }` and its first append expects version 0 (D2, E-1)
 - createExpectsVersionZero: an operation that creates a subject plans its command with `expectedVersion: 0`; the adapter's expected-version step answers a loaded row with the reserved `entityExists` instead of `staleVersion`, so `decide` never sees a create against an existing state (D6, E-21, Sc L1-4)
 - baselineStart: when the stream row carries a `baselineVersion`, rebuild reads the baseline event at that version and folds from the state it holds over the events with a greater version (D5, E-1)

@@ -65,7 +65,7 @@ Each probe is a fixture-app test on a disposable backend. The probe app is separ
 - fixtureApp: the probe app is the kernel's fixture app, separate from the example app, and test-only functions never ship (Acceptance scenarios)
 - evidence: each run records commit, backend and dependency versions, configuration, command and result, and states any difference from production configuration (Acceptance scenarios)
 - probe7Narrowed: the states and the 7-day retention of `_scheduled_functions` were found documented on 2026-09-30, so the probe confirms them and spends its effort on what a restore leaves (F16, S6, S8)
-- location: where the probe app lives is OQ4 and stays with the owner (OQ4)
+- location: the probe app lives in this repository, beside the design, as the owner ruled under OQ4 on 2026-10-01 (OQ4)
 
 ## Verification — reviewed
 

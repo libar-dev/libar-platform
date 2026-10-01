@@ -1,0 +1,25 @@
+# libar-platform
+
+The Convex transactional domain platform. `docs/` holds the inputs. `design/` holds the design as a Software Delivery Protocol corpus of Specs. The code built from the design sits beside them; there is none yet.
+
+## Which reader you are
+
+- **You run the session.** Read `design/STATE.md`, then follow `design/SESSIONS.md`.
+- **You were handed a brief.** The brief is your task and its limits. Change only the files it names.
+
+## Rules for every reader
+
+- `docs/convex-transactional-domain-platform-decisions.md`, "the doc", says what the platform is. Its decisions are proposals until the owner rules. Only the owner states `ready` on a Spec, settles an open question or edits the doc.
+- A Spec is intended truth. Report code that disagrees with a Spec as a gap, and the main thread rules which side changes.
+- Read the corpus through its graph. Run `npm ci` once, then `npx sdp q '<recipe body>' --root design --json` with a body from `node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md`. Always `npx sdp`: a bare `sdp` on macOS is an unrelated tool.
+- Before you write or edit a Spec, read `design/PLAN.md` section 6 and `node_modules/@libar-dev/software-delivery-protocol/.agents/skills/sdp-authoring/SKILL.md`.
+- `python3 design/tools/check.py` prints `OK` when the Specs, the README and the ledger agree. Run it before you say they do.
+- Name the tier behind a claim about behavior: compiled, pure test, `convex-test`, or native backend.
+- The earlier platform, in the `convex-event-sourcing` repository, is evidence about Convex and about what failed. Take a fact from it with its date and versions. Take none of its designs or working habits.
+- `design/reviews/r3-*.jsonl` are records of a finished review round and keep their text.
+- Prose uses plain words, sentence-case headings and no em dashes.
+
+## On the owner's machine
+
+- How one Claude thread works with Claude and GPT agents: `~/dev-libar/gpt-models-from-the-claude-main-thread.md`.
+- This project's commands for a brief, its job log and the reports gathered so far: `~/dev-libar/gpt-models-project-notes/application-platform.md`.

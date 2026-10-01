@@ -26,7 +26,7 @@ A command marks a scoped view key dirty in its own transaction, and several chan
 
 ### Open questions
 
-- [non-blocking] The dirty-mark table, the recompute scheduling and the staleness field are deferred to the build on this trigger (D18, Decision method rule 4)
+- [blocking] The dirty-mark table, the recompute scheduling and the staleness field are deferred to the build on this trigger (D18, Decision method rule 4)
 
 ## Behavior
 

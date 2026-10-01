@@ -19,7 +19,7 @@ An approval is a record that an authorized person approved one exact proposal: o
 
 ### Open questions
 
-- [non-blocking] The approvals table, its indexes and the approval command's declaration are deferred to the build on the process trigger; the rules here are the promise the build must keep (D16, Decision method rule 4)
+- [blocking] The approvals table, its indexes and the approval command's declaration are deferred to the build on the process trigger; the rules here are the promise the build must keep (D16, Decision method rule 4)
 
 ## Rule
 

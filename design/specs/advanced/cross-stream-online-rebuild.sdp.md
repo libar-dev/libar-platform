@@ -26,7 +26,7 @@ The rebuild class is declared first: per entity, bounded current state, or histo
 
 ### Open questions
 
-- [non-blocking] The dependency protocol or the consistent source cut, and the online cutover for this class, are deferred to the build on this trigger (D18, Decision method rule 4)
+- [blocking] The dependency protocol or the consistent source cut, and the online cutover for this class, are deferred to the build on this trigger (D18, Decision method rule 4)
 
 ## Behavior
 

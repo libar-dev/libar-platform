@@ -23,6 +23,7 @@ Layer 4 · Detail: deferred until the operation spans time, external systems or 
 
 ### Open questions
 
+- [blocking] The trigger has not fired; the workflow definition, the process record, the reservation's business expiry and the payment obligation's handler are deferred to the build until the operation spans time, external systems or human decisions (D16, Decision method rule 4)
 - [non-blocking] Which of the three late-payment policies applies is a product decision the build records per deployment: reallocate, ask a person, or refund as a separately tracked operation (D16)
 
 ## Workflow

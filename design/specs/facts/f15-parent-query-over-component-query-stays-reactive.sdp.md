@@ -2,7 +2,7 @@
 id: spec:facts.f15-parent-query-over-component-query-stays-reactive
 kind: constraint
 altitude: story
-readiness: defined
+readiness: scoped
 relations:
   refines: spec:facts.fact-ledger
 ---
@@ -19,7 +19,7 @@ The read-need table's default for one entity's detail is an authorized component
 
 ### Open questions
 
-- [non-blocking] Probe 5 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D8) rest on the author's reading of the pages (F15, Probe 5)
+- [blocking] Probe 5 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D8) rest on the author's reading of the pages (F15, Probe 5)
 
 ## Constraints
 

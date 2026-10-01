@@ -2,30 +2,27 @@
 
 Lead architect's plan, 2026-09-30. Authoring agents execute it; the orchestrator owns this file. Nobody but the orchestrator edits it.
 
-Two inputs. The decisions document at `../docs/convex-transactional-domain-platform-decisions.md` (below: "the doc") says what the platform is. The Libar Software Delivery Protocol at `/Users/darkomijic/dev-libar/software-delivery-protocol/` (below: "SDP") says how the design is written down. The doc wins on content, SDP wins on form, this plan wins on IDs, layout and conventions. Where the plan had to rule on something neither input rules on, section 11 lists it for the owner.
+Two inputs. The decisions document at `../docs/convex-transactional-domain-platform-decisions.md` (below: "the doc") says what the platform is. The Libar Software Delivery Protocol (below: "SDP"), installed at the version the repository's `package.json` pins, says how the design is written down. The doc wins on content, SDP wins on form, this plan wins on IDs, layout and conventions. Where the plan had to rule on something neither input rules on, section 11 lists it for the owner.
 
 ## 0. Validate and tooling
 
-The CLI is prebuilt. `SDP` below stands for `/Users/darkomijic/dev-libar/software-delivery-protocol/dist/cli/sdp.js`, Node 24.
+The CLI is the `sdp` binary of the pinned `@libar-dev/software-delivery-protocol` package. Run `npm ci` once at the repository root, then call it as `npx sdp`. A bare `sdp` on macOS resolves to an unrelated Xcode tool. The package also ships the recipe catalog, three agent skills and the Protocol's own Specs; `npx sdp --help` lists their paths.
 
 ```sh
 # from the repository root
-node /Users/darkomijic/dev-libar/software-delivery-protocol/dist/cli/sdp.js validate design
-
-# or from design/
-cd design && node /Users/darkomijic/dev-libar/software-delivery-protocol/dist/cli/sdp.js validate .
+npx sdp validate design
 ```
 
 Both forms were run against the scaffold in this directory on 2026-09-30 and printed `validate: 0 errors · 0 warnings`. No `--exclude` is needed; `design/` carries no fixtures. Output goes to `design/generated/` (graph, contracts, registrar manifest), which `design/.gitignore` ignores.
 
 Other verbs, same path and root rules:
 
-- `node $SDP validate design --watch` is the authoring loop; it re-runs on carrier changes and stays alive.
-- `node $SDP view design` writes the Design Review to `design/generated/design-review/` (an index plus one page per Spec and Pack). This is the human-readable rendering of the corpus.
-- `node $SDP q '<body>' --root design --json` evaluates a recipe body from `docs/agent-surface/recipes.md` against this corpus. Recipes 3 (one Spec's guarantees), 5 (Pack review), 6 (concept search), 7 (readiness divergence), 8 (warnings as data), 9 (promotion preflight) and 11 (the lower ladder) are the useful ones here.
-- `node $SDP new spec specs/<family>/<name>.sdp.md --id ID --kind KIND --altitude ALT --title TITLE --outcome OUTCOME` scaffolds an idea-rung stub. PATH is relative to the current directory, so run it from `design/`.
+- `npx sdp validate design --watch` is the authoring loop; it re-runs on carrier changes and stays alive.
+- `npx sdp view design` writes the Design Review to `design/generated/design-review/` (an index plus one page per Spec and Pack). This is the human-readable rendering of the corpus.
+- `npx sdp q '<body>' --root design --json` evaluates a recipe body from the package's `docs/agent-surface/recipes.md` against this corpus. Recipes 3 (one Spec's guarantees), 5 (Pack review), 6 (concept search), 7 (readiness divergence), 8 (warnings as data), 9 (promotion preflight) and 11 (the lower ladder) are the useful ones here.
+- `npx sdp new spec specs/<family>/<name>.sdp.md --id ID --kind KIND --altitude ALT --title TITLE --outcome OUTCOME` scaffolds an idea-rung stub. PATH is relative to the current directory, so run it from `design/`.
 
-Exit code 1 means an error; warnings exit 0. The finished corpus must exit 0 with zero errors. Section 7 says which warnings are expected.
+Exit code 1 means an error; warnings exit 0. The corpus must exit 0 with zero errors and zero warnings.
 
 ## 1. Reading the inputs: the numbering key
 
@@ -121,7 +118,7 @@ The constructs used, and where SDP shows them: the Markdown envelope and body (`
 | The platform thesis | `behavior` | `epic` | `defined` |
 | A law | `rule` | `feature` | `defined` |
 | A decision | `decision` | `feature` | `defined` |
-| A fact-ledger row | `constraint` | `story` | `defined` |
+| A fact-ledger row | `constraint` | `story` | `defined`; `scoped` while the fact is assumed |
 | The probe plan, the first experiment, the command pipeline, rebuild, restore, the checkout example | `workflow` | `feature` or `story` | see inventory |
 | A component with rules and an example space | `behavior` | `feature` | `defined` (Layers 0 to 3), `scoped` (Layers 4 to 6) |
 | A pinned interface, table schema or wire shape | `contract` | `story` | `defined` |
@@ -130,7 +127,7 @@ The constructs used, and where SDP shows them: the Markdown envelope and body (`
 | A ruling the design makes beyond the doc | `decision` | `story` | `defined` |
 | An acceptance scenario | `example` | `story` | `defined` |
 
-Readiness policy. No agent writes `readiness: ready`; SDP reserves that statement for a human after review, and the doc says the owner has ruled on nothing. `defined` is the ceiling and is stated only when the floor clears: outcome present, at least one relation, the kind's evidence complete, no blocking open question. Layer 4 to 6 component Specs state `scoped`; their examples may still state `defined` because readiness is independent across refinement. A Spec that needs a ruling before it can be designed records a `[blocking]` open question and stays at `scoped`; that is the honest signal, not a defect.
+Readiness policy. No agent writes `readiness: ready`; SDP reserves that statement for a human after review, and the doc says the owner has ruled on nothing. `defined` is the ceiling and is stated only when the floor clears: outcome present, at least one relation, the kind's evidence complete, no blocking open question. Layer 4 to 6 component Specs state `scoped`; their examples may still state `defined` because readiness is independent across refinement. A Spec that needs a ruling before it can be designed records a `[blocking]` open question and stays at `scoped`; that is the honest signal, not a defect. Two more uses of a blocking question follow the Protocol's authoring skill. A deferred Spec carries one that names its trigger. An assumed fact carries one that names its probe, so the `ready` floor refuses every Spec that rests on it until the probe has run.
 
 Facts as constraints: the doc's own open question 5 proposes that ledger facts become constraints. The plan adopts it. A fact's `target` is its evidence status in the form `evidence.status:documented`, `evidence.status:rechecked`, `evidence.status:probed` or `evidence.status:assumed`, and `measurableBy` names the source and, for assumed facts, the probe. Every Spec that relies on a fact points `constrainedBy` at it, so the graph answers "which designs rest on an assumption".
 
@@ -201,7 +198,7 @@ Fact slugs: `f01-serializable-mutations-under-occ`, `f02-component-calls-commit-
 | ID | kind | alt | readiness | relations | Content |
 |---|---|---|---|---|---|
 | `spec:kernel.domain-kernel` | behavior | feature | defined | refines epic; decidedBy D3, D4; constrainedBy Law 3, Law 10; dependsOn `spec:kernel.outcome-model` | Purity (no database, network, scheduler, environment, ambient auth); time and outside facts as inputs; historically significant facts captured in events and never re-fetched; commands load current state and apply only new events; rebuild equality is a test; small state machines and invariants. Example space for L0-1, L0-2 |
-| `spec:kernel.decider-contract` | contract | story | defined | refines domain-kernel; decidedBy D3; dependsOn initial-state | `Decider⟨S, C, E, R⟩` with `initial`, `decide`, `evolve`; `DecisionContext` (now, actor, captured facts); `DecideResult⟨E, R⟩`; `fold`; the state-machine helper shape |
+| `spec:kernel.decider-contract` | contract | story | defined | refines domain-kernel; decidedBy D3; dependsOn initial-state | `Decider<S, C, E, R>` with `initial`, `decide`, `evolve`; `DecisionContext` (now, actor, captured facts); `DecideResult<E, R>`; `fold`; the state-machine helper shape |
 | `spec:kernel.outcome-model` | rule | feature | defined | refines epic; decidedBy D4; constrainedBy Law 6 | The four outcomes; business failure commits like success; rejection commits nothing; technical failure rolls back and stores nothing; transient refusal is a retryable error; refused-as-fact is a per-command business policy. Design: the `Outcome` union |
 | `spec:kernel.initial-state` | decision | story | defined | refines domain-kernel; dependsOn D3 | E-1: `initial()` versus evolve-from-empty; the ruling, its consequence for rebuild from the creation event |
 | `spec:kernel.state-document-mapping` | decision | story | defined | refines domain-kernel; dependsOn D3 | E-2: one document per stream by default within the size budget; when state spans documents, one mapping per context derives writes from folded state; OQ3 |
@@ -332,8 +329,8 @@ Five packages, disjoint by directory. Sequence: A first, because every other pac
 
 Definition of done, every package:
 
-1. `node $SDP validate design` exits 0 on the merged corpus. While a foreign ID from the package's cross-package list is not yet authored, the only tolerated error is `conformance/referential-integrity` naming that ID.
-2. The only warnings are `conformance/verifies-linkage`, one per example, because no test anchors exist yet.
+1. `npx sdp validate design` exits 0 on the merged corpus. While a foreign ID from the package's cross-package list is not yet authored, the only tolerated error is `conformance/referential-integrity` naming that ID.
+2. No warning. An example with no test bound is data below `ready`, not a warning.
 3. Every Spec in the package's inventory exists with the stated kind, altitude, readiness and minimum relations; every scenario assigned to the package has its example(s).
 4. The pack manifest lists every Spec of the package in inventory order.
 5. Recipe 7 (readiness divergence) returns an empty array for the package's IDs.
@@ -356,7 +353,7 @@ Scope: `specs/kernel/`, `specs/context/`, `specs/kernel-and-context.pack.sdp.md`
 
 Deliverables: 5 kernel Specs, 7 context Specs, 6 examples (L0-1, L0-2, L1-1, L1-10, L1-11, L2-7).
 
-Brief. Layer 0 and Layer 1, full detail. The kernel is a pure TypeScript module and its Design section says so; the decider contract pins `Decider⟨S, C, E, R⟩`, `DecisionContext`, `DecideResult⟨E, R⟩` and `fold`, one Design bullet per declaration. The outcome model's `Outcome` union is the single type the boundary (Package C) maps to the wire; write it once here. E-1 and E-2 are decision Specs with the do-nothing option first. The context component describes one Convex component (`convex.config.ts` with `defineComponent`, mounted per context by the parent's `app.use`), its function surface (`execute` as a mutation, queries), and states explicitly that the parent calls it through `ctx.runMutation` on the component API so each call is an isolated sub-transaction that commits with the caller (F2, S2 wording in section 9). The tables contract carries `streams` and `events` as pasteable `defineTable` expressions with every index the doc names (replay, identity, enumeration) plus the operation index the doc implies, and states the document size budget for one-document-per-stream. The persistence adapter is the step sequence load, decide, fold, append with expected-version check, save, and it names the three outcomes at its boundary: version conflict (an indexed read finds a newer version), rejection (from `decide`), throw. Distinguish a version conflict, which is a logical answer the caller sees, from an engine OCC retry, which is invisible (F1); scenario L1-11 turns on that distinction. The journal Spec carries the baseline-event rules and its example space holds L2-7. Batch-shaped API is a rule Spec: one call per context per use case.
+Brief. Layer 0 and Layer 1, full detail. The kernel is a pure TypeScript module and its Design section says so; the decider contract pins `Decider<S, C, E, R>`, `DecisionContext`, `DecideResult<E, R>` and `fold`, one Design bullet per declaration. The outcome model's `Outcome` union is the single type the boundary (Package C) maps to the wire; write it once here. E-1 and E-2 are decision Specs with the do-nothing option first. The context component describes one Convex component (`convex.config.ts` with `defineComponent`, mounted per context by the parent's `app.use`), its function surface (`execute` as a mutation, queries), and states explicitly that the parent calls it through `ctx.runMutation` on the component API so each call is an isolated sub-transaction that commits with the caller (F2, S2 wording in section 9). The tables contract carries `streams` and `events` as pasteable `defineTable` expressions with every index the doc names (replay, identity, enumeration) plus the operation index the doc implies, and states the document size budget for one-document-per-stream. The persistence adapter is the step sequence load, decide, fold, append with expected-version check, save, and it names the three outcomes at its boundary: version conflict (an indexed read finds a newer version), rejection (from `decide`), throw. Distinguish a version conflict, which is a logical answer the caller sees, from an engine OCC retry, which is invisible (F1); scenario L1-11 turns on that distinction. The journal Spec carries the baseline-event rules and its example space holds L2-7. Batch-shaped API is a rule Spec: one call per context per use case.
 
 Cross-package IDs B may reference: `spec:command.actor-and-scope` (dependsOn from context-component and event-envelope), all Package A IDs. B must not reference anything else.
 
@@ -526,7 +523,7 @@ Validate enforces these. They were each tried against the CLI on 2026-09-30; the
 2. First body line is `# Title`. Everything before the first `##` is narrative and must be plain paragraphs.
 3. Recognized `##` headings: `Intent`, one of `Behavior` | `Rule` | `Workflow` | `Contract`, `Example space`, `Constraints`, `Model`, `Design`, `Decision`, `UI`, and `Verification — <manual|reviewed|contract|executable>` with an em dash and spaces. Each at most once. Any other heading is an error, as is a second `#` H1 or a `###` anywhere except `### Open questions` under Intent.
 4. Fenced code blocks are refused everywhere except the single ```` ```gwt-vocabulary ```` under `## Example space` and the single ```` ```gwt ```` under an example's `## Intent`. TypeScript and Convex code therefore go in inline code inside a bullet.
-5. Tables, blockquotes, ordered lists, `*` or `+` bullets, horizontal rules, indented lines and nested lists are refused in every section. Raw HTML is refused, and the guard treats any `<word...>` as HTML. ASCII generics like `Promise<void>` are an error even inside backticks. Write generics with the Unicode brackets `⟨` `⟩` (U+27E8, U+27E9): `Promise⟨AppendResult⟩`. Comparison operators with spaces around them (`a < b`, `n <= 1000`) are safe.
+5. Tables, blockquotes, ordered lists, `*` or `+` bullets, horizontal rules, indented lines and nested lists are refused in every section. Raw HTML is refused outside inline code, and the guard treats any `<word...>` as HTML. Inside an inline code span angle brackets are content, so write generics as they are in TypeScript: `Promise<AppendResult>`. A code span opens and closes on one line, and an unmatched backtick shields nothing. Comparison operators with spaces around them (`a < b`, `n <= 1000`) are safe anywhere.
 6. One bullet is one physical line, however long. A wrapped continuation is a refused nested line. Never run Prettier or another Markdown formatter over `.sdp.md` files.
 7. `Intent` bullets are keyed and closed: `actor`, `problem`, `outcome`, `value` once each; `risk` and `assumption` repeatable. Open questions are `- [blocking] text` or `- [non-blocking] text` under `### Open questions`, after the keyed bullets.
 8. `Behavior` accepts only `- rule:` and `- flow:` bullets. `Workflow` accepts plain bullets (flows) and `- rule:`. `Rule` and `Contract` accept plain bullets only; a keyed bullet is refused. A plain bullet that begins with one word followed by a colon and a space (`Applied: ...`, `Note: ...`) is parsed as keyed and refused; write `Applied means ...` or `[applied] ...`.
@@ -542,9 +539,9 @@ Validate enforces these. They were each tried against the CLI on 2026-09-30; the
 
 One declaration per Design bullet, in inline code, on one line, using the real `convex/server` and `convex/values` syntax so a reader can paste it into `schema.ts` or a function file.
 
-- Types: `- typeOutcome: \`type Outcome⟨R⟩ = { kind: "applied"; result: R; versions: StreamVersion[] } | { kind: "businessFailure"; result: R; versions: StreamVersion[] }\``
+- Types: `- typeOutcome: \`type Outcome<R> = { kind: "applied"; result: R; versions: StreamVersion[] } | { kind: "businessFailure"; result: R; versions: StreamVersion[] }\``
 - Interfaces: members separated by `;` inside one pair of braces.
-- Functions: `- fnAppend: \`append(ctx: MutationCtx, input: AppendInput): Promise⟨AppendResult⟩\``
+- Functions: `- fnAppend: \`append(ctx: MutationCtx, input: AppendInput): Promise<AppendResult>\``
 - Convex functions: `- fnExecute: \`export const execute = mutation({ args: { tenantId: v.string(), scope: scopeValidator, actor: actorValidator, command: v.any() }, returns: outcomeValidator, handler })\``. Name the `args` validators; `handler` alone stands for the body.
 - Tables: `- tableEvents: \`events: defineTable({ tenantId: v.string(), contextId: v.string(), streamType: v.string(), streamId: v.string(), streamVersion: v.number(), eventId: v.string(), eventType: v.string(), eventSchemaVersion: v.number(), operationId: v.string(), correlationId: v.optional(v.string()), causedBy: causedByValidator, actor: actorValidator, recordedAt: v.number(), occurredAt: v.optional(v.number()), payload: v.any() }).index("by_stream", ["tenantId", "streamType", "streamId", "streamVersion"]).index("by_event_id", ["tenantId", "eventId"]).index("by_operation", ["tenantId", "operationId"])\``. A long table may be split into `tableX`, `validatorXDoc` and `indexXByY` bullets.
 - Index fields are listed in query order: equality fields first, then the range field. State which query uses each index in a following bullet (`indexEventsByStreamUse: replay and expected-version check (D2)`).
@@ -561,7 +558,7 @@ Quote the doc where its sentence is the rule; paraphrase only to fit one bullet.
 
 An extension is a design claim the doc does not make. Three things, always together: the bullet's text starts with `[extension]` (after the `rule:` or Design key), the citation names the E-number, and the Spec's Intent carries `- [non-blocking] Extension E-<n>: <the ruling needed and the option taken here>`. Rulings the design cannot take provisionally use `[blocking]` and the Spec states `scoped`. Section 10 assigns E-numbers to the extension points the lead already sees; each package owns a numeric range for new ones.
 
-A deferral is detail the doc says the build will write (Layers 3 to 6). Mark it with `[deferred]` at the start of the bullet, add a `deferred:` Design bullet naming what is deferred and the trigger, and open the narrative with `Detail: deferred until <trigger>`. Deferred Specs state `scoped`.
+A deferral is detail the doc says the build will write (Layers 3 to 6). Mark it with `[deferred]` at the start of the bullet, add a `deferred:` Design bullet naming what is deferred and the trigger, and open the narrative with `Detail: deferred until <trigger>`. The Spec carries one `[blocking]` open question that names the trigger, which is the Protocol's home for a deferral and what holds the Spec at `scoped`.
 
 The design never resolves an inconsistency it finds in the doc. It records the two readings as a `[non-blocking]` open question on the Spec where it surfaced and picks the reading the acceptance scenarios need, marked `[extension]`.
 
@@ -584,7 +581,7 @@ Fidelity to the decisions document:
 
 SDP conformance:
 
-7. `validate` exits 0 with zero errors; the warnings are all `conformance/verifies-linkage`, one per example.
+7. `validate` exits 0 with zero errors and zero warnings.
 8. Recipe 7 returns an empty array; every stated readiness is earned by the floor. No Spec states `ready`.
 9. Every example `refines` and `verifies` its parent; Layer 0 to 3 examples bind points in the parent's space; recipe 3 on a sample of parents shows the expected verifiers.
 10. Packs list every Spec of their package in order, carry `modelRefs: [spec:platform.vocabulary]`, and recipe 5 shows no unresolved members.
@@ -604,7 +601,7 @@ Completeness:
 18. All 43 scenario rows of the doc have examples per section 4, with the enumerated cases split into siblings.
 19. Every component in section 2 has its Specs; every Spec in 3.4 exists.
 20. Every open question of the doc (OQ1 to OQ6) is recorded on the Spec section 3.4 assigns it to.
-21. Every assumed fact (F14 to F17) is named as an `assumption` or open question on each Spec that relies on it, and the probe plan lists the probe.
+21. Every assumed fact (F14, F15, F17) states `scoped` behind a `[blocking]` question that names its probe, is named as an `assumption` or open question on each Spec that relies on it, and has its probe in the probe plan. F16 was found documented and states `defined`.
 
 Convex correctness, checked against the sources the doc lists (S1 to S15) and the recheck in section 9, never from memory:
 
@@ -628,7 +625,7 @@ Polish:
 
 37. Titles in sentence case and plain words; one claim per bullet; no bullet without a citation or marker.
 38. Prose uses the doc's vocabulary and no synonyms for locked terms; no filler; no em dashes in prose (carrier syntax excepted).
-39. `sdp view` renders every page; the Design Review index reads as a component map; README matches the corpus (IDs, counts, warnings).
+39. `sdp view` renders every page; the Design Review index reads as a component map; README matches the corpus (IDs, tables, the expected validate output).
 40. A reader who knows Convex can implement Layer 0 to 2 from the Specs alone; a reviewer who knows the doc can find every decision in the graph in one query.
 
 ## 8. README.md template
@@ -637,12 +634,12 @@ Package A writes `design/README.md` with these sections, in this order, and upda
 
 1. What this is: one paragraph; the doc is the source of truth for content, the corpus is the design, the Design Review is the rendering.
 2. How to read: run `view`, open `generated/design-review/index.md`; the recipes to run for questions.
-3. How to validate: the commands from section 0 and the expected warnings.
+3. How to validate: the commands from section 0 and the expected output.
 4. The component map: section 2's table with each component linked to its Spec file(s).
 5. The layers and packages: which families and packs carry each layer.
 6. The numbering key (section 1) and the scenario table (section 4) with links to example files.
 7. The extension register (section 10) as maintained by the packages.
-8. Open questions for the owner: every `[blocking]` and `[non-blocking]` question in the corpus, grouped by Spec, plus section 11.
+8. Open questions for the owner: the doc's open questions and section 11 with their provisional readings. The full register, by Spec, is recipe 20 of the Protocol's catalog and is derived, not kept.
 9. ID changes: any inventory ID that was renamed, split or added, with the reason.
 
 ## 9. Convex facts rechecked on 2026-09-30
@@ -691,7 +688,7 @@ Recorded here and in README section 8. The corpus proceeds on the provisional re
 6. One document per stream and the maximum order size (OQ3). The design assumes one document per stream and leaves the maximum lines as a product number with a placeholder.
 7. Where the experiment lives (OQ4). Not decided by the corpus.
 8. Readiness. No agent states `ready`. After consensus the owner may state it on Layer 0 to 2 Specs whose floor clears; recipe 9 lists the floor per Spec.
-9. `verifies` on examples before tests exist. Kept for fidelity to the acceptance contract, at the cost of one warning per example. The alternative (`refines` only until a test anchor binds) removes the warnings and the trace.
+9. `verifies` on examples before tests exist. Settled by the Protocol on 2026-10-01: an unbound example below `ready` no longer warns, so the trace is kept at no cost.
 10. Layer 3 depth. The doc says Layer 3 is written from what the experiment shows; the plan lets D13 to D15 be carried at `defined` now because the doc is specific there. Confirm that this does not pre-empt the experiment.
 11. F16 changes status. The lead read S6 on 2026-09-30 and found the states and the 7-day retention documented. The doc itself is not edited by this effort; the corpus records the recheck. The owner decides whether the doc follows.
 12. The doc's fact F4 says the size of the nested-call overhead is unknown, and Probe 3 measures it. Layer 1's design puts every context read behind a component call. If the probe shows a cost that breaks the read budgets, OQ1's answer changes the context component's shape; the design flags the dependency on `spec:context.context-component` and does not pre-decide it.

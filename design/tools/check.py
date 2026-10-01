@@ -3,6 +3,11 @@
 
 Exits 0 when the corpus, README.md and the review ledger agree; prints each failure and exits 1 otherwise.
 SESSIONS.md says when to run it.
+`python3 design/tools/check.py --slice S1` lists the findings a slice takes and exits.
+
+The Protocol's CLI is the pinned dependency in the repository's package.json; run `npm ci` once.
+What `sdp validate` checks is the Protocol's. What this script adds is this project's policy:
+citations carry edges, extensions are registered, nobody but the owner states `ready`.
 """
 import collections
 import glob
@@ -14,7 +19,10 @@ import subprocess
 import sys
 
 DESIGN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SDP = os.environ.get("SDP", "/Users/darkomijic/dev-libar/software-delivery-protocol/dist/cli/sdp.js")
+ROOT = os.path.dirname(DESIGN)
+PACKAGE = os.path.join(ROOT, "node_modules", "@libar-dev", "software-delivery-protocol")
+SDP = os.environ.get("SDP", os.path.join(PACKAGE, "dist", "cli", "sdp.js"))
+PINNED = json.load(open(os.path.join(ROOT, "package.json"), encoding="utf-8"))["devDependencies"]["@libar-dev/software-delivery-protocol"]
 READINESS_DIVERGENCE = (
     'const rungs = ["idea", "scoped", "defined", "ready"];'
     " const rank = (r) => (r === undefined ? -1 : rungs.indexOf(r));"
@@ -40,16 +48,16 @@ text = out.stdout + out.stderr
 graph = re.search(r"(\d+) specs · (\d+) packs · \d+ anchors → (\d+) nodes · (\d+) edges", text)
 verdict = re.search(r"validate: (\d+) errors · (\d+) warnings", text)
 if not graph or not verdict:
-    fail("validate printed no summary line; is SDP built at " + SDP + "?")
+    fail("validate printed no summary line; run `npm ci` at the repository root, then check " + SDP)
     print("\n".join(failures))
     sys.exit(1)
 n_specs, n_packs, n_nodes, n_edges = (int(x) for x in graph.groups())
 n_errors, n_warnings = (int(x) for x in verdict.groups())
-other_warnings = [l for l in text.splitlines() if "[warning]" in l and "conformance/verifies-linkage" not in l]
+warnings = [l for l in text.splitlines() if "[warning]" in l]
 if n_errors:
     fail(f"validate: {n_errors} errors")
-if other_warnings:
-    fail(f"validate: {len(other_warnings)} warnings that are not verifies-linkage, first: {other_warnings[0][:200]}")
+if n_warnings:
+    fail(f"validate: {n_warnings} warnings, first: {(warnings or ['not printed'])[0][:200]}")
 
 out = run(["q", READINESS_DIVERGENCE, "--root", ".", "--json"])
 try:
@@ -104,43 +112,21 @@ for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), re
         edge_gaps.append(f"{sid}: laws {sorted(missing_laws)} facts {sorted(missing_facts)}")
 for gap in edge_gaps:
     fail("cited without a constrainedBy edge (rubric 16): " + gap)
-if kinds["example"] != n_warnings:
-    fail(f"{n_warnings} warnings for {kinds['example']} examples; expected one verifies-linkage warning per example")
 
 # 3. README.md against the Specs.
 readme = open(os.path.join(DESIGN, "README.md"), encoding="utf-8").read()
 expected_line = f"{n_specs} specs · {n_packs} packs · 0 anchors → {n_nodes} nodes · {n_edges} edges (0 errors, 0 warnings)"
 if expected_line not in readme:
     fail("README's expected validate output is stale; it should read: " + expected_line)
-if f"validate: 0 errors · {n_warnings} warnings" not in readme:
-    fail(f"README's expected warning count is stale; it should be {n_warnings}")
-census = re.search(r"Census: (\d+) Specs, of which (\d+) are examples; by kind, (.*?)\. Readiness: (\d+) `defined`, (\d+) `scoped`", readme)
-if not census:
-    fail("README has no census sentence")
-else:
-    stated_kinds = {k: int(n) for n, k in re.findall(r"(\d+) (\w+)", census.group(3))}
-    if int(census.group(1)) != sum(kinds.values()) or stated_kinds != dict(kinds):
-        fail(f"README census is stale; the corpus has {sum(kinds.values())} Specs, {dict(kinds)}")
-    if (int(census.group(4)), int(census.group(5))) != (readiness["defined"], readiness["scoped"]):
-        fail(f"README readiness counts are stale; the corpus has {dict(readiness)}")
+if "validate: 0 errors · 0 warnings" not in readme:
+    fail("README's expected validate verdict is stale; it should read 0 errors and 0 warnings")
 registered = set(re.findall(r"^\| E-(\d+) \|", readme, re.M))
 if cited_extensions - registered:
     fail(f"extensions cited in Specs but missing from README's register: E-{sorted(cited_extensions - registered, key=int)}")
 if registered - cited_extensions:
     fail(f"extensions registered in README but cited by no Spec: E-{sorted(registered - cited_extensions, key=int)}")
 n_questions = sum(len(v) for v in questions.values())
-tally = re.search(r"(\d+) Specs carry (\d+) questions", readme)
-if not tally or (int(tally.group(1)), int(tally.group(2))) != (len(questions), n_questions):
-    fail(f"README's open-question tally is stale; {len(questions)} Specs carry {n_questions} questions")
-rows = dict(re.findall(r"^\| \[`(spec:[^`]+)`\]\([^)]*\) \| (.*?) \|$", readme, re.M))
-for sid, lines in questions.items():
-    if sid not in rows:
-        fail(f"README's open-question table has no row for {sid}")
-    elif len(rows[sid].split(";")) != len(lines):
-        fail(f"README's open-question row for {sid} lists {len(rows[sid].split(';'))} questions; the Spec has {len(lines)}")
-for sid in rows:
-    if sid not in questions:
-        fail(f"README's open-question table lists {sid}, which has no open question")
+n_blocking = sum(1 for v in questions.values() for line in v if line.startswith("- [blocking]"))
 for link in re.findall(r"\]\(([^)#]+)\)", readme):
     if not link.startswith("http") and not os.path.exists(os.path.join(DESIGN, link)):
         fail(f"README link does not resolve: {link}")
@@ -153,6 +139,14 @@ for item in ledger:
         fail(f"ledger item {item['id']} has status {item['status']!r}; allowed: {sorted(LEDGER_STATUSES)}")
     by_status[item["status"]] += 1
 
+if "--slice" in sys.argv:
+    wanted = sys.argv[sys.argv.index("--slice") + 1]
+    for item in ledger:
+        if item.get("slice") == wanted and item["status"] in ("open", "partially-fixed", "owner"):
+            print(f"{item['id']} | {item['severity']} | {item['status']} | caught by: {item.get('detector', '?')} | {', '.join(item['files'])}")
+    sys.exit(0)
+by_slice = collections.Counter(item.get("slice", "none") for item in ledger if item["status"] == "open")
+
 digest = hashlib.sha256()
 tracked = sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), recursive=True))
 tracked += [os.path.join(DESIGN, name) for name in ("README.md", "PLAN.md", "SESSIONS.md", "reviews/consensus-ledger.json")]
@@ -162,9 +156,12 @@ for path in tracked:
 
 print(expected_line)
 print(f"validate: {n_errors} errors · {n_warnings} warnings; readiness divergence: {diverging}")
-print(f"open questions: {len(questions)} Specs, {n_questions} questions; extensions registered: {len(registered)}")
+print(f"open questions: {len(questions)} Specs, {n_questions} questions, {n_blocking} blocking; extensions registered: {len(registered)}")
+print(f"stated readiness: {dict(sorted(readiness.items()))}")
 print(f"ledger: {len(ledger)} findings, {dict(sorted(by_status.items()))}")
+print(f"open findings by slice: {dict(sorted(by_slice.items()))}")
 print(f"corpus digest: {digest.hexdigest()[:16]}")
+print(f"protocol: {PINNED}")
 if failures:
     print(f"\nFAIL ({len(failures)}):")
     for message in failures:

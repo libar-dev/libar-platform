@@ -34,7 +34,7 @@ A process is a business operation that spans time, external systems or human dec
 
 ### Open questions
 
-- [non-blocking] The trigger has not fired; the process record's table, the step signatures, the wait mechanism for an obligation's result and the deploy procedure are deferred to the build (D16, Decision method rule 4)
+- [blocking] The trigger has not fired; the process record's table, the step signatures, the wait mechanism for an obligation's result and the deploy procedure are deferred to the build (D16, Decision method rule 4)
 - [non-blocking] Whether an old run is kept, migrated or blocked on a given deploy is a per-release choice the build records; the README's determinism rule means keeping requires the old definition to stay registered under its version (D16, S11)
 
 ## Behavior

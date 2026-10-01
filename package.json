@@ -1,0 +1,20 @@
+{
+  "name": "libar-platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Convex transactional domain platform: its design as a Software Delivery Protocol corpus, and the code built from it.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "sdp": "sdp",
+    "check": "python3 design/tools/check.py",
+    "validate": "sdp validate design",
+    "view": "sdp view design",
+    "census": "sdp census design"
+  },
+  "devDependencies": {
+    "@libar-dev/software-delivery-protocol": "file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz"
+  }
+}

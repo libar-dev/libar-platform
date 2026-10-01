@@ -19,7 +19,7 @@ Twelve capabilities each wait for a named trigger. Activating one records the ac
 
 ### Open questions
 
-- [non-blocking] No trigger has fired; each capability's design is deferred until its activation record exists (D18, Decision method rule 4)
+- [blocking] No trigger has fired; each capability's design is deferred until its activation record exists (D18, Decision method rule 4)
 
 ## Rule
 
