@@ -76,6 +76,19 @@ export const reference = mutation({
     return row;
   },
 });
+// A scheduled run of a function other than reaction that fails, which the failed-reaction scans leave out.
+export const refused = mutation({
+  args: {},
+  handler: () => {
+    throw new Error("refused: a function other than reaction");
+  },
+});
+export const scheduleRefused = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.scheduler.runAfter(0, mutationRef("refused"), {});
+  },
+});
 export const consume = mutation({
   args: { payload: v.any() },
   handler: () => null,

@@ -111,6 +111,10 @@ export async function dataRows(backend: Backend) {
       ? [
           "receipts",
           "grants",
+          "tenants",
+          "maintenanceGates",
+          "auditRecords",
+          "operatorAudit",
           "generations",
           "orderSummaries",
           "schedulerData",
