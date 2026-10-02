@@ -6,6 +6,7 @@ readiness: defined
 relations:
   refines: spec:platform.transactional-domain-platform
   dependsOn:
+    - spec:platform.acceptance-contract
     - spec:kernel.domain-kernel
     - spec:context.context-component
     - spec:context.journal
