@@ -26,5 +26,5 @@ And all scheduler rows remain unchanged across the interval {retained: true}
 
 ## Verification — executable
 
-- The value is observed, not expected: the expectation written before the first run was all five states with completion times only on terminal rows, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed those states and fields in all three scopes.
+- On the first run of this example, on 2026-10-02 on release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, the bound values held in all three scopes.
 - The held action supplies inProgress. The test records the retention interval; seven-day retention and expiry and hosted retention are not run.

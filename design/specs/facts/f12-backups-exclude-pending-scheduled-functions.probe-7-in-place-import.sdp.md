@@ -27,6 +27,6 @@ And each restored scheduler reference resolves to the kept row {found: true} and
 
 ## Verification — executable
 
-- The value is observed, not expected: the expectation written before the first run was replacement of documents with destination schedules kept, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed unchanged scheduler rows in all scopes and kept pending reactions reading exported data at or after their due time.
+- On the first run of this example, on 2026-10-02 on release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, the bound values held: the scheduler rows were unchanged in all three scopes and the kept pending reactions read the restored value at or after their time.
 - The test changes business data in the parent and both contexts before import and fails if it does not reach that boundary. It records execution times; it binds only that execution is no earlier than the due time.
 - The exported snapshot is the archive. Hosted dashboard restore, file storage, Workpool and Workflow are not run.

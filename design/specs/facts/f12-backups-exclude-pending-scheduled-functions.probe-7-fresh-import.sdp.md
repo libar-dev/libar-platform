@@ -26,5 +26,5 @@ And each stored id validates as an argument and on a later write {valid: true}, 
 
 ## Verification — executable
 
-- The value is observed, not expected: the expectation written before the first run was restored documents and empty scheduler tables in a fresh destination, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed that result in the parent, Orders and Inventory, with stored scheduler IDs still validating.
+- On the first run of this example, on 2026-10-02 on release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, the bound values held: the documents came back in the parent, Orders and Inventory, the scheduler tables stayed empty, and the stored scheduler ids still validated.
 - The exported snapshot is the archive. Full document equality includes IDs and creation times. Hosted dashboard restore, file storage, Workpool and Workflow are not run.

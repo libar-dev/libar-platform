@@ -33,6 +33,6 @@ And the shorter warning accepts accounted sizes {shortSample: 4194254} and {shor
 
 - The value is observed, not expected: the expectation written before the first run was a hard 4 MiB per-call limit, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed a 16777216-byte sum enforced at runAfter while larger single calls warn and return.
 - The tested objects account for UTF-8 content plus 14 bytes per call and two bytes per array element. Newline and quote characters distinguish this accounting from JSON escapes.
-- The value is observed, not expected: the expectation written before the first run of the warning boundary was no per-call warning at 3355443 accounted bytes, the shorter warning from 3355444 through 4194304 and the future hard error form from 4194305, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed those boundaries with the calls still accepted.
+- The warning bounds are observed and were not expected: the first run on release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0 on 2026-10-02 found the per-call warning in the completion record's log lines, and a later run of this example searched for its onset and bound it; the shorter warning starts at 80 percent of 4 MiB, the future hard error form one byte above 4 MiB, and every call stays accepted.
 - The warning names a future hard error at 4 MiB, which remains the design ceiling per call.
 - The test must reach accepted and refused neighbours. Hosted limits are not run.
