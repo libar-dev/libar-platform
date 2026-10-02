@@ -1,7 +1,7 @@
 import { expect } from "vitest";
 import type { Backend } from "../../harness/backend.js";
 import { measure } from "../../harness/native.js";
-import { exportData } from "./scheduler-cases.js";
+import { exportData, placeAdditionalOrder } from "./scheduler-cases.js";
 import {
   schedulingBackend,
   schedulerRows,
@@ -66,6 +66,7 @@ export async function freshImport(backend: Backend, directory: string) {
 export async function inPlaceImport(backend: Backend, directory: string) {
   const due = Date.now() + 45000;
   const exported = await exportData(backend, directory, due);
+  await placeAdditionalOrder(backend);
   for (const component of scopes) {
     const rows = await backend.admin.readTable(
       "schedulerData",
@@ -110,6 +111,17 @@ export async function inPlaceImport(backend: Backend, directory: string) {
       ]);
   await backend.admin.setEnvironment({ SCHEDULER_VALUE: "after-export" });
   const environment = await backend.admin.environment();
+  const changedData = await dataRows(backend);
+  record("in-place data before import", changedData);
+  for (const table of [
+    "orders/streams",
+    "orders/events",
+    "inventory/streams",
+    "inventory/events",
+    "parent/receipts",
+    "parent/orderSummaries",
+  ])
+    expect(changedData[table]).not.toEqual(exported.data[table]);
   const before = await schedulerRows(backend);
   record("in-place scheduler tables before import", before);
   await backend.admin.replaceSnapshot(exported.path);

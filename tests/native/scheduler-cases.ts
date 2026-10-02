@@ -314,6 +314,23 @@ async function productionData(backend: Backend) {
     },
   });
 }
+export async function placeAdditionalOrder(backend: Backend) {
+  const client = ordinaryClient(backend.url, {
+    token: await backend.issuer.token(subject),
+  });
+  await client.mutation(api.receiving.receiveStock, {
+    tenantId: "t-1",
+    input: { items: [{ stockItemId: "sku", quantity: 2 }] },
+  });
+  await client.mutation(api.ordering.placeOrder, {
+    tenantId: "t-1",
+    requestKey: "another-order",
+    input: {
+      orderId: "another-order",
+      lines: [{ stockItemId: "sku", quantity: 1, unitPrice: 10 }],
+    },
+  });
+}
 export async function exportData(
   backend: Backend,
   directory: string,

@@ -28,3 +28,4 @@ Then the observation is {result: "documents replaced and schedules preserved"}
 - A kept pending row referenced by an imported `v.id("_scheduled_functions")` is canceled after import; the cancellation is expected to prevent that reaction, while the uncanceled row created after export still runs against restored data.
 - The first native run on 2026-10-02 on `precompiled-2026-09-28-5c7cb5b` held the original bound values.
 - The uncanceled reaction is expected to commit no earlier than its recorded scheduled time; elapsed waiting time is recorded rather than bounded.
+- Another ReceiveStock and PlaceOrder after export change both contexts and the parent receipts and order summaries; replacement must restore the exported documents exactly and remove these later business changes.
