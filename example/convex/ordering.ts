@@ -19,7 +19,8 @@ export const placeOrderPermission = "orders.place";
 export const cancelOrderPermission = "orders.cancel";
 // The largest order PlaceOrder accepts: the example's promise, chosen under the adapter's ceilings.
 export const maxOrderLines = 100;
-// Keeps the maximum order's OrderPlaced payload under the journal's bound.
+// The longest stock item ID an order line may carry, in UTF-8 bytes, so that the OrderPlaced of the
+// largest order fits the journal's payload bound.
 export const maxStockItemIdBytes = 64;
 const orderSource = { contextId: "orders", streamType: "order" };
 const stockItemSource = { contextId: "inventory", streamType: "stockItem" };
