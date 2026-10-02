@@ -1,6 +1,6 @@
 # Run evidence
 
-Every native run writes one JSON record to `evidence/runs/`. Git ignores that directory. When a Spec or a commit cites a run, copy that run's record to `evidence/` and commit it. No other record is kept.
+Every native run writes one JSON record to `evidence/runs/`. Git ignores that directory. CI uploads the record of every push as an artifact of its run, and a claim that a tier passed names the commit and that run. No record is copied into the repository: the seven records beside this file are from before that rule and stay as history.
 
 A record that backs a claim says `"clean": true`. It was made on a tree with no uncommitted and no untracked file, at the commit it names. A kept record names the commit it ran on, which is the parent of the commit that adds the record. That commit changes only `evidence/`. A record that says `"clean": false` backs no claim.
 
