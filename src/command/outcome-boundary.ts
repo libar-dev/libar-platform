@@ -60,6 +60,15 @@ export const errorDataValidator = v.union(
     retryAfterMs: v.optional(v.number()),
   }),
 );
+// convex-helpers' validate takes an array where a record is expected, and Convex does not: details
+// fit a record only as a plain object.
+function detailsAreRecord(data: object): boolean {
+  if (!("details" in data) || data.details === undefined) return true;
+  const { details } = data;
+  if (typeof details !== "object" || details === null) return false;
+  const prototype: unknown = Object.getPrototypeOf(details);
+  return prototype === Object.prototype || prototype === null;
+}
 // The bound on a rejection's details, measured as Convex measures a value.
 const limitDetailsBytes = 16384;
 // Throws a plain Error, a technical failure, when the details measure above the bound.
@@ -94,12 +103,17 @@ export function normalizeThrown(
     const wire = "kind" in data && data.kind === "rejection";
     if (
       wire &&
-      (!validate(errorDataValidator, data) || data.kind !== "rejection")
+      (!validate(errorDataValidator, data) ||
+        !detailsAreRecord(data) ||
+        data.kind !== "rejection")
     )
       throw new Error(
         `${commandType} received a rejection that does not fit the wire shape`,
       );
-    const bare = !("kind" in data) && validate(rejectionValidator, data);
+    const bare =
+      !("kind" in data) &&
+      validate(rejectionValidator, data) &&
+      detailsAreRecord(data);
     if (bare || wire) {
       // The wire validator above establishes the rejection branch.
       const rejection = data as RejectionData;
@@ -134,7 +148,11 @@ export function classifyThrown(
   | { kind: "rejection"; data: RejectionData }
   | { kind: "transient"; data: TransientData }
   | { kind: "technical"; error: unknown } {
-  if (error instanceof ConvexError && validate(errorDataValidator, error.data))
+  if (
+    error instanceof ConvexError &&
+    validate(errorDataValidator, error.data) &&
+    detailsAreRecord(error.data)
+  )
     return error.data.kind === "rejection"
       ? { kind: "rejection", data: error.data }
       : { kind: "transient", data: error.data };

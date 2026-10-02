@@ -9,7 +9,7 @@ A record that backs a claim says `"clean": true`. It was made on a tree with no 
 - `commit` and `clean`: the commit that was checked out when the run started, and whether the tree was clean then.
 - `command`, `startedAt`, `finishedAt` and `result`.
 - `versions`: Node and the packages the tiers depend on, read from the installed packages.
-- `tests`: one entry per test, with its result, its error messages, its backends and its measurements.
+- `tests`: one entry per test, with its result, its error messages, its backends and its measurements. A run that includes the native project records the tests of every project it ran, each with its `project`: `types`, `pure`, `simulator` or `native`.
 
 A test's `backends` has one entry per backend that became ready. The harness writes the entry from the backend that ran:
 
