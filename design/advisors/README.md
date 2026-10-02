@@ -44,9 +44,32 @@ The main thread merges each patch with `python3 design/tools/decisions.py apply 
 
 `python3 design/tools/decisions.py --owner --before <unit>` lists what the owner must decide first. One launch for each fork, or one for a few forks of the same advisor, with `design/advisors/task-fork.md`, the ids and a patch path. Forks of different advisors run at once: each writes `design/decisions/forks/<id>.md` and its own patch.
 
+## How the main thread runs a roadmap
+
+The owner asked on 2026-10-02 for the panel to propose the upcoming milestones as a short-term roadmap. The task is `task-roadmap.md`, and the aggregated result is `design/ROADMAP.md`, a work document the main thread cuts from the four memos and the owner rules on.
+
+One launch for each advisor, the four at once, each with a disjoint subject, because the owner ruled on 2026-10-02 that one agent decides one thing. The subjects of the first run: measurement and the Convex facts; the domain design and the domain build; the operator's parts; scope, the cut and what the owner decides. The order between subjects is the main thread's, as a tactical decision, and the task says so.
+
+```
+Agent(subagent_type: "advisor-domain",
+      prompt: "Your task is design/advisors/task-roadmap.md. Your slug is domain. Your subject is: <the subject>. Write your memo to <folder>/roadmap-domain.md.")
+```
+
+Then, in this order:
+
+1. The memos are copied to `<folder>/check-copy/`, and the main thread plants one false citation in each copy and records the plants in `<folder>/plants.md`, as tactical decision 31 of `STATE.md` asks for a review copy.
+2. One `gpt:codex` job, `gpt-6.1-sol` at medium with the fast tier, checks the copies: every cited claim held, not held or not checked, every unlabelled fact listed. Its brief is `<folder>/check-brief.md`, and its report is saved to `<folder>/check-report.md` the moment it arrives.
+3. While the check runs, the main thread writes `design/ROADMAP.md`: the cut as one table, the rounds, what is deferred with its trigger, where the advisors differed and what was ruled, the questions that are not rows yet, the findings beyond the roadmap, and the words the advisors needed that `CONTEXT.md` lacks.
+4. The claims the check marked not held are corrected in the roadmap, or the advisor is continued with the check's findings where the memo must change. The plants caught go into `plants.md` and the project notes.
+5. The unit closes as any unit does: the check prints `OK`, `STATE.md` points at the roadmap, the commit goes up through a pull request.
+
+The next run is lighter, by the owner's word of 2026-10-02: "next time, for the roadmap we will call only 1-2 advisors for input and give the decision for PM." One or two advisors are launched, on the subjects where the roadmap is in doubt, and the product advisor cuts the roadmap as its product manager, with the same task file and the same check. The session takes the tactical rulings and the owner rules only on what is critical: the forks, `ready`, the doc, the public-repository rows.
+
+What the first run showed, on 2026-10-02. Four advisors took five to six and a half minutes each, at 186 to 231 thousand tokens, and each returned a memo of 76 to 86 lines in the task's shape. The disjoint subjects held: no advisor leaned on another's decision, and the needs between subjects came back as one-line requests, as the task asks. Two advisors put the same case against the order, S3 before S4, which is the main thread's to rule. Every advisor listed the words it lacked; the union is in the roadmap. The memos state far fewer unlabelled facts than the first sort did: the task repeats the rules of a sentence, and that appears to be enough. The sol check took ten minutes on the fast tier for 291 claims and caught all four plants; its real findings were line citations past the end of a Spec, which an advisor can avoid by opening the line, and sentences that said more than their source.
+
 ## The check
 
-Before the owner sees a fork, and before a `delegated` lean becomes a ruling, a model of the other family opens every citation the lean rests on and marks each claim held, not held or not checked. For a Fable advisor that is `gpt-6.1-sol` at medium, or `gpt-6-astra` where a claim needs something run. The advisor corrects what did not hold, on its own thread. The main thread then sets `checkedBy` with a patch.
+Before the owner sees a fork, and before a `delegated` lean becomes a ruling, a model of the other family opens every citation the lean rests on and marks each claim held, not held or not checked. For a Fable advisor that is `gpt-6.1-sol` at medium, or `gpt-6-astra` where a claim needs something run. The advisor corrects what did not hold, on its own thread. The main thread then sets `checkedBy` with a patch. A roadmap memo is checked the same way, on a copy with a plant.
 
 ## How a decided row gets back into the Specs and `STATE.md`
 
@@ -60,7 +83,7 @@ A unit that adds, removes or rewords an open question of a Spec, an item for the
 ## What is deliberately not built yet
 
 - No tool checks an advisor's sentences against their citations. A model does.
-- No reply stage between advisors, no memo of the whole panel and no summary page.
+- No reply stage between advisors and no summary page. The one memo of the whole panel is the roadmap, cut by the main thread and not by the advisors.
 - No run folders. A patch lives outside the repository, and git is the history of the register.
 - No check that the register and the Specs' open questions still agree. The rule above stands in for it.
 - The ledger's findings and the leads of `STATE.md` are not rows. A finding that needs the owner becomes a row by hand.

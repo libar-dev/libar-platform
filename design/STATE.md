@@ -1,6 +1,6 @@
 # State of the design corpus
 
-Written on 2026-10-02 at the close of the unit that took in the platform review, which followed slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it.
+Written on 2026-10-02 at the close of the roadmap unit, which followed the decision register unit, the platform review unit and slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it. `ROADMAP.md` orders the next units and is kept current at each close.
 
 ## Measured at close
 
@@ -11,7 +11,7 @@ open questions: 68 Specs, 144 questions, 10 blocking; extensions registered: 51
 stated readiness: {'defined': 192, 'scoped': 10}
 ledger: 263 findings, {'fixed': 144, 'open': 100, 'owner': 1, 'partially-fixed': 18}
 open findings by slice: {'L3': 31, 'P': 20, 'S3': 1, 'S4': 30, 'S5': 18}
-corpus digest: 04faf7d4d793badd
+corpus digest: 124c4eaf89aaa5b1
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
@@ -23,7 +23,11 @@ From this merge on, a unit reaches `main` through a pull request: tactical decis
 
 ## Where the work stands
 
-Slices S0, S1 and S2 are built, and one unit after them took in an independent review of the whole.
+Slices S0, S1 and S2 are built, one unit after them took in an independent review of the whole, one built the decision register and the advisor panel, and one asked the panel for a roadmap.
+
+The roadmap unit, on 2026-10-02, on `unit/roadmap`, from a fresh clone on the owner's second machine. The owner asked for the advisory board to propose the upcoming design, build and mixed milestones as a short-term roadmap, for the aggregated roadmap to be kept in the repository, for the notes on how the board was used to be in a doc, and for a quick reference in `AGENTS.md`. Four advisors ran at once on disjoint subjects under the new `design/advisors/task-roadmap.md`, five to six and a half minutes each, and returned memos of 76 to 86 lines. The main thread cut `ROADMAP.md` from them: five rounds of units, the cross-subject order as tactical rulings, four questions that are not rows yet, seven findings beyond the roadmap, and the words the advisors lacked. A sol check at medium read the memos on copies with one planted false citation each, in ten minutes: 291 claims, 228 held, 39 not held with the four plants among them, 24 not checked, 74 stated without a label; all four plants caught, and the real misses were citation lines past the end of a Spec and a few sentences that said more than their source. Three sentences of the roadmap changed for it and no milestone did. `design/advisors/README.md` has the method and what the run showed, and the memos, plants and check are in the unit folder the project notes name. CI on `main` after the push of 2026-10-02 passed, the Linux native job and the acceptance step included.
+
+Two machines, since this unit. The context beside the repository, the orchestration guide, the project notes and every unit's folder, is one git repository the owner published on 2026-10-02, cloned on both machines at the path `AGENTS.md` names; a session pulls it at an opening and pushes the unit's folder at a close. What stays per machine: the run records under the ignored `evidence/runs/`, which decision 35 makes CI's artifacts and never a commit, and the Codex job directories, whose threads can be continued only where they ran.
 
 The platform review unit, in one afternoon on 2026-10-02. An independent read of all 201 Specs, the libraries, both compositions and the harness at `dd3185a`, by `gpt-6-astra` in a Codex thread of its own, said to keep the architecture and the built core, and reported 31 findings. The session ruled on each, and the owner said the report could go once its fixes were applied or recorded. It is gone from the tree. A copy, the session's response and every brief, design and report of the unit are in the folder the project notes name. Every statement of the review that asks for later work is in the ledger or in this file.
 
@@ -134,9 +138,9 @@ Eighteen more findings are `partially-fixed`, each waiting for its slice. Remove
 
 ## Next unit
 
-First, look at CI on `main` after the push of 2026-10-02: it is the first run on everything S2 and the platform review unit built, the Linux native job and the acceptance step included. No record is copied into `evidence/` any more (decision 35); the records of `e76e587` and `645130f` are in CI's artifacts of the pushes of `main`.
+`ROADMAP.md` is the order, ruled as cut by decision 36. Round 1 opens, its four lanes at once on their own branches: sitting one, which writes the ten forks of the rows that block S3 and S4 and the two public-repository rows and makes rows of the four questions the roadmap lists; the attribution of the reads of `PlaceOrder`; the review scoped to the thirty-three flagged fixes; and the import scout. No record is copied into `evidence/`: decision 35, taken on the main machine the same day and sent up as its own pull request, makes CI's artifact of each push the record.
 
-Then `slice` S3 or S4, the owner's choice. S3 measures, and it needs `OD-046` of the register first: the maximum order size and the latency and throughput targets. S4 can open without an owner decision, and its paper decisions are listed below.
+`slice` S3 is round 1's attribution and round 2's measurement, and S3's measurement needs `OD-046` and `OD-064` from sitting one. S4 is round 2's paper and the builds of rounds 3 and 4. S5 is round 5. The paper decisions each slice needs are listed below and are unchanged.
 
 How S2 was run, for the next slice. Tactical decisions 25 to 27 hold the rules. Two Fable designers with disjoint subjects took about twenty minutes. One workflow run of thirteen Opus agents then wrote the Specs, built four packages in sequence, bound the scenarios in four worktrees and integrated, in about an hour and a half. The main thread stopped and resumed that run once, at a seam between two packages, to add corrections: finished agents came back from the cache. The scripts, the rulings and the reports are in the S2 folder the project notes name.
 
@@ -204,7 +208,11 @@ The owner accepted the first nine on the session's recommendation. The session t
 31. A review copy carries planted defects, and the project notes record who caught which. Each reviewer that mutates code gets a copy of its own. A plant goes inside the unit's own commits, not on top of them.
 32. From the merge of 2026-10-02 on, a unit reaches `main` through a pull request, and decision 18 ends. The owner's words: "This is the last change we will do without formal PRs since things are starting to shape up."
 33. Every open decision is a row of the decision register, `design/decisions/register.json`, sorted into one of three classes, and four advisors work on it. The owner's words on 2026-10-02: "I will need help with all owner decisions. We should have a way of trakcing/filtering them. Tactical things and thing where capable agent can make better decision vs. myself, should be made by agent." `design/advisors/` has the sorting rule, the protocol and the lenses, and `SESSIONS.md`, "Who decides", has the rule in short. An advisor is a Fable agent, and a GPT model checks the facts of each lean. The panel works on the register between and beside units. Decision 26, no advisor agent, is about a slice's own run and stands.
+34. The roadmap is `ROADMAP.md`, a work document the main thread cuts from one memo per advisor under `design/advisors/task-roadmap.md`, each advisor on a disjoint subject, and the owner rules on it. The order between subjects is the main thread's, as any order of the work is. The owner's words on 2026-10-02: "we should maintain an aggregated roadmap which you produced in the repo and your notes on how advisory board was used in a doc and a quick reference in CLAUDE.md/AGENTS.md". The notes are in `design/advisors/README.md` and the quick reference in `AGENTS.md`. Each close keeps the roadmap current. A roadmap memo is checked like a lean, on a copy with one planted false citation.
 35. No run record is committed. The harness still writes one per native run, because it costs nothing and the acceptance check reads it, and CI keeps the record of every push as an artifact. A claim that a tier passed names the commit and the CI run. The owner asked on 2026-10-02, from the second machine, whether evidence was needed at all: the record is kept, the ritual of copying it into the repository ends, because it made owner work, a cross-machine dependency and a paper proof of a thing CI shows for free.
+36. The roadmap of 2026-10-02 is ruled as cut, by the session. The owner's words the same day: "can you recommend the roadmap decisions, unless they are critical? use your best judgement, you saw all responses." and "tactical decisions will be decided on by Fable better than me at this stage. so please do that for me." The seven rulings in `ROADMAP.md`, "Where the advisors differed", stand; round 1 opens as its four lanes; the four questions that are not rows become rows and go into sitting one, which stays the owner's. What is critical stays the owner's: the forks of sitting one and sitting two, `ready`, the doc, and the two public-repository rows.
+37. The next roadmap is lighter. The owner's words on 2026-10-02: "next time, for the roadmap we will call only 1-2 advisors for input and give the decision for PM." So a roadmap run launches one or two advisors on the subjects where the roadmap is in doubt, the product advisor cuts the roadmap as its product manager, and the session takes the tactical rulings. The four-memo run of this unit is the baseline the lighter run is judged against.
+38. A round runs as one long orchestration, the way S1 and S2 ran and the guide's "Speed with assurance" says: one page of rulings in every brief, one Workflow run of Claude agents with GPT jobs started beside it, packages delegated and never findings, astra on the proof and the measurement, sol on bookkeeping and bounded builds, one integrator, one review behind the write lane, one pull request per lane with significant scope. The owner's words on 2026-10-02: "i would like to do a long orchestration based on notes made by fable orchestrating claude and gpt models. the approach enable significant scope in PRs."
 
 ## Owner queue
 
@@ -217,7 +225,7 @@ class: tactical=3, delegated=85, owner=47, null=15
 advisor: convex=34, domain=43, operator=34, product=39
 ```
 
-Of the 47 `owner` rows, these block S3, S4 or S5, in the order the units need them. No fork is written yet: an advisor writes one when the owner takes a row up.
+Of the 47 `owner` rows, these block S3, S4 or S5, in the order the units need them. No fork is written yet. `ROADMAP.md` puts them in two sittings: sitting one takes the eight that block S3 or S4 with OD-047 and OD-048, and sitting two takes the language rows, OD-008 with OD-006, OD-138 and the three that block S5.
 
 - `OD-046`, S3, the product advisor: The maximum order size and the latency and throughput targets, before S3 benchmarks.
 - `OD-064`, S3, the convex advisor: OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum o
@@ -270,7 +278,7 @@ A session confirms or drops each. None is a finding yet.
 16. About ten older Spec sentences still name a slice or a date, such as "slice S2 decides" in `spec:context.queries` and "ran on 2026-10-01" in open questions. The owner's direction is against them; a unit that touches those Specs moves them out, and a sweep waits for the owner's word.
 17. The kernel's code anchor lives in `tests/pure/kernel.test.ts`, because the kernel may not import the Protocol package, so the graph cannot say what a change under `src/kernel` reaches. `npx sdp build` writes `*.test.generated.ts` files beside a suite that binds an example whose parent has an example space; they are ignored by git, Prettier and ESLint. Both are in `docs/sdp-feedback.md`.
 18. `append` refuses a stream row whose version has no event in the journal. A later audit-only context that imports rows with incomplete history would trip it.
-19. The root `README.md` says `npm run dev` rewrites all three `_generated` directories; nobody ran it to see. `scripts/dev.mjs` names only `annex/_generated` in a comment.
+19. Dropped at the close of the roadmap unit: the root `README.md` now names every `_generated` directory under both compositions. What remains: nobody ran `npm run dev` to see that it rewrites them, and `scripts/dev.mjs` names only `annex/_generated` in a comment.
 
 20. Left by the read of S1's fold-in. Revocation reads every grant of a principal, so a principal with more than 500 grants whose fields are very large passes the transaction's read limit and cannot be revoked: a bounded, resumable revocation and a bound on a grant's field sizes would close it. Seven tests would not catch a removal: tenant routing in the revocation tests, the service-issuer test that never calls a public entry, the stock-overflow code in a declaration's list, grouping inside `placeOrders`, acceptance at exactly 8 MiB of measured writes, both receipt arrays filled at once, and the `invalidInput` path from a context through the closed code list.
 
@@ -292,6 +300,8 @@ A session confirms or drops each. None is a finding yet.
     - Scheduled argument size. The current scheduling documentation says 8 MB for aggregate arguments while the limits page says 16 MiB. When the scheduling probe activates, resolve the discrepancy against the pinned backend with boundary cases and record which limit and accounting unit it actually enforces; do not turn either page into a confirmed defect now.
 
 26. From the first run of the advisor panel. Eleven full leans wait for their advisor's correction (the check's file is `check-leans.json` in the unit folder); the nine leans of the second sort round have no check yet. No fork is written. The advisors sort well by the rule and label their sentences loosely: a run of the panel after this one should start from the protocol's rules of a sentence and plant one false citation per lens to see whether the check catches it. The Convex advisor's lean on OD-044 reports that `getSnapshotTs`, which a ledger item relies on, is in no server declaration of `convex` 1.46.0; the commit timestamp is (`db.vars.commitTs`, `database.d.ts`). The advisors' language gaps (first activation, parent and context query, acceptance check, verifier, build tier, run record, gate, dispatch, lease, repair, drill, adopter, and three meanings of register) join the owner's ruling on terms, OD-139 and OD-140.
+
+27. From the roadmap unit. `ROADMAP.md`, "Findings beyond the roadmap", lists seven things the advisors found beside their task: the order summary's status validator admits a `cancelled` no event sets; `@convex-dev/migrations` is not pinned; OD-048's `reason` cites a line of `docs/modern-ts.md` as `package.json`; the ledger's `files` fields mix two path prefixes; `CONTEXT.md` names three fixture names where the fixture has five; no harness member exports or imports a snapshot. Each names the unit that takes it. The four questions that are not rows yet are listed there too and become rows before sitting one. The memos' words that `CONTEXT.md` lacks join OD-009 and OD-022.
 
 The reports behind leads 1 to 3 and 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them, with the reports, briefs and rulings of S0.
 

@@ -20,6 +20,13 @@ The Convex transactional domain platform. `docs/` holds the inputs. `design/` ho
 - `design/reviews/r3-*.jsonl` are records of a finished review round and keep their text.
 - Prose uses plain words, sentence-case headings and no em dashes.
 
+## The advisor panel and the roadmap
+
+- `design/ROADMAP.md` is the aggregated roadmap: the next units in rounds, what each needs first and shows, what is deferred and why. The owner rules on it; the main thread keeps it current at each close. The slices of `design/STATE.md` keep their names, and the roadmap orders the units inside and between them.
+- Four advisors, `advisor-convex`, `advisor-domain`, `advisor-operator` and `advisor-product`, are Fable agents defined under `.claude/agents/`. Each is launched with a task file under `design/advisors/`: `task-sort.md` sorts the open decisions of its lens, `task-fork.md` writes one owner decision as a fork, `task-roadmap.md` proposes the milestones of one subject. The four run at once, with disjoint subjects, and the main thread merges or cuts.
+- Every lean, fork or memo is checked by a `gpt-6.1-sol` job of the other family before the owner sees it, on a copy that carries one planted false citation. `design/advisors/README.md` says how each run goes and what the first runs showed; `design/advisors/protocol.md` binds every sentence an advisor writes.
+- The memos, briefs, plants and check reports of a run live outside the repository, in the unit folder the project notes name.
+
 ## The language
 
 `CONTEXT.md` is the platform's ubiquitous language: one word for each concept, with the words it replaces. Read it before you name anything or write a sentence about the platform: a type, a table, an event, an error code, a Spec bullet, a scenario step.
