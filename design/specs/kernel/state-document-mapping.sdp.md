@@ -12,14 +12,14 @@ relations:
 
 Provenance: new; the doc names the gap, states the preference and leaves the budget open. Story · Traces: D2, D3, D5, D10, D18, F13, OQ3, Sc L2-3, E-2, E-3, E-25.
 
-Folding is simple when a stream's state is one document. When state spans several documents, such as an order with separate line rows or stock spread over rows, the adapter needs a mapping from folded state to documents, and if each command writes that mapping by hand a second source of state creeps back. This decision keeps one document per stream as the default while the state fits a size budget, and where it cannot, derives every document write from the folded state in one mapping per stream type. The budget, `budgetBytes`, is one number per stream type and means the whole stream: the one document of the single mapping, or the head and every part of the derived mapping together. Every bound in the corpus that multiplies stream documents multiplies that number. The budget is a design number. A command's declaration carries its own largest input, chosen by its author under the adapter's stream and byte ceilings that the budget sets, so the 100 lines of the example's `PlaceOrder` are that command's promise and no platform limit.
+Folding is simple when a stream's state is one document. When state spans several documents, such as an order with separate line rows or stock spread over rows, the adapter needs a mapping from folded state to documents, and if each command writes that mapping by hand a second source of state creeps back. This decision keeps one document per stream as the default while the state fits a size budget, and where it cannot, derives every document write from the folded state in one mapping per stream type. The budget, `budgetBytes`, is one number per stream type and means the whole stream: the one document of the single mapping, or the head and every part of the derived mapping together. Every bound in the corpus that multiplies stream documents multiplies that number. The budget is a design number. A command's declaration carries its own largest input, chosen by its author under the adapter's stream and byte ceilings, so the 100 lines of the example's `PlaceOrder` are that command's promise and no platform limit.
 
 ## Intent
 
 - outcome: The saved representation of a stream's state is derived from the folded state by one mapping per stream type, and the default mapping is one document that holds the whole state and the stream metadata (D3, E-2)
 - value: No command writes documents by hand, so the fold stays the one authority for state even when state spans documents (D3)
 - risk: A state that outgrows the budget forces the derived mapping, which multiplies the documents one command reads and writes; the first experiment measures documents read and written per order size (D10, First experiment, Sc L2-3)
-- risk: The document budget below is a design number; a command whose declared bound does not fit it needs a larger budget or the derived mapping (OQ3, E-2)
+- risk: The document budget below is a design number; a command bound whose state does not fit it changes the budget or the mapping (OQ3, E-2)
 - assumption: A document holds at most 1 MiB and a transaction reads at most 16 MiB and 32,000 documents (F13)
 
 ### Open questions

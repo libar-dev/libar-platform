@@ -23,7 +23,7 @@ Contexts never read each other's tables and never call each other. A rule linkin
 - outcome: Contexts never read each other's tables and never call each other; every cross-context rule lives in a parent use case in one transaction or in an obligation, and a use case makes one list-shaped call per context (D10)
 - value: Every cross-context rule is visible in one place, and O(N) business work stays O(1) in component calls (D10)
 - risk: The parent grows with each cross-context rule, so use cases are grouped by business flow (D10)
-- risk: An operation too large for one transaction is rejected or becomes a separate import command with honest partial progress, and each command's declaration carries its own bound, chosen by its author under those limits (D10, F13, OQ3)
+- risk: An operation too large for one transaction is rejected or becomes a separate import command with honest partial progress, and each command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings (D10, F13, OQ3)
 - assumption: Transactions have limits (F13)
 
 ## Decision

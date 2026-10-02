@@ -44,7 +44,7 @@ The boundary sits at the component API. The use case sees DTOs and stream versio
 - outcome: Every cross-context rule lives in a parent use case that runs as one top-level mutation with one list-shaped call per context, one receipt and one outcome, so that either the whole operation commits or nothing of it is stored (D1, D10)
 - value: A maintainer finds every rule that spans two contexts in one place, a new use case needs only its input, its context calls and the read models it maintains, and no saga, command bus or lock protocol sits between local contexts (D10, D1, Thesis)
 - risk: The parent grows with each cross-context rule, so use cases are grouped by business flow (D10)
-- risk: An operation too large for one transaction is rejected or becomes a separate import command with honest partial progress, and each use case's declaration carries its own bound, chosen by its author under those limits (D10, F13, OQ3)
+- risk: An operation too large for one transaction is rejected or becomes a separate import command with honest partial progress, and each command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings (D10, F13, OQ3)
 - assumption: Component calls commit or roll back with the calling mutation, and each call is a sub-transaction isolated from other calls (F2, S2)
 - assumption: A `ConvexError` thrown inside a component sub-transaction reaches the use case with its data intact, which Probe 2 showed on the pinned backend (F14, Probe 2)
 - assumption: Transactions have limits, and they are one budget across nested calls and components, as the docs state for nested calls and Probe 4 showed for both (F13, Probe 4)

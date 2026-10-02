@@ -10,7 +10,7 @@ relations:
 
 Feature · Detail: extension · Traces: Acceptance scenarios (tiers, evidence), S13, Sc L2-9, D11, E-13, E-15.
 
-The doc says that native tests prove component and nested-mutation behavior, scheduling, contention and deployment, that the kernel's fixture app is separate from the example app, that test-only functions never ship and that every test owns its disposable backend. It does not say how a test obtains an identity, what the fixture app contains, how a fault enters a run, what a test may read or what it controls. This Spec carries those rules as two extensions, E-13 and E-15. Every rule here is the corpus's provisional reading until the owner rules, except the reading of Sc L2-9 in the first rule, which is settled. The doc's own rules on tiers and evidence stay in `spec:platform.acceptance-contract`.
+The doc says that native tests prove component and nested-mutation behavior, scheduling, contention and deployment, that the kernel's fixture app is separate from the example app, that test-only functions never ship and that every test owns its disposable backend. It does not say how a test obtains an identity, what the fixture app contains, how a fault enters a run, what a test may read or what it controls. This Spec carries those rules as two extensions, E-13 and E-15. Every rule here is the corpus's provisional reading until the owner rules, except the local reading of Sc L2-9 in the first rule, which is settled. The doc's own rules on tiers and evidence stay in `spec:platform.acceptance-contract`.
 
 ## Intent
 
