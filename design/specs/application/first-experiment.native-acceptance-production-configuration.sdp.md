@@ -6,6 +6,7 @@ readiness: defined
 relations:
   refines: spec:application.first-experiment
   verifies: spec:application.first-experiment
+  dependsOn: spec:platform.acceptance-contract
 ---
 # Run native acceptance with production configuration
 
