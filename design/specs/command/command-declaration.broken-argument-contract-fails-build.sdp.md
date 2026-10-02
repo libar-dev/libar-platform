@@ -9,7 +9,7 @@ relations:
 ---
 # Break a typed handler's argument contract
 
-Sc L2-4 · build tier, the fifth tier `spec:platform.acceptance-contract` adds under E-14 · the second of the row's two cases.
+Sc L2-4 · build tier · the second of the row's two cases.
 
 A typed caller calls `api.ordering.placeOrder` with an input that no longer fits the declaration's `input` validator: a required field is missing, or a field has another type. The generated `api` type carries the argument type of the public entry, which the composition helper builds from the declaration, so the caller fails `tsc` before anything is deployed.
 

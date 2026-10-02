@@ -9,7 +9,7 @@ relations:
 ---
 # Rename a typed handler
 
-Sc L2-4 · build tier, the fifth tier `spec:platform.acceptance-contract` adds under E-14 · the first of the row's two cases.
+Sc L2-4 · build tier · the first of the row's two cases.
 
 The export `placeOrder` is renamed to `submitOrder` without touching its callers. The generated `api` type is built from the module's exports, so `api.ordering.placeOrder` no longer exists and every typed caller fails `tsc`.
 
