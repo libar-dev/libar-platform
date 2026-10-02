@@ -168,3 +168,18 @@ test("pure: ReceiveStock refuses the first stock item ID past the same bound", (
     ),
   ).toEqual(refusal(1, 65));
 });
+
+test("pure: both commands bound the supplied bytes, so a decomposed ID of 96 bytes is refused although its composed form has 64", () => {
+  const decomposed = "é".repeat(32);
+  expect(new TextEncoder().encode(decomposed)).toHaveLength(96);
+  expect(new TextEncoder().encode(decomposed.normalize("NFC"))).toHaveLength(
+    64,
+  );
+  const refineReceive = receiveStockDeclaration.refine;
+  if (refineReceive === undefined)
+    throw new Error("ReceiveStock needs its refinement");
+  expect(refine([decomposed])).toEqual(refusal(0, 96));
+  expect(
+    refineReceive({ items: [{ stockItemId: decomposed, quantity: 1 }] }),
+  ).toEqual(refusal(0, 96));
+});
