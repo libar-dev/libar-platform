@@ -134,7 +134,7 @@ Eighteen more findings are `partially-fixed`, each waiting for its slice. Remove
 
 ## Next unit
 
-First, look at CI on `main` after the push of 2026-10-02: it is the first run on everything S2 and the platform review unit built, the Linux native job and the acceptance step included. The commits that copy the native run records of `e76e587` and `645130f` into `evidence/` are still not made.
+First, look at CI on `main` after the push of 2026-10-02: it is the first run on everything S2 and the platform review unit built, the Linux native job and the acceptance step included. No record is copied into `evidence/` any more (decision 35); the records of `e76e587` and `645130f` are in CI's artifacts of the pushes of `main`.
 
 Then `slice` S3 or S4, the owner's choice. S3 measures, and it needs `OD-046` of the register first: the maximum order size and the latency and throughput targets. S4 can open without an owner decision, and its paper decisions are listed below.
 
@@ -182,7 +182,7 @@ The owner accepted the first nine on the session's recommendation. The session t
 9. Two Protocol idioms. An extension becomes a decision Spec when the owner takes it up, and until then the E-register stays. A probe is an example that verifies its fact, which S0 did for probes 1 to 5.
 10. The fixture's component is mounted as `annex`. A fixture context gets its own name when a slice adds it.
 11. `moduleSuffixes: [".d", ""]` and `erasableSyntaxOnly` hold for the whole repository, so that Node 24 can run the harness's TypeScript by stripping its types, and so that the compiler reads the declarations of `convex-helpers` and not the source it ships.
-12. Evidence records are kept by hand: every native run writes one under `evidence/runs/`, which git ignores, and the record of a run a Spec or a commit cites is copied to `evidence/` in a commit of its own.
+12. Ended by decision 35. Evidence records were kept by hand: every native run writes one under `evidence/runs/`, which git ignores, and the record of a run a Spec or a commit cited was copied to `evidence/` in a commit of its own.
 13. A design pass designs the key abstractions as proposed Spec entries, with a time bound, and anything it built is handed on as a patch.
 14. A GPT job is started with the launcher beside the orchestration guide, on a frozen copy, and its session id is kept. Builders work in one worktree each.
 15. `npm run dev` is the watch mode: one disposable backend with `convex dev` bound to it.
@@ -204,6 +204,7 @@ The owner accepted the first nine on the session's recommendation. The session t
 31. A review copy carries planted defects, and the project notes record who caught which. Each reviewer that mutates code gets a copy of its own. A plant goes inside the unit's own commits, not on top of them.
 32. From the merge of 2026-10-02 on, a unit reaches `main` through a pull request, and decision 18 ends. The owner's words: "This is the last change we will do without formal PRs since things are starting to shape up."
 33. Every open decision is a row of the decision register, `design/decisions/register.json`, sorted into one of three classes, and four advisors work on it. The owner's words on 2026-10-02: "I will need help with all owner decisions. We should have a way of trakcing/filtering them. Tactical things and thing where capable agent can make better decision vs. myself, should be made by agent." `design/advisors/` has the sorting rule, the protocol and the lenses, and `SESSIONS.md`, "Who decides", has the rule in short. An advisor is a Fable agent, and a GPT model checks the facts of each lean. The panel works on the register between and beside units. Decision 26, no advisor agent, is about a slice's own run and stands.
+35. No run record is committed. The harness still writes one per native run, because it costs nothing and the acceptance check reads it, and CI keeps the record of every push as an artifact. A claim that a tier passed names the commit and the CI run. The owner asked on 2026-10-02, from the second machine, whether evidence was needed at all: the record is kept, the ritual of copying it into the repository ends, because it made owner work, a cross-machine dependency and a paper proof of a thing CI shows for free.
 
 ## Owner queue
 
