@@ -180,7 +180,11 @@ test("pure: registered gate entries export the exact argument and return validat
       isInternal: boolean;
     };
     expect(exported.isInternal).toBe(true);
-    expect(JSON.parse(exported.exportArgs())).toEqual(args.json);
-    expect(JSON.parse(exported.exportReturns())).toEqual(returns.json);
+    expect(JSON.parse(exported.exportArgs())).toEqual(
+      (args as unknown as { json: unknown }).json,
+    );
+    expect(JSON.parse(exported.exportReturns())).toEqual(
+      (returns as unknown as { json: unknown }).json,
+    );
   }
 });
