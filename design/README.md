@@ -338,7 +338,7 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-operator-cancel` | Probe 6: an operator cancels a committed successor |
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-transaction-failure` | Probe 6: a transaction failure preserves the saved cursor |
 
-Package A therefore has 93 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+Package A therefore has 93 Specs, Package C has 17 examples, Package D has 26, and the corpus has 60 examples that bind a doc row.
 
 The example domain's second lifecycle command added six examples that verify no doc row, each a child of `spec:application.orders-inventory-example` under E-46:
 
@@ -351,7 +351,7 @@ The example domain's second lifecycle command added six examples that verify no 
 | none | `spec:application.orders-inventory-example.cancel-second-context-rejects` | verifies that a release Inventory refuses rolls back the cancel Orders recorded |
 | none | `spec:application.orders-inventory-example.cancel-without-grant-refused` | verifies that `CancelOrder` requires its own permission |
 
-Package D therefore has 25 examples.
+Package D therefore has 26 examples.
 
 ## Integration notes
 
