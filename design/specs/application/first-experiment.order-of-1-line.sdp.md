@@ -9,7 +9,7 @@ relations:
 ---
 # An order of 1 line
 
-Sc L2-3 · native tier · the first of the three enumerated sizes.
+Sc L2-3 · native tier · production composition · the first of the three enumerated sizes.
 
 ## Intent
 
@@ -29,6 +29,6 @@ And the budgets {budgets: "hold"}
 ## Verification — executable
 
 - Runs in the native tier on the production composition; every test owns its disposable backend.
-- On the production composition, after grants, the first activation and `ReceiveStock` as setup, the test sends `PlaceOrder` with one line, reads the backend's function log, and asserts one top-level mutation execution for the command and no scheduled function, cron or action.
-- The call count is shown by a pure test of the same executor, which asserts one `runMutation` on the Orders operation and one on the Inventory operation for this size.
-- The test records the documents and bytes read and written from the completion record's `usageStats` and asserts them under the transaction ceilings; that the stream rows and the summary row stayed inside their budgets is shown by the command having committed, because a row above its budget fails the command.
+- On the production composition, after grants, the first activation and `ReceiveStock` as setup, the test sends `PlaceOrder` with one line, reads the backend's function log from a mark before the command to a read of the order summary list that the same client sends after the command returned, and asserts that the log holds one top-level mutation execution for the command, which committed, and no other execution, so no scheduled function, cron or action ran for it, and that the list the read returned already holds the order's summary row.
+- The call count is shown at the pure tier by the same executor, run on the order the test sent against a ctx whose `runMutation` counts calls by function reference and answers a canned operation outcome, which asserts one `runMutation` on the Orders operation and then one on the Inventory operation for this size.
+- The test reads the documents and bytes read and written from the completion record's `usageStats`, records them on the test's entry in the run's evidence record and not as a `Measurement` record, asserts them under the F13 ceilings of 32,000 documents and 16 MiB read and 16,000 documents and 16 MiB written, and asserts six documents written: the receipt, the order's state and event, the stock item's state and event, and the summary row; that the stream rows and the summary row stayed inside their budgets is shown by the command having committed, because a row above its budget fails the command.
