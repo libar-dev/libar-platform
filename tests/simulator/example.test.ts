@@ -737,3 +737,146 @@ test(
     ).toEqual([]);
   },
 );
+
+// Stock on sku-1 and sku-2 in one tenant, and order-1 placed over both, by a caller with every grant
+// there; the lines name sku-2 first.
+async function placedOverTwoItems(t: App, tenantId: string) {
+  const user = await caller(t, "user-1", everything, tenantId);
+  await user.mutation(api.receiving.receiveStock, {
+    tenantId,
+    input: {
+      items: [
+        { stockItemId: "sku-1", quantity: 5 },
+        { stockItemId: "sku-2", quantity: 7 },
+      ],
+    },
+  });
+  await user.mutation(api.ordering.placeOrder, {
+    tenantId,
+    requestKey: "k-place",
+    input: {
+      orderId: "order-1",
+      lines: [line("sku-2", 3, 200), line("sku-1", 2, 400)],
+    },
+  });
+  return user;
+}
+const stockItems = (t: App, tenantId: string) =>
+  Promise.all(
+    ["sku-1", "sku-2"].map((streamId) =>
+      t.query(components.inventory.queries.stockItem.get, {
+        tenantId,
+        streamId,
+      }),
+    ),
+  );
+
+test(
+  name(
+    "CancelOrder of an order over two stock items releases each one's allocation in the same commit",
+  ),
+  async () => {
+    const t = productionTest();
+    await activate(t);
+    const user = await placedOverTwoItems(t, "t-1");
+    expect(await stockItems(t, "t-1")).toMatchObject([
+      { onHand: 5, allocated: 2, version: { version: 2 } },
+      { onHand: 7, allocated: 3, version: { version: 2 } },
+    ]);
+    const response = await user.mutation(
+      api.ordering.cancelOrder,
+      cancelCall("k-1"),
+    );
+    expect(response).toMatchObject({
+      kind: "applied",
+      result: {
+        orderId: "order-1",
+        released: [
+          { stockItemId: "sku-2", quantity: 3 },
+          { stockItemId: "sku-1", quantity: 2 },
+        ],
+      },
+    });
+    expect(await stockItems(t, "t-1")).toMatchObject([
+      { onHand: 5, allocated: 0, version: { version: 3 } },
+      { onHand: 7, allocated: 0, version: { version: 3 } },
+    ]);
+  },
+);
+
+test(
+  name(
+    "CancelOrder in t-2 releases t-2's allocation and leaves the stock items of the same IDs in t-1 as they were",
+  ),
+  async () => {
+    const t = productionTest();
+    await activate(t);
+    await placedOverTwoItems(t, "t-1");
+    const user = await placedOverTwoItems(t, "t-2");
+    const untouched = await stockItems(t, "t-1");
+    expect(untouched).toMatchObject([{ allocated: 2 }, { allocated: 3 }]);
+    const response = await user.mutation(api.ordering.cancelOrder, {
+      ...cancelCall("k-1"),
+      tenantId: "t-2",
+    });
+    expect(response.kind).toBe("applied");
+    // The order and both stock items it released, every one in t-2.
+    expect(
+      response.versions.map(
+        ({ tenantId, streamId }: { tenantId: string; streamId: string }) => [
+          tenantId,
+          streamId,
+        ],
+      ),
+    ).toEqual([
+      ["t-2", "order-1"],
+      ["t-2", "sku-2"],
+      ["t-2", "sku-1"],
+    ]);
+    expect(await stockItems(t, "t-2")).toMatchObject([
+      { allocated: 0, version: { version: 3 } },
+      { allocated: 0, version: { version: 3 } },
+    ]);
+    expect(await stockItems(t, "t-1")).toEqual(untouched);
+    expect(
+      await user.query(api.orderQueries.getOrder, {
+        tenantId: "t-1",
+        orderId: "order-1",
+      }),
+    ).toMatchObject({ status: "placed" });
+  },
+);
+
+test(
+  name(
+    "the Orders context's cancel operation over two orders answers both, each with its own lines, in the order asked",
+  ),
+  async () => {
+    const t = productionTest();
+    const user = await placedOrder(t);
+    await user.mutation(api.ordering.placeOrder, {
+      tenantId: "t-1",
+      requestKey: "k-place-2",
+      input: { orderId: "order-2", lines: [line("sku-1", 1, 300)] },
+    });
+    // The context's own operation, which CancelOrder calls with one order, called here with two.
+    const cancelled = await t.mutation(components.orders.operations.cancel, {
+      tenantId: "t-1",
+      actor: operator,
+      operation: {
+        operationId: "cancel-two",
+        causedBy: { kind: "command", commandType: "Setup" },
+      },
+      input: { orders: [{ orderId: "order-2" }, { orderId: "order-1" }] },
+    });
+    expect(cancelled.result).toEqual({
+      orders: [
+        { orderId: "order-2", lines: [line("sku-1", 1, 300)] },
+        {
+          orderId: "order-1",
+          lines: [line("sku-1", 2, 250), line("sku-1", 1, 999)],
+        },
+      ],
+    });
+  },
+);
