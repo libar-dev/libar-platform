@@ -1,3 +1,8 @@
+// The fixture composition's migrations, driven by the migrations component mounted in the parent.
+// summaries walks the parent's document summaries of generation 1 and writes generation 2 from each
+// document's current state; contextBatch is a parent mutation written by hand that pages the depot's
+// list and returns the context's cursor to the component; the rest show which tables a migration
+// defined in the parent can reach. Generation 2 is a building generation the tests insert.
 import {
   Migrations,
   type MigrationStatus,

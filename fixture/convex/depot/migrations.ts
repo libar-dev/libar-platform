@@ -1,3 +1,6 @@
+// Migrations defined inside the depot context, over its own streams table: one that only visits
+// each stream, one that tries to write a parent row by its ID, and one that calls a parent mutation
+// through the function handle the parent stored with configure.
 import { Migrations } from "@convex-dev/migrations";
 import {
   type FunctionHandle,

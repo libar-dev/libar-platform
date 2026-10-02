@@ -17,7 +17,7 @@ Native backend `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helper
 
 ## Intent
 
-- outcome: The race reaches overlapping mutation calls; conflict and retry counts are recorded as sizes. Sequential checks cover each commit order. Hosted contention and throughput are not answered. (Probe 6, F17)
+- outcome: A batch the component drives and a live command that write one read-model row are ordered by optimistic concurrency, so neither overwrites newer data. (Probe 6, F17, F1)
 
 ```gwt
 Given a document source at stream version 1 with its building summary missing
@@ -29,6 +29,7 @@ Then both generations end at stream version {version: 2} with the amended title
 
 - The bound values are expectations written before the first native run on the pinned releases.
 - Each test owns its disposable backend; failure to reach the named boundary fails the example.
-- The native backend evidence on the pinned releases records five conflict entries and five requested retries across six trials; both commit orders occur, every target finishes at version 2, and overlap is checked from execution timestamps. These counts are recorded sizes, not asserted limits.
-- The missing building row forces the racing batch to insert a summary; the command updates that row if the batch commits first and skips it if the command commits first, after which the batch reads the newest source.
-- The missing-row race records six conflicts and six requested retries in its first native evidence; separate serial checks bind both batch-first and command-first order to the same final stream version 2.
+- The building generation's row is missing when the race starts, so the batch must insert it: the command skips a building row that does not exist yet and updates it when the batch has written it, as the rebuild's rule says, and the batch reads the newest source when it commits second.
+- The test requires the batch's and the command's executions to overlap in the backend's function log, and records each trial's conflicts and engine retries as sizes. On the pinned releases each trial recorded zero or one conflict, on the context's `streams` table or the parent's `documentSummaries` table.
+- Two runs without overlap, batch first and then command first, end at the same stream version 2.
+- What a hosted deployment does under sustained contention is not answered by this local example.

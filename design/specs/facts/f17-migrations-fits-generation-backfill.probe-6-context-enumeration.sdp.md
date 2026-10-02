@@ -15,7 +15,7 @@ Native backend `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helper
 
 ## Intent
 
-- outcome: The parent cannot name the context table in its typed data model. A runtime table walk stays in the parent. A depot migration can walk streams but direct parent-table writes fail; a passed parent function handle is tested separately. A parent migration over page records can call list, with two cursors and its page size bounded explicitly. Hosted quotas are not answered. (Probe 6, F17)
+- outcome: A migration walks the tables of the component it is defined in: a parent migration cannot walk a context's table, a migration mounted in the context can but cannot write a parent table, and a parent migration over a parent table of page records can call the context's `list`. (Probe 6, F17)
 
 ```gwt
 Given {rows: 5} depot documents and migrations mounted in the parent and depot
@@ -27,9 +27,10 @@ Then the parent table walk fails with {parentRows: 0} processed context rows and
 
 - The bound values are expectations written before the first native run on the pinned releases.
 - Each test owns its disposable backend; failure to reach the named boundary fails the example.
-- The first native run on the pinned releases expected an empty successful parent walk; it instead reported `failed` with `Uncaught Error: Index streams.by_creation_time not found.` The bound parent outcome is that observed refusal.
-- A parent definition without the schema option is expected to reach the backend and complete with zero processed rows, while depot still holds all five sources; this value is bound before that form is run.
-- The pinned native backend completes the depot walk with five visits, the depot callback with five parent rows, and the parent table-of-pages walk with three page records for five rows; the table-of-pages form keeps two cursors and requires migration batch size one for one bounded context page per batch.
-- Before its native run, a parent definition with `customRange` but no schema option is bound to fail with `You must provide your schema to use a custom range.`
-- The first native attempt without a schema option also reported `failed` with `Uncaught Error: Index streams.by_creation_time not found.`, rather than the expected successful zero-row walk; that form is rebound to the observed refusal.
-- The pinned native backend returns `Uncaught Error: You must provide your schema to use a custom range.` for the no-schema range definition, as bound.
+- The bound values first written expected the parent walk of the context's `streams` table to succeed over zero rows; the first run on the pinned releases reported `failed` with `Uncaught Error: Index streams.by_creation_time not found.`, with and without the schema option, and the example is bound to that observed refusal.
+- The parent's typed data model refuses the context's table name in the compiled tier; the fixture declares it under an expected type error so that the runtime is reached, and the compiler fails if a later release admits the name.
+- A parent `customRange` without the schema option fails with `Uncaught Error: You must provide your schema to use a custom range.`, as bound before its run.
+- A parent mutation that reads a context row by its ID fails with ``Invalid argument `id` for `db.get`: expected to be an Id<"streams">, got Id<"depthRows"> instead.``, and a context migration that patches a parent row by its ID fails with the same kind of error naming a context table, so an ID is read in the namespace of the component that reads it.
+- The migration mounted in the context completes over the five documents and writes the parent's summaries only through a function handle the parent supplied, one parent call per source row.
+- The parent migration over page records calls `list` once per batch and writes three page records for five documents at a page of two; it carries two cursors, the component's over the page records and the context's in each record.
+- Hosted quotas are not answered by this local example.
