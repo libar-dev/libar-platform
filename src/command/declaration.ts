@@ -46,6 +46,8 @@ export type CommandDeclaration<I, R> = {
   admission?: AdmissionPolicy<I>;
   bounds?: Bounds;
   retention?: Retention;
+  // Asks step 10 for one audit record, which fails closed. Absent means none.
+  audit?: { kind: "security" | "business" };
 };
 export type PermissionPolicy<I> = {
   permission: string;

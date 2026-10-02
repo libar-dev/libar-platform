@@ -2,8 +2,11 @@
 export {
   actorKindValidator,
   actorValidator,
+  assertOperator,
   authorityValidator,
   callerNamespaceValidator,
+  limitOperatorBytes,
+  operatorValidator,
   subjectRefValidator,
   tenantScopeValidator,
 } from "./actor-and-scope.js";
@@ -24,6 +27,7 @@ export {
   establishActor,
   insertGrant,
   limitGrantsRead,
+  nextTenant,
   revokeGrant,
 } from "./authority.js";
 export type {
@@ -85,6 +89,7 @@ export type {
   MutationCtx,
   QueryCtx,
   Receipt,
+  Tenant,
 } from "./tables.js";
 export {
   limitActorIdLength,

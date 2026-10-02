@@ -2,7 +2,7 @@
 
 ## What this is
 
-The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 228 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 229 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-228 specs · 5 packs · 126 anchors → 359 nodes · 1206 edges (0 errors, 0 warnings)
+229 specs · 5 packs · 127 anchors → 361 nodes · 1210 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -85,7 +85,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 | all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 98 |
 | 0 | `kernel` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) | 7 |
 | 1 | `context`, `command` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) (19 with the kernel), [`command-pipeline`](specs/command-pipeline.pack.sdp.md) | 12 + 24 |
-| 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 44 |
+| 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 45 |
 | 3 | `obligations`, `effects` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 22 (of the pack's 43) |
 | 4 | `processes` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 6 |
 | 5 | `agents` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 7 |
@@ -311,7 +311,7 @@ Slice S1 added three more for the same reason, when its scenario tests bound the
 
 Package B therefore has 7 examples, Package C has 15, and the corpus has 57.
 
-The Layer 2 design added two more for the same reason, and nine examples that verify no doc row:
+The Layer 2 design added two more for the same reason, and ten examples that verify no doc row:
 
 | Sc | Added example | Reason |
 |---|---|---|
@@ -322,6 +322,7 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:application.read-models.query-refused-before-disclosure` | verifies Law 5 for a parent query called with no identity |
 | none | `spec:application.read-models.query-refused-without-grant` | verifies Law 5 for a parent query called with no grant in the tenant |
 | none | `spec:application.read-models.list-pages-by-cursor` | verifies a parent list paged by a cursor pair, under E-24 |
+| none | `spec:application.write-pause.restore-door-without-deploy` | shows on the pinned release that the restore door's environment switch needs no deploy, under E-42 |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-built-in-paginate-throws-in-component` | Probe 5: the built-in `paginate` throws inside a component |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |
@@ -343,7 +344,7 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-scan` | Probe 7: a failed-function scan reads unrelated schedules |
 | none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-states` | Probe 7: the five scheduler states remain readable |
 
-Package A therefore has 98 Specs, Package C has 17 examples, Package D has 26, and the corpus has 60 examples that bind a doc row.
+Package A therefore has 98 Specs, Package C has 17 examples, Package D has 27, and the corpus has 60 examples that bind a doc row.
 
 The example domain's second lifecycle command added six examples that verify no doc row, each a child of `spec:application.orders-inventory-example` under E-46:
 
@@ -356,7 +357,7 @@ The example domain's second lifecycle command added six examples that verify no 
 | none | `spec:application.orders-inventory-example.cancel-second-context-rejects` | verifies that a release Inventory refuses rolls back the cancel Orders recorded |
 | none | `spec:application.orders-inventory-example.cancel-without-grant-refused` | verifies that `CancelOrder` requires its own permission |
 
-Package D therefore has 26 examples.
+Package D therefore has 27 examples.
 
 ## Integration notes
 

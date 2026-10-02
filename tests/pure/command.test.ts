@@ -372,7 +372,7 @@ test("pure: classifyThrown tells a rejection from a transient refusal from a tec
     expect(classifyThrown(error)).toEqual({ kind: "technical", error });
 });
 
-test("pure: the receipts and grants indexes lead with tenantId, and a receipt has no field for input or result", () => {
+test("pure: the receipts, grants and tenants indexes lead with tenantId, and a receipt has no field for input or result", () => {
   const indexes = Object.values(commandTables).flatMap((table) =>
     table[" indexes"](),
   );
@@ -384,6 +384,7 @@ test("pure: the receipts and grants indexes lead with tenantId, and a receipt ha
     ["by_tenant_expiry", ["tenantId", "expiresAt"]],
     ["by_principal", ["tenantId", "principalKind", "principalId"]],
     ["by_permission", ["tenantId", "permission"]],
+    ["by_tenant", ["tenantId"]],
   ]);
   expect(Object.keys(commandTables.receipts.validator.fields).sort()).toEqual([
     "actorId",
