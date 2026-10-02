@@ -1893,7 +1893,7 @@
       "status": "sorted",
       "foldedInto": [],
       "class": "owner",
-      "reason": "Rule 1, a licence; package.json:215 lists LICENSE under files and the root holds no such file, so a publish today ships none; the lens records what a licence text says and leans on none.",
+      "reason": "Rule 1, a licence; docs/modern-ts.md:215 lists LICENSE under files and the root holds no such file, and package.json has no files field, so a publish today ships none; the lens records what a licence text says and leans on none.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-048.md",
