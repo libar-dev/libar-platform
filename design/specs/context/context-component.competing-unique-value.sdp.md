@@ -9,7 +9,7 @@ relations:
 ---
 # Two commands compete for the same unique value
 
-Sc L1-11 · native tier · second of two cases.
+Sc L1-11 · native tier · fixture composition · second of two cases.
 
 The fixture composition binds it. Two ordinary clients send the RegisterDocument command at once, each creating its own document under one reference, the unique value. The depot's registerDocuments operation claims the reference on a reference stream of its own at expected version 0 and then creates the document, both in one sub-transaction. Both calls read the absent reference row; one commits, the engine reruns the other, and the rerun loads the claimed row and is answered by the version check before decide.
 

@@ -9,7 +9,7 @@ relations:
 ---
 # Two tenants use the same request key and local ID
 
-Sc L1-6 · native tier.
+Sc L1-6 · native tier · fixture composition.
 
 On the fixture composition, tenant A's own caller has already applied the receipted create `CreateDocument` through its public entry with request key `k-1` and document ID `doc-1`. Tenant B's caller, the fixture issuer's subject `user-b`, sends the same command with the same key, document ID and title to tenant B. The receipt key leads with the tenant, so the lookup finds nothing; the document ID is scoped by the tenant in the depot's identity index, so the create succeeds; and nothing of tenant A is read or returned.
 

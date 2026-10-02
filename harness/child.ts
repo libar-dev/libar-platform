@@ -1,4 +1,15 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { execFile } from "node:child_process";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.child"),
+  label: "child processes and redaction",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export interface ChildOptions {
   timeoutMs: number;
   cwd?: string;

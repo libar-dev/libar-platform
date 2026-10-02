@@ -9,7 +9,7 @@ relations:
 ---
 # A command names a stale, explicitly reviewed version
 
-Sc L1-10 · native tier.
+Sc L1-10 · native tier · fixture composition.
 
 The fixture composition binds it. An ordinary client creates a document in the depot context, amends it and submits it, so its stream stands at version 3. It then sends the AmendDocument command through its public entry naming version 2, the version it reviewed, and the depot's amendDocuments operation plans the amend at that expected version.
 

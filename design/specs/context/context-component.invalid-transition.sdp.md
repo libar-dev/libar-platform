@@ -9,7 +9,7 @@ relations:
 ---
 # A command asks for an invalid state transition
 
-Sc L1-1 · native tier.
+Sc L1-1 · native tier · fixture composition.
 
 The fixture composition binds it. An ordinary client creates a document in the depot context and then sends the ShipDocument command through its public entry; the parent mutation calls the depot's shipDocuments operation through `ctx.runMutation` on the component API, and the document stream's transition table has no ship from draft.
 

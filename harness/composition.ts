@@ -1,8 +1,19 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 // The two compositions a native run deploys. The Convex CLI reads convex.json and package.json from
 // its working directory and takes no functions directory any other way, so a composition is a
 // name, the project directory the CLI runs in and the functions directory that project's
 // convex.json names. Both directories are relative to the repository root.
 import { join } from "node:path";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.composition"),
+  label: "the two compositions",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export interface Composition {
   name: "fixture" | "production";
   project: string;

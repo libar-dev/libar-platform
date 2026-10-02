@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { readdirSync, rmSync } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -8,6 +13,12 @@ import type { RunRecordSlot } from "./evidence.js";
 import { signalOwned } from "./ownership.js";
 import { resolveExecutable } from "./executable.js";
 import type { Executable } from "./executable.js";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.native-run"),
+  label: "the run's setup and final sweep",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export interface NativeRun {
   directory: string;
   executable: Executable;

@@ -9,7 +9,7 @@ relations:
 ---
 # A client claims a worker or agent namespace
 
-Sc L1-7 · native tier · first of two cases.
+Sc L1-7 · native tier · fixture composition · first of two cases.
 
 On the fixture composition, an ordinary client that carries a fixture-issuer token for subject `user-1` and holds a grant in tenant `t-1` sends the public entry of `CreateDocument` a `namespace` argument of `worker`. The public entry's `args` validators do not declare that field, so the call fails argument validation before the handler runs. The other route to the worker namespace, a client calling the internal entry directly, is refused by Convex's visibility rule and is asserted in the verification bullets. The agent namespace is the second case, `spec:command.tenancy-and-authority.client-claims-agent-namespace`.
 

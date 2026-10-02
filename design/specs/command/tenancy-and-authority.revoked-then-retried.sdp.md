@@ -9,7 +9,7 @@ relations:
 ---
 # Authorization is revoked, then a successful command is retried
 
-Sc L1-8 · native tier.
+Sc L1-8 · native tier · fixture composition.
 
 On the fixture composition, an ordinary client that carries a fixture-issuer token for subject `user-1` sends the receipted `CreateDocument` through its public entry, which succeeds and leaves a receipt. An operator then deletes the caller's grant with the fixture's internal mutation `grants:revoke`, which the test runs with admin access. The caller retries with the same key and input. Authorization runs at step 4, before the receipt lookup of step 5, so the retry receives `forbidden` and the stored outcome is not disclosed. The fixture configures no service issuer, so the public entry makes the caller a human actor.
 

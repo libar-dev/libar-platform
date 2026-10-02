@@ -9,7 +9,7 @@ relations:
 ---
 # Two commands compete for the same stock
 
-Sc L1-11 · native tier · first of two cases.
+Sc L1-11 · native tier · fixture composition · first of two cases.
 
 The fixture composition binds it. An ordinary client stocks one unit of a product in the depot context. Two other ordinary clients then send the ClaimStock command for that unit through its public entry at once, and the depot's claimStock operation plans a claim on the product's stock stream with no expected version. Both calls load version 1; one commits, the engine reruns the other, and the rerun decides against the stock the winner left. The unique-value case is the second.
 

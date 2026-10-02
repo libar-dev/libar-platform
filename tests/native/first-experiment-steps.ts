@@ -211,7 +211,7 @@ export async function place(
 }
 export async function placeOrderRuns(
   world: ExperimentWorld,
-  run: "the PlaceOrder use case" | "every Layer 0 to 2 scenario",
+  run: "the PlaceOrder use case" | "the end-to-end path",
 ) {
   if (run !== "the PlaceOrder use case")
     throw new Error(`These examples run the PlaceOrder use case, not ${run}`);

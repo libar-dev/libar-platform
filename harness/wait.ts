@@ -1,4 +1,15 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { setTimeout as sleep } from "node:timers/promises";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.wait"),
+  label: "waits",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export {
   localWriteRateBytesPerSecond,
   paceAfterWrite,

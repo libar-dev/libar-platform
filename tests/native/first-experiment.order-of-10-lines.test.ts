@@ -29,8 +29,8 @@ bindExample(
   contract,
   (): ExperimentWorld => ({}),
   {
-    "the Orders and Inventory application built through Layer 2 on a native backend":
-      (world) => application(world),
+    "the production composition on a native backend": (world) =>
+      application(world),
     "an order of {size} with stock contention {contention}": (
       world,
       { size, contention },

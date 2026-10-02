@@ -268,19 +268,16 @@ bindExample(
   contract,
   (): AcceptanceWorld => ({}),
   {
-    "the Orders and Inventory application built through Layer 2 on a native backend":
-      (world) => application(world),
+    "the production composition on a native backend": (world) =>
+      application(world),
     "the backend runs with {configuration}": (world, { configuration }) =>
       configurationIs(world, configuration),
     "{run} runs": async (world, { run }) => {
-      if (run !== "every Layer 0 to 2 scenario")
-        throw new Error(`This example runs every scenario, not ${run}`);
+      if (run !== "the end-to-end path")
+        throw new Error(`This example runs the end-to-end path, not ${run}`);
       await endToEndPath(world);
     },
-    "authority, schemas, concurrency and code path {parity}": async (
-      world,
-      { parity },
-    ) => {
+    "authority, schemas and code path {parity}": async (world, { parity }) => {
       if (parity !== "match a release")
         throw new Error(`The harness deploys nothing that may ${parity}`);
       authorityHolds(world);

@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import {
@@ -11,6 +16,12 @@ import {
 } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { runChild } from "./child.js";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.executable"),
+  label: "the pinned backend executable",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export interface Executable {
   path: string;
   sha256: string;

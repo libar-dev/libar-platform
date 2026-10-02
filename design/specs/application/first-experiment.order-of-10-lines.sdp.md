@@ -16,7 +16,7 @@ Sc L2-3 · native tier · production composition · the second of the three enum
 - outcome: One top-level commit each, zero projection jobs, one call per context, budgets hold. (Sc L2-3)
 
 ```gwt
-Given the Orders and Inventory application built through Layer 2 on a native backend
+Given the production composition on a native backend
 And an order of {size: "10 lines"} with stock contention {contention: "absent"}
 And the backend runs with {configuration: "production configuration"}
 When {run: "the PlaceOrder use case"} runs

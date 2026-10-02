@@ -11,7 +11,7 @@ import type { Executable } from "./executable.js";
 import type { Backend } from "./backend.js";
 import type { JsonValue, NativeTestFacts } from "./evidence.js";
 import { createFixtureIssuer } from "./identity.js";
-// Binds the code under harness/ to its Spec in the corpus graph.
+// Binds this file to its Spec in the corpus graph. Every other file under harness/ carries its own anchor.
 const anchor = codeAnchor({
   id: codeAnchorId("impl:platform.native-harness"),
   label: "the native harness",

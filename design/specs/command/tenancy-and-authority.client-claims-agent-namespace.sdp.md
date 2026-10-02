@@ -9,7 +9,7 @@ relations:
 ---
 # A client claims an agent namespace
 
-Sc L1-7 · native tier · second of two cases.
+Sc L1-7 · native tier · fixture composition · second of two cases.
 
 On the fixture composition, an ordinary client that carries a fixture-issuer token for subject `user-1` and holds a grant in tenant `t-1` calls the internal entry of `CreateDocument` directly, naming the `agent` namespace and an actor of its own. The internal entry is an internal function, so Convex refuses a client's call to it before any handler runs. The other route to the agent namespace, a `namespace` argument to the public entry, fails the public entry's `args` validators and is asserted in the verification bullets. The worker namespace is the first case, `spec:command.tenancy-and-authority.client-claims-system-namespace`.
 

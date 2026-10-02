@@ -36,7 +36,7 @@ relations:
 ---
 # The first experiment
 
-Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, Law 1, D3, D8, D9, D10, D11, F4, F13, Probe 3, OQ1, OQ3, OQ4, Sc L2-3, Sc L2-9, E-8, E-13, E-15, E-37, E-46, E-47.
+Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, Law 1, D3, D8, D9, D10, D11, F4, F13, Probe 3, OQ1, OQ3, OQ4, Sc L2-3, Sc L2-9, E-8, E-13, E-15, E-17, E-37, E-46, E-47.
 
 The first experiment builds Layers 0 to 2 in a small, clean application, Orders and Inventory, and measures what the design costs. It passes when every Layer 0, 1 and 2 scenario passes on a native backend. It measures orders of 1 line, 10 lines and the chosen maximum, without and with stock contention, and counts top-level commits, function and component calls, documents read and written, and rows left behind, with healthy-path and retry costs reported separately. Semantics come first and speed second; latency and throughput targets are product decisions made before the benchmark. The results feed the open question on component cost and the Layer 3 decisions.
 
@@ -61,10 +61,12 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 - [non-blocking] Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)
 - [non-blocking] Extension E-47, the documents a command reads: the design expected one `PlaceOrder` of N lines to read about N + 6 documents, and the pinned backend counted 3N + 5; the measurement run decides where the other 2N reads come from (E-47, F13)
 - [non-blocking] Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a run seeds its grants and makes the order summary writable with admin access before its first command, the production composition names no service issuer, its `auth.config.ts` reads its issuer from environment variables, and it is the Convex app whose project directory is `example/`; these are options taken here and the owner has not ruled (E-8, E-13, E-15, E-37, E-46)
+- [non-blocking] Extension E-17, the rows the experiment requires: the doc says the experiment passes when every Layer 0, 1 and 2 scenario passes, and its one all-layer row, Sc ALL-1, applies to every installed layer; the option taken here requires the twenty-three rows the doc's table gives Layer 0, 1 or 2 and leaves Sc ALL-1 to the Spec that owns it; the owner rules whether the experiment's pass includes Sc ALL-1 (E-17, First experiment, Sc ALL-1)
 
 ## Workflow
 
 - rule: The experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend (First experiment)
+- rule: [extension] Whether the experiment passed is answered by the acceptance check of `spec:platform.acceptance-contract`, over the rows `acceptanceRows` names and one run's record; no single example and no single test answers it (E-17, First experiment)
 - rule: It builds Layers 0 to 2 in a small, clean application: Orders and Inventory, complete order placement, one more lifecycle command, one essential summary, journal inspection and rebuild (First experiment)
 - rule: It reuses the pure deciders and state machines where they fit, under the one-authority rule of D3, and leaves the current app's infrastructure behind (First experiment, D3)
 - rule: It measures orders of 1 line, 10 lines and the chosen maximum, without and with stock contention (First experiment, Sc L2-3)
@@ -110,23 +112,24 @@ The experiment is an application, a test suite and a report. The application is 
 - productDecisions: latency and throughput targets are set by the owner before the benchmark and recorded with the run; the experiment reports latency but does not set a target (First experiment)
 - deliverables: the application in this repository, beside the design, which settles OQ4, the evidence records of every scenario run, and the measurement report with the six targets marked held or not held (First experiment, OQ4, Acceptance scenarios)
 - authProvider: [extension] the production composition's `auth.config.ts` declares one `customJwt` provider whose `issuer`, `applicationID` and `jwks` are environment variables of the deployment, as `spec:platform.native-harness` pins for a composition that runs natively (E-13, D11)
+- acceptanceRows: [extension] the rows the experiment's acceptance check requires are Sc L0-1, Sc L0-2, Sc L1-1, Sc L1-2, Sc L1-3, Sc L1-4, Sc L1-5, Sc L1-6, Sc L1-7, Sc L1-8, Sc L1-9, Sc L1-10, Sc L1-11, Sc L1-12, Sc L2-1, Sc L2-2, Sc L2-3, Sc L2-4, Sc L2-5, Sc L2-6, Sc L2-7, Sc L2-8 and Sc L2-9, which are the rows the doc's table gives Layer 0, 1 or 2 (E-17, First experiment, Acceptance scenarios)
 
 ## Example space
 
 ```gwt-vocabulary
-Given the Orders and Inventory application built through Layer 2 on a native backend
+Given the production composition on a native backend
 And an order of {size:"1 line"|"10 lines"|"the maximum"} with stock contention {contention:"absent"|"present"}
 And the backend runs with {configuration:"production configuration"|"test configuration"}
-When {run:"the PlaceOrder use case"|"every Layer 0 to 2 scenario"} runs
+When {run:"the PlaceOrder use case"|"the end-to-end path"} runs
 Then each successful command makes {commits:number} top-level commit
 And the core path runs {projectionJobs:number} projection jobs
 And the use case makes {callsPerContext:number} call per context
 And the budgets {budgets:"hold"|"are exceeded"}
-And authority, schemas, concurrency and code path {parity:"match a release"|"differ from a release"}
+And authority, schemas and code path {parity:"match a release"|"differ from a release"}
 ```
 
 ## Verification — reviewed
 
-- A reviewer confirms that every Layer 0, 1 and 2 example in the corpus is in the experiment's suite and that no scenario is marked passing without a recorded run.
+- The acceptance check confirms that every row `acceptanceRows` names has an example with a verifier and a passing result in one run's record, and a pure test confirms that `acceptanceRows` names exactly the rows the doc's table gives Layer 0, 1 or 2.
 - A reviewer confirms that each of the six constraint targets is compared against a measurement field and that the comparison is in the report.
 - A reviewer confirms that the reused deciders return events and a result only, never a state patch.

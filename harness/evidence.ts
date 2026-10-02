@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -5,6 +10,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Reporter, TestCase } from "vitest/node";
 import type { BackendFacts } from "./backend.js";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.evidence"),
+  label: "the run record",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export type JsonValue =
   null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export interface Measurement {

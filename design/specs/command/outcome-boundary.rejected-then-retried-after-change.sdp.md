@@ -9,7 +9,7 @@ relations:
 ---
 # A rejected command's response is lost, and it is retried after state changed
 
-Sc L1-12 · native tier.
+Sc L1-12 · native tier · fixture composition.
 
 On the fixture composition, the depot's stock stream for product `p-1` in tenant `t-1` stands at version 5 with nothing on hand, and an ordinary client that holds a stock grant sends the receipted `ClaimStock` for one unit. The first run is rejected because the stream's state refuses the command, an allocation against empty stock. The test keeps the thrown error for its assertions and otherwise acts as the caller whose response was lost. Another command then changes the stream, `AddStock` of one unit, a restock. The retry carries the same request key and input and must run against the new state, because the first attempt stored nothing, not even its key.
 

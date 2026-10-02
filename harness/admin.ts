@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { BaseConvexClient, ConvexHttpClient } from "convex/browser";
 import type { Value } from "convex/values";
 import { tmpdir } from "node:os";
@@ -6,6 +11,12 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { redact, runChild } from "./child.js";
 import { projectDirectory } from "./composition.js";
 import type { Composition } from "./composition.js";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.admin"),
+  label: "the harness's admin access",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export interface AdminTarget {
   url: string;
   adminKey: string;

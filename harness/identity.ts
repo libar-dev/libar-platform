@@ -1,4 +1,15 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.identity"),
+  label: "the fixture issuer",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export const fixtureIssuerUrl = "https://fixture-issuer.test";
 export const fixtureApplicationId = "fixture-app";
 export const fixtureKeyId = "fixture-key-1";

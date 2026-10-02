@@ -1,6 +1,17 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { execFileSync } from "node:child_process";
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.ownership"),
+  label: "backend ownership records",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 
 // Publish without an await after spawn. A parent sweep sees the whole record or no record.
 export function publishOwnership(

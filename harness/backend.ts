@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
@@ -14,6 +19,12 @@ import { fixtureComposition } from "./composition.js";
 import type { Composition } from "./composition.js";
 import type { Executable } from "./executable.js";
 import type { FixtureIssuer } from "./identity.js";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.backend"),
+  label: "the disposable backend",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export interface BackendFacts {
   composition: Composition["name"] | null;
   installedLayers: string[];

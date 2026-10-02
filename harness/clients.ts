@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { ConvexClient, ConvexHttpClient } from "convex/browser";
 import type {
   FunctionArgs,
@@ -5,6 +10,12 @@ import type {
   FunctionReturnType,
 } from "convex/server";
 import { waitUntil } from "./wait.js";
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:platform.native-harness.clients"),
+  label: "ordinary clients and their controls",
+  satisfies: ref("spec:platform.native-harness"),
+});
+void anchor;
 export function ordinaryClient(
   url: string,
   options: { token?: string; fetch?: typeof globalThis.fetch } = {},
