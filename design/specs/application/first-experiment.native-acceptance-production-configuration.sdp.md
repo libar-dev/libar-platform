@@ -15,6 +15,10 @@ Sc L2-9 · end to end tier · production composition.
 
 - outcome: Same authority, schemas, concurrency and code path as a release. (Sc L2-9)
 
+### Open questions
+
+- [non-blocking] No native observation shows that the disposable backend's concurrency matches a release's: the test shows that the deployment's environment holds only the three variables its `auth.config.ts` reads, and the concurrency the Then step claims rests on that reading, which the owner has not confirmed (Sc L2-9, E-15)
+
 ```gwt
 Given the Orders and Inventory application built through Layer 2 on a native backend
 And the backend runs with {configuration: "production configuration"}

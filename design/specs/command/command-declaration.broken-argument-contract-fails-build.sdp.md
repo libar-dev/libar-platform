@@ -28,4 +28,5 @@ And it fails {when: "before any traffic"}
 ## Verification — executable
 
 - Runs in the build tier with no backend, as a type test of the production composition's generated `api`.
+- The binding is a type test: the compiler is the check, and no step body runs.
 - The test asserts that a call of `api.ordering.placeOrder` whose input lacks a required field, and one whose field has another type, each fail `tsc` through the compiler's expected-error directive.

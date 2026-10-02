@@ -43,7 +43,7 @@ Context APIs take lists, such as `inventory.allocate({ lines })`, so a use case 
 
 - planShape: `plan: (input: I) => readonly PlannedCommand[]` groups the input's items by stream and names each command's registration through `planned`, so ten lines on three products plan three stream commands (D10, E-23)
 - combineShape: `combine: (results: readonly StreamResult<unknown>[]) => O` returns the operation's list-shaped DTO, telling stream types apart by each result's `version.streamType` (D10, E-23)
-- exampleAllocate: `inventory.allocate({ lines: [{ productId, quantity }] })` plans one `claim` per product stream and returns `{ allocations: [{ productId, allocated }] }` with the stream versions on the outcome (D10, Sc L2-3)
+- exampleAllocate: `inventory.allocate({ orderId, lines: [{ productId, quantity }] })` plans one `claim` per product stream and returns `{ allocations: [{ productId, allocated }] }` with the stream versions on the outcome (D10, Sc L2-3)
 - limitStreamsPerCall: `maxStreams` per operation, ceiling 256, and 8 MiB of stream documents at the planned stream types' `budgetBytes`, so the allocation operation's 100 stock streams fit only because the stock stream type declares a small budget, 16 KiB as `spec:application.orders-inventory-example` pins, under which the byte bound admits 512 and the count bound the full 256 (E-22, E-2, E-46, F13)
 - limitDocumentsWrittenPerCall: 800 documents and 8 MiB per call (E-22, F13)
 - limitOrderLines: the maximum lines per `PlaceOrder` is a product decision and a placeholder in the first experiment; `maxStreams` of the allocation operation follows it (OQ3, D10, F13)

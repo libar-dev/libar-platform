@@ -28,4 +28,5 @@ And it fails {when: "before any traffic"}
 ## Verification — executable
 
 - Runs in the build tier with no backend, as a type test of the production composition's generated `api`.
+- The binding is a type test: the compiler is the check, and no step body runs.
 - The test asserts that `api.ordering.placeOrder` is a public mutation reference, that a reference to a name the module does not export fails `tsc`, and that a typed call of `placeOrder` through the api built, as the generated `api` is, from the module with that export renamed `submitOrder` fails `tsc`, each through the compiler's expected-error directive, which itself fails the compile when the line stops being an error.
