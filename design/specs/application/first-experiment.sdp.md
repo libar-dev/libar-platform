@@ -37,7 +37,7 @@ relations:
 ---
 # The first experiment
 
-Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, Law 1, D3, D8, D9, D10, D11, F4, F13, Probe 3, OQ1, OQ3, OQ4, Sc L2-3, Sc L2-9, E-8, E-13, E-15, E-17, E-37, E-46, E-47.
+Layer 2 · Detail: full · Traces: First experiment, Acceptance scenarios, Law 1, D3, D8, D9, D10, D11, F4, F13, Probe 3, OQ1, OQ3, OQ4, Sc L2-3, Sc L2-9, E-8, E-12, E-13, E-15, E-17, E-37, E-46, E-47.
 
 The first experiment builds Layers 0 to 2 in a small, clean application, Orders and Inventory, and measures what the design costs. It passes when every Layer 0, 1 and 2 scenario passes on a native backend. It measures orders of 1 line, 10 lines and the maximum of 100 lines, without and with stock contention, and counts top-level commits, function and component calls, documents read and written, and rows left behind, with healthy-path and retry costs reported separately. Semantics come first and speed second; the latency and throughput targets are set before the benchmark, for the pinned local backend, and no target changes after the run. The results feed the open question on component cost and the Layer 3 decisions.
 
@@ -115,6 +115,7 @@ The experiment is an application, a test suite and a report. The application is 
 - datasetSizes: 1 line, 10 lines and 100 lines, the maximum, each against a fresh disposable backend whose stock items are created through `ReceiveStock` (E-46, Sc L2-3, OQ3)
 - contentionShape: N `PlaceOrder` commands for the same stock item sent concurrently, at N of 2, 8 and 32, with stock for one, so that one is applied and the rest are rejected for short stock or failed by the engine after its bounded retries, which is Sc L1-11's shape widened into the contention run; the run reports bytes read per call beside documents, the engine's retries where the backend exposes them, and how many commands the engine failed after its bounded retries, which the outcome boundary classifies as technical failures the caller may retry; the shared stock item is the first line of every order and each other line is on a stock item of that command alone, received once with quantity two, and no caller retries during the cell, while the caller may repeat a command the engine failed under its same request key (First experiment, Sc L1-11, F1, E-5, E-47)
 - limitOrderLines: 100 lines per `PlaceOrder`, the largest order the example supports and the bound its declaration carries, chosen under the 1 second timeout, the F13 ceilings and the adapter's stream and byte bounds; it is the example's promise and no platform limit, and the experiment reports documents read and written per line (OQ3, F13)
+- limitStockItemIdBytes: [extension] 64 bytes of UTF-8 for the stock item ID of each order line, the bound `PlaceOrder`'s declaration carries beside its 100 lines and checks in its refinement, so a longer one is refused `invalidInput` at step 1 of the command pipeline, before any read and before either context is called, as the stock item ID bound of `spec:application.orders-inventory-example` states; it is chosen so that the maximum order's `OrderPlaced` fits the 16,384-byte payload bound of E-12: `getConvexSize` measures the payload at 25 + 100 × (53 + 64) = 11,725 bytes at the bound, where 128 bytes would make 18,125 and the 256 bytes of a stream ID 30,925 (E-46, E-12, OQ3, F13)
 - limitExpectedDocuments: the design expects one receipted `PlaceOrder` of N lines, each on its own stock item, to write 2N + 4 documents, one stock item state and one event per line, the order state, the order event, the receipt and the summary row, and apart from them the audit record's one document; it expects the command to read three documents per line, the stock item's state to decide against, the journal's event at the expected stream version to check the append against, and the state again when it is replaced by its document ID, which the backend charges as a read, and beside them the caller's grants, the registry row and the gate; `observedPlaceOrderDocuments` holds what the pinned backend counted (E-47, F13, D10)
 - observedPlaceOrderDocuments: [extension] on the local backend `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, four grants, one active generation, no audit record written and no gate read, the `usageStats` of one receipted `PlaceOrder` of N lines, each line on its own stock item received once, counted 3N + 5 documents read and 2N + 4 written at N = 1, 10 and 100: 8 read and 6 written, 35 and 24, 305 and 204; at N = 10 the reads are the ten stock item states loaded, the ten journal events at the expected stream versions, the ten replacements of those states by document ID, the four grants and the registry row; the lookups of the receipt, the order stream, its events and the summary row that find nothing read no document, a second earlier event on a stock item adds no read, and two of the ten lines on one stock item read three documents fewer and write two fewer (E-47, F13)
 - observedMeasurementPins: [extension] the measurement records name the native backend tier, the local backend `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helpers` 0.1.124, `convex-test` 0.0.60, Node v24.19.0 and Linux 7.2.7-200.fc44.x86_64 on x64; these observations concern that local environment only (E-47, E-15, Sc L2-9)
@@ -136,6 +137,7 @@ The experiment is an application, a test suite and a report. The application is 
 ```gwt-vocabulary
 Given the production composition on a native backend
 And an order of {size:"1 line"|"10 lines"|"the maximum"} with stock contention {contention:"absent"|"present"}
+And the order's stock item IDs are {idBytes:number} bytes of UTF-8, the last line's {lastIdBytes:number}
 And the contention matrix has sizes {sizes:string} and callers {callers:string}
 And the backend runs with {configuration:"production configuration"|"test configuration"}
 When {run:"the PlaceOrder use case"|"the end-to-end path"} runs
@@ -145,6 +147,10 @@ And the use case makes {callsPerContext:number} call per context
 And the budgets {budgets:"hold"|"are exceeded"}
 And the contention matrix records one applied outcome per cell and {smallCellEngineFailures:number} engine failures at two and eight callers
 And authority, schemas and code path {parity:"match a release"|"differ from a release"}
+And the caller receives {answer:"the result"|"the rejection invalidInput"}
+And the rejection names line {line:number} with a stock item ID of {length:number} bytes against a bound of {limit:number}
+And the command read {readDocuments:number} documents and wrote {writtenDocuments:number}
+And the order's OrderPlaced payload measures {payloadBytes:number} bytes
 ```
 
 ## Verification — reviewed
