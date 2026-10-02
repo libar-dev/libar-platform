@@ -992,7 +992,7 @@
       "provisionalReading": "Taken: the library registers no grant function; an operator runs an internal mutation with admin access.",
       "blocks": "S4",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner tests 2 and 5: who holds the root of authority in a tenant is a promise to an adopter and trades safety against ease of adoption, and the corpus holds no evidence on which weighs more; doubt stated, because the mechanism beneath it, plain helpers and a composition's internal mutations, is delegated-shaped.",
@@ -1002,9 +1002,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-025.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The first grant of a tenant is created with admin access through the composition's own internal grant mutation, and later grants the same way or by whatever command the composition registers. The library registers no grant function and promises no recorded bootstrap, first-admin flow or invitation: those are an adopter's to build on the helpers. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-026",
@@ -1833,7 +1833,7 @@
       "provisionalReading": null,
       "blocks": "S3",
       "advisor": "product",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction: the largest order the platform promises an adopter and the targets it holds itself to, and OQ3 is the doc's own question (design/README.md:247); the maximum is also half of OD-123 (domain), which the number ruled here settles for both; the targets have no other row.",
@@ -1843,9 +1843,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-046.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One answer for the largest order: 100 lines is the largest order `PlaceOrder` of the example supports, and the bound its declaration carries. It is the example's promise and no platform limit: a command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings. One document per stream stays the default mapping, with the derived mapping for state that outgrows its budget. The Specs stop calling 100 provisional. The speed targets are set here, before the benchmark, as the doc requires. They are targets for the pinned local backend on the machine of the run; a hosted deployment is another question. When it set them the main thread had seen three single local runs, 51.6, 39.1 and 184.4 ms at 1, 10 and 100 lines, and the record says so. Latency without contention, the execution time of the top-level mutation as the backend's log reports it, over at least 30 accepted commands per size after 5 discarded: median at most 100 ms at 1 line, 100 ms at 10 lines and 400 ms at 100 lines, and 95th percentile at most 200, 200 and 800 ms. Throughput without contention: 8 callers at once, each placing ten-line orders on stock no other caller touches, complete at least 20 orders a second over at least 10 seconds, with the local backend's write cap of 4 MiB a second stated beside the number. Contention, N commands at once on one stock item with stock for one: at N of 2 and 8 every command reaches a business outcome, one applied and the rest rejected for short stock, and the engine fails none after its bounded retries; at N of 32 the same count is reported, and a command the engine failed is a recorded cost and no failure of the experiment, because the caller repeats it under the same request key. A target that is missed is reported as not held with its number. No target is changed after the run. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-047",
@@ -1863,16 +1863,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, said in public: the paths are in a public repository's history, which an edit does not take back, and STATE.md:263 says the section is the owner's; nearer the owner when unsure, since the edit itself is layout.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-047.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The two references in `AGENTS.md` under \"On the owner's machine\" stay. They are paths and hold no content of the files. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-048",
@@ -2528,7 +2528,7 @@
       "provisionalReading": "OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum of 100 lines and reports the numbers per line so the owner can choose (OQ3)",
       "blocks": "S3",
       "advisor": "convex",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction: the doc calls the largest order a product decision [design/specs/application/first-experiment.sdp.md:60,109].",
@@ -2538,9 +2538,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-064.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One answer for the largest order: 100 lines is the largest order `PlaceOrder` of the example supports, and the bound its declaration carries. It is the example's promise and no platform limit: a command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings. One document per stream stays the default mapping, with the derived mapping for state that outgrows its budget. The Specs stop calling 100 provisional. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-065",
@@ -2706,7 +2706,7 @@
       "provisionalReading": "Extension E-8: the doc names a generation registry, a marker and a gate without their shapes, and says to keep the old generation for a rollback period without saying whether live commands keep writing it; the option taken here is the `generations` and `projectionMarkers` tables below with seven states, a rollback period of 7 days, one building generation per read model at a time, and a retired generation that is kept but not written, so that a rollback reopens it as `verifying` and one verify pass repairs the rows changed since the switch before it is active again; the other reading is write-through, where live commands keep writing the retired generation for the whole period so that rollback is one write, at the cost of a third point read and write per read model per command for 7 days after every cutover; the cheaper steady path is taken and the owner rules whether the product needs instant rollback (E-8, D9, Sc L2-5)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, trades one value for another with no evidence which weighs more: a third point read and write per read model per command for 7 days against an instant rollback, and whether the product needs instant rollback is product direction [design/specs/application/generation-registry.sdp.md:33]. The tables, the seven states and the period are mechanism and go in the fork as the lean.",
@@ -2715,9 +2715,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-068.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "A retired generation is not written. Rollback reopens it as `verifying`, runs one verify pass that repairs what the intervening writes changed, and then switches. The switch is one write in both directions; the Specs stop promising a rollback of one write, and say rollback is a verify pass and then a switch of one write. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-069",
@@ -2744,7 +2744,7 @@
       "provisionalReading": "Extension E-8, reach of a generation: the doc says nothing about tenants and rebuild; the option taken here is one generation per read model spanning every tenant, so the registry has no tenant dimension, one row is active for all tenants and the batches iterate the tenant list; the other reading is one registry per read model and tenant, keyed by `readModel`, `tenantId` and `generation`, which lets one tenant rebuild while another keeps reading and lets a write pause close one tenant at a time, at the cost of one generation row, switch, rollback and purge per tenant, a projection-version rollout that is one generation per tenant, and a third index field on every registry read; the deployment-wide reading is taken because a generation is a build of the projection's code and the owner rules whether per-tenant rebuilds are a product need; a consequence the owner confirms with it is that the `generations` table is operational data whose scope is the whole deployment, not tenant data, so its two indexes `by_read_model` and `by_read_model_state` lead with the read model name rather than `tenantId`, a recorded deviation from Law 11's index rule and the review rubric's item 25, of the same kind the obligation module records under E-57, while the marker table, which is tenant data, leads with the tenant (E-8, D9, D11, Law 11, E-57)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, goes against a law of the doc and is product direction: the registry's two indexes lead with the read model and not the tenant, a recorded deviation from Law 11's index rule, and whether a per-tenant rebuild is a product need is the owner's [design/specs/application/generation-registry.sdp.md:34]. The fork gives the deployment-wide generation as the lean.",
@@ -2753,9 +2753,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-069.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One generation per read model spans every tenant. The generation registry is operational data of the deployment and its indexes lead with the read model. Every table that holds tenant data, the read-model rows and the markers among them, still leads with the tenant. The deviation from Law 11's index rule is recorded where it is today, as confirmed. A rebuild for one tenant is not offered. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-070",
@@ -5092,7 +5092,7 @@
       "provisionalReading": "OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions; the design assumes one document and leaves the maximum lines as a placeholder in the first experiment (OQ3, D10)",
       "blocks": "S3",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction and an open question of the doc: the largest order the placement command supports is OQ3 [design/specs/kernel/state-document-mapping.sdp.md:28], and S3 needs it before its benchmarks [design/STATE.md:139], a pointer; the 1, 10 and 100-line measurement already exists [design/STATE.md:158], a pointer.",
@@ -5101,9 +5101,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-123.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One answer for the largest order: 100 lines is the largest order `PlaceOrder` of the example supports, and the bound its declaration carries. It is the example's promise and no platform limit: a command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings. One document per stream stays the default mapping, with the derived mapping for state that outgrows its budget. The Specs stop calling 100 provisional. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-124",
@@ -6089,7 +6089,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner tests 5 and 6: who may run a rebuild or a restore across every tenant trades safety against ease with no evidence on which weighs more, and any grant for it needs a scope beyond the tenant, which rules on the term grant, a permission in a tenant [CONTEXT.md:128]; doubt stated, because admin access alone is a mechanism and D11's trust boundary already admits it.",
@@ -6101,9 +6101,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-148.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "Admin access is the authority of an operation over the whole deployment. Every operator entry is an internal function, so only admin access reaches it. It takes the operator as a required argument, a string bounded as an actor's ID is, refuses an empty one, reads no grant, and writes that operator on what it changes: the generation row, the gate's audit record, the restore's run record. The Specs say \"records the stated operator\" and stop saying \"authorizes an operator actor\". No scope beyond the tenant is added. D11's one trusted deployment is the boundary, and the Spec says a stated operator is what admin access chose to state. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-149",
@@ -6159,7 +6159,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "operator",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 5, and the doc makes acceptability itself a trigger: [docs/convex-transactional-domain-platform-decisions.md:354] activates online rebuild of cross-stream views when the write pause is unacceptable for them, so naming the acceptable length settles a trigger of the doc, which only the owner does; a policy by the operator lens's own rule.",
@@ -6170,9 +6170,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-150.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The write-pause Spec states no acceptable length. Before a paused rebuild starts, its length is estimated as the sum the lean names, backfill batches times batch time plus verify batches times batch time, and the number comes from the first paused rebuild that is measured on the native backend. Whether that length fires the doc's trigger for an online history rebuild is asked of the owner then, with the number. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-151",
@@ -6194,16 +6194,16 @@
       "provisionalReading": "the stock item holds allocated as one total",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 2, the example's policy under E-46, which the Spec leaves to the owner; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-151.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "Stock state keeps totals only. `release` takes the quantities from the cancelled order's own lines, in the same mutation as the order's `cancel`, with Orders called first (OD-074). The stock decider rejects a release larger than the allocated total. A second cancel of one order is rejected by the order's own state, so no stock item needs to remember an order. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-152",
@@ -6226,16 +6226,16 @@
       "provisionalReading": "the history view is in the first experiment and its rebuild pauses writes",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 2, the scope of the experiment; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-152.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The order allocation history view stays in the first experiment, because Sc L2-6 is a row of the doc and the experiment passes on every Layer 0 to 2 row. Its rules are written first (roadmap 4c) and its build is a unit of round 5, after the online rebuild. The roadmap's deferral \"at a view that needs them\" now covers the aggregate form only. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-153",
@@ -6260,16 +6260,16 @@
       "provisionalReading": "Sc L2-9 is bound to native runs on a local backend with production configuration",
       "blocks": "S3",
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 1, the reading of a scenario of the doc; OD-007's lean carries the case against; raised by the convex advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-153.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "Sc L2-9 reads as the local observation: the production composition on the pinned local backend, with the same authority, schemas, concurrency and code path a release has. No Spec claims parity with a hosted deployment. The concurrency half is the contention run on the production composition, as OD-007's checked lean says. A hosted run stays deferred with Probe 3's quota half (OD-036). Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     }
   ],
   "possiblySame": [
