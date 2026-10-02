@@ -1,6 +1,6 @@
 // Parent queries that relay the depot's queries for one tenant, so a client reads a context query
-// across the component boundary. Each authorizes its caller for the tenant before it calls the
-// context's query with the tenant as its one scope argument.
+// across the component boundary. Each authorizes its caller for the tenant, and getDocument for the
+// document it reads, before it calls the context's query with the tenant as its one scope argument.
 import {
   paginationOptsValidator,
   paginationResultValidator,
@@ -20,6 +20,11 @@ export const getDocument = query({
       name: "getDocument",
       tenantId,
       permission: readPermission,
+      subject: {
+        contextId: "depot",
+        streamType: "document",
+        streamId: documentId,
+      },
     });
     return ctx.runQuery(document.get, { tenantId, streamId: documentId });
   },

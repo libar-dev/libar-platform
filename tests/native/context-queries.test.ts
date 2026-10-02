@@ -1,5 +1,5 @@
 import { getFunctionName, type PaginationResult } from "convex/server";
-import { ConvexError } from "convex/values";
+import { ConvexError, type Value } from "convex/values";
 import type { ConvexHttpClient } from "convex/browser";
 import { expect, onTestFinished, test } from "vitest";
 import { api, internal } from "../../fixture/convex/_generated/api.js";
@@ -261,4 +261,90 @@ test("native: list leaves a deleted subject out by default, and a trusted caller
     documentId: "doc-002",
     title: deletedTitle,
   });
+});
+
+test("native: each relay refuses a caller with no identity and one with no grant, and getDocument authorizes a grant for its document only", async () => {
+  const backend = await fixtureBackend();
+  await createDocuments(backend, ["doc-1", "doc-2"]);
+  const grant = (subject: string, documentId?: string) =>
+    backend.admin.run(getFunctionName(internal.grants.grant), {
+      tenantId: "t-1",
+      principalKind: "human",
+      principalId: `${backend.issuer.issuer}|${subject}`,
+      permission: readPermission,
+      ...(documentId === undefined
+        ? {}
+        : {
+            subject: {
+              contextId: "depot",
+              streamType: "document",
+              streamId: documentId,
+            },
+          }),
+      grantedBy: "native-test",
+    });
+  const client = async (subject?: string) =>
+    subject === undefined
+      ? ordinaryClient(backend.url)
+      : ordinaryClient(backend.url, {
+          token: await backend.issuer.token(subject),
+        });
+  const refusal = async (promise: Promise<unknown>) => {
+    const error = await promise.then(
+      () => {
+        throw new Error("The call did not fail");
+      },
+      (thrown: unknown) => thrown,
+    );
+    expect(error).toBeInstanceOf(ConvexError);
+    return (error as ConvexError<Record<string, Value>>).data;
+  };
+  // No identity, then an identity with no grant, for each relay.
+  for (const [subject, code] of [
+    [undefined, "unauthenticated"],
+    ["stranger", "forbidden"],
+  ] as const) {
+    const caller = await client(subject);
+    expect(
+      await refusal(
+        caller.query(api.depotQueries.getDocument, {
+          tenantId: "t-1",
+          documentId: "doc-1",
+        }),
+      ),
+    ).toMatchObject({ kind: "rejection", code, commandType: "getDocument" });
+    expect(
+      await refusal(read(caller, { cursor: null, numItems: 10 })),
+    ).toMatchObject({ kind: "rejection", code, commandType: "listDocuments" });
+  }
+  // A grant for doc-1 reads doc-1 and is refused doc-2; a tenant-wide grant reads doc-2.
+  await grant("one-document", "doc-1");
+  await grant("tenant-wide");
+  const oneDocument = await client("one-document");
+  expect(
+    await oneDocument.query(api.depotQueries.getDocument, {
+      tenantId: "t-1",
+      documentId: "doc-1",
+    }),
+  ).toMatchObject({ documentId: "doc-1" });
+  expect(
+    await refusal(
+      oneDocument.query(api.depotQueries.getDocument, {
+        tenantId: "t-1",
+        documentId: "doc-2",
+      }),
+    ),
+  ).toMatchObject({
+    code: "forbidden",
+    commandType: "getDocument",
+    details: { reason: "subject_mismatch" },
+  });
+  expect(
+    await (
+      await client("tenant-wide")
+    ).query(api.depotQueries.getDocument, {
+      tenantId: "t-1",
+      documentId: "doc-2",
+    }),
+  ).toMatchObject({ documentId: "doc-2" });
 });

@@ -115,13 +115,14 @@ And a client subscribed to the first page of the read model's list for the tenan
 And an order placed in a tenant
 And a caller {caller:"with no identity"|"with an identity and no grant in the tenant"}
 And {orders:number} orders placed in one tenant and {others:number} in another
-When {action:"the use case commits one successful command"|"the caller reads the order through the parent"|"a client reads the tenant's order list in pages by cursor"}
+When {action:"the use case commits one successful command"|"the caller reads the order through the parent"|"a client pins the tenant's order list in pages by cursor, and then orders are placed inside its first page"}
 Then the subscription shows the committed state with source versions {versionMatch:"equal to the command's returned versions"|"older than the command's returned versions"}
 And the number of workers, jobs or queues that ran is {workers:number}
 And a read of the parent query over the context's get shows the committed state with stream version {versionMatch:"equal to the command's returned versions"|"older than the command's returned versions"}
 And the read throws rejection {code:"unauthenticated"|"forbidden"} that names the query
 And the number of receipts the read wrote is {receipts:number}
 And pages of {pageSize:number} together hold {ordersHeld:number} orders, each once and in order of order ID, and none of the other tenant's
+And the pinned first page keeps its range and holds {firstPageHeld:number} orders
 And the number of pages that carry pageStatus SplitRequired is {splitPages:number}
 ```
 

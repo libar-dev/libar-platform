@@ -17,13 +17,14 @@ E-24 · native tier · production composition · no acceptance row; the example 
 
 ```gwt
 Given {orders: 25} orders placed in one tenant and {others: 3} in another
-When {action: "a client reads the tenant's order list in pages by cursor"}
-Then pages of {pageSize: 10} together hold {ordersHeld: 25} orders, each once and in order of order ID, and none of the other tenant's
+When {action: "a client pins the tenant's order list in pages by cursor, and then orders are placed inside its first page"}
+Then pages of {pageSize: 10} together hold {ordersHeld: 27} orders, each once and in order of order ID, and none of the other tenant's
+And the pinned first page keeps its range and holds {firstPageHeld: 12} orders
 And the number of pages that carry pageStatus SplitRequired is {splitPages: 0}
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the production composition; every test owns its disposable backend.
-- After grants, the first activation and `ReceiveStock` as setup, the test places the orders through `PlaceOrder`, then reads `listOrders` for the first tenant as a caller granted `orders.read`, each page with `cursor` and `numItems` and then subscribed with `endCursor` set to the `continueCursor` that read returned, the next page starting at the previous page's `endCursor`, until a read answers `isDone`.
-- The test asserts three pages of 10, 10 and 5 orders, that no page carries `pageStatus` `SplitRequired`, and that every order ID of the first tenant appears once.
+- After grants, the first activation and `ReceiveStock` as setup, the test places the orders through `PlaceOrder`, then reads `listOrders` for the first tenant as a caller granted `orders.read`, each page with `cursor` and `numItems` and then subscribed with `endCursor` set to the `continueCursor` that read returned, the next page starting at the previous page's `endCursor`, until a read answers `isDone`; with every page subscribed, it places two orders whose order IDs sort inside the first page, `order-00a` and `order-05a`.
+- The test asserts that the first page, pinned by its end cursor, still starts and ends at the orders it held and grows from 10 to 12 orders, that the second page starts at the order after it, that the pages then hold 12, 10 and 5 orders, that no page carries `pageStatus` `SplitRequired`, and that every order ID of the first tenant appears once, none missing or repeated.

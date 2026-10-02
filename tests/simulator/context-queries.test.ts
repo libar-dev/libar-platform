@@ -376,6 +376,106 @@ describe("the parent relays a context query across the component boundary", () =
       expect(second.isDone).toBe(true);
     },
   );
+  test(
+    name(
+      "getDocument authorizes for the document it reads: a grant for that document reads it, a grant for another is refused, and a tenant-wide grant reads any",
+    ),
+    async () => {
+      const t = app();
+      await t.mutation(
+        internal.depotRelay.createDocuments,
+        call(
+          {
+            documents: ["doc-1", "doc-2"].map((documentId) => ({
+              documentId,
+              title: `Report ${documentId}`,
+            })),
+          },
+          "create-1",
+        ),
+      );
+      const grant = (subject: string, documentId?: string) =>
+        t.mutation(internal.grants.grant, {
+          tenantId: "t-1",
+          principalKind: "human",
+          principalId: `${issuer}|${subject}`,
+          permission: readPermission,
+          ...(documentId === undefined
+            ? {}
+            : {
+                subject: {
+                  contextId: "depot",
+                  streamType: "document",
+                  streamId: documentId,
+                },
+              }),
+          grantedBy: "operator",
+        });
+      await grant("one-document", "doc-1");
+      await grant("tenant-wide");
+      const get = (subject: string, documentId: string) =>
+        t
+          .withIdentity({ issuer, subject })
+          .query(parentApi.depotQueries.getDocument, {
+            tenantId: "t-1",
+            documentId,
+          });
+      expect(await get("one-document", "doc-1")).toMatchObject({
+        documentId: "doc-1",
+      });
+      const refused = await rejected(get("one-document", "doc-2"));
+      expect(refused).toBeInstanceOf(ConvexError);
+      expect((refused as ConvexError<Value>).data).toMatchObject({
+        code: "forbidden",
+        commandType: "getDocument",
+        details: { reason: "subject_mismatch" },
+      });
+      expect(await get("tenant-wide", "doc-2")).toMatchObject({
+        documentId: "doc-2",
+      });
+    },
+  );
+  test(
+    name(
+      "each relay refuses a caller with no identity and a caller with an identity and no grant, before it reads",
+    ),
+    async () => {
+      const t = app();
+      type Reader = Pick<ReturnType<typeof t.withIdentity>, "query">;
+      const relays = [
+        [
+          "getDocument",
+          (caller: Reader) =>
+            caller.query(parentApi.depotQueries.getDocument, {
+              tenantId: "t-1",
+              documentId: "doc-1",
+            }),
+        ],
+        [
+          "listDocuments",
+          (caller: Reader) =>
+            caller.query(parentApi.depotQueries.listDocuments, {
+              tenantId: "t-1",
+              paginationOpts: { cursor: null, numItems: 10 },
+            }),
+        ],
+      ] as const;
+      for (const [relay, read] of relays) {
+        for (const [caller, code] of [
+          [t, "unauthenticated"],
+          [t.withIdentity({ issuer, subject: "stranger" }), "forbidden"],
+        ] as const) {
+          const error = await rejected(read(caller));
+          expect(error).toBeInstanceOf(ConvexError);
+          expect((error as ConvexError<Value>).data).toMatchObject({
+            kind: "rejection",
+            code,
+            commandType: relay,
+          });
+        }
+      }
+    },
+  );
 });
 
 describe("the bound on what an operation returns", () => {
