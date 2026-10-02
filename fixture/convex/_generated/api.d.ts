@@ -25,6 +25,7 @@ import type * as orders from "../orders.js";
 import type * as parentList from "../parentList.js";
 import type * as readCost from "../readCost.js";
 import type * as readModels from "../readModels.js";
+import type * as rejectionCommands from "../rejectionCommands.js";
 import type * as summaries from "../summaries.js";
 import type * as summarizedTwice from "../summarizedTwice.js";
 import type * as switches from "../switches.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   parentList: typeof parentList;
   readCost: typeof readCost;
   readModels: typeof readModels;
+  rejectionCommands: typeof rejectionCommands;
   summaries: typeof summaries;
   summarizedTwice: typeof summarizedTwice;
   switches: typeof switches;
