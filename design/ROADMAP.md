@@ -37,13 +37,13 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 
 **1a. Sitting one.** One launch per advisor with `task-fork.md`: OD-046 (product), OD-064 (convex), OD-123 (domain) for S3; OD-025, OD-148, OD-150 (operator) and OD-068, OD-069 (domain) for S4; OD-047 and OD-048 (product), which block no unit and need no evidence. Ten forks. The questions below that are not rows yet become rows first, so that the sitting answers them too. A sol check of every fork's facts, the advisors' corrections, then one `owner` unit applies the owner's words. Sitting one is the first thing the planning thread opens, because every lane of round 2 but one waits on it.
 
-**1b. Attribute the reads.** Three native tests on the production composition, each one change against the 10-line run, reading the usage of the top-level completion record; the run's record copied to `evidence/`; the two Spec entries of the first experiment rewritten with the attribution. The convex advisor's own sum from the code reaches 2N + 5, so one read per stock stream is unattributed, and the candidate is the adapter's replace of the stream row. OD-066 becomes decidable.
+**1b. Attribute the reads.** Three native tests on the production composition, each one change against the 10-line run, reading the usage of the top-level completion record; the run's record kept as CI's artifact of the push; the two Spec entries of the first experiment rewritten with the attribution. The convex advisor's own sum from the code reaches 2N + 5, so one read per stock stream is unattributed, and the candidate is the adapter's replace of the stream row. OD-066 becomes decidable.
 
 **1c. Confirm the flags.** A `review` unit scoped to the thirty-three `fixed` findings with `unreviewed: true` and not to the corpus: the eleven from S0 on the platform Specs against the harness that binds them, then the rest, which touch the kernel, context, command, application, facts and a few platform Specs. The flag goes, or a new finding is written. The eight `partially-fixed` flags stay with the slices that build their rest.
 
 **1d. The import scout.** One afternoon, by astra: whether `npx convex import` with replacement runs against the pinned local backend, what it does to component tables and to `_scheduled_functions`, and what the two docs pages say of a local deployment. Its answer moves 4b forward or keeps it where it is.
 
-Also in round 1, a commit of its own on the main machine: the native run records of `e76e587` and `645130f` copied into `evidence/`. They sit under the ignored `evidence/runs/` on the main machine, and no kept record backs the Layer 2 counts until they are copied.
+No record is copied into `evidence/` in round 1 or later: tactical decision 35 ends that ritual, CI keeps the record of every push as an artifact, and a claim that a tier passed names the commit and the CI run. The Layer 2 counts of `e76e587` and `645130f` are backed by the artifacts of those pushes of `main`.
 
 ## Round 2: after sitting one
 
