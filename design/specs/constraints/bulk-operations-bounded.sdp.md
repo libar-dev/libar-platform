@@ -14,7 +14,7 @@ relations:
 
 Operations bound · Traces: D19, F13.
 
-Every bulk operation, sweeper and batch has a stated bound, tested against the pinned Convex version, and platform limits are ceilings, not batch sizes. In this package the bounded operations are the backfill, verify and purge batches of a rebuild, the check batches of a restore, an import's batches and the operator's audit pages; each states its bound in its Spec. A batch sized at a platform limit is a batch that times out or fails when the limit moves, so every bound sits well below the 32,000 documents scanned, 16,000 written, 16 MiB read and written, 4,096 index ranges and the one second timeout.
+Every bulk operation, sweeper and batch has a stated bound, tested against the pinned Convex version, and platform limits are ceilings, not batch sizes. In this package the bounded operations are the backfill, verify and purge batches of a rebuild, the batches of its tenant fill, the check batches of a restore, an import's batches and the operator's audit pages; each states its bound in its Spec. A batch sized at a platform limit is a batch that times out or fails when the limit moves, so every bound sits well below the 32,000 documents scanned, 16,000 written, 16 MiB read and written, 4,096 index ranges and the one second timeout.
 
 ## Intent
 
