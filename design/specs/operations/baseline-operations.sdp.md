@@ -60,7 +60,7 @@ Security, bounded resource use, useful errors and tests start in Layer 1, so non
 - Restore starts with external dispatch off, reconciles the gap since the backup and rebuilds schedules from obligations, and external idempotency keys survive restore; the transactional profile's procedure is the restore workflow and the durable profile's additions are the obligation module's (D19, F12)
 - Accepted deferred work stores a logical handler key and version, stable shims stay while vendor jobs refer to old function handles, and an unsupported version goes to needs attention, never an endless retry; this applies from Layer 3 and its detail is the obligation module's (D19, D13)
 - Security, bounded resource use, useful errors and tests start in Layer 1 (Thesis)
-- Every audit record and every diagnostic record names its tenant, and every operator query over them takes the tenant scope (Law 11, D11)
+- Every audit record of a command and every diagnostic record names its tenant, and every operator query over them takes the tenant scope; an `operatorAudit` record of a gate change names a tenant only through a tenant scope, and its query takes the scope (Law 11, D11, E-43)
 - Operator entries that read audit records are internal functions, so only admin access reaches them, as the operator entry contract of `spec:command.actor-and-scope` rules; each one over tenant data takes the tenant, so a client cannot read another tenant's audit (D11, Law 5, E-48)
 - [extension] A diagnostic record is emitted per command through a sink that never throws, is bounded to 4 KiB, and holds identifiers, outcome kind, error code, versions and timings only (E-43, D19)
 - [extension] An audit record is one document written by the command pipeline's step 10 through `writeAudit` for every declaration whose `audit` field is set, after an applied command and after a business failure alike, with every field taken from the command as `auditRecordSources` lists, and the failure of that write throws and rolls back the command (E-43, D19, E-38)
@@ -71,7 +71,7 @@ Security, bounded resource use, useful errors and tests start in Layer 1, so non
 
 Diagnostics and audit are two paths with opposite failure rules. `emitDiagnostic` runs at the end of the command's mutation, after the business writes, inside a try and catch that swallows every error and increments a counter in memory; nothing it does can throw into the mutation. `writeAudit` runs inside the mutation with the business writes, uses `ctx.db.insert` with a validator, and any failure, including a validator refusal or a document too large, throws and rolls the whole command back. Both are parent code; components neither log nor audit for the parent.
 
-Optimistic-concurrency retries cannot be observed from inside a mutation, because a retried mutation re-runs from the start; the metric comes from the platform's function logs and insights. Rebuild and restore progress are read from the generation and restore run rows. The Layer 3 metrics are listed so the list is complete; they are measured once the obligation module is installed.
+Optimistic-concurrency retries cannot be observed from inside a mutation, because a retried mutation re-runs from the start; the metric comes from the platform's function logs and insights. Rebuild progress is read from the generation's progress row and restore progress from the restore run row. The Layer 3 metrics are listed so the list is complete; they are measured once the obligation module is installed.
 
 - transactionBoundary: audit is written inside the command's top-level mutation and fails closed; diagnostics are emitted from the same mutation after the business writes and never throw (D19, Sc ALL-1)
 - convexSurface: `getAuditByOperation`, `getAuditBySubject`, `getAuditByRequestKey` as internal queries for operators, each taking `tenantId` first, and `getGateAudit` of `spec:application.write-pause` over `operatorAudit`; the diagnostic sink is `console.log` of one JSON line, read through the platform's logs (E-43, D19)
@@ -102,7 +102,7 @@ Optimistic-concurrency retries cannot be observed from inside a mutation, becaus
 - metricOldestUnresolvedObligation: age of the oldest unresolved obligation, measured once Layer 3 is installed (D19, D13)
 - metricRetryAndExhaustion: retry and exhaustion counts, measured once Layer 3 is installed (D19, D13)
 - metricProviderUncertainty: obligations in needs attention for an ambiguous provider outcome, measured once Layer 3 is installed (D19, D14)
-- metricRebuildProgress: batches done, rows written and misses per generation, from the generation registry (D19, D9)
+- metricRebuildProgress: batches done, rows written and misses per generation, from the generation's `generationProgress` row in the registry (D19, D9, E-40)
 - metricRestoreProgress: checks passed, examined counts and findings per restore run, from the restore run record (D19, Sc L2-8)
 - releaseRule: a release keeps a building generation's cursor, a retired generation's rows and an import's progress row readable; a schema change to any of them ships with a migration that runs before the new code reads them (D19)
 - limitDiagnosticRecord: 4 KiB per diagnostic record; larger records are truncated, never dropped (E-43, D19)
@@ -122,5 +122,5 @@ And the failure is {surfaced:"reported as a diagnostic gap without touching the 
 
 - A reviewer confirms that `emitDiagnostic` is the only path from a command to logs or metrics, that it cannot throw into the mutation, and that no code path decides a business outcome from a diagnostic.
 - A reviewer confirms that the command pipeline's step 10 calls `writeAudit` for every declaration whose `audit` field is set, inside the mutation, and that no catch surrounds it.
-- A reviewer confirms that every batch in the corpus states its bound and that every audit and personal-data index leads with the tenant.
+- A reviewer confirms that every batch in the corpus states its bound and that every index of `auditRecords` and of personal data leads with the tenant, and that the `operatorAudit` index leads with the scope.
 - A reviewer confirms that a retention and deletion policy document exists before any production data and that it names which claims survive deletion.
