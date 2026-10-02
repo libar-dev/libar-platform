@@ -85,21 +85,28 @@ test("native: snapshot replacement restores parent and context data and preserve
   const path = join(directory, "snapshot.zip");
   const exported = await exportSnapshot(source, path, signal);
   measure("snapshot export command", { ...exported });
-  console.log(JSON.stringify(exported));
   const entries = await runChild("unzip", "unzip", ["-Z1", path], {
     timeoutMs: 10000,
     signal,
   });
   measure("snapshot archive entries", entries);
+  for (const entry of [
+    "markers/documents.jsonl",
+    "notes/documents.jsonl",
+    "_components/depot/streams/documents.jsonl",
+    "_components/depot/events/documents.jsonl",
+  ])
+    expect(entries).toContain(entry);
   expect(entries).not.toContain("_scheduled_functions");
   expect(await observe(source)).toEqual(before);
 
   const fresh = await fixtureBackend();
+  // A table the backend holds but does not list among the tables reads as empty, not as missing.
+  expect(await fresh.admin.readTable("_scheduled_functions")).toEqual([]);
   await fresh.admin.setEnvironment({ SNAPSHOT_VALUE: "destination" });
   const freshEnvironment = await fresh.admin.environment();
   const imported = await replaceSnapshot(fresh, path, signal);
   measure("fresh replacement command", { ...imported });
-  console.log(JSON.stringify(imported));
   const freshAfter = await observe(fresh);
   measure("fresh replacement contents", convexToJson(freshAfter));
   expect(freshAfter).toEqual({
@@ -124,7 +131,6 @@ test("native: snapshot replacement restores parent and context data and preserve
   measure("same backend before replacement", convexToJson(sameBefore));
   const replaced = await replaceSnapshot(source, path, signal);
   measure("same backend replacement command", { ...replaced });
-  console.log(JSON.stringify(replaced));
   const sameAfter = await observe(source);
   measure("same backend replacement contents", convexToJson(sameAfter));
   expect(sameAfter).toEqual({

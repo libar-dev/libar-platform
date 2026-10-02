@@ -1,13 +1,17 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { execFile } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Backend } from "./backend.js";
 import { redact } from "./child.js";
-
 const anchor = codeAnchor({
   id: codeAnchorId("impl:platform.native-harness.snapshot"),
-  label: "snapshot export and replacement import through admin access",
+  label: "snapshot export and replacement import through the Convex CLI",
   satisfies: ref("spec:platform.native-harness"),
 });
 void anchor;
@@ -95,8 +99,3 @@ export function replaceSnapshot(
     signal,
   );
 }
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
