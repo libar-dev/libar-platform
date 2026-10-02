@@ -26,7 +26,16 @@ export interface NativeTestFacts {
   backends: BackendFacts[];
   measurements: Measurement[];
 }
+// The Vitest project that ran a test. The acceptance check reads it to confirm a scenario's tier.
+export type TestProjectName = "types" | "pure" | "simulator" | "native";
+const projectNames: readonly string[] = [
+  "types",
+  "pure",
+  "simulator",
+  "native",
+];
 export interface NativeTestEntry extends NativeTestFacts {
+  project: TestProjectName;
   name: string;
   file: string;
   result: "passed" | "failed" | "skipped";
@@ -92,11 +101,16 @@ export default class EvidenceReporter implements Reporter {
     this.clean = git("status", "--porcelain") === "";
     this.tests = [];
   }
+  // A run that includes the native project records every test it ran, of every project, so that
+  // one record holds the results of every tier the run covered.
   onTestCaseResult(test: TestCase) {
-    if (test.project.name !== "native") return;
+    const project = test.project.name;
+    if (!projectNames.includes(project))
+      throw new Error(`The run record has no project named ${project}`);
     const result = test.result();
     if (result.state === "pending") return;
     this.tests.push({
+      project: project as TestProjectName,
       name: test.fullName,
       file: test.module.relativeModuleId,
       result: result.state,

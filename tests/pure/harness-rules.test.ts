@@ -1,8 +1,10 @@
 import {
+  createReader,
   ref,
   specTest,
   testAnchorId,
 } from "@libar-dev/software-delivery-protocol";
+import type { GraphSchema } from "@libar-dev/software-delivery-protocol";
 import { readdir, readFile } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import { join } from "node:path";
@@ -148,4 +150,30 @@ test("pure: local write pacing is exported by its named module and remains compa
   expect(wait.localWriteRateBytesPerSecond).toBe(localWriteRateBytesPerSecond);
   await paceAfterWrite(localWriteRateBytesPerSecond + 1);
   expect(sleep).toHaveBeenLastCalledWith(1251);
+});
+
+test("pure: every TypeScript file under harness/ reaches a Spec through its own anchor, and none is of unknown coverage", async () => {
+  const root = join(import.meta.dirname, "../..");
+  const graph = createReader(
+    JSON.parse(
+      await readFile(join(root, "generated/graph.json"), "utf8"),
+    ) as GraphSchema,
+  );
+  const files = (await readdir(join(root, "harness")))
+    .filter((name) => name.endsWith(".ts"))
+    .map((name) => `harness/${name}`);
+  expect(files.length).toBeGreaterThan(0);
+  for (const file of files) {
+    const radius = graph.blastRadius([file]);
+    expect({ file, unknown: radius.coverageUnknown }).toEqual({
+      file,
+      unknown: [],
+    });
+    expect({
+      file,
+      reached: radius.impactedSpecs.some((spec) =>
+        spec.reasons.some((reason) => reason.file === file),
+      ),
+    }).toEqual({ file, reached: true });
+  }
 });

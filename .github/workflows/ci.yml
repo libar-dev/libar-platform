@@ -38,7 +38,27 @@ jobs:
       - run: npm run codegen
       - run: git diff --exit-code -- fixture/convex example/convex
       - run: test -z "$(git status --porcelain -- fixture/convex example/convex)"
-      - run: npm run test:native
+      # One run of every test project, so that one record holds every tier's results.
+      - run: npm run test:all
+      # The acceptance check reads that run's record. It fails the job on a failed or absent
+      # scenario (exit 1) and when it cannot answer (exit 2). A scenario with no verifier (exit 3)
+      # is reported in the job summary and does not fail the job.
+      - name: Acceptance check
+        if: always()
+        run: |
+          set +e
+          npm run --silent acceptance > "$RUNNER_TEMP/acceptance.txt"
+          code=$?
+          set -e
+          cat "$RUNNER_TEMP/acceptance.txt"
+          {
+            echo '## Acceptance check'
+            echo
+            echo '```text'
+            cat "$RUNNER_TEMP/acceptance.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          test "$code" -eq 0 || test "$code" -eq 3
       - uses: actions/upload-artifact@v7
         if: always()
         with:

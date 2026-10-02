@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, vi } from "vitest";
@@ -12,7 +12,7 @@ vi.mock("node:fs", async (original) => {
 });
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
-import {
+import EvidenceReporter, {
   failRunRecord,
   openRunRecord,
   writeRunRecord,
@@ -87,6 +87,70 @@ test("pure: an amendment that fails leaves the old record whole", async () => {
       "EFBIG",
     );
     expect(await readFile(path, "utf8")).toBe(original);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+// A finished test as the reporter sees it.
+function finished(project: string, file: string, name: string) {
+  return {
+    project: { name: project },
+    fullName: name,
+    module: { relativeModuleId: file },
+    result: () => ({ state: "passed", errors: [] }),
+    diagnostic: () => ({ duration: 1 }),
+    meta: () => ({}),
+  } as never;
+}
+
+test("pure: a run that includes the native project records the tests of every project, each under its project", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-evidence-projects-"));
+  try {
+    vi.mocked(randomUUID).mockReturnValueOnce(
+      "00000000-0000-0000-0000-000000000004",
+    );
+    const reporter = new EvidenceReporter({ directory });
+    reporter.onTestRunStart([
+      { project: { name: "native" } },
+      { project: { name: "pure" } },
+    ] as never);
+    reporter.onTestCaseResult(
+      finished("native", "tests/native/a.test.ts", "a native test"),
+    );
+    reporter.onTestCaseResult(
+      finished("pure", "tests/pure/b.test.ts", "pure: a pure test"),
+    );
+    await reporter.onTestRunEnd([] as never, [] as never, "passed" as never);
+    const [name] = await readdir(directory);
+    const record = JSON.parse(
+      await readFile(join(directory, name!), "utf8"),
+    ) as NativeRunRecord;
+    expect(
+      record.tests.map(({ project, file, result }) => ({
+        project,
+        file,
+        result,
+      })),
+    ).toEqual([
+      { project: "native", file: "tests/native/a.test.ts", result: "passed" },
+      { project: "pure", file: "tests/pure/b.test.ts", result: "passed" },
+    ]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("pure: a run without the native project writes no record", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-evidence-no-native-"));
+  try {
+    const reporter = new EvidenceReporter({ directory });
+    reporter.onTestRunStart([{ project: { name: "pure" } }] as never);
+    reporter.onTestCaseResult(
+      finished("pure", "tests/pure/b.test.ts", "pure: a pure test"),
+    );
+    await reporter.onTestRunEnd([] as never, [] as never, "passed" as never);
+    expect(await readdir(directory)).toEqual([]);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
