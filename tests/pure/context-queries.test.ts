@@ -114,15 +114,21 @@ test("pure: get takes tenantId and streamId only and returns the registration's 
   expect(returns.value[0]).toEqual(jsonOf(documentStream.dto));
 });
 
-test("pure: list takes tenantId and paginationOpts only and returns the shared page shape over the registration's DTO", () => {
+test("pure: list takes tenantId, paginationOpts and an optional includeDeleted only and returns the shared page shape over the registration's DTO", () => {
   const list = defineList(journal, stockStream);
   const args = JSON.parse(exported(list).exportArgs()) as {
-    value: Record<string, unknown>;
+    value: Record<string, { optional: boolean; fieldType: { type: string } }>;
   };
   expect(Object.keys(args.value).sort()).toEqual([
+    "includeDeleted",
     "paginationOpts",
     "tenantId",
   ]);
+  expect(args.value.includeDeleted).toEqual({
+    optional: true,
+    fieldType: { type: "boolean" },
+  });
+  expect(args.value.tenantId?.optional).toBe(false);
   const returns = JSON.parse(exported(list).exportReturns()) as {
     type: string;
     value: Record<

@@ -37,6 +37,9 @@ export const faultTitles = {
   // toDto runs in step 10, after the row is written.
   afterStateWrite: "fault: after the state write",
 } as const;
+// A document whose title is this one is deleted: the mapping marks its stream row, so get answers
+// null for it and list leaves it out unless its caller asks for deleted subjects.
+export const deletedTitle = "(deleted)";
 // How many times the copyTitles operation repeats each title in its result, so a call that writes
 // little returns more than the library's bound on what a call returns.
 export const titleCopies = 64;
@@ -84,7 +87,7 @@ export const documentStream: StreamRegistration<
     isDeleted: (state) => {
       if (state.title === faultTitles.afterJournalAppend)
         throw new Error(`Fault injected: ${faultTitles.afterJournalAppend}`);
-      return false;
+      return state.title === deletedTitle;
     },
   },
   stateSchemaVersion: 1,

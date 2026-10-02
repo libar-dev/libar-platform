@@ -28,6 +28,7 @@ import type * as readModels from "../readModels.js";
 import type * as summaries from "../summaries.js";
 import type * as summarizedTwice from "../summarizedTwice.js";
 import type * as switches from "../switches.js";
+import type * as usage from "../usage.js";
 
 import type {
   ApiFromModules,
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   summaries: typeof summaries;
   summarizedTwice: typeof summarizedTwice;
   switches: typeof switches;
+  usage: typeof usage;
 }>;
 
 /**

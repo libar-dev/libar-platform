@@ -50,7 +50,13 @@ export function boundedPage(
   };
 }
 export type GetArgs = { tenantId: string; streamId: string };
-export type ListArgs = { tenantId: string; paginationOpts: PaginationOptions };
+// includeDeleted is for a trusted caller inside the deployment, such as a rebuild or a restore,
+// which needs deleted subjects. A parent query never relays it from a client.
+export type ListArgs = {
+  tenantId: string;
+  paginationOpts: PaginationOptions;
+  includeDeleted?: boolean;
+};
 // One subject's DTO, or null when its stream does not exist or is deleted.
 export function defineGet<S, C, E extends DomainEvent, R>(
   journal: Journal,
@@ -66,8 +72,9 @@ export function defineGet<S, C, E extends DomainEvent, R>(
     },
   });
 }
-// A tenant's subjects of one stream type in streamId order. Deleted subjects are left out after the
-// page is read, so a page may hold fewer DTOs than numItems while isDone is false.
+// A tenant's subjects of one stream type in streamId order. Unless includeDeleted is true, deleted
+// subjects are left out after the page is read, so a page may hold fewer DTOs than numItems while
+// isDone is false.
 export function defineList<S, C, E extends DomainEvent, R>(
   journal: Journal,
   registration: StreamRegistration<S, C, E, R>,
@@ -78,9 +85,13 @@ export function defineList<S, C, E extends DomainEvent, R>(
     bytes: limitListBytes,
   };
   return query({
-    args: { tenantId: v.string(), paginationOpts: paginationOptsValidator },
+    args: {
+      tenantId: v.string(),
+      paginationOpts: paginationOptsValidator,
+      includeDeleted: v.optional(v.boolean()),
+    },
     returns: paginationResultValidator(registration.dto),
-    handler: async (ctx, { tenantId, paginationOpts }) => {
+    handler: async (ctx, { tenantId, paginationOpts, includeDeleted }) => {
       const result = await paginator(ctx.db, contextSchema)
         .query("streams")
         .withIndex("by_identity", (q) =>
@@ -89,7 +100,7 @@ export function defineList<S, C, E extends DomainEvent, R>(
         .paginate(boundedPage(paginationOpts, limit));
       const page: Value[] = [];
       for (const row of result.page) {
-        if (row.deletedAt !== undefined) continue;
+        if (row.deletedAt !== undefined && includeDeleted !== true) continue;
         page.push(
           registration.toDto(row.state as S, metaOf(registration, row)),
         );

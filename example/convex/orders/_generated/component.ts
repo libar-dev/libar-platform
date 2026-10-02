@@ -160,6 +160,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           "query",
           "internal",
           {
+            includeDeleted?: boolean;
             paginationOpts: {
               cursor: string | null;
               endCursor?: string | null;
