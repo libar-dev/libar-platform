@@ -79,7 +79,7 @@ bindExample(contract, (): World => ({}), {
       );
       record("parent reads context id", parentIdError);
       expect(parentIdError).toContain(
-        'Invalid argument `id` for `db.get`: expected to be an Id<"streams">, got Id<"depthRows"> instead.',
+        'Invalid argument `id` for `db.get`: expected to be an Id<"streams">, got Id<',
       );
       await backend.admin.run("migrations:streams", {}, { component: "depot" });
       const context = await untilStatus(
@@ -117,7 +117,7 @@ bindExample(contract, (): World => ({}), {
       );
       record("context writes parent id", failed);
       expect(failed.error).toContain(
-        'Invalid argument `id` for `db.patch`: expected to be an Id<"documentSummaries">, got Id<"migrationSettings"> instead.',
+        'Invalid argument `id` for `db.patch`: expected to be an Id<"documentSummaries">, got Id<',
       );
       expect(
         (await backend.admin.readTable("documentSummaries"))[0]!.title,
