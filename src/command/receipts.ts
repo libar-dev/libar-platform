@@ -31,7 +31,6 @@ export const defaultRetention: Retention = {
   window: 7 * 24 * 60 * 60 * 1000,
   afterExpiry: "delete",
 };
-export { limitIdLength } from "../context/text.js";
 export const limitAffectedRefs = 1000;
 function sorted(json: JSONValue): string {
   if (Array.isArray(json)) return `[${json.map(sorted).join(",")}]`;
@@ -87,7 +86,7 @@ export function classifyReceipt(
   if (found === null || found.expiresAt <= now) return { class: "new" };
   if (found.tombstone)
     throw new Error(
-      `Receipt ${found.operationId} is a tombstone, which no retention writes: afterExpiry is always delete`,
+      "A receipt is a tombstone, which no retention writes: afterExpiry is always delete",
     );
   if (found.contractVersion !== contractVersion)
     return { class: "unsupportedVersion" };

@@ -4,10 +4,7 @@ import {
   testAnchorId,
 } from "@libar-dev/software-delivery-protocol";
 import { bindExample } from "@libar-dev/software-delivery-protocol/vitest";
-import { ConvexError, type Value } from "convex/values";
-import { expect } from "vitest";
 import { keyReuseChangedInputContract as contract } from "../../generated/contracts/command.idempotency-and-receipts.key-reuse-changed-input.contract.js";
-import { required } from "../../harness/native.js";
 import {
   type ReceiptWorld,
   givenAdmission,
@@ -38,27 +35,7 @@ bindExample(contract, (): ReceiptWorld => ({}), {
     givenPriorReceipt,
   "the admission policy {admission}": givenAdmission,
   "the caller sends the command {sends}": whenSends,
-  // The conflict answer discloses nothing of the stored receipt: no details, no operation ID.
-  "the first answer is {first}": (world, { first }) => {
-    thenFirst(world, { first });
-    expect(first).toBe("conflict");
-    const answer = required(
-      required(world.answers, "answers")[0],
-      "first answer",
-    );
-    if (!("error" in answer)) throw new Error("The command did not throw");
-    expect(answer.error).toBeInstanceOf(ConvexError);
-    const data = (answer.error as ConvexError<Value>).data;
-    expect(data).toMatchObject({
-      kind: "rejection",
-      code: "idempotencyConflict",
-      commandType: "AddStock",
-    });
-    expect(data).not.toHaveProperty("details");
-    expect(JSON.stringify(data)).not.toContain(
-      required(world.prior, "original").response.operationId,
-    );
-  },
+  "the first answer is {first}": thenFirst,
   "the second answer is {second}": thenSecond,
   "the business effects committed number {effects}": thenEffects,
   "the receipts stored for the key number {receipts}": thenReceipts,

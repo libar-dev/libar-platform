@@ -82,46 +82,65 @@ function itemsOf(input: unknown): number {
     0,
   );
 }
+// The text fields a caller sets beside the input, their bounds in UTF-8 bytes and how each is read,
+// in the order step 1 checks them: limitCallText of spec:command.command-pipeline.
+type CallText = readonly [
+  field: string,
+  limit: number,
+  read: (call: PipelineCall<unknown>) => string | undefined,
+];
+const callText: readonly CallText[] = [
+  ["tenantId", limitIdLength, (call) => call.tenantId],
+  ["requestKey", limitIdLength, (call) => call.requestKey],
+  ["correlationId", limitIdLength, (call) => call.correlationId],
+  ["actor.id", limitActorIdLength, (call) => call.actor.id],
+  ["actor.issuer", limitIdLength, (call) => call.actor.issuer],
+  [
+    "actor.onBehalfOf.id",
+    limitActorIdLength,
+    (call) => call.actor.onBehalfOf?.id,
+  ],
+  ["actor.delegationRef", limitIdLength, (call) => call.actor.delegationRef],
+  [
+    "causedBy.commandType",
+    limitIdLength,
+    ({ causedBy }) =>
+      causedBy?.kind === "command" ? causedBy.commandType : undefined,
+  ],
+  [
+    "causedBy.tenantId",
+    limitIdLength,
+    ({ causedBy }) =>
+      causedBy?.kind === "event" ? causedBy.tenantId : undefined,
+  ],
+  [
+    "causedBy.contextId",
+    limitIdLength,
+    ({ causedBy }) =>
+      causedBy?.kind === "event" ? causedBy.contextId : undefined,
+  ],
+  [
+    "causedBy.eventId",
+    limitIdLength,
+    ({ causedBy }) =>
+      causedBy?.kind === "event" ? causedBy.eventId : undefined,
+  ],
+  [
+    "causedBy.migrationName",
+    limitIdLength,
+    ({ causedBy }) =>
+      causedBy?.kind === "migration" ? causedBy.migrationName : undefined,
+  ],
+];
+// The fields and bounds of callText in their order, for a test to hold against the Spec's list.
+export const callTextOrder: readonly { field: string; limit: number }[] =
+  callText.map(([field, limit]) => ({ field, limit }));
 // Step 1 after the entry's args validators: caller-set text, the declaration's bounds and its
 // refinement, all before any read.
 function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   const commandType = decl.name;
-  const cause = call.causedBy;
-  const fields: readonly (readonly [string, string | undefined, number])[] = [
-    ["tenantId", call.tenantId, limitIdLength],
-    ["requestKey", call.requestKey, limitIdLength],
-    ["correlationId", call.correlationId, limitIdLength],
-    ["actor.id", call.actor.id, limitActorIdLength],
-    ["actor.issuer", call.actor.issuer, limitIdLength],
-    ["actor.onBehalfOf.id", call.actor.onBehalfOf?.id, limitActorIdLength],
-    ["actor.delegationRef", call.actor.delegationRef, limitIdLength],
-    [
-      "causedBy.commandType",
-      cause?.kind === "command" ? cause.commandType : undefined,
-      limitIdLength,
-    ],
-    [
-      "causedBy.tenantId",
-      cause?.kind === "event" ? cause.tenantId : undefined,
-      limitIdLength,
-    ],
-    [
-      "causedBy.contextId",
-      cause?.kind === "event" ? cause.contextId : undefined,
-      limitIdLength,
-    ],
-    [
-      "causedBy.eventId",
-      cause?.kind === "event" ? cause.eventId : undefined,
-      limitIdLength,
-    ],
-    [
-      "causedBy.migrationName",
-      cause?.kind === "migration" ? cause.migrationName : undefined,
-      limitIdLength,
-    ],
-  ];
-  for (const [field, value, limit] of fields) {
+  for (const [field, limit, read] of callText) {
+    const value = read(call);
     if (value === undefined) continue;
     const length = utf8Length(value);
     if (length > limit)

@@ -289,6 +289,43 @@ export function renderAcceptance(verdict: AcceptanceVerdict): string[] {
   return lines;
 }
 
+const runResults: readonly unknown[] = ["passed", "failed", "interrupted"];
+const testResults: readonly unknown[] = ["passed", "failed", "skipped"];
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+// The fields that make a file a run record at all: its commit, tree state, result and a list of
+// tests. Only a file of this shape that states its start is a candidate for the newest record.
+function hasRunRecordShape(value: unknown): value is Record<string, unknown> {
+  return (
+    isObject(value) &&
+    typeof value.commit === "string" &&
+    typeof value.clean === "boolean" &&
+    runResults.includes(value.result) &&
+    Array.isArray(value.tests)
+  );
+}
+// Why a test entry cannot be read, or null when it can.
+function entryProblem(entry: unknown): string | null {
+  if (!isObject(entry)) return "is not an object";
+  if (typeof entry.name !== "string") return "has no name";
+  if (typeof entry.file !== "string") return "has no file";
+  if (!testResults.includes(entry.result))
+    return "has a result other than passed, failed or skipped";
+  if (entry.project !== undefined && typeof entry.project !== "string")
+    return "names its project with something other than text";
+  if (!Array.isArray(entry.backends)) return "has no list of backends";
+  for (const backend of entry.backends as unknown[]) {
+    if (!isObject(backend)) return "has a backend that is not an object";
+    const { composition } = backend;
+    if (
+      composition !== undefined &&
+      composition !== null &&
+      typeof composition !== "string"
+    )
+      return "has a backend whose composition is not text";
+  }
+  return null;
+}
 function readRecord(path: string): AcceptanceRecord {
   let record: unknown;
   try {
@@ -298,18 +335,20 @@ function readRecord(path: string): AcceptanceRecord {
       `The record ${path} cannot be read: ${(error as Error).message}`,
     );
   }
-  const candidate = record as Partial<AcceptanceRecord> | null;
-  if (
-    typeof candidate?.commit !== "string" ||
-    typeof candidate.clean !== "boolean" ||
-    !["passed", "failed", "interrupted"].includes(candidate.result as string) ||
-    !Array.isArray(candidate.tests)
-  )
+  if (!hasRunRecordShape(record))
     throw new AcceptanceUnanswerable(`The file ${path} is not a run record`);
-  return candidate as AcceptanceRecord;
+  for (const [index, entry] of (record.tests as unknown[]).entries()) {
+    const problem = entryProblem(entry);
+    if (problem !== null)
+      throw new AcceptanceUnanswerable(
+        `The record ${path} is not a run record: its test entry ${index} ${problem}`,
+      );
+  }
+  return record as unknown as AcceptanceRecord;
 }
 
-// The record of the run that started last, by the `startedAt` it states.
+// The record of the run that started last, by the `startedAt` it states. Only a file with the
+// shape of a run record is a candidate, so an unrelated JSON file hides no record.
 export function newestRecord(directory: string): string {
   let names: string[];
   try {
@@ -320,16 +359,14 @@ export function newestRecord(directory: string): string {
   let newest: { path: string; startedAt: string } | undefined;
   for (const name of names) {
     const path = join(directory, name);
-    let startedAt: unknown;
+    let candidate: unknown;
     try {
-      startedAt = (
-        JSON.parse(readFileSync(path, "utf8")) as {
-          startedAt?: unknown;
-        }
-      ).startedAt;
+      candidate = JSON.parse(readFileSync(path, "utf8"));
     } catch {
       continue;
     }
+    if (!hasRunRecordShape(candidate)) continue;
+    const { startedAt } = candidate;
     if (typeof startedAt !== "string") continue;
     if (newest === undefined || startedAt > newest.startedAt)
       newest = { path, startedAt };
@@ -376,10 +413,12 @@ export function answerAcceptance(options: {
       exit: acceptanceExit(verdict),
     };
   } catch (error) {
-    if (!(error instanceof AcceptanceUnanswerable)) throw error;
+    // Anything else that breaks the check is no answer either: the check never ends in a throw.
+    const reason =
+      error instanceof Error ? error.message : `it threw ${String(error)}`;
     return {
       record,
-      lines: [`acceptance: cannot answer · ${error.message}`],
+      lines: [`acceptance: cannot answer · ${reason}`],
       exit: 2,
     };
   }

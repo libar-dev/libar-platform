@@ -316,11 +316,14 @@ export function answerIs(
     case "forbidden": {
       const error = threw(world.answer);
       expect(error).toBeInstanceOf(ConvexError);
-      expect((error as ConvexError<Value>).data).toMatchObject({
+      const data = (error as ConvexError<Value>).data;
+      expect(data).toMatchObject({
         kind: "rejection",
         code: answer === "conflict" ? "idempotencyConflict" : "forbidden",
         commandType: "CreateDocument",
       });
+      // A conflict carries nothing of the stored receipt.
+      if (answer === "conflict") expect(data).not.toHaveProperty("details");
       return;
     }
     case "refused before the handler runs":

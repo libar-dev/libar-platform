@@ -43,6 +43,10 @@ export const deletedTitle = "(deleted)";
 // How many times the copyTitles operation repeats each title in its result, so a call that writes
 // little returns more than the library's bound on what a call returns.
 export const titleCopies = 64;
+// A create whose title is this one is rejected with details that are a list, not a record: a bare
+// rejection of the wrong shape, which the parent's boundary turns into a technical failure.
+export const listDetailsTitle = "fault: a rejection whose details are a list";
+export const listedDetail = "a detail the caller never sees";
 // A command whose decide fails the call if it is reached, so a rejection from an earlier step shows
 // that decide did not run, and the same command at the right version shows that it does.
 export type DepotDocumentCommand =
@@ -58,6 +62,15 @@ const depotDocumentDecider: Decider<
   decide: (state, command, context) => {
     if (command.commandType === "failIfDecided")
       throw new Error(failIfDecidedMessage);
+    if (command.commandType === "create" && command.title === listDetailsTitle)
+      return {
+        kind: "rejection",
+        rejection: {
+          code: "invalidInput",
+          message: "A document with this title is refused",
+          details: [listedDetail] as unknown as Record<string, Value>,
+        },
+      };
     return documentDecider.decide(state, command, context);
   },
 };

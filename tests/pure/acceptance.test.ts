@@ -366,6 +366,148 @@ test("pure: with no path the check reads the record of the run that started last
   }
 });
 
+test("pure: a scenario with one verifier failed and another absent is failed", () => {
+  const graph = sampleGraph([
+    {
+      id: "spec:sample.evaluate",
+      opening: "Sc L0-1 · domain tier.",
+      files: [
+        "tests/pure/evaluate.test.ts",
+        "tests/pure/evaluate-again.test.ts",
+      ],
+    },
+  ]);
+  const record = sampleRecord();
+  record.tests[0]!.result = "failed";
+  const verdict = checkAcceptance(
+    deriveRequiredScenarios(graph, experiment),
+    record,
+  );
+  expect(verdict.scenarios[0]).toMatchObject({
+    row: "Sc L0-1",
+    status: "failed",
+  });
+});
+
+test("pure: a failed scenario beside a missing one makes the check exit 1", () => {
+  const graph = sampleGraph(
+    undefined,
+    "the rows are Sc L0-1, Sc L1-1, Sc L1-12 and Sc L2-9 (E-17)",
+  );
+  const record = sampleRecord();
+  record.tests[0]!.result = "failed";
+  const verdict = checkAcceptance(
+    deriveRequiredScenarios(graph, experiment),
+    record,
+  );
+  expect(verdict.scenarios.map((scenario) => scenario.status)).toEqual([
+    "failed",
+    "passed",
+    "missing",
+    "passed",
+  ]);
+  expect(acceptanceExit(verdict)).toBe(1);
+});
+
+test("pure: a file with two passing results passes", () => {
+  const record = sampleRecord();
+  record.tests.push({
+    ...record.tests[1]!,
+    name: "an invalid transition, second test",
+  });
+  expect(statusOf(record, "Sc L1-1")).toBe("passed");
+});
+
+test("pure: a record whose test entries are malformed is no record, so the check cannot answer and exits 2", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-acceptance-nested-"));
+  try {
+    const path = join(directory, "record.json");
+    const malformed = {
+      ...sampleRecord(),
+      startedAt: "2026-01-01T00:00:00.000Z",
+      tests: [null],
+    };
+    await writeFile(path, JSON.stringify(malformed));
+    for (const options of [{ recordPath: path }, {}]) {
+      const answer = answerAcceptance({
+        graph: sampleGraph(),
+        runsDirectory: directory,
+        specId: experiment,
+        ...options,
+      });
+      expect(answer.exit).toBe(2);
+      expect(answer.lines).toEqual([
+        `acceptance: cannot answer · The record ${path} is not a run record: its test entry 0 is not an object`,
+      ]);
+    }
+    const noBackends = sampleRecord();
+    delete (noBackends.tests[1] as Partial<AcceptanceRecord["tests"][number]>)
+      .backends;
+    await writeFile(path, JSON.stringify(noBackends));
+    expect(
+      answerAcceptance({
+        graph: sampleGraph(),
+        runsDirectory: directory,
+        recordPath: path,
+        specId: experiment,
+      }).lines,
+    ).toEqual([
+      `acceptance: cannot answer · The record ${path} is not a run record: its test entry 1 has no list of backends`,
+    ]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("pure: a newer JSON file that is not a run record does not hide an older record", async () => {
+  const directory = await mkdtemp(
+    join(tmpdir(), "libar-acceptance-unrelated-"),
+  );
+  try {
+    await writeFile(
+      join(directory, "record.json"),
+      JSON.stringify({
+        ...sampleRecord(),
+        startedAt: "2026-01-01T00:00:00.000Z",
+      }),
+    );
+    await writeFile(
+      join(directory, "other.json"),
+      JSON.stringify({ startedAt: "2026-02-01T00:00:00.000Z", notes: [] }),
+    );
+    const answer = answerAcceptance({
+      graph: sampleGraph(),
+      runsDirectory: directory,
+      specId: experiment,
+    });
+    expect(answer.record).toBe(join(directory, "record.json"));
+    expect(answer.exit).toBe(0);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("pure: a graph that throws while it is read leaves the check unable to answer, and it exits 2", () => {
+  const broken: ScenarioGraph = {
+    specs: () => {
+      throw new TypeError("the reader broke");
+    },
+    specContext: (id) => sampleGraph().specContext(id),
+  };
+  expect(
+    answerAcceptance({
+      graph: broken,
+      runsDirectory: tmpdir(),
+      recordPath: join(tmpdir(), "no-such-record.json"),
+      specId: experiment,
+    }),
+  ).toEqual({
+    record: null,
+    lines: ["acceptance: cannot answer · the reader broke"],
+    exit: 2,
+  });
+});
+
 test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2, and every native example of them that has a verifier names its composition", async () => {
   const doc = await readFile(
     join(root, "docs/convex-transactional-domain-platform-decisions.md"),

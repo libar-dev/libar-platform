@@ -8,11 +8,11 @@ import {
   type EnvelopeInput,
   type LoadedStream,
 } from "../../src/context/index.js";
-import { failure } from "./command-boundary-support.js";
+import { failure, name } from "./command-boundary-support.js";
 
 // spec:context.journal, limitEnvelopeCheck, includes occurredAt and every event type.
 test.each(["documentCreated", "baseline"])(
-  "append counts occurredAt in the bound for %s",
+  name("append counts occurredAt in the bound for %s"),
   async (eventType) => {
     const t = convexTest(
       schema,

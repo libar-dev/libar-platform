@@ -1,5 +1,8 @@
 import { getConvexSize, getDocumentSize } from "convex/values";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test } from "vitest";
+import { callTextOrder } from "../../src/command/pipeline.js";
 import {
   utf8Length,
   limitIdLength,
@@ -18,12 +21,12 @@ test.each([
   ["é", 2],
   ["€", 3],
   ["😀", 4],
-] as const)("UTF-8 length of %j is %i bytes", (value, bytes) => {
+] as const)("pure: UTF-8 length of %j is %i bytes", (value, bytes) => {
   expect(utf8Length(value)).toBe(bytes);
   expect(contextUtf8Length(value)).toBe(bytes);
   expect(utf8Length(value)).toBe(getConvexSize(value) - 2);
 });
-test("the exported text and event bounds agree", () => {
+test("pure: the exported text and event bounds agree", () => {
   expect(limitIdLength).toBe(256);
   expect(limitActorIdLength).toBe(512);
   expect(limitEnvelopeBytes).toBe(4096);
@@ -36,7 +39,7 @@ test.each([
   [0, 3486],
   [200, 4086],
 ])(
-  "caller fields at their bounds with names of %i bytes measure %i bytes",
+  "pure: caller fields at their bounds with names of %i bytes measure %i bytes",
   (names, bytes) => {
     const value = {
       eventId: "e".repeat(36),
@@ -70,14 +73,34 @@ test.each([
     expect(bytes).toBeLessThanOrEqual(4096);
   },
 );
-test("stored document system fields add 61 bytes", () => {
+test("pure: stored document system fields add 61 bytes", () => {
   expect(getDocumentSize({}) - getConvexSize({})).toBe(61);
 });
 
 // UTF-8 replaces an unpaired surrogate with U+FFFD. The pinned Convex size helper counts it differently.
-test("UTF-8 length counts an unpaired high surrogate as three bytes", () => {
+test("pure: UTF-8 length counts an unpaired high surrogate as three bytes", () => {
   const value = "\ud800";
   expect(new TextEncoder().encode(value)).toHaveLength(3);
   expect(utf8Length(value)).toBe(3);
   expect(contextUtf8Length(value)).toBe(3);
+});
+// spec:command.command-pipeline, limitCallText: step 1 holds the Spec's list whole, in its order.
+test("pure: step 1 checks the caller-set text fields in the order and with the bounds limitCallText lists", () => {
+  const spec = readFileSync(
+    join(
+      import.meta.dirname,
+      "../../design/specs/command/command-pipeline.sdp.md",
+    ),
+    "utf8",
+  );
+  const line = spec
+    .split("\n")
+    .find((text) => text.startsWith("- limitCallText:"));
+  expect(line).toBeDefined();
+  const listed = Array.from(
+    line!.slice(0, line!.indexOf(";")).matchAll(/`([A-Za-z.]+)` (\d+)/g),
+    (match) => ({ field: match[1]!, limit: Number(match[2]) }),
+  );
+  expect(listed).toHaveLength(12);
+  expect(callTextOrder).toEqual(listed);
 });

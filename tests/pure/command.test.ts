@@ -251,13 +251,12 @@ test("pure: normalizeThrown wraps a bare kernel rejection with the discriminator
   });
 });
 
-test("pure: normalizeThrown rejects another command name and rethrows technical failures unchanged", () => {
+test("pure: normalizeThrown rejects another command name and rethrows a plain error, a transient refusal, a ConvexError carrying other data and a thrown string unchanged", () => {
   const passed = [
     new Error("Fault injected"),
     new ConvexError({ kind: "transient", code: "capacity", message: "Full" }),
     new ConvexError("a string"),
-    new ConvexError({ code: "x", message: "y", extra: 1 }),
-    new ConvexError({ code: 1, message: "y" }),
+    new ConvexError({ message: "y", extra: 1 }),
     "a thrown string",
   ];
   const mismatched = new ConvexError({
@@ -361,6 +360,13 @@ test("pure: classifyThrown tells a rejection from a transient refusal from a tec
     new ConvexError({ code: "invalidTransition", message: "bare" }),
     new ConvexError({ kind: "transient", code: "other", message: "x" }),
     new ConvexError({ kind: "rejection", code: "x", message: "no type" }),
+    new ConvexError({
+      kind: "rejection",
+      code: "forbidden",
+      commandType: "C",
+      message: "No",
+      details: ["listed"],
+    }),
   ];
   for (const error of technical)
     expect(classifyThrown(error)).toEqual({ kind: "technical", error });

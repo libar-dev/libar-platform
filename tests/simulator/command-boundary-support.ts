@@ -5,12 +5,22 @@ import {
   type FunctionReference,
 } from "convex/server";
 import { ConvexError, v, type Value } from "convex/values";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect } from "vitest";
 import { internal } from "../../fixture/convex/_generated/api.js";
 import schema from "../../fixture/convex/schema.js";
 import depotSchema from "../../fixture/convex/depot/schema.js";
 import annexSchema from "../../fixture/convex/annex/schema.js";
 
+const { version } = JSON.parse(
+  readFileSync(
+    join(import.meta.dirname, "../../node_modules/convex-test/package.json"),
+    "utf8",
+  ),
+) as { version: string };
+// A test's name with the simulator's version, as every simulator test names itself.
+export const name = (text: string) => `convex-test ${version}: ${text}`;
 const inspect = queryGeneric({
   args: {},
   returns: v.any(),

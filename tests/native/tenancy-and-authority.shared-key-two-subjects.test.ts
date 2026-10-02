@@ -16,6 +16,7 @@ import { fixtureBackend, required } from "../../harness/native.js";
 import {
   type Answer,
   type Response,
+  answerIs,
   principalOf,
   settle,
   stored,
@@ -130,15 +131,7 @@ bindExample(
           ),
         );
       },
-    "the answer is {answer}": (world, { answer }) => {
-      expect(answer).toBe("conflict");
-      expect(errorData(world)).toMatchObject({
-        kind: "rejection",
-        code: "idempotencyConflict",
-        commandType: "CreateDocument",
-      });
-      expect.soft(errorData(world)).not.toHaveProperty("details");
-    },
+    "the answer is {answer}": (world, { answer }) => answerIs(world, answer),
     "a stored outcome is disclosed to the caller {disclosed}": (
       world,
       { disclosed },

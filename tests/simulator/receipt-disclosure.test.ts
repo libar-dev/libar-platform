@@ -6,6 +6,7 @@ import {
   create,
   rejection,
   stored,
+  name,
 } from "./command-boundary-support.js";
 
 async function twoSubjects() {
@@ -19,50 +20,65 @@ async function twoSubjects() {
   return { t, alice, bob, original, before: await stored(t) };
 }
 // spec:command.outcome-boundary, errorCodeIdempotencyConflict.
-test("a shared key conflict discloses no receipt facts to another subject's caller", async () => {
-  const { alice, original } = await twoSubjects();
-  const data = await rejection(
-    alice.mutation(api.depotCommands.createDocument, create()),
-  );
-  expect.soft(data).toEqual({
-    kind: "rejection",
-    commandType: "CreateDocument",
-    code: "idempotencyConflict",
-    message: "This request key was used with other input",
-  });
-  expect.soft(data).not.toHaveProperty("details");
-  expect.soft(JSON.stringify(data)).not.toContain(original.operationId);
-});
-test("the caller has no authority over the stored receipt's subject", async () => {
-  const { t, alice, before } = await twoSubjects();
-  expect(
-    await rejection(
-      alice.mutation(api.depotCommands.createDocument, {
-        ...create("b"),
-        requestKey: "unused",
-      }),
-    ),
-  ).toMatchObject({
-    kind: "rejection",
-    code: "forbidden",
-    commandType: "CreateDocument",
-  });
-  expect(await stored(t)).toEqual(before);
-});
-test("a conflicting call leaves one unchanged receipt and no stream for its subject", async () => {
-  const { t, alice, before } = await twoSubjects();
-  expect(
-    await rejection(alice.mutation(api.depotCommands.createDocument, create())),
-  ).toMatchObject({ code: "idempotencyConflict" });
-  const after = await stored(t);
-  expect(after).toEqual(before);
-  expect(
-    after.receipts.filter((row) => row.requestKey === "shared-key"),
-  ).toHaveLength(1);
-  expect(after.streams.some((row) => row.streamId === "a")).toBe(false);
-});
+test(
+  name(
+    "a shared key conflict discloses no receipt facts to another subject's caller",
+  ),
+  async () => {
+    const { alice, original } = await twoSubjects();
+    const data = await rejection(
+      alice.mutation(api.depotCommands.createDocument, create()),
+    );
+    expect.soft(data).toEqual({
+      kind: "rejection",
+      commandType: "CreateDocument",
+      code: "idempotencyConflict",
+      message: "This request key was used with other input",
+    });
+    expect.soft(data).not.toHaveProperty("details");
+    expect.soft(JSON.stringify(data)).not.toContain(original.operationId);
+  },
+);
+test(
+  name("the caller has no authority over the stored receipt's subject"),
+  async () => {
+    const { t, alice, before } = await twoSubjects();
+    expect(
+      await rejection(
+        alice.mutation(api.depotCommands.createDocument, {
+          ...create("b"),
+          requestKey: "unused",
+        }),
+      ),
+    ).toMatchObject({
+      kind: "rejection",
+      code: "forbidden",
+      commandType: "CreateDocument",
+    });
+    expect(await stored(t)).toEqual(before);
+  },
+);
+test(
+  name(
+    "a conflicting call leaves one unchanged receipt and no stream for its subject",
+  ),
+  async () => {
+    const { t, alice, before } = await twoSubjects();
+    expect(
+      await rejection(
+        alice.mutation(api.depotCommands.createDocument, create()),
+      ),
+    ).toMatchObject({ code: "idempotencyConflict" });
+    const after = await stored(t);
+    expect(after).toEqual(before);
+    expect(
+      after.receipts.filter((row) => row.requestKey === "shared-key"),
+    ).toHaveLength(1);
+    expect(after.streams.some((row) => row.streamId === "a")).toBe(false);
+  },
+);
 test.each(["same input", "other subject"])(
-  "an unsupported contract version discloses no stored facts with %s",
+  name("an unsupported contract version discloses no stored facts with %s"),
   async (input) => {
     const { t, alice, bob, original } = await twoSubjects();
     await t.run(async (ctx) => {
@@ -90,17 +106,20 @@ test.each(["same input", "other subject"])(
     expect(await stored(t)).toEqual(before);
   },
 );
-test("an authorized duplicate still receives the stored operation ID", async () => {
-  const { t, bob, original, before } = await twoSubjects();
-  const duplicate = await bob.mutation(
-    api.depotCommands.createDocument,
-    create("b"),
-  );
-  expect(duplicate).toMatchObject({
-    kind: "applied",
-    replayed: true,
-    operationId: original.operationId,
-    result: null,
-  });
-  expect(await stored(t)).toEqual(before);
-});
+test(
+  name("an authorized duplicate still receives the stored operation ID"),
+  async () => {
+    const { t, bob, original, before } = await twoSubjects();
+    const duplicate = await bob.mutation(
+      api.depotCommands.createDocument,
+      create("b"),
+    );
+    expect(duplicate).toMatchObject({
+      kind: "applied",
+      replayed: true,
+      operationId: original.operationId,
+      result: null,
+    });
+    expect(await stored(t)).toEqual(before);
+  },
+);

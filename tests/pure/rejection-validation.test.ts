@@ -153,6 +153,42 @@ const cases: Case[] = [
     contains: [commandType],
   },
   {
+    name: "bare details that are not a record",
+    error: bare("invalidTransition", { details: ["listed"] }),
+    result: "technical",
+    contains: [commandType],
+  },
+  {
+    name: "bare missing message",
+    error: new ConvexError({ code: "invalidTransition" }),
+    result: "technical",
+    contains: [commandType],
+  },
+  {
+    name: "bare numeric code",
+    error: bare("invalidTransition", { code: 1 }),
+    result: "technical",
+    contains: [commandType],
+  },
+  {
+    name: "bare extra field",
+    error: bare("invalidTransition", { extra: 1 }),
+    result: "technical",
+    contains: [commandType],
+  },
+  {
+    name: "ConvexError carrying a list that has a code",
+    error: new ConvexError(
+      Object.assign(["listed"], { code: "invalidTransition", message }),
+    ),
+    result: "same",
+  },
+  {
+    name: "ConvexError carrying a record with no code and no kind",
+    error: new ConvexError({ message }),
+    result: "same",
+  },
+  {
     name: "wire command checked before details",
     error: wire("forbidden", "SomeOtherCommand", { details: details(16385) }),
     result: "technical",
@@ -160,7 +196,7 @@ const cases: Case[] = [
   },
 ];
 // spec:command.outcome-boundary, fnNormalizeThrown.
-test.each(cases)("normalizes $name", ({ error, result, contains }) => {
+test.each(cases)("pure: normalizes $name", ({ error, result, contains }) => {
   const thrown = normalized(error);
   if (result === "same") expect(thrown).toBe(error);
   else if (result === "wrapped") {

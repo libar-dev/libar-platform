@@ -69,7 +69,6 @@ export {
   fingerprintOf,
   insertReceipt,
   limitAffectedRefs,
-  limitIdLength,
   lookupReceipt,
 } from "./receipts.js";
 export type {
@@ -87,4 +86,8 @@ export type {
   QueryCtx,
   Receipt,
 } from "./tables.js";
-export { limitActorIdLength, utf8Length } from "../context/text.js";
+export {
+  limitActorIdLength,
+  limitIdLength,
+  utf8Length,
+} from "../context/text.js";
