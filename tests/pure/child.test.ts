@@ -307,3 +307,64 @@ test("pure: runChild removes its abort listener when the child exits", async () 
   });
   expect(getEventListeners(controller.signal, "abort")).toEqual([]);
 });
+
+test("pure: captured child failures carry the redacted command, exit code and last twenty stderr lines only", async () => {
+  const args = [
+    "-e",
+    "process.stdout.write('stdout omitted'); for (let n = 1; n <= 25; n++) console.error(n + ':' + process.argv[1]); process.exit(7)",
+    secret,
+  ];
+  const error = await runChild("snapshot child", process.execPath, args, {
+    timeoutMs: 10000,
+    secrets: [secret],
+    output: "both",
+  }).catch((error: Error) => error);
+  expect(error).toBeInstanceOf(Error);
+  const failure = JSON.parse((error as Error).message) as {
+    command: string[];
+    code: number;
+    stderr: string;
+  };
+  expect(failure).toEqual({
+    command: [process.execPath, ...args.slice(0, -1), "[redacted]"],
+    code: 7,
+    stderr: Array.from({ length: 20 }, (_, n) => `${n + 6}:[redacted]`).join(
+      "\n",
+    ),
+  });
+  expect((error as Error).message).not.toContain('stdout omitted"');
+  expect((error as Error).message).not.toContain(secret);
+});
+
+test("pure: captured child output redacts both streams and abort rejects with the signal reason", async () => {
+  expect(
+    await runChild(
+      "snapshot child",
+      process.execPath,
+      [
+        "-e",
+        "console.log(process.argv[1]); console.error(process.argv[1])",
+        secret,
+      ],
+      {
+        timeoutMs: 10000,
+        secrets: [secret],
+        output: "both",
+      },
+    ),
+  ).toEqual({ stdout: "[redacted]\n", stderr: "[redacted]\n" });
+  const controller = new AbortController();
+  const reason = new Error("snapshot stopped");
+  const result = runChild(
+    "snapshot child",
+    process.execPath,
+    ["-e", "setInterval(() => {}, 1000)"],
+    {
+      timeoutMs: 10000,
+      signal: controller.signal,
+      output: "both",
+    },
+  );
+  controller.abort(reason);
+  await expect(result).rejects.toBe(reason);
+});
