@@ -58,7 +58,7 @@ The doc says that native tests prove component and nested-mutation behavior, sch
 - [extension] A scenario that needs time to pass waits in real time or shortens a duration that its owning Spec makes configuration, and a run with a shortened duration is adjusted configuration (E-15, Acceptance scenarios)
 - [extension] A native run's record names the backend that ran by the hash of its executable and, when that hash is the pinned one, by its release; it names the identity source, and the commit with whether the tree was clean (E-15, Acceptance scenarios)
 - [extension] A run's record takes its facts from the backends that ran, and a measurement is stored on the test that recorded it (E-15, Acceptance scenarios)
-- [extension] A claim that a tier passed cites a record that is kept in the repository and was made on a clean tree at the commit it names (E-15, Acceptance scenarios)
+- [extension] A claim that a tier passed cites the commit and the run of the continuous integration on it, whose record was made on a clean tree at that commit (E-15, Acceptance scenarios)
 
 ## Design
 
@@ -98,7 +98,7 @@ The harness is plain test support with no Convex function in it. The entries who
 - observedUsageStats: [extension] a top-level mutation's completion record carries `usageStats` with `databaseReadDocuments`, `databaseWriteDocuments`, `databaseReadBytes`, `databaseWriteBytes` and `databaseWriteIndexRows`, and they count what a component call inside the mutation read and wrote (E-15)
 - observedFailedMutationWrites: [extension] a failed top-level mutation's completion record shows no written documents, `usageStats.databaseWriteDocuments` 0, even when a component call inside it wrote before the throw, so the function log cannot show writes that rolled back (E-15)
 - observedTableRead: [extension] the backend answers a read of a missing table with an empty page; the harness reads through the system query that `convex data` uses and checks an empty result against the table list (E-15)
-- evidenceKept: [extension] every native run writes its record under `evidence/runs/`, which git ignores; the record of the run a Spec or a commit cites is copied to `evidence/` and committed; other runs' records are not kept (E-15, Acceptance scenarios)
+- evidenceKept: [extension] every native run writes its record under `evidence/runs/`, which git ignores, and the continuous integration keeps the record of every push as an artifact of its run; no record is copied into the repository, and a claim names the commit and the run whose artifact holds the record (E-15, Acceptance scenarios)
 
 ## Verification — reviewed
 
