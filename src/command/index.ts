@@ -87,3 +87,4 @@ export type {
   QueryCtx,
   Receipt,
 } from "./tables.js";
+export { limitActorIdLength, utf8Length } from "../context/text.js";

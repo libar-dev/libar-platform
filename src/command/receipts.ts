@@ -14,12 +14,8 @@ export type ReceiptKey = {
 export type ReceiptClass =
   | { class: "new" }
   | { class: "duplicate"; receipt: Receipt }
-  | { class: "conflict"; storedOperationId: string }
-  | {
-      class: "unsupportedVersion";
-      storedContractVersion: number;
-      storedOperationId: string;
-    };
+  | { class: "conflict" }
+  | { class: "unsupportedVersion" };
 export type ReceiptInsert = ReceiptKey & {
   fingerprint: string;
   contractVersion: number;
@@ -35,8 +31,7 @@ export const defaultRetention: Retention = {
   window: 7 * 24 * 60 * 60 * 1000,
   afterExpiry: "delete",
 };
-// The longest tenant ID, request key and command type a receipt row holds.
-export const limitIdLength = 256;
+export { limitIdLength } from "../context/text.js";
 export const limitAffectedRefs = 1000;
 function sorted(json: JSONValue): string {
   if (Array.isArray(json)) return `[${json.map(sorted).join(",")}]`;
@@ -95,13 +90,8 @@ export function classifyReceipt(
       `Receipt ${found.operationId} is a tombstone, which no retention writes: afterExpiry is always delete`,
     );
   if (found.contractVersion !== contractVersion)
-    return {
-      class: "unsupportedVersion",
-      storedContractVersion: found.contractVersion,
-      storedOperationId: found.operationId,
-    };
-  if (found.fingerprint !== fingerprint)
-    return { class: "conflict", storedOperationId: found.operationId };
+    return { class: "unsupportedVersion" };
+  if (found.fingerprint !== fingerprint) return { class: "conflict" };
   return { class: "duplicate", receipt: found };
 }
 // recordedAt is the mutation's Date.now(), and expiresAt is a retention window after it.

@@ -629,7 +629,7 @@ describe("applyProjection", () => {
 describe("step 1", () => {
   test(
     name(
-      "a tenant ID or request key above 256 characters is invalidInput naming the field, and a declaration name above it a plain Error",
+      "a tenant ID or request key above 256 bytes is invalidInput naming the field, and a declaration name above it a plain Error",
     ),
     async () => {
       const t = app();
@@ -648,7 +648,7 @@ describe("step 1", () => {
           kind: "rejection",
           code: "invalidInput",
           commandType: "CreateDocument",
-          message: `${field === "tenantId" ? "A tenant ID" : "A request key"} has at most 256 characters`,
+          message: `${field} has at most 256 bytes of UTF-8`,
           details: { field, length: 257, limit: 256 },
         });
       // At the bound the call passes step 1 and is refused at step 4, for want of a grant.
@@ -660,7 +660,7 @@ describe("step 1", () => {
       });
       await technicalFailure(
         run(t, { ...returning([], []), name: "N".repeat(257) }),
-        "A command type has at most 256 characters, and this declaration's name has 257",
+        "A command type has at most 256 bytes of UTF-8, and this declaration's name has 257",
       );
     },
   );

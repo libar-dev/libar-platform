@@ -326,10 +326,11 @@ export function thenFirst(world: ReceiptWorld, { first }: { first: string }) {
       kind: "rejection",
       code: "idempotencyConflict",
       commandType: world.commandType,
-      details: {
-        operationId: required(world.prior, "the original").response.operationId,
-      },
     });
+    expect(data).not.toHaveProperty("details");
+    expect(JSON.stringify(data)).not.toContain(
+      required(world.prior, "the original").response.operationId,
+    );
   }
   if (first === "transient refusal") {
     const code = required(world.admissionSwitch, "the refusing switch");

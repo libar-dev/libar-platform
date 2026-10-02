@@ -20,6 +20,7 @@ import {
   type StreamMeta,
   type StreamRegistration,
 } from "./journal.js";
+import { limitIdLength, utf8Length } from "./text.js";
 import type { MutationCtx } from "./tables.js";
 // A registration of any stream type. Its state type is both read and written, so only any fits all.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -283,6 +284,15 @@ export async function runOperation<I, O>(
       message: `Operation ${declaration.name} plans ${bytes} bytes of streams, above ${limitStreamBytesPerCall}`,
       details: { bytes, maxBytes: limitStreamBytesPerCall },
     });
+  for (const command of plan) {
+    const length = utf8Length(command.streamId);
+    if (length > limitIdLength)
+      reject({
+        code: "invalidInput",
+        message: `A stream ID has at most ${limitIdLength} bytes of UTF-8`,
+        details: { field: "streamId", length, limit: limitIdLength },
+      });
+  }
   // A committed outcome carries at least one event, so a plan of nothing has no outcome to return.
   if (plan.length === 0)
     throw new Error(`Operation ${declaration.name} planned no stream command`);

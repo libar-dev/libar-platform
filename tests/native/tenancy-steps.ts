@@ -298,7 +298,11 @@ export async function sends(
 export function answerIs(
   world: TenancyWorld,
   answer:
-    "applied" | "replayed" | "forbidden" | "refused before the handler runs",
+    | "applied"
+    | "replayed"
+    | "forbidden"
+    | "conflict"
+    | "refused before the handler runs",
 ) {
   switch (answer) {
     case "applied":
@@ -308,12 +312,13 @@ export function answerIs(
         replayed: answer === "replayed",
       });
       return;
+    case "conflict":
     case "forbidden": {
       const error = threw(world.answer);
       expect(error).toBeInstanceOf(ConvexError);
       expect((error as ConvexError<Value>).data).toMatchObject({
         kind: "rejection",
-        code: "forbidden",
+        code: answer === "conflict" ? "idempotencyConflict" : "forbidden",
         commandType: "CreateDocument",
       });
       return;
