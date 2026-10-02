@@ -15,10 +15,11 @@ corpus digest: 04faf7d4d793badd
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
-The default branch is `main`, published at `github.com/libar-dev/libar-platform`. Each unit works on its own branch, named for the unit, so that `main` stays green. The owner gave the session a mandate on 2026-10-01 to merge at this early stage, and said the same day that a pull request per unit was not a good idea while the design is iterated quickly. So from slice S1 on there is no pull request: CI runs on every push, and the session fast-forwards `main` once CI is green on the last commit. Slice S0 was the one unit merged through a pull request. The mandate has no stated end: ask when a release or an outside user appears.
+The default branch is `main`, published at `github.com/libar-dev/libar-platform`. Each unit works on its own branch, named for the unit, so that `main` stays green. The owner gave the session a mandate on 2026-10-01 to merge at this early stage, and said the same day that a pull request per unit was not a good idea while the design is iterated quickly. So from slice S1 on there is no pull request: CI runs on every push, and the session fast-forwards `main` once CI is green on the last commit. Slice S0 was the one unit merged through a pull request. That held until the merge of 2026-10-02.
 
-**Slice S2 is on `slice/s2` and is not merged.** `main` is at `9221da1`, the close of S1. The owner's bar for S2, said on 2026-10-02: "if we can make good progress ok. if not we can revert changes and take a more formal planning and execution approach. high-confidence changes only". So `main` moves only after the owner has seen S2's result, and a revert to `9221da1` stays cheap until then. The branch was not pushed by the session and CI has not run on it: the session's push and its commit of the native run record were both refused by the permission classifier, and both wait for the owner.
-**The platform review unit is on `fix/platform-review`, which starts at the head of `slice/s2`, and is not merged or pushed either.** It is about twenty commits on top of `aeb08d6`. The owner asked for it on 2026-10-02 and has not yet said that `slice/s2` goes to `main`, so both wait for the same word. One thing about its history is the owner's to decide before a push: commit `70c15bc` holds the review as it was received, with paths of the owner's machine in its links and its inventory, and the repository is public. The files are deleted from the tree at the close, at the owner's word, and stay in that commit unless the branch is rewritten.
+**Slice S2 and the platform review unit are on `main`.** The owner said on 2026-10-02, after the close of the platform review unit: "Please merge to main and push. This is the last change we will do without formal PRs since things are starting to shape up." The session fast-forwarded `main` to `fix/platform-review`, which holds `slice/s2`, and pushed it. The owner's earlier bar for S2 was "high-confidence changes only", with a revert to `9221da1` kept cheap until the owner had seen the result.
+
+From this merge on, a unit reaches `main` through a pull request: tactical decision 32. The review as it was received is in commit `70c15bc`, with paths of the owner's machine in its links. The files were deleted from the tree at the close, and the owner said the same day that the deleted review may stay in the history.
 
 ## Where the work stands
 
@@ -41,7 +42,7 @@ What passed at `645130f`, and at which tier, with the same pins as S2:
 - Compiled, pure test and `convex-test` tiers: 49 files, 455 tests. Typecheck, lint and format pass.
 - Every project in one run on a clean tree, macOS on Apple silicon: 116 files, 540 tests, the native tier among them. The record is `evidence/runs/native-20261002T161135Z-645130f-066930f6-cc9f-48ff-a5da-2fd9e93dc028.json`. It is not copied to `evidence/`. Commits after `645130f` change Spec text, the ledger and this file only.
 - `npm run acceptance` on that record: 30 scenarios passed, none failed or absent, 5 missing, exit 3. The missing ones are the examples of Sc L2-5 to L2-8, which have no test yet. Sc L2-9 shows as passed on an example that proves nothing about concurrency: the owner queue has the question.
-- CI has not run: nothing is pushed.
+- CI first ran on these commits at the push of `main`. This file was written before its result.
 
 How the unit was run, for the next one. Tactical decisions 28 to 31 hold the rules, `SESSIONS.md` has the role table that came out of it, and the project notes have the times, the plant results and what to carry forward. Two Fable designers with disjoint subjects took fifteen minutes each and returned Spec patches proven in scratch copies. Then astra wrote 94 test cases and sol wrote the fix, each from the Spec text alone and in its own worktree: 92 of the 94 passed at the first merge, and the two that failed were one wrong sentence in the Spec and one real defect in the fix. Sol drafted the whole ledger intake with an apply script. An Opus agent checked astra's nine findings on unbuilt design against the Spec text before they entered the ledger: all nine held.
 
@@ -62,7 +63,7 @@ What passed at `e76e587`, and at which tier, with the same pins as S1 (backend r
 
 - Compiled, pure test and `convex-test` tiers: 40 files, 307 tests. Typecheck, lint and format pass.
 - Native tier, on a clean tree, macOS on Apple silicon: 65 files, 82 tests. The record is `evidence/runs/native-20261002T013308Z-e76e587-74c842b8-1dee-4aa3-a880-29c2f92c70d5.json`. It is not yet copied to `evidence/`.
-- CI has not run: the branch is not pushed.
+- CI did not run on the slice's own branch: it was never pushed.
 - The doc's Layer 2 rows with a bound test that passes: Sc L2-1 (the second context rejects on the production composition, throws on the fixture composition), Sc L2-2 (the list, and the parent query as a sibling), Sc L2-3 at 1, 10 and 100 lines without contention and without a Measurement record, and Sc L2-9 for the scenarios routed to the production composition that exist, all on the native backend; Sc L2-4 at the compiled tier, as expected-error type tests over the production composition's generated api. Sc L2-5 to L2-8 wait for S4 and S5.
 - Measured on the native backend: `PlaceOrder` of N lines read 3N + 5 documents and wrote 2N + 4, at N = 1, 10 and 100. The design expected N + 6 read. S3 finds where the other 2N reads come from.
 
@@ -133,7 +134,7 @@ Eighteen more findings are `partially-fixed`, each waiting for its slice. Remove
 
 ## Next unit
 
-First, the owner says whether `slice/s2` and `fix/platform-review` go to `main`, and whether the review's commit stays in the branch's history. The things the session could not do are the owner's: the push, and the commits that copy the native run records of `e76e587` and `645130f` into `evidence/`.
+First, look at CI on `main` after the push of 2026-10-02: it is the first run on everything S2 and the platform review unit built, the Linux native job and the acceptance step included. The commits that copy the native run records of `e76e587` and `645130f` into `evidence/` are still not made.
 
 Then `slice` S3 or S4, the owner's choice. S3 measures, and it needs item 12 of the owner queue first: the maximum order size and the latency and throughput targets. S4 can open without an owner decision, and its paper decisions are listed below.
 
@@ -201,12 +202,13 @@ The owner accepted the first nine on the session's recommendation. The session t
 29. Proof and fix are written apart. Once a designer's Spec text is ruled, astra writes the tests and a builder writes the code, each from the Spec text alone and in its own worktree, and an integrator merges them and says of each failing test whether the Spec, the test or the fix is wrong.
 30. What one family writes or finds, the other reads or checks. A finding on unbuilt design is checked against the Spec text by a model of the other family before it enters the ledger. In a review, sol reads the lines Claude wrote and an Opus agent reads the lines GPT wrote.
 31. A review copy carries planted defects, and the project notes record who caught which. Each reviewer that mutates code gets a copy of its own. A plant goes inside the unit's own commits, not on top of them.
+32. From the merge of 2026-10-02 on, a unit reaches `main` through a pull request, and decision 18 ends. The owner's words: "This is the last change we will do without formal PRs since things are starting to shape up."
 
 ## Owner queue
 
 Platform decisions. The first item is new: what the platform review unit rests on.
 
-000. From the platform review unit. Whether `fix/platform-review` goes to `main` with `slice/s2`, and whether commit `70c15bc`, which holds the review with paths of the owner's machine, stays in the history of a public repository. And each provisional reading the code now rests on:
+000. From the platform review unit, each provisional reading the code now rests on:
     - A conflict answer and an unsupported-version answer carry no details. Their two codes still tell a caller whether the stored receipt's contract version is the declaration's.
     - A rejection candidate is a `ConvexError` whose data is an object, not a list, with an own `code` and no `kind`, or with `kind` equal to `"rejection"`. One that does not fit its shape becomes a plain error. `reject` takes platform codes only.
     - The byte bounds: 256 for the text fields a caller sets and for a stream ID, 512 for an actor's ID, 4,096 for the envelope beside the payload, 16,384 for a rejection's details. The fold bound of 500 events follows from them and nothing built reads it yet.
@@ -218,7 +220,7 @@ Platform decisions. The first item is new: what the platform review unit rests o
     - Sharpen the first-activation question already in item 00. Decide whether activation requires a proved empty source or whether installation over existing history always goes through rebuild. The acceptance case installs a new read model after subjects already have history: the native backend must either refuse empty activation before changing anything or make the ruled rebuild procedure cover those old subjects before serving the generation.
     - Sharpen the `getOrder` question already in item 00. Decide whether an order-specific grant is intended to admit the parent query. A direct `authorizeQuery` test is not the public-entry proof: the native acceptance case uses the actual endpoint with a reader granted only that order, a forbidden second order and a tenant-wide positive control.
 
-00. From S2: whether `slice/s2` goes to `main`. And each provisional reading the S2 code now rests on:
+00. From S2, each provisional reading the S2 code now rests on:
     - The production composition as `example/`, with `example/package.json` a symbolic link to the root file.
     - The first activation: one explicit transition, run as an internal mutation with admin access, legal only when the read model has no generation row. Adding a read model to a command on a live deployment fails that command from the deploy until an operator acts, and neither `activate` nor `startGeneration` can run before the deploy.
     - How two projection versions are written at once. S2 built no version check.
