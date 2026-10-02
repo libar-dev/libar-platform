@@ -33,5 +33,5 @@ A word you need that is missing, or one word used for two things, is a gap in th
 
 ## On the owner's machine
 
-- How one Claude thread works with Claude and GPT agents: `~/dev-libar/gpt-models-from-the-claude-main-thread.md`.
-- This project's commands for a brief, its job log and the reports gathered so far: `~/dev-libar/gpt-models-project-notes/application-platform.md`.
+- How one Claude thread works with Claude and GPT agents: `~/dev-libar-supporting-context/gpt-models/gpt-models-from-the-claude-main-thread.md`.
+- This project's commands for a brief, its job log and the reports gathered so far: `~/dev-libar-supporting-context/gpt-models/gpt-models-project-notes/application-platform.md`.
