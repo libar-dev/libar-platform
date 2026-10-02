@@ -164,9 +164,12 @@ test.each([
   }
 });
 
-test.each([false, true])(
-  "native: unrelated stock commands with separate tenants %s",
-  async (separateTenants) => {
+test.each([
+  ["in one tenant", false],
+  ["in eight tenants", true],
+] as const)(
+  "native: eight PlaceOrder commands at once on unrelated stock %s",
+  async (_tenants, separateTenants) => {
     const world = await setup();
     const args = Array.from({ length: 8 }, (_, i) =>
       order(10, i, separateTenants ? `t-${i + 1}` : "t-1"),

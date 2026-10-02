@@ -5,6 +5,8 @@ import { getFunctionName, type FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { expect } from "vitest";
 import { api, internal } from "../../example/convex/_generated/api.js";
+import schema from "../../example/convex/schema.js";
+import { contextTables } from "../../src/context/index.js";
 import type { CompletionRecord, LogMark } from "../../harness/admin.js";
 import type { Backend } from "../../harness/backend.js";
 import type { JsonValue } from "../../harness/evidence.js";
@@ -32,8 +34,21 @@ import {
 
 export type ExecutionRecord = CompletionRecord & {
   willRetry: boolean;
-  occInfo: { tableName: string } | null;
+  occInfo: {
+    tableName: string;
+    componentPath: string | null;
+    retryCount: number;
+  } | null;
 };
+// The table an optimistic-concurrency conflict named, with the component that holds it.
+const occTable = (record: ExecutionRecord) =>
+  record.occInfo === null
+    ? []
+    : [
+        record.occInfo.componentPath === null
+          ? record.occInfo.tableName
+          : `${record.occInfo.componentPath}:${record.occInfo.tableName}`,
+      ];
 export type Answer = {
   kind: string;
   code: string | null;
@@ -186,7 +201,16 @@ export async function schedules(backend: Backend) {
   );
   return Object.fromEntries(entries);
 }
+// Rows left behind are counted over every table the production composition deploys; markers, the
+// gate and audit records are reported as not deployed only while neither schema declares a table.
 export function leftBehind(before: Stored, after: Stored) {
+  expect(Object.keys(schema.tables).sort()).toEqual([
+    "generations",
+    "grants",
+    "orderSummaries",
+    "receipts",
+  ]);
+  expect(Object.keys(contextTables).sort()).toEqual(["events", "streams"]);
   return {
     generations: {
       before: before.generations.length,
@@ -232,13 +256,7 @@ export function recordMeasurement(
         finalOutcomes: 1,
         finalError: final.error,
         engineReruns: reruns.length,
-        occTables: [
-          ...new Set(
-            executions.flatMap((record) =>
-              record.occInfo === null ? [] : [record.occInfo.tableName],
-            ),
-          ),
-        ],
+        occTables: [...new Set(executions.flatMap(occTable))],
         usageStats: sumUsage(executions),
         finalUsageStats: usageOf(final),
         rerunUsageStats: sumUsage(reruns),
@@ -297,13 +315,7 @@ export function recordMeasurement(
     engineReruns: own.filter((record) => record.willRetry).length,
     engineFailedCommands: completed.filter((record) => record.occInfo !== null)
       .length,
-    occTables: [
-      ...new Set(
-        own.flatMap((record) =>
-          record.occInfo === null ? [] : [record.occInfo.tableName],
-        ),
-      ),
-    ],
+    occTables: [...new Set(own.flatMap(occTable))],
     rowsBefore: rowCounts(options.before),
     rowsAfter: rowCounts(options.after),
     rowsLeftBehind: leftBehind(options.before, options.after),
@@ -328,6 +340,13 @@ export function recordMeasurement(
     expect(
       request.completionRecords.filter((record) => !record.willRetry),
     ).toHaveLength(1);
+    // The engine numbers the executions it refused at commit, so its own count agrees with ours.
+    expect(
+      request.completionRecords
+        .filter((record) => record.willRetry)
+        .map((record) => record.occInfo?.retryCount),
+    ).toEqual(request.completionRecords.slice(0, -1).map((_, index) => index));
+    expect(request.completionRecords.at(-1)?.willRetry).toBe(false);
     for (const record of request.completionRecords) {
       expect(typeof record.willRetry).toBe("boolean");
       expect(record).toHaveProperty("occInfo");
