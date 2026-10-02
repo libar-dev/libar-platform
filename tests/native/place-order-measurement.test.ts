@@ -144,11 +144,23 @@ test.each([
       : ([32, 0, 13106, 0] as const);
   expectUsage(required(result.records[0], "completion"), expected);
   expect(result.after).toEqual(result.before);
-  if (path === "authorized duplicate")
+  if (path === "authorized duplicate") {
     expect(result.answers[0]).toMatchObject({
       kind: "applied",
       replayed: true,
     });
+    // The answer from the receipt is the cell's one duplicate and no applied command.
+    expect(result.value.outcomeCounts).toEqual({
+      applied: 0,
+      duplicates: 1,
+      rejected: 0,
+      businessFailure: 0,
+      technicalFailure: 0,
+      transientRefusal: 0,
+    });
+  }
+  // One command and no concurrency: the engine reruns nothing.
+  expect(result.value.engineReruns).toBe(0);
   if (path === "changed input conflict")
     expect(result.answers[0]).toMatchObject({
       kind: "rejection",

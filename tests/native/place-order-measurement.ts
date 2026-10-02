@@ -342,6 +342,24 @@ export function recordMeasurement(
   measure("Measurement", json(value));
   // A terminal record per submitted command is also the log-completeness check.
   expect(completed).toHaveLength(options.answers.length);
+  // Each reported count against a second reading of the same answers and records: a duplicate is an
+  // answer marked replayed, every execution that is not a command's last is an engine rerun, and the
+  // summed usage covers every execution, reruns included.
+  expect(value.outcomeCounts.duplicates).toBe(
+    options.answers.filter((answer) => answer.replayed === true).length,
+  );
+  expect(value.engineReruns).toBe(value.executions - value.submittedCommands);
+  expect(value.engineReruns).toBe(
+    requests.reduce((sum, request) => sum + request.engineReruns, 0),
+  );
+  for (const key of usageKeys) {
+    expect(value.usageStats[key]).toBe(
+      own.reduce((sum, record) => sum + usageOf(record)[key], 0),
+    );
+    expect(value.usageStats[key]).toBe(
+      value.finalUsageStats[key] + value.rerunUsageStats[key],
+    );
+  }
   expect(requests).toHaveLength(options.answers.length);
   expect(new Set(own.map((record) => record.executionId)).size).toBe(
     own.length,
