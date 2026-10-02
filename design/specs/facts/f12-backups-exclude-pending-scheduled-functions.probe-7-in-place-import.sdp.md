@@ -16,16 +16,17 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 - outcome: Replacement in place preserves schedules that run against restored data. (Probe 7)
 
 ```gwt
-Given the production composition with temporary scheduler functions
-When the native backend exercises in-place-import
-Then the observation is {result: "documents replaced and schedules preserved"}
+Given a production composition exports business documents and all five scheduler states before more orders and schedules are created
+When replacement imports the exported snapshot in place before the pending reactions are due
+Then documents including ids and creation times in {scopes: "parent,orders,inventory"} equal the exported documents {equal: true}
+And every scheduler row in each scope is unchanged {unchanged: true}
+And later business changes are gone {removed: true} and the destination environment is unchanged {environmentUnchanged: true}
+And kept reactions read {value: "exported"} no earlier than their scheduled time {onTime: true}
+And each restored scheduler reference resolves to the kept row {found: true} and cancellation leaves state {state: "canceled"}
 ```
 
 ## Verification — executable
 
-- Every scheduler state in the parent and both contexts survives replacement. A pending reaction created after export still runs at its scheduled time against restored data. A failed reaction created after export remains visible despite having no matching exported data. The system table alone cannot identify which intent belongs to the exported data. Hosted dashboard restore, Workpool and Workflow are not run.
-- Bound values are expectations written before the first native run; measured durations and sizes are recorded, not asserted.
-- A kept pending row referenced by an imported `v.id("_scheduled_functions")` is canceled after import; the cancellation is expected to prevent that reaction, while the uncanceled row created after export still runs against restored data.
-- The first native run on 2026-10-02 on `precompiled-2026-09-28-5c7cb5b` held the original bound values.
-- The uncanceled reaction is expected to commit no earlier than its recorded scheduled time; elapsed waiting time is recorded rather than bounded.
-- Another ReceiveStock and PlaceOrder after export change both contexts and the parent receipts and order summaries; replacement must restore the exported documents exactly and remove these later business changes.
+- The value is observed, not expected: the expectation written before the first run was replacement of documents with destination schedules kept, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed unchanged scheduler rows in all scopes and kept pending reactions reading exported data at or after their due time.
+- The test changes business data in the parent and both contexts before import and fails if it does not reach that boundary. It records execution times; it binds only that execution is no earlier than the due time.
+- The exported snapshot is the archive. Hosted dashboard restore, file storage, Workpool and Workflow are not run.

@@ -1,6 +1,5 @@
 import { expect } from "vitest";
 import type { Backend } from "../../harness/backend.js";
-import { measure } from "../../harness/native.js";
 import { exportData, placeAdditionalOrder } from "./scheduler-cases.js";
 import {
   schedulingBackend,
@@ -18,13 +17,13 @@ export async function freshImport(backend: Backend, directory: string) {
   await fresh.admin.replaceSnapshot(exported.path);
   const restored = await dataRows(fresh);
   record("fresh restored data", restored);
-  expect(restored).toEqual(exported.data);
+
   const schedules = await schedulerRows(fresh);
   record("fresh scheduler tables", schedules);
-  for (const rows of Object.values(schedules)) expect(rows).toEqual([]);
-  expect(await fresh.admin.environment()).toEqual(environment);
+  const environmentAfter = await fresh.admin.environment();
+  const references = [];
   record("fresh environment after import", await fresh.admin.environment());
-  measure("fresh environment preserved", true);
+
   for (const component of scopes) {
     const stored = await fresh.admin.readTable(
       "schedulerReferences",
@@ -49,19 +48,31 @@ export async function freshImport(backend: Backend, directory: string) {
       error,
       row: read === undefined ? null : (read as null),
     });
-    expect(error).toBeNull();
-    expect(read).toBeNull();
+
     const copies = await fresh.admin.readTable(
       "schedulerReferences",
       options(component),
     );
-    expect(copies).toHaveLength(2);
-    expect(copies.every((row) => row.dispatchId === id)).toBe(true);
-    expect(
-      await fresh.admin.readTable("_scheduled_functions", options(component)),
-    ).toEqual([]);
+    references.push({
+      component: component ?? "parent",
+      id,
+      read,
+      error,
+      copies,
+      schedules: await fresh.admin.readTable(
+        "_scheduled_functions",
+        options(component),
+      ),
+    });
   }
-  return "documents preserved and schedules absent";
+  return {
+    exported: exported.data,
+    restored,
+    schedules,
+    environment,
+    environmentAfter,
+    references,
+  };
 }
 export async function inPlaceImport(backend: Backend, directory: string) {
   const due = Date.now() + 45000;
@@ -128,16 +139,18 @@ export async function inPlaceImport(backend: Backend, directory: string) {
   expect(Date.now()).toBeLessThan(due);
   const after = await schedulerRows(backend);
   record("in-place scheduler tables after import", after);
-  expect(after).toEqual(before);
+
   const restored = await dataRows(backend);
   record("in-place restored data", restored);
-  expect(restored).toEqual(exported.data);
-  expect(await backend.admin.environment()).toEqual(environment);
+
+  const environmentAfter = await backend.admin.environment();
+  const references = [];
+  const reactions = [];
   record(
     "in-place environment after import",
     await backend.admin.environment(),
   );
-  measure("in-place environment preserved", true);
+
   for (const component of scopes) {
     const id =
       exported.data[`${component ?? "parent"}/schedulerReferences`]![0]!
@@ -152,9 +165,6 @@ export async function inPlaceImport(backend: Backend, directory: string) {
       id,
       row: found,
     });
-    expect(found).toEqual(
-      before[component ?? "parent"]!.find((row) => row._id === id),
-    );
     const canceled = (
       await backend.admin.readTable("_scheduled_functions", options(component))
     ).find((row) => row._id === id);
@@ -162,7 +172,7 @@ export async function inPlaceImport(backend: Backend, directory: string) {
       component: component ?? "parent",
       row: canceled!,
     });
-    expect(canceled?.state).toEqual({ kind: "canceled" });
+    references.push({ component: component ?? "parent", id, found, canceled });
   }
   for (const component of scopes) {
     await expect
@@ -173,12 +183,10 @@ export async function inPlaceImport(backend: Backend, directory: string) {
               "schedulerEffects",
               options(component),
             )
-          ).filter((row) => row.label === "after-export"),
+          ).filter((row) => row.label === "after-export").length,
         { timeout: 55000, interval: 200 },
       )
-      .toEqual([
-        expect.objectContaining({ label: "after-export", value: "exported" }),
-      ]);
+      .toBe(1);
     const effects = await backend.admin.readTable(
       "schedulerEffects",
       options(component),
@@ -190,12 +198,22 @@ export async function inPlaceImport(backend: Backend, directory: string) {
       effects,
     });
     const kept = effects.find((row) => row.label === "after-export");
-    expect(Number(kept?._creationTime)).toBeGreaterThanOrEqual(due);
-    expect(effects.filter((row) => row.label === "exported")).toEqual([]);
+    reactions.push({ component: component ?? "parent", kept, effects });
   }
   record(
     "in-place scheduler tables after execution",
     await schedulerRows(backend),
   );
-  return "documents replaced and schedules preserved";
+  return {
+    exported: exported.data,
+    changedData,
+    restored,
+    before,
+    after,
+    environment,
+    environmentAfter,
+    references,
+    reactions,
+    due,
+  };
 }

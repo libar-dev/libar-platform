@@ -16,15 +16,15 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 - outcome: A failed-function scan reads unrelated schedules. (Probe 7)
 
 ```gwt
-Given the production composition with temporary scheduler functions
-When the native backend exercises scan
-Then the observation is {result: "4091 rows scan and 4092 exceed 4096 reads; zero document reads counted"}
+Given a successful local reaction and a failed reaction share the scheduler with pending calls to several functions
+When a query filters the system table for one function and failed state while unrelated schedules grow past the read boundary
+Then the last accepted total is {accepted: 4091} and the first refused total is {refused: 4092} with text {refusal: "Too many reads in a single function execution (limit: 4096)"}
+And each successful scan reads {documents: 0} documents and {bytes: 0} bytes, adding {queriesPerRow: 1} database query per row plus {extraQueries: 1}
+And the table reaches {total: 32001} rows and scans at {documentCeiling: 32000} and above are refused before any document bound is measured
 ```
 
 ## Verification — executable
 
-- A plain scheduled mutation records a local reaction. The failed-function filter reads unrelated outstanding rows. Metrics and completion usage record the scan cost. Hosted scan limits and seven-day expiry are not run.
-- Original bound values were written before the first native run; the bound values here follow the observed refusal. Measured durations are recorded, not asserted.
-- The first run on 2026-10-02 on `precompiled-2026-09-28-5c7cb5b` counted zero document reads at 1000 rows; the next run refused 32000 rows for too many system operations. The original document-read expectation did not hold. The 4091 and 4092 boundary is an expectation derived from the recorded system-operation count before its first run.
-- The boundary run on 2026-10-02 observed 4091 rows returning one failed reaction, with `databaseQueries.used` at 4096, and 4092 rows refused by the 4096-read limit; the same refusal also occurred at 32000, while a system-operation timeout occurred at 32001. The bound values are observed, and a plain scan without metric calls is also checked.
-- In `evidence/runs/native-20261002T210145Z-592f1dc-1f503d30-03eb-431b-b48b-e946c2866bd5.json`, the plain scan without metric calls also accepted 4091 rows and refused 4092 for the 4096-read limit. Total rows include three terminal rows; outstanding rows are total rows minus three.
+- The value is observed, not expected: the expectation written before the first run was that filtered-out rows consumed the 32000-document allowance, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed zero documents and bytes read, with 4091 rows accepted and 4092 refused at 4096 reads in both plain and instrumented scans.
+- The scan adds N + 1 database queries to four already used. Three rows are terminal, so the boundary is 4088 accepted and 4089 refused outstanding rows.
+- A local scheduled mutation completes. Populating beyond 32000 rows does not show a document boundary because system reads or system-operation time refuse first. Workpool, Workflow and hosted limits are not run.

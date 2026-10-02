@@ -16,13 +16,15 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 - outcome: The five scheduler states remain readable. (Probe 7)
 
 ```gwt
-Given the production composition with temporary scheduler functions
-When the native backend exercises states
-Then the observation is {result: "all five states readable"}
+Given the parent and Orders and Inventory have temporary functions for pending, held, successful, failed and canceled schedules
+When admin access reads each scheduler table before and after a short interval
+Then each scope {scopes: "parent,orders,inventory"} contains state kinds {kinds: "canceled,failed,inProgress,pending,success"}
+And rows have names, arguments and scheduled times, and completedTime is present exactly for {terminal: "canceled,failed,success"}
+And each failed row has error text containing {failure: "Uncaught Error: reaction refused: exported-failed"}
+And all scheduler rows remain unchanged across the interval {retained: true}
 ```
 
 ## Verification — executable
 
-- Native observations include names, arguments, times and failure errors in the parent and both contexts. Completion rows remain readable during the measured interval. Seven-day expiry and hosted retention are not run.
-- Bound values are expectations written before the first native run; measured durations and sizes are recorded, not asserted.
-- The first native run on 2026-10-02 on `precompiled-2026-09-28-5c7cb5b` held the original bound values.
+- The value is observed, not expected: the expectation written before the first run was all five states with completion times only on terminal rows, and the run on release `precompiled-2026-09-28-5c7cb5b` with Convex 1.46.0 on 2026-10-02 showed those states and fields in all three scopes.
+- The held action supplies inProgress. The test records the retention interval; seven-day retention and expiry and hosted retention are not run.

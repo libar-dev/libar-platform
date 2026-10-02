@@ -52,6 +52,7 @@ export interface CompletionRecord {
   error: string | null;
   caller: string;
   usageStats: Record<string, number>;
+  logLines: string[];
 }
 export interface AdminAccess {
   deploy(): Promise<void>;
