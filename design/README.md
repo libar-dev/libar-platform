@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-202 specs · 5 packs · 101 anchors → 308 nodes · 1097 edges (0 errors, 0 warnings)
+203 specs · 5 packs · 102 anchors → 310 nodes · 1101 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -303,7 +303,7 @@ Slice S1 added three more for the same reason, when its scenario tests bound the
 
 Package B therefore has 7 examples, Package C has 15, and the corpus has 57.
 
-The Layer 2 design added two more for the same reason, and nine examples that verify no doc row:
+The Layer 2 design added two more for the same reason, and ten examples that verify no doc row:
 
 | Sc | Added example | Reason |
 |---|---|---|
@@ -314,12 +314,13 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:application.read-models.query-refused-before-disclosure` | verifies Law 5 for a parent query called with no identity |
 | none | `spec:application.read-models.query-refused-without-grant` | verifies Law 5 for a parent query called with no grant in the tenant |
 | none | `spec:application.read-models.list-pages-by-cursor` | verifies a parent list paged by a cursor pair, under E-24 |
+| none | `spec:application.write-pause.restore-door-without-deploy` | shows on the pinned release that the restore door's environment switch needs no deploy, under E-42 |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-built-in-paginate-throws-in-component` | Probe 5: the built-in `paginate` throws inside a component |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap` | Probe 5: a parent list's page outgrows its row cap |
 
-Package A therefore has 79 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+Package A therefore has 79 Specs, Package C has 16 examples, Package D has 20, and the corpus has 59 examples that bind a doc row.
 
 ## Integration notes
 

@@ -1,7 +1,8 @@
 // The maintenance gate on the native backend, over the fixture composition: a closed tenant refuses a
-// public command and leaves another tenant writable, the restore door set through the deployment's
-// environment refuses the next write with no deploy, a close races commands in flight, and every
+// public command and leaves another tenant writable, a close races commands in flight, and every
 // operator action has its audit record (spec:application.write-pause, spec:operations.baseline-operations).
+// The restore door's switch with no deploy is bound to its example in
+// write-pause.restore-door-without-deploy.test.ts.
 import { getFunctionName } from "convex/server";
 import { ConvexError, type Value } from "convex/values";
 import { expect, test } from "vitest";
@@ -99,60 +100,6 @@ test("native: a closed tenant refuses a public command with writePaused and stor
     },
   ]);
   expect(await gateAudit(backend, "all")).toEqual([]);
-});
-
-test("native: MAINTENANCE_MODE set to restore on the running backend refuses the next write of every tenant and entry with no deploy, and any other value lets the same request key apply", async () => {
-  const backend = await fixtureBackend();
-  const { admin } = backend;
-  const first = await userIn(backend, "t-1", "user-1");
-  const second = await userIn(backend, "t-2", "user-2");
-  expect(await create(first, "t-1", "doc-0", "k-0")).toMatchObject({
-    kind: "applied",
-  });
-  // Authorization, step 4, precedes the gate, step 7: the service actor holds a grant.
-  await admin.run(getFunctionName(internal.grants.grant), {
-    tenantId: "t-2",
-    principalKind: "service",
-    principalId: "svc-1",
-    permission: permissions.documents,
-    grantedBy: "native-test",
-  });
-  await admin.setEnvironment({ MAINTENANCE_MODE: "restore" });
-  const door = paused("write paused for all: restore");
-  expect(await thrownData(create(first, "t-1", "doc-1", "k-1"))).toEqual(door);
-  expect(await thrownData(create(second, "t-2", "doc-1", "k-1"))).toEqual(door);
-  expect(
-    await thrownData(
-      admin.run(
-        getFunctionName(internal.depotCommands.createDocumentInternal),
-        {
-          tenantId: "t-2",
-          namespace: "worker",
-          actor: { kind: "service", id: "svc-1" },
-          requestKey: "k-2",
-          input: { documentId: "doc-2", title: "Report" },
-        },
-      ),
-    ),
-  ).toEqual(door);
-  expect(await admin.run(getFunctionName(internal.gate.getGate), {})).toEqual({
-    restore: true,
-    closed: [],
-  });
-  expect(await admin.readTable("receipts")).toHaveLength(1);
-  for (const value of ["Restore", "off"]) {
-    await admin.setEnvironment({ MAINTENANCE_MODE: value });
-    expect(await admin.run(getFunctionName(internal.gate.getGate), {})).toEqual(
-      { restore: false, closed: [] },
-    );
-  }
-  expect(await create(first, "t-1", "doc-1", "k-1")).toMatchObject({
-    kind: "applied",
-    replayed: false,
-  });
-  expect(await create(second, "t-2", "doc-1", "k-1")).toMatchObject({
-    kind: "applied",
-  });
 });
 
 // Optimistic concurrency makes the close a consistent cut: a command either commits before the close
