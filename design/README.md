@@ -6,7 +6,7 @@ The decisions document at [`../docs/convex-transactional-domain-platform-decisio
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
-The owner has ruled on nothing. Every decision is a proposal, every extension is provisional, and no Spec states `ready`.
+No Spec states `ready`, and the doc's decisions are proposals until the owner rules. `design/decisions/register.json` says which open decision is ruled, by whom and when, and `design/advisors/register.md` says who decides which. An extension stays marked after it is ruled, because it is still a claim the doc does not make.
 
 ## How to read
 

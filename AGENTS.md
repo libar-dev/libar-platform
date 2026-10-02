@@ -6,10 +6,11 @@ The Convex transactional domain platform. `docs/` holds the inputs. `design/` ho
 
 - **You run the session.** Read `design/STATE.md`, then follow `design/SESSIONS.md`.
 - **You were handed a brief.** The brief is your task and its limits. Change only the files it names.
+- **You were launched as an advisor.** Read `design/advisors/protocol.md`, then what it names.
 
 ## Rules for every reader
 
-- `docs/convex-transactional-domain-platform-decisions.md`, "the doc", says what the platform is. Its decisions are proposals until the owner rules. Only the owner states `ready` on a Spec, settles an open question or edits the doc.
+- `docs/convex-transactional-domain-platform-decisions.md`, "the doc", says what the platform is. Its decisions are proposals until the owner rules. Only the owner states `ready` on a Spec or edits the doc. `design/SESSIONS.md`, "Who decides", says who settles an open question.
 - A Spec is intended truth. Report code that disagrees with a Spec as a gap, and the main thread rules which side changes.
 - Read the corpus through its graph. Run `npm ci` once, then, from the repository root, `npx sdp q '<recipe body>' --json` with a body from `node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md`. Always `npx sdp`: a bare `sdp` on macOS is an unrelated tool.
 - Before you write or edit a Spec, read `design/PLAN.md` section 6 and `node_modules/@libar-dev/software-delivery-protocol/.agents/skills/sdp-authoring/SKILL.md`.

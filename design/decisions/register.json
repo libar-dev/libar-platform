@@ -1,0 +1,5630 @@
+{
+  "schema": 1,
+  "units": [
+    "S3",
+    "S4",
+    "S5",
+    "L3"
+  ],
+  "decisions": [
+    {
+      "id": "OD-001",
+      "title": "From the platform review unit, each provisional reading the code now rests on:",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000",
+          "file": "design/STATE.md",
+          "line": 212
+        }
+      ],
+      "families": [
+        "platform",
+        "command",
+        "context",
+        "application"
+      ],
+      "cites": [],
+      "provisionalReading": "From the platform review unit, each provisional reading the code now rests on:",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-002",
+      "title": "A conflict answer and an unsupported-version answer carry no details.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/1",
+          "file": "design/STATE.md",
+          "line": 213
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [],
+      "provisionalReading": "A conflict answer and an unsupported-version answer carry no details. Their two codes still tell a caller whether the stored receipt's contract version is the declaration's.",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-003",
+      "title": "A rejection candidate is a `ConvexError` whose data is an object, not a list, with an own `code` and no `kind`, or with ",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/2",
+          "file": "design/STATE.md",
+          "line": 214
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [],
+      "provisionalReading": "A rejection candidate is a `ConvexError` whose data is an object, not a list, with an own `code` and no `kind`, or with `kind` equal to `\"rejection\"`. One that does not fit its shape becomes a plain error. `reject` takes platform codes only.",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-004",
+      "title": "The byte bounds: 256 for the text fields a caller sets and for a stream ID, 512 for an actor's ID, 4,096 for the envelop",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/3",
+          "file": "design/STATE.md",
+          "line": 215
+        }
+      ],
+      "families": [
+        "command",
+        "context",
+        "constraints"
+      ],
+      "cites": [],
+      "provisionalReading": "The byte bounds: 256 for the text fields a caller sets and for a stream ID, 512 for an actor's ID, 4,096 for the envelope beside the payload, 16,384 for a rejection's details. The fold bound of 500 events follows from them and nothing built reads it yet.",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-005",
+      "title": "E-17, the acceptance check: a pass of the first experiment is the check's answer over one run's record, with the require",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/4",
+          "file": "design/STATE.md",
+          "line": 216
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.acceptance-contract#2",
+          "file": "design/specs/platform/acceptance-contract.sdp.md",
+          "line": 25
+        },
+        {
+          "kind": "extension",
+          "ref": "E-17",
+          "file": "design/README.md",
+          "line": 201
+        }
+      ],
+      "families": [
+        "platform",
+        "application"
+      ],
+      "cites": [
+        "E-17"
+      ],
+      "provisionalReading": "Extension E-17: the doc says that a link between source and test is not a passing run and that the first experiment passes when every Layer 0, 1 and 2 scenario passes, and it does not say how a pass of the whole is established from runs; the option taken here is the acceptance check: the required scenarios are generated from the graph, one per example of a required row with its tier, composition and verifiers, and read against one run's record, so that a scenario with no verifier, with no result or with a result other than passed keeps the whole from passing; the alternative, a list of scenarios and verifiers kept by hand beside the tests, was not taken because the graph already holds each example's row, tier, composition and verifiers; the owner confirms (E-17, Acceptance scenarios, First experiment)",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-006",
+      "title": "Whether the experiment's pass includes Sc ALL-1.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/5",
+          "file": "design/STATE.md",
+          "line": 217
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#7",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 65
+        }
+      ],
+      "families": [
+        "application",
+        "platform"
+      ],
+      "cites": [
+        "E-17",
+        "Sc ALL-1"
+      ],
+      "provisionalReading": "Taken: no, the 23 rows of Layers 0 to 2.",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-007",
+      "title": "Whether Sc L2-9 needs an example that runs commands at once on the production composition.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/6",
+          "file": "design/STATE.md",
+          "line": 218
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment.native-acceptance-production-configuration#1",
+          "file": "design/specs/application/first-experiment.native-acceptance-production-configuration.sdp.md",
+          "line": 21
+        }
+      ],
+      "families": [
+        "application",
+        "platform"
+      ],
+      "cites": [
+        "E-15",
+        "Sc L2-9"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-008",
+      "title": "The doc says the experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend, and the acceptance c",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/7",
+          "file": "design/STATE.md",
+          "line": 219
+        }
+      ],
+      "families": [
+        "platform",
+        "application"
+      ],
+      "cites": [
+        "Sc L2-4"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-009",
+      "title": "Language.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/8",
+          "file": "design/STATE.md",
+          "line": 220
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-010",
+      "title": "Sharpen the first-activation question already in item 00.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/9",
+          "file": "design/STATE.md",
+          "line": 221
+        },
+        {
+          "kind": "ownerQueue",
+          "ref": "00/2",
+          "file": "design/STATE.md",
+          "line": 226
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.generation-registry#4",
+          "file": "design/specs/application/generation-registry.sdp.md",
+          "line": 36
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-8",
+        "D9",
+        "D19"
+      ],
+      "provisionalReading": "Extension E-8, the first generation: the doc says how a generation is rebuilt and not how a read model's first generation comes to exist; the option taken here is one explicit transition, the first activation, run with admin access before the first command that writes the read model, legal only when the read model has no generation row, with a command that finds no generation to write failing as a technical failure and a query that finds no active generation failing the same way; the owner has not ruled (E-8, D9, D19)",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-011",
+      "title": "Sharpen the `getOrder` question already in item 00.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "000/10",
+          "file": "design/STATE.md",
+          "line": 222
+        },
+        {
+          "kind": "ownerQueue",
+          "ref": "00/7",
+          "file": "design/STATE.md",
+          "line": 231
+        }
+      ],
+      "families": [
+        "context",
+        "application",
+        "command"
+      ],
+      "cites": [],
+      "provisionalReading": "`getOrder` on the production composition authorizes with no subject, as `queries.sdp.md:85` pins it, so a reader granted one order only is refused. The fixture relay had the same omission and was fixed; the production query follows its Spec and waits for the ruling.",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-012",
+      "title": "From S2, each provisional reading the S2 code now rests on:",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00",
+          "file": "design/STATE.md",
+          "line": 224
+        }
+      ],
+      "families": [
+        "platform",
+        "application",
+        "command",
+        "context"
+      ],
+      "cites": [],
+      "provisionalReading": "From S2, each provisional reading the S2 code now rests on:",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-013",
+      "title": "The production composition as `example/`, with `example/package.json` a symbolic link to the root file.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/1",
+          "file": "design/STATE.md",
+          "line": 225
+        },
+        {
+          "kind": "ownerQueue",
+          "ref": "3",
+          "file": "design/STATE.md",
+          "line": 248
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.native-harness#2",
+          "file": "design/specs/platform/native-harness.sdp.md",
+          "line": 25
+        },
+        {
+          "kind": "extension",
+          "ref": "E-15",
+          "file": "design/README.md",
+          "line": 199
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "E-15",
+        "Sc L2-9"
+      ],
+      "provisionalReading": "Extension E-15: the doc does not say what the fixture app contains, how a fault enters a run, what a test may observe, or what a test controls on a backend that offers no clock and no scheduler switch; the option taken here is the rules below; two of them read the doc for the owner: the production-configuration run of Sc L2-9 is taken as the scenarios routed to the production composition, where the corpus earlier asked for the full Layer 0 to 2 suite on a release build, and evidence records that back a pass claim are kept in the repository; whether the durations Layer 3 pins become configuration, so that a test can outwait them, is left to Layer 3; and because the Convex CLI reads `convex.json` and `package.json` from its working directory, a composition is a name, a project directory and a functions directory, the production composition's project directory is `example/` with a `package.json` that links to the repository's one, and both compositions' generated files are committed; the owner has not ruled on the layout (E-15, Acceptance scenarios, Sc L2-9)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-014",
+      "title": "How two projection versions are written at once.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/3",
+          "file": "design/STATE.md",
+          "line": 227
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.projection-contract#2",
+          "file": "design/specs/application/projection-contract.sdp.md",
+          "line": 34
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "D8",
+        "D9"
+      ],
+      "provisionalReading": "Extension E-9, two projection versions: a read model holds one projection, so `applyProjection` writes every generation it is given with that projection, whatever `projectionVersion` the generation records; after a projection version change the active generation was built by the earlier version, and the owner has not ruled how a command writes two projection versions at once, the active generation's and a building generation's (E-9, D8, D9)",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-015",
+      "title": "No command registry.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/4",
+          "file": "design/STATE.md",
+          "line": 228
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-declaration#2",
+          "file": "design/specs/command/command-declaration.sdp.md",
+          "line": 35
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-7",
+        "Sc L2-4",
+        "D12",
+        "D18",
+        "OQ2"
+      ],
+      "provisionalReading": "Extension E-7: the pipeline receives the declaration and takes the fingerprint's contract version from it, and the type check at a typed caller is the check of Sc L2-4, so no standing map from command type to declaration exists; the conditional dispatcher of `spec:command.outcome-boundary` is the one thing that would need such a map and brings it with it; this is a provisional reading the owner rules (E-7, D12, D18, OQ2)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-016",
+      "title": "A context query takes `tenantId` and no `scope`; no client hook crosses the component boundary, although the Convex comp",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/5",
+          "file": "design/STATE.md",
+          "line": 229
+        }
+      ],
+      "families": [
+        "context",
+        "application"
+      ],
+      "cites": [],
+      "provisionalReading": "A context query takes `tenantId` and no `scope`; no client hook crosses the component boundary, although the Convex components page recommends the helper hook; a read-model list keeps the built-in `paginate`, whose row cap is advice on a pinned page.",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-017",
+      "title": "A query's refusal is `RejectionData` with the query's name in `commandType`.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/6",
+          "file": "design/STATE.md",
+          "line": 230
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.read-models#3",
+          "file": "design/specs/application/read-models.sdp.md",
+          "line": 51
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.outcome-boundary#2",
+          "file": "design/specs/command/outcome-boundary.sdp.md",
+          "line": 39
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [
+        "E-6",
+        "E-5",
+        "D7",
+        "D11",
+        "Law 5"
+      ],
+      "provisionalReading": "Extension E-5: the doc says a query authorizes before it discloses and does not say how a refused query is answered; here a parent query's refusal is the same `RejectionData` a command's is, with the query's name in the field `commandType` and only the codes `unauthenticated` and `forbidden`, and a use case's own rejection is thrown as the kernel's bare `Rejection`, the way a context throws one; that a field named for a command carries a query's name is a gap in the language, and the owner has not ruled on either reading (E-5, D7, Law 5)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-018",
+      "title": "`limitReturnBytesPerCall` at 8 MiB, which can fail a call before the write bound does, and whose stated reason does not ",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/8",
+          "file": "design/STATE.md",
+          "line": 232
+        }
+      ],
+      "families": [
+        "context",
+        "command"
+      ],
+      "cites": [
+        "F13"
+      ],
+      "provisionalReading": "`limitReturnBytesPerCall` at 8 MiB, which can fail a call before the write bound does, and whose stated reason does not match F13. `limitIdLength` at 256.",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-019",
+      "title": "The order summary without `allocated`; `unitPrice` on an order line in whole minor units.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/9",
+          "file": "design/STATE.md",
+          "line": 233
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#3",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 61
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.orders-inventory-example#1",
+          "file": "design/specs/application/orders-inventory-example.sdp.md",
+          "line": 27
+        },
+        {
+          "kind": "extension",
+          "ref": "E-46",
+          "file": "design/README.md",
+          "line": 225
+        }
+      ],
+      "families": [
+        "application",
+        "kernel"
+      ],
+      "cites": [
+        "E-46",
+        "E-2",
+        "E-9",
+        "Sc L2-6"
+      ],
+      "provisionalReading": "Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model, with 100 as the provisional maximum for measurement (E-46, First experiment)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-020",
+      "title": "`projection-contract.sdp.md`: \"a newer row is never overwritten\" read as the rule of the backfill path only.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/10",
+          "file": "design/STATE.md",
+          "line": 234
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.projection-contract#3",
+          "file": "design/specs/application/projection-contract.sdp.md",
+          "line": 35
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "D9"
+      ],
+      "provisionalReading": "The rule that a row with a newer version is never overwritten is read as the backfill path's rule only, so a live write to the active generation always lands, as `step3` has it; the owner has not confirmed that reading (D9, E-9)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-021",
+      "title": "Sc L2-9: the function-list observation is not built, `installedLayers` of the production composition is unpinned, and no",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/11",
+          "file": "design/STATE.md",
+          "line": 235
+        }
+      ],
+      "families": [
+        "platform",
+        "application"
+      ],
+      "cites": [
+        "Sc L2-9"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-022",
+      "title": "Language.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "00/12",
+          "file": "design/STATE.md",
+          "line": 236
+        }
+      ],
+      "families": [
+        "platform",
+        "context",
+        "application"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-023",
+      "title": "From S1, each a provisional reading that the code now rests on:",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0",
+          "file": "design/STATE.md",
+          "line": 237
+        }
+      ],
+      "families": [
+        "kernel",
+        "context",
+        "command"
+      ],
+      "cites": [],
+      "provisionalReading": "From S1, each a provisional reading that the code now rests on:",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-024",
+      "title": "`ready` on the Specs S1 built and passed.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/1",
+          "file": "design/STATE.md",
+          "line": 238
+        }
+      ],
+      "families": [
+        "kernel",
+        "context",
+        "command"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-025",
+      "title": "Who creates a tenant's first grant.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/2",
+          "file": "design/STATE.md",
+          "line": 239
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.tenancy-and-authority#3",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md",
+          "line": 39
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-37",
+        "D11",
+        "Law 5"
+      ],
+      "provisionalReading": "Taken: the library registers no grant function; an operator runs an internal mutation with admin access.",
+      "blocks": "S4",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-026",
+      "title": "The tenant scope as the one `tenantId` argument, with no separate `scope`.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/3",
+          "file": "design/STATE.md",
+          "line": 240
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.actor-and-scope#2",
+          "file": "design/specs/command/actor-and-scope.sdp.md",
+          "line": 32
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-6",
+        "D11",
+        "Law 11"
+      ],
+      "provisionalReading": "Extension E-6: the tenant scope of an operation, of a command and of a query is the `tenantId` argument alone, so none takes a separate scope argument; this is a provisional reading the owner rules (E-6, Law 11, D11)",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-027",
+      "title": "`ctx.auth` and the environment in a component as the design's rule and not a Convex fact (F11).",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/4",
+          "file": "design/STATE.md",
+          "line": 241
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.f11-components-have-no-ctx-auth#1",
+          "file": "design/specs/facts/f11-components-have-no-ctx-auth.sdp.md",
+          "line": 21
+        }
+      ],
+      "families": [
+        "facts"
+      ],
+      "cites": [
+        "F11",
+        "D10",
+        "D11"
+      ],
+      "provisionalReading": "Observed against the documentation on 2026-10-01: the components page says `ctx.auth` is not available within a component; on the pinned native backend, release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `ctx.auth.getUserIdentity()` inside a component query returned the caller's identity, and `convex-test` 0.0.60 returns null for the same call; the design does not depend on which holds, because D11 passes the actor explicitly and no component function reads `ctx.auth`; whether this fact's wording and status follow the documentation or the backend is the owner's ruling; the design takes the provisional reading that the documentation's sentence stays the fact and that the Specs of the kernel, context and command families state no component function reads `ctx.auth` or `process.env` as the design's rule, which a lint check over `src/context` and every component directory of the fixture composition enforces (F11, D11)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-028",
+      "title": "The request key stays optional on the public entry, so a caller of `ConvexHttpClient` that retries must supply one.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/5",
+          "file": "design/STATE.md",
+          "line": 242
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#4",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 62
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.idempotency-and-receipts#1",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
+          "line": 42
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.idempotency-and-receipts#2",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
+          "line": 43
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d06-idempotency-client-and-receipts#1",
+          "file": "design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md",
+          "line": 33
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.probe-plan#1",
+          "file": "design/specs/facts/probe-plan.sdp.md",
+          "line": 38
+        },
+        {
+          "kind": "extension",
+          "ref": "E-33",
+          "file": "design/README.md",
+          "line": 212
+        }
+      ],
+      "families": [
+        "command",
+        "decisions",
+        "facts"
+      ],
+      "cites": [
+        "E-33",
+        "D6",
+        "Probe 1"
+      ],
+      "provisionalReading": "Extension E-33: the doc lists the callers that need receipts and leaves UI commands to the client guarantee; here a public caller may still supply a request key to opt into a receipt, which Probe 1 showed a caller of `ConvexHttpClient` needs when it retries, and the internal entry always requires one (E-33, D6, Probe 1)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-029",
+      "title": "The language.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/6",
+          "file": "design/STATE.md",
+          "line": 243
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-030",
+      "title": "`fixture/convex/nonUiCaller.ts`, a fixture action that stands for trusted server code and lets an ordinary client reach ",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "0/7",
+          "file": "design/STATE.md",
+          "line": 244
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.native-harness#3",
+          "file": "design/specs/platform/native-harness.sdp.md",
+          "line": 26
+        }
+      ],
+      "families": [
+        "platform",
+        "command"
+      ],
+      "cites": [
+        "E-15",
+        "D11",
+        "Sc L1-7"
+      ],
+      "provisionalReading": "Extension E-15: the design takes the fixture action `nonUiCaller:send`, which any authenticated client of the fixture composition may call to run any fixture command's internal entry under any namespace and actor kind, as the fixture's stand-in for trusted server code, kept out of the production composition; it is a provisional reading the owner rules, because within the fixture composition it lets a client do what `spec:command.tenancy-and-authority` refuses a client (E-15, D11, Sc L1-7)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-031",
+      "title": "`ready` on `spec:platform.native-harness`.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "1",
+          "file": "design/STATE.md",
+          "line": 246
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-032",
+      "title": "E-13, both halves: the fixture issuer for tests, and what it means for production's `auth.config.ts`, which must then be",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "2",
+          "file": "design/STATE.md",
+          "line": 247
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.native-harness#1",
+          "file": "design/specs/platform/native-harness.sdp.md",
+          "line": 24
+        },
+        {
+          "kind": "extension",
+          "ref": "E-13",
+          "file": "design/README.md",
+          "line": 197
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "E-13",
+        "Sc L2-9",
+        "D11"
+      ],
+      "provisionalReading": "Extension E-13: the doc says native acceptance runs with production authority and a disposable backend per test and does not say how a test obtains a signed identity, which a production issuer cannot mint for a throwaway backend; the option taken here is a fixture issuer: a composition that runs natively reads its issuer, application ID and key set from the deployment's environment variables, the harness sets the key set to a data URI whose private key it holds, and each caller under test is an ordinary client carrying a token the harness signs; the option first taken, the backend's admin key acting as an identity, was dropped because such a caller passes Convex's visibility check for internal functions, which `spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function` shows; this reading reaches into production, because running the production composition natively with no changed file means the example application's `auth.config.ts` is a `customJwt` provider whose trust root is whatever the deployment's environment names, and a provider that fetches its keys from an issuer's own endpoint cannot be run on a disposable backend this way; the owner rules on both halves, the test identity and the production provider (E-13, S13, Sc L2-9, D11)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-033",
+      "title": "E-16: how a probe states its expectation and records a different result.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "4",
+          "file": "design/STATE.md",
+          "line": 249
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.probe-plan#6",
+          "file": "design/specs/facts/probe-plan.sdp.md",
+          "line": 43
+        },
+        {
+          "kind": "extension",
+          "ref": "E-16",
+          "file": "design/README.md",
+          "line": 200
+        }
+      ],
+      "families": [
+        "facts"
+      ],
+      "cites": [
+        "E-16"
+      ],
+      "provisionalReading": "Extension E-16: the doc says each probe is one small test on a native backend and that a probed fact is one a native backend test showed, and does not say how a test that settles an unknown states what it expects or what follows when the backend answers otherwise; the option taken here: a probe is written as example Specs that verify its fact, each bound to its native test; an example's bound values are the expectation written before the first run; a first run that shows another value is a finding recorded on the fact, and the example is then bound to what that release does and says so; an example fails when its run did not reach the boundary it is about; a later run on a new release that shows another value is again a finding, and the test is not repaired to keep the old value; a size is recorded and not asserted, while a limit the backend enforces is bound as observed; and what a local backend cannot answer is named on the example and stays open on the fact; the owner confirms (E-16, Probes, Acceptance scenarios)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-034",
+      "title": "F11: documented as unavailable in a component, observed as available.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "5",
+          "file": "design/STATE.md",
+          "line": 250
+        }
+      ],
+      "families": [
+        "facts",
+        "decisions",
+        "command"
+      ],
+      "cites": [
+        "F11",
+        "D6",
+        "Probe 1"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-035",
+      "title": "The doc disagrees with what the probes showed in eleven places.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "6",
+          "file": "design/STATE.md",
+          "line": 251
+        }
+      ],
+      "families": [
+        "facts",
+        "decisions"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-036",
+      "title": "Probe 3's quota half needs a hosted deployment.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "7",
+          "file": "design/STATE.md",
+          "line": 252
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.probe-plan#2",
+          "file": "design/specs/facts/probe-plan.sdp.md",
+          "line": 39
+        }
+      ],
+      "families": [
+        "facts",
+        "context",
+        "application"
+      ],
+      "cites": [
+        "OQ1",
+        "F4",
+        "D2",
+        "D8",
+        "Probe 3"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-037",
+      "title": "The 140 open questions (recipe 20), the twelve ambiguities of `PLAN.md` 11 and three product decisions listed in `README",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "8",
+          "file": "design/STATE.md",
+          "line": 253
+        }
+      ],
+      "families": [
+        "advanced",
+        "context",
+        "constraints",
+        "processes",
+        "platform",
+        "laws",
+        "agents",
+        "decisions",
+        "operations",
+        "command",
+        "application",
+        "facts",
+        "obligations",
+        "effects",
+        "kernel"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-038",
+      "title": "Probes 6 and 7 have not run.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "9",
+          "file": "design/STATE.md",
+          "line": 254
+        }
+      ],
+      "families": [
+        "facts",
+        "application"
+      ],
+      "cites": [
+        "Probe 6",
+        "Probe 7"
+      ],
+      "provisionalReading": null,
+      "blocks": "S4",
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-039",
+      "title": "Rulings the round-3 findings ask for:",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "10",
+          "file": "design/STATE.md",
+          "line": 255
+        }
+      ],
+      "families": [
+        "obligations",
+        "context",
+        "application",
+        "decisions",
+        "advanced"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-040",
+      "title": "D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt (`r3-fidelity-der",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "10/1",
+          "file": "design/STATE.md",
+          "line": 256
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "D6"
+      ],
+      "provisionalReading": null,
+      "blocks": "L3",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-041",
+      "title": "D3 and a history-reading migration (`r3-fidelity-migrate-on-load-replays-history-against-d3`).",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "10/2",
+          "file": "design/STATE.md",
+          "line": 257
+        }
+      ],
+      "families": [
+        "context",
+        "kernel"
+      ],
+      "cites": [
+        "D3"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-042",
+      "title": "Restore policy: whether a failed check keeps every writer out with no override, and how often the drill runs (`r3-fideli",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "10/3",
+          "file": "design/STATE.md",
+          "line": 258
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-043",
+      "title": "The `[extension]` marker: `PLAN.md` 6.5 asks for it on every extension bullet and about a fifth carry it (`r3-fidelity-e",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "10/4",
+          "file": "design/STATE.md",
+          "line": 259
+        }
+      ],
+      "families": [
+        "kernel",
+        "command",
+        "effects",
+        "constraints"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-044",
+      "title": "D2's premise: Convex documents a commit timestamp that increases in commit order (`r3-convex-commit-timestamp-not-weighe",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "10/5",
+          "file": "design/STATE.md",
+          "line": 260
+        }
+      ],
+      "families": [
+        "decisions",
+        "context",
+        "advanced"
+      ],
+      "cites": [
+        "D2"
+      ],
+      "provisionalReading": null,
+      "blocks": "L3",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-045",
+      "title": "What code cannot choose, each at its slice: the grant bootstrap trust model, deployment-wide operator authority, tenant ",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "11",
+          "file": "design/STATE.md",
+          "line": 261
+        }
+      ],
+      "families": [
+        "command",
+        "application",
+        "context",
+        "operations",
+        "obligations"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": "S4",
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-046",
+      "title": "The maximum order size and the latency and throughput targets, before S3 benchmarks.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "12",
+          "file": "design/STATE.md",
+          "line": 262
+        }
+      ],
+      "families": [
+        "application",
+        "context",
+        "kernel"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": "S3",
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-047",
+      "title": "`AGENTS.md` names two files by their path on the owner's machine, in a public repository.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "13",
+          "file": "design/STATE.md",
+          "line": 263
+        }
+      ],
+      "families": [],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-048",
+      "title": "A license.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "14",
+          "file": "design/STATE.md",
+          "line": 264
+        }
+      ],
+      "families": [],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-049",
+      "title": "Four proposals on how sessions are run, in the orchestration guide under \"Proposals not yet ruled\".",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "15",
+          "file": "design/STATE.md",
+          "line": 265
+        }
+      ],
+      "families": [],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-050",
+      "title": "The dirty-mark table, the recompute scheduling and the staleness field are deferred to the build on this trigger (D18, D",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:advanced.coalesced-recomputation#1",
+          "file": "design/specs/advanced/coalesced-recomputation.sdp.md",
+          "line": 29
+        }
+      ],
+      "families": [
+        "advanced"
+      ],
+      "cites": [
+        "D18"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-051",
+      "title": "The dependency protocol or the consistent source cut, and the online cutover for this class, are deferred to the build o",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:advanced.cross-stream-online-rebuild#1",
+          "file": "design/specs/advanced/cross-stream-online-rebuild.sdp.md",
+          "line": 29
+        }
+      ],
+      "families": [
+        "advanced"
+      ],
+      "cites": [
+        "D18"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-052",
+      "title": "The sequence allocation, the consumer position record, the worker's batch bound and the skip authorization are deferred ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:advanced.ordered-consumer#1",
+          "file": "design/specs/advanced/ordered-consumer.sdp.md",
+          "line": 28
+        }
+      ],
+      "families": [
+        "advanced"
+      ],
+      "cites": [
+        "D18"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-053",
+      "title": "No trigger has fired; each capability's design is deferred until its activation record exists (D18, Decision method rule",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:advanced.trigger-table#1",
+          "file": "design/specs/advanced/trigger-table.sdp.md",
+          "line": 22
+        }
+      ],
+      "families": [
+        "advanced"
+      ],
+      "cites": [
+        "D18"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-054",
+      "title": "The trigger has not fired; the run, proposal and attempt tables, the proposal schema, the policy engine's inputs and the",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:agents.agent-runs#1",
+          "file": "design/specs/agents/agent-runs.sdp.md",
+          "line": 36
+        }
+      ],
+      "families": [
+        "agents"
+      ],
+      "cites": [
+        "D17"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-055",
+      "title": "OQ2 dependency: whether a rejected agent proposal must be recorded as a fact decides whether the generic internal dispat",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:agents.agent-runs#2",
+          "file": "design/specs/agents/agent-runs.sdp.md",
+          "line": 37
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.outcome-boundary#4",
+          "file": "design/specs/command/outcome-boundary.sdp.md",
+          "line": 41
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d07-rejections-thrown-not-stored#1",
+          "file": "design/specs/decisions/d07-rejections-thrown-not-stored.sdp.md",
+          "line": 31
+        },
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.4",
+          "file": "design/PLAN.md",
+          "line": 688
+        }
+      ],
+      "families": [
+        "agents",
+        "command",
+        "decisions"
+      ],
+      "cites": [
+        "OQ2",
+        "D7"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-056",
+      "title": "The reservation and usage records, the slot allocator and the reconciliation operation are deferred to the build on the ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:agents.budget-accounting#1",
+          "file": "design/specs/agents/budget-accounting.sdp.md",
+          "line": 23
+        }
+      ],
+      "families": [
+        "agents"
+      ],
+      "cites": [
+        "D17"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-057",
+      "title": "Probe 6 pending: until it runs on a native backend this fact stays assumed, and the decisions it serves (D9) rest on the",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.f17-migrations-fits-generation-backfill#1",
+          "file": "design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md",
+          "line": 22
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.rebuild#1",
+          "file": "design/specs/application/rebuild.sdp.md",
+          "line": 57
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d09-rebuild-online-by-default#1",
+          "file": "design/specs/decisions/d09-rebuild-online-by-default.sdp.md",
+          "line": 30
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.probe-plan#4",
+          "file": "design/specs/facts/probe-plan.sdp.md",
+          "line": 41
+        }
+      ],
+      "families": [
+        "facts",
+        "application",
+        "decisions"
+      ],
+      "cites": [
+        "D9",
+        "F17",
+        "F1",
+        "Probe 6"
+      ],
+      "provisionalReading": null,
+      "blocks": "S4",
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-058",
+      "title": "The approvals table, its indexes and the approval command's declaration are deferred to the build on the process trigger",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:processes.approvals#1",
+          "file": "design/specs/processes/approvals.sdp.md",
+          "line": 22
+        }
+      ],
+      "families": [
+        "processes"
+      ],
+      "cites": [
+        "D16"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-059",
+      "title": "The trigger has not fired; the workflow definition, the process record, the reservation's business expiry and the paymen",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:processes.start-checkout-example#1",
+          "file": "design/specs/processes/start-checkout-example.sdp.md",
+          "line": 26
+        }
+      ],
+      "families": [
+        "processes"
+      ],
+      "cites": [
+        "D16"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-060",
+      "title": "Which of the three late-payment policies applies is a product decision the build records per deployment: reallocate, ask",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:processes.start-checkout-example#2",
+          "file": "design/specs/processes/start-checkout-example.sdp.md",
+          "line": 27
+        },
+        {
+          "kind": "productDecision",
+          "ref": "2",
+          "file": "design/README.md",
+          "line": 270
+        }
+      ],
+      "families": [
+        "processes"
+      ],
+      "cites": [
+        "D16"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-061",
+      "title": "The trigger has not fired; the process record's table, the step signatures, the wait mechanism for an obligation's resul",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:processes.workflow-processes#1",
+          "file": "design/specs/processes/workflow-processes.sdp.md",
+          "line": 37
+        }
+      ],
+      "families": [
+        "processes"
+      ],
+      "cites": [
+        "D16"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-062",
+      "title": "Whether an old run is kept, migrated or blocked on a given deploy is a per-release choice the build records; the README'",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:processes.workflow-processes#2",
+          "file": "design/specs/processes/workflow-processes.sdp.md",
+          "line": 38
+        },
+        {
+          "kind": "productDecision",
+          "ref": "3",
+          "file": "design/README.md",
+          "line": 271
+        }
+      ],
+      "families": [
+        "processes"
+      ],
+      "cites": [
+        "D16"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-063",
+      "title": "OQ1: whether a trivial context with no invariants of its own may be plain tables behind lint rules is decided after this",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#1",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 59
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.context-component#1",
+          "file": "design/specs/context/context-component.sdp.md",
+          "line": 49
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d02-context-owns-state-and-journal#2",
+          "file": "design/specs/decisions/d02-context-owns-state-and-journal.sdp.md",
+          "line": 31
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.obligation-module#3",
+          "file": "design/specs/obligations/obligation-module.sdp.md",
+          "line": 55
+        },
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.5",
+          "file": "design/PLAN.md",
+          "line": 689
+        }
+      ],
+      "families": [
+        "application",
+        "context",
+        "decisions",
+        "obligations"
+      ],
+      "cites": [
+        "OQ1",
+        "D2",
+        "Probe 3"
+      ],
+      "provisionalReading": "OQ1: whether a trivial context with no invariants of its own may be plain tables in the parent behind lint rules instead of a component is decided after the experiment measures component call cost; the design assumes a component per context everywhere (OQ1, D2)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-064",
+      "title": "OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum o",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#2",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 60
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.parent-use-cases#1",
+          "file": "design/specs/application/parent-use-cases.sdp.md",
+          "line": 54
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.batch-shaped-api#1",
+          "file": "design/specs/context/batch-shaped-api.sdp.md",
+          "line": 26
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d10-contexts-meet-in-parent-use-cases#1",
+          "file": "design/specs/decisions/d10-contexts-meet-in-parent-use-cases.sdp.md",
+          "line": 31
+        }
+      ],
+      "families": [
+        "application",
+        "context",
+        "decisions"
+      ],
+      "cites": [
+        "OQ3",
+        "D10"
+      ],
+      "provisionalReading": "OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum of 100 lines and reports the numbers per line so the owner can choose (OQ3)",
+      "blocks": "S3",
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-065",
+      "title": "Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#4",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 62
+        },
+        {
+          "kind": "extension",
+          "ref": "E-47",
+          "file": "design/README.md",
+          "line": 226
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-47"
+      ],
+      "provisionalReading": "Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-066",
+      "title": "Extension E-47, the documents a command reads: the design expected one `PlaceOrder` of N lines to read about N + 6 docum",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#5",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 63
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-47",
+        "F13"
+      ],
+      "provisionalReading": null,
+      "blocks": "S3",
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-067",
+      "title": "Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a r",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.first-experiment#6",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 64
+        }
+      ],
+      "families": [
+        "application",
+        "platform",
+        "command"
+      ],
+      "cites": [
+        "E-8",
+        "E-13",
+        "E-15",
+        "E-37",
+        "E-46"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-068",
+      "title": "Extension E-8: the doc names a generation registry, a marker and a gate without their shapes, and says to keep the old g",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.generation-registry#1",
+          "file": "design/specs/application/generation-registry.sdp.md",
+          "line": 33
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.rebuild#3",
+          "file": "design/specs/application/rebuild.sdp.md",
+          "line": 59
+        },
+        {
+          "kind": "extension",
+          "ref": "E-8",
+          "file": "design/README.md",
+          "line": 192
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [
+        "E-8",
+        "E-9",
+        "E-38",
+        "D9",
+        "Sc L2-5",
+        "Law 11"
+      ],
+      "provisionalReading": "Extension E-8: the doc names a generation registry, a marker and a gate without their shapes, and says to keep the old generation for a rollback period without saying whether live commands keep writing it; the option taken here is the `generations` and `projectionMarkers` tables below with seven states, a rollback period of 7 days, one building generation per read model at a time, and a retired generation that is kept but not written, so that a rollback reopens it as `verifying` and one verify pass repairs the rows changed since the switch before it is active again; the other reading is write-through, where live commands keep writing the retired generation for the whole period so that rollback is one write, at the cost of a third point read and write per read model per command for 7 days after every cutover; the cheaper steady path is taken and the owner rules whether the product needs instant rollback (E-8, D9, Sc L2-5)",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-069",
+      "title": "Extension E-8, reach of a generation: the doc says nothing about tenants and rebuild; the option taken here is one gener",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.generation-registry#2",
+          "file": "design/specs/application/generation-registry.sdp.md",
+          "line": 34
+        }
+      ],
+      "families": [
+        "application",
+        "obligations"
+      ],
+      "cites": [
+        "E-8",
+        "E-57",
+        "D9",
+        "D11",
+        "Law 11"
+      ],
+      "provisionalReading": "Extension E-8, reach of a generation: the doc says nothing about tenants and rebuild; the option taken here is one generation per read model spanning every tenant, so the registry has no tenant dimension, one row is active for all tenants and the batches iterate the tenant list; the other reading is one registry per read model and tenant, keyed by `readModel`, `tenantId` and `generation`, which lets one tenant rebuild while another keeps reading and lets a write pause close one tenant at a time, at the cost of one generation row, switch, rollback and purge per tenant, a projection-version rollout that is one generation per tenant, and a third index field on every registry read; the deployment-wide reading is taken because a generation is a build of the projection's code and the owner rules whether per-tenant rebuilds are a product need; a consequence the owner confirms with it is that the `generations` table is operational data whose scope is the whole deployment, not tenant data, so its two indexes `by_read_model` and `by_read_model_state` lead with the read model name rather than `tenantId`, a recorded deviation from Law 11's index rule and the review rubric's item 25, of the same kind the obligation module records under E-57, while the marker table, which is tenant data, leads with the tenant (E-8, D9, D11, Law 11, E-57)",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-070",
+      "title": "Extension E-42, as it touches the registry: a restore brings back a generation row at its checkpoint and drops the sched",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.generation-registry#3",
+          "file": "design/specs/application/generation-registry.sdp.md",
+          "line": 35
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-42",
+        "F12"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-071",
+      "title": "Extension E-40: the batch runner writes its cursor and counts on the generation row; the migrations component keeps its ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.generation-registry#5",
+          "file": "design/specs/application/generation-registry.sdp.md",
+          "line": 37
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-40",
+        "F17"
+      ],
+      "provisionalReading": null,
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-072",
+      "title": "Extension E-41: the doc says a too-large operation is rejected or becomes a separate import command with honest partial ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.parent-use-cases#2",
+          "file": "design/specs/application/parent-use-cases.sdp.md",
+          "line": 55
+        },
+        {
+          "kind": "extension",
+          "ref": "E-41",
+          "file": "design/README.md",
+          "line": 220
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [
+        "E-41",
+        "E-38",
+        "D10"
+      ],
+      "provisionalReading": "The option taken here: the input bound is the declaration's `bounds.maxItems` of `spec:command.command-declaration` under E-38, checked by the pipeline's step 1 and by no body, the rejection is the outcome boundary's reserved `operationTooLarge`, and this extension owns only the import command, a caller-driven sequence of bounded batch commands that record progress on an `imports` row (E-41, E-38, D10)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-073",
+      "title": "Extension E-44: the doc says keeping a refused request as a fact is a business policy chosen per command, and the execut",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.parent-use-cases#3",
+          "file": "design/specs/application/parent-use-cases.sdp.md",
+          "line": 56
+        },
+        {
+          "kind": "extension",
+          "ref": "E-44",
+          "file": "design/README.md",
+          "line": 223
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [
+        "E-44",
+        "E-5",
+        "D4",
+        "D10",
+        "D7"
+      ],
+      "provisionalReading": "The option taken here is a `BusinessFailurePolicy` per context call, carry or reject, applied inside the executor body through the pinned helper `carryOrReject` right after the context call, because the executor is a plain function and the declaration carries no slot for it; `reject` rolls back the events the context recorded as its business failure, which D4 says belong in history, and the doc's per-command choice is read as the use case's because D10 makes the use case the command, so the owner confirms that a context's business failure may be overridden by its caller; the throw shape, the kernel's bare `Rejection` that a context and a use case's own code both throw and the pipeline's rethrow normalizes, is taken here, under E-5 for the boundary's rethrow, and the owner has not ruled on it (E-44, E-5, D4, D7, D10)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-074",
+      "title": "Extension E-39: the doc fixes no order for a use case's context calls; the option taken here is one fixed order the exec",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.parent-use-cases#4",
+          "file": "design/specs/application/parent-use-cases.sdp.md",
+          "line": 57
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [
+        "E-39",
+        "D1",
+        "D10"
+      ],
+      "provisionalReading": "Extension E-39: the doc fixes no order for a use case's context calls; the option taken here is one fixed order the executor states, the creating context first, with no failure handling of a later call, because the calls before it roll back with the mutation; the owner has not ruled (E-39, D1, D10)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-075",
+      "title": "Extension E-9: the doc says a projection is named, versioned and deterministic and that live update and rebuild share it",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.projection-contract#1",
+          "file": "design/specs/application/projection-contract.sdp.md",
+          "line": 33
+        },
+        {
+          "kind": "extension",
+          "ref": "E-9",
+          "file": "design/README.md",
+          "line": 193
+        }
+      ],
+      "families": [
+        "application",
+        "context"
+      ],
+      "cites": [
+        "E-9",
+        "E-23",
+        "E-24",
+        "D8",
+        "D9"
+      ],
+      "provisionalReading": "The option taken here: a per-entity read model declared as a `ReadModel<D, Row>` with `name`, `table`, `rowBudgetBytes` and its `Projection<D, Row>`, which holds `version`, `keyOf` and `project` alone, rows with `tenantId`, `generation`, `key`, `projectionVersion` and `sourceVersions`, one `applyProjection` helper with a mode per caller that writes each generation by its role, active or building, for an `AggregateProjection<D>` an aggregate row with `value` and `entityCount` and no `sourceVersions`, because the markers carry them, written by `applyAggregate` under the marker's version compare with the mode ignored, and for a history-dependent view a `HistoryProjection<Row>` that folds events into the prior row, fed on the live path by the events the operation appended, which the adapter's `streams` entry now carries, and on the backfill by the context's `history` pages under the write pause, with `sourceVersions` recording the highest version folded per stream so that an event is never folded twice; a cross-context or cross-stream row is built by one projection bound once per source stream type; the owner confirms the three forms and has not ruled on the split of a per-entity read model into `ReadModel` and `Projection`, on the write by generation role or on the row measured against its budget at every write; no check ties a generation to the projection version it records, and how a command writes two projection versions at once is the next question (E-9, E-23, E-24, D8, D9)",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-076",
+      "title": "Probe 5 showed that the built-in `.paginate` treats `maximumRowsRead` as advice once a page has an end cursor: a pinned ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.read-models#1",
+          "file": "design/specs/application/read-models.sdp.md",
+          "line": 49
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "F13",
+        "D8",
+        "Probe 5"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-077",
+      "title": "Extension E-24, as it reaches read models: a list over a parent read-model table calls the built-in `.paginate` with the",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.read-models#2",
+          "file": "design/specs/application/read-models.sdp.md",
+          "line": 50
+        }
+      ],
+      "families": [
+        "application",
+        "context"
+      ],
+      "cites": [
+        "E-24",
+        "D8",
+        "Probe 5"
+      ],
+      "provisionalReading": "Extension E-24, as it reaches read models: a list over a parent read-model table calls the built-in `.paginate` with the options of `boundedPage`, a row cap of twice the item cap, and returns through `paginationResultValidator` with its rows mapped by `readModelView`, and a client pages every list by an explicit cursor pair with no hook; these are options taken here and the owner has not ruled (E-24, S4, Probe 5, D8)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-078",
+      "title": "Probe 3 pending: the cost of one component call in latency and function-call quota decides whether one entity's detail s",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.read-models#4",
+          "file": "design/specs/application/read-models.sdp.md",
+          "line": 52
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.context-component#2",
+          "file": "design/specs/context/context-component.sdp.md",
+          "line": 50
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d02-context-owns-state-and-journal#1",
+          "file": "design/specs/decisions/d02-context-owns-state-and-journal.sdp.md",
+          "line": 30
+        },
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.12",
+          "file": "design/PLAN.md",
+          "line": 696
+        }
+      ],
+      "families": [
+        "application",
+        "context",
+        "decisions"
+      ],
+      "cites": [
+        "OQ1",
+        "F4",
+        "D2",
+        "D8",
+        "Probe 3"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-079",
+      "title": "Extension E-45: the doc says a small cross-context view is a parent query over bounded component reads and does not give",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.read-models#5",
+          "file": "design/specs/application/read-models.sdp.md",
+          "line": 53
+        },
+        {
+          "kind": "extension",
+          "ref": "E-45",
+          "file": "design/README.md",
+          "line": 224
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-45",
+        "D8"
+      ],
+      "provisionalReading": "Extension E-45: the doc says a small cross-context view is a parent query over bounded component reads and does not give the bound; the option taken here is at most 8 component reads per parent query and at most 4 read-model rows written per command, both measured by the first experiment (E-45, D8)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-080",
+      "title": "Extension E-40: the doc binds resumable batching to `@convex-dev/migrations` and gives no batch size; the component iter",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.rebuild#2",
+          "file": "design/specs/application/rebuild.sdp.md",
+          "line": 58
+        },
+        {
+          "kind": "extension",
+          "ref": "E-40",
+          "file": "design/README.md",
+          "line": 219
+        }
+      ],
+      "families": [
+        "application",
+        "context"
+      ],
+      "cites": [
+        "E-40",
+        "E-24",
+        "E-9",
+        "F13",
+        "F17",
+        "F1",
+        "Probe 6"
+      ],
+      "provisionalReading": "The option taken here: a batch is one mutation with one cursor and a bound of at most 100 entities, capped twice, by the read model's declared `rowBudgetBytes` so that the parent's point reads and writes stay under 4 MiB, and by the context's byte-derived `list` page bound, which is 16 items at the default 256 KiB stream budget, a design choice under F13 that is a field of the generation row and that `resumeGeneration` lowers down to 1 when a generation stalls on optimistic-concurrency conflicts over a hot key range, because a mutation that loses the race never commits and cannot count its own losses; the migrations component drives batches whose source is a parent table, and a self-scheduled internal mutation with the same batch contract drives batches whose source is a context's enumeration until Probe 6 shows the component can; Probe 6 also measures the contention and decides whether an automatic stall check earns its function (E-40, E-24, E-9, F17, F13, F1)",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-081",
+      "title": "Probe 7 pending: what a restore leaves of component state decides whether the contexts' tables come back with the parent",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.restore#1",
+          "file": "design/specs/application/restore.sdp.md",
+          "line": 55
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "F12",
+        "D19",
+        "Probe 7"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-082",
+      "title": "Extension E-42: the doc says restore runs with matching code and configuration, that domain, journal and read-model inva",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.restore#2",
+          "file": "design/specs/application/restore.sdp.md",
+          "line": 56
+        },
+        {
+          "kind": "extension",
+          "ref": "E-42",
+          "file": "design/README.md",
+          "line": 221
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-42",
+        "D19",
+        "F12"
+      ],
+      "provisionalReading": "The option taken here: four checks, journal, domain, read model and receipt, each a bounded checkpointed batch, the stream check bounded through the `rebuild` query's `maxEvents` argument so a batch folds at most 500 events in all, each folded stream also reading its own stored baseline event, a fifth step that inventories the closed gate entries, the generations in `building`, `verifying` or `verified` and the `imports` rows in `running` that the snapshot restored, a `restoreRuns` row as the record, an accepted branch that resumes every stranded generation the operator did not abort, and the `MAINTENANCE_MODE` environment variable as the door (E-42, D19, F12)",
+      "blocks": "S5",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-083",
+      "title": "Extension E-42, the stream check's batch size: `limitCheckBatch` states the read of a batch that folds one stream, and e",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.restore#3",
+          "file": "design/specs/application/restore.sdp.md",
+          "line": 57
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-42",
+        "F13"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-084",
+      "title": "Extension E-8: the doc names a maintenance gate every writer reads, fencing or draining of background writers, and opera",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.write-pause#1",
+          "file": "design/specs/application/write-pause.sdp.md",
+          "line": 34
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [
+        "E-8",
+        "E-35",
+        "E-38",
+        "D9",
+        "D4",
+        "F1"
+      ],
+      "provisionalReading": "Extension E-8: the doc names a maintenance gate every writer reads, fencing or draining of background writers, and operator resume and abort; the option taken here is one gate document per deployment holding the closed scopes, each in one `closed` state, with no fence of its own and no drain interval, because optimistic concurrency serializes every writer's gate read against the close and the generation row's fence already fences a rebuild's batches, and a refusal answered with `writePaused`, the transient code the outcome boundary reserves for this contract under its E-35, which this contract confirms; the scope a rebuild closes is the paused view's sources, one `source:` entry per context and stream type its bindings name, rather than the read model itself, because a consistent cut must hold every writer of those streams and a use case that writes a source stream without maintaining the view would otherwise pass the gate, which is why the command declaration names what it writes under E-38 and the pipeline proves the list at its step 9; the alternative, closing the tenant or `all` for every paused rebuild, is safe and coarser and stays the operator's manual option through `closeGate` (E-8, E-38, D9, D4, F1)",
+      "blocks": "S4",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-085",
+      "title": "Extension E-6: the doc names the actor kinds, the envelope's actor field and the worker's two modes; the field names, th",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.actor-and-scope#1",
+          "file": "design/specs/command/actor-and-scope.sdp.md",
+          "line": 31
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.tenancy-and-authority#2",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md",
+          "line": 38
+        },
+        {
+          "kind": "extension",
+          "ref": "E-6",
+          "file": "design/README.md",
+          "line": 190
+        }
+      ],
+      "families": [
+        "command",
+        "obligations"
+      ],
+      "cites": [
+        "E-6",
+        "E-54",
+        "Sc L1-7",
+        "D6",
+        "D11",
+        "D13"
+      ],
+      "provisionalReading": "Extension E-6: the doc names the actor kinds, the envelope's actor field and the worker's two modes; the field names, the namespace union, the grant fields and the `authorize` signature are the design's, and the grant's `permission` string vocabulary is per product; the worker's two modes are one `Authority` shape, `{ actor, scope, mode }` with the literals `recheckDelegator` and `serviceAuthority`, stored on the obligation record and never restated, where the delegation travels on the actor's own `onBehalfOf` and `delegationRef`; and the doc says a derived command carries a server namespace without naming it, so this design assigns `worker` to every command a reaction issues, which is the namespace Sc L1-7 refuses to a client and the one D6 lists among the receipted callers, and reserves `system` for the platform's own maintenance chains and operator operations that run a receipted command, such as a restore or a migration driver, so a `system` receipt is never a reaction's; the owner confirms both (E-6, E-54, D6, D11, D13, Sc L1-7)",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-086",
+      "title": "Extension E-6: the doc says a query authorizes before it discloses and does not say how; here a parent query calls `auth",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.actor-and-scope#3",
+          "file": "design/specs/command/actor-and-scope.sdp.md",
+          "line": 33
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-6",
+        "D11",
+        "Law 5"
+      ],
+      "provisionalReading": "Extension E-6: the doc says a query authorizes before it discloses and does not say how; here a parent query calls `authorizeQuery`, which establishes and authorizes its actor through the same two helpers a command's entry uses and is generic over the parent's data model; the owner has not ruled (E-6, D11, Law 5)",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-087",
+      "title": "Extension E-7: the doc says a small composition helper and shared schema values; the helper signatures, the executor sig",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-declaration#1",
+          "file": "design/specs/command/command-declaration.sdp.md",
+          "line": 34
+        },
+        {
+          "kind": "extension",
+          "ref": "E-7",
+          "file": "design/README.md",
+          "line": 191
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-7",
+        "D7",
+        "Sc L2-4",
+        "D12"
+      ],
+      "provisionalReading": "`CommandDeclaration`, `publicCommand` and `internalCommand`, the executor that takes the minted `OperationRef` and returns the kernel's outcome plus `streams`, the read-model binding with its `source` and read model, what generation emits, and no standing map from command type to declaration, because the type check at a typed caller is the check of Sc L2-4; the cost of two registered mutations per command and the single-export dispatcher alternative it beat",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-088",
+      "title": "Extension E-38: the doc names five declaration fields; this design adds `contractVersion` for the fingerprint, `retentio",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-declaration#3",
+          "file": "design/specs/command/command-declaration.sdp.md",
+          "line": 36
+        },
+        {
+          "kind": "extension",
+          "ref": "E-38",
+          "file": "design/README.md",
+          "line": 217
+        }
+      ],
+      "families": [
+        "command",
+        "application",
+        "obligations"
+      ],
+      "cites": [
+        "E-38",
+        "E-54",
+        "E-8",
+        "D6",
+        "D9",
+        "D10",
+        "D19"
+      ],
+      "provisionalReading": "The declaration also carries `contractVersion`, `retention`, `irreversible`, `admission`, `bounds`, `rejections`, `audit` and `writes`; `bounds` is the one input bound, checked at the pipeline's step 1; `writes` names the context and stream type pairs the executor may write, from which step 7 derives the write pause's source scopes and which step 9 proves; the declaration has no reactions field",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-089",
+      "title": "Extension E-30: the doc names the outcome, the operation ID and the affected stream versions as what a command returns, ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#1",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 59
+        },
+        {
+          "kind": "extension",
+          "ref": "E-30",
+          "file": "design/README.md",
+          "line": 209
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-30",
+        "D2",
+        "D6",
+        "D8"
+      ],
+      "provisionalReading": "Extension E-30: the doc names the outcome, the operation ID and the affected stream versions as what a command returns, but not a wire shape; the shape here is a union discriminated by `replayed`, whose executed member carries the declaration's result and whose replayed member carries `result` null because a receipt stores no result, so the entry's returns validator admits a replay as a value; affected IDs are application IDs, never private document IDs (E-30, D2, D6, D8)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-090",
+      "title": "Extension E-31: the doc says an operation's ID ties together everything one request caused but not how it is minted, and",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#2",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 60
+        },
+        {
+          "kind": "extension",
+          "ref": "E-31",
+          "file": "design/README.md",
+          "line": 210
+        }
+      ],
+      "families": [
+        "command",
+        "obligations"
+      ],
+      "cites": [
+        "E-31",
+        "E-54",
+        "D2",
+        "D13"
+      ],
+      "provisionalReading": "Extension E-31: the doc says an operation's ID ties together everything one request caused but not how it is minted, and it says a derived command carries causation and an event's `causedBy` may be a triggering event without saying how that cause reaches the pipeline; here the pipeline mints the operation ID once per top-level mutation with `crypto.randomUUID()` before the first context call, a duplicate returns the operation ID stored on the receipt, and the internal entry takes an optional `causedBy` argument that step 7 copies onto the `OperationRef` when present, so a reaction that issues a derived command passes `causedBy` of kind `event` naming its publication event and the envelope's `event` variant has exactly one producer, while an entry called without it mints `causedBy` of kind `command` from the declaration's name; the obligation and attempt behind a derived command are found through its receipt, whose request key is the obligation's effect key, and never through the envelope (E-31, E-54, D2, D13, Vocab: operation)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-091",
+      "title": "Extension E-32: the doc places rate admission for new intent after the duplicate check and makes a rate or capacity refu",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#3",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 61
+        },
+        {
+          "kind": "extension",
+          "ref": "E-32",
+          "file": "design/README.md",
+          "line": 211
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-32",
+        "D7",
+        "D4",
+        "D6"
+      ],
+      "provisionalReading": "Extension E-32: the doc places rate admission for new intent after the duplicate check and makes a rate or capacity refusal a retryable error, but names no admission mechanism; here admission is an optional per-command policy in the declaration, absent by default, evaluated inside the mutation so that a refusal that throws leaves no consumption behind; the flip side is that a consumption the policy writes commits only with the command, so the policy counts committed intent and cannot bound refused or unauthorized traffic, and a product that must bound refused traffic needs the dispatcher form of D7, where the parent survives the body's rejection (E-32, D4, D6, D7)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-092",
+      "title": "Probe 4 showed on the pinned backend that the transaction limits are one budget across the parent and its component sub-",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#5",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 63
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "F13",
+        "Probe 4"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-093",
+      "title": "Extension E-9: the doc says essential read models are updated inside the command and does not say from what or in what o",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#6",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 64
+        }
+      ],
+      "families": [
+        "command",
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "E-7",
+        "E-8",
+        "E-45",
+        "D8",
+        "D9"
+      ],
+      "provisionalReading": "Extension E-9: the doc says essential read models are updated inside the command and does not say from what or in what order; here step 9 writes a per-entity read model from the DTO of each matching `streams` entry, never from the events, checks `writes` first, then that each bound read model has a generation to write, then the count of the rows it writes against `limitReadModelWritesPerCommand`, each failure a plain error, and the library helpers that step 9 calls are generic over the application's data model; the owner has not ruled on any of it (E-9, E-7, E-8, E-45, D8, D9)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-094",
+      "title": "Extension E-34: step 1 bounds every text field a caller sets beside the input, the tenant ID, the request key, the corre",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.command-pipeline#7",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 65
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-34",
+        "D6",
+        "D12",
+        "D19"
+      ],
+      "provisionalReading": "Extension E-34: step 1 bounds every text field a caller sets beside the input, the tenant ID, the request key, the correlation ID, the actor's fields and the fields of `causedBy`, in UTF-8 bytes as `limitCallText` lists them, as rejection `invalidInput`, and treats a declaration name above `limitIdLength` as a defect, a plain error, because these fields become fields of the receipt row or of every event's envelope; the doc says events stay small and names no number; the owner has not ruled (E-34, D6, D12, D19)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-095",
+      "title": "Extension E-34: the doc says expiry is explicit and names no number; here the default retry window is 7 days per command",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.idempotency-and-receipts#3",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
+          "line": 44
+        },
+        {
+          "kind": "extension",
+          "ref": "E-34",
+          "file": "design/README.md",
+          "line": 213
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-34",
+        "D6",
+        "D19",
+        "F13"
+      ],
+      "provisionalReading": "Extension E-34: the doc says expiry is explicit and names no number; here the default retry window is 7 days per command, expiry is checked lazily at lookup so the core path needs no job, and a bounded per-tenant sweep deletes expired receipts in batches of at most 1,000; the tenant ID and the request key are bounded to 256 bytes of UTF-8, a declaration name above that bound is a defect and a plain error, and a receipt is bounded to 1,000 affected refs; the owner has not ruled (E-34, D6, D19, F13)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-096",
+      "title": "Extension E-36: the doc says the fingerprint covers business input and its contract version; here it is the SHA-256 dige",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.idempotency-and-receipts#4",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
+          "line": 45
+        },
+        {
+          "kind": "extension",
+          "ref": "E-36",
+          "file": "design/README.md",
+          "line": 215
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-36",
+        "D6",
+        "D3"
+      ],
+      "provisionalReading": "Extension E-36: the doc says the fingerprint covers business input and its contract version; here it is the SHA-256 digest, computed with the Convex runtime's `crypto.subtle.digest`, over the canonical JSON of the business input with object keys sorted, followed by the contract version; the outside facts the executor captures travel beside the input and are excluded, so a retry that captures a fresher fact is not a conflict, which the decider contract cites; a change to the canonical form is a contract version bump (E-36, D6, D3)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-097",
+      "title": "Extension E-39: the doc says a client-generated entity ID plus a uniqueness check gives one entity on a UI double submit",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.idempotency-and-receipts#5",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
+          "line": 46
+        },
+        {
+          "kind": "extension",
+          "ref": "E-39",
+          "file": "design/README.md",
+          "line": 218
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-39",
+        "D6",
+        "Sc L1-4"
+      ],
+      "provisionalReading": "Extension E-39: the doc says a client-generated entity ID plus a uniqueness check gives one entity on a UI double submit and does not say what the second submit is told; here the second submit is answered with the rejection `entityExists` naming the existing entity, not with an idempotent success, because no receipt exists on the UI path to replay an outcome from and the client already holds the entity ID it needs to read the result; the owner may prefer an idempotent success, which would need a receipt on every create (E-39, D6, Sc L1-4)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-098",
+      "title": "Extension E-5: the doc fixes the four outcomes and that a rejection is a structured `ConvexError`, but not the data shap",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.outcome-boundary#1",
+          "file": "design/specs/command/outcome-boundary.sdp.md",
+          "line": 38
+        },
+        {
+          "kind": "extension",
+          "ref": "E-5",
+          "file": "design/README.md",
+          "line": 189
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-5",
+        "D4",
+        "D7"
+      ],
+      "provisionalReading": "`RejectionData` and `TransientData`; the platform codes `invalidInput`, `unauthenticated`, `forbidden`, `idempotencyConflict`, `staleVersion`, `entityExists`, `operationTooLarge`, `unsupportedContractVersion` and the transient `rateLimited`, `capacity`, `writePaused`; `normalizeThrown`, which turns a code the declaration's `rejections` does not list into a technical failure; a 16 KiB bound on `details` that `reject` measures; the engine's OCC-retry exhaustion as a retryable technical failure; the conditional dispatcher; a parent query's refusal as the same `RejectionData`, with the query's name in `commandType` and only the codes `unauthenticated` and `forbidden`; a use case's own rejection thrown as the kernel's bare `Rejection`, as a context throws one",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-099",
+      "title": "Extension E-35: the write pause of D9 refuses writers in its scope while a cross-stream history view rebuilds; the doc d",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.outcome-boundary#3",
+          "file": "design/specs/command/outcome-boundary.sdp.md",
+          "line": 40
+        },
+        {
+          "kind": "extension",
+          "ref": "E-35",
+          "file": "design/README.md",
+          "line": 214
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-35",
+        "D9",
+        "D4"
+      ],
+      "provisionalReading": "The transient code `writePaused`, reserved for the write pause and confirmed by it",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-100",
+      "title": "Extension E-4: the doc fixes what a receipt holds and that expiry is explicit; the concrete fields, the three indexes, t",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.receipt-table#1",
+          "file": "design/specs/command/receipt-table.sdp.md",
+          "line": 28
+        },
+        {
+          "kind": "extension",
+          "ref": "E-4",
+          "file": "design/README.md",
+          "line": 188
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-4",
+        "D6"
+      ],
+      "provisionalReading": "Receipt fields; indexes `by_key`, `by_operation`, `by_tenant_expiry`; the tombstone shape; a 7-day default window and a tombstone horizon of never",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-101",
+      "title": "Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity be",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:command.tenancy-and-authority#1",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md",
+          "line": 37
+        },
+        {
+          "kind": "extension",
+          "ref": "E-37",
+          "file": "design/README.md",
+          "line": 216
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "E-37",
+        "D11"
+      ],
+      "provisionalReading": "Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity becomes an actor or how revocation takes effect; here the public entry and a parent query's `authorizeQuery` map `ctx.auth.getUserIdentity()` to a human actor, or a service actor when the issuer is a configured service issuer, grants live in a parent table by default and are revoked by deleting the row, with no cache, so a revoked grant fails the next command (E-37, D11)",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-102",
+      "title": "Extension E-12: the payload byte bound is the design's number, 16 KiB, chosen with the envelope bound of 4 KiB so that a",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:constraints.events-stay-small#1",
+          "file": "design/specs/constraints/events-stay-small.sdp.md",
+          "line": 26
+        },
+        {
+          "kind": "extension",
+          "ref": "E-12",
+          "file": "design/README.md",
+          "line": 196
+        }
+      ],
+      "families": [
+        "constraints",
+        "context",
+        "kernel"
+      ],
+      "cites": [
+        "E-12",
+        "E-25",
+        "E-2",
+        "D19",
+        "F13"
+      ],
+      "provisionalReading": "A 16 KiB payload bound and a 4,096-byte envelope bound measured with `getConvexSize` by the journal's `append`, so a fold of 500 stored events of at most 20,541 bytes each stays under 9.8 MiB under the 16 MiB read ceiling; the reserved `baseline` event's payload is exempt and bounded by its stream type's `budgetBytes`, and the stored baseline event is at most `budgetBytes + 4,096 + 61` bytes; the 1 second query timeout binds first and the first experiment measures it",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-103",
+      "title": "Extension E-22: the doc says the parent calls the context's sanctioned operations and does not say how they are register",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.context-component#3",
+          "file": "design/specs/context/context-component.sdp.md",
+          "line": 51
+        },
+        {
+          "kind": "extension",
+          "ref": "E-22",
+          "file": "design/README.md",
+          "line": 204
+        }
+      ],
+      "families": [
+        "context"
+      ],
+      "cites": [
+        "E-22",
+        "D12",
+        "D10"
+      ],
+      "provisionalReading": "One registered mutation per sanctioned operation via `defineOperation` with args `{ tenantId, actor, operation, input, facts }`; `contextId` as a code constant equal to the mount name; 256 streams, 800 written documents and 8 MiB of stream documents read or written per call, derived from each stream type's byte budget; `convex-helpers` as the component's dependency; the query and maintenance surface",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-104",
+      "title": "Extension E-26: the doc lists the fifteen fields and their meaning; this Spec fixes the validator shapes, the `CausedBy`",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.event-envelope#1",
+          "file": "design/specs/context/event-envelope.sdp.md",
+          "line": 32
+        },
+        {
+          "kind": "extension",
+          "ref": "E-26",
+          "file": "design/README.md",
+          "line": 208
+        }
+      ],
+      "families": [
+        "context"
+      ],
+      "cites": [
+        "E-26",
+        "D2"
+      ],
+      "provisionalReading": "Extension E-26: the doc lists the fifteen fields and their meaning; this Spec fixes the validator shapes, the `CausedBy` union with a migration variant for baseline events, the `OperationRef` the parent passes, and the event ID as a version 4 UUID from the runtime's `crypto`; the owner confirms (D2, E-26)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-105",
+      "title": "Extension E-12: the doc says events stay small and gives no number for the envelope; this Spec bounds the envelope besid",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.event-envelope#2",
+          "file": "design/specs/context/event-envelope.sdp.md",
+          "line": 33
+        }
+      ],
+      "families": [
+        "context",
+        "constraints"
+      ],
+      "cites": [
+        "E-12",
+        "D19",
+        "F13"
+      ],
+      "provisionalReading": "Extension E-12: the doc says events stay small and gives no number for the envelope; this Spec bounds the envelope beside the payload at `limitEnvelopeBytes`, 4,096 bytes, and each text field of it that a caller can set at 256 bytes of UTF-8, 512 for an actor's ID, so the largest stored event, `limitEventBytes`, is derived and enforced and never assumed; the owner may set other numbers, and the fold bound of `spec:context.journal` moves with them (E-12, D19, F13)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-106",
+      "title": "Extension E-25: the doc says a migration writes a baseline event holding the migrated state and that rebuild starts from",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.journal#1",
+          "file": "design/specs/context/journal.sdp.md",
+          "line": 45
+        },
+        {
+          "kind": "extension",
+          "ref": "E-25",
+          "file": "design/README.md",
+          "line": 207
+        }
+      ],
+      "families": [
+        "context",
+        "kernel",
+        "application",
+        "constraints"
+      ],
+      "cites": [
+        "E-25",
+        "E-2",
+        "E-8",
+        "E-12",
+        "Sc L1-10",
+        "D5",
+        "D9"
+      ],
+      "provisionalReading": "Extension E-25: the doc says a migration writes a baseline event holding the migrated state and that rebuild starts from the latest baseline, and it does not say who computes that state, who drives the migration, or what a live command does on a stream the migration has not reached; this Spec fixes the representation, an event of the reserved type `baseline` whose payload holds the state and its schema version and is bounded by the stream's `budgetBytes` instead of the payload bound, a `baselineVersion` on the stream row, a `BaselineMigration` registered on the stream type whose `migrate` function computes the migrated state from the saved state and optionally the events since the last baseline, the rule that `stateSchemaVersion` counts meaning only and lives on the registration, one helper `migrateToSchemaVersion` that writes the baseline chain, called by the adapter on load for a live stream and by the `writeBaseline` maintenance mutation for the sweep, the code-older-than-data error, the `writeBaseline` mutation built by `defineMaintenance` and declared with the component's public `mutation` builder, the parent-side scheduled chain that drives it by cursor, the batch bound derived from `budgetBytes`, the upcasting rule for old event schema versions, the fold bound of 500 events with the refusals `rebuildStream` returns above it and for a stream awaiting its baseline, the retirement rule for a migration, and the payload byte check in `append`; the option of refusing commands on unmigrated streams with a transient code until the sweep arrives was not taken because it turns a deploy into a partial write pause the doc reserves for history-dependent views; a consequence the owner should weigh is that every baseline bumps its stream's version, so a reviewed version held across the sweep is answered `staleVersion` and re-reviewed rather than silently accepted, because Sc L1-10 forbids reinterpreting a reviewed version against fresh state and the baseline is a real event of the stream, while a live stream migrated on load never trips it because its expected-version check runs before the chain; and the driver reads the write pause's gate before every batch and reschedules itself when refused, so a sweep never changes a source under a paused rebuild's cut; the owner confirms (D5, D9, S4, Sc L1-10, E-2, E-8, E-12, E-25)",
+      "blocks": "S5",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-107",
+      "title": "Extension E-23: the doc gives the sequence and the one-authority rule; this Spec fixes the request and result types, the",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.persistence-adapter#1",
+          "file": "design/specs/context/persistence-adapter.sdp.md",
+          "line": 43
+        },
+        {
+          "kind": "extension",
+          "ref": "E-23",
+          "file": "design/README.md",
+          "line": 205
+        }
+      ],
+      "families": [
+        "context"
+      ],
+      "cites": [
+        "E-23",
+        "E-25",
+        "D3",
+        "D6"
+      ],
+      "provisionalReading": "Extension E-23: the doc gives the sequence and the one-authority rule; this Spec fixes the request and result types, the operation runner with `plan` and `combine`, the aggregation of per-stream outcomes, the per-stream `dto` and `created` flag that the operation returns beside the kernel's outcome so the parent's projections and the backfill take one DTO shape, the semantics of a caller-named expected version including expected version 0 as the create's uniqueness check, the byte-derived bounds on streams and writes per call and the bound on the value a call returns, the on-load baseline migration of step 3a whose rules `spec:context.journal` carries under E-25, and the internal guards that turn a defect into a technical failure; this is a provisional reading the owner has not ruled (D3, D6, E-23, E-25)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-108",
+      "title": "Probe 5 showed on the pinned backend with `convex-helpers` 0.1.124 that the parent query stays reactive, that pages pinn",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.queries#1",
+          "file": "design/specs/context/queries.sdp.md",
+          "line": 35
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d08-read-models-in-command#1",
+          "file": "design/specs/decisions/d08-read-models-in-command.sdp.md",
+          "line": 30
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.probe-plan#3",
+          "file": "design/specs/facts/probe-plan.sdp.md",
+          "line": 40
+        }
+      ],
+      "families": [
+        "context",
+        "decisions",
+        "facts"
+      ],
+      "cites": [
+        "E-24",
+        "F15",
+        "D8",
+        "Probe 5"
+      ],
+      "provisionalReading": "Probe 5 showed on the pinned backend with `convex-helpers` 0.1.124 that the parent query stays reactive, that pages pinned by their end cursors stay contiguous, that a capped page crosses the boundary as `SplitRequired` with its `splitCursor`, and that the `usePaginatedQuery` hook of `convex-helpers/react` then shows 40 of 45 rows; this design uses no hook across the boundary, and the examples are rerun when either pin moves (Probe 5, F15, S4, D8, E-24)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-109",
+      "title": "Extension E-24: the doc says component queries are authorized and return DTOs; this Spec fixes one definer per query, th",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.queries#2",
+          "file": "design/specs/context/queries.sdp.md",
+          "line": 36
+        },
+        {
+          "kind": "extension",
+          "ref": "E-24",
+          "file": "design/README.md",
+          "line": 206
+        }
+      ],
+      "families": [
+        "context",
+        "application"
+      ],
+      "cites": [
+        "E-24",
+        "E-42",
+        "D8"
+      ],
+      "provisionalReading": "Extension E-24: the doc says component queries are authorized and return DTOs; this Spec fixes one definer per query, the one `tenantId` argument with no separate scope, the `toDto` mapping with the stream version on every DTO, pagination through `paginator`, the item cap with a row cap of twice the item cap and a byte cap passed on every run, the relay of `pageStatus` and `splitCursor` unchanged, paging by an explicit cursor pair with no client hook, the parent query's one `authorizeQuery` call and its refusal as a rejection, the `maxEvents` argument of the `rebuild` query and its `budgetExhausted` refusal for a batching caller, and the fold refusal of the `rebuild` query; this is a provisional reading the owner has not ruled (D8, S4, E-24, E-42)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-110",
+      "title": "A parent query's refusal carries the query's name in the field `commandType` of the rejection data, a field whose name s",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.queries#3",
+          "file": "design/specs/context/queries.sdp.md",
+          "line": 37
+        }
+      ],
+      "families": [
+        "context",
+        "command"
+      ],
+      "cites": [
+        "E-24",
+        "D7"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-111",
+      "title": "Extension E-3: the doc names three indexes and the fields of the envelope; this Spec fixes the concrete tables, the oper",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:context.tables#1",
+          "file": "design/specs/context/tables.sdp.md",
+          "line": 29
+        },
+        {
+          "kind": "extension",
+          "ref": "E-3",
+          "file": "design/README.md",
+          "line": 187
+        }
+      ],
+      "families": [
+        "context"
+      ],
+      "cites": [
+        "E-3",
+        "D2"
+      ],
+      "provisionalReading": "Extension E-3: the doc names three indexes and the fields of the envelope; this Spec fixes the concrete tables, the operation index, the `streamParts` table for the derived mapping, the deleted-subject marker as `deletedAt` on the stream row and the size budgets; the owner confirms (D2, E-3)",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-112",
+      "title": "Gap, initial state: the v0.1 interface has none; add `initial()` or let `evolve` accept an empty state so a rebuild from",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d03-events-only-source-of-next-state#1",
+          "file": "design/specs/decisions/d03-events-only-source-of-next-state.sdp.md",
+          "line": 26
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.domain-kernel#2",
+          "file": "design/specs/kernel/domain-kernel.sdp.md",
+          "line": 38
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.initial-state#1",
+          "file": "design/specs/kernel/initial-state.sdp.md",
+          "line": 24
+        },
+        {
+          "kind": "extension",
+          "ref": "E-1",
+          "file": "design/README.md",
+          "line": 185
+        }
+      ],
+      "families": [
+        "decisions",
+        "kernel"
+      ],
+      "cites": [
+        "E-1",
+        "D3"
+      ],
+      "provisionalReading": "Gap, initial state: the v0.1 interface has none; add `initial()` or let `evolve` accept an empty state so a rebuild from the creation event has a defined start; ruled provisionally as E-1 in the kernel's initial-state decision (D3, E-1)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-113",
+      "title": "Gap, state across several documents: prefer one document per stream while it fits the size budget, and where it cannot, ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d03-events-only-source-of-next-state#2",
+          "file": "design/specs/decisions/d03-events-only-source-of-next-state.sdp.md",
+          "line": 27
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.state-document-mapping#1",
+          "file": "design/specs/kernel/state-document-mapping.sdp.md",
+          "line": 27
+        },
+        {
+          "kind": "extension",
+          "ref": "E-2",
+          "file": "design/README.md",
+          "line": 186
+        }
+      ],
+      "families": [
+        "decisions",
+        "kernel",
+        "context"
+      ],
+      "cites": [
+        "E-2",
+        "E-25",
+        "OQ3",
+        "D3",
+        "D5",
+        "F13"
+      ],
+      "provisionalReading": "Gap, state across several documents: prefer one document per stream while it fits the size budget, and where it cannot, derive the document writes from the folded state in one place per context; ruled provisionally as E-2 in the kernel's state-document mapping decision, with the size budget open under OQ3 (D3, E-2, OQ3)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-114",
+      "title": "Probe 7 pending, the do-nothing check at activation: a plain scheduled mutation plus a scan of `_scheduled_functions` fo",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d13-deferred-work-is-an-obligation#1",
+          "file": "design/specs/decisions/d13-deferred-work-is-an-obligation.sdp.md",
+          "line": 35
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.do-nothing-check#1",
+          "file": "design/specs/obligations/do-nothing-check.sdp.md",
+          "line": 33
+        }
+      ],
+      "families": [
+        "decisions",
+        "obligations"
+      ],
+      "cites": [
+        "D13",
+        "F12",
+        "F16",
+        "F13",
+        "Probe 7"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-115",
+      "title": "Probe 7 pending: what a restore leaves of Workpool and Workflow state decides how much of the restore procedure the obli",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:decisions.d19-operations-travel-with-capability#1",
+          "file": "design/specs/decisions/d19-operations-travel-with-capability.sdp.md",
+          "line": 31
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.retention-and-restore#3",
+          "file": "design/specs/obligations/retention-and-restore.sdp.md",
+          "line": 35
+        }
+      ],
+      "families": [
+        "decisions",
+        "obligations"
+      ],
+      "cites": [
+        "F12",
+        "D19",
+        "Probe 7"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-116",
+      "title": "Extension E-11: the doc gives the three steps and the three policies but no signatures; this Spec pins them and adds a f",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:effects.claim-call-settle#1",
+          "file": "design/specs/effects/claim-call-settle.sdp.md",
+          "line": 41
+        },
+        {
+          "kind": "extension",
+          "ref": "E-11",
+          "file": "design/README.md",
+          "line": 195
+        }
+      ],
+      "families": [
+        "effects"
+      ],
+      "cites": [
+        "E-11",
+        "D14"
+      ],
+      "provisionalReading": "The signatures of `claimAttempt`, `readForCall`, `callProvider`, `reconcileAttempt`, `settleAttempt`, `expireLease`; the `RepetitionPolicy` union with a fourth value `none`",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-117",
+      "title": "Extension E-58: the doc gives no lease duration, key derivation, late evidence bound, reconcile shape or handling of a s",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:effects.claim-call-settle#2",
+          "file": "design/specs/effects/claim-call-settle.sdp.md",
+          "line": 42
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:effects.external-effects#1",
+          "file": "design/specs/effects/external-effects.sdp.md",
+          "line": 42
+        },
+        {
+          "kind": "extension",
+          "ref": "E-58",
+          "file": "design/README.md",
+          "line": 235
+        }
+      ],
+      "families": [
+        "effects"
+      ],
+      "cites": [
+        "E-58",
+        "D14",
+        "D15",
+        "F13",
+        "Law 12"
+      ],
+      "provisionalReading": "The lease is the runtime's action timeout plus 5 minutes; the provider key is `tenantId:effectKey`; ten late reports kept; a reconcile returns the same report union; plus three bounded repeats of a thrown settle call with a duplicate rule in the settle, so a repeat is not an attempt under Law 12",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-118",
+      "title": "Extension E-51: a declined provider report settles the obligation as cancelled with `businessRejection` evidence, by the",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:effects.external-effects#2",
+          "file": "design/specs/effects/external-effects.sdp.md",
+          "line": 43
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.lifecycle-transitions#2",
+          "file": "design/specs/obligations/lifecycle-transitions.sdp.md",
+          "line": 26
+        },
+        {
+          "kind": "extension",
+          "ref": "E-51",
+          "file": "design/README.md",
+          "line": 228
+        }
+      ],
+      "families": [
+        "effects",
+        "obligations"
+      ],
+      "cites": [
+        "E-51",
+        "D14",
+        "D4",
+        "D13"
+      ],
+      "provisionalReading": "Extension E-51: the doc says a known business rejection settles the business result but not which state it settles to; this design reads a body's business failure, which commits like a success, as succeeded with evidence naming its event, and a thrown rejection, which commits nothing, as cancelled with the settled result as `businessRejection` evidence, because cancelled means the effect will not happen and no call is in flight; the owner may prefer a seventh state (D13, D4, E-51)",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-119",
+      "title": "Decision method rule 4: the doc writes Layer 3 from what the first experiment shows, and this Spec and `spec:effects.cla",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:effects.external-effects#3",
+          "file": "design/specs/effects/external-effects.sdp.md",
+          "line": 44
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.obligation-module#4",
+          "file": "design/specs/obligations/obligation-module.sdp.md",
+          "line": 56
+        },
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.10",
+          "file": "design/PLAN.md",
+          "line": 694
+        }
+      ],
+      "families": [
+        "effects",
+        "obligations"
+      ],
+      "cites": [
+        "E-58",
+        "E-51",
+        "E-52",
+        "E-54",
+        "E-55",
+        "E-57",
+        "D14",
+        "D15",
+        "D13",
+        "Probe 7"
+      ],
+      "provisionalReading": "Decision method rule 4: the doc writes Layer 3 from what the first experiment shows, and this Spec and `spec:effects.claim-call-settle` are written before it runs; the lease durations, the settle repeats and the late-evidence bound of E-58 and the backoff shared under E-51 are provisional defaults until the experiment's measurements and Probe 7 confirm or replace them, and the owner confirms that writing the structure now does not pre-empt the experiment (Decision method rule 4, D14, D15, E-51, E-58)",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-120",
+      "title": "Probe 7 pending: the states and the 7-day retention are documented, so the probe need only confirm them on a native back",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.f16-scheduled-functions-table-shows-failed-runs#1",
+          "file": "design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md",
+          "line": 21
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:facts.probe-plan#5",
+          "file": "design/specs/facts/probe-plan.sdp.md",
+          "line": 42
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.obligation-module#1",
+          "file": "design/specs/obligations/obligation-module.sdp.md",
+          "line": 53
+        }
+      ],
+      "families": [
+        "facts",
+        "obligations"
+      ],
+      "cites": [
+        "F16",
+        "F12",
+        "D13",
+        "D19",
+        "Probe 7"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-121",
+      "title": "Extension E-20: the concrete generic parameters, the fields of `DecisionContext`, the `DomainEvent` shape, the at-least-",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.decider-contract#1",
+          "file": "design/specs/kernel/decider-contract.sdp.md",
+          "line": 29
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.domain-kernel#1",
+          "file": "design/specs/kernel/domain-kernel.sdp.md",
+          "line": 37
+        },
+        {
+          "kind": "extension",
+          "ref": "E-20",
+          "file": "design/README.md",
+          "line": 202
+        }
+      ],
+      "families": [
+        "kernel"
+      ],
+      "cites": [
+        "E-20",
+        "D3"
+      ],
+      "provisionalReading": "The concrete generics, `DomainEvent`, `DecisionActor` as the kernel's structural view of the actor, `DecisionContext { now, actor, facts }`, `DecideResult`, `Invariant`, `Transitions` and `transition`; the kernel imports nothing from Convex and nothing from the command family",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-122",
+      "title": "Extension E-21: the doc names the four outcomes and their commit behavior but not their TypeScript shape; this Spec fixe",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.outcome-model#1",
+          "file": "design/specs/kernel/outcome-model.sdp.md",
+          "line": 35
+        },
+        {
+          "kind": "extension",
+          "ref": "E-21",
+          "file": "design/README.md",
+          "line": 203
+        }
+      ],
+      "families": [
+        "kernel"
+      ],
+      "cites": [
+        "E-21",
+        "D6",
+        "D4"
+      ],
+      "provisionalReading": "Extension E-21: the doc names the four outcomes and their commit behavior but not their TypeScript shape; this Spec fixes `Outcome<R>`, `Rejection`, `CommittedOutcome<R>`, `AffectedRef`, the rule that a committed outcome carries at least one event, and the three rejection codes the adapter reserves, `staleVersion`, `operationTooLarge` and `entityExists`, the last being the adapter's answer to a create planned at expected version 0 whose stream already exists, which is the uniqueness check D6 names for a client-generated entity ID; the owner confirms the shapes or renames the reserved codes before code names them (D4, D6, E-21)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-123",
+      "title": "OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:kernel.state-document-mapping#2",
+          "file": "design/specs/kernel/state-document-mapping.sdp.md",
+          "line": 28
+        },
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.6",
+          "file": "design/PLAN.md",
+          "line": 690
+        }
+      ],
+      "families": [
+        "kernel"
+      ],
+      "cites": [
+        "OQ3",
+        "D10"
+      ],
+      "provisionalReading": "OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions; the design assumes one document and leaves the maximum lines as a placeholder in the first experiment (OQ3, D10)",
+      "blocks": "S3",
+      "advisor": "domain",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-124",
+      "title": "Extension E-54: the doc bounds neither static fan-out, nor the dynamic fan-out batch, nor the chain depth, and it says w",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.fan-out-and-chains#1",
+          "file": "design/specs/obligations/fan-out-and-chains.sdp.md",
+          "line": 30
+        },
+        {
+          "kind": "extension",
+          "ref": "E-54",
+          "file": "design/README.md",
+          "line": 231
+        }
+      ],
+      "families": [
+        "obligations",
+        "command"
+      ],
+      "cites": [
+        "E-54",
+        "E-6",
+        "E-31",
+        "D12",
+        "D13",
+        "F13"
+      ],
+      "provisionalReading": "Extension E-54: the doc bounds neither static fan-out, nor the dynamic fan-out batch, nor the chain depth, and it says where a static subscription's obligations are created without saying where the subscription is declared; this design allows 16 obligations per publishing transaction, 500 derived obligations per fan-out attempt with one child fan-out obligation per further page, and a causation depth of 8, and it reads the static subscription as the `createObligation` calls in the command's executor body, reviewed at build time and counted at creation, rather than a reactions field on the command declaration, because D12 lists no such field and the declaration is Layer 1 machinery that imports nothing from this family; the namespace a derived command carries, `worker`, is E-6's ruling on `spec:command.actor-and-scope`, and the path by which its causation reaches the pipeline, the internal entry's `causedBy` argument, is E-31's on `spec:command.command-pipeline`; the owner confirms the numbers and the reading (D12, D13, F13, Thesis, E-6, E-31, E-54)",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-125",
+      "title": "Extension E-10: the doc names the six states but not the allowed transitions or their causes; this Spec lists them and r",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.lifecycle-transitions#1",
+          "file": "design/specs/obligations/lifecycle-transitions.sdp.md",
+          "line": 25
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-10",
+        "D13"
+      ],
+      "provisionalReading": null,
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-126",
+      "title": "Extension E-51: the doc does not give the backoff schedule, the default attempt budget, the default deadline or what a m",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.local-reaction-wrapper#1",
+          "file": "design/specs/obligations/local-reaction-wrapper.sdp.md",
+          "line": 34
+        }
+      ],
+      "families": [
+        "obligations",
+        "effects"
+      ],
+      "cites": [
+        "E-51",
+        "D13"
+      ],
+      "provisionalReading": "Extension E-51: the doc does not give the backoff schedule, the default attempt budget, the default deadline or what a maintenance refusal does to the attempt count; this design uses exponential backoff from 1 second with base 2 capped at 1 hour, 8 attempts by default and no deadline by default, all per handler in the registry, and treats a transient `writePaused` or `capacity` refusal as a delay of the same attempt after `retryAfterMs` or 60 seconds; every number is a provisional default until the first experiment (D13, E-51, Decision method rule 4)",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-127",
+      "title": "Extension E-50: the doc does not say where the module lives; this design places it in the parent as a library plus the `",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.obligation-module#2",
+          "file": "design/specs/obligations/obligation-module.sdp.md",
+          "line": 54
+        },
+        {
+          "kind": "extension",
+          "ref": "E-50",
+          "file": "design/README.md",
+          "line": 227
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-50",
+        "D13",
+        "D11"
+      ],
+      "provisionalReading": "Extension E-50: the doc does not say where the module lives; this design places it in the parent as a library plus the `obligations` and `obligationRepairs` tables with a static handler registry keyed by handler key and version, because the wrapper runs parent-side bodies as nested mutations and the record reuses the parent's actor and scope types; the alternative, a Convex component driven by function handles like Workpool, is not pre-empted (D13, D11, E-50)",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-128",
+      "title": "Extension E-53: the doc names the five operations and the repair record's fields but not their signatures or their trans",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.operator-operations#1",
+          "file": "design/specs/obligations/operator-operations.sdp.md",
+          "line": 32
+        },
+        {
+          "kind": "extension",
+          "ref": "E-53",
+          "file": "design/README.md",
+          "line": 230
+        }
+      ],
+      "families": [
+        "obligations",
+        "effects"
+      ],
+      "cites": [
+        "E-53",
+        "D13",
+        "D14"
+      ],
+      "provisionalReading": "The five operations as authorized parent functions; cancel and reconcile refused while a lease is live; reconcile mints a reconcile attempt that the claim mutation dispatches, or accepts supplied provider evidence from needs attention",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-129",
+      "title": "Extension E-10: the doc lists the fields and the six states but not the concrete table, the index set, the payload bound",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.record-contract#1",
+          "file": "design/specs/obligations/record-contract.sdp.md",
+          "line": 28
+        },
+        {
+          "kind": "extension",
+          "ref": "E-10",
+          "file": "design/README.md",
+          "line": 194
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-10",
+        "E-52",
+        "E-54",
+        "D13"
+      ],
+      "provisionalReading": "The allowed transitions between the six states and who causes each; the `obligations` and `obligationRepairs` tables with seven and two indexes; a 64 KiB inline payload bound; ten late-evidence entries; two attention reasons beyond D13's four, `recoveryFailing` and `chainBound`",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-130",
+      "title": "Extension E-57: the sweeper and the retention batch are deployment-wide, so `by_status_next_attempt`, `by_status_lease_e",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.record-contract#2",
+          "file": "design/specs/obligations/record-contract.sdp.md",
+          "line": 29
+        },
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.sweeper#3",
+          "file": "design/specs/obligations/sweeper.sdp.md",
+          "line": 38
+        },
+        {
+          "kind": "extension",
+          "ref": "E-57",
+          "file": "design/README.md",
+          "line": 234
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-57",
+        "D13",
+        "Law 11"
+      ],
+      "provisionalReading": "Three deployment-wide indexes lead with `status`, not `tenantId`; a recorded deviation from the review rubric's item 25",
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-131",
+      "title": "Extension E-55: the doc gives no retention horizon, compaction rule or batch bound; this design keeps a completed obliga",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.retention-and-restore#1",
+          "file": "design/specs/obligations/retention-and-restore.sdp.md",
+          "line": 33
+        },
+        {
+          "kind": "extension",
+          "ref": "E-55",
+          "file": "design/README.md",
+          "line": 232
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-55",
+        "D19",
+        "F13"
+      ],
+      "provisionalReading": "A completed-work horizon of the larger of 30 days and the longest provider-key validity; compaction after 7 days; 500 rows per retention run",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-132",
+      "title": "Extension E-56: the doc says restore starts with dispatch off but not how the switch works; this design reads a deployme",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.retention-and-restore#2",
+          "file": "design/specs/obligations/retention-and-restore.sdp.md",
+          "line": 34
+        },
+        {
+          "kind": "extension",
+          "ref": "E-56",
+          "file": "design/README.md",
+          "line": 233
+        }
+      ],
+      "families": [
+        "obligations",
+        "application"
+      ],
+      "cites": [
+        "E-56",
+        "E-42",
+        "D19",
+        "F12"
+      ],
+      "provisionalReading": "Extension E-56: the doc says restore starts with dispatch off but not how the switch works; this design reads a deployment environment variable in the parent's claim mutation only, where a call-mode claim defers its attempt without counting it and a reconcile-mode claim proceeds, sets it before the restore, adds a cursor-driven `rebuildSchedules` operation for a backlog larger than the sweeper's batch, and orders the two switches: `OBLIGATIONS_DISPATCH` goes off before the snapshot and on last, and `rebuildSchedules` refuses to run while `MAINTENANCE_MODE` is `restore`, so it runs only after `spec:application.restore` has accepted the run and reopened writers (D19, F12, E-42, E-56)",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-133",
+      "title": "Extension E-52: the doc says the sweeper is batched and bounded but gives no cadence, batch bound, grace period, rearm b",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.sweeper#1",
+          "file": "design/specs/obligations/sweeper.sdp.md",
+          "line": 36
+        },
+        {
+          "kind": "extension",
+          "ref": "E-52",
+          "file": "design/README.md",
+          "line": 229
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-52",
+        "D13",
+        "D19",
+        "Probe 3"
+      ],
+      "provisionalReading": "A cron every 60 s, a grace of 120 s, 100 candidates per scan, 5 rearms, per-candidate nested-mutation isolation, plus a 500 ms elapsed guard by `performance.now()`; the 100 bound provisional on Probe 3; dispatch state read from the system row's lowercase `state.kind` with the failed row's error kept on the rearmed record",
+      "blocks": "L3",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-134",
+      "title": "Probe 3 pending: the candidate bound of 100 is provisional; it assumes a nested `ctx.runMutation` costs a few millisecon",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:obligations.sweeper#2",
+          "file": "design/specs/obligations/sweeper.sdp.md",
+          "line": 37
+        }
+      ],
+      "families": [
+        "obligations"
+      ],
+      "cites": [
+        "E-52",
+        "F4",
+        "F13",
+        "Probe 3"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-135",
+      "title": "Extension E-43: the doc says audit is written inside the transaction and fails closed, that diagnostics hold no raw prom",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:operations.baseline-operations#1",
+          "file": "design/specs/operations/baseline-operations.sdp.md",
+          "line": 42
+        },
+        {
+          "kind": "extension",
+          "ref": "E-43",
+          "file": "design/README.md",
+          "line": 222
+        }
+      ],
+      "families": [
+        "operations"
+      ],
+      "cites": [
+        "E-43",
+        "D19"
+      ],
+      "provisionalReading": "The option taken here: an `auditRecords` table with indexes by operation, subject and request key, a bounded diagnostic record emitted through a sink that never throws, and a `personalData` table that events point at by reference (E-43, D19)",
+      "blocks": "S4",
+      "advisor": "operator",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-136",
+      "title": "The retention and deletion policy's content is the owner's: which historical claims survive deletion and how long receip",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:operations.baseline-operations#2",
+          "file": "design/specs/operations/baseline-operations.sdp.md",
+          "line": 43
+        },
+        {
+          "kind": "productDecision",
+          "ref": "1",
+          "file": "design/README.md",
+          "line": 269
+        }
+      ],
+      "families": [
+        "operations"
+      ],
+      "cites": [
+        "D19"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-137",
+      "title": "Extension E-14: the doc's four tiers, domain, simulator, native and end to end, name no compile-time check, while Sc L2-",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.acceptance-contract#1",
+          "file": "design/specs/platform/acceptance-contract.sdp.md",
+          "line": 24
+        },
+        {
+          "kind": "extension",
+          "ref": "E-14",
+          "file": "design/README.md",
+          "line": 198
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "E-14",
+        "Sc L2-4"
+      ],
+      "provisionalReading": "Extension E-14: the doc's four tiers, domain, simulator, native and end to end, name no compile-time check, while Sc L2-4's pass condition is a build, type or registration check that fails before any traffic; the option taken here is a fifth tier, the build tier, a compile, with no backend, of a typed caller that states the change, which asserts that `tsc` refuses it, run with every type check and recorded like any run; the alternative, folding it into the native tier as a compile step that precedes the native run, was not taken because a native run needs a backend and the check needs none; the owner confirms (E-14, Sc L2-4, Acceptance scenarios)",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-138",
+      "title": "OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.transactional-domain-platform#1",
+          "file": "design/specs/platform/transactional-domain-platform.sdp.md",
+          "line": 44
+        },
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.2",
+          "file": "design/PLAN.md",
+          "line": 686
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "OQ5"
+      ],
+      "provisionalReading": "OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability; the owner confirms the mapping or chooses rule Specs for facts, which is a mechanical change (OQ5)",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-139",
+      "title": "OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.vocabulary#1",
+          "file": "design/specs/platform/vocabulary.sdp.md",
+          "line": 25
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "OQ6"
+      ],
+      "provisionalReading": "OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the corpus reads the latter as completion evidence and the owner picks one meaning before code names it (OQ6, Vocabulary)",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-140",
+      "title": "OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for th",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.vocabulary#2",
+          "file": "design/specs/platform/vocabulary.sdp.md",
+          "line": 26
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "OQ6"
+      ],
+      "provisionalReading": "OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the corpus reads the latter as attempt and the owner picks one meaning before code names it (OQ6, Vocabulary)",
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-141",
+      "title": "Vocabulary clashes (OQ6).",
+      "sources": [
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.1",
+          "file": "design/PLAN.md",
+          "line": 685
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [
+        "OQ6"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-142",
+      "title": "Plan-imposed numbering.",
+      "sources": [
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.3",
+          "file": "design/PLAN.md",
+          "line": 687
+        }
+      ],
+      "families": [],
+      "cites": [
+        "F1",
+        "F17",
+        "Sc L0-1",
+        "OQ1",
+        "OQ6",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F9",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "OQ2",
+        "OQ3",
+        "OQ4",
+        "OQ5"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-143",
+      "title": "Where the experiment lives (OQ4).",
+      "sources": [
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.7",
+          "file": "design/PLAN.md",
+          "line": 691
+        }
+      ],
+      "families": [
+        "application",
+        "facts"
+      ],
+      "cites": [
+        "OQ4"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-144",
+      "title": "Readiness.",
+      "sources": [
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.8",
+          "file": "design/PLAN.md",
+          "line": 692
+        }
+      ],
+      "families": [],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-145",
+      "title": "`verifies` on examples before tests exist.",
+      "sources": [
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.9",
+          "file": "design/PLAN.md",
+          "line": 693
+        }
+      ],
+      "families": [],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-146",
+      "title": "F16 changes status.",
+      "sources": [
+        {
+          "kind": "planAmbiguity",
+          "ref": "11.11",
+          "file": "design/PLAN.md",
+          "line": 695
+        }
+      ],
+      "families": [
+        "facts"
+      ],
+      "cites": [
+        "F16"
+      ],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "convex",
+      "status": "unsorted",
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    }
+  ],
+  "possiblySame": [
+    [
+      "OD-002",
+      "OD-098",
+      "The queue asks about receipt conflict and unsupported-version details; E-5 asks about the overall rejection wire shape and code list, without naming this disclosure choice."
+    ],
+    [
+      "OD-003",
+      "OD-098",
+      "The queue pins candidate recognition and reject accepting platform codes; E-5 asks about the overall rejection data shape and codes, without stating those recognition rules."
+    ],
+    [
+      "OD-004",
+      "OD-094",
+      "The queue bundles caller text, stream ID, actor ID, envelope, rejection details and fold bounds; this Spec question covers caller text only."
+    ],
+    [
+      "OD-004",
+      "OD-105",
+      "The queue bundles several byte bounds; the envelope question covers envelope and caller text bounds."
+    ],
+    [
+      "OD-004",
+      "OD-102",
+      "The queue bundles several byte bounds; E-12 covers payload, envelope and fold bounds."
+    ],
+    [
+      "OD-004",
+      "OD-098",
+      "The queue includes the rejection-details bound inside a larger byte-bound bundle; E-5 asks about the overall rejection data shape."
+    ],
+    [
+      "OD-008",
+      "OD-137",
+      "The queue questions all native-tier wording, including Layer 0; E-14 resolves only the additional build tier for Sc L2-4."
+    ],
+    [
+      "OD-009",
+      "OD-137",
+      "The queue language gaps include the build tier; the Spec asks whether a fifth tier is added, rather than how tiers are named."
+    ],
+    [
+      "OD-016",
+      "OD-109",
+      "The queue bundles tenant scope, component paging and parent read-model paging; the context-query question covers only its context surface."
+    ],
+    [
+      "OD-016",
+      "OD-077",
+      "The queue bundles context queries and parent read-model paginate advice; this question is the parent read-model list choice."
+    ],
+    [
+      "OD-016",
+      "OD-026",
+      "The queue includes tenantId without scope inside its query and pagination bundle; the actor-and-scope question is the standalone tenant-scope choice."
+    ],
+    [
+      "OD-018",
+      "OD-107",
+      "The queue bundles the return-byte bound and ID-length bound; E-23 covers the broader adapter contract including its return bound."
+    ],
+    [
+      "OD-018",
+      "OD-094",
+      "The queue also names limitIdLength; this question covers caller text limits at step 1 and is not the same bundled decision."
+    ],
+    [
+      "OD-021",
+      "OD-007",
+      "Both name Sc L2-9 unproved concurrency, but queue 00/11 also asks about the function list and installedLayers."
+    ],
+    [
+      "OD-022",
+      "OD-110",
+      "The queue has several query language gaps; the Spec asks specifically whether commandType is renamed or gets a shared word."
+    ],
+    [
+      "OD-024",
+      "OD-144",
+      "Both concern owner-stated ready, but the queue targets the built S1 Specs and PLAN gives the general readiness rule."
+    ],
+    [
+      "OD-031",
+      "OD-144",
+      "Both concern owner-stated ready, but the queue targets native-harness and PLAN gives the general readiness rule."
+    ],
+    [
+      "OD-029",
+      "OD-139",
+      "The queue language ruling bundles six term pairs and which vocabulary source leads; the Spec asks only about receipt."
+    ],
+    [
+      "OD-029",
+      "OD-140",
+      "The queue language ruling bundles six term pairs and which vocabulary source leads; the Spec asks only about generation."
+    ],
+    [
+      "OD-029",
+      "OD-141",
+      "The queue has six term pairs and source precedence; PLAN ambiguity 1 bundles only receipt and generation."
+    ],
+    [
+      "OD-034",
+      "OD-027",
+      "Owner queue 5 bundles F11 documentation with the D6 HTTP retry ruling; the fact question is F11 only."
+    ],
+    [
+      "OD-034",
+      "OD-028",
+      "Owner queue 5 bundles D6 HTTP retry with F11 documentation; the request-key questions concern D6 only."
+    ],
+    [
+      "OD-038",
+      "OD-057",
+      "The queue bundles pending Probes 6 and 7 with S4 and S5; this group concerns Probe 6 only."
+    ],
+    [
+      "OD-038",
+      "OD-120",
+      "The queue bundles pending Probes 6 and 7 with S4 and S5; this group concerns Probe 7 states, retention and restore only."
+    ],
+    [
+      "OD-041",
+      "OD-106",
+      "The queue asks specifically whether a history-reading on-load migration violates D3; E-25 lists the baseline mechanism without asking that departure."
+    ],
+    [
+      "OD-042",
+      "OD-082",
+      "The queue asks specifically about fail-closed scope, override and drill cadence; E-42 lists checks and the door without asking those policy choices."
+    ],
+    [
+      "OD-046",
+      "OD-064",
+      "The queue bundles maximum order size with latency and throughput targets; these Spec questions ask only for maximum order lines."
+    ],
+    [
+      "OD-141",
+      "OD-139",
+      "PLAN ambiguity 1 bundles receipt and generation; this vocabulary question is receipt only."
+    ],
+    [
+      "OD-141",
+      "OD-140",
+      "PLAN ambiguity 1 bundles receipt and generation; this vocabulary question is generation only."
+    ],
+    [
+      "OD-123",
+      "OD-064",
+      "PLAN ambiguity 6 and the mapping question bundle the storage default with maximum order size; the order-limit group asks only for maximum lines."
+    ],
+    [
+      "OD-123",
+      "OD-113",
+      "PLAN ambiguity 6 includes the one-document default and maximum order size; E-2 additionally decides derived mappings and byte budgets."
+    ],
+    [
+      "OD-076",
+      "OD-077",
+      "The read-model bound question weighs hard bounds or rebuild generations; the E-24 question states the paging mechanism and soft row-cap default."
+    ],
+    [
+      "OD-067",
+      "OD-010",
+      "The experiment setup bundles first activation, grants, issuer, project layout and stock creation; the registry question concerns first activation only."
+    ],
+    [
+      "OD-067",
+      "OD-032",
+      "The experiment setup bundles issuer with several setup choices; E-13 concerns fixture identity and the production trust root."
+    ],
+    [
+      "OD-067",
+      "OD-013",
+      "The experiment setup bundles project layout with several setup choices; E-15 concerns the native harness rules and layout."
+    ],
+    [
+      "OD-067",
+      "OD-025",
+      "The experiment setup bundles admin grant seeding with several choices; the authority question concerns who may create and change grants."
+    ],
+    [
+      "OD-067",
+      "OD-019",
+      "The experiment setup includes ReceiveStock among several setup choices; E-46 concerns the example lifecycle, summary and numbers."
+    ],
+    [
+      "OD-086",
+      "OD-017",
+      "Both name authorizeQuery; actor-and-scope asks how a query establishes and authorizes its actor, while read-models also asks about the refusal shape and field name."
+    ],
+    [
+      "OD-110",
+      "OD-017",
+      "Both name commandType on query refusal; the context question asks for a language or field rename, while the other questions ask for the existing wire shape."
+    ],
+    [
+      "OD-105",
+      "OD-102",
+      "Both cite E-12 but one asks about envelope and caller-text limits and the other about payload and fold limits."
+    ],
+    [
+      "OD-070",
+      "OD-082",
+      "Both cite E-42 but generation-registry asks about the fence as stranded-generation evidence and restore asks about the overall restore checks and procedure."
+    ],
+    [
+      "OD-084",
+      "OD-068",
+      "Both cite E-8 but write-pause asks about gate and source scope, while generation-registry primarily asks about tables, states and rollback writes."
+    ],
+    [
+      "OD-092",
+      "OD-107",
+      "The pipeline asks whether transactionLimits should reserve headroom after a component call; the adapter question covers bounds on its own call."
+    ],
+    [
+      "OD-081",
+      "OD-115",
+      "Both name Probe 7 restore coverage, but application.restore asks whether context tables return with parent tables and retention-and-restore asks about Workpool and Workflow work."
+    ],
+    [
+      "OD-120",
+      "OD-114",
+      "Both need Probe 7 but the fact/probe question asks for states, retention and restore observations, and do-nothing-check asks whether scheduled functions can replace obligations."
+    ],
+    [
+      "OD-120",
+      "OD-115",
+      "Both need Probe 7 but states/retention confirmation and passed-ownership restore coverage are distinct subjects."
+    ]
+  ]
+}

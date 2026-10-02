@@ -16,9 +16,9 @@ Code never overrules a Spec by existing. When code and a Spec disagree, the main
 
 ## Who decides
 
-Only the owner states `ready`, settles an E-number or an open question, or edits the doc.
+Only the owner states `ready` or edits the doc. Every other open decision is a row of the decision register, `design/decisions/register.json`, with one of three classes. `design/advisors/register.md` holds the rule that sorts it.
 
-The owner ruled on 2026-10-01 that the session takes tactical decisions on its own recommendation, and that decisions about the platform's design stay open until the owner takes them up. A tactical decision is about how the work runs: tooling, order, layout, who does what. A platform decision changes what a Spec promises. For a platform decision the session keeps the provisional reading in the Spec, records the question there, adds it to the owner queue in `STATE.md` and carries on. When unsure which kind it is, treat it as a platform decision.
+The owner ruled on 2026-10-01 that the session takes tactical decisions on its own recommendation, and on 2026-10-02 that an agent decides what an agent decides better: "Tactical things and thing where capable agent can make better decision vs. myself, should be made by agent." A `tactical` decision is about how the work runs: tooling, order, layout, who does what. The session takes it and lists it in `STATE.md`. A platform decision changes what a Spec promises, and it is `owner` or `delegated`. It is `owner` when it edits the doc, sets product direction, is about money, a licence or publication, cannot be taken back by an edit in this repository, trades values that no evidence weighs, or rules on a term. The owner rules on it from a fork that an advisor writes. Until then the session keeps the provisional reading in the Spec, records the question there and in the register, and carries on. Every other platform decision is `delegated`: the advisor it belongs to rules on it by a lean whose facts a model of the other family has checked, the main thread applies the ruling to the Specs and the register, and the owner reopens it by naming it. The main thread applies a delegated lean or sends the row to the owner, and does not judge it again. When unsure between two classes, take the one nearer the owner.
 
 ## Who does what
 
@@ -33,7 +33,8 @@ The owner ruled on 2026-10-01 that the session takes tactical decisions on its o
 | Read-only scout before a unit; measurement and controlled comparisons on the native backend; the behavior review lane, which runs things | `gpt-6-astra` | high |
 | The mechanical review lane over what Claude models wrote: every changed line, test, number and pinned value | `gpt-6.1-sol` | medium |
 | The review lane over what GPT models wrote, and review of balance and of how a reader will take the text | Claude agent, Opus 5.5 | default |
-| An independent check of a finding before it enters the ledger | A model of the other family than the one that found it | default |
+| An independent check of a finding before it enters the ledger, and of the facts of an advisor's lean before it is applied or shown to the owner | A model of the other family than the one that found or wrote it | default |
+| A sort of the open decisions of its lens, a lean on a delegated decision, a fork for the owner | Claude agent, Fable 5.1, as `advisor-<slug>` | high |
 | Whole-branch review before a hand-over or a close | `gpt-6-astra` | xhigh |
 
 The two families are one team. The owner ruled on 2026-10-01 that Claude models write and GPT models review, and on 2026-10-02 that GPT agents are an essential and complementary part of the team and not supplemental workers. The table above is what the unit of 2026-10-02 tried and what held. Design judgment and the project's vocabulary stay with Claude: a Fable agent, not the main thread inside a brief, designs a solution before any implementer writes it, taste review goes to a Claude model only, and solution design to Fable only. A GPT agent gets rulings and exact text, never an open design question. What one family writes or finds, the other reads or checks. A job is sized to its model: sol takes what an Opus agent would take, astra what a Fable agent would, in width and in depth.
@@ -108,12 +109,12 @@ For a session that was cut off. `git diff` shows what changed. Confirm each `ope
 
 ### owner
 
-The owner rules. The session applies each ruling at the Spec that owns the question, updates the register, and lists the rulings in the commit message with the owner's words. This is the only unit that writes `ready`.
+The owner rules. The session applies each ruling at the Spec that owns the question, puts the owner's words in the row of the decision register and in its fork, and lists the rulings in the commit message with the owner's words. This is the only unit that writes `ready`. A `delegated` ruling is applied the same way in any unit, without `ready`.
 
 ## Close
 
 1. `python3 design/tools/check.py` prints `OK`.
-2. Rewrite `STATE.md` under its existing headings, with the check's summary lines copied in. It describes the present. Git holds the history.
+2. Rewrite `STATE.md` under its existing headings, with the check's summary lines copied in. It describes the present. Git holds the history. It takes the summary of `python3 design/tools/decisions.py` and what agents decided since the last close.
 3. Add each delegated job to the run log in the project notes: model, effort, scope, time, outcome.
 4. Commit as `design: <unit> <scope>` or `build: <slice> <scope>`, on the unit's branch, push it and open a pull request to `main`. CI runs on every push. The owner ruled on 2026-10-02 that the merge of that day was the last without a pull request. `STATE.md` says who merges a pull request.
 
