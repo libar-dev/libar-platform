@@ -39,8 +39,8 @@ Thirteen facts are documented and four are assumed as the doc states them. Four 
 
 The four statuses map to the constraint target `evidence.status:documented`, `evidence.status:rechecked`, `evidence.status:probed` or `evidence.status:assumed`; `measurableBy` names the source and, for an assumed fact, the probe.
 
-- factsDocumented: F1, F2, F7, F8, F9, F10, F11, F12, F13 (Fact ledger)
-- factsRechecked: F3, F4, F5, F6 on 2026-09-29; F16 on 2026-09-30 against S6, changed from assumed (Fact ledger, F16)
+- factsDocumented: F1, F2, F7, F8, F9, F10, F11, F12, F13; F12 retains this status for the wider backup and dashboard claim, with local CLI replacement observations recorded on the fact (Fact ledger)
+- factsRechecked: F3, F4, F5, F6 on 2026-09-29; F16 on 2026-09-30 against S6, changed from assumed; native observations establish the five states and scan cost, while seven-day retention and expiry remain documented and not run (Fact ledger, F16)
 - factsAssumed: F17, with Probe 6; the doc also lists F14 and F15, which the corpus records as probed (Fact ledger, Probes)
 - factsProbed: F14 by Probe 2 and F15 by Probe 5, on 2026-10-01 on backend release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0; Probe 1 on F5, Probe 3 on F4 and Probe 4 on F13 ran the same day, and their results are recorded on those facts, whose status stays documented or rechecked (Fact ledger, Probes)
 - factsBeyondTheDoc: F18 by Probe 8, F19 by Probe 9 and Probe 11, and F20 by Probe 10 on native backend `precompiled-2026-09-28-5c7cb5b`, with `convex` 1.46.0 and `convex-helpers` 0.1.124; each states its package source and the limits of the local evidence (Fact ledger, F18, F19, F20)
