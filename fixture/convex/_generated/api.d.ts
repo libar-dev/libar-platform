@@ -14,6 +14,7 @@ import type * as depotRelay from "../depotRelay.js";
 import type * as documentTitles from "../documentTitles.js";
 import type * as failures from "../failures.js";
 import type * as filing from "../filing.js";
+import type * as gate from "../gate.js";
 import type * as grants from "../grants.js";
 import type * as identity from "../identity.js";
 import type * as limits from "../limits.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   documentTitles: typeof documentTitles;
   failures: typeof failures;
   filing: typeof filing;
+  gate: typeof gate;
   grants: typeof grants;
   identity: typeof identity;
   limits: typeof limits;

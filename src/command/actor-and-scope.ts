@@ -1,8 +1,10 @@
 // The shapes of spec:command.actor-and-scope that the parent establishes and passes into a context:
-// the actor, the tenant scope, the namespace and a worker's authority. Validators and types only, so
-// the context library can import the actor's validator without carrying the parent's helpers; those,
-// authorize, establishActor and the grant helpers, are in authority.ts.
+// the actor, the tenant scope, the namespace and a worker's authority, and the operator an operator
+// entry states. Validators, types and the operator's check only, so the context library can import the
+// actor's validator without carrying the parent's helpers; those, authorize, establishActor and the
+// grant helpers, are in authority.ts.
 import { v } from "convex/values";
+import { limitActorIdLength, utf8Length } from "../context/text.js";
 export type ActorKind = "human" | "service" | "agent" | "reviewer" | "operator";
 export type ActorRef = { kind: ActorKind; id: string };
 // delegationRef names the obligation, approval or agent run the delegation rests on.
@@ -70,3 +72,19 @@ export type AuthorizeInput = {
   permission: string;
   subject?: SubjectRef;
 };
+// The operator an operator entry that changes anything takes, and the type of every field that
+// records it. A stated operator is what admin access chose to state and proves no identity.
+export const operatorValidator = v.string();
+// The bound limitCallText gives an actor's id.
+export const limitOperatorBytes = limitActorIdLength;
+// An operator entry calls this first, so a refused entry has read and written nothing.
+export function assertOperator(operator: string): string {
+  if (operator.trim() === "")
+    throw new Error("An operator entry needs a stated operator");
+  const bytes = utf8Length(operator);
+  if (bytes > limitOperatorBytes)
+    throw new Error(
+      `The stated operator is ${bytes} bytes, above the limit of ${limitOperatorBytes}`,
+    );
+  return operator;
+}

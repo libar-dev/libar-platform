@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as gate from "../gate.js";
 import type * as grants from "../grants.js";
 import type * as orderQueries from "../orderQueries.js";
 import type * as orderSummary from "../orderSummary.js";
@@ -22,6 +23,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  gate: typeof gate;
   grants: typeof grants;
   orderQueries: typeof orderQueries;
   orderSummary: typeof orderSummary;

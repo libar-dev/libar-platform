@@ -1,5 +1,9 @@
 // The command pipeline of spec:command.command-pipeline: the steps between a caller's request and the
 // committed outcome, in one top-level mutation. Its only failure signal is a throw.
+import type {
+  GenericDatabaseReader,
+  GenericDatabaseWriter,
+} from "convex/server";
 import { getConvexSize, v, type Validator, type Value } from "convex/values";
 import {
   limitActorIdLength,
@@ -24,6 +28,9 @@ import {
   type ReceiptKey,
 } from "./receipts.js";
 import type { MutationCtx } from "./tables.js";
+import { writeAudit, type AuditDataModel } from "../audit/index.js";
+import { assertWritable, scopesOfUseCase } from "../gate/gate.js";
+import type { GateDataModel } from "../gate/tables.js";
 import {
   fromSource,
   writeReadModels,
@@ -178,8 +185,8 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   if (refused !== null)
     reject({ ...refused, code: "invalidInput", commandType });
 }
-// Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. Step 7
-// reads no gate, and steps 10 and 11 write no audit record and emit no diagnostic.
+// Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. Step 11
+// emits no diagnostic.
 export async function runPipeline<I, R>(
   ctx: MutationCtx,
   decl: CommandDeclaration<I, R>,
@@ -265,7 +272,13 @@ export async function runPipeline<I, R>(
           : { retryAfterMs: admission.retryAfterMs }),
       });
   }
-  // Step 7: the operation, minted once, before the first context call.
+  // Step 7: the gate, read once, and only then the operation, minted once, before the first context
+  // call. The library types ctx with the command tables; every composition that registers a command
+  // holds the gate's table too, and at run time ctx is that composition's own.
+  await assertWritable(
+    ctx as unknown as { db: GenericDatabaseReader<GateDataModel> },
+    scopesOfUseCase(tenantId, decl.writes),
+  );
   const operation: OperationRef = {
     operationId: crypto.randomUUID(),
     causedBy: call.causedBy ?? { kind: "command", commandType },
@@ -318,6 +331,39 @@ export async function runPipeline<I, R>(
       },
       decl.retention,
     );
+  // Step 10, the audit record of a declaration that sets audit, every field from the command alone.
+  if (decl.audit !== undefined) {
+    const first = executed.versions[0];
+    const subject =
+      decl.permission.subjectFrom?.(input) ??
+      (first === undefined
+        ? undefined
+        : {
+            contextId: first.contextId,
+            streamType: first.streamType,
+            streamId: first.streamId,
+          });
+    if (subject === undefined)
+      throw new Error(
+        `${commandType} sets audit, declares no subjectFrom and returned no version, so its audit record has no subject`,
+      );
+    await writeAudit(
+      ctx as unknown as { db: GenericDatabaseWriter<AuditDataModel> },
+      {
+        tenantId,
+        operationId: operation.operationId,
+        ...(call.requestKey === undefined
+          ? {}
+          : { requestKey: call.requestKey }),
+        commandType,
+        actor,
+        subject,
+        kind: decl.audit.kind,
+        decision: executed.kind,
+        causedBy: operation.causedBy,
+      },
+    );
+  }
   // Step 11.
   return {
     kind: executed.kind,

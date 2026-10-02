@@ -1,6 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { auditTables } from "../../src/audit/index.js";
 import { commandTables } from "../../src/command/index.js";
+import { gateTables } from "../../src/gate/index.js";
 import { readModelTables, rowConventions } from "../../src/read-model/index.js";
 import { documentTitleFields } from "./documentTitles.js";
 import { documentSummaryFields } from "./summaries.js";
@@ -20,8 +22,11 @@ export default defineSchema({
     "by_group",
     ["group"],
   ),
-  // The command library's receipts and grants.
+  // The command library's receipts, grants and tenant list.
   ...commandTables,
+  // The maintenance gate the pipeline's step 7 reads, and the audit records. See gate.ts.
+  ...gateTables,
+  ...auditTables,
   // The generation registry, and the rows of the fixture's document summary. See summaries.ts.
   ...readModelTables,
   documentSummaries: defineTable({
