@@ -4,6 +4,8 @@
 // operator's function uses to write and delete a grant, and nextTenant, which reads the tenant list.
 // None is registered here.
 import type { GenericDatabaseReader, GenericQueryCtx } from "convex/server";
+import { ConvexError } from "convex/values";
+import { limitIdLength, utf8Length } from "../context/text.js";
 import { assertWritable, scopesOfUseCase } from "../gate/gate.js";
 import type { GateDataModel } from "../gate/tables.js";
 import type { Actor, AuthorizeInput, SubjectRef } from "./actor-and-scope.js";
@@ -105,6 +107,14 @@ export async function insertGrant(
   ctx: { db: MutationCtx["db"] },
   grant: GrantInput,
 ): Promise<GrantId> {
+  // The tenant ID is stored in the tenant list, which holds at most limitIdLength bytes of it.
+  const length = utf8Length(grant.tenantId);
+  if (length > limitIdLength)
+    throw new ConvexError({
+      code: "invalidInput",
+      message: `tenantId has at most ${limitIdLength} bytes of UTF-8`,
+      details: { field: "tenantId", length, limit: limitIdLength },
+    });
   await assertGrantWritable(ctx, grant.tenantId);
   const now = Date.now();
   const tenant = await ctx.db

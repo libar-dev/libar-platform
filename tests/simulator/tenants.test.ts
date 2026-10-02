@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import schema from "../../fixture/convex/schema.js";
 import {
@@ -77,4 +78,29 @@ test("convex-test: nextTenant reads one tenant in ascending ID order, excludes t
   expect(await t.run((ctx) => nextTenant(ctx, "b"))).toBe(
     "tenant:source:depot",
   );
+});
+
+// spec:command.actor-and-scope fnInsertGrant, tableTenants: at most limitIdLength bytes of tenant ID.
+test("convex-test: insertGrant refuses a tenant ID of 257 bytes as invalidInput and stores neither a tenant nor a grant, and takes one of 256", async () => {
+  const t = app();
+  const error = await t
+    .run((ctx) => insertGrant(ctx, grant("t".repeat(257))))
+    .then(
+      () => null,
+      (thrown: unknown) => thrown,
+    );
+  expect(error).toBeInstanceOf(ConvexError);
+  expect((error as ConvexError<Value>).data).toEqual({
+    code: "invalidInput",
+    message: "tenantId has at most 256 bytes of UTF-8",
+    details: { field: "tenantId", length: 257, limit: 256 },
+  });
+  expect(await t.run((ctx) => ctx.db.query("tenants").collect())).toEqual([]);
+  expect(await t.run((ctx) => ctx.db.query("grants").collect())).toEqual([]);
+  await t.run((ctx) => insertGrant(ctx, grant("é".repeat(128))));
+  expect(
+    (await t.run((ctx) => ctx.db.query("tenants").collect())).map(
+      (row) => row.tenantId,
+    ),
+  ).toEqual(["é".repeat(128)]);
 });
