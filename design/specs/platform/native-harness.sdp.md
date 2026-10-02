@@ -10,7 +10,7 @@ relations:
 
 Feature · Detail: extension · Traces: Acceptance scenarios (tiers, evidence), S13, Sc L2-9, D11, E-13, E-15.
 
-The doc says that native tests prove component and nested-mutation behavior, scheduling, contention and deployment, that the kernel's fixture app is separate from the example app, that test-only functions never ship and that every test owns its disposable backend. It does not say how a test obtains an identity, what the fixture app contains, how a fault enters a run, what a test may read or what it controls. This Spec carries those rules as two extensions, E-13 and E-15. Every rule here is the corpus's provisional reading until the owner rules. The doc's own rules on tiers and evidence stay in `spec:platform.acceptance-contract`.
+The doc says that native tests prove component and nested-mutation behavior, scheduling, contention and deployment, that the kernel's fixture app is separate from the example app, that test-only functions never ship and that every test owns its disposable backend. It does not say how a test obtains an identity, what the fixture app contains, how a fault enters a run, what a test may read or what it controls. This Spec carries those rules as two extensions, E-13 and E-15. Every rule here is the corpus's provisional reading until the owner rules, except the reading of Sc L2-9 in the first rule, which is settled. The doc's own rules on tiers and evidence stay in `spec:platform.acceptance-contract`.
 
 ## Intent
 
@@ -27,7 +27,7 @@ The doc says that native tests prove component and nested-mutation behavior, sch
 
 ## Rule
 
-- [extension] Parity with a release for Sc L2-9 means the same code path, schema, concurrency and authority model: the grants, namespaces, entry points and actor mapping, and Convex's own visibility check on every call a caller under test makes (E-13, S13, Sc L2-9)
+- [extension] Sc L2-9 is read as the local observation: the production composition on the pinned local backend, with the same code path, schema, concurrency and authority model a release has, the authority model being the grants, namespaces, entry points and actor mapping, and Convex's own visibility check on every call a caller under test makes; no native pass claims parity with a hosted deployment (E-13, S13, Sc L2-9)
 - [extension] A caller under test is an ordinary client that carries a token signed by the fixture issuer, or no token (E-13)
 - [extension] A composition that runs natively reads its issuer, its application ID and its key set from the deployment's environment variables, and the harness sets the key set to a data URI that holds the fixture issuer's public key (E-13, S13)
 - [extension] No caller under test carries the admin key, alone or acting as an identity, because a call made with it passes Convex's visibility check (E-13)

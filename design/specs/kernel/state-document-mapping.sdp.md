@@ -12,20 +12,19 @@ relations:
 
 Provenance: new; the doc names the gap, states the preference and leaves the budget open. Story · Traces: D2, D3, D5, D10, D18, F13, OQ3, Sc L2-3, E-2, E-3, E-25.
 
-Folding is simple when a stream's state is one document. When state spans several documents, such as an order with separate line rows or stock spread over rows, the adapter needs a mapping from folded state to documents, and if each command writes that mapping by hand a second source of state creeps back. This decision keeps one document per stream as the default while the state fits a size budget, and where it cannot, derives every document write from the folded state in one mapping per stream type. The budget, `budgetBytes`, is one number per stream type and means the whole stream: the one document of the single mapping, or the head and every part of the derived mapping together. Every bound in the corpus that multiplies stream documents multiplies that number. The budget is a design number under OQ3; the maximum order size that the placement command supports is the product decision that tests it.
+Folding is simple when a stream's state is one document. When state spans several documents, such as an order with separate line rows or stock spread over rows, the adapter needs a mapping from folded state to documents, and if each command writes that mapping by hand a second source of state creeps back. This decision keeps one document per stream as the default while the state fits a size budget, and where it cannot, derives every document write from the folded state in one mapping per stream type. The budget, `budgetBytes`, is one number per stream type and means the whole stream: the one document of the single mapping, or the head and every part of the derived mapping together. Every bound in the corpus that multiplies stream documents multiplies that number. The budget is a design number. A command's declaration carries its own largest input, chosen by its author under the adapter's stream and byte ceilings that the budget sets, so the 100 lines of the example's `PlaceOrder` are that command's promise and no platform limit.
 
 ## Intent
 
 - outcome: The saved representation of a stream's state is derived from the folded state by one mapping per stream type, and the default mapping is one document that holds the whole state and the stream metadata (D3, E-2)
 - value: No command writes documents by hand, so the fold stays the one authority for state even when state spans documents (D3)
 - risk: A state that outgrows the budget forces the derived mapping, which multiplies the documents one command reads and writes; the first experiment measures documents read and written per order size (D10, First experiment, Sc L2-3)
-- risk: The document budget below is a design number; if OQ3 sets a maximum order that does not fit it, the budget or the mapping changes (OQ3, E-2)
+- risk: The document budget below is a design number; a command whose declared bound does not fit it needs a larger budget or the derived mapping (OQ3, E-2)
 - assumption: A document holds at most 1 MiB and a transaction reads at most 16 MiB and 32,000 documents (F13)
 
 ### Open questions
 
-- [non-blocking] Extension E-2: the doc prefers one document per stream within a size budget and names no budget; this Spec sets `budgetBytes` as one number per stream type meaning the whole stream, the single document or the head and every part together, at most 256 KiB for the single mapping and at most 512 KiB over at most 32 parts for the derived mapping, provisionally, lets a stream type declare a smaller `budgetBytes` on its mapping, caps the derived budget at half the document ceiling because a baseline event holds the whole migrated state in one document, and derives every bound on streams per call, list page, backfill batch and baseline batch from that budget so that the 16 MiB read ceiling binds in bytes and not only in documents; the owner confirms the numbers with OQ3 (D3, D5, OQ3, F13, E-2, E-25)
-- [non-blocking] OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions; the design assumes one document and leaves the maximum lines as a placeholder in the first experiment (OQ3, D10)
+- [non-blocking] Extension E-2: the doc prefers one document per stream within a size budget and names no budget; this Spec sets `budgetBytes` as one number per stream type meaning the whole stream, the single document or the head and every part together, at most 256 KiB for the single mapping and at most 512 KiB over at most 32 parts for the derived mapping, provisionally, lets a stream type declare a smaller `budgetBytes` on its mapping, caps the derived budget at half the document ceiling because a baseline event holds the whole migrated state in one document, and derives every bound on streams per call, list page, backfill batch and baseline batch from that budget so that the 16 MiB read ceiling binds in bytes and not only in documents; the owner confirms the numbers (D3, D5, OQ3, F13, E-2, E-25)
 
 ## Decision
 
@@ -40,6 +39,7 @@ Folding is simple when a stream's state is one document. When state spans severa
 - consequence: The stream row carries the metadata that enumeration and deletion need, including the deleted-subject marker, in both mappings (D2, E-3)
 - consequence: A context switching a stream type from `single` to `derived` rewrites its stream rows through the new mapping in bounded batches; no event changes and `stateSchemaVersion` does not move, so it is a change of representation, not of meaning (D5, E-25)
 - consequence: The derived mapping writes only the parts whose value changed, compared against the loaded parts, so a command on a large state costs the parts it touched plus the head (E-2)
+- consequence: One document per stream stays the default, with the derived mapping for state that outgrows its budget, and the largest order the placement command supports is the bound its declaration carries, 100 lines for the example's `PlaceOrder`, chosen under the adapter's stream and byte ceilings and no platform limit, which settles OQ3 (OQ3, D10, E-2)
 - consequence: The standing cost is one mapping declaration per stream type and, for the derived mapping, one extra table, one index and one extra read per part on every load (E-2, E-3)
 
 ## Design
