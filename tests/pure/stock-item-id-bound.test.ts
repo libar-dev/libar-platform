@@ -2,9 +2,12 @@ import { ConvexError, getConvexSize, type Value } from "convex/values";
 import { expect, test } from "vitest";
 import {
   maxOrderLines,
-  maxStockItemIdBytes,
   placeOrderDeclaration,
 } from "../../example/convex/ordering.js";
+import {
+  maxStockItemIdBytes,
+  receiveStockDeclaration,
+} from "../../example/convex/receiving.js";
 import { orderDecider, type OrderLine } from "../../example/domain/index.js";
 import { runPipeline, type MutationCtx } from "../../src/command/index.js";
 import { limitPayloadBytes } from "../../src/context/index.js";
@@ -149,4 +152,19 @@ test("pure: the pipeline refuses a long ID before any read and checks the line c
     );
   }
   expect(touched).toEqual([]);
+});
+
+test("pure: ReceiveStock refuses the first stock item ID past the same bound", () => {
+  const refineReceive = receiveStockDeclaration.refine;
+  if (refineReceive === undefined)
+    throw new Error("ReceiveStock needs its refinement");
+  const items = (ids: string[]) => ({
+    items: ids.map((stockItemId) => ({ stockItemId, quantity: 1 })),
+  });
+  expect(refineReceive(items(["a".repeat(64), "é".repeat(32)]))).toBeNull();
+  expect(
+    refineReceive(
+      items(["a".repeat(64), "a" + "é".repeat(32), "b".repeat(70)]),
+    ),
+  ).toEqual(refusal(1, 65));
 });

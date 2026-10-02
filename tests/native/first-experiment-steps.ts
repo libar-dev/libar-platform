@@ -13,12 +13,14 @@ import { expect } from "vitest";
 import { api, internal } from "../../example/convex/_generated/api.js";
 import {
   maxOrderLines,
-  maxStockItemIdBytes,
   placeOrderDeclaration,
   placeOrderPermission,
 } from "../../example/convex/ordering.js";
 import { readOrdersPermission } from "../../example/convex/readModels.js";
-import { receiveStockPermission } from "../../example/convex/receiving.js";
+import {
+  maxStockItemIdBytes,
+  receiveStockPermission,
+} from "../../example/convex/receiving.js";
 import type { CompletionRecord } from "../../harness/admin.js";
 import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
@@ -223,7 +225,10 @@ const scheduledAfter = new WeakMap<
 >();
 export async function placeOrderRuns(
   world: ExperimentWorld,
-  run: "the PlaceOrder use case" | "the end-to-end path",
+  run:
+    | "the PlaceOrder use case"
+    | "the end-to-end path"
+    | "the ReceiveStock command",
 ) {
   if (run !== "the PlaceOrder use case")
     throw new Error(`These examples run the PlaceOrder use case, not ${run}`);
@@ -449,11 +454,20 @@ export async function stockItemIdBytesAre(
     );
   const lastId = required(lines.at(-1), "the last line").stockItemId;
   expect(lastId.length).toBeLessThan(utf8Length(lastId));
-  await receive(world, lines);
+  // Only stock item IDs within the bound can be received: a longer one is refused by ReceiveStock too.
+  await receive(
+    world,
+    lines.filter(
+      ({ stockItemId }) => utf8Length(stockItemId) <= maxStockItemIdBytes,
+    ),
+  );
 }
 export async function placeOrderAtIdBoundRuns(
   world: StockItemIdWorld,
-  run: "the PlaceOrder use case" | "the end-to-end path",
+  run:
+    | "the PlaceOrder use case"
+    | "the end-to-end path"
+    | "the ReceiveStock command",
 ) {
   expect(run).toBe("the PlaceOrder use case");
   const backend = required(world.backend, "the backend");
@@ -518,11 +532,12 @@ export function stockItemIdRejectionIs(
   line: number,
   length: number,
   limit: number,
+  commandType: "PlaceOrder" | "ReceiveStock" = "PlaceOrder",
 ) {
   expect((world.error as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "invalidInput",
-    commandType: "PlaceOrder",
+    commandType,
     message: `Line ${line} needs a stock item ID of at most ${limit} bytes of UTF-8, not ${length}`,
     details: { line, length, limit },
   });
@@ -535,4 +550,74 @@ export function commandDocumentsAre(
   const usage = usageOf(required(world.own, "the completion record"));
   expect(usage.databaseReadDocuments).toBe(readDocuments);
   expect(usage.databaseWriteDocuments).toBe(writtenDocuments);
+}
+// ReceiveStock of stock items whose IDs have exact byte lengths, the last built from two-byte
+// characters so that its character count is below its byte count.
+export function receiveItemsWithIdBytes(
+  world: StockItemIdWorld,
+  items: number,
+  idBytes: number,
+  lastIdBytes: number,
+) {
+  world.lines = orderLines(items, "sku");
+  for (const [i, line] of world.lines.entries())
+    line.stockItemId =
+      i === items - 1
+        ? (lastIdBytes % 2 === 1 ? "a" : "") +
+          "é".repeat(Math.floor(lastIdBytes / 2))
+        : line.stockItemId.padEnd(idBytes, "x");
+  for (const [i, { stockItemId }] of world.lines.entries())
+    expect(utf8Length(stockItemId)).toBe(
+      i === items - 1 ? lastIdBytes : idBytes,
+    );
+  const lastId = required(world.lines.at(-1), "the last item").stockItemId;
+  expect(lastId.length).toBeLessThan(utf8Length(lastId));
+}
+const receiveStockIdentifier = getFunctionName(api.receiving.receiveStock);
+export async function receiveStockRuns(
+  world: StockItemIdWorld,
+  run:
+    | "the PlaceOrder use case"
+    | "the end-to-end path"
+    | "the ReceiveStock command",
+) {
+  expect(run).toBe("the ReceiveStock command");
+  const backend = required(world.backend, "the backend");
+  const client = required(world.client, "the client");
+  world.before = await storedOrderDocuments(backend);
+  const mark = await backend.admin.logMark();
+  await client
+    .mutation(api.receiving.receiveStock, {
+      tenantId,
+      requestKey: "k-receive-past-id-bound",
+      input: {
+        items: required(world.lines, "the items").map(({ stockItemId }) => ({
+          stockItemId,
+          quantity: 2,
+        })),
+      },
+    })
+    .then(
+      () => {
+        throw new Error("ReceiveStock past the stock item ID bound applied");
+      },
+      (error: unknown) => {
+        world.error = error;
+      },
+    );
+  const records = await backend.admin.completionsSince(mark, (records) =>
+    records.some(
+      (record) =>
+        record.identifier === receiveStockIdentifier &&
+        record.componentPath === null,
+    ),
+  );
+  world.own = required(
+    records.find(
+      (record) =>
+        record.identifier === receiveStockIdentifier &&
+        record.componentPath === null,
+    ),
+    "the command's completion record",
+  );
 }

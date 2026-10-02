@@ -9,19 +9,16 @@ import { v, type Infer } from "convex/values";
 import {
   internalCommand,
   publicCommand,
-  utf8Length,
   type CommandDeclaration,
 } from "../../src/command/index.js";
 import { components } from "./_generated/api.js";
 import { orderSummary } from "./orderSummary.js";
 import { orderLineValidator } from "./orders/streams.js";
+import { stockItemIdRefusal } from "./receiving.js";
 export const placeOrderPermission = "orders.place";
 export const cancelOrderPermission = "orders.cancel";
 // The largest order PlaceOrder accepts: the example's promise, chosen under the adapter's ceilings.
 export const maxOrderLines = 100;
-// The longest stock item ID an order line may carry, in UTF-8 bytes, so that the OrderPlaced of the
-// largest order fits the journal's payload bound.
-export const maxStockItemIdBytes = 64;
 const orderSource = { contextId: "orders", streamType: "order" };
 const stockItemSource = { contextId: "inventory", streamType: "stockItem" };
 const placeOrderInput = v.object({
@@ -43,15 +40,7 @@ export const placeOrderDeclaration: CommandDeclaration<
   refine: ({ lines }) => {
     if (lines.length === 0)
       return { message: "An order needs at least one line" };
-    for (const [line, { stockItemId }] of lines.entries()) {
-      const length = utf8Length(stockItemId);
-      if (length > maxStockItemIdBytes)
-        return {
-          message: `Line ${line} needs a stock item ID of at most ${maxStockItemIdBytes} bytes of UTF-8, not ${length}`,
-          details: { line, length, limit: maxStockItemIdBytes },
-        };
-    }
-    return null;
+    return stockItemIdRefusal(lines.map(({ stockItemId }) => stockItemId));
   },
   output: placeOrderResult,
   permission: { permission: placeOrderPermission },

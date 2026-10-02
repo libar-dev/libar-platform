@@ -27,6 +27,7 @@ specs:
   - spec:application.first-experiment.order-of-max-lines
   - spec:application.first-experiment.order-at-stock-item-id-bound
   - spec:application.first-experiment.stock-item-id-past-bound-refused
+  - spec:application.first-experiment.receive-stock-item-id-past-bound-refused
   - spec:application.first-experiment.native-acceptance-production-configuration
   - spec:application.first-experiment.native-contention
   - spec:application.orders-inventory-example
