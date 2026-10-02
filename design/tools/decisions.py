@@ -19,14 +19,14 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 REGISTER = ROOT / "design/decisions/register.json"
-STATUSES = ("unsorted", "sorted", "waiting", "decided")
+STATUSES = ("unsorted", "sorted", "waiting", "decided", "folded")
 CLASSES = ("tactical", "delegated", "owner")
 ADVISORS = ("convex", "domain", "operator", "product")
 LEAN_FIELDS = ("do", "restsOn", "against", "settles", "changes", "ifWrong")
 LOAD_FIELDS = {"id", "title", "sources", "families", "cites", "provisionalReading", "advisor"}
 PATCH_FIELDS = {
     "blocks", "status", "class", "reason", "lean", "checkedBy", "fork",
-    "decidedBy", "decidedOn", "ruling",
+    "decidedBy", "decidedOn", "ruling", "foldedInto",
 }
 
 
@@ -45,12 +45,21 @@ def date(value):
         raise argparse.ArgumentTypeError("expected a date in YYYY-MM-DD form")
 
 
-def row_errors(row, units, root):
-    """Validate the merged row, including all six patch refusals."""
+def row_errors(row, units, root, row_ids):
+    """Validate the merged row and every patch refusal."""
     errors = []
     status, cls, lean = row.get("status"), row.get("class"), row.get("lean")
     if status not in STATUSES:
-        errors.append("status must be unsorted, sorted, waiting or decided")
+        errors.append("status must be unsorted, sorted, waiting, decided or folded")
+    if status == "folded" and not present(row.get("reason")):
+        errors.append("requires reason when folded")
+    targets = row.get("foldedInto", [])
+    if not isinstance(targets, list):
+        errors.append("foldedInto must be a list of ids")
+    else:
+        for target in targets:
+            if not isinstance(target, str) or target not in row_ids:
+                errors.append(f"unknown foldedInto id: {target!r}")
     if cls is not None and cls not in CLASSES:
         errors.append("class must be tactical, delegated, owner or null")
     if row.get("blocks") is not None and row["blocks"] not in units:
@@ -83,6 +92,8 @@ def row_errors(row, units, root):
         elif isinstance(by, str) and by.startswith("advisor:"):
             if by[8:] not in ADVISORS:
                 errors.append("decidedBy names an unknown advisor")
+            if by[8:] != row.get("advisor"):
+                errors.append("decidedBy advisor must equal the row's advisor")
             if cls != "delegated":
                 errors.append("an advisor may decide only delegated rows")
             missing = [key for key in LEAN_FIELDS if not isinstance(lean, dict) or not present(lean.get(key))]
@@ -137,7 +148,7 @@ def merge_patch(register, patch, root):
         if identifier not in changed:
             changed.append(identifier)
     for identifier in changed:
-        errors.extend(identifier + ": " + reason for reason in row_errors(rows[identifier], register["units"], root))
+        errors.extend(identifier + ": " + reason for reason in row_errors(rows[identifier], register["units"], root, rows))
         original = next(row for row in register["decisions"] if row["id"] == identifier)
         if rows[identifier]["blocks"] != original["blocks"] and not present(rows[identifier]["reason"]):
             errors.append(identifier + ": correcting blocks requires reason")
@@ -150,8 +161,14 @@ def apply_patch(path, patch, root):
     candidate, errors = merge_patch(register, patch, root)
     if errors:
         return errors
+    write_register(path, original, register, candidate)
+    return []
+
+
+def write_register(path, original, register, candidate):
+    """Keep serialization stable and replace the register atomically."""
     if candidate == register:
-        return []
+        return
     text = original.decode("utf-8")
     match = re.search(r'\n([ \t]+)"', text)
     indent = match.group(1) if match else "  "
@@ -174,7 +191,28 @@ def apply_patch(path, patch, root):
     finally:
         if temporary is not None and temporary.exists():
             temporary.unlink()
-    return []
+
+
+def reassign(path, identifier, advisor, reason, root):
+    """The main thread's explicit exception to the immutable advisor field."""
+    original = path.read_bytes()
+    register = json.loads(original)
+    candidate = copy.deepcopy(register)
+    row = next((r for r in candidate["decisions"] if r["id"] == identifier), None)
+    errors = []
+    if row is None:
+        errors.append("unknown id: " + identifier)
+    if advisor not in ADVISORS:
+        errors.append("unknown advisor: " + advisor)
+    if not present(reason):
+        errors.append("reassign requires reason")
+    if errors:
+        return errors
+    row.update(advisor=advisor, status="unsorted", **{"class": None, "reason": reason, "lean": None})
+    errors = row_errors(row, register["units"], root, {r["id"] for r in register["decisions"]})
+    if not errors:
+        write_register(path, original, register, candidate)
+    return errors
 
 
 def summary(register):
@@ -196,6 +234,8 @@ def select(register, args):
     wanted_class = "owner" if args.owner else args.decision_class
     before = register["units"][:register["units"].index(args.before) + 1] if args.before else None
     def matches(row):
+        if row["status"] == "folded" and not (args.id or args.status == "folded"):
+            return False
         if wanted_status and row["status"] != wanted_status:
             return False
         if wanted_class and row["class"] != wanted_class:
@@ -218,7 +258,7 @@ def select(register, args):
         if args.cites and args.cites not in row["cites"]:
             return False
         if args.spec:
-            refs = [source["ref"] for source in row["sources"] if source["kind"] == "specQuestion"]
+            refs = [source["ref"] for source in row["sources"] if source["kind"] in ("specQuestion", "specLine")]
             if not any(ref == args.spec or ref.split("#")[0] == args.spec for ref in refs):
                 return False
         if (args.spec or args.family or args.cites) and row["status"] == "decided":
@@ -246,8 +286,10 @@ def main(argv=None, register_path=None, root=None):
     path = Path(register_path) if register_path is not None else REGISTER
     root = Path(root) if root is not None else ROOT
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", nargs="?", choices=("apply",))
+    parser.add_argument("action", nargs="?", choices=("apply", "reassign"))
     parser.add_argument("patch", nargs="?")
+    parser.add_argument("new_advisor", nargs="?")
+    parser.add_argument("--reason")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--owner", action="store_true")
     parser.add_argument("--before")
@@ -276,11 +318,28 @@ def main(argv=None, register_path=None, root=None):
             "owner", "before", "blocks", "decision_class", "status", "unsorted", "waiting",
             "decided", "advisor", "by", "since", "spec", "family", "cites", "id",
         ))
+        if args.action == "reassign":
+            if not args.patch or not args.new_advisor:
+                parser.error("reassign requires an id and an advisor")
+            if filters:
+                parser.error("reassign does not accept query filters")
+            errors = reassign(path, args.patch, args.new_advisor, args.reason, root)
+            if args.json:
+                print(json.dumps({"reassigned": not errors, "id": args.patch, "advisor": args.new_advisor, "reasons": errors}, ensure_ascii=False))
+            elif errors:
+                print("REFUSED")
+                for error in errors:
+                    print(error)
+            else:
+                print(f"Reassigned {args.patch} to {args.new_advisor}")
+            return 1 if errors else 0
         if args.action == "apply":
             if not args.patch:
                 parser.error("apply requires a patch file")
             if filters:
                 parser.error("apply does not accept query filters")
+            if args.new_advisor or args.reason is not None:
+                parser.error("apply takes one patch file and no --reason")
             patch = json.loads(Path(args.patch).read_text(encoding="utf-8"))
             errors = apply_patch(path, patch, root)
             result = {"applied": not errors, "reasons": errors}
@@ -293,6 +352,8 @@ def main(argv=None, register_path=None, root=None):
             else:
                 print("Applied")
             return 1 if errors else 0
+        if args.reason is not None:
+            parser.error("--reason is for reassign")
         if not filters:
             result = summary(register)
             if args.json:

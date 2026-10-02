@@ -28,9 +28,10 @@
       "provisionalReading": "From the platform review unit, each provisional reading the code now rests on:",
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [],
       "class": null,
-      "reason": "Not a decision: the heading of owner queue item 000 (design/STATE.md:212); its bullets are OD-002 to OD-011.",
+      "reason": "This is the heading of an owner queue item, not a decision of its own.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -57,6 +58,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of an answer before any release (package.json:4 is private, version 0.0.0); built at src/command/receipts.ts:92-93 and src/command/pipeline.ts:230,236, with receipt-disclosure tests in the pure and simulator projects of the newest clean passed record evidence/runs/native-20261002T161135Z-645130f-066930f6-cc9f-48ff-a5da-2fd9e93dc028.json; doubt: the command family is domain's by the advisor table, so the main thread may move it.",
       "lean": {
@@ -87,6 +89,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature: the shape of a ConvexError's data and what reject accepts (src/command/outcome-boundary.ts:77-85 and :110) before any release; doubt: OD-098 (domain, E-5) decides the same data shape, so the main thread may fold this row into it.",
       "lean": {
@@ -118,9 +121,15 @@
       "provisionalReading": "The byte bounds: 256 for the text fields a caller sets and for a stream ID, 512 for an actor's ID, 4,096 for the envelope beside the payload, 16,384 for a rejection's details. The fold bound of 500 events follows from them and nothing built reads it yet.",
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-094",
+        "OD-102",
+        "OD-105",
+        "OD-106"
+      ],
       "class": null,
-      "reason": "The same numbers as other rows: the 256 text bounds are OD-094 (domain, E-34), the 4,096 envelope bound is OD-105 (domain) and OD-102 (convex), the fold bound of 500 is OD-106 (domain, E-25); the actor ID at 512 and the rejection details at 16,384 have no row of their own that I found and belong with OD-094 and OD-098 (domain).",
+      "reason": "The same decision is carried by OD-094, OD-102, OD-105, OD-106.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -162,6 +171,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, an extension whose alternative, a hand-kept list, loses on a documented fact: the graph already holds each example's row, tier, composition and verifiers (design/specs/platform/acceptance-contract.sdp.md:25); the owner's part, the doc's 'on a native backend', is OD-008 and is held apart.",
       "lean": {
@@ -207,6 +217,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: settling it reads the doc's scenario table, whether Sc ALL-1's 'every installed layer' counts as a Layer 0 to 2 row [design/specs/application/first-experiment.sdp.md:65]; a reading of the doc is the owner's.",
       "lean": {
@@ -247,6 +258,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which example proves a row; the strict reading, an example that sends commands at once on the production composition, goes against no scenario of the doc and an edit takes it back. Doubt: the acceptance contract is the product advisor's Spec, the example is this family's.",
       "lean": {
@@ -285,6 +297,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, settling it edits the doc: the doc's sentence 'passes when every Layer 0, 1 and 2 scenario passes on a native backend' (docs/convex-transactional-domain-platform-decisions.md:479) against the contract's tiers for Sc L0-1, L0-2 and L2-4 (design/specs/platform/acceptance-contract.sdp.md:58,62).",
       "lean": {
@@ -315,6 +328,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: acceptance check, verifier and build tier are missing, scenario and run record each carry two meanings, and the tiers have three sets of names (design/STATE.md:220); the one code name in the bullet, otherPrincipalId, is a name inside the language and goes with the ruling.",
       "lean": {
@@ -361,6 +375,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: the doc names no path for a first generation [design/specs/application/generation-registry.sdp.md:36], and an edit to one Spec and one file takes the path back; nothing here edits the doc or trades values without evidence.",
       "lean": {
@@ -402,10 +417,11 @@
       "cites": [],
       "provisionalReading": "`getOrder` on the production composition authorizes with no subject, as `queries.sdp.md:85` pins it, so a reader granted one order only is refused. The fixture relay had the same omission and was fixed; the production query follows its Spec and waits for the ruling.",
       "blocks": null,
-      "advisor": "convex",
+      "advisor": "operator",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Unsorted: plainly the operator's. Whether a subject-scoped grant admits a parent query is the authority model of spec:command.actor-and-scope [design/specs/command/actor-and-scope.sdp.md:64,67], and the register gives command.actor-and-scope and command.tenancy-and-authority to the operator.",
+      "reason": "The sorting advisor found it another's: subject-scoped query grants belong to the authority model",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -434,9 +450,10 @@
       "provisionalReading": "From S2, each provisional reading the S2 code now rests on:",
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [],
       "class": null,
-      "reason": "Not a decision: the heading of owner queue item 00 (design/STATE.md:224); its bullets are OD-013 to OD-022.",
+      "reason": "This is the heading of an owner queue item, not a decision of its own.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -484,6 +501,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, one part is the owner's: E-15's open question reads Sc L2-9 for the owner, the production-configuration run as the scenarios routed to the production composition, and keeps evidence records in the repository [design/specs/platform/native-harness.sdp.md:25]; the layout itself, example/ with the linked package.json, is tooling and would be tactical alone.",
       "lean": {
@@ -524,6 +542,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature and the order of steps: the doc says live update and rebuild share one projection and fixes no shape [design/specs/application/projection-contract.sdp.md:33]; an edit to one Spec and two files takes it back.",
       "lean": {
@@ -571,6 +590,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: a uniqueness check on declaration names changes no doc decision and an edit takes it back; the owner queue states the gap [design/STATE.md:228], a pointer.",
       "lean": {
@@ -601,9 +621,15 @@
       "provisionalReading": "A context query takes `tenantId` and no `scope`; no client hook crosses the component boundary, although the Convex components page recommends the helper hook; a read-model list keeps the built-in `paginate`, whose row cap is advice on a pinned page.",
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-026",
+        "OD-076",
+        "OD-108",
+        "OD-109"
+      ],
       "class": null,
-      "reason": "Plainly convex's and operator's, and the same as other rows: the one tenantId argument is OD-026 (operator), the hook and the component boundary are OD-108 and OD-109 (convex), the built-in paginate is OD-076 (domain).",
+      "reason": "The same decision is carried by OD-026, OD-076, OD-108, OD-109.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -649,6 +675,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, a term of `CONTEXT.md`: `CONTEXT.md:55` defines rejection as a command's outcome and the query Specs use it for a query, and a field named for a command carries a query's name; the owner queue lists both as a gap in the language [design/STATE.md:236], a pointer. The shape and the two codes are mechanism, so the fork gives them as the lean.",
       "lean": {
@@ -682,6 +709,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: a bound and its number, pinned in one Spec entry and one constant, taken back by an edit [design/specs/context/persistence-adapter.sdp.md:93; src/context/adapter.ts:101].",
       "lean": {
@@ -741,6 +769,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: the example domain's terms, which the doc leaves open at E-46 and which an edit takes back [design/specs/application/orders-inventory-example.sdp.md:27; design/README.md:225]; built in S2 and passing at the native tier per STATE.md's record, a pointer [design/STATE.md:67]. Doubt: the summary's shape is a read model, the domain advisor's subject.",
       "lean": {
@@ -780,6 +809,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the order of steps: the reading is built as [design/specs/application/projection-contract.sdp.md:48] and [design/specs/application/projection-contract.sdp.md:49] state it, the pure and `convex-test` tiers pass as a whole at 5bb227e (438 tests), the test that binds these lines not identified by me; an edit to one line takes it back.",
       "lean": {
@@ -811,10 +841,11 @@
       ],
       "provisionalReading": null,
       "blocks": null,
-      "advisor": "product",
+      "advisor": "convex",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Plainly convex's (platform.native-harness, E-15, per the advisor table) and the same as OD-007 and OD-013.",
+      "reason": "The sorting advisor found it another's: the native function list and concurrency observation belong to the native harness",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -843,6 +874,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: no word for a parent's read, a context's read, the first activation or a refused function's name, rejection used for a query, projection without its per-entity name, three fixture names unlisted (design/STATE.md:236); the mechanism behind the query's name in commandType is OD-017 (domain) and OD-110 (convex), and only the word is here.",
       "lean": {
@@ -874,9 +906,10 @@
       "provisionalReading": "From S1, each a provisional reading that the code now rests on:",
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [],
       "class": null,
-      "reason": "Not a decision: the heading of owner queue item 0 (design/STATE.md:237); its bullets are OD-024 to OD-030.",
+      "reason": "This is the heading of an owner queue item, not a decision of its own.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -905,6 +938,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, ready stated on a Spec is not taken back by an edit, and AGENTS.md:13 gives the statement to the owner alone.",
       "lean": {
@@ -945,6 +979,7 @@
       "blocks": "S4",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Owner tests 2 and 5: who holds the root of authority in a tenant is a promise to an adopter and trades safety against ease of adoption, and the corpus holds no evidence on which weighs more; doubt stated, because the mechanism beneath it, plain helpers and a composition's internal mutations, is delegated-shaped.",
       "lean": {
@@ -986,6 +1021,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a signature; the doc's Law 11 and D11 name the tenant and no more, and `CONTEXT.md` already defines tenant scope as the tenant named, so no owner test holds.",
       "lean": {
@@ -1031,6 +1067,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: F11 is Documented in the doc and the pinned backend answered otherwise [design/specs/facts/f11-components-have-no-ctx-auth.sdp.md:11,21]; which the fact follows is the doc against a probe, and only the owner resolves it.",
       "lean": {
@@ -1103,6 +1140,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, settling it edits the doc: [design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md:33] says Probe 1 showed `ConvexHttpClient` is a client the guarantee does not reach and that whether its callers join D6's list [design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md:42] is the owner's ruling.",
       "lean": {
@@ -1133,6 +1171,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: operation, command, subject, actor and duplicate each against another word, and whether CONTEXT.md or spec:platform.vocabulary leads (design/STATE.md:243); receipt and generation are OD-139 and OD-140 and are not decided twice here.",
       "lean": {
@@ -1174,6 +1213,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: a harness mechanism that stands in for trusted server code, kept out of the production composition by a lint [design/specs/platform/native-harness.sdp.md:87,91]; it changes no promise of the platform and an edit removes it. Doubt: inside the fixture it lets a client do what tenancy refuses a client, the operator's subject.",
       "lean": {
@@ -1204,6 +1244,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: ready stated on a Spec is the owner's word and nothing in the repository takes it back.",
       "lean": {
@@ -1250,6 +1291,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: the production half pins an adopter's auth.config.ts to a customJwt provider whose keys the environment names, a promise to an adopter and a trade of testability against the provider an adopter may choose [design/specs/platform/native-harness.sdp.md:24,68]; the fixture issuer half alone would be delegated.",
       "lean": {
@@ -1294,6 +1336,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: a rule of proof the doc leaves open, which changes nothing of the platform and is taken back by an edit to one Spec [design/specs/facts/probe-plan.sdp.md:43].",
       "lean": {
@@ -1334,9 +1377,13 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-027",
+        "OD-028"
+      ],
       "class": null,
-      "reason": "Unsorted: the F11 half is the same decision as OD-027, and the D6 half, whether a caller of ConvexHttpClient must supply a request key after Probe 1 [design/specs/facts/probe-plan.sdp.md:38], is D6, the domain advisor's by the register.",
+      "reason": "The same decision is carried by OD-027, OD-028.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1364,6 +1411,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, settling it edits the doc, which only the owner does; the list of the eleven places sits in S0 reports outside the repository (design/STATE.md:251) and on the fact Specs, and two of the places are convex's rows OD-034 and OD-146, so convex should write the fork.",
       "lean": {
@@ -1408,6 +1456,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, money: a hosted deployment is the owner's account, and the quota half cannot run on a local backend [design/specs/facts/probe-plan.sdp.md:39]. Doubt: it is a need more than a decision; the decision it serves is OD-063.",
       "lean": {
@@ -1451,9 +1500,10 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [],
       "class": null,
-      "reason": "Not a decision: a pointer to every row loaded from the Specs' open questions, PLAN.md 11 and the README's three product decisions (design/STATE.md:253), each of which is its own row.",
+      "reason": "This is a pointer to rows already loaded, not a decision of its own.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1483,9 +1533,13 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "convex",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-057",
+        "OD-120"
+      ],
       "class": null,
-      "reason": "Unsorted: not a decision but the status of two probes; Probe 6 is OD-057 and Probe 7 is OD-120.",
+      "reason": "The same decision is carried by OD-057, OD-120.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1515,9 +1569,10 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [],
       "class": null,
-      "reason": "Not a decision: the heading of owner queue item 10 (design/STATE.md:255); its bullets are OD-040 to OD-044.",
+      "reason": "This is the heading of an owner queue item, not a decision of its own.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1546,6 +1601,7 @@
       "blocks": "L3",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, an extension whose alternative loses on a documented decision: D6's list of receipted callers [design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md:42] already covers any caller that is not a Convex client; an edit to one Spec line takes it back.",
       "lean": {
@@ -1584,6 +1640,7 @@
       "blocks": "S5",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, goes against a decision of the doc: [design/specs/decisions/d03-events-only-source-of-next-state.sdp.md:35] says commands load current state and never replay history, and [design/specs/context/journal.sdp.md:45] lets `migrate` read the events since the last baseline when the adapter runs it on load.",
       "lean": {
@@ -1612,10 +1669,11 @@
       "cites": [],
       "provisionalReading": null,
       "blocks": "S5",
-      "advisor": "product",
+      "advisor": "operator",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Plainly operator's (application.restore): OD-082 carries E-42 and the restore override policy is also a part of OD-045.",
+      "reason": "The sorting advisor found it another's: restore overrides and drill cadence belong to restore policy",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1645,6 +1703,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "tactical",
       "reason": "Rule 2, it changes nothing a Spec promises: the marker is a rule of how a Spec is written (design/PLAN.md section 6.5) and the bullets' content stands with or without it.",
       "lean": {
@@ -1677,10 +1736,11 @@
       ],
       "provisionalReading": null,
       "blocks": "L3",
-      "advisor": "domain",
+      "advisor": "convex",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Left unsorted: plainly the convex advisor's. The question is whether Convex documents a commit timestamp that increases in commit order, a Convex fact to be cited from the docs or the pinned package; only once it is settled does D2's premise become a question of the doc, which is the owner's.",
+      "reason": "The sorting advisor found it another's: commit-order timestamps are a Convex fact",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1709,10 +1769,11 @@
       "cites": [],
       "provisionalReading": null,
       "blocks": "S4",
-      "advisor": "product",
+      "advisor": "operator",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Plainly operator's: the grant bootstrap is OD-025, the restore override is OD-082 and OD-042, history deletion is OD-136 (mine); tenant creation during a scan and the acceptable length of a write pause have no row I found; the main thread moves it to operator with those two parts named.",
+      "reason": "The sorting advisor found it another's: tenant enumeration and write-pause duration belong to operations",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -1741,6 +1802,7 @@
       "blocks": "S3",
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction: the largest order the platform promises an adopter and the targets it holds itself to, and OQ3 is the doc's own question (design/README.md:247); the maximum is also half of OD-123 (domain), which the number ruled here settles for both; the targets have no other row.",
       "lean": {
@@ -1770,6 +1832,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, said in public: the paths are in a public repository's history, which an edit does not take back, and STATE.md:263 says the section is the owner's; nearer the owner when unsure, since the edit itself is layout.",
       "lean": null,
@@ -1796,6 +1859,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, a licence; package.json:215 lists LICENSE under files and the root holds no such file, so a publish today ships none; the lens records what a licence text says and leans on none.",
       "lean": null,
@@ -1822,6 +1886,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "tactical",
       "reason": "Rule 2, how sessions run changes nothing a Spec promises, and the owner's word of 2026-10-02 sends tactical things to agents (design/STATE.md:206); the proposals sit in the orchestration guide outside the repository, which the protocol keeps an advisor from, so the main thread takes them as numbered tactical decisions.",
       "lean": null,
@@ -1852,6 +1917,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, scope: activating a Layer 6 capability is what is in scope, and D18 makes the trigger the owner's activation record (design/specs/advanced/trigger-table.sdp.md:14,18).",
       "lean": {
@@ -1885,6 +1951,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, scope: activating a Layer 6 capability is what is in scope, and D18 makes the trigger the owner's activation record (design/specs/advanced/trigger-table.sdp.md:14,18).",
       "lean": {
@@ -1918,6 +1985,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, scope: activating a Layer 6 capability is what is in scope, and D18 makes the trigger the owner's activation record (design/specs/advanced/trigger-table.sdp.md:14,18).",
       "lean": {
@@ -1951,6 +2019,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, scope: which of the twelve capabilities is ever installed is what is in scope, and the Spec says a possible future need is not a trigger (design/specs/advanced/trigger-table.sdp.md:14,22).",
       "lean": {
@@ -1984,6 +2053,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, scope: whether the agents layer is built is what the platform is for and promises, and D17 defers it to a trigger (design/specs/agents/agent-runs.sdp.md:36).",
       "lean": {
@@ -2038,6 +2108,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ2 and product direction: whether the product needs a record of refused commands for audit or agent proposals (design/specs/command/outcome-boundary.sdp.md:41, design/specs/decisions/d07-rejections-thrown-not-stored.sdp.md:31); OD-073 (domain, E-44) decides the per-command policy of keeping a refused request as a fact, which is not decided again here.",
       "lean": {
@@ -2070,6 +2141,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, scope: the budget records belong to the agents layer, which D17 defers to a trigger (design/specs/agents/budget-accounting.sdp.md:23); the same trigger as OD-054.",
       "lean": {
@@ -2126,6 +2198,7 @@
       "blocks": "S4",
       "advisor": "convex",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which Convex mechanism drives a backfill batch, settled by a probe and taken back by an edit [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:22; design/README.md:219].",
       "lean": {
@@ -2163,6 +2236,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of a table, its indexes and a declaration; the Spec defers them to the build on the process trigger [design/specs/processes/approvals.sdp.md:22], so a trigger comes first. Whether the trigger has fired is read under D16, the product advisor's decision.",
       "lean": {
@@ -2195,6 +2269,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, signatures and a record's shape; the Spec defers them to the build until the trigger fires [design/specs/processes/start-checkout-example.sdp.md:26]. Whether the trigger has fired is read under D16, the product advisor's decision.",
       "lean": {
@@ -2218,7 +2293,7 @@
         },
         {
           "kind": "productDecision",
-          "ref": "2",
+          "ref": "product/1",
           "file": "design/README.md",
           "line": 270
         }
@@ -2233,6 +2308,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a policy of the deployment and not a promise of the platform: the Spec records it per deployment and the platform fixes none of the three (design/specs/processes/start-checkout-example.sdp.md:27); doubt: design/README.md:270 lists it as a product decision, and the build it is recorded by waits on the D16 trigger of OD-059 (domain).",
       "lean": {
@@ -2265,6 +2341,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of a table, step signatures and a wait mechanism; the Spec defers them to the build until the trigger fires [design/specs/processes/workflow-processes.sdp.md:37]. Whether the trigger has fired is read under D16, the product advisor's decision.",
       "lean": {
@@ -2288,7 +2365,7 @@
         },
         {
           "kind": "productDecision",
-          "ref": "3",
+          "ref": "product/2",
           "file": "design/README.md",
           "line": 271
         }
@@ -2303,6 +2380,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a per-release choice of the deployment and not a promise of the platform (design/specs/processes/workflow-processes.sdp.md:38); doubt: design/README.md:271 lists it as a product decision, and the build waits on the D16 trigger of OD-061 (domain).",
       "lean": {
@@ -2364,6 +2442,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: OQ1 is the doc's open question and D2 assumes a component per context [design/specs/context/context-component.sdp.md:49; design/PLAN.md:689]; answering it edits the doc.",
       "lean": {
@@ -2418,6 +2497,7 @@
       "blocks": "S3",
       "advisor": "convex",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction: the doc calls the largest order a product decision [design/specs/application/first-experiment.sdp.md:60,109].",
       "lean": {
@@ -2457,6 +2537,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: how a measurement is taken, which changes nothing the platform promises and an edit takes back [design/specs/application/first-experiment.sdp.md:62].",
       "lean": {
@@ -2495,6 +2576,7 @@
       "blocks": "S3",
       "advisor": "convex",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: what a command reads and whether the command path changes for it, settled by a measurement on the native backend [design/specs/application/first-experiment.sdp.md:63].",
       "lean": {
@@ -2537,9 +2619,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-032",
+        "OD-013",
+        "OD-019",
+        "OD-025",
+        "OD-010"
+      ],
       "class": null,
-      "reason": "Unsorted: a bundle of other rows' decisions. E-13 is OD-032, E-15 is OD-013, E-46's ReceiveStock is OD-019, a tenant's first grant with admin access (E-37) is the operator's by the register, and the first activation with admin access (E-8) belongs to spec:application.generation-registry, the domain advisor's.",
+      "reason": "The same decision is carried by OD-032, OD-013, OD-019, OD-025, OD-010.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -2586,6 +2675,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, trades one value for another with no evidence which weighs more: a third point read and write per read model per command for 7 days against an instant rollback, and whether the product needs instant rollback is product direction [design/specs/application/generation-registry.sdp.md:33]. The tables, the seven states and the period are mechanism and go in the fork as the lean.",
       "lean": {
@@ -2623,6 +2713,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, goes against a law of the doc and is product direction: the registry's two indexes lead with the read model and not the tenant, a recorded deviation from Law 11's index rule, and whether a per-tenant rebuild is a product need is the owner's [design/specs/application/generation-registry.sdp.md:34]. The fork gives the deployment-wide generation as the lean.",
       "lean": {
@@ -2654,10 +2745,11 @@
       ],
       "provisionalReading": null,
       "blocks": null,
-      "advisor": "domain",
+      "advisor": "operator",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Left unsorted: plainly the operator advisor's. E-42 is owned first by `application.restore` [design/README.md:221], and the question is what a restore's inventory proves about a stranded generation; the registry is only where the fence is stored.",
+      "reason": "The sorting advisor found it another's: the restore inventory proves whether a generation is stranded",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -2687,6 +2779,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of a table and which row holds a cursor; the doc binds batching to the component and fixes no checkpoint [design/specs/application/generation-registry.sdp.md:37]; an edit to one Spec and one file takes it back. Doubt: the lean goes against the built reading of [design/specs/application/generation-registry.sdp.md:47] on a contention judgment that only the native tier shows, and S4's guidance [design/STATE.md:160], a pointer, asks for progress away from rows every command reads.",
       "lean": {
@@ -2728,6 +2821,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism and a bound's place: the doc says reject or a separate import command and names no record [design/specs/application/parent-use-cases.sdp.md:55]; an edit to one Spec takes it back.",
       "lean": {
@@ -2771,6 +2865,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: the doc itself makes keeping a refused request as a fact a per-command policy [design/specs/application/parent-use-cases.sdp.md:56], so a per-call policy inside the executor goes against no decision; an edit to one Spec and one helper takes it back. Doubt: `reject` discards events a context recorded as its business failure, which D4 says belong in history, so the owner may want this one.",
       "lean": {
@@ -2806,6 +2901,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the order of steps: the doc fixes no order for a use case's context calls [design/specs/application/parent-use-cases.sdp.md:57], and the mutation rolls every earlier call back; an edit to one line takes it back.",
       "lean": {
@@ -2849,6 +2945,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, signatures and the shape of a row: the doc gives no signature, row shape or input for the three forms [design/specs/application/projection-contract.sdp.md:33]; an edit to one Spec and the read-model files takes it back. The order in which the forms are bound is the main thread's [design/STATE.md:160], a pointer.",
       "lean": {
@@ -2881,10 +2978,11 @@
       ],
       "provisionalReading": null,
       "blocks": null,
-      "advisor": "domain",
+      "advisor": "convex",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Left unsorted: plainly the convex advisor's. The question is what the built-in `.paginate` guarantees once a page has an end cursor, a Convex fact Probe 5 showed [design/specs/application/read-models.sdp.md:49], and E-24 is owned first by `context.queries` [design/README.md:206].",
+      "reason": "The sorting advisor found it another's: pinned-page bounds are a Convex pagination guarantee",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -2914,10 +3012,11 @@
       ],
       "provisionalReading": "Extension E-24, as it reaches read models: a list over a parent read-model table calls the built-in `.paginate` with the options of `boundedPage`, a row cap of twice the item cap, and returns through `paginationResultValidator` with its rows mapped by `readModelView`, and a client pages every list by an explicit cursor pair with no hook; these are options taken here and the owner has not ruled (E-24, S4, Probe 5, D8)",
       "blocks": null,
-      "advisor": "domain",
+      "advisor": "convex",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Left unsorted: plainly the convex advisor's. E-24 is owned first by `context.queries` [design/README.md:206], and the options are `.paginate`'s, `paginationResultValidator` and the client hook, Convex mechanisms, not the read model's shape.",
+      "reason": "The sorting advisor found it another's: pagination validators and client hooks are Convex mechanisms",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -2970,6 +3069,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, settling it edits the doc: it is OQ1, an open question of the doc [design/specs/application/read-models.sdp.md:52], and Probe 3's quota half needs a hosted deployment [design/STATE.md:252], a pointer; the measurement is the convex advisor's lane.",
       "lean": {
@@ -3009,6 +3109,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number: the doc gives no bound [design/specs/application/read-models.sdp.md:53], and the Spec binds both numbers to the first experiment's measurement, so a measurement comes first; [src/read-model/write.ts:21] holds 4 today.",
       "lean": {
@@ -3055,6 +3156,7 @@
       "blocks": "S4",
       "advisor": "domain",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number and which mechanism drives a batch: the doc gives no batch size [design/specs/application/rebuild.sdp.md:58], and the Spec itself leaves the component's reach to Probe 6, so a probe comes first.",
       "lean": {
@@ -3090,6 +3192,7 @@
       "blocks": "S5",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: which mechanism the restore needs for the contexts' tables turns on a probed fact; owner test 1 would hold only if the probe showed a snapshot that leaves component tables behind, which would set F12 against the doc; the probe's own design is the convex advisor's.",
       "lean": {
@@ -3131,6 +3234,7 @@
       "blocks": "S5",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the order of steps, a record's shape and a Convex mechanism, the environment variable, inside what D19 rules; the override policy and the drill's cadence are the owner's and are not in this row's question.",
       "lean": {
@@ -3169,6 +3273,7 @@
       "blocks": "S5",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a bound and its number; `blocks` corrected from none to S5, where [design/STATE.md:129] places restore.",
       "lean": {
@@ -3209,6 +3314,7 @@
       "blocks": "S4",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a Convex mechanism, a table shape and a refusal code inside what D9 and D4 rule; the one trade-off, sources against the read model as the closed scope, has a documented reason on its side; the acceptable length of a pause is the owner's policy and not this row.",
       "lean": {
@@ -3264,6 +3370,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a signature, the `Authority` shape, and a name inside the language as it is ruled, since `worker` and `system` are both in the closed namespace union of [CONTEXT.md:135].",
       "lean": {
@@ -3299,6 +3406,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a signature and a mechanism inside Law 5; built at [src/command/authority.ts:131] and tested at the `convex-test` tier in [tests/simulator/read-model.test.ts:674].",
       "lean": {
@@ -3341,6 +3449,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism with the alternative losing on a documented fact: the dispatcher form loses the compiled check Sc L2-4 exists to keep [design/specs/command/command-declaration.sdp.md:34]; [src/command/declaration.ts:95] and [src/command/declaration.ts:134] are built and the pure and `convex-test` tiers pass at 5bb227e; an edit takes it back.",
       "lean": {
@@ -3387,6 +3496,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature: the eight added fields each serve a cited rule of another Spec [design/specs/command/command-declaration.sdp.md:36], and an edit to one Spec and one file takes any of them back.",
       "lean": {
@@ -3428,6 +3538,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature: the doc names what a command returns and no wire shape [design/specs/command/command-pipeline.sdp.md:59]; `result` null on a replay follows D6's thin receipts [design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md:51]; an edit takes it back.",
       "lean": {
@@ -3470,6 +3581,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism and the order of steps: the doc says what the operation ID ties together and not how it is minted [design/specs/command/command-pipeline.sdp.md:60]; an edit to one Spec and the pipeline takes it back.",
       "lean": {
@@ -3511,6 +3623,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: the doc places admission and names no mechanism [design/specs/command/command-pipeline.sdp.md:61]; an edit to one Spec and one file takes it back; bounding refused traffic needs D7's dispatcher form and would be the owner's.",
       "lean": {
@@ -3542,10 +3655,11 @@
       ],
       "provisionalReading": null,
       "blocks": null,
-      "advisor": "domain",
+      "advisor": "convex",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
-      "reason": "Left unsorted: plainly the convex advisor's. The question is whether a context call should pass `ctx.runMutation`'s `transactionLimits` option to reserve room [design/specs/command/command-pipeline.sdp.md:63], a Convex mechanism under F13 and Probe 4.",
+      "reason": "The sorting advisor found it another's: transactionLimits is a Convex mechanism",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -3580,6 +3694,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the order of steps: the doc says essential read models are updated inside the command and not from what or in what order [design/specs/command/command-pipeline.sdp.md:64]; writing from the state the command committed is the read model's definition at `CONTEXT.md:160`; an edit takes it back.",
       "lean": {
@@ -3615,6 +3730,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number: the doc says events stay small and names no number [design/specs/command/command-pipeline.sdp.md:65]; the numbers are OD-105's and OD-095's, and an edit to `limitCallText` takes them back.",
       "lean": {
@@ -3656,6 +3772,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number: the doc says expiry is explicit and names no number [design/specs/command/idempotency-and-receipts.sdp.md:44]; the default is per command and a declaration overrides it; an edit takes it back.",
       "lean": {
@@ -3696,6 +3813,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: the doc says what the fingerprint covers and not how it is computed [design/specs/command/idempotency-and-receipts.sdp.md:45]; a change to the canonical form is a contract version bump, so an edit takes it back.",
       "lean": {
@@ -3736,6 +3854,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, an extension whose alternative loses on a documented decision: an idempotent success needs a receipt on every UI create, and D6 chose no receipt on UI commands [design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md:38]; an edit takes it back.",
       "lean": {
@@ -3776,6 +3895,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature and names inside the code: the doc fixes a structured `ConvexError` and no shape or code list [design/specs/command/outcome-boundary.sdp.md:38]; the one part that rules on a term, a query's refusal in `commandType`, is OD-017's row.",
       "lean": {
@@ -3816,6 +3936,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a name inside the code: the doc does not say how a refused writer is answered [design/specs/command/outcome-boundary.sdp.md:40], and a transient code stores nothing, as `CONTEXT.md:64` defines a transient refusal; an edit takes it back.",
       "lean": {
@@ -3855,6 +3976,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of a table, its indexes and a default number: the doc fixes what a receipt holds [design/specs/command/receipt-table.sdp.md:28]; the Spec calls the expiry number a product decision, but the rule makes a bound with a number delegated and the declaration overrides it, so the doubt is said here.",
       "lean": {
@@ -3894,6 +4016,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a Convex mechanism, `ctx.auth` to actor, and a table in the parent, inside what D11 rules; built and tested at the `convex-test` tier.",
       "lean": {
@@ -3943,6 +4066,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: a bound and its number, taken back by an edit [design/specs/constraints/events-stay-small.sdp.md:26]; the baseline exemption is E-25, the journal's, and this lean takes it as ruled there.",
       "lean": {
@@ -3988,6 +4112,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which Convex mechanism registers an operation, a signature and bounds with their numbers, built and taken back by an edit [design/specs/context/context-component.sdp.md:51].",
       "lean": {
@@ -4032,6 +4157,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature: the doc lists the fifteen fields and their meaning and no validator shapes [design/specs/context/event-envelope.sdp.md:32]; an edit to one Spec and one file takes it back.",
       "lean": {
@@ -4067,6 +4193,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number: the doc says events stay small and gives no number [design/specs/context/event-envelope.sdp.md:33]; the fold bound of the journal moves with these, and an edit to one Spec takes them back.",
       "lean": {
@@ -4114,6 +4241,7 @@
       "blocks": "S5",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a representation, helper names and bounds the doc leaves open [design/specs/context/journal.sdp.md:45]; the one part that goes against the doc, `migrate` reading events on load against D3, is OD-041's row, and the version bump on a reviewed version rests on Sc L1-10 as the Spec cites it. Doubt: nearer the owner would be `owner`, because the fork for OD-041 would then carry this reading too.",
       "lean": {
@@ -4155,6 +4283,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: request and result types, the runner, expected-version semantics and byte-derived bounds [design/specs/context/persistence-adapter.sdp.md:43]. Doubt: step 3a's on-load migration reads history against D3, which the owner queue holds, a pointer [design/STATE.md:257], and E-25 is the journal's, the domain advisor's.",
       "lean": {
@@ -4203,9 +4332,12 @@
       "provisionalReading": "Probe 5 showed on the pinned backend with `convex-helpers` 0.1.124 that the parent query stays reactive, that pages pinned by their end cursors stay contiguous, that a capped page crosses the boundary as `SplitRequired` with its `splitCursor`, and that the `usePaginatedQuery` hook of `convex-helpers/react` then shows 40 of 45 rows; this design uses no hook across the boundary, and the examples are rerun when either pin moves (Probe 5, F15, S4, D8, E-24)",
       "blocks": null,
       "advisor": "convex",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-109"
+      ],
       "class": null,
-      "reason": "Unsorted: the same decision as OD-109; no hook across the boundary and paging by a cursor pair are rules of E-24 [design/specs/context/queries.sdp.md:36,54], and the rest of the row is a probe's result and the rerun at a pin move, not a decision.",
+      "reason": "The same decision is carried by OD-109.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -4243,6 +4375,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: signatures, a mechanism and bounds with their numbers, built and taken back by an edit [design/specs/context/queries.sdp.md:36]. The tenantId-only scope part follows the owner queue's own row on it, the operator's.",
       "lean": {
@@ -4282,6 +4415,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: it rules on a term, whether the language gains a word for the function that refused or the field is renamed [design/specs/context/queries.sdp.md:37].",
       "lean": {
@@ -4321,6 +4455,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: the shape of a table and its indexes, built and taken back by an edit before a release [design/specs/context/tables.sdp.md:29].",
       "lean": {
@@ -4378,6 +4513,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature: the doc names the gap and both fixes [design/specs/decisions/d03-events-only-source-of-next-state.sdp.md:26]; `initial()` is built at [src/kernel/decider.ts:30] and [src/kernel/decider.ts:61], the pure tier passes at 5bb227e, and an edit takes it back.",
       "lean": {
@@ -4429,6 +4565,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: the doc itself prefers one document per stream and the derived mapping in one place per context [design/specs/decisions/d03-events-only-source-of-next-state.sdp.md:27]; the budget number under OQ3 is OD-123's row, the owner's.",
       "lean": {
@@ -4472,6 +4609,7 @@
       "blocks": "S5",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 1: if Probe 7 lets the do-nothing option stand for the durable profile, D13's chosen option changes, which edits the doc, and [design/specs/obligations/do-nothing-check.sdp.md:45] has the owner restate readiness after the probe.",
       "lean": {
@@ -4515,6 +4653,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: how much the schedule rebuild covers turns on a probed fact; `blocks` corrected from S5 to L3 because [design/specs/application/restore.sdp.md:55] gives the Workpool and Workflow half of Probe 7 to Layer 3 and [design/STATE.md:129] gives S5 the transactional part only.",
       "lean": {
@@ -4555,6 +4694,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: signatures, and `none` names the declared absence of a safe policy that D14's needs-attention path already describes; no owner test holds.",
       "lean": {
@@ -4604,6 +4744,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: bounds and their numbers plus a key derivation; waiting because [design/specs/effects/claim-call-settle.sdp.md:27] marks every number provisional until the first experiment.",
       "lean": {
@@ -4653,6 +4794,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a reading within the six states the doc gives, where [design/specs/decisions/d13-deferred-work-is-an-obligation.sdp.md:48] makes cancelled mean the effect will not happen and no call is in flight; doubt stated, because the alternative the Spec names, a seventh state, would edit the doc and is the owner's if the owner names it.",
       "lean": {
@@ -4708,6 +4850,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 1: whether Layer 3 Specs written before the first experiment keep to the doc's own method rule is a reading of the doc only the owner gives, and [design/PLAN.md:694] asks the owner to confirm it; doubt stated, because it could be tactical, changing nothing a Spec promises, and every number it covers is a row of its own.",
       "lean": {
@@ -4758,6 +4901,7 @@
       "blocks": "S5",
       "advisor": "convex",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: a fact's status and its probe, settled by a probe [design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:21]; the ruling the probe serves, D13's do-nothing check, is the operator's by the register.",
       "lean": {
@@ -4808,6 +4952,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, signatures: the kernel's generics, `DecisionContext`, `DomainEvent` and the helpers are shapes the doc does not fix [design/specs/kernel/decider-contract.sdp.md:29]; the kernel is built in `src/kernel` and the pure tier passes at 5bb227e; an edit takes it back.",
       "lean": {
@@ -4848,6 +4993,7 @@
       "blocks": null,
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, signatures and names inside the code: the doc names the four outcomes and no TypeScript shape [design/specs/kernel/outcome-model.sdp.md:35]; the three reserved codes are names in the code and not terms of `CONTEXT.md`, and an edit takes them back. Doubt: a rejection code is a name an adopter reads.",
       "lean": {
@@ -4887,6 +5033,7 @@
       "blocks": "S3",
       "advisor": "domain",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction and an open question of the doc: the largest order the placement command supports is OQ3 [design/specs/kernel/state-document-mapping.sdp.md:28], and S3 needs it before its benchmarks [design/STATE.md:139], a pointer; the 1, 10 and 100-line measurement already exists [design/STATE.md:158], a pointer.",
       "lean": {
@@ -4931,6 +5078,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: bounds and their numbers, and where a subscription is declared, which D12's declaration fields decide; waiting because [design/specs/obligations/fan-out-and-chains.sdp.md:20] marks the numbers provisional until the first experiment.",
       "lean": {
@@ -4965,6 +5113,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the order of steps and who causes each, within the six states D13 gives; no owner test holds.",
       "lean": {
@@ -5000,6 +5149,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: bounds and their numbers, and the rule that a maintenance refusal counts nothing; waiting because [design/specs/obligations/local-reaction-wrapper.sdp.md:34] marks every number provisional until the first experiment.",
       "lean": {
@@ -5041,6 +5191,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: which Convex mechanism, a parent library against a component, where the nested mutation D7 allows and the parent's actor types decide; no owner test holds.",
       "lean": {
@@ -5083,6 +5234,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: signatures and a transaction shape for the five operations D13 names; whether an operator may force a cancel under a live lease is a policy and the owner's, outside this row.",
       "lean": {
@@ -5129,6 +5281,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the shape of a table, an index set and a bound; the two added attention reasons name what D13 describes without naming and edit nothing in the doc.",
       "lean": {
@@ -5176,6 +5329,7 @@
       "blocks": null,
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the shape of an index; the doc's Law 11 [docs/convex-transactional-domain-platform-decisions.md:59] names the tenant on every command and query and says nothing of index order, and the index-leads rule is the rubric's [design/PLAN.md:613] and the Spec's [design/specs/command/tenancy-and-authority.sdp.md:44], so no owner test holds.",
       "lean": {
@@ -5217,6 +5371,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Owner tests 2 and 5: the 30-day floor on keeping completed work is a retention policy the platform promises an adopter, which [design/specs/operations/baseline-operations.sdp.md:43] names as the owner's for receipts, audit and diagnostics; the compaction rule and the 500-row batch are delegated and the fork gives them as the lean.",
       "lean": {
@@ -5260,6 +5415,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: a Convex mechanism, the environment variable, and the order of steps inside what D19 rules; no owner test holds.",
       "lean": {
@@ -5306,6 +5462,7 @@
       "blocks": "L3",
       "advisor": "operator",
       "status": "waiting",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: bounds and their numbers; waiting because the candidate bound rests on a nested-call cost that [design/specs/facts/f04-nested-calls-cost-more-than-helpers.sdp.md:11] carries as size unknown.",
       "lean": {
@@ -5341,9 +5498,12 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "operator",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-133"
+      ],
       "class": null,
-      "reason": "Unsorted: the same decision as OD-133, whose E-52 numbers include the 100 candidate bound and whose `settles` is this row's probe.",
+      "reason": "The same decision is carried by OD-133.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -5379,6 +5539,7 @@
       "blocks": "S4",
       "advisor": "operator",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the shape of two tables, an index set and a bounded record inside what D19 rules; the retention periods are the owner's by the Spec's own next question and are not this row.",
       "lean": {
@@ -5407,7 +5568,7 @@
         },
         {
           "kind": "productDecision",
-          "ref": "1",
+          "ref": "product/3",
           "file": "design/README.md",
           "line": 269
         }
@@ -5422,6 +5583,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction and a trade of safety against cost with no evidence on the weights, and the Spec itself says the content is the owner's (design/specs/operations/baseline-operations.sdp.md:43); the history-deletion semantics are also a part of OD-045.",
       "lean": {
@@ -5461,6 +5623,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, an extension whose alternative, a compile step inside the native tier, loses on a documented fact: the native run needs a backend and the check needs none (design/specs/platform/acceptance-contract.sdp.md:24); the owner's part, the doc's four tiers and its 'on a native backend', is OD-008 and OD-009 and is held apart.",
       "lean": {
@@ -5504,6 +5667,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ5, which only the owner closes in the doc (design/specs/platform/transactional-domain-platform.sdp.md:44); doubt: the carrier choice itself is mechanical and would be tactical on its own.",
       "lean": {
@@ -5536,6 +5700,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ6 and a term of CONTEXT.md; the code already names receipt for the stored idempotency outcome (design/STATE.md:243, src/command/receipts.ts).",
       "lean": {
@@ -5568,6 +5733,7 @@
       "blocks": null,
       "advisor": "product",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ6 and a term of CONTEXT.md; the code already names generation for a numbered read-model build (design/STATE.md:243).",
       "lean": {
@@ -5599,9 +5765,13 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-139",
+        "OD-140"
+      ],
       "class": null,
-      "reason": "The same decision as OD-139 and OD-140, the two clashes of OQ6.",
+      "reason": "The same decision is carried by OD-139, OD-140.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -5651,6 +5821,7 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: adopting the numbering edits the doc [design/PLAN.md:687].",
       "lean": {
@@ -5683,15 +5854,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
-      "class": null,
-      "reason": "Ruled already: the owner ruled OQ4 on 2026-10-01, the experiment lives in this repository (design/README.md:248, design/STATE.md:116).",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "the owner ruled OQ4",
       "lean": null,
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-01",
+      "ruling": "Ruled by the owner on 2026-10-01: in this repository, beside the design"
     },
     {
       "id": "OD-144",
@@ -5709,9 +5881,12 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
+      "status": "folded",
+      "foldedInto": [
+        "OD-024"
+      ],
       "class": null,
-      "reason": "Ruled in part and the rest is other rows: 'Only the owner states ready on a Spec' is AGENTS.md:13; whether to state it now on the built Specs is OD-024 (mine) and OD-031 (convex).",
+      "reason": "The same decision is carried by OD-024. Its other half is ruled at AGENTS.md line 13: only the owner states `ready` on a Spec or edits the doc.",
       "lean": null,
       "checkedBy": null,
       "fork": null,
@@ -5735,15 +5910,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "unsorted",
-      "class": null,
-      "reason": "Not a decision any more: settled by the Protocol on 2026-10-01, an unbound example below ready no longer warns (design/PLAN.md:693).",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "tactical",
+      "reason": "the Protocol settles it",
       "lean": null,
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "session",
+      "decidedOn": "2026-10-01",
+      "ruling": "Settled by the Protocol on 2026-10-01: an unbound example below `ready` no longer warns, so the trace is kept at no cost."
     },
     {
       "id": "OD-146",
@@ -5766,11 +5942,55 @@
       "blocks": null,
       "advisor": "convex",
       "status": "sorted",
+      "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: whether the doc's status of F16 follows the recheck is an edit of the doc [design/PLAN.md:695; design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:13].",
       "lean": {
         "do": "Keep F16 at rechecked with the page and the day, and the doc's status until the owner edits it."
       },
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-147",
+      "title": "The actor ID bound of 512 bytes and the rejection details bound of 16,384 bytes",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "spec:command.command-pipeline#limitCallText",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 131
+        },
+        {
+          "kind": "specLine",
+          "ref": "spec:command.outcome-boundary#limitErrorData",
+          "file": "design/specs/command/outcome-boundary.sdp.md",
+          "line": 98
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "D2",
+        "D11",
+        "D19",
+        "F13",
+        "E-34",
+        "E-12",
+        "E-5"
+      ],
+      "provisionalReading": "[extension] the text fields a caller sets beside the input and their bounds in UTF-8 bytes, in the order step 1 checks them, each written as the path that `field` carries in the rejection's `details`: `tenantId` 256, `requestKey` 256, `correlationId` 256, `actor.id` 512, `actor.issuer` 256, `actor.onBehalfOf.id` 512, `actor.delegationRef` 256, `causedBy.commandType` 256, `causedBy.tenantId` 256, `causedBy.contextId` 256, `causedBy.eventId` 256, `causedBy.migrationName` 256; an absent field is not checked, a field exactly at its bound passes, and a field one byte longer is rejection `invalidInput` with `details` `{ field, length, limit }`, `length` being the field's UTF-8 byte count and `limit` its bound; the check runs in `runPipeline` for both entries, so the public entry's actor is the one step 2 established and an identity whose `tokenIdentifier` is longer than 512 bytes is rejected with `field` equal to `\"actor.id\"`; 256 is the exported `limitIdLength` and 512 is `limitActorIdLength`, which the command library exports; these bounds and the stream ID's are what `limitEnvelopeBytes` of `spec:context.event-envelope` is derived from (D2, D11, D19, F13, E-34, E-12)",
+      "blocks": null,
+      "advisor": "domain",
+      "status": "unsorted",
+      "foldedInto": [],
+      "class": null,
+      "reason": null,
+      "lean": null,
       "checkedBy": null,
       "fork": null,
       "decidedBy": null,

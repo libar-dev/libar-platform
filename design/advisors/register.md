@@ -67,6 +67,7 @@ An advisor that finds a row plainly another's leaves it unsorted and says so in 
       "blocks": null,
       "advisor": "domain",
       "status": "unsorted",
+      "foldedInto": [],
       "class": null,
       "reason": null,
       "lean": null,
@@ -86,19 +87,20 @@ An advisor that finds a row plainly another's leaves it unsorted and says so in 
 |---|---|---|
 | `id` | `OD-` and three digits, given in source order and never reused | the load |
 | `title` | The first sentence of the first source, cut at 120 characters | the load |
-| `sources` | Where the decision came from, every place once. `kind` is `ownerQueue`, `specQuestion`, `extension`, `planAmbiguity` or `productDecision`. `ref` is the lasting name: `000/3` for the third bullet of owner queue item 000, `<spec id>#<n>` for a Spec's n-th open question in authored order, `E-32`, `11.3` for an ambiguity of `PLAN.md`. `file` and `line` say where it stood at the load. | the load |
+| `sources` | Where the decision came from, every place once. `kind` is `ownerQueue`, `specQuestion`, `extension`, `planAmbiguity`, `productDecision` or `specLine`. `ref` is the lasting name: `000/3` for the third bullet of owner queue item 000, `<spec id>#<n>` for a Spec's n-th open question in authored order, `E-32`, `11.3` for an ambiguity of `PLAN.md`, `product/1`, `product/2` or `product/3` for a product decision, and `<spec id>#<bullet key>` for a named Spec bullet that is not an open question. `file` and `line` say where it stood at the load. | the load |
 | `families` | The Spec families it touches | the load |
 | `cites` | The tokens its sources cite: E, D, F, OQ, Sc, Probe, Law | the load |
 | `provisionalReading` | What the code or the Specs rest on today, word for word from the source, or `null` | the load |
 | `blocks` | The first unit that needs it, or `null` for nothing | the load, and an advisor may correct it with the reason |
-| `advisor` | `convex`, `domain`, `operator` or `product`, by the rule above | the load |
-| `status` | `unsorted`, `sorted`, `waiting` or `decided` | the load, then a patch |
+| `advisor` | `convex`, `domain`, `operator` or `product`, by the rule above | the load; the main thread may reassign it |
+| `status` | `unsorted`, `sorted`, `waiting`, `decided` or `folded` | the load, then a patch |
+| `foldedInto` | A list of existing row ids; empty when the folded row is not a decision at all. Other rows start with an empty list. | the load, then a patch |
 | `class` | `tactical`, `delegated`, `owner` or `null` | an advisor |
-| `reason` | One line: the test of the sorting rule that gave the class | an advisor |
+| `reason` | One line: the test of the sorting rule that gave the class, why the row is folded, or why it was reassigned | an advisor or the main thread |
 | `lean` | `null`, or `{ do, restsOn, against, settles, changes, ifWrong }` as the protocol defines a lean. A sort may fill `do` alone. | an advisor |
 | `checkedBy` | The model that checked the lean's facts, or `null` | the main thread |
 | `fork` | The path of the fork, or `null` | an advisor |
-| `decidedBy` | `session`, `advisor:<slug>` or `owner` | the main thread |
+| `decidedBy` | `session`, `advisor:<slug>` or `owner`; an advisor slug must equal the row's `advisor` | the main thread |
 | `decidedOn` | The date | the main thread |
 | `ruling` | One line: what was ruled. The owner's ruling is in the owner's words. A tactical one names its number in `STATE.md`. | the main thread |
 
@@ -110,10 +112,16 @@ An advisor never writes the file. It writes a patch: a JSON list of rows with `i
 - is `sorted`, `waiting` or `decided` with no `class` and `reason`;
 - is `waiting` with no `lean.settles`;
 - is `decided` with no `decidedBy`, `decidedOn` and `ruling`;
-- is decided by `session` and is not `tactical`, or by an advisor and is not `delegated` with all six parts of the lean and a `checkedBy`;
-- names a `fork` that is not a file.
+- is decided by `session` and is not `tactical`, or by an advisor and is not `delegated` with all six parts of the lean and a `checkedBy`, or the deciding advisor does not equal the row's `advisor`;
+- names a `fork` that is not a file;
+- is `folded` with no `reason`;
+- names a `foldedInto` id that does not exist.
 
 The owner may decide a row of any class.
+
+A `folded` row is a heading, a pointer or the same decision as other rows. It stays in the file, but is left out of every listing except `--id` and `--status folded`; counts include it.
+
+Only the main thread uses `decisions.py reassign <id> <advisor> --reason "..."`. It changes `advisor`, sets `status` to `unsorted`, clears `class`, `reason` and `lean`, then records the supplied reason in `reason`. Other fields stay as they were.
 
 ## What the tool answers
 
@@ -130,5 +138,7 @@ One line for each decision: its id, class, advisor, the unit it blocks, its titl
 | What blocks S4, whoever decides it? | `decisions.py --blocks S4` |
 | What waits for a probe, a measurement, a build or a trigger, and for which? | `decisions.py --waiting` |
 | What is open on one Spec, one family or one E-number? | `decisions.py --spec spec:application.rebuild`, `--family command`, `--cites E-32` |
+| Rows folded out of the decision listings | `decisions.py --status folded` |
+| Reassign a row, for the main thread only | `decisions.py reassign <id> <advisor> --reason "..."` |
 | One row in full | `decisions.py --id OD-014` |
 | Merge an advisor's patch | `decisions.py apply <patch>` |

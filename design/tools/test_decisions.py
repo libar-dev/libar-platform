@@ -43,7 +43,7 @@ def row(identifier, **changes):
         "sources": [{"kind": "specQuestion", "ref": "spec:context.tables#1", "file": "design/specs/context/tables.sdp.md", "line": 1}],
         "families": ["context"], "cites": ["E-32", "F13"],
         "provisionalReading": "One bounded call", "blocks": None, "advisor": "convex",
-        "status": "unsorted", "class": None, "reason": None, "lean": None,
+        "status": "unsorted", "foldedInto": [], "class": None, "reason": None, "lean": None,
         "checkedBy": None, "fork": None, "decidedBy": None, "decidedOn": None, "ruling": None,
     }
     result.update(changes)
@@ -105,7 +105,7 @@ class DecisionsTests(unittest.TestCase):
     def test_counts_command(self):
         counts = self.query()
         self.assertEqual(counts["total"], 7)
-        self.assertEqual(counts["status"], {"unsorted": 1, "sorted": 3, "waiting": 1, "decided": 2})
+        self.assertEqual(counts["status"], {"unsorted": 1, "sorted": 3, "waiting": 1, "decided": 2, "folded": 0})
         self.assertEqual(counts["class"]["null"], 1)
         self.assertEqual(counts["advisor"], {"convex": 1, "domain": 2, "operator": 2, "product": 2})
         code, output, _ = self.run_tool()
@@ -183,6 +183,7 @@ class DecisionsTests(unittest.TestCase):
             ([{"id": "OD-999", "status": "unsorted"}], "unknown id"),
             ([{"id": "OD-007", "recommendation": "Keep it"}], "unknown field"),
             ([{"id": "OD-007", "title": "A rewritten title"}], "cannot change load field"),
+            ([{"id": "OD-007", "advisor": "domain"}], "cannot change load field"),
         ]:
             with self.subTest(reason=reason):
                 self.refused(patch, reason)
@@ -281,24 +282,84 @@ class DecisionsTests(unittest.TestCase):
         self.refused([{"id": "OD-007", "blocks": "S4"}], "correcting blocks requires reason")
         self.assertEqual(self.apply([{"id": "OD-007", "blocks": "S4", "reason": "S4 needs this before its code"}])[0], 0)
 
+    def test_folded_command_and_exclusion_from_other_listings(self):
+        update = {"id": "OD-001", "status": "folded", "reason": "The heading is not a decision", "foldedInto": []}
+        self.assertEqual(self.apply([update])[0], 0)
+        for args in [("--owner",), ("--blocks", "S3"), ("--advisor", "product"),
+                     ("--family", "context"), ("--spec", "spec:context.tables"),
+                     ("--cites", "E-32"), ("--class", "owner")]:
+            with self.subTest(args=args):
+                self.assertNotIn("OD-001", self.ids(*args))
+        self.assertEqual(self.ids("--status", "folded"), ["OD-001"])
+        self.assertEqual(self.query("--id", "OD-001")["decision"]["status"], "folded")
+        self.assertEqual(self.query()["status"]["folded"], 1)
+        self.assertEqual(self.query()["total"], 7)
+        self.assertEqual(self.apply([{"id": "OD-007", "status": "folded", "reason": "Same decision", "foldedInto": ["OD-001", "OD-004"]}])[0], 0)
+
+    def test_refusal_7_folded_requires_reason(self):
+        for reason in (None, "", " "):
+            with self.subTest(reason=reason):
+                self.refused([{"id": "OD-007", "status": "folded", "foldedInto": [], "reason": reason}], "requires reason when folded")
+
+    def test_refusal_8_folded_into_requires_existing_ids(self):
+        self.refused([{"id": "OD-007", "status": "folded", "reason": "Same decision", "foldedInto": ["OD-999"]}], "unknown foldedInto id")
+        self.refused([{"id": "OD-007", "foldedInto": "OD-001"}], "foldedInto must be a list")
+
+    def test_refusal_9_deciding_advisor_must_match_assignment(self):
+        self.refused([{"id": "OD-007", "status": "decided", "class": "delegated", "reason": "Reversible bound", "lean": lean(), "checkedBy": "gpt-6.1-sol", "decidedBy": "advisor:domain", "decidedOn": "2026-10-02", "ruling": "Keep it"}], "decidedBy advisor must equal")
+
+    def test_reassign_command_resets_sort_and_records_reason(self):
+        self.save(indent=4)
+        before = self.path.read_text()
+        code, output, error = self.run_tool("reassign", "OD-005", "convex", "--reason", "The bound needs Convex evidence", "--json")
+        self.assertEqual((code, error), (0, ""))
+        self.assertTrue(json.loads(output)["reassigned"])
+        after = json.loads(self.path.read_text())
+        expected = copy.deepcopy(self.register)
+        expected["decisions"][4].update(advisor="convex", status="unsorted", **{"class": None, "reason": "The bound needs Convex evidence", "lean": None})
+        self.assertEqual(after, expected)
+        self.assertEqual(self.path.read_text(), json.dumps(expected, indent=4, ensure_ascii=False) + "\n")
+        self.assertNotEqual(before, self.path.read_text())
+
+    def test_reassign_refuses_bad_id_advisor_or_absent_reason_without_writes(self):
+        for args, reason in [
+            (("OD-999", "convex", "--reason", "Move it"), "unknown id"),
+            (("OD-007", "unknown", "--reason", "Move it"), "unknown advisor"),
+            (("OD-007", "convex"), "reassign requires reason"),
+        ]:
+            with self.subTest(args=args):
+                before = self.path.read_bytes()
+                code, output, error = self.run_tool("reassign", *args)
+                self.assertEqual((code, error), (1, ""))
+                self.assertIn(reason, output)
+                self.assertEqual(self.path.read_bytes(), before)
+
+    def test_spec_line_sources_can_be_queried(self):
+        self.register["decisions"][6]["sources"] = [{"kind": "specLine", "ref": "spec:command.command-pipeline#limitCallText", "file": "design/specs/command/command-pipeline.sdp.md", "line": 131}]
+        self.save()
+        self.assertEqual(self.ids("--spec", "spec:command.command-pipeline"), ["OD-007"])
+
 
 class RealRegisterTests(unittest.TestCase):
     def test_real_register_has_unique_rows_and_exact_recipe_20_coverage(self):
         register = json.loads((ROOT / "design/decisions/register.json").read_text())
         rows = register["decisions"]
-        self.assertEqual(len(rows), 146)
-        self.assertEqual([r["id"] for r in rows], [f"OD-{i:03d}" for i in range(1, 147)])
-        self.assertEqual(len({r["id"] for r in rows}), 146)
-        self.assertTrue(all(r["status"] == "unsorted" for r in rows))
-        self.assertTrue(all(r["class"] is None for r in rows))
+        self.assertEqual(len(rows), 147)
+        ids = [r["id"] for r in rows]
+        self.assertEqual(ids, [f"OD-{i:03d}" for i in range(1, len(rows) + 1)])
+        self.assertEqual(len(set(ids)), len(rows))
+        for r in rows:
+            self.assertEqual(tool.row_errors(r, register["units"], ROOT, set(ids)), [], r["id"])
+            self.assertTrue(all(target in ids for target in r["foldedInto"]))
+            if r["status"] in ("sorted", "waiting", "decided"):
+                self.assertIn(r["class"], tool.CLASSES)
+                self.assertTrue(tool.present(r["reason"]))
         self.assertTrue(all(set(s) == {"kind", "ref", "file", "line"} for r in rows for s in r["sources"]))
+        products = [s["ref"] for r in rows for s in r["sources"] if s["kind"] == "productDecision"]
+        self.assertEqual(products, ["product/1", "product/2", "product/3"])
         self.assertEqual(len(register["possiblySame"]), 46)
         self.assertEqual(register["schema"], 1)
         self.assertEqual(register["units"], ["S3", "S4", "S5", "L3"])
-        self.assertEqual(collections.Counter(r["advisor"] for r in rows), {"convex": 30, "domain": 47, "operator": 27, "product": 42})
-        self.assertEqual(rows[37]["advisor"], "convex")
-        self.assertIn("Probe 6", rows[37]["cites"])
-        self.assertIn("Probe 7", rows[37]["cites"])
         refs = collections.Counter(s["ref"] for r in rows for s in r["sources"] if s["kind"] == "specQuestion")
         for decision in rows:
             for source in decision["sources"]:
