@@ -23,7 +23,7 @@ The doc says events stay small and that personal data sits behind references whe
 
 ### Open questions
 
-- [non-blocking] Extension E-12: the payload byte bound is the design's number, 16 KiB, chosen with the envelope bound of 4 KiB so that a fold of 500 events of at most 20 KiB each stays under 9.8 MiB, under the 16 MiB read ceiling with headroom; the owner may set another, and the journal's 500-event fold bound moves with it; the reserved `baseline` event of E-25 is exempt from the 16 KiB bound and bounded by its stream type's `budgetBytes` instead, at most 512 KiB, because its payload is current state that the fold reads once and never folds, and the owner confirms the exemption with E-25 (E-12, E-2, E-25, D19, F13)
+- [non-blocking] Extension E-12: the payload byte bound is the design's number, 16 KiB, chosen with the envelope bound of 4 KiB so that a fold of 500 events of at most 20 KiB each stays under 9.8 MiB, under the 16 MiB read ceiling with headroom; the owner may set another, and the journal's 500-event fold bound moves with it; the reserved `baseline` event of E-25 is exempt from the 16 KiB bound and bounded by its stream type's `budgetBytes` instead, at most 512 KiB, because its payload is the migrated state of its stream, which the fold reads once as its start and never folds, and the owner confirms the exemption with E-25 (E-12, E-2, E-25, D19, F13)
 
 ## Constraints
 
