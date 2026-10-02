@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-217 specs · 5 packs · 115 anchors → 337 nodes · 1160 edges (0 errors, 0 warnings)
+217 specs · 5 packs · 115 anchors → 337 nodes · 1161 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -246,7 +246,7 @@ The doc's own open questions:
 |---|---|---|---|
 | OQ1 | May a trivial context with no invariants of its own be plain tables in the parent behind lint rules? | A component per context everywhere; the first experiment measures component call cost (Probe 3) and decides | [`context-component`](specs/context/context-component.sdp.md), [`first-experiment`](specs/application/first-experiment.sdp.md), [`obligation-module`](specs/obligations/obligation-module.sdp.md), [`d02`](specs/decisions/d02-context-owns-state-and-journal.sdp.md) |
 | OQ2 | Does the product need a record of refused commands, for security audit or agent proposals? | No command uses the generic internal dispatcher; it is carried as a conditional design | [`outcome-boundary`](specs/command/outcome-boundary.sdp.md), [`agent-runs`](specs/agents/agent-runs.sdp.md), [`d07`](specs/decisions/d07-rejections-thrown-not-stored.sdp.md) |
-| OQ3 | One document per stream as the default, and the largest order the placement command supports | One document per stream under a 256 KiB budget (E-2); the maximum is `MAX_ORDER_LINES`, measured at 100 | [`state-document-mapping`](specs/kernel/state-document-mapping.sdp.md), [`batch-shaped-api`](specs/context/batch-shaped-api.sdp.md), [`parent-use-cases`](specs/application/parent-use-cases.sdp.md), [`first-experiment`](specs/application/first-experiment.sdp.md), [`d10`](specs/decisions/d10-contexts-meet-in-parent-use-cases.sdp.md) |
+| OQ3 | One document per stream as the default, and the largest order the placement command supports | Settled: one document per stream under a 256 KiB budget (E-2) stays the default, with the derived mapping above it; the largest order `PlaceOrder` supports is 100 lines, the bound its declaration carries | [`state-document-mapping`](specs/kernel/state-document-mapping.sdp.md), [`batch-shaped-api`](specs/context/batch-shaped-api.sdp.md), [`parent-use-cases`](specs/application/parent-use-cases.sdp.md), [`first-experiment`](specs/application/first-experiment.sdp.md), [`d10`](specs/decisions/d10-contexts-meet-in-parent-use-cases.sdp.md) |
 | OQ4 | Where the probe app and the experiment live | Ruled by the owner on 2026-10-01: in this repository, beside the design | [`first-experiment`](specs/application/first-experiment.sdp.md), [`probe-plan`](specs/facts/probe-plan.sdp.md) |
 | OQ5 | Whether the decisions move into SDP carriers | This corpus is that move; facts as constraint Specs with an evidence-status target | [`transactional-domain-platform`](specs/platform/transactional-domain-platform.sdp.md) |
 | OQ6 | The vocabulary clashes on receipt and generation | Receipt is the stored idempotency outcome; the row that proves an effect happened is completion evidence; generation is a read-model build; the attempt number is the attempt | [`vocabulary`](specs/platform/vocabulary.sdp.md) |
@@ -381,7 +381,7 @@ Cross-package fixes made in review round 2:
 
 Things in the plan that the packages found wrong, and the convention adopted:
 
-- `<product decision>` (plan 6.3) was refused by the carrier's HTML guard when the corpus was written; the placeholder is written in prose as `MAX_ORDER_LINES`, a product decision under OQ3.
+- `<product decision>` (plan 6.3) was refused by the carrier's HTML guard when the corpus was written; the placeholder was written in prose as `MAX_ORDER_LINES`, a product decision under OQ3; no Spec writes it since the largest order became the 100 lines `PlaceOrder`'s declaration carries.
 - A `workflow` Spec needs rules or examples to reach `defined`; every workflow carries `- rule:` bullets under `## Workflow`.
 - Unnumbered sections of the doc are cited by name (the last row of the numbering key); the plan's section 1 should list them.
 - The composition helper returns two static exports per command, not one; a public mutation cannot take a server-assigned namespace without letting a client claim it (Sc L1-7).
