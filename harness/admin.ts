@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { redact, runChild } from "./child.js";
+import { createSnapshotAccess } from "./snapshot.js";
 import { projectDirectory } from "./composition.js";
 import type { Composition } from "./composition.js";
 const anchor = codeAnchor({
@@ -64,6 +65,8 @@ export interface AdminAccess {
     table: string,
     options?: { component?: string; pageSize?: number },
   ): Promise<Record<string, Value>[]>;
+  exportSnapshot(path: string): Promise<void>;
+  replaceSnapshot(path: string): Promise<void>;
   logMark(): Promise<LogMark>;
   completionsSince(
     mark: LogMark,
@@ -194,6 +197,7 @@ export function createAdminAccess(
     });
   }
   return {
+    ...createSnapshotAccess(target),
     async deploy() {
       await cli("deploy");
       state.deployed = target.composition;

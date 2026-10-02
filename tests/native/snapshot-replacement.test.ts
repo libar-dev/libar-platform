@@ -6,11 +6,7 @@ import { expect, onTestFinished, test } from "vitest";
 import type { Backend } from "../../harness/backend.js";
 import { runChild } from "../../harness/child.js";
 import { fixtureBackend, measure } from "../../harness/native.js";
-import {
-  deploySnapshotFixture,
-  exportSnapshot,
-  replaceSnapshot,
-} from "../../harness/snapshot.js";
+import { deploySnapshotFixture } from "../../harness/snapshot.js";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -83,8 +79,7 @@ test("native: snapshot replacement restores parent and context data and preserve
   const before = await observe(source);
   measure("snapshot source", convexToJson(before));
   const path = join(directory, "snapshot.zip");
-  const exported = await exportSnapshot(source, path, signal);
-  measure("snapshot export command", { ...exported });
+  await source.admin.exportSnapshot(path);
   const entries = await runChild("unzip", "unzip", ["-Z1", path], {
     timeoutMs: 10000,
     signal,
@@ -105,8 +100,7 @@ test("native: snapshot replacement restores parent and context data and preserve
   expect(await fresh.admin.readTable("_scheduled_functions")).toEqual([]);
   await fresh.admin.setEnvironment({ SNAPSHOT_VALUE: "destination" });
   const freshEnvironment = await fresh.admin.environment();
-  const imported = await replaceSnapshot(fresh, path, signal);
-  measure("fresh replacement command", { ...imported });
+  await fresh.admin.replaceSnapshot(path);
   const freshAfter = await observe(fresh);
   measure("fresh replacement contents", convexToJson(freshAfter));
   expect(freshAfter).toEqual({
@@ -129,8 +123,7 @@ test("native: snapshot replacement restores parent and context data and preserve
   await source.admin.setEnvironment({ SNAPSHOT_VALUE: "after-export" });
   const sameBefore = await observe(source);
   measure("same backend before replacement", convexToJson(sameBefore));
-  const replaced = await replaceSnapshot(source, path, signal);
-  measure("same backend replacement command", { ...replaced });
+  await source.admin.replaceSnapshot(path);
   const sameAfter = await observe(source);
   measure("same backend replacement contents", convexToJson(sameAfter));
   expect(sameAfter).toEqual({

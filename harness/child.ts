@@ -16,6 +16,7 @@ export interface ChildOptions {
   env?: Readonly<Record<string, string>>;
   secrets?: readonly string[];
   signal?: AbortSignal;
+  output?: "both";
 }
 export function redact(text: string, secrets: readonly string[]): string {
   const keys = secrets
@@ -35,12 +36,28 @@ export function redact(text: string, secrets: readonly string[]): string {
   }
   return result;
 }
+export interface ChildOutput {
+  stdout: string;
+  stderr: string;
+}
+export function runChild(
+  name: string,
+  file: string,
+  args: readonly string[],
+  options: ChildOptions & { output?: undefined },
+): Promise<string>;
+export function runChild(
+  name: string,
+  file: string,
+  args: readonly string[],
+  options: ChildOptions & { output: "both" },
+): Promise<ChildOutput>;
 export function runChild(
   name: string,
   file: string,
   args: readonly string[],
   options: ChildOptions,
-): Promise<string> {
+): Promise<string | ChildOutput> {
   return new Promise((resolve, reject) => {
     const child = execFile(
       file,
@@ -54,8 +71,34 @@ export function runChild(
         signal: options.signal,
       },
       (error, stdout, stderr) => {
-        if (error === null) return resolve(stdout);
+        if (error === null)
+          return resolve(
+            options.output === "both"
+              ? {
+                  stdout: redact(stdout, options.secrets ?? []),
+                  stderr: redact(stderr, options.secrets ?? []),
+                }
+              : stdout,
+          );
         if (options.signal?.aborted) return reject(options.signal.reason);
+        if (options.output === "both")
+          return reject(
+            new Error(
+              JSON.stringify({
+                command: [file, ...args].map((part) =>
+                  redact(part, options.secrets ?? []),
+                ),
+                code: error.code ?? null,
+                stderr: redact(
+                  stderr.replace(/\r?\n$/, ""),
+                  options.secrets ?? [],
+                )
+                  .split(/\r?\n/)
+                  .slice(-20)
+                  .join("\n"),
+              }),
+            ),
+          );
         if (error.killed)
           return reject(
             new Error(`${name} did not finish in ${options.timeoutMs} ms`),
