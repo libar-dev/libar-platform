@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-202 specs · 5 packs · 101 anchors → 308 nodes · 1097 edges (0 errors, 0 warnings)
+206 specs · 5 packs · 105 anchors → 316 nodes · 1110 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -91,7 +91,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 | 5 | `agents` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 7 |
 | 6 | `advanced` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 8 |
 
-Counts by kind and by stated readiness are derived, not kept here: `npx sdp census` writes the census, and the session check prints the readiness tally. Two groups state `scoped`: every Layer 4 to 6 non-example Spec, held by its deferral, and the assumed fact F17, held by its probe. Nothing states `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
+Counts by kind and by stated readiness are derived, not kept here: `npx sdp census` writes the census, and the session check prints the readiness tally. Every Layer 4 to 6 non-example Spec states `scoped`, held by its deferral; F17 states `defined` with its native Probe 6 evidence. Nothing states `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
 
 What each layer fixes, in one paragraph each.
 
@@ -236,7 +236,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 
 ## Open questions for the owner
 
-A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact (F17) names the probe that would settle it. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
+A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact names the probe that would settle it; F17 is probed by the four native Probe 6 examples. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
 
 The doc's own open questions:
 
@@ -270,7 +270,7 @@ Beyond the plan's list, three product decisions the packages surfaced:
 - The late-payment policy of `StartCheckout`: reallocate, ask a person, or refund as a separate operation ([`start-checkout-example`](specs/processes/start-checkout-example.sdp.md)).
 - Whether an old process run is kept, migrated or blocked on a given deploy ([`workflow-processes`](specs/processes/workflow-processes.sdp.md)).
 
-Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is recorded on its fact and on the Specs that rest on it, and [`probe-plan`](specs/facts/probe-plan.sdp.md) says what stays open: Probe 1 (the client guarantee holds across a restart, a closed client can lose a command, and the HTTP client does not retry, D6), Probe 2 (`ConvexError` data survives a nested mutation and a component boundary, F14, D7), Probe 3 (a component call costs about 2 ms more than a helper call on a local backend, with hosted cost and quota open, F4, D2, D8), Probe 4 (transaction limits are one budget across nested calls and components, F13, D10), Probe 5 (a parent query over a component query stays reactive and pinned pages stay contiguous, and the client hook loses rows after a capped split, F15, D8). Two are pending: Probe 6 (a backfill batch racing a live command; the migrations component, F17, D9) and Probe 7 (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
+Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is recorded on its fact and on the Specs that rest on it, and [`probe-plan`](specs/facts/probe-plan.sdp.md) says what stays open: Probe 1 (the client guarantee holds across a restart, a closed client can lose a command, and the HTTP client does not retry, D6), Probe 2 (`ConvexError` data survives a nested mutation and a component boundary, F14, D7), Probe 3 (a component call costs about 2 ms more than a helper call on a local backend, with hosted cost and quota open, F4, D2, D8), Probe 4 (transaction limits are one budget across nested calls and components, F13, D10), Probe 5 (a parent query over a component query stays reactive and pinned pages stay contiguous, and the client hook loses rows after a capped split, F15, D8). Probe 6 has native evidence on backend `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helpers` 0.1.124 and `@convex-dev/migrations` 0.3.6 for the row race, interruption and resume, table scope and a parent batch that returns a context cursor to the driver. Probe 7 remains pending (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
 
 Every open question in the corpus, by Spec, is recipe 20 of the Protocol's catalog, the open-question register. It lists the Specs that hold a blocking question first and reports the totals, so no table is kept here:
 
@@ -316,8 +316,12 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap` | Probe 5: a parent list's page outgrows its row cap |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-batch-races-command` | Probe 6: a migration batch races a live command |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-interruption-and-resume` | Probe 6: a migration resumes after interruption |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-enumeration` | Probe 6: migration table scope and context enumeration |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-batch-cursor` | Probe 6: a parent batch returns a context cursor to the migrations driver |
 
-Package A therefore has 79 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+Package A therefore has 83 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
 
 ## Integration notes
 
@@ -376,7 +380,7 @@ Adopted from the Protocol on 2026-10-01, at the commit `package.json` pins:
 
 - Generics are written with real angle brackets inside inline code. The Unicode brackets the carrier once forced, 248 pairs on 114 lines of 29 Specs, are gone, so every pinned declaration can be pasted into source.
 - An unbound example below `ready` no longer warns. The expected validate verdict is 0 errors and 0 warnings.
-- The `ready` floor reads `constrainedBy` and `decidedBy` as well as `refines` and `dependsOn`. The assumed fact F17 states `scoped` behind a blocking question that names its probe, so no Spec resting on it can state `ready` until the probe has run; F14 and F15 did the same until their probes ran in slice S0. F16 stays `defined`: its states and retention are documented.
+- The `ready` floor reads `constrainedBy` and `decidedBy` as well as `refines` and `dependsOn`. F17 states `defined` with native Probe 6 evidence for the pinned releases; F14 and F15 previously stated `scoped` until their probes ran in slice S0. F16 stays `defined`: its states and retention are documented.
 - A deferral is a blocking open question that names its trigger, on the nine Layer 4 to 6 Specs.
 - The census sentence and the open-question table are no longer kept by hand. `sdp census` and recipe 20 derive them.
 - The extension register stays in this file. It is this project's policy, and `design/tools/check.py` keeps it honest.

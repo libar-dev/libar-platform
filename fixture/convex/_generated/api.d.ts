@@ -19,6 +19,7 @@ import type * as identity from "../identity.js";
 import type * as limits from "../limits.js";
 import type * as list from "../list.js";
 import type * as markers from "../markers.js";
+import type * as migrations from "../migrations.js";
 import type * as nonUiCaller from "../nonUiCaller.js";
 import type * as notes from "../notes.js";
 import type * as orders from "../orders.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   limits: typeof limits;
   list: typeof list;
   markers: typeof markers;
+  migrations: typeof migrations;
   nonUiCaller: typeof nonUiCaller;
   notes: typeof notes;
   orders: typeof orders;
@@ -89,6 +91,7 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
   annex: import("../annex/_generated/component.js").ComponentApi<"annex">;
   depot: import("../depot/_generated/component.js").ComponentApi<"depot">;
   yard: import("../yard/_generated/component.js").ComponentApi<"yard">;

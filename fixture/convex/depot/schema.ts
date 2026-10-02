@@ -1,4 +1,11 @@
-import { defineSchema } from "convex/server";
+import { defineSchema, defineTable } from "convex/server";
 import { contextTables } from "../../../src/context/index.js";
-// A context component's schema holds the context library's tables and nothing else.
-export default defineSchema({ ...contextTables });
+import { v } from "convex/values";
+export default defineSchema({
+  ...contextTables,
+  migrationVisits: defineTable({ streamId: v.string() }),
+  migrationSettings: defineTable({
+    parentId: v.string(),
+    callback: v.string(),
+  }),
+});

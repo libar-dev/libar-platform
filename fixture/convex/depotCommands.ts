@@ -359,3 +359,9 @@ const claimStockDeclaration = stockCommand(
 );
 export const claimStock = publicCommand(claimStockDeclaration);
 export const claimStockInternal = internalCommand(claimStockDeclaration);
+
+export const amendSummarizedDocument = publicCommand({
+  ...amendDocumentDeclaration,
+  name: "AmendSummarizedDocument",
+  readModels: [{ readModel: documentSummary, source: documentSource }],
+});

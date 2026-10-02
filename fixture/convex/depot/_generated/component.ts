@@ -23,6 +23,15 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
+    migrations: {
+      configure: FunctionReference<
+        "mutation",
+        "internal",
+        { callback: string; parentId: string },
+        any,
+        Name
+      >;
+    };
     operations: {
       addStock: FunctionReference<
         "mutation",

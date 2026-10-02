@@ -5,6 +5,16 @@ import { readModelTables, rowConventions } from "../../src/read-model/index.js";
 import { documentTitleFields } from "./documentTitles.js";
 import { documentSummaryFields } from "./summaries.js";
 export default defineSchema({
+  migrationSettings: defineTable({
+    failKey: v.union(v.string(), v.null()),
+    reads: v.number(),
+  }),
+  migrationVisits: defineTable({ key: v.string(), version: v.number() }),
+  enumerationPages: defineTable({
+    tenantId: v.string(),
+    cursor: v.union(v.string(), v.null()),
+    size: v.number(),
+  }),
   notes: defineTable({ source: v.string() }),
   depthRows: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),
   markers: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),

@@ -1,3 +1,5 @@
 import { defineComponent } from "convex/server";
-// The mount name is the context's contextId, the constant in streams.ts.
-export default defineComponent("depot");
+import migrations from "@convex-dev/migrations/convex.config.js";
+const depot = defineComponent("depot");
+depot.use(migrations);
+export default depot;
