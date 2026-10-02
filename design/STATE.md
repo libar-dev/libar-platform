@@ -1,27 +1,53 @@
 # State of the design corpus
 
-Written on 2026-10-02 at the close of slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it.
+Written on 2026-10-02 at the close of the unit that took in the platform review, which followed slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it.
 
 ## Measured at close
 
 ```
-201 specs · 5 packs · 83 anchors → 289 nodes · 1069 edges (0 errors, 0 warnings)
+202 specs · 5 packs · 99 anchors → 306 nodes · 1095 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings; readiness divergence: []
-open questions: 68 Specs, 140 questions, 10 blocking; extensions registered: 50
-stated readiness: {'defined': 191, 'scoped': 10}
-ledger: 245 findings, {'fixed': 138, 'open': 88, 'owner': 1, 'partially-fixed': 18}
-open findings by slice: {'L3': 22, 'P': 18, 'S3': 1, 'S4': 30, 'S5': 17}
-corpus digest: 3d638deb0ff7a714
+open questions: 68 Specs, 144 questions, 10 blocking; extensions registered: 51
+stated readiness: {'defined': 192, 'scoped': 10}
+ledger: 263 findings, {'fixed': 144, 'open': 100, 'owner': 1, 'partially-fixed': 18}
+open findings by slice: {'L3': 31, 'P': 20, 'S3': 1, 'S4': 30, 'S5': 18}
+corpus digest: 04faf7d4d793badd
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz
 ```
 
 The default branch is `main`, published at `github.com/libar-dev/libar-platform`. Each unit works on its own branch, named for the unit, so that `main` stays green. The owner gave the session a mandate on 2026-10-01 to merge at this early stage, and said the same day that a pull request per unit was not a good idea while the design is iterated quickly. So from slice S1 on there is no pull request: CI runs on every push, and the session fast-forwards `main` once CI is green on the last commit. Slice S0 was the one unit merged through a pull request. The mandate has no stated end: ask when a release or an outside user appears.
 
 **Slice S2 is on `slice/s2` and is not merged.** `main` is at `9221da1`, the close of S1. The owner's bar for S2, said on 2026-10-02: "if we can make good progress ok. if not we can revert changes and take a more formal planning and execution approach. high-confidence changes only". So `main` moves only after the owner has seen S2's result, and a revert to `9221da1` stays cheap until then. The branch was not pushed by the session and CI has not run on it: the session's push and its commit of the native run record were both refused by the permission classifier, and both wait for the owner.
+**The platform review unit is on `fix/platform-review`, which starts at the head of `slice/s2`, and is not merged or pushed either.** It is about twenty commits on top of `aeb08d6`. The owner asked for it on 2026-10-02 and has not yet said that `slice/s2` goes to `main`, so both wait for the same word. One thing about its history is the owner's to decide before a push: commit `70c15bc` holds the review as it was received, with paths of the owner's machine in its links and its inventory, and the repository is public. The files are deleted from the tree at the close, at the owner's word, and stay in that commit unless the branch is rewritten.
 
 ## Where the work stands
 
-Slices S0, S1 and S2 are built. S0 gave the repository a native test harness (`harness/`), a fixture Convex app (`fixture/convex/`), four test tiers (`tests/`), a codegen script, a watch mode, CI and evidence records. S1 gave it Layers 0 and 1 of the platform. S2 gave it Layer 2, thin, and a second composition. The root `README.md` says how to run each tier for each composition.
+Slices S0, S1 and S2 are built, and one unit after them took in an independent review of the whole.
+
+The platform review unit, in one afternoon on 2026-10-02. An independent read of all 201 Specs, the libraries, both compositions and the harness at `dd3185a`, by `gpt-6-astra` in a Codex thread of its own, said to keep the architecture and the built core, and reported 31 findings. The session ruled on each, and the owner said the report could go once its fixes were applied or recorded. It is gone from the tree. A copy, the session's response and every brief, design and report of the unit are in the folder the project notes name. Every statement of the review that asks for later work is in the ledger or in this file.
+
+What the unit built, about 3,000 lines:
+
+- A receipt conflict and an unsupported-version answer carry a fixed message and no details. Holding a request key gives no authority over the receipt stored under it. The one fact the two codes disclose is whether the stored contract version is the declaration's.
+- Every rejection passes one validation at the outer boundary, bare or in the wire shape: the code, the command's name, the details bound. A rejection candidate that does not fit its shape becomes a plain error. `reject` compiles with platform codes only.
+- Every text field a caller sets beside the input is bounded in UTF-8 bytes at step 1 (256, and 512 for an actor's ID), a stream ID at the adapter's step 1, and `append` bounds the envelope beside the payload at 4,096 bytes. So a stored event is at most 20,541 bytes, and the fold bound in the Specs moved from 600 to 500 events.
+- `rebuild` folds from an explicit `null` start.
+- The acceptance check: `npm run acceptance` derives the required scenarios of the first experiment from the graph, one per example of a required row, and reads them against one run's record. A scenario is passed, failed, absent or missing. `npm run test:all` makes the one run of every project that the record needs, and CI fails on a failed or absent scenario and reports the missing ones. The bound step of the production-configuration example now names the path it runs and claims nothing about concurrency.
+- Every TypeScript file under `harness/` carries its own code anchor.
+- The ledger took 18 new records and notes on 46 existing ones.
+
+What passed at `645130f`, and at which tier, with the same pins as S2:
+
+- Compiled, pure test and `convex-test` tiers: 49 files, 455 tests. Typecheck, lint and format pass.
+- Every project in one run on a clean tree, macOS on Apple silicon: 116 files, 540 tests, the native tier among them. The record is `evidence/runs/native-20261002T161135Z-645130f-066930f6-cc9f-48ff-a5da-2fd9e93dc028.json`. It is not copied to `evidence/`. Commits after `645130f` change Spec text, the ledger and this file only.
+- `npm run acceptance` on that record: 30 scenarios passed, none failed or absent, 5 missing, exit 3. The missing ones are the examples of Sc L2-5 to L2-8, which have no test yet. Sc L2-9 shows as passed on an example that proves nothing about concurrency: the owner queue has the question.
+- CI has not run: nothing is pushed.
+
+How the unit was run, for the next one. Tactical decisions 28 to 31 hold the rules, `SESSIONS.md` has the role table that came out of it, and the project notes have the times, the plant results and what to carry forward. Two Fable designers with disjoint subjects took fifteen minutes each and returned Spec patches proven in scratch copies. Then astra wrote 94 test cases and sol wrote the fix, each from the Spec text alone and in its own worktree: 92 of the 94 passed at the first merge, and the two that failed were one wrong sentence in the Spec and one real defect in the fix. Sol drafted the whole ledger intake with an apply script. An Opus agent checked astra's nine findings on unbuilt design against the Spec text before they entered the ledger: all nine held.
+
+Review of the unit. Three lanes on a frozen copy that shared nothing: astra at xhigh on behavior (38 mutations, 19 attacks on the acceptance check, native probes), sol at medium on every line and number Claude models wrote, an Opus agent on every line GPT models wrote. None found a defect on a healthy path in the three corrections. They found one defect on an ordinary failure path, in a path the merge itself had added (a bare rejection with a list as its details left the boundary unvalidated), two ways to make the acceptance check pass when it should not, one uncaught exception on a malformed record, three figures that did not follow from their operands, three stale register rows, and fourteen mutations no test caught. One fold-in in two rounds closed them, code by an Opus agent and Spec text by sol, and each new test was shown to fail under its removal. One read of the fold-in followed, sol on the code and an Opus agent on the Spec text. It found no defect on a healthy path in the code and six Spec sentences that were false or said less than the code does, which were corrected, and the unit stopped on tactical decision 19. Three defects were planted in the frozen copy to calibrate the reviewers: the project notes say who caught which.
+
+Before that unit: S0 gave the repository a native test harness (`harness/`), a fixture Convex app (`fixture/convex/`), four test tiers (`tests/`), a codegen script, a watch mode, CI and evidence records. S1 gave it Layers 0 and 1 of the platform. S2 gave it Layer 2, thin, and a second composition. The root `README.md` says how to run each tier for each composition.
 
 What S2 built, in one night on 2026-10-02, about 12,500 lines on `slice/s2`:
 
@@ -91,23 +117,23 @@ What changed in the Specs during S2, and why:
 
 Review of S2. One review read the whole build at `fd8ad02`, in three lanes that shared nothing: astra at xhigh on behavior, sol at medium on the library, the fixture composition and the harness, sol at medium on the production composition, its tests and the later Spec lines. None found a defect on a path a healthy run or an ordinary failure takes. Astra ran sixteen mutations under `src/`: two survived, and each now has a test. One Spec sentence was wrong against the native backend (two concurrent `PlaceOrder` commands both apply when stock covers both) and was corrected. Two fold-ins followed, `9b20134` with `f3d4a77` for the orchestrator's rulings on the build and `705fb32` for the review. One read of the fold-ins followed, sol at medium at `705fb32`. It found one defect on a healthy path, in a path the first fold-in had added and in the fixture composition: the depot relay that reads one document authorized without the document as its subject, so a reader granted that one document was refused. It also found two tests that would not catch a removal and one stale Spec sentence. All four were fixed in `e76e587`, each new test shown to fail under its removal, and the slice stopped on tactical decision 19 with no further read. The rulings and the reports are in the S2 folder the project notes name.
 
-Twenty-seven findings are `fixed` and carry `unreviewed: true`, fourteen from S0, four from S1 and nine from S2: no lens has confirmed them in the Spec text.
+Thirty-three findings are `fixed` and carry `unreviewed: true`, fourteen from S0, four from S1, nine from S2 and six from the platform review unit: no lens has confirmed them in the Spec text.
 
 Review round 3 stands as it was for the rest of the corpus: no lens approved. The design is finished by building it, one slice at a time.
 
 | Slice | Builds | Open findings | Blocker, major, minor |
 |---|---|---|---|
 | S3 | Measurement: 1, 10 and 100 lines, without and with contention. Repeated after S4 and S5 | 1 | 0, 0, 1 |
-| S4 | Generations and rebuild, the history view and the write pause, with the tenant list, operator entry points and gate audit the rebuild uses; Probe 6 | 30 | 0, 14, 16 |
-| S5 | Baseline migration, restore, the rest of operators and audit, diagnostics, the receipts sweep, maintenance jobs; the transactional part of Probe 7 | 17 | 0, 7, 10 |
-| L3 | Layers 3 to 6, written from what the experiment shows | 22 | 0, 5, 17 |
-| P | Polish with no effect on what is built: citations, markers, stale sentences, README | 18 | 0, 0, 18 |
+| S4 | Generations and rebuild, the history view and the write pause, with the tenant list, operator entry points and gate audit the rebuild uses; Probe 6 | 30 | 0, 15, 15 |
+| S5 | Baseline migration, restore, the rest of operators and audit, diagnostics, the receipts sweep, maintenance jobs; the transactional part of Probe 7 | 18 | 0, 8, 10 |
+| L3 | Layers 3 to 6, written from what the experiment shows | 31 | 0, 12, 19 |
+| P | Polish with no effect on what is built: citations, markers, stale sentences, README | 20 | 0, 0, 20 |
 
 Eighteen more findings are `partially-fixed`, each waiting for its slice. Remove an unsupported generic promise before designing a helper no view needs.
 
 ## Next unit
 
-First, the owner sees S2's result and says whether `slice/s2` goes to `main` or is reverted. Until then no unit opens on top of it. The two things the session could not do are the owner's: `git push -u origin slice/s2`, and the commit that copies the native run record of `e76e587` into `evidence/`.
+First, the owner says whether `slice/s2` and `fix/platform-review` go to `main`, and whether the review's commit stays in the branch's history. The things the session could not do are the owner's: the push, and the commits that copy the native run records of `e76e587` and `645130f` into `evidence/`.
 
 Then `slice` S3 or S4, the owner's choice. S3 measures, and it needs item 12 of the owner queue first: the maximum order size and the latency and throughput targets. S4 can open without an owner decision, and its paper decisions are listed below.
 
@@ -125,9 +151,24 @@ Decisions each later slice needs on paper before its code:
 - S4: how two projection versions are written at once, since a read model holds one projection and S2 built no version check (`projection-contract.sdp.md`, the open question C1 left); order-independent cross-stream folds and whether deletion keeps fold memory (`r3-architecture-history-fold-order-and-deletion`); who owns the tenant list (`r3-architecture-tenant-list-undefined`); operator authority and entry points (`r3-completeness-operator-entry-points-undefined`); refusal or a paused catch-up for history rollback (`r3-architecture-history-generation-rollback-unpaused`).
 - S5: history-reading migrations off the command path unless the owner changes D3 (`r3-fidelity-migrate-on-load-replays-history-against-d3`); whether paused migrations are supported (`r3-fidelity-baseline-sweep-and-the-pause-contradict`); reopening authority, failure scope and drill cadence as explicit extensions (`r3-fidelity-restore-policies-cited-to-the-doc`); which diagnostic outcomes are emitted and where a duration comes from.
 
+What the platform review of 2026-10-02 asks of the later units. The ledger owns each finding's counterexample and what its build must show. This is the order and the guidance that fits no single finding.
+
+- S3 attributes the extra reads before changing the command path. Compare stream loading, journal consistency, state replacement, grants, receipts and read-model maintenance under controlled changes. Run a new accepted command, an authorized duplicate, changed-input conflict, business rejection, a second-context failure and native OCC retries; contend on shared stock and also use unrelated stock and tenants. Report attempts and final outcomes separately, documents and bytes read and written, and retained durable rows, with the backend pin and local or hosted environment stated.
+- The platform review of 2026-10-02 measured single local uncontended runs at 1, 10 and 100 lines: respectively 8/6, 35/24 and 305/204 documents read/written; 2,943/4,271, 14,454/18,410 and 129,564/159,800 bytes read/written; 51.6, 39.1 and 184.4 ms execution. These are not percentiles or a throughput curve, and the faster 10-line sample forbids fitting latency from three observations. The pins were Convex 1.46.0, convex-helpers 0.1.124, convex-test 0.0.60 and native backend precompiled-2026-09-28-5c7cb5b on Node 24.21.0, macOS on Apple silicon. The 100-line case is a supported test configuration, not the owner's maximum-order ruling.
+- S3 removes journal-tail work only after proving the writer invariant and weighing the defect it prevents against measured cost. The one-second query/mutation limit describes user-code execution, not database time. Weigh component overhead for the actual use case under OQ1, and state the local backend's write cap when reporting throughput; hosted quota remains separate from the local measurements. Diagnostic work counters are owned by `pr1-completeness-diagnostic-cost-counters-have-no-source`.
+- S4 builds the per-subject online path first: enumerate sources and tenants, keep progress away from rows every command reads, choose the projection by generation version, interrupt and resume, verify presence and absence, switch, then roll back after intervening writes. Probe 6 and the complete lifecycle are the exit, not successful backfill alone. Aggregate and history forms wait for a real view that needs them; narrow an unsupported generic promise instead of installing a general runner before the chosen path needs it. The ledger owns the exact counterexamples and proofs for these subjects, including migrations binding, operator authority and gate audit.
+- S5 builds `CancelOrder` and `release`, baselines and migration, then restores snapshots made during migration and interrupts the restore itself. Its exit separates mandatory audit failure from best-effort diagnostic failure, proves completion rather than merely counting batches, and reassesses all Layer 0 to 2 acceptance rows after the new paths are bound. The APPL-09, APPL-10 and APPL-12 ledger items own their specific acceptance cases.
+- L3 starts only at its trigger, with Probe 7's do-nothing body and a thin local reaction before an external effect. Before the external profile is claimed, run the whole failure matrix carried by the durable ledger items: retries, cancellations, repair, key expiry, restore, retention and bounded fan-out. Keep agents on the command boundary, distinguish budget money from concurrency slots, preserve atomic local multi-context work and admit asynchronous reads only for a stated need. Workflow, agents and advanced reads remain deferred to their own consumer; their acceptance gaps and owner policies are ledger work, not permission to implement every later layer now.
+- Preserve the present transaction and authority arrangement while repairing its boundaries. Do not replace it with a command bus, saga, generic dispatcher, central journal, application-wide counter or mandatory worker process. Public component functions provide parent reachability and are not thereby public client endpoints; filtering already bounded grant results in memory is not an unindexed database query. High-volume grant revocation remains Leads 20's separate repair.
+- Keep the example's deliberate policies distinct from missing capability. Caller-supplied unit prices are its stated policy; totals-only stock is not already per-order allocation tracking, and the future release operation does not make that current model defective. Preserve the order of authorization, receipt recognition and admission, ordinary OCC, creation's `entityExists`, and the positive control that a stale reviewed version refuses before `decide`.
+- Preserve negative controls for authority, atomic rollback, deduplication, generation switching and recovery. When repairing a reproduced defect, turn its defective-behavior assertion into a regression expectation and show the relevant removal fails; do not require mutations for every helper or prose change. The CORE and APPL-11 ledger detectors own the concrete cases.
+- An implementation anchor binds a contract to source, and an example anchor binds a verifier; neither claims a whole planned workflow or a passed run. `Journal.history` remains a configuration surface rather than runtime enforcement of rebuild, and the baseline-rebuild example is not an executable proof until it has a verifier. Keep acceptance coverage explicit by scenario, composition, tier, verifier and saved result under APPL-11; do not raise readiness merely to show progress. Installed-layer observation and native concurrency parity still need the owner queue's evidence.
+- Check each ledger fix against the current Spec when its subject is built. Confirm fixed-but-unreviewed records when their subjects are touched, rather than opening another whole-corpus cycle; split mixed work by the unit that builds it and explain any deferred remainder. `check.py` proves corpus agreement, not that a proposed algorithm or test works. Close the next unit on concrete changes and their evidence, not blanket approval of the corpus.
+- Keep a public Spec sufficient to build its ruled contract even when dated historical evidence stays private. Dates, versions and run results belong beside evidence, and work status belongs here or in the ledger; the governing doc and readiness remain the owner's rulings. A clean local run is not hosted or CI evidence. The apparent compiler discrepancy was checked: `tsc` came from `@typescript/native` 7.0.2 and the TypeScript package was a parser library, so replacing the compiler is not a repair. Vitest's SIGINT/SIGTERM handles alone did not establish a sustained handle leak.
+
 ## Tactical decisions taken on 2026-10-01
 
-The owner accepted the first nine on the session's recommendation. The session took 10 to 19 during S0, 20 to 23 during S1 and 25 to 27 during S2, on 2026-10-02. Any of them can be reopened.
+The owner accepted the first nine on the session's recommendation. The session took 10 to 19 during S0, 20 to 23 during S1, 25 to 27 during S2 and 28 to 31 during the platform review unit, on 2026-10-02. Any of them can be reopened.
 
 1. Slices replace the eight fix units of the previous plan.
 2. A slice is built on Specs at `defined` with no open blocker inside the slice. The owner states `ready` after the slice passes.
@@ -156,10 +197,26 @@ The owner accepted the first nine on the session's recommendation. The session t
 25. One Fable agent decides each thing. The owner's words on 2026-10-02: "one big brain should decide on one thing. if you have two deciding on the same thing, get redy for multi-turn discussion". Fable agents in one run get disjoint subjects, split by subject and not only by file; a need from another's subject is a one-line request to the main thread; no later Fable agent judges again what an earlier one decided. The GPT review lanes are split the same way.
 26. A slice's run is mostly producers. The owner's words: "it should be much more updates vs advisory. you can also implement s slie, like the last session did". Two Fable designers, then Opus writers on disjoint Spec directories with a closer that commits, then the builders, the scenario groups and the integrator in the same run. No planner agent and no advisor agent: the main thread cuts the packages and rules on the designers' short lists.
 27. A second thread may review a commit while the run goes on. Its findings are advice, the main thread rules on them, and they enter the run at a seam between two packages, by stopping the run and resuming it from an edited script.
+28. The two model families are one team. The owner's words on 2026-10-02: GPT agents are "essential and complementary part of the team", not supplemental workers, "with building project-specific knowledge on how to best leverage them". Claude designs, rules and reads for taste. Astra owns the proof, the measurements and the behavior review. Sol builds from exact Spec text, keeps the ledger and the registers, and reads every line and number. `SESSIONS.md` has the table.
+29. Proof and fix are written apart. Once a designer's Spec text is ruled, astra writes the tests and a builder writes the code, each from the Spec text alone and in its own worktree, and an integrator merges them and says of each failing test whether the Spec, the test or the fix is wrong.
+30. What one family writes or finds, the other reads or checks. A finding on unbuilt design is checked against the Spec text by a model of the other family before it enters the ledger. In a review, sol reads the lines Claude wrote and an Opus agent reads the lines GPT wrote.
+31. A review copy carries planted defects, and the project notes record who caught which. Each reviewer that mutates code gets a copy of its own. A plant goes inside the unit's own commits, not on top of them.
 
 ## Owner queue
 
-Platform decisions. The first item is new: the owner's word on `slice/s2`.
+Platform decisions. The first item is new: what the platform review unit rests on.
+
+000. From the platform review unit. Whether `fix/platform-review` goes to `main` with `slice/s2`, and whether commit `70c15bc`, which holds the review with paths of the owner's machine, stays in the history of a public repository. And each provisional reading the code now rests on:
+    - A conflict answer and an unsupported-version answer carry no details. Their two codes still tell a caller whether the stored receipt's contract version is the declaration's.
+    - A rejection candidate is a `ConvexError` whose data is an object, not a list, with an own `code` and no `kind`, or with `kind` equal to `"rejection"`. One that does not fit its shape becomes a plain error. `reject` takes platform codes only.
+    - The byte bounds: 256 for the text fields a caller sets and for a stream ID, 512 for an actor's ID, 4,096 for the envelope beside the payload, 16,384 for a rejection's details. The fold bound of 500 events follows from them and nothing built reads it yet.
+    - E-17, the acceptance check: a pass of the first experiment is the check's answer over one run's record, with the required scenarios generated from the graph.
+    - Whether the experiment's pass includes Sc ALL-1. Taken: no, the 23 rows of Layers 0 to 2.
+    - Whether Sc L2-9 needs an example that runs commands at once on the production composition. Until it is ruled, the check shows the row passed on an example that binds no concurrency claim.
+    - The doc says the experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend, and the acceptance contract assigns Layer 0 to the pure test tier and Sc L2-4 to the compiled tier.
+    - Language. `CONTEXT.md` has no word for the acceptance check, a verifier or the build tier, "scenario" means both a row and a case, and the tiers have three sets of names (`AGENTS.md`, the acceptance contract, the test projects). "Run record" names both the harness's record and a restore run's row. The new example's step keeps `otherPrincipalId` beside the existing `principalId`.
+    - Sharpen the first-activation question already in item 00. Decide whether activation requires a proved empty source or whether installation over existing history always goes through rebuild. The acceptance case installs a new read model after subjects already have history: the native backend must either refuse empty activation before changing anything or make the ruled rebuild procedure cover those old subjects before serving the generation.
+    - Sharpen the `getOrder` question already in item 00. Decide whether an order-specific grant is intended to admit the parent query. A direct `authorizeQuery` test is not the public-entry proof: the native acceptance case uses the actual endpoint with a reader granted only that order, a forbidden second order and a tenant-wide positive control.
 
 00. From S2: whether `slice/s2` goes to `main`. And each provisional reading the S2 code now rests on:
     - The production composition as `example/`, with `example/package.json` a symbolic link to the root file.
@@ -249,6 +306,20 @@ A session confirms or drops each. None is a finding yet.
 
 21. Left by the review of S2 on purpose. `scripts/codegen.mjs` loses its first error when disposal also fails. Tests that would not catch a removal: one case in `tests/simulator/example.test.ts`; the Probe 5 test of a full first page passes even if the row cap never reaches `paginator`; nothing checks that the order DTO's `placedAt` equals the summary row's; a mutation that drops the composition in `scripts/codegen.mjs` is caught only by CI's codegen diff, and `scripts/dev.mjs` has no test. The production isolation rule checks relative imports and not bare specifiers. A total above the largest safe integer has no rejection code, and stream IDs inside a receipt's `affected` and `versions` have no length bound. The "no job" assertions of Sc L2-2 and L2-3 close a function-log window with an ordinary read, so a job scheduled with a delay past the window is not seen: the harness cannot read `_scheduled_functions`. A failed top-level mutation's completion record shows no written documents, so the function log cannot show rolled-back writes, and the first context's writes in Sc L2-1 are shown at the pure tier and by the retry.
 22. Temporal sentences still in Specs no S2 writer touched, beyond lead 16: `facts/probe-plan.sdp.md:38-40,74`, `decisions/d06` and `d08`, `facts/f11`, the first-run bullets of the Probe 1 to 5 examples, and "today's" in `platform/transactional-domain-platform.sdp.md`, `vocabulary.sdp.md`, `existing-systems.sdp.md` and `layers-and-profiles.sdp.md`.
+
+23. Left by the platform review unit on purpose. Each is a hole in the handling of malformed input, a test gap, or a Spec line about what is not built.
+    - The acceptance check: a run record whose backend entry is `{}` or names an unknown composition can still pass; three checks of a record's entries have no test of their own; an error that cannot be turned into text escapes the catch; `scripts/acceptance.mjs` imports the harness outside any `try`, so an import failure exits 1; an opening line with a full stop inside it is refused; deleting a test together with its anchor turns a passed scenario into a missing one and CI stays green.
+    - The boundary: data with an own `code` and an inherited `kind` becomes a plain error. No Spec says which producer may send which cause variant, and nothing built checks it. "Validates as Convex validates a value" claims more than `validate` of `convex-helpers` with a plain-object check does.
+    - Not built, and the Specs pin them: the tombstone member of `ReceiptClass` and the tombstone flow; the baseline payload allowance (`append` holds a `baseline` event to 16,384 bytes like any other); `maxFoldEvents`; the receipts sweep; the largest-payload and fold-time measurements of the first experiment.
+    - Restore's check batch: a batch that folds several streams reads one stored baseline for each, and at four streams of 512 KiB that is above the 16 MiB ceiling. The Spec states the total for one stream and carries the open question; `r3-convex-restore-check-omits-baseline-reads` owns the batch shape.
+    - Spec marks: numeric bullets that cite an E-number without the `[extension]` mark remain in the Specs the unit touched (`journal:94` and `:117`, `idempotency:101`, `queries:89-92`, `rebuild:124`, `restore:109-110`, `tenancy:78`, `persistence-adapter:106-107`), and four newly marked bullets have no matching open question in their own Spec. `check.py` tests neither.
+    - Tests of S2 that sol's read showed would not catch a removal: the first-experiment order tests never offer an oversized row, the ten-line test counts writes and not their contents, the production-configuration lint assertion passes if the rule is removed from the configuration, and `codePathHolds` does not require one completion per call. In `tests/pure/evidence.test.ts` the test named for simultaneous writes writes one after the other.
+    - A native run over history of the maximum event size waits for the unit that builds rebuild. One attempt hit the fixture stream's own state budget first.
+24. A Claude agent in this harness may not write a file it calls a report. It may write a design file, a patch and a spike. The main thread saves a hand-back by extracting it from the agent's transcript with a script.
+25. From the platform review, not findings:
+    - Pagination across a generation switch. Keep two subscribed pages pinned with both cursor endpoints, switch the active generation between reads, and run the native case for both ordinary and split pages. Rule and prove either continuity with no missing or duplicate subject or an explicit reset that makes the caller restart the page sequence; a cursor must not silently change its generation meaning.
+    - Sharpen Leads 1's overlapping paused rebuilds. Two paused rebuilds share one source scope, and the first resumes or aborts while the second still needs the pause. The native case must show either refusal of the second owner before it changes anything or independent ownership whose release cannot reopen the other rebuild's writers; a bare scope-wide Boolean is not proof of ownership.
+    - Scheduled argument size. The current scheduling documentation says 8 MB for aggregate arguments while the limits page says 16 MiB. When the scheduling probe activates, resolve the discrepancy against the pinned backend with boundary cases and record which limit and accounting unit it actually enforces; do not turn either page into a confirmed defect now.
 
 The reports behind leads 1 to 3 and 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them, with the reports, briefs and rulings of S0.
 

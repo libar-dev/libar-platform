@@ -4241,11 +4241,11 @@
    ],
    "issue": "Authorization checks the new input subject, but a conflicting receipt key discloses the stored operation ID for another subject. The unsupported-version answer carries the same metadata.",
    "fix": "Omit stored receipt metadata from conflict and unsupported-version answers unless the actor is authorized for the stored subject. Prove both branches with two actors and two subjects, then check the public answer on the native backend.",
-   "status": "open",
-   "note": "the platform review of 2026-10-02, CORE-01. Evidence recorded by that read: convex-test. Counterexample: Bob creates document B with a shared request key; Alice, granted only A, submits A with that key and receives B's stored operation ID on conflict, with the unsupported-version branch exposing the same pointer. Spec evidence at 2e20b29: command/tenancy-and-authority.sdp.md:48 requires authorization before stored outcome disclosure.",
+   "status": "fixed",
+   "note": "the platform review of 2026-10-02, CORE-01. Evidence recorded by that read: convex-test. Counterexample: Bob creates document B with a shared request key; Alice, granted only A, submits A with that key and receives B's stored operation ID on conflict, with the unsupported-version branch exposing the same pointer. Spec evidence at 2e20b29: command/tenancy-and-authority.sdp.md:48 requires authorization before stored outcome disclosure. Fixed on fix/platform-review: the Spec text in 096db7e, the fix in 24ecbce, the proof in e68e0af, merged in 9d63c3f. A conflict and an unsupported-version answer carry a fixed message and no details; the one fact their codes disclose is whether the stored contract version is the declaration's. Proven at the pure test, convex-test and native backend tiers.",
    "slice": "platform-review",
    "detector": "convex-test must cover both branches with two actors and two subjects: B stays forbidden, no B operation ID, result, affected subject or version is disclosed, and state and receipts do not change. Native backend tests must assert the public wire answer while preserving authorized same-input replay and ordinary conflicts.",
-   "unreviewed": false
+   "unreviewed": true
   },
   {
    "round": "PR1",
@@ -4257,11 +4257,11 @@
    ],
    "issue": "The outer boundary checks bare rejection codes but passes tagged errors unchanged, allowing an undeclared code, another command name or oversized details.",
    "fix": "Validate bare and tagged rejections against the running command, its allowed codes and the details bound. Treat invalid tagged rejections like undeclared bare codes and test the helper and a registered command.",
-   "status": "open",
-   "note": "the platform review of 2026-10-02, CORE-02. Evidence recorded by that read: pure test. Counterexample: A tagged rejection with code notDeclared and command SomeOtherCommand passes normalization for CreateDocument; a directly constructed tagged error can also bypass the details bound. Spec evidence at 2e20b29: command/outcome-boundary.sdp.md:58 closes the codes, but :76 rethrows errors already carrying kind unchanged.",
+   "status": "fixed",
+   "note": "the platform review of 2026-10-02, CORE-02. Evidence recorded by that read: pure test. Counterexample: A tagged rejection with code notDeclared and command SomeOtherCommand passes normalization for CreateDocument; a directly constructed tagged error can also bypass the details bound. Spec evidence at 2e20b29: command/outcome-boundary.sdp.md:58 closes the codes, but :76 rethrows errors already carrying kind unchanged. Fixed on fix/platform-review: the Spec text in 096db7e and c233023, the code in 24ecbce, 9d63c3f and efa95da. Every rejection candidate, bare or in the wire shape, passes one validation at the outer boundary, and one that does not fit becomes a plain error. Proven at the compiled, pure test and convex-test tiers, and by native probes of the unit's review.",
    "slice": "platform-review",
    "detector": "Pure tests must cover bare and tagged allowed and undeclared codes, wrong command identity, oversized details, malformed tagged data, transient errors and unchanged technical throws. A convex-test registered command calling the helper incorrectly must produce the boundary's technical-failure behavior and preserve rollback.",
-   "unreviewed": false
+   "unreviewed": true
   },
   {
    "round": "PR1",
@@ -4275,11 +4275,11 @@
    ],
    "issue": "Valid caller metadata can make an event larger than the 17 KiB assumed by fold and migration bounds. A 32 KiB correlation ID alone invalidates the 600-event arithmetic.",
    "fix": "Bound caller-set envelope fields at command entry and derive the complete event maximum. Use it in fold, query and migration bounds, with an explicit refusal for metadata past its bound.",
-   "status": "open",
-   "note": "the platform review of 2026-10-02, CORE-03. Evidence recorded by that read: convex-test. Counterexample: A valid 32 KiB correlation ID is copied onto every small-payload event; 600 such IDs alone exceed 18.75 MiB, although future folds assume about 17 KiB per complete event. Spec evidence at 2e20b29: context/event-envelope.sdp.md:45 limits only payload bytes and document structure; context/journal.sdp.md:97,108 and context/queries.sdp.md:93 assume about 1 KiB of envelope. The future read-limit claim is arithmetic, not a native failure.",
+   "status": "fixed",
+   "note": "the platform review of 2026-10-02, CORE-03. Evidence recorded by that read: convex-test. Counterexample: A valid 32 KiB correlation ID is copied onto every small-payload event; 600 such IDs alone exceed 18.75 MiB, although future folds assume about 17 KiB per complete event. Spec evidence at 2e20b29: context/event-envelope.sdp.md:45 limits only payload bytes and document structure; context/journal.sdp.md:97,108 and context/queries.sdp.md:93 assume about 1 KiB of envelope. The future read-limit claim is arithmetic, not a native failure. Fixed on fix/platform-review: the Spec text in 096db7e and 86da870, the code in 24ecbce and 9d63c3f. Every text field a caller sets is bounded in UTF-8 bytes at step 1, the stream ID at the adapter, and append bounds the envelope at 4,096 bytes, so a stored event is at most 20,541 bytes and the fold bound is 500 events. Proven at the pure test and convex-test tiers and for multibyte text on the native backend. A native run over history of the maximum size waits for the unit that builds rebuild.",
    "slice": "platform-review",
    "detector": "Pure or convex-test boundary cases must cover exact and one-byte-over limits, multibyte metadata and large actor or delegation fields. Before rebuild bounds are claimed, native backend tests must fold and migrate maximum permitted complete envelopes within shared limits or return the declared refusal, including valid stored history outside a later limit.",
-   "unreviewed": false
+   "unreviewed": true
   },
   {
    "round": "PR1",
@@ -4308,11 +4308,11 @@
    ],
    "issue": "The native acceptance example binds every Layer 0 to 2 scenario, but its test runs one sequential path and establishes no concurrency parity.",
    "fix": "Name the path the bound test runs. Add a separate experiment check over required scenarios, compositions, tiers and verifiers that fails when a required case is absent or failing.",
-   "status": "open",
-   "note": "the platform review of 2026-10-02, APPL-11. Evidence recorded by that read: source inspection of native test binding. Counterexample: The bound native step says every Layer 0 to 2 scenario but runs a short sequential path; failing a different required scenario does not fail it, and no concurrent commands run. Spec evidence at 2e20b29: application/first-experiment.native-acceptance-production-configuration.sdp.md:25 says every scenario; :32 describes a small end-to-end path. No new native runtime failure is claimed.",
+   "status": "fixed",
+   "note": "the platform review of 2026-10-02, APPL-11. Evidence recorded by that read: source inspection of native test binding. Counterexample: The bound native step says every Layer 0 to 2 scenario but runs a short sequential path; failing a different required scenario does not fail it, and no concurrent commands run. Spec evidence at 2e20b29: application/first-experiment.native-acceptance-production-configuration.sdp.md:25 says every scenario; :32 describes a small end-to-end path. No new native runtime failure is claimed. Fixed on fix/platform-review: c245407 renames the bound steps to the path the test runs, e095da6 adds the acceptance check (npm run acceptance), efa95da and c3f3fd8 harden it. The check derives the required scenarios from the graph and reads one run record; at 645130f it answers 30 passed and 5 missing. Proven at the pure test tier and by a clean run of every tier.",
    "slice": "platform-review",
    "detector": "Pure tests must remove and fail a required scenario and make aggregate experiment acceptance fail, with each required scenario mapped to composition, tier, verifier and saved result. The native backend smoke path must retain its actual assertions and fixture-issuer difference; a native contention case is required before claiming concurrency parity.",
-   "unreviewed": false
+   "unreviewed": true
   },
   {
    "round": "PR1",
@@ -4340,11 +4340,11 @@
    ],
    "issue": "The harness anchor covers only its carrier file. Impact lookup for backend.ts and admin.ts reports unknown coverage and misses the owning Spec.",
    "fix": "Give implementation-bearing harness files distinct anchors to the native harness Spec, or require an explicit review fallback for unknown file coverage.",
-   "status": "open",
-   "note": "the platform review of 2026-10-02, FOUND-01. Evidence recorded by that read: graph query and source inspection. Counterexample: Changing harness/backend.ts or harness/admin.ts alone gives an empty impact set and unknown coverage, while including the anchor carrier harness/native.ts finds the native-harness Spec. Spec evidence at 2e20b29: Graph recipe 4 reports coverageUnknownFiles for harness/backend.ts and harness/admin.ts. This is a graph gap, not a runtime failure.",
+   "status": "fixed",
+   "note": "the platform review of 2026-10-02, FOUND-01. Evidence recorded by that read: graph query and source inspection. Counterexample: Changing harness/backend.ts or harness/admin.ts alone gives an empty impact set and unknown coverage, while including the anchor carrier harness/native.ts finds the native-harness Spec. Spec evidence at 2e20b29: Graph recipe 4 reports coverageUnknownFiles for harness/backend.ts and harness/admin.ts. This is a graph gap, not a runtime failure. Fixed on fix/platform-review in c245407: every TypeScript file under harness/ carries its own code anchor, and a pure test fails when one loses it. harness/backend-release.json cannot carry an anchor; SESSIONS.md says a file with unknown coverage is reviewed against the Spec that owns its directory.",
    "slice": "platform-review",
    "detector": "Graph recipe 4 must reach spec:platform.native-harness for each implementation-bearing harness file, or the review procedure must require its owning-contract review for unknown coverage. Compiled anchor declarations must remain valid; a graph binding proves location, not a passed runtime test.",
-   "unreviewed": false
+   "unreviewed": true
   },
   {
    "round": "PR1",

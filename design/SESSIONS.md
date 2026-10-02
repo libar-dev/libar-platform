@@ -25,14 +25,22 @@ The owner ruled on 2026-10-01 that the session takes tactical decisions on its o
 | Work | Who | Effort |
 |---|---|---|
 | Coordination, rulings, approval of every Spec sentence, the check, the push and the merge | Fable 5.1, the main thread | high |
-| The design of a solution's key abstractions before an implementer writes it: interfaces as stubs, names, shapes, and exact text only where a reader sees it | Claude agent, Fable 5.1 | default |
-| Building from a Spec, integrating parallel builders, folding in ruled findings, and applying ruled Spec and ledger edits | Claude agent, Opus 5.5, usually inside one Workflow run | default |
-| Read-only scout before a unit; the behavior review lane, which runs things | `gpt-6-astra` | high |
-| The mechanical review lane: every changed line, test and pinned value | `gpt-6.1-sol` | medium |
+| The design of a solution's key abstractions before an implementer writes it: interfaces as stubs, names, shapes, bounds, proof obligations, and exact Spec text as a patch proven in a scratch copy | Claude agent, Fable 5.1 | default |
+| Building from a Spec, integrating parallel builders and folding in ruled findings | Claude agent, Opus 5.5, usually inside one Workflow run | default |
+| Building a correction or a bounded package from exact Spec text, in a worktree of its own | `gpt-6.1-sol` | medium |
+| The proof before the build: tests written from the ruled Spec text alone, shown to fail before the fix, with an attack on the ruled behavior | `gpt-6-astra` | high |
+| Corpus bookkeeping from exact rulings: ledger records, register rows, recomputed numbers, coverage tables, each as a draft with an apply script proven on a scratch copy | `gpt-6.1-sol` | medium |
+| Read-only scout before a unit; measurement and controlled comparisons on the native backend; the behavior review lane, which runs things | `gpt-6-astra` | high |
+| The mechanical review lane over what Claude models wrote: every changed line, test, number and pinned value | `gpt-6.1-sol` | medium |
+| The review lane over what GPT models wrote, and review of balance and of how a reader will take the text | Claude agent, Opus 5.5 | default |
+| An independent check of a finding before it enters the ledger | A model of the other family than the one that found it | default |
 | Whole-branch review before a hand-over or a close | `gpt-6-astra` | xhigh |
-| Review of balance and of how a reader will take the text | Claude agent, Opus 5.5 | default |
 
-Claude models write and GPT models review. The owner ruled it on 2026-10-01, after slice S0 had tried both: Opus 5.5 is the primary coder, and GPT reviews run on frozen copies beside the write lanes, where they cost no time. Design judgment and the project's vocabulary stay with Claude. Three earlier rulings of the same day stand. A Fable agent, not the main thread inside a brief, designs a solution before any implementer writes it. Taste review goes to a Claude model only, and solution design to Fable only. And a job is sized to its model: sol takes what an Opus agent would take, astra what a Fable agent would, in width and in depth. A GPT job is started with the launcher the orchestration guide describes, not through a forwarding agent, and its session id is kept so that a job that dies can be resumed. The mechanics, the briefing of each family and the calibration of a reviewer are in the orchestration guide, and this project's commands, brief fragments and job log are in its notes file. `AGENTS.md` names both.
+The two families are one team. The owner ruled on 2026-10-01 that Claude models write and GPT models review, and on 2026-10-02 that GPT agents are an essential and complementary part of the team and not supplemental workers. The table above is what the unit of 2026-10-02 tried and what held. Design judgment and the project's vocabulary stay with Claude: a Fable agent, not the main thread inside a brief, designs a solution before any implementer writes it, taste review goes to a Claude model only, and solution design to Fable only. A GPT agent gets rulings and exact text, never an open design question. What one family writes or finds, the other reads or checks. A job is sized to its model: sol takes what an Opus agent would take, astra what a Fable agent would, in width and in depth.
+
+Proof and fix are written apart. Once a designer's Spec text is ruled, astra writes the tests and a builder writes the code, each from the Spec text alone, in a worktree of its own, and an integrator merges them. A test that fails at that merge is a gap in the Spec, a wrong test or a wrong fix, and the integrator says which. So the designer writes into the Spec everything the two must agree on.
+
+A GPT job is started as an agent of type `gpt:codex`, with its brief in a file, and a job that ended is continued on its own thread with the next rulings. Each reviewer that mutates code gets its own frozen copy. The mechanics, the briefing of each family and the calibration of a reviewer are in the orchestration guide, and this project's commands, brief fragments, plant results and job log are in its notes file. `AGENTS.md` names both.
 
 Four rules from the stop of 2026-09-30, when ten parallel Fable agents hit the usage limit and one left 109 unreported edits:
 
@@ -117,7 +125,7 @@ Consensus holds for Layers 0 to 2 when the first experiment passes on a native b
 
 A build slice is too long for one conversation. The main thread hands over to a fresh main thread at a seam, before its own context gets in the way: after a commit, with no delegated job running and every report saved.
 
-1. Reach the seam. Wait for or stop every delegated job. A Claude agent dies with the conversation and leaves no report. A GPT job started with the launcher survives it, and its report, events and session id are in the job directory the notes name.
+1. Reach the seam. Wait for or stop every delegated job. A Claude agent dies with the conversation and leaves no report. A GPT job survives it, and its report, events and thread id are in its directory under `~/.codex-jobs`.
 2. Commit what is in the tree on the unit's branch, as work in progress if it is not reviewed, and say so in the message.
 3. Write the handover note beside the unit's reports, in the folder the project notes name. It says what is committed, what each tier showed and at which commit, which findings are ruled and where the rulings are, what is drafted and not applied, the next steps in order, and what waits for the owner. It lists every instruction the owner gave during the conversation, in the owner's words.
 4. Put a short "In progress" block at the top of `STATE.md` that names the unit, the seam and the note. The rest of `STATE.md` waits for the close.
