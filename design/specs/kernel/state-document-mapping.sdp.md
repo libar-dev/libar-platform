@@ -19,7 +19,7 @@ Folding is simple when a stream's state is one document. When state spans severa
 - outcome: The saved representation of a stream's state is derived from the folded state by one mapping per stream type, and the default mapping is one document that holds the whole state and the stream metadata (D3, E-2)
 - value: No command writes documents by hand, so the fold stays the one authority for state even when state spans documents (D3)
 - risk: A state that outgrows the budget forces the derived mapping, which multiplies the documents one command reads and writes; the first experiment measures documents read and written per order size (D10, First experiment, Sc L2-3)
-- risk: The document budget below is a design number; a command bound whose state does not fit it changes the budget or the mapping (OQ3, E-2)
+- risk: The document budget below is a design number, and a command's declared bound holds only while the stream state that bound produces fits it (OQ3, E-2)
 - assumption: A document holds at most 1 MiB and a transaction reads at most 16 MiB and 32,000 documents (F13)
 
 ### Open questions
