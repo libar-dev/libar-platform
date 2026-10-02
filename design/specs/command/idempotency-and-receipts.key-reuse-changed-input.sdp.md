@@ -33,6 +33,6 @@ And the original outcome and state are unchanged {unchanged: true}
 ## Verification — executable
 
 - Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The test asserts that the thrown error has `data.kind` equal to `"rejection"`, `data.code` equal to `"idempotencyConflict"`, and `data.details.operationId` equal to the original receipt's operation ID.
+- The test asserts that the thrown error has `data.kind` equal to `"rejection"`, `data.code` equal to `"idempotencyConflict"` and no `details`, and that the original receipt's operation ID appears nowhere in the error's data.
 - The test asserts that the receipt row is byte-identical before and after, and that the stream version the original touched is unchanged.
 - The test asserts that the stored fingerprint is `fingerprintOf` of the original input and differs from that of the changed input, so f-1 and f-2 name two real fingerprints.
