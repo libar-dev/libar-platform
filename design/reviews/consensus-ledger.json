@@ -2096,10 +2096,9 @@
    "issue": "The adapter's step 1 admits a plan whose planned streams' `budgetBytes` sum to at most 8 MiB, and three Specs give the result as '32 streams at the default 256 KiB budget'. `limitDocumentsWrittenPerCall` then checks, before returning, 'the sum of the saved streams' `budgetBytes` plus every appended event's serialized size' against the same 8 MiB and throws a plain error above it. A plan at the admitted bound always writes at least one event per stream, so it always exceeds the write check: 32 default-budget streams pass step 1 and fail as a technical failure on every call, which a caller retries unchanged for ever. The stated admissions are therefore one notch too high wherever the byte bound, not the count, binds.",
    "fix": "Make the two bounds agree. Either step 1 admits `8 MiB` minus an event allowance of `maxStreams` times the payload bound, and the worked numbers become 31, 15 and so on; or the write check counts each saved stream at its serialized size rather than its budget, which is what the write ceiling measures. State the choice once in the adapter and correct the three worked figures.",
    "status": "fixed",
-   "note": "S1, 2026-10-01, ruling F1. Admission at step 1 stays by the planned streams' `budgetBytes`; the write check of `limitDocumentsWrittenPerCall` now sums each saved stream row's size as step 9 measures it and every appended event's size, both with `getConvexSize`, in `spec:context.persistence-adapter` and in `spec:context.context-component`, so the worked admissions (32, 16, 256 streams) stand. Shown by the convex-test tests 'a plan at the admitted bound of 8 MiB of stream budgets commits when its saved rows and events are small' and 'a call that writes more than 800 documents, or more than 8 MiB measured over its saved rows and appended events, is a technical failure' in `tests/simulator/depot.test.ts`.",
+   "note": "S1, 2026-10-01, ruling F1. Admission at step 1 stays by the planned streams' `budgetBytes`; the write check of `limitDocumentsWrittenPerCall` now sums each saved stream row's size as step 9 measures it and every appended event's size, both with `getConvexSize`, in `spec:context.persistence-adapter` and in `spec:context.context-component`, so the worked admissions (32, 16, 256 streams) stand. Shown by the convex-test tests 'a plan at the admitted bound of 8 MiB of stream budgets commits when its saved rows and events are small' and 'a call that writes more than 800 documents, or more than 8 MiB measured over its saved rows and appended events, is a technical failure' in `tests/simulator/depot.test.ts`. Confirmed in the Spec text by a lens read.",
    "slice": "S1",
-   "detector": "pure unit test",
-   "unreviewed": true
+   "detector": "pure unit test"
   },
   {
    "round": 3,
@@ -2243,10 +2242,9 @@
    "issue": "The Inventory context is given 'the allocate and release decisions' and the experiment's only public commands are `PlaceOrder` and `CancelOrder`. Every run starts from 'a fresh disposable backend seeded with the stock items the order needs', the L2-1 example re-sends 'after stock is added' and the L1-12 example names 'a restock'. A stock item stream cannot exist without an event, and Law 1 allows no write outside a sanctioned operation, so the experiment needs a stock-receiving operation and event that the example domain does not name. A test-only seeding function would also break the rule that Sc L2-9's deployment registers none.",
    "fix": "Add to orders-inventory-example a `ReceiveStock` command with a `StockReceived` event, or name the operator operation that creates stock items, and say that the experiment seeds through it. Count it among the experiment's commands in the model's Verification bullet.",
    "status": "fixed",
-   "note": "S2, 2026-10-02, fold-in after the build. `ReceiveStock`, the Inventory context's receive operation and `StockReceived` are in `spec:application.orders-inventory-example`, and `spec:application.first-experiment` rules that stock exists only through `ReceiveStock`; built as `example/convex/receiving.ts`. Shown at the native tier on the production composition by every test that needs stock, `tests/native/production-orders.test.ts` and the Sc L2 tests among them, each of which creates it only through `ReceiveStock`.",
+   "note": "S2, 2026-10-02, fold-in after the build. `ReceiveStock`, the Inventory context's receive operation and `StockReceived` are in `spec:application.orders-inventory-example`, and `spec:application.first-experiment` rules that stock exists only through `ReceiveStock`; built as `example/convex/receiving.ts`. Shown at the native tier on the production composition by every test that needs stock, `tests/native/production-orders.test.ts` and the Sc L2 tests among them, each of which creates it only through `ReceiveStock`. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "judgement",
-   "unreviewed": true
+   "detector": "judgement"
   },
   {
    "round": 3,
@@ -2324,10 +2322,9 @@
    "issue": "command-declaration pins `registry: export const commandRegistry = { PlaceOrder: { declaration: placeOrderDeclaration, internalEntry: internal.orders.placeOrderInternal }, ... } as const`, 'hand-written until generated, read by the fingerprint's contract version lookup and by the conditional dispatcher'. Neither reader needs it today: `runPipeline(ctx, decl, call)` receives the declaration, and idempotency-and-receipts says `classifyReceipt` takes `contractVersion` 'the declaration's'; the dispatcher is conditional on OQ2 and 'exists for no command until the product answers OQ2'. What remains is a second hand-maintained list of every command beside its exports. D12 says 'The test of the module system is whether it removes independently maintained wiring facts' and names 'reflection registry' among what it rejects; D18 lists 'runtime declaration registries' under 'Not standing requirements'. The same Spec's Verification says 'no separate registry, decorator or config file repeats one', which the `registry` bullet contradicts. The E-7 question names 'the registry shape' but not this tension or the cost.",
    "fix": "On `spec:command.command-declaration`: make `commandRegistry` conditional on OQ2 with the dispatcher (the registration check can compare declarations with exports without it), or keep it and say in the E-7 question that it is a static map and not a runtime registry, what reads it while OQ2 is open, and that it is one more hand-kept list until generation. Correct 'read by the fingerprint's contract version lookup' and the Verification bullet to match.",
    "status": "fixed",
-   "note": "S1, 2026-10-01. Slice S1 built no `commandRegistry` and no registration check (ruling R2): the pipeline receives the declaration and the fingerprint's contract version is the declaration's. `spec:command.command-declaration` records this as a provisional reading under E-7 for the owner; on 2026-10-02 its `registry` bullet and the Design paragraph above it were corrected to name the conditional dispatcher as the registry's reader, the pipeline taking the contract version from the declaration it was given, and the Verification bullet is unchanged. S2, which builds the registration check for Sc L2-4, must show whether that check compares declarations with exports without a registry; if it does, the `registry` bullet becomes conditional on OQ2 with the dispatcher and the Verification bullet stands. S2, 2026-10-02, fold-in after the build. There is no `commandRegistry` and no registration check (ruling R10): `spec:command.command-declaration` no longer pins the registry, and Sc L2-4 is the compiler over the production composition's generated `api`. Shown at the compiled tier by `tests/types/command-declaration.renamed-handler-fails-build.test-d.ts` and `tests/types/command-declaration.broken-argument-contract-fails-build.test-d.ts`.",
+   "note": "S1, 2026-10-01. Slice S1 built no `commandRegistry` and no registration check (ruling R2): the pipeline receives the declaration and the fingerprint's contract version is the declaration's. `spec:command.command-declaration` records this as a provisional reading under E-7 for the owner; on 2026-10-02 its `registry` bullet and the Design paragraph above it were corrected to name the conditional dispatcher as the registry's reader, the pipeline taking the contract version from the declaration it was given, and the Verification bullet is unchanged. S2, which builds the registration check for Sc L2-4, must show whether that check compares declarations with exports without a registry; if it does, the `registry` bullet becomes conditional on OQ2 with the dispatcher and the Verification bullet stands. S2, 2026-10-02, fold-in after the build. There is no `commandRegistry` and no registration check (ruling R10): `spec:command.command-declaration` no longer pins the registry, and Sc L2-4 is the compiler over the production composition's generated `api`. Shown at the compiled tier by `tests/types/command-declaration.renamed-handler-fails-build.test-d.ts` and `tests/types/command-declaration.broken-argument-contract-fails-build.test-d.ts`. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "judgement",
-   "unreviewed": true
+   "detector": "judgement"
   },
   {
    "round": 3,
@@ -2574,10 +2571,9 @@
    "issue": "The write rule depends on which generation is active, and the helper is not told. The Contract says 'In the live-updated mode the row is updated in the active generation, and in a building generation only if backfill has already written it'. `generationsToWrite` returns `{ active?: number; building?: number }`, but `applyProjection`, `applyAggregate` and `applyHistoryProjection` take `generations: number[]`, and step3 applies one rule to every element: 'live-updated updates only when the row exists, else `skipped-missing`'. The pipeline's step 9 has to flatten the registry's answer to call the helper, and no Spec says how. Read as written, step3 also skips a missing row in the active generation, and that loses rows: 'A projection may return `null` for a DTO that has no row, such as a deleted subject; `applyProjection` then deletes the row if present ... and nothing records the deletion', while state-document-mapping `isDeletedMarker` lets a subject come back ('clears it if a later fold makes it false'). The command that brings the subject back runs in live-updated mode, finds no row in the active generation and skips, and nothing repairs an active generation, because verify passes run only on a building one. The row stays missing until the next rebuild. The corpus's own aggregate bullet gives the reason the skip is not needed there: 'a live update on an entity backfill has not reached is therefore not partial, because `contribute` sees the whole DTO', and `project(tenantId, dto, versions)` sees the whole DTO too.",
    "fix": "In `spec:application.projection-contract` change the helpers' input to `generations: { active?: number; building?: number }`, the shape `generationsToWrite` already returns, and rewrite step3 per target: in the active generation live-updated inserts a missing row and replaces an existing one; the missing-row skip applies to the building generation only. Say in the pipeline's step 9 and in `callers` that the registry's answer is passed through unchanged, and that the rebuild's batches pass `{ building }`. If the owner wants the doc's missing-row rule kept for a whole-DTO projection, record under E-9 that it is kept for fidelity to D9 although `project` cannot build a partial row. Add the delete-then-return case to the L2-2 or L2-5 example.",
    "status": "fixed",
-   "note": "S2, 2026-10-02, fold-in after the build. `generationsToWrite` returns a list tagged by role, and `applyProjection` decides by role and mode: in the active generation a live write always lands, and the rule that a newer row is never overwritten is the backfill path's, which `spec:application.projection-contract` now says, with an open question for the owner on that reading. Shown at the convex-test tier by `tests/simulator/read-model.test.ts`, 'in the active generation a live write always lands; in a building one live-updated replaces a row and skips a missing one'; no native test makes a building generation, because the first activation is the only transition built.",
+   "note": "S2, 2026-10-02, fold-in after the build. `generationsToWrite` returns a list tagged by role, and `applyProjection` decides by role and mode: in the active generation a live write always lands, and the rule that a newer row is never overwritten is the backfill path's, which `spec:application.projection-contract` now says, with an open question for the owner on that reading. Shown at the convex-test tier by `tests/simulator/read-model.test.ts`, 'in the active generation a live write always lands; in a building one live-updated replaces a row and skips a missing one'; no native test makes a building generation, because the first activation is the only transition built. Read against the Spec text; what is left is r3-completeness-apply-projection-cannot-tell-active-from-building-remainder.",
    "slice": "S2",
-   "detector": "convex-test",
-   "unreviewed": true
+   "detector": "convex-test"
   },
   {
    "round": 3,
@@ -2899,10 +2895,9 @@
    "issue": "Rubric item 18 holds as the plan's section 4 states it: all 43 rows have examples, 54 in all, each with the doc's pass condition verbatim as its outcome (checked by script), and nine rows are split into siblings. The split rule is applied unevenly, though. README's ID changes add a sibling for L2-1, L2-6, L3-2 and L3-6 'because the doc's scenario row enumerates two cases', and four rows of the same form keep one bound point with the second case only in a verification bullet: L1-7 'a worker or agent namespace' binds `worker` and tests `agent` in a bullet, L1-9 'Rate or capacity refusal' binds a rate refusal only, L2-4 'Rename a typed handler or break its argument contract' binds the rename only although the parent's space has all three values of `change`, and L1-11 'the same stock or unique value' binds stock only. For L1-11 the parent's example space cannot bind the other case at all: `state` is `\"draft\"|\"submitted\"|\"stock of 1\"` and no operation creates a subject with a claimed unique value, although the adapter's `uniqueValueWorked` bullet designs exactly that.",
    "fix": "Either add the four siblings, `client-claims-agent-namespace`, `capacity-refusal-then-retry`, `broken-argument-contract-fails-build` and `competing-unique-value` with a `claimed unique value` state and a creating operation in `spec:context.context-component`'s vocabulary, and list them in README's ID changes, or state in `spec:platform.acceptance-contract` the rule that decides when an 'or' in a row is a case and when it is a variant covered by a verification bullet, so the next reviewer can check it.",
    "status": "fixed",
-   "note": "S0, 2026-10-01. The rule is now exact in `PLAN.md` section 4 and in the acceptance contract's verification: an 'or' in a scenario's text enumerates cases and each gets a sibling example; an 'or' in the pass condition does not; a verification bullet never stands in for a case. The fix's alternative, a rule that lets a bullet cover a variant, is not taken, because it would change a rule the corpus already states in three places. One correction to the issue: the capacity and the unique-value cases are absent altogether, not carried by a bullet. S1, 2026-10-01, ruling S7: the three siblings exist with their fence values, the context component's vocabulary has the unique-value state and the creating operation, and README's ID changes and `PLAN.md` section 4 list them; shown by the native tests `tests/native/tenancy-and-authority.client-claims-agent-namespace.test.ts`, `tests/native/idempotency-and-receipts.capacity-refusal-then-retry.test.ts` and `tests/native/context-component.competing-unique-value.test.ts`. Still open: S2 writes a query sibling of `committed-state-visible` (L2-2) and `broken-argument-contract-fails-build` (L2-4). S2, 2026-10-02, fold-in after the build. L2-4's second case is `spec:command.command-declaration.broken-argument-contract-fails-build`, shown at the compiled tier by `tests/types/command-declaration.broken-argument-contract-fails-build.test-d.ts`; L2-2's query case is `spec:application.read-models.committed-state-read-through-query`, beside the subscription case, with its pack line and its scenario table row, shown at the native tier on the production composition by `tests/native/read-models.committed-state-read-through-query.test.ts`. README's ID changes table does not yet list the L2-2 sibling.",
+   "note": "S0, 2026-10-01. The rule is now exact in `PLAN.md` section 4 and in the acceptance contract's verification: an 'or' in a scenario's text enumerates cases and each gets a sibling example; an 'or' in the pass condition does not; a verification bullet never stands in for a case. The fix's alternative, a rule that lets a bullet cover a variant, is not taken, because it would change a rule the corpus already states in three places. One correction to the issue: the capacity and the unique-value cases are absent altogether, not carried by a bullet. S1, 2026-10-01, ruling S7: the three siblings exist with their fence values, the context component's vocabulary has the unique-value state and the creating operation, and README's ID changes and `PLAN.md` section 4 list them; shown by the native tests `tests/native/tenancy-and-authority.client-claims-agent-namespace.test.ts`, `tests/native/idempotency-and-receipts.capacity-refusal-then-retry.test.ts` and `tests/native/context-component.competing-unique-value.test.ts`. Still open: S2 writes a query sibling of `committed-state-visible` (L2-2) and `broken-argument-contract-fails-build` (L2-4). S2, 2026-10-02, fold-in after the build. L2-4's second case is `spec:command.command-declaration.broken-argument-contract-fails-build`, shown at the compiled tier by `tests/types/command-declaration.broken-argument-contract-fails-build.test-d.ts`; L2-2's query case is `spec:application.read-models.committed-state-read-through-query`, beside the subscription case, with its pack line and its scenario table row, shown at the native tier on the production composition by `tests/native/read-models.committed-state-read-through-query.test.ts`. README's ID changes table does not yet list the L2-2 sibling. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "judgement",
-   "unreviewed": true
+   "detector": "judgement"
   },
   {
    "round": 3,
@@ -2963,10 +2958,9 @@
    "issue": "Two bullets disagree on who writes the stream row. journal `appendWrites` says of `append`: 'one `ctx.db.insert(\"events\", envelope)` per event at versions `expectedVersion + 1` to `expectedVersion + n`, then one insert or patch of the stream row with `streamVersion: expectedVersion + n`'. The same Spec says `migrateToSchemaVersion` calls `append` per baseline and 'saves no row, which its caller does once', `baselineRow` says 'the adapter saves it at step 9', and the adapter's step8 describes `append` as the indexed read plus the event inserts only, with step9 'save; write the stream row'. Read literally, `appendWrites` gives two row writes per stream per command and a row write inside the helper that 'saves no row'. `fnAppend` also takes `loaded: LoadedStream⟨S⟩`, which only a row write would need, since `EnvelopeInput` already names the stream.",
    "fix": "In `spec:context.journal` reword `appendWrites` to the event inserts only and say that the row is saved by the caller (the adapter's step 9, or `writeBaseline` after the chain). Either drop `loaded` from `fnAppend` and from the adapter's step8 call, or say in one clause what `append` reads from it.",
    "status": "fixed",
-   "note": "S1, 2026-10-01, ruling R7. `appendWrites` in `spec:context.journal` is the event inserts only, with the row saved once by the caller, the adapter at step 9 or `writeBaseline` after the chain; `fnAppend` says what `append` reads from `loaded`, the identity it checks the envelope against; the journal's flow and narrative follow. Shown by the convex-test test 'a create commits one event and one stream row, and returns the DTO, version and envelope' in `tests/simulator/depot.test.ts`; no test yet throws on an envelope that names another stream.",
+   "note": "S1, 2026-10-01, ruling R7. `appendWrites` in `spec:context.journal` is the event inserts only, with the row saved once by the caller, the adapter at step 9 or `writeBaseline` after the chain; `fnAppend` says what `append` reads from `loaded`, the identity it checks the envelope against; the journal's flow and narrative follow. Shown by the convex-test test 'a create commits one event and one stream row, and returns the DTO, version and envelope' in `tests/simulator/depot.test.ts`; no test yet throws on an envelope that names another stream. Confirmed in the Spec text by a lens read.",
    "slice": "S1",
-   "detector": "judgement",
-   "unreviewed": true
+   "detector": "judgement"
   },
   {
    "round": 3,
@@ -3013,10 +3007,9 @@
    "issue": "Lead 6, second item, confirmed, and it changes behavior. queries `parentPassThrough` pins the parent query's handler with `const actor: Actor = { kind: \"human\", id: identity.tokenIdentifier }` and says `ctx.auth` 'is read once for the actor only as the pipeline's public entry does'. The public entry does not do that: actor-and-scope pins `establishActor(ctx: MutationCtx | QueryCtx, serviceIssuers: ReadonlySet⟨string⟩): Promise⟨Actor | null⟩`, which returns 'a `service` actor when the identity's issuer is in `serviceIssuers`, and a `human` actor otherwise', tenancy-and-authority lists it as the one helper ('the helpers `establishActor` and `authorize`') and its flow says an identity becomes 'an actor of kind `human`, or `service` when its issuer is configured as a service issuer'. The helper already accepts a `QueryCtx`. Grants are keyed by kind: `grantsRead` is `.eq(\"tenantId\", tenantId).eq(\"principalKind\", actor.kind).eq(\"principalId\", actor.id)`. So a service identity that holds a grant row with `principalKind: \"service\"` is authorized on every command and refused `forbidden` on every parent query built from the pinned template, and the hand-built actor also drops `issuer`. One concept, actor establishment, has two implementations with different answers.",
    "fix": "In `spec:context.queries` `parentPassThrough`, replace the hand-built actor with `const actor = await establishActor(ctx, serviceIssuers); if (actor === null) throw ...`, and say that every parent query and the public entry call the same helper of `spec:command.actor-and-scope`. In `spec:command.command-pipeline` step 2 and `ctxAuthUse`, name `establishActor` as the call, so the helper has one stated caller list.",
    "status": "fixed",
-   "note": "S1, 2026-10-01. Slice S1 built no parent query (ruling R2). The pipeline's step 2 now names `establishActor` as its call, and `spec:command.tenancy-and-authority` says it is the one helper that reads `ctx.auth`. S2, which builds queries, must make `parentPassThrough` call `establishActor` with the same `serviceIssuers` as the public entry and show in a test that a service identity holding a `service` grant is authorized by a parent query. S2, 2026-10-02, fold-in after the build. A parent query calls `authorizeQuery`, which calls `establishActor` and `authorize` unchanged (`spec:command.actor-and-scope`, `spec:context.queries`); every parent query an ordinary client can call on tenant data authorizes through it, the fixture's relays `getDocument` and `listDocuments` included. Shown at the convex-test tier by `tests/simulator/read-model.test.ts`, 'authorizeQuery makes a service actor for a configured service issuer and returns the actor it authorized', and at the native tier on the production composition by `tests/native/read-models.query-refused-before-disclosure.test.ts` and `tests/native/read-models.query-refused-without-grant.test.ts`. The production composition names no service issuer, so the service case has no production test.",
+   "note": "S1, 2026-10-01. Slice S1 built no parent query (ruling R2). The pipeline's step 2 now names `establishActor` as its call, and `spec:command.tenancy-and-authority` says it is the one helper that reads `ctx.auth`. S2, which builds queries, must make `parentPassThrough` call `establishActor` with the same `serviceIssuers` as the public entry and show in a test that a service identity holding a `service` grant is authorized by a parent query. S2, 2026-10-02, fold-in after the build. A parent query calls `authorizeQuery`, which calls `establishActor` and `authorize` unchanged (`spec:command.actor-and-scope`, `spec:context.queries`); every parent query an ordinary client can call on tenant data authorizes through it, the fixture's relays `getDocument` and `listDocuments` included. Shown at the convex-test tier by `tests/simulator/read-model.test.ts`, 'authorizeQuery makes a service actor for a configured service issuer and returns the actor it authorized', and at the native tier on the production composition by `tests/native/read-models.query-refused-before-disclosure.test.ts` and `tests/native/read-models.query-refused-without-grant.test.ts`. The production composition names no service issuer, so the service case has no production test. Read against the Spec text; the remainder a reader proposed did not hold on the check.",
    "slice": "S2",
-   "detector": "convex-test",
-   "unreviewed": true
+   "detector": "convex-test"
   },
   {
    "round": 3,
@@ -3099,10 +3092,9 @@
    "issue": "The registry answers which generation is active and which is building; the write helper takes a bare list and its rule needs the difference. generation-registry pins `generationsToWrite(ctx: MutationCtx, readModel: string): Promise⟨{ active?: number; building?: number }⟩`. projection-contract pins `applyProjection⟨D, Row⟩(ctx: MutationCtx, projection: Projection⟨D, Row⟩, input: { tenantId: string; dto: D; versions: StreamVersion[]; mode: ApplyMode; generations: number[] }): Promise⟨ApplyResult[]⟩` and its `callers` bullet says step 9 passes 'the generations from `generationsToWrite`'. The Contract then needs the role: 'In the live-updated mode the row is updated in the active generation, and in a building generation only if backfill has already written it'. With `number[]` the helper cannot tell them apart, and `step3` applies the building rule to both: 'live-updated updates only when the row exists, else `skipped-missing`'. A row is legitimately missing in the active generation whenever `project` returned `null` before ('such as a deleted subject', and `isDeletedMarker` says the adapter 'clears it if a later fold makes it false'): the next live-updated write to that subject is skipped in the active generation and the row never comes back until a rebuild. Related to `r3-architecture-one-projection-writes-every-generation`, which changes the same return type for another reason; this is the role, not the projection version.",
    "fix": "In `spec:application.projection-contract`, which owns the write rule, change the three helpers' input to `generations: { active?: number; building?: number }`, the registry's own return type, and rewrite `step3`: in the active generation live-updated inserts when the row is missing; in the building generation it writes only when the row exists, else `skipped-missing`. If the fix for the architecture finding makes the return a list of `{ generation, projectionVersion }` pairs, add `role: \"active\" | \"building\"` to each pair. Update `spec:command.command-pipeline` step 9 and `readModelWrites` to pass the object.",
    "status": "fixed",
-   "note": "S2, 2026-10-02, fold-in after the build. `generationsToWrite` returns a list tagged by role, the active generation first and then the one in building, verifying or verified, from two ranges of `by_read_model_state` (`spec:application.generation-registry`, built as pinned under ruling C5). Shown at the convex-test tier by `tests/simulator/read-model.test.ts`, 'a command writes the active generation first and the one in building, verifying or verified second; a query reads the active one' and 'two active generations, or two in building, verifying or verified, are a plain Error'.",
+   "note": "S2, 2026-10-02, fold-in after the build. `generationsToWrite` returns a list tagged by role, the active generation first and then the one in building, verifying or verified, from two ranges of `by_read_model_state` (`spec:application.generation-registry`, built as pinned under ruling C5). Shown at the convex-test tier by `tests/simulator/read-model.test.ts`, 'a command writes the active generation first and the one in building, verifying or verified second; a query reads the active one' and 'two active generations, or two in building, verifying or verified, are a plain Error'. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "TypeScript compiler",
-   "unreviewed": true
+   "detector": "TypeScript compiler"
   },
   {
    "round": 3,
@@ -3587,10 +3579,9 @@
    "issue": "The tenant scope reaches a context in two shapes. Every context query takes both `tenantId: v.string()` and `scope: tenantScopeValidator`, and `TenantScope` is `{ tenantId: string }` with no other field ('A finer scope than the tenant, such as a project or an organization inside a tenant, is not designed here'), so a query receives the same tenant twice; queries says 'the context reads `scope.tenantId` and any narrowing it carries', while the pinned index reads use the `tenantId` argument, and no bullet says what happens when the two differ. Operations take `{ tenantId, actor, operation, input, facts }` with no `scope` at all, although context-component's rule says the parent 'passes the server-established actor and tenant scope as arguments' and actor-and-scope's Contract says 'Components receive `tenantId`, `actor` and `operation`'. PLAN 6.3's own example of a context mutation still shows `scope: scopeValidator` on `execute`.",
    "fix": "In `spec:context.queries`, which owns the query args, pick one: drop `tenantId` and read `scope.tenantId` everywhere, or keep both and add the guard 'a query throws a plain error when `scope.tenantId !== tenantId`'. State in `spec:command.actor-and-scope` that for operations the tenant scope is the `tenantId` argument until `TenantScope` gains a narrowing field.",
    "status": "fixed",
-   "note": "S1, 2026-10-01, ruling R3. For operations and commands the tenant scope is the `tenantId` argument alone; `spec:command.actor-and-scope` says so in its Contract and carries it under E-6 as a provisional reading for the owner. Still open: S2, which builds the context queries, removes their `scope` argument or adds the guard that compares it with `tenantId`, in `spec:context.queries` and in `noAuthNoEnv` of `spec:context.context-component`, and shows the choice in a test. S2, 2026-10-02, fold-in after the build. A context query takes the one `tenantId` argument and no `scope`, as an operation does (`spec:context.queries`, `spec:context.context-component`, `spec:command.actor-and-scope`). Shown at the convex-test tier by `tests/simulator/context-queries.test.ts`, 'refuses a scope argument beside tenantId as a validation failure'.",
+   "note": "S1, 2026-10-01, ruling R3. For operations and commands the tenant scope is the `tenantId` argument alone; `spec:command.actor-and-scope` says so in its Contract and carries it under E-6 as a provisional reading for the owner. Still open: S2, which builds the context queries, removes their `scope` argument or adds the guard that compares it with `tenantId`, in `spec:context.queries` and in `noAuthNoEnv` of `spec:context.context-component`, and shows the choice in a test. S2, 2026-10-02, fold-in after the build. A context query takes the one `tenantId` argument and no `scope`, as an operation does (`spec:context.queries`, `spec:context.context-component`, `spec:command.actor-and-scope`). Shown at the convex-test tier by `tests/simulator/context-queries.test.ts`, 'refuses a scope argument beside tenantId as a validation failure'. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "convex-test",
-   "unreviewed": true
+   "detector": "convex-test"
   },
   {
    "round": 3,
@@ -3605,10 +3596,9 @@
    "issue": "E-13 gives every native test its identity through 'the local backend's admin key acting as an identity' and says 'the token's source is the one named difference from production' (tenancy-and-authority `nativeTierIdentity`; acceptance-contract `tierNativeIdentity` and the E-13 rule: 'the identity's signature source is the one named difference'). The mechanism exists: `setAdminAuth(token, actingAsIdentity)` in convex-js `src/browser/http_client.ts` and `ConvexTestingHelper.withIdentity` in `convex-helpers/testing.ts` (github.com/get-convex/convex-js and get-convex/convex-helpers, read 2026-10-01). But a request that carries the admin key is not checked like a client request. In `crates/udf/src/validation.rs` of get-convex/convex-backend (read 2026-10-01) `check_visibility_access` allows an internal function when `identity.is_admin() || identity.is_system() || identity.is_acting_as_user()` ('Admins may have the ability to run the internal function'), and the same test opens a component's public functions to such a caller. The docs agree for the admin tools: internal functions can be run 'using the Dashboard' and 'from the CLI' (docs.convex.dev/functions/internal-functions, read 2026-10-01). So the harness identity can call every `internalMutation` and every component function directly. Two things follow. First, the Sc L1-7 example's sibling assertion, 'The test also calls the internal entry from the client with namespace `agent` and asserts that Convex refuses the call', cannot pass when the client is the harness client E-13 pins for 'caller user-1': the call is accepted and the internal entry runs with a client-chosen actor and namespace. Second, the parity statement for Sc L2-9 is incomplete: under the acting-as identity `clientClaimRefused` ('a client call to the internal entry is refused by Convex before any handler runs') and `clientReach` in context-component do not hold for the test's own client, so a test that reaches an internal entry or a component function by mistake passes natively and fails in production. E-13 also says the alternative costs 'a JWKS endpoint per run'; the custom JWT page says of `jwks`: 'If you'd like to avoid hitting an external service you may use a data URI' (docs.convex.dev/auth/advanced/custom-jwt, read 2026-10-01), so no endpoint is needed.",
    "fix": "On `spec:platform.acceptance-contract` (owner of E-13) name the second difference: an admin acting-as identity passes Convex's visibility check for internal and component functions, so the harness client is more privileged than any production client. Pin that every assertion about visibility, Sc L1-7's direct call to the internal entry and any 'a client cannot reach a component function' check, is made from a second client that holds no admin key (unauthenticated is enough, since the refusal precedes authentication), and say so in the L1-7 example's verification bullet and in `clientClaimRefused`. Correct the E-13 alternative: a test issuer needs no endpoint, because a `customJwt` provider takes its JWKS as a data URI; the cost is one extra provider entry in the fixture's `auth.config.ts`, which the evidence record names as adjusted configuration. Add both differences to `evidenceRecord`.",
    "status": "fixed",
-   "note": "S0, 2026-10-01. E-13's option changed on `spec:platform.acceptance-contract`: a caller under test is an ordinary client carrying a token the harness signs for a fixture issuer, and `auth.config.ts` reads the issuer and a data-URI key set from the deployment's environment variables. The admin key is for setup and reading only (E-15). Restated in `tenancy-and-authority` (`nativeTierIdentity`), `first-experiment` (the rule and `identitySource`), the L2-9 and L1-7 examples and README. Four examples verify the contract on a native backend. Two corrections to the finding: the refusal precedes the handler, not authentication; and the fix's cost line is right, a data-URI key set needs no endpoint. The owner confirms E-13.",
+   "note": "S0, 2026-10-01. E-13's option changed on `spec:platform.acceptance-contract`: a caller under test is an ordinary client carrying a token the harness signs for a fixture issuer, and `auth.config.ts` reads the issuer and a data-URI key set from the deployment's environment variables. The admin key is for setup and reading only (E-15). Restated in `tenancy-and-authority` (`nativeTierIdentity`), `first-experiment` (the rule and `identitySource`), the L2-9 and L1-7 examples and README. Four examples verify the contract on a native backend. Two corrections to the finding: the refusal precedes the handler, not authentication; and the fix's cost line is right, a data-URI key set needs no endpoint. The owner confirms E-13. Confirmed in the Spec text by a lens read.",
    "slice": "S0",
-   "detector": "native local-backend test",
-   "unreviewed": true
+   "detector": "native local-backend test"
   },
   {
    "round": 3,
@@ -3654,10 +3644,9 @@
    "issue": "read-models `fnListOrSummary` pins the first experiment's essential list as `export const listOpenOrders = query({ args: { tenantId: v.string(), paginationOpts: paginationOptsValidator }, returns: v.object({ page: v.array(orderSummaryRow), isDone: v.boolean(), continueCursor: v.string() }), handler })`, and the `pagination` bullet says list queries over parent tables 'return `page`, `isDone` and `continueCursor` from the built-in `.paginate`'. The built-in `.paginate()` returns five keys, not three. convex-js `src/server/impl/query_impl.ts` returns `{ page, isDone, continueCursor, splitCursor, pageStatus }`, and the backend's `queryPage` syscall serializes `split_cursor: Option<String>` and `page_status: Option<&str>` with no skip, so both keys are present as `null` on an ordinary page (get-convex/convex-js and get-convex/convex-backend crates/isolate/src/environment/udf/async_syscall.rs, read 2026-10-01). That is why `paginationResultValidator` in `convex/server` declares `splitCursor: v.optional(v.union(v.string(), v.null()))` and `pageStatus: v.optional(v.union(..., v.null()))`. A `v.object` return validator refuses fields it does not declare ('Object validators don't allow extra properties, objects with properties that aren't specified will fail validation', docs.convex.dev/functions/validation, read 2026-10-01), so `listOpenOrders` as pinned throws a return-validation error on every call, and Sc L2-2's subscription never gets a value. The context's `list` and the parent's `listOrders` in `spec:context.queries` already use `paginationResultValidator`; this is the one query that hand-writes the shape. It also means the client hook cannot split a page of the read-model list when Convex recommends it, because the two fields the hook reads are declared away. Severity: the Sc L2-2 example asserts on 'the next subscription value's page' of 'the order summary query', which is this function, so the scenario cannot pass as pinned; the fix is one line, as the round-1 `.paginate` blocker's was.",
    "fix": "In `spec:application.read-models` change `fnListOrSummary` to `returns: paginationResultValidator(orderSummaryRow)` from `convex/server`, and reword the `pagination` bullet: a list over a parent read-model table returns the built-in `.paginate` result unchanged, `splitCursor` and `pageStatus` included, validated by `paginationResultValidator`. State in the same bullet that a function may run one built-in `.paginate` only ('Convex only supports a single paginated query in each function' is the backend's error text), which the restore's `pendingWorkBatch` and this query both respect.",
    "status": "fixed",
-   "note": "S2, 2026-10-02, fold-in after the build. A read-model list returns through `paginationResultValidator` and maps its rows through `readModelView` (`spec:application.read-models`); built for `listOrderSummaries`. Shown at the native tier on the production composition by `tests/native/read-models.committed-state-visible.test.ts`, whose subscription receives the page, and on the fixture composition by `tests/native/read-models.test.ts`.",
+   "note": "S2, 2026-10-02, fold-in after the build. A read-model list returns through `paginationResultValidator` and maps its rows through `readModelView` (`spec:application.read-models`); built for `listOrderSummaries`. Shown at the native tier on the production composition by `tests/native/read-models.committed-state-visible.test.ts`, whose subscription receives the page, and on the fixture composition by `tests/native/read-models.test.ts`. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "convex-test",
-   "unreviewed": true
+   "detector": "convex-test"
   },
   {
    "round": 3,
@@ -3704,10 +3693,9 @@
    "issue": "Lead 3 holds. Three sentences read as if Convex forbade a component to read an environment variable. F11's narrative: 'Code inside a component cannot read data that is not explicitly provided to it, and that includes the caller's identity ... No component function reads `ctx.auth` or environment variables', under the title 'Components have no ctx.auth' and `evidence.status:documented`. context-component's Design: 'a component cannot read the parent's environment or tables, so everything it needs arrives as arguments or as code'. retention-and-restore's Design: 'the parent may read `process.env` while a component may not'. The docs say otherwise for the environment: 'A component's functions are isolated from the app's environment variables and cannot access just any value from the app's `process.env`. Only the system environment variables (`CONVEX_CLOUD_URL` and `CONVEX_SITE_URL`) are available in every component function. For anything else, components can declare their own typed environment variables in `convex.config.ts`', with `defineComponent(\"myComponent\", { env: { ... } })`, `app.use(myComponent, { env: { MODE: app.env.ENVIRONMENT } })` and 'Environment variables declared by a component are also available via `process.env`' (docs.convex.dev/components/authoring#environment-variables and docs.convex.dev/production/environment-variables#component-env-vars, read 2026-10-01). `ctx.auth` is different: 'Within a component, `ctx.auth` is not available'. So 'no `ctx.auth`' is a Convex fact, and 'no environment variable' is this design's rule (D11, rubric item 24), which stays valid but is the corpus's choice.",
    "fix": "In `spec:facts.f11-components-have-no-ctx-auth` split the narrative: `ctx.auth` is unavailable in a component (documented, S4); a component is isolated from the app's variables but may declare typed ones the installing app supplies, and always sees `CONVEX_CLOUD_URL` and `CONVEX_SITE_URL` (documented, S4); the platform's rule is that a context component declares none, so actor, scope, facts and switches arrive as arguments. Reword context-component's Design sentence and `noAuthNoEnv` to 'declares no environment variable and reads none', and retention-and-restore's to 'the switch is read in the parent because a context component declares no environment variable'. Mark the rule `[extension]` where it is stated as a rule, or cite D11 for it instead of F11.",
    "status": "fixed",
-   "note": "S1, 2026-10-01, rulings R4 and S12. F11's narrative keeps the documentation's sentence and calls the environment rule the design's; `spec:context.context-component`, `spec:context.queries`, `spec:command.tenancy-and-authority`, `spec:command.command-pipeline` and `spec:obligations.retention-and-restore` state that no component function reads `ctx.auth` or `process.env` as this design's rule, which ESLint enforces over `src/context` and every component directory of the fixture composition. Shown by the pure test 'lint refuses every read of ctx.auth or the environment in %s' in `tests/pure/context-rules.test.ts`. The decision Specs D10 and D11 transcribe the doc and are unchanged.",
+   "note": "S1, 2026-10-01, rulings R4 and S12. F11's narrative keeps the documentation's sentence and calls the environment rule the design's; `spec:context.context-component`, `spec:context.queries`, `spec:command.tenancy-and-authority`, `spec:command.command-pipeline` and `spec:obligations.retention-and-restore` state that no component function reads `ctx.auth` or `process.env` as this design's rule, which ESLint enforces over `src/context` and every component directory of the fixture composition. Shown by the pure test 'lint refuses every read of ctx.auth or the environment in %s' in `tests/pure/context-rules.test.ts`. The decision Specs D10 and D11 transcribe the doc and are unchanged. Confirmed in the Spec text by a lens read.",
    "slice": "S1",
-   "detector": "judgement",
-   "unreviewed": true
+   "detector": "judgement"
   },
   {
    "round": 3,
@@ -3743,10 +3731,9 @@
    "issue": "F15 is carried as assumed: 'Nothing read so far states or denies it', `measurableBy: no page states it; S2 and S5 describe reactivity and component isolation separately`. A docs page states it: 'Queries, mutations, and action rules still apply - queries can only call component queries, mutations can also call component mutations, and actions can also call component actions. As a result, queries into components are reactive by default, and mutations have the same transaction guarantees' (docs.convex.dev/components/using#using-the-components-api-directly, read 2026-10-01). The system tables page adds that queries on system tables are 'reactive and realtime just like queries reading from all other tables'. The doc's ledger lists F15 as assumed and only the owner edits the doc, but the corpus records rechecks on the fact, as it did for F16. What stays open is the second half of Probe 5: whether the `paginator` page relayed by the parent stays contiguous under live writes and whether the split path works across the boundary.",
    "fix": "On `spec:facts.f15-parent-query-over-component-query-stays-reactive` record the recheck the way F16 does: status rechecked, the using page as `measurableBy`, the doc's own status left for the owner. Move F15 from `factsAssumed` to `factsRechecked` in `spec:facts.fact-ledger`, and narrow Probe 5 in `spec:facts.probe-plan` and the Probe 5 question in `spec:context.queries` to the pagination half.",
    "status": "fixed",
-   "note": "S0, 2026-10-01. F15 states `probed` and `defined`: the page on using components states the reactivity and Probe 5 showed it on a native backend. Its blocking question is gone. Restated in `fact-ledger` (`factsAssumed`, `factsProbed`), `probe-plan`, `context.queries`, `application.read-models`, `application.rebuild`, D8, the platform root, README and PLAN's rubric items 21 and 34; the fix's file list missed the last five. The doc keeps F15 as assumed until the owner edits it. The pagination half of Probe 5 ran too and is recorded on F15; what it found about the client hook is finding `s0-helper-hook-loses-rows-after-a-capped-split`.",
+   "note": "S0, 2026-10-01. F15 states `probed` and `defined`: the page on using components states the reactivity and Probe 5 showed it on a native backend. Its blocking question is gone. Restated in `fact-ledger` (`factsAssumed`, `factsProbed`), `probe-plan`, `context.queries`, `application.read-models`, `application.rebuild`, D8, the platform root, README and PLAN's rubric items 21 and 34; the fix's file list missed the last five. The doc keeps F15 as assumed until the owner edits it. The pagination half of Probe 5 ran too and is recorded on F15; what it found about the client hook is finding `s0-helper-hook-loses-rows-after-a-capped-split`. Read against the Spec text; what is left is r3-convex-f15-reactivity-is-documented-remainder.",
    "slice": "S0",
-   "detector": "judgement",
-   "unreviewed": true
+   "detector": "judgement"
   },
   {
    "round": 3,
@@ -3813,10 +3800,9 @@
    "issue": "Every byte bound in the corpus exists to stay under Convex's 16 MiB and 1 MiB ceilings, but the bounds are measured in a different unit and one of them is not checked at run time. journal `limitPayloadBytes`: '`append` measures each validated payload as the byte length of its JSON serialization'. idempotency `fnCanonicalJson`: 'serializes with object keys sorted, `undefined` members omitted, numbers in shortest round-trip form'. Two problems follow from the values `v` validators accept. (1) A payload or an input may hold `v.int64()` or `v.bytes()`; `JSON.stringify` throws on a BigInt and turns an ArrayBuffer into `{}`, so the measure and the fingerprint are undefined for values the declared validators admit ('the same data types supported by function arguments, return types and the database', docs.convex.dev/database/types, read 2026-10-01). (2) Convex ships the measure its limits use: 'Use `getDocumentSize` from \"convex/values\" to measure the size of documents, including the default `_id` and `_creationTime` fields. Use `getConvexSize` to measure the byte size of arbitrary values'; `getConvexSize` 'matches how Convex calculates document size for bandwidth tracking and size limit enforcement' (docs.convex.dev/database/types#measuring-document-sizes and docs.convex.dev/api/modules/values#getconvexsize, read 2026-10-01), and `convexToJson` gives a JSON form that keeps Int64 and Bytes. Separately, `budgetBytes`, 'the one number every byte-derived bound reads', is never enforced: state-document-mapping `budgetCheck` is 'a native test [that] writes the largest state the product allows', and the adapter's step 9 saves the row without measuring it, while the list page, the streams per call, the backfill batch, the baseline batch and the restore check all assume no row exceeds its budget. A row that grows past its declared budget and stays under 1 MiB is written without error and then breaks those bounds as read-limit errors far from the cause.",
    "fix": "On `spec:context.journal` measure the payload with `getConvexSize` from `convex/values` and state the 16,384-byte bound in that unit; say the same in `spec:constraints.events-stay-small` `measurableBy`. On `spec:context.persistence-adapter` add to step 9 a check that `getDocumentSize` of the row, plus its parts under a derived mapping, is at most `registration.mapping.budgetBytes`, a plain error and a technical failure above it, and name it in `spec:kernel.state-document-mapping` as the run-time enforcer beside `budgetCheck`. On `spec:command.idempotency-and-receipts` define `canonicalJson` over `convexToJson(value)` with keys sorted, so Int64 and Bytes fingerprint deterministically, or state that command inputs admit no `v.int64()` and no `v.bytes()` and have the registration check enforce it. Measure `bounds.maxBytes` and the 16 KiB `details` bound the same way.",
    "status": "fixed",
-   "note": "S1, 2026-10-01, rulings R8 and F4. Every bound S1 built is measured with `getConvexSize`: the payload in `append` (`spec:context.journal`, `spec:constraints.events-stay-small`), the saved row at the adapter's step 9 (`spec:context.persistence-adapter`, named in `spec:kernel.state-document-mapping`), `bounds.maxBytes` at step 1 and a rejection's `details` in `reject`; `canonicalJson` is `convexToJson` with keys sorted. Shown by the convex-test tests 'a payload above 16,384 bytes and a row above its budget are technical failures' in `tests/simulator/depot.test.ts` and 'step 1 refuses a long request key and a refined title as invalidInput, and an input over its bounds as operationTooLarge' in `tests/simulator/command.test.ts`, and the pure tests 'canonicalJson gives an int64, bytes and a non-finite number one tagged encoding each, so they never collide' and 'reject throws a plain Error when its details measure above 16,384 bytes' in `tests/pure/command.test.ts`.",
+   "note": "S1, 2026-10-01, rulings R8 and F4. Every bound S1 built is measured with `getConvexSize`: the payload in `append` (`spec:context.journal`, `spec:constraints.events-stay-small`), the saved row at the adapter's step 9 (`spec:context.persistence-adapter`, named in `spec:kernel.state-document-mapping`), `bounds.maxBytes` at step 1 and a rejection's `details` in `reject`; `canonicalJson` is `convexToJson` with keys sorted. Shown by the convex-test tests 'a payload above 16,384 bytes and a row above its budget are technical failures' in `tests/simulator/depot.test.ts` and 'step 1 refuses a long request key and a refined title as invalidInput, and an input over its bounds as operationTooLarge' in `tests/simulator/command.test.ts`, and the pure tests 'canonicalJson gives an int64, bytes and a non-finite number one tagged encoding each, so they never collide' and 'reject throws a plain Error when its details measure above 16,384 bytes' in `tests/pure/command.test.ts`. Confirmed in the Spec text by a lens read.",
    "slice": "S1",
-   "detector": "pure unit test",
-   "unreviewed": true
+   "detector": "pure unit test"
   },
   {
    "round": 3,
@@ -3989,10 +3975,9 @@
    "issue": "Slice S0 wrote the harness rules of E-13 and E-15 into `spec:platform.acceptance-contract` as seven bullets, several holding two or three rules, and bound the four harness examples to it with `verifies`. The graph then showed the acceptance contract as verified by tests that touch no scenario row, and the issuer as 'the one difference' was stated three times in one Spec. Found by the Opus review of commits a6889c1 and 951874d (minors 2 and 17).",
    "fix": "Move the harness rules to a Spec of their own that refines the acceptance contract, one rule per bullet, and re-parent the four examples.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01, ruling S1. `spec:platform.native-harness` now owns E-13 and E-15, their two open questions, 23 rules and the Design keys `backend`, `identity`, `adminReads`, `localWriteRate` and `evidenceKept`. The acceptance contract keeps the doc's rules and E-14, and one sentence that points at the new Spec. The four examples are `spec:platform.native-harness.<slug>`; their test anchors and contract imports follow. Restated in `tenancy-and-authority` (`nativeTierIdentity`), `first-experiment` (the identity rule), the L2-9 example, the foundation pack, README's register and PLAN's inventory, which cite E-13 or E-15 and no longer name the acceptance contract as the owner."
+   "note": "S0, 2026-10-01, ruling S1. `spec:platform.native-harness` now owns E-13 and E-15, their two open questions, 23 rules and the Design keys `backend`, `identity`, `adminReads`, `localWriteRate` and `evidenceKept`. The acceptance contract keeps the doc's rules and E-14, and one sentence that points at the new Spec. The four examples are `spec:platform.native-harness.<slug>`; their test anchors and contract imports follow. Restated in `tenancy-and-authority` (`nativeTierIdentity`), `first-experiment` (the identity rule), the L2-9 example, the foundation pack, README's register and PLAN's inventory, which cite E-13 or E-15 and no longer name the acceptance contract as the owner. Read against the Spec text; what is left is s0-harness-rules-sit-on-the-acceptance-contract-remainder."
   },
   {
    "round": "S0",
@@ -4007,10 +3992,9 @@
    "issue": "The acceptance contract called the fixture issuer 'the one difference from production' and also required the production-configuration run of Sc L2-9 to have 'no adjusted configuration', while the harness wrote the issuer under `adjustments`. If the issuer is an adjustment, no production-configuration run can satisfy the rule. Opus review, M3.",
    "fix": "State once what the issuer is, and have the evidence record follow.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01, ruling S2. `spec:platform.native-harness`: 'The fixture issuer is the identity source of a native run and its one named difference from production; it is recorded as the identity source and is not an adjusted configuration.' `first-experiment`'s `typeMeasurement` already keeps `identitySource` apart from `adjustments`. The evidence module follows in the fold-in (code ruling C12)."
+   "note": "S0, 2026-10-01, ruling S2. `spec:platform.native-harness`: 'The fixture issuer is the identity source of a native run and its one named difference from production; it is recorded as the identity source and is not an adjusted configuration.' `first-experiment`'s `typeMeasurement` already keeps `identitySource` apart from `adjustments`. The evidence module follows in the fold-in (code ruling C12). Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4025,10 +4009,9 @@
    "issue": "The contract said a scenario on the fixture composition 'runs the same libraries, schemas and authority model', and `tierNative` said 'production schemas and authority', while the fixture composition mounts fixture contexts with their own schemas. An owner reads production parity into fixture runs. Opus review, M4.",
    "fix": "Name which tables are shared and which are the fixture's.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01, ruling S3. The rule now reads: a scenario on the fixture composition 'runs the shared libraries with their own tables and the same authority model, beside fixture contexts whose state is the fixture's own'. `tierNative` on the acceptance contract is back to the doc's sentence. The L2-9 example says the same."
+   "note": "S0, 2026-10-01, ruling S3. The rule now reads: a scenario on the fixture composition 'runs the shared libraries with their own tables and the same authority model, beside fixture contexts whose state is the fixture's own'. `tierNative` on the acceptance contract is back to the doc's sentence. The L2-9 example says the same. Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4041,10 +4024,9 @@
    "issue": "The contract said the shared libraries 'carry no test hook' and allowed 'a replaceable part it wires in place of the production one, such as the audit destination and the diagnostic sink'. The boundary between a hook and a replaceable part was undefined, and the line settled the mechanism of Sc ALL-1 ahead of slice S5. Opus review, minor 3.",
    "fix": "Define a hook, and say what a composition may supply without naming S5's mechanism.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01, ruling S4. Two rules: 'The shared libraries carry no test hook: they read no flag and take no callback that exists only for a test', and a fault enters only through 'a fixture context's declaration, a fixture function, or a dependency the libraries take from every composition'. The audit destination and the diagnostic sink are no longer named here; S5 decides how Sc ALL-1 breaks them."
+   "note": "S0, 2026-10-01, ruling S4. Two rules: 'The shared libraries carry no test hook: they read no flag and take no callback that exists only for a test', and a fault enters only through 'a fixture context's declaration, a fixture function, or a dependency the libraries take from every composition'. The audit destination and the diagnostic sink are no longer named here; S5 decides how Sc ALL-1 breaks them. Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4059,10 +4041,9 @@
    "issue": "The two refusal examples claimed 'Convex refuses the call before a handler runs' and showed only that the call failed and no row existed. Three native mutations survived on commit 951874d: the tests pass when the function or the component they call does not exist. The internal-function example cited Sc L1-7, so a reader could count the namespace scenario as covered by Convex's visibility check. Opus review minors 1 and 7, sol review 1 and 2, astra review 8.",
    "fix": "A refusal example states what it shows: the refusal's own error, nothing stored, and the target existing on the same deployment.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "native backend",
-   "note": "S0, 2026-10-01, ruling S5. The rule on `spec:platform.native-harness` and both examples now require the error text (`Could not find public function`; `BadDeployKey` on the endpoint that takes a component path), zero rows, and one row after the same function is called with admin access on the same deployment. The component example covers both routes a client has. The Sc L1-7 citation is gone. The tests follow in the fold-in (code ruling C8), which reruns the three mutations."
+   "note": "S0, 2026-10-01, ruling S5. The rule on `spec:platform.native-harness` and both examples now require the error text (`Could not find public function`; `BadDeployKey` on the endpoint that takes a component path), zero rows, and one row after the same function is called with admin access on the same deployment. The component example covers both routes a client has. The Sc L1-7 citation is gone. The tests follow in the fold-in (code ruling C8), which reruns the three mutations. Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4077,10 +4058,9 @@
    "issue": "Several example steps were positive sentences whose bound value negated them: 'is stored {stored: false}', 'returns an identity {anonymousHasIdentity: false}', 'is stored after the parent caught the error and committed {childRowStored: false}'. A reader takes the sentence for the claim. The Probe 2 examples also named 'a client whose parent lets the error pass', a second parent no Given set up. Opus review, minors 4 and 5.",
    "fix": "Reword with counts, and set up every actor in a Given.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01, ruling S6. Steps now bind counts ('holds {rows: 0} rows') or carry no slot ('returns no identity'). Both Probe 2 examples have a Given for the two parents, the one that catches and the one that lets the error pass."
+   "note": "S0, 2026-10-01, ruling S6. Steps now bind counts ('holds {rows: 0} rows') or carry no slot ('returns no identity'). Both Probe 2 examples have a Given for the two parents, the one that catches and the one that lets the error pass. Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4105,10 +4085,9 @@
    "issue": "The probe examples wrote the expected answer in as the pass condition with nothing saying it was a hypothesis, so a contrary result would read as a red test to repair: the depth example bound 8 and the first native run showed 9. Probe 3 dropped function-call quota without saying so and its local timings would feed OQ1 unmarked. Probe 5's question, whether the client hook splits a page, sat in a verification bullet that allowed the run to skip it. Probe 1's Thens passed without reaching the guarantee's boundary: twenty trials with no row passed, the HTTP example lost no response, and a random kill might never land before the commit; the examples said 'WebSocket client' for a fact about the React client. The subscription example did not require a parent that reads no table of its own. Opus review, M5 to M8 and minors 5, 6 and 16; the first native run of the probes on 2026-10-01.",
    "fix": "Say in the probe plan what a bound value is and what follows a different result; make each example fail when its boundary is not reached; name the client; give the hook its own example; say what a local backend cannot answer.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "native backend",
-   "note": "S0, 2026-10-01, ruling S7. `spec:facts.probe-plan` carries extension E-16 with six rules: a probe is example Specs that verify its fact; bound values are the expectation written before the first run; a different first result is recorded on the fact and the example is then bound to what the release does and says so; an example fails when its run did not reach its boundary; sizes are recorded and not asserted; what a local backend cannot answer stays open on the fact. Probe 1's three examples name `ConvexClient` or `ConvexHttpClient`, require a trial committed without confirmation, a kill on each side of the commit, and a lost response with one request per call. Probe 3 says quota is not measured and the time is a local backend's. Probe 4's depth binds 9 as observed and calls it a backend default; the shared-limit examples say the seeding is paced under the local backend's write rate and that each half of the write commits alone. Probe 5 gains `probe-5-hook-splits-across-boundary`; the subscription example's parent reads no table of its own. Opus minor 16, drop the depth example, is rejected: the round-3 finding on nested limits asks for the depth and the test is small."
+   "note": "S0, 2026-10-01, ruling S7. `spec:facts.probe-plan` carries extension E-16 with six rules: a probe is example Specs that verify its fact; bound values are the expectation written before the first run; a different first result is recorded on the fact and the example is then bound to what the release does and says so; an example fails when its run did not reach its boundary; sizes are recorded and not asserted; what a local backend cannot answer stays open on the fact. Probe 1's three examples name `ConvexClient` or `ConvexHttpClient`, require a trial committed without confirmation, a kill on each side of the commit, and a lost response with one request per call. Probe 3 says quota is not measured and the time is a local backend's. Probe 4's depth binds 9 as observed and calls it a backend default; the shared-limit examples say the seeding is paced under the local backend's write rate and that each half of the write commits alone. Probe 5 gains `probe-5-hook-splits-across-boundary`; the subscription example's parent reads no table of its own. Opus minor 16, drop the depth example, is rejected: the round-3 finding on nested limits asks for the depth and the test is small. Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4124,10 +4103,9 @@
    "issue": "`spec:context.queries` relays a component list's `paginator` page through the parent and relies on the client hook to split a page the helper marks `SplitRequired` (`componentPagination`, `paginationShape`, `parentPassThrough`). On a native backend, release `precompiled-2026-09-28-5c7cb5b`, with `convex-helpers` 0.1.124, the `usePaginatedQuery` hook of `convex-helpers/react` showed 40 of 45 rows after a page of 10 grew to 25 rows under `maximumRowsRead` 20: the five rows between the capped page's `continueCursor` and its end cursor were never loaded, and the hook reported no error. Read in the helper's source by the design agent: a capped page returns `continueCursor` at the last row it read, and the hook ends the second half of the split there. Reading the two halves directly, from the start to the split cursor and from the split cursor to the page's own end cursor, gives all 25 rows. So a list that is capped by `maximumRowsRead` and read with this hook can lose rows without a sign. Found by the design agent's bound test in slice S0, 2026-10-01, run twice; the orchestrator reran it after applying the prototype.",
    "fix": "Slice S2 decides before it builds lists: whether a context list sets `maximumRowsRead` at all, whether the parent or the client closes the range to the page's end cursor, or whether the client uses another hook. The Probe 5 example keeps the observed value so a later helper release that fixes it turns the test red.",
    "status": "fixed",
-   "note": "S2, 2026-10-02, fold-in after the build. No hook crosses the component boundary: a client pages by the cursor pair and replaces a `SplitRequired` page with two halves to its end cursor (`spec:context.queries`). Shown at the native tier on the fixture composition by `tests/native/context-queries.test.ts`, a page that outgrows its row cap splits into two halves that hold every row, and `tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap.test.ts`; the hook's Probe 5 example keeps its observed value.",
+   "note": "S2, 2026-10-02, fold-in after the build. No hook crosses the component boundary: a client pages by the cursor pair and replaces a `SplitRequired` page with two halves to its end cursor (`spec:context.queries`). Shown at the native tier on the fixture composition by `tests/native/context-queries.test.ts`, a page that outgrows its row cap splits into two halves that hold every row, and `tests/native/f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap.test.ts`; the hook's Probe 5 example keeps its observed value. Confirmed in the Spec text by a lens read.",
    "slice": "S2",
-   "detector": "native backend",
-   "unreviewed": true
+   "detector": "native backend"
   },
   {
    "round": "S0",
@@ -4162,10 +4140,9 @@
    "issue": "Extension E-16 said what a different first run means and nothing about a different later run. Seven bound values are what one backend release or one package version does (the depth of 9, the hook's 40 shown and 5 missing, the socket wait, two refusal texts, one log record per call), so the next pin bump would turn them red with nothing saying that red is a finding and not a regression. No example whose expectation held said so. The size rule ('an example asserts a size only where the fact states a bound') forbade the depth example's own Then. Opus review of the fold-in, M1 and M5.",
    "fix": "Say what a red on a new release is; let a reader tell a held expectation from an observed value; rule between the size rule and the depth example.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01. `spec:facts.probe-plan` gains the rule that a later run showing another value is again a finding and the example is rebound, and the size rule now tells a measured size, which is recorded and not asserted, from a limit the backend enforces, which is bound as observed. `spec:platform.native-harness` gains the same rule for the values its four examples bind. Twelve probe examples say their bound values held on the first run; the depth and hook examples already said theirs were observed. The depth example also binds the refusal's text."
+   "note": "S0, 2026-10-01. `spec:facts.probe-plan` gains the rule that a later run showing another value is again a finding and the example is rebound, and the size rule now tells a measured size, which is recorded and not asserted, from a limit the backend enforces, which is bound as observed. `spec:platform.native-harness` gains the same rule for the values its four examples bind. Twelve probe examples say their bound values held on the first run; the depth and hook examples already said theirs were observed. The depth example also binds the refusal's text. Read against the Spec text; what is left is s0-e16-silent-on-a-later-different-run-remainder."
   },
   {
    "round": "S0",
@@ -4178,10 +4155,9 @@
    "issue": "One rule said a fault enters a native run only through something the fixture composition supplies, while other rules and the Design entries give the harness a kill, a closed client and a lost response, and all of Probe 1 injects its fault that way. A slice S1 implementer would read the first rule as forbidding the tools the Spec hands over. Opus review of the fold-in, M2.",
    "fix": "One statement of which faults come from the harness and which only from fixture code.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01. Two rules: a fault inside a function enters only through what the fixture composition supplies; a fault outside the functions, a killed backend, a closed client or a lost response, comes from the harness's controls."
+   "note": "S0, 2026-10-01. Two rules: a fault inside a function enters only through what the fixture composition supplies; a fault outside the functions, a killed backend, a closed client or a lost response, comes from the harness's controls. Read against the Spec text; what is left is s0-fault-rule-contradicts-the-harness-controls-remainder."
   },
   {
    "round": "S0",
@@ -4194,10 +4170,9 @@
    "issue": "After the design pass the harness Spec's Design section held about thirty entries under a preamble that called all of them observations: the stubs slice S1 builds on, implementation detail that goes stale at the first code change (system query names, CLI flags, retry counts, thirteen fields copied from the backend's log), and readings of one backend release written as rules. The fixture token was said to yield 'the shape a production token yields' while it carries five claims. Opus review of the fold-in, M3 and minor 10; the owner's direction that a Spec carries the design of its key abstractions.",
    "fix": "Keep the stubs later slices build on, mark one release's readings as readings, drop the entries whose only reader is the harness's own code.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "judgement",
-   "note": "S0, 2026-10-01. Ten entries are gone: the table-read and log mechanisms, the executable resolver and its type, the pin file, the issuer constructor, `startBackend`, the readiness check, the completion record's full type and the CLI call. Three entries are renamed `observedWriteRate`, `observedFunctionLog` and `observedTableRead` and the preamble says they are readings, not rules. `identity` names the five claims the fixture token carries. `adminReads` names the six fields of a completion record a test may rely on. Left for polish: several rules are still said twice or hold two rules in one bullet (Opus minors 1 and 2)."
+   "note": "S0, 2026-10-01. Ten entries are gone: the table-read and log mechanisms, the executable resolver and its type, the pin file, the issuer constructor, `startBackend`, the readiness check, the completion record's full type and the CLI call. Three entries are renamed `observedWriteRate`, `observedFunctionLog` and `observedTableRead` and the preamble says they are readings, not rules. `identity` names the five claims the fixture token carries. `adminReads` names the six fields of a completion record a test may rely on. Left for polish: several rules are still said twice or hold two rules in one bullet (Opus minors 1 and 2). Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4210,10 +4185,9 @@
    "issue": "The component refusal example said Convex 'refuses the call on every route', and for the WebSocket route it showed only that a promise stayed pending for three seconds. The test passed when the mutation was never sent, which the behavior review showed, and when the public route called a function that does not exist, which a native mutation showed. Opus review M4, astra review 6, sol review 6.",
    "fix": "The outcome says what each route showed; the socket step shows that the request left the client and that the backend closed the connection; the public route checks its target.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "native backend",
-   "note": "S0, 2026-10-01. The outcome now reads: refused on the two HTTP routes with its own error, connection closed on the WebSocket route without an answer. The socket step binds the wait and at least one close by the backend, and the verification bullets say what would show a call that ran. The test follows in fold-in 2."
+   "note": "S0, 2026-10-01. The outcome now reads: refused on the two HTTP routes with its own error, connection closed on the WebSocket route without an answer. The socket step binds the wait and at least one close by the backend, and the verification bullets say what would show a call that ran. The test follows in fold-in 2. Confirmed in the Spec text by a lens read."
   },
   {
    "round": "S0",
@@ -4226,10 +4200,9 @@
    "issue": "The harness rule said a run 'never signals a process it did not start'. The sweep signals by process id after reading the process table, and between the read and the signal a process id can change hands. The review of the second fold-in showed the interleaving on a model of the code (astra, report U, finding 1), and showed on a real child process that a failed inspection left the process alive, removed its directory and reported success (finding 2).",
    "fix": "The rule says what the harness does before a signal and what it does when it cannot inspect a process; a Design entry says the interval between read and signal is not closed.",
    "status": "fixed",
-   "unreviewed": true,
    "slice": "S0",
    "detector": "pure test",
-   "note": "S0, 2026-10-01, third main thread. The rule is split in two: cleanup, and inspection before a signal with the failed-inspection case. Design entry `sweepOwnership` states the open interval and why it matters only for a backend that exits during the sweep. The code follows in fold-in 3, list A, item A1."
+   "note": "S0, 2026-10-01, third main thread. The rule is split in two: cleanup, and inspection before a signal with the failed-inspection case. Design entry `sweepOwnership` states the open interval and why it matters only for a backend that exits during the sweep. The code follows in fold-in 3, list A, item A1. Read against the Spec text; what is left is s0-sweep-rule-promises-more-than-a-process-id-allows-remainder."
   },
   {
    "round": "PR1",
@@ -4242,10 +4215,9 @@
    "issue": "Authorization checks the new input subject, but a conflicting receipt key discloses the stored operation ID for another subject. The unsupported-version answer carries the same metadata.",
    "fix": "Omit stored receipt metadata from conflict and unsupported-version answers unless the actor is authorized for the stored subject. Prove both branches with two actors and two subjects, then check the public answer on the native backend.",
    "status": "fixed",
-   "note": "the platform review of 2026-10-02, CORE-01. Evidence recorded by that read: convex-test. Counterexample: Bob creates document B with a shared request key; Alice, granted only A, submits A with that key and receives B's stored operation ID on conflict, with the unsupported-version branch exposing the same pointer. Spec evidence at 2e20b29: command/tenancy-and-authority.sdp.md:48 requires authorization before stored outcome disclosure. Fixed on fix/platform-review: the Spec text in 096db7e, the fix in 24ecbce, the proof in e68e0af, merged in 9d63c3f. A conflict and an unsupported-version answer carry a fixed message and no details; the one fact their codes disclose is whether the stored contract version is the declaration's. Proven at the pure test, convex-test and native backend tiers.",
+   "note": "the platform review of 2026-10-02, CORE-01. Evidence recorded by that read: convex-test. Counterexample: Bob creates document B with a shared request key; Alice, granted only A, submits A with that key and receives B's stored operation ID on conflict, with the unsupported-version branch exposing the same pointer. Spec evidence at 2e20b29: command/tenancy-and-authority.sdp.md:48 requires authorization before stored outcome disclosure. Fixed on fix/platform-review: the Spec text in 096db7e, the fix in 24ecbce, the proof in e68e0af, merged in 9d63c3f. A conflict and an unsupported-version answer carry a fixed message and no details; the one fact their codes disclose is whether the stored contract version is the declaration's. Proven at the pure test, convex-test and native backend tiers. Read against the Spec text; what is left is pr1-architecture-receipt-conflict-discloses-other-subject-remainder.",
    "slice": "platform-review",
-   "detector": "convex-test must cover both branches with two actors and two subjects: B stays forbidden, no B operation ID, result, affected subject or version is disclosed, and state and receipts do not change. Native backend tests must assert the public wire answer while preserving authorized same-input replay and ordinary conflicts.",
-   "unreviewed": true
+   "detector": "convex-test must cover both branches with two actors and two subjects: B stays forbidden, no B operation ID, result, affected subject or version is disclosed, and state and receipts do not change. Native backend tests must assert the public wire answer while preserving authorized same-input replay and ordinary conflicts."
   },
   {
    "round": "PR1",
@@ -4258,10 +4230,9 @@
    "issue": "The outer boundary checks bare rejection codes but passes tagged errors unchanged, allowing an undeclared code, another command name or oversized details.",
    "fix": "Validate bare and tagged rejections against the running command, its allowed codes and the details bound. Treat invalid tagged rejections like undeclared bare codes and test the helper and a registered command.",
    "status": "fixed",
-   "note": "the platform review of 2026-10-02, CORE-02. Evidence recorded by that read: pure test. Counterexample: A tagged rejection with code notDeclared and command SomeOtherCommand passes normalization for CreateDocument; a directly constructed tagged error can also bypass the details bound. Spec evidence at 2e20b29: command/outcome-boundary.sdp.md:58 closes the codes, but :76 rethrows errors already carrying kind unchanged. Fixed on fix/platform-review: the Spec text in 096db7e and c233023, the code in 24ecbce, 9d63c3f and efa95da. Every rejection candidate, bare or in the wire shape, passes one validation at the outer boundary, and one that does not fit becomes a plain error. Proven at the compiled, pure test and convex-test tiers, and by native probes of the unit's review.",
+   "note": "the platform review of 2026-10-02, CORE-02. Evidence recorded by that read: pure test. Counterexample: A tagged rejection with code notDeclared and command SomeOtherCommand passes normalization for CreateDocument; a directly constructed tagged error can also bypass the details bound. Spec evidence at 2e20b29: command/outcome-boundary.sdp.md:58 closes the codes, but :76 rethrows errors already carrying kind unchanged. Fixed on fix/platform-review: the Spec text in 096db7e and c233023, the code in 24ecbce, 9d63c3f and efa95da. Every rejection candidate, bare or in the wire shape, passes one validation at the outer boundary, and one that does not fit becomes a plain error. Proven at the compiled, pure test and convex-test tiers, and by native probes of the unit's review. Confirmed in the Spec text by a lens read.",
    "slice": "platform-review",
-   "detector": "Pure tests must cover bare and tagged allowed and undeclared codes, wrong command identity, oversized details, malformed tagged data, transient errors and unchanged technical throws. A convex-test registered command calling the helper incorrectly must produce the boundary's technical-failure behavior and preserve rollback.",
-   "unreviewed": true
+   "detector": "Pure tests must cover bare and tagged allowed and undeclared codes, wrong command identity, oversized details, malformed tagged data, transient errors and unchanged technical throws. A convex-test registered command calling the helper incorrectly must produce the boundary's technical-failure behavior and preserve rollback."
   },
   {
    "round": "PR1",
@@ -4276,10 +4247,9 @@
    "issue": "Valid caller metadata can make an event larger than the 17 KiB assumed by fold and migration bounds. A 32 KiB correlation ID alone invalidates the 600-event arithmetic.",
    "fix": "Bound caller-set envelope fields at command entry and derive the complete event maximum. Use it in fold, query and migration bounds, with an explicit refusal for metadata past its bound.",
    "status": "fixed",
-   "note": "the platform review of 2026-10-02, CORE-03. Evidence recorded by that read: convex-test. Counterexample: A valid 32 KiB correlation ID is copied onto every small-payload event; 600 such IDs alone exceed 18.75 MiB, although future folds assume about 17 KiB per complete event. Spec evidence at 2e20b29: context/event-envelope.sdp.md:45 limits only payload bytes and document structure; context/journal.sdp.md:97,108 and context/queries.sdp.md:93 assume about 1 KiB of envelope. The future read-limit claim is arithmetic, not a native failure. Fixed on fix/platform-review: the Spec text in 096db7e and 86da870, the code in 24ecbce and 9d63c3f. Every text field a caller sets is bounded in UTF-8 bytes at step 1, the stream ID at the adapter, and append bounds the envelope at 4,096 bytes, so a stored event is at most 20,541 bytes and the fold bound is 500 events. Proven at the pure test and convex-test tiers and for multibyte text on the native backend. A native run over history of the maximum size waits for the unit that builds rebuild.",
+   "note": "the platform review of 2026-10-02, CORE-03. Evidence recorded by that read: convex-test. Counterexample: A valid 32 KiB correlation ID is copied onto every small-payload event; 600 such IDs alone exceed 18.75 MiB, although future folds assume about 17 KiB per complete event. Spec evidence at 2e20b29: context/event-envelope.sdp.md:45 limits only payload bytes and document structure; context/journal.sdp.md:97,108 and context/queries.sdp.md:93 assume about 1 KiB of envelope. The future read-limit claim is arithmetic, not a native failure. Fixed on fix/platform-review: the Spec text in 096db7e and 86da870, the code in 24ecbce and 9d63c3f. Every text field a caller sets is bounded in UTF-8 bytes at step 1, the stream ID at the adapter, and append bounds the envelope at 4,096 bytes, so a stored event is at most 20,541 bytes and the fold bound is 500 events. Proven at the pure test and convex-test tiers and for multibyte text on the native backend. A native run over history of the maximum size waits for the unit that builds rebuild. Read against the Spec text; what is left is pr1-convex-event-envelope-has-no-byte-bound-remainder.",
    "slice": "platform-review",
-   "detector": "Pure or convex-test boundary cases must cover exact and one-byte-over limits, multibyte metadata and large actor or delegation fields. Before rebuild bounds are claimed, native backend tests must fold and migrate maximum permitted complete envelopes within shared limits or return the declared refusal, including valid stored history outside a later limit.",
-   "unreviewed": true
+   "detector": "Pure or convex-test boundary cases must cover exact and one-byte-over limits, multibyte metadata and large actor or delegation fields. Before rebuild bounds are claimed, native backend tests must fold and migrate maximum permitted complete envelopes within shared limits or return the declared refusal, including valid stored history outside a later limit."
   },
   {
    "round": "PR1",
@@ -4293,10 +4263,9 @@
    "issue": "The rebuild helper used a nullish fallback, so an explicit null baseline became the initial state.",
    "fix": "Use an undefined check to distinguish no baseline from an explicit null, and test omitted, null, zero and object starts.",
    "status": "fixed",
-   "note": "the platform review of 2026-10-02, CORE-04. Evidence recorded by that read: pure test. Counterexample: A decider whose initial state is 42 and whose state admits null rebuilt no tail events from an explicit null start as 42. Spec evidence at 2e20b29: kernel/decider-contract.sdp.md:59 already says start === undefined at this commit; initial-state.sdp.md:44 folds from the baseline state. Commit 2e20b29 fixed it; status is fixed with unreviewed true pending the unit review under response R4.",
+   "note": "the platform review of 2026-10-02, CORE-04. Evidence recorded by that read: pure test. Counterexample: A decider whose initial state is 42 and whose state admits null rebuilt no tail events from an explicit null start as 42. Spec evidence at 2e20b29: kernel/decider-contract.sdp.md:59 already says start === undefined at this commit; initial-state.sdp.md:44 folds from the baseline state. Commit 2e20b29 fixed it; status is fixed with unreviewed true pending the unit review under response R4. Confirmed in the Spec text by a lens read.",
    "slice": "platform-review",
-   "detector": "Pure tests must preserve omitted, null, zero and object starts and show initial is never called for explicit null; commit 2e20b29 already supplies the undefined check, with the fixed item awaiting review.",
-   "unreviewed": true
+   "detector": "Pure tests must preserve omitted, null, zero and object starts and show initial is never called for explicit null; commit 2e20b29 already supplies the undefined check, with the fixed item awaiting review."
   },
   {
    "round": "PR1",
@@ -4309,10 +4278,9 @@
    "issue": "The native acceptance example binds every Layer 0 to 2 scenario, but its test runs one sequential path and establishes no concurrency parity.",
    "fix": "Name the path the bound test runs. Add a separate experiment check over required scenarios, compositions, tiers and verifiers that fails when a required case is absent or failing.",
    "status": "fixed",
-   "note": "the platform review of 2026-10-02, APPL-11. Evidence recorded by that read: source inspection of native test binding. Counterexample: The bound native step says every Layer 0 to 2 scenario but runs a short sequential path; failing a different required scenario does not fail it, and no concurrent commands run. Spec evidence at 2e20b29: application/first-experiment.native-acceptance-production-configuration.sdp.md:25 says every scenario; :32 describes a small end-to-end path. No new native runtime failure is claimed. Fixed on fix/platform-review: c245407 renames the bound steps to the path the test runs, e095da6 adds the acceptance check (npm run acceptance), efa95da and c3f3fd8 harden it. The check derives the required scenarios from the graph and reads one run record; at 645130f it answers 30 passed and 5 missing. Proven at the pure test tier and by a clean run of every tier.",
+   "note": "the platform review of 2026-10-02, APPL-11. Evidence recorded by that read: source inspection of native test binding. Counterexample: The bound native step says every Layer 0 to 2 scenario but runs a short sequential path; failing a different required scenario does not fail it, and no concurrent commands run. Spec evidence at 2e20b29: application/first-experiment.native-acceptance-production-configuration.sdp.md:25 says every scenario; :32 describes a small end-to-end path. No new native runtime failure is claimed. Fixed on fix/platform-review: c245407 renames the bound steps to the path the test runs, e095da6 adds the acceptance check (npm run acceptance), efa95da and c3f3fd8 harden it. The check derives the required scenarios from the graph and reads one run record; at 645130f it answers 30 passed and 5 missing. Proven at the pure test tier and by a clean run of every tier. Confirmed in the Spec text by a lens read.",
    "slice": "platform-review",
-   "detector": "Pure tests must remove and fail a required scenario and make aggregate experiment acceptance fail, with each required scenario mapped to composition, tier, verifier and saved result. The native backend smoke path must retain its actual assertions and fixture-issuer difference; a native contention case is required before claiming concurrency parity.",
-   "unreviewed": true
+   "detector": "Pure tests must remove and fail a required scenario and make aggregate experiment acceptance fail, with each required scenario mapped to composition, tier, verifier and saved result. The native backend smoke path must retain its actual assertions and fixture-issuer difference; a native contention case is required before claiming concurrency parity."
   },
   {
    "round": "PR1",
@@ -4341,10 +4309,9 @@
    "issue": "The harness anchor covers only its carrier file. Impact lookup for backend.ts and admin.ts reports unknown coverage and misses the owning Spec.",
    "fix": "Give implementation-bearing harness files distinct anchors to the native harness Spec, or require an explicit review fallback for unknown file coverage.",
    "status": "fixed",
-   "note": "the platform review of 2026-10-02, FOUND-01. Evidence recorded by that read: graph query and source inspection. Counterexample: Changing harness/backend.ts or harness/admin.ts alone gives an empty impact set and unknown coverage, while including the anchor carrier harness/native.ts finds the native-harness Spec. Spec evidence at 2e20b29: Graph recipe 4 reports coverageUnknownFiles for harness/backend.ts and harness/admin.ts. This is a graph gap, not a runtime failure. Fixed on fix/platform-review in c245407: every TypeScript file under harness/ carries its own code anchor, and a pure test fails when one loses it. harness/backend-release.json cannot carry an anchor; SESSIONS.md says a file with unknown coverage is reviewed against the Spec that owns its directory.",
+   "note": "the platform review of 2026-10-02, FOUND-01. Evidence recorded by that read: graph query and source inspection. Counterexample: Changing harness/backend.ts or harness/admin.ts alone gives an empty impact set and unknown coverage, while including the anchor carrier harness/native.ts finds the native-harness Spec. Spec evidence at 2e20b29: Graph recipe 4 reports coverageUnknownFiles for harness/backend.ts and harness/admin.ts. This is a graph gap, not a runtime failure. Fixed on fix/platform-review in c245407: every TypeScript file under harness/ carries its own code anchor, and a pure test fails when one loses it. harness/backend-release.json cannot carry an anchor; SESSIONS.md says a file with unknown coverage is reviewed against the Spec that owns its directory. Confirmed in the Spec text by a lens read.",
    "slice": "platform-review",
-   "detector": "Graph recipe 4 must reach spec:platform.native-harness for each implementation-bearing harness file, or the review procedure must require its owning-contract review for unknown coverage. Compiled anchor declarations must remain valid; a graph binding proves location, not a passed runtime test.",
-   "unreviewed": true
+   "detector": "Graph recipe 4 must reach spec:platform.native-harness for each implementation-bearing harness file, or the review procedure must require its owning-contract review for unknown coverage. Compiled anchor declarations must remain valid; a graph binding proves location, not a passed runtime test."
   },
   {
    "round": "PR1",
@@ -4532,6 +4499,197 @@
    "slice": "L3",
    "detector": "Native backend provider-stub tests must interrupt at that point and restart, reporting requests and attempts separately while observing exactly one payment effect and one transition from awaiting payment to confirmed.",
    "unreviewed": false
+  },
+  {
+   "round": 3,
+   "id": "r3-convex-f15-reactivity-is-documented-remainder",
+   "lens": "sdp",
+   "severity": "minor",
+   "files": [
+    "design/specs/facts/probe-plan.sdp.md",
+    "design/specs/decisions/d08-read-models-in-command.sdp.md",
+    "design/specs/facts/fact-ledger.sdp.md"
+   ],
+   "issue": "The Probe 5 open questions of `spec:facts.probe-plan` and `spec:decisions.d08-read-models-in-command` say that how a context list is capped is decided later, before a list is built, while `spec:context.queries` already pins the row cap, the cursor-pair paging and the split handling under E-24; the two questions and the fact ledger's narrative and `factsProbed` also name a work stage and the day Probe 5 ran.",
+   "fix": "Reword both Probe 5 questions to state the result and point at `spec:context.queries` for the cap and the paging, and state the fact ledger's probe results by the pinned release alone.",
+   "status": "open",
+   "note": "Remainder of r3-convex-f15-reactivity-is-documented, left after its fix when a lens read checked the fix against the Spec text.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": "S0",
+   "id": "s0-harness-rules-sit-on-the-acceptance-contract-remainder",
+   "lens": "sdp",
+   "severity": "minor",
+   "files": [
+    "design/specs/platform/native-harness.sdp.md"
+   ],
+   "issue": "Several rules of `spec:platform.native-harness` still hold two rules in one bullet: the fixture-composition rule (native evidence for its own row, and what the run shares), the refusal rule (three showings, and the fixture part that fails a call when no error tells a refusal from a failure) and the cleanup rule (cleanup registered before a start can stall, and every process killed and directory removed when a run ends); three neighbouring rules say that a caller under test holds no admin key.",
+   "fix": "Split each of those bullets into one rule per bullet and keep one statement that no caller under test carries the admin key.",
+   "status": "open",
+   "note": "Remainder of s0-harness-rules-sit-on-the-acceptance-contract, left after its fix when a lens read checked the fix against the Spec text.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": "S0",
+   "id": "s0-e16-silent-on-a-later-different-run-remainder",
+   "lens": "completeness",
+   "severity": "minor",
+   "files": [
+    "design/specs/facts/probe-plan.sdp.md",
+    "design/specs/facts/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation.sdp.md",
+    "design/specs/facts/f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query.sdp.md",
+    "design/specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-built-in-paginate-throws-in-component.sdp.md",
+    "design/specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split.sdp.md",
+    "design/specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap.sdp.md",
+    "design/specs/facts/f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap.sdp.md"
+   ],
+   "issue": "A reader cannot yet tell what every bound value of the probe examples is. The two Probe 3 examples bind the median time through the component as {componentAgainstHelper: \"higher\"} than through the helper in their Then, while `spec:facts.probe-plan` rules that a measured size, a time or a cost, is recorded and not asserted. Four Probe 5 examples with bound values say neither that their values held nor that they were observed: built-in paginate throws in a component, full first page not split, full first page split at an equal cap, and parent page outgrows the row cap.",
+   "fix": "Say in the probe plan's size rule whether the direction a fact states may be asserted, or make the Probe 3 comparison a recorded value; give the four Probe 5 examples the held or the observed sentence.",
+   "status": "open",
+   "note": "Remainder of s0-e16-silent-on-a-later-different-run, left after its fix when a lens read checked the fix against the Spec text. The reader also named the day of the run in the twelve sentences that say a probe example's values held; those belong to the temporal sweep that leads 16 and 22 of design/STATE.md already hold and enter no finding.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": "S0",
+   "id": "s0-fault-rule-contradicts-the-harness-controls-remainder",
+   "lens": "completeness",
+   "severity": "minor",
+   "files": [
+    "design/README.md",
+    "README.md"
+   ],
+   "issue": "Both READMEs still state the single fault rule that `spec:platform.native-harness` split in two: the E-15 register row says faults enter only through what the fixture composition supplies, and the root README says the fixture composition holds every fault a test injects, while the Spec lets a killed backend, a closed client and a lost response come from the harness's controls.",
+   "fix": "Restate the E-15 row and the root README's fixture bullet with both rules: a fault inside a function through what the fixture composition supplies, a fault outside the functions from the harness's controls.",
+   "status": "open",
+   "note": "Remainder of s0-fault-rule-contradicts-the-harness-controls, left after its fix when a lens read checked the fix against the Spec text.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": "S0",
+   "id": "s0-sweep-rule-promises-more-than-a-process-id-allows-remainder",
+   "lens": "convex",
+   "severity": "minor",
+   "files": [
+    "design/specs/platform/native-harness.sdp.md"
+   ],
+   "issue": "The Design entry `sweepOwnership` says no call available to a process that did not spawn the backend closes the interval between the process-table read and the signal; on Linux `pidfd_open` takes any visible process id, not only a child's, and a check of the process after the open followed by `pidfd_send_signal` closes the interval; what holds is that the harness, a Node process, has no binding for these calls and does not use them.",
+   "fix": "Say that the harness has no call that closes the interval and leaves it open, without claiming that no process could close it, or name `pidfd_open` as the Linux call the harness does not use.",
+   "status": "open",
+   "note": "Remainder of s0-sweep-rule-promises-more-than-a-process-id-allows, left after its fix when a lens read checked the fix against the Spec text. It rests on the manual pages pidfd_open(2) and pidfd_send_signal(2) and no probe; whether Node reaches `pidfd_send_signal` without a native addon decides it.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": 3,
+   "id": "r3-completeness-apply-projection-cannot-tell-active-from-building-remainder",
+   "lens": "completeness",
+   "severity": "minor",
+   "files": [
+    "design/specs/application/projection-contract.sdp.md"
+   ],
+   "issue": "No example or verification bullet shows that a read-model row deleted by a `null` projection comes back in the active generation on the next live-updated write, the case `spec:application.projection-contract` states in its rule that a live write to the active generation always lands.",
+   "fix": "Add to `spec:application.projection-contract` Verification a bullet that a test deletes a row through a `null` projection and asserts the next live-updated write to the active generation answers `inserted`, or add that step to the L2-5 example.",
+   "status": "open",
+   "note": "Remainder of r3-completeness-apply-projection-cannot-tell-active-from-building, left after its fix when a lens read checked the fix against the Spec text.",
+   "slice": "S4",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": "PR1",
+   "id": "pr1-architecture-receipt-conflict-discloses-other-subject-remainder",
+   "lens": "architecture",
+   "severity": "minor",
+   "files": [
+    "design/specs/command/tenancy-and-authority.shared-key-two-subjects.sdp.md"
+   ],
+   "issue": "The fix asked both branches, conflict and unsupported version, to be proven on the native backend, but `spec:command.tenancy-and-authority.shared-key-two-subjects` line 34 specifies the conflict branch only; the unsupported-version branch is covered by `tests/simulator/receipt-disclosure.test.ts` line 81, at the convex-test tier only.",
+   "fix": "Bind the unsupported-version answer on the native backend beside the conflict branch, or state that the native tier proves the conflict branch only and the convex-test tier the unsupported-version branch.",
+   "status": "open",
+   "note": "Remainder of pr1-architecture-receipt-conflict-discloses-other-subject, left after its fix when a lens read checked the fix against the Spec text. The check of the readers' verdicts found that the reader's evidence did not hold the parent's 'both branches on the native backend' and turned the verdict from confirmed to partial; lens and severity were set by the closer, since the reader proposed no remainder.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": "PR1",
+   "id": "pr1-convex-event-envelope-has-no-byte-bound-remainder",
+   "lens": "convex",
+   "severity": "minor",
+   "files": [
+    "design/specs/context/queries.sdp.md"
+   ],
+   "issue": "`limitHistoryPage` of `spec:context.queries` says a history page at its row cap of 500 reads under 9 MiB at the payload bound plus the envelope, but at `limitEventBytes` and the 61 bytes of system fields 500 stored events read 10,270,500 bytes, about 9.8 MiB.",
+   "fix": "In `spec:context.queries` `limitHistoryPage`, cite `limitEventBytes` of `spec:context.event-envelope` and state that a page at the row cap of 500 reads under 9.8 MiB, plus the baseline events it spans.",
+   "status": "open",
+   "note": "Remainder of pr1-convex-event-envelope-has-no-byte-bound, left after its fix when a lens read checked the fix against the Spec text.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": 3,
+   "id": "pr1-sdp-plan-scope-validator-stale",
+   "lens": "sdp",
+   "severity": "minor",
+   "files": [
+    "design/PLAN.md"
+   ],
+   "issue": "`design/PLAN.md` line 547, the example of how a Convex function is pinned, still shows `fnExecute` with `scope: scopeValidator` among its `args`, while `spec:command.actor-and-scope` and `spec:context.queries` pass the tenant scope as the one `tenantId` argument with no separate scope.",
+   "fix": "Drop `scope: scopeValidator` from the example's `args` so it shows the one `tenantId` argument.",
+   "status": "open",
+   "note": "Found by a flags reader beside its task, in the read of r3-sdp-tenant-scope-passed-two-ways, and held on the check of the readers' verdicts.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": 3,
+   "id": "pr1-sdp-adapter-example-stock-budget-stale",
+   "lens": "sdp",
+   "severity": "minor",
+   "files": [
+    "design/specs/context/persistence-adapter.sdp.md"
+   ],
+   "issue": "`limitStreamsPerCall` of `spec:context.persistence-adapter`, line 106, illustrates the byte admission with a stock stream declared at 4 KiB, while `spec:application.orders-inventory-example` pins the stock item stream at 16 KiB, as `spec:application.first-experiment` `streamBudgets` restates.",
+   "fix": "Restate the illustration with the 16 KiB stock budget the example pins and the number of streams it admits, or name it as an illustration that is not the example's.",
+   "status": "open",
+   "note": "Found by a flags reader beside its task, in the read of r3-architecture-write-bound-refuses-what-stream-bound-admits.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": 3,
+   "id": "pr1-fidelity-evidence-records-kept-sentences-stale",
+   "lens": "fidelity",
+   "severity": "minor",
+   "files": [
+    "design/specs/platform/native-harness.sdp.md",
+    "design/README.md"
+   ],
+   "issue": "Extension E-15 in `spec:platform.native-harness`, line 25, says evidence records that back a pass claim are kept in the repository, and the E-15 row of `design/README.md`, line 199, says a pass claim cites a record kept in the repository; decision 35 ended that: the harness writes a run record under the ignored `evidence/runs/`, CI keeps the record of every push as an artifact, and a pass claim names the commit and the CI run.",
+   "fix": "Restate both sentences with the rule decision 35 set: a claim that a tier passed names the commit and the CI run whose artifact holds the record.",
+   "status": "open",
+   "note": "Found by a flags reader beside its task; ruled by the main thread as a finding of the fidelity lens.",
+   "slice": "P",
+   "detector": "lens read of a flagged fix"
+  },
+  {
+   "round": 3,
+   "id": "pr1-convex-restore-drops-schedules-not-shown-by-import",
+   "lens": "convex",
+   "severity": "major",
+   "files": [
+    "design/specs/application/restore.sdp.md",
+    "design/specs/facts/f12-backups-exclude-pending-scheduled-functions.sdp.md"
+   ],
+   "issue": "`spec:application.restore`, near line 70, says a restore drops every pending scheduled function, and F12, near line 13, infers that no dispatches survive; on the pinned local backend a `convex import --replace` into the same backend kept every existing `_scheduled_functions` row, pending ones included, and into a fresh backend left the table empty, so the sentence holds for a fresh target and not for an import in place, and the dashboard restore the backup page describes was not run.",
+   "fix": "State the two cases apart in the restore Spec and on F12, and name which one the restore procedure is.",
+   "status": "open",
+   "note": "Found by the import scout of lane 1d on the native backend, local backend at the pinned release; it enters the ledger through lane 1c, the ledger's one writer in the round. Shown at the native backend tier by `tests/native/snapshot-replacement.test.ts` at commit d53c651 on unit/import-scout; the run and the commands are in report-d-import-scout.md.",
+   "slice": "S5",
+   "detector": "native run of the import scout"
   }
  ],
  "sessions": [
