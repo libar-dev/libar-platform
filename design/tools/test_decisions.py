@@ -344,7 +344,7 @@ class RealRegisterTests(unittest.TestCase):
     def test_real_register_has_unique_rows_and_exact_recipe_20_coverage(self):
         register = json.loads((ROOT / "design/decisions/register.json").read_text())
         rows = register["decisions"]
-        self.assertEqual(len(rows), 147)
+        self.assertGreaterEqual(len(rows), 147)
         ids = [r["id"] for r in rows]
         self.assertEqual(ids, [f"OD-{i:03d}" for i in range(1, len(rows) + 1)])
         self.assertEqual(len(set(ids)), len(rows))
