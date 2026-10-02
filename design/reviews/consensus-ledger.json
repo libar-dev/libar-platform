@@ -4710,6 +4710,23 @@
    "note": "S4 on paper, 2026-10-02. Found by the mechanical read of the generations and gate text; older than that text, which made verify a repairing pass. The main thread ruled it is not fixed on paper and goes to the unit that builds the restore. The build must show: at convex-test, a read-model check over an active generation with a missing row, an older row and a row of a deleted subject records three findings and writes no read-model row; a clean generation records none.",
    "slice": "S5",
    "detector": "judgement"
+  },
+  {
+   "round": 3,
+   "id": "s3-measurement-architecture-current-state-not-checked-against-event-fold",
+   "lens": "architecture",
+   "severity": "major",
+   "files": [
+    "specs/application/restore.sdp.md",
+    "specs/context/journal.sdp.md",
+    "specs/application/first-experiment.sdp.md"
+   ],
+   "issue": "Current state is defined as always equal to the fold of its stream's events, and nothing checks it. On the native backend, after `ReceiveStock` recorded quantity two, admin access set the stock item's current on-hand to three with the same stream version and journal tail, and a one-line `PlaceOrder` for three was applied at the healthy cost: the journal tail check proves the tail matches the version, not that the state is the fold of the events (`spec:application.first-experiment` `observedStockFoldGap`, `tests/native/place-order-measurement.test.ts`).",
+   "fix": "No check is added on the command path: admin access is inside D11's trust boundary, and a check of state against the fold of its events on every command is the cost the single-document mapping exists to avoid. The restore's domain check and `rebuildStream` detect a current state that is not the fold of its stream's events and report it as a finding.",
+   "status": "open",
+   "note": "S3 measurement on the native backend, 2026-10-02. The main thread ruled no command-path check and sent it to the unit that builds the restore check and `rebuildStream`. The reproduction stays as a test that states what happens. The build must show: on the native backend or at convex-test, a stock item whose current state admin access set ahead of its events is reported by the restore's domain check and by `rebuildStream` as a state that differs from its fold, while a stream whose state is its fold reports none; and the present reproduction still states what the command path does.",
+   "slice": "S5",
+   "detector": "native backend"
   }
  ],
  "sessions": [
