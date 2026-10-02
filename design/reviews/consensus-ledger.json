@@ -4690,7 +4690,7 @@
    "issue": "`spec:application.restore`, near line 70, says a restore drops every pending scheduled function, and F12, near line 13, infers that no dispatches survive; on the pinned local backend a `convex import --replace` into the same backend kept every existing `_scheduled_functions` row, pending ones included, and into a fresh backend left the table empty, so the sentence holds for a fresh target and not for an import in place, and the dashboard restore the backup page describes was not run.",
    "fix": "State the two cases apart in the restore Spec and on F12, and name which one the restore procedure is.",
    "status": "open",
-   "note": "Found by the import scout of lane 1d on the native backend, local backend at the pinned release; it enters the ledger through lane 1c, the ledger's one writer in the round. Shown at the native backend tier by `tests/native/snapshot-replacement.test.ts` at commit d53c651 on unit/import-scout; the run and the commands are in report-d-import-scout.md.",
+   "note": "Found by the import scout of lane 1d on the native backend, local backend at the pinned release; it enters the ledger through lane 1c, the ledger's one writer in the round. Shown at the native backend tier by `tests/native/snapshot-replacement.test.ts` at commit d53c651 on unit/import-scout; the run and the commands are in report-d-import-scout.md. Probe 7 shows the in-place half on the native backend at the pinned release: the exported documents replace later changes while every scheduler row, including ones created after the export, is kept, and a kept pending mutation still runs against the restored data (`tests/native/f12-backups-exclude-pending-scheduled-functions.probe-7-in-place-import.test.ts`). The restore Spec's step and its backup rule now state both cases; its rule near line 70 still says a restore drops every pending scheduled function, and the rule that replaces it is the restore build's, in `probe-7-architecture-restore-kept-schedules-not-reconciled`.",
    "slice": "S5",
    "detector": "native run of the import scout"
   },
@@ -4725,6 +4725,23 @@
    "fix": "No check is added on the command path: admin access is inside D11's trust boundary, and a check of state against the fold of its events on every command is the cost the single-document mapping exists to avoid. The restore's domain check and `rebuildStream` detect a current state that is not the fold of its stream's events and report it as a finding.",
    "status": "open",
    "note": "S3 measurement on the native backend, 2026-10-02. The main thread ruled no command-path check and sent it to the unit that builds the restore check and `rebuildStream`. The reproduction stays as a test that states what happens. The build must show: on the native backend or at convex-test, a stock item whose current state admin access set ahead of its events is reported by the restore's domain check and by `rebuildStream` as a state that differs from its fold, while a stream whose state is its fold reports none; and the present reproduction still states what the command path does.",
+   "slice": "S5",
+   "detector": "native backend"
+  },
+  {
+   "round": 3,
+   "id": "probe-7-architecture-restore-kept-schedules-not-reconciled",
+   "lens": "architecture",
+   "severity": "major",
+   "files": [
+    "specs/application/restore.sdp.md",
+    "specs/obligations/retention-and-restore.sdp.md",
+    "specs/obligations/obligation-module.sdp.md"
+   ],
+   "issue": "The restore and its schedule rebuild assume a restore leaves no scheduled function. On the native backend at the pinned release that holds only for a CLI replacement into a fresh backend, where every document returns with its id and creation time, every `_scheduled_functions` table is empty, and a stored scheduler id still validates while `system.get` returns null. In a replacement in place the exported documents replace later changes while every scheduler row, including ones created after the export, is kept, and a kept pending mutation still runs against the restored data. So `spec:application.restore` near line 70 (a restore drops every pending scheduled function, and the accepted branch resumes each inventoried generation), `spec:obligations.retention-and-restore` near line 45 (schedules are rebuilt from obligations) and `rebuildStep2` near line 68 (running obligations whose in-flight action was lost with the backup), and the rearming that `spec:obligations.obligation-module` relies on, can rearm work beside a kept schedule that still runs.",
+   "fix": "Decide in the restore's build which replacement the restore procedure uses, and for a replacement in place a rule that reconciles or fences the kept schedules before anything is rearmed: the probe proposed that the fifth step resumes each inventoried generation under a reconciled fence, that schedules are reconciled with restored obligations and obsolete ones cancelled or fenced before new attempt IDs are minted, and that `rebuildStep2` also covers an action still in progress on an in-place destination. None of these is applied; each is a rule, not an observation.",
+   "status": "open",
+   "note": "Probe 7 on the native backend, local backend at the pinned release, 2026-10-02 (`report-probe-7-bindings.md`, the proposed lines for `restore.sdp.md:70`, `retention-and-restore.sdp.md:45` and `:68`, and the reconciling clause of `obligation-module.sdp.md:48`). The main thread ruled that the rule-adding lines go to the unit that builds the restore. The build must show, on the native backend: after a replacement into a fresh backend, a generation in `building` and a running obligation are resumed or rearmed once with no kept schedule; after a replacement in place with a pending batch and a pending dispatch kept, including one scheduled after the export, nothing runs twice and nothing runs against a fence or attempt the restore superseded; and which replacement the procedure uses is stated and tested.",
    "slice": "S5",
    "detector": "native backend"
   }
