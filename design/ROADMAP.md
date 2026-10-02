@@ -1,10 +1,10 @@
 # Roadmap: the next units
 
-Written on 2026-10-02 by the main thread, from four advisor memos written the same day under `design/advisors/task-roadmap.md`. It is a work document: it orders units and names what each needs and shows, and it says nothing a Spec should say. The owner rules on it. The memos, the plants and the check are in the roadmap unit's folder, which the project notes name.
+Written on 2026-10-02 by the main thread, from four advisor memos written the same day under `design/advisors/task-roadmap.md`. It is a work document: it orders units and names what each needs and shows, and it says nothing a Spec should say. The owner rules on it. The memos, the plants and the check are in the roadmap unit's folder, which the project notes name. It is kept current at each close, last at the close of round 2 on 2026-10-03.
 
 ## How to read it
 
-A unit is one session, as `SESSIONS.md` cuts them, on its own branch and through a pull request. Its kind is `decide` when the owner or an advisor rules first, `design` when it writes Spec text from rulings, `build` when it writes code and tests from Spec text already ruled, and `mixed` when the two cannot be separated. Units are grouped in rounds. The lanes of one round touch disjoint files and may run at once, each on its own branch; a round ends when its owner sitting or its blocking unit closes. Sizes are the advisors' judgment: an evening is what S1 took, a night what S2 took.
+A unit is one session, as `SESSIONS.md` cuts them, on its own branch. Since round 2 a lane merges into the one feature branch the owner reviews before anything reaches `main`, tactical decision 42 of `STATE.md`. Its kind is `decide` when the owner or an advisor rules first, `design` when it writes Spec text from rulings, `build` when it writes code and tests from Spec text already ruled, and `mixed` when the two cannot be separated. Units are grouped in rounds. The lanes of one round touch disjoint files and may run at once, each on its own branch; a round ends when its owner sitting or its blocking unit closes. Sizes are the advisors' judgment: an evening is what S1 took, a night what S2 took.
 
 The slices of `STATE.md` keep their names. S3 is round 1's attribution and round 2's measurement. S4 is the paper of round 2 and the builds of rounds 3 and 4. S5 is round 5.
 
@@ -16,14 +16,16 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 | 1 | b | Attribute the 3N + 5 reads of `PlaceOrder` under controlled changes. Done (#9) | build | convex | an evening | nothing |
 | 1 | c | Confirm the thirty-three flagged fixes in the Spec text. Done (#6) | design | product | an evening | nothing |
 | 1 | d | Scout: does the pinned local backend take a snapshot import with replacement. Done, yes (#7) | build | operator, convex | an afternoon | nothing |
-| 2 | a | The S3 measurement: six cells, Measurement records, the six targets, Sc L2-9's concurrency half | build | convex | a night | 1b, OD-046, OD-064 |
-| 2 | b | S4 on paper: the per-entity generation lifecycle, the gate and the audit record, the operator entry contract | design | domain, operator | an evening | sitting one |
-| 2 | c | `CancelOrder` and `release` in the example domain | mixed | domain | an evening | the owner's answer on allocations |
-| 2 | d | Probe 6, before the rebuild is built on the component | build | convex | an evening to a night | OD-057's checked lean applied |
-| 2 | e | Probe 7, as far as the local backend can take it, with the scheduled-argument boundary | mixed | operator, convex | an evening | nothing: the import runs locally and admin access reads `_scheduled_functions` |
-| 3 | a | The gate, the restore door, and a gate change as audit that fails closed | mixed | operator | an evening | 2b |
+| 2 | a | The S3 measurement: six cells, Measurement records, the six targets, Sc L2-9's concurrency half. Done: in every contention cell one command applied and the rest were rejected, the six cost targets held, the timings wait for a quiet run | build | convex | a night | 1b, OD-046, OD-064 |
+| 2 | b | S4 on paper: the per-entity generation lifecycle, the gate and the audit record, the operator entry contract. Done, by one designer: installation through the first rebuild, the tenant list, the operator entry contract, S4's open findings 31 to 19 | design | domain, operator | an evening | sitting one |
+| 2 | c | `CancelOrder` and `release` in the example domain. Done: totals only, six native examples, a cancel writes six documents | mixed | domain | an evening | the owner's answer on allocations |
+| 2 | d | Probe 6, before the rebuild is built on the component. Done: the component does not drive a context's rows as documented, so the rebuild drives every batch itself | build | convex | an evening to a night | OD-057's checked lean applied |
+| 2 | e | Probe 7, as far as the local backend can take it, with the scheduled-argument boundary. Done: a fresh import keeps no schedule and an import in place keeps every one; 16 MiB of scheduled arguments per mutation | mixed | operator, convex | an evening | nothing: the import runs locally and admin access reads `_scheduled_functions` |
+| 2 | f | Also done in round 2: the stock item ID bound, so the largest order fits the payload bound `append` holds an event to; 64 bytes, a refusal at step 1 | build | domain | under an evening | 2c |
+| 2 | g | Also done in round 2: the review's fold-in, the caller's signal in the harness, three `CancelOrder` tests, `fillTenants` and the resumed batch size on paper | mixed | operator, domain | under an evening | the review |
+| 3 | a | The gate, the restore door, and a gate change as audit that fails closed. Done in round 2: 106 proof tests written apart from the fix, all passing at the merge, the fix wrong nowhere | mixed | operator | an evening | 2b |
 | 3 | b | The online rebuild of the order summary, Sc L2-5 at the native tier | build | domain | a night | 2b, 2d, 3a |
-| 3 | c | The two harness reads and the fact rows no Spec carries | mixed | convex | a session plus an evening | nothing |
+| 3 | c | The two harness reads and the fact rows no Spec carries. Done in round 2: F18 to F20 probed, the "no job" assertions read `_scheduled_functions`; the deployed-function read stays deferred | mixed | convex | a session plus an evening | nothing |
 | 3 | d | Sitting two: the language, the pass sentence, and the S5 rows | decide | product, domain, operator | an evening of forks, one check, one owner sitting | nothing |
 | 4 | a | A command's audit fails closed and its diagnostic never aborts, Sc ALL-1 | mixed | operator | an evening | 3a |
 | 4 | c | The history view's fold, its memory and its rollback, on paper | design | domain | an evening | 2c |
@@ -32,6 +34,7 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 | 5 | a | Baselines, migration and the fold bound, Sc L2-7 at the native tier | mixed | domain | a night or more | OD-041 from sitting two, 3b |
 | 5 | b | The restore procedure and the drill, Sc L2-8 | mixed | operator | unknown until 4b | 4b, 5a |
 | 5 | c | The first adopter-facing cut: README, the example walkthrough, the package shape | mixed | product | a night | OD-047, OD-048, Sc L2-5 to L2-8 bound |
+| 5 | d | The build of the order allocation history view, Sc L2-6 at the native tier, by ruling F10 | build | domain | a night | 3b, 4c |
 
 ## Round 1: what blocks nothing
 
@@ -49,6 +52,8 @@ No record is copied into `evidence/` in round 1 or later: tactical decision 35 e
 
 ## Round 2: after sitting one
 
+Done on 2026-10-02 and 2026-10-03, as nine lanes merged into `feature/round-2`, then an integration, one review and its fold-in. `STATE.md`, "Where the work stands", says what each showed. The lanes below are kept as they were cut; what differed: the main thread ruled the forks of sitting one on the owner's word before the round, so every lane opened at once; 2b ran as one Fable designer with both subjects, not two, because the gate, the rebuild and the operator entries share surfaces; Probe 6 answered that `@convex-dev/migrations` drives a context's rows only through a hand-written parent mutation against an undocumented contract, so the rebuild drives every batch with its own self-scheduled mutation and uses the component for nothing, and OD-057 waits for its lens; 3a, the gate, was pulled into the round and built from 2b's text with the proof written apart, and 3c, the fact rows, ran beside the other lanes because it needed nothing; a polish lane (2f) and the review's fold-in (2g) came after the merge.
+
 **2a. The measurement.** The contention run at 2, 8 and 32 commands on one stock item, the `Measurement` record per run with the retry count read from the log fields the native harness Spec lists as observed, the comparison with the six targets, the local write rate stated beside any throughput, and the contention run bound to Sc L2-9 as OD-007's lean says. OD-063 and OD-064 get their local numbers.
 
 **2b. S4 on paper.** One design unit, two Fable designers with disjoint subjects, Opus writers, a closer. The domain subject: the projection chosen by the version the generation row records (OD-014) and installation through a first rebuild (OD-010), both checked leans, which close the version check correction C1 left; the progress row (OD-071); the verify pass deleting a row whose DTO projects to null; the rulings of OD-068 and OD-069 applied. The operator subject: `AuditRecordInput` and the record an operator action writes, the gate's shapes, and the one operator entry contract written from the rulings on OD-148 and OD-025, so that every later operator function is written against one establishment rule. The tenant list's owner is ruled here too.
@@ -58,6 +63,16 @@ No record is copied into `evidence/` in round 1 or later: tactical decision 35 e
 **2d. Probe 6.** The three examples OD-057's checked lean names, with `@convex-dev/migrations` pinned, on the fixture composition's read model. F17 becomes probed or E-40's split stands.
 
 **2e. Probe 7.** Moved up from round 4 by ruling 2 once the import scout answered yes. One unit for both halves: the five states and the retention of `_scheduled_functions` confirmed on the pinned release, a scheduled argument grown until the backend refuses it, and, where 1d allows, a snapshot of the parent and the two context components imported into a fresh backend with what is there recorded. F12 and F16 move to probed or stay documented with the reason recorded. OD-081, OD-120 and OD-114 get the measurement their `settles` names; OD-115 waits for the Workpool and Workflow half, which comes before L3. The restore Spec's sentence on dropped schedules is already a ledger finding for S5, from the scout.
+
+## Round 3, as it now stands
+
+The owner discusses the next session's work before it is prepared. In this order:
+
+1. **3b, the online rebuild of the order summary**, Sc L2-5 at the native tier. It is the next unit. What it needs is in `design-s4-paper.md` in the round 2 folder: package 3b of section 3 and the rulings of section 7. 3a is merged, so `assertOperator`, `nextTenant` and `gateAllows` exist. The files: `src/read-model/projection.ts` (`projections`, `projectionOf`, the three roles of a written generation, the backfill mode), `src/read-model/tables.ts` (the slimmer `generations` and `generationProgress`, with its field `pass`), `src/read-model/generations.ts` (the roles, and `activateFirstGeneration` removed), a new `src/read-model/rebuild.ts` (one helper per entry, `RebuildConfig`, `batchSizeFor`, `resumeChain`), the order summary's `projections`, the composition's registered rebuild functions and the fixture's read models the same. Every setup that ran the first activation installs through `startGeneration`, its batches and `switchGeneration`, and the first-activation example is renamed `first-rebuild-installs-read-model` with its test in one commit. From section 7: `fillTenants` and its batches with the refusal of `startGeneration` on an empty tenant list beside a grant, `resumeGeneration` with no batch size, the backfill mode's rule for a row that projects to `null`, and the message that sends a started purge to `resumeGeneration`. The proof obligations are at the pure, `convex-test` and native tiers, the native one the L2-5 example: 350 orders in two tenants, batch size 1, live commands in both tenants, an interrupt, a resume, a switch and a rollback. It does not build the paused path, the aggregate rebuild, `@convex-dev/migrations` in any form, an automatic stall check, a purge that starts by itself or the restore's `finishRestoreRun`.
+2. **3d, sitting two.** The language rows OD-009, OD-022, OD-029, OD-139 and OD-140, with the words round 2 added (snapshot, tenant fill, the measurement's words); OD-008 with OD-006; OD-138; OD-041, OD-042 and OD-114, the last with Probe 7's facts; OD-044 with F18 against D2; OD-063 with its local numbers; OD-048, the licence; and the two speed targets of F2 once their timings are taken on a quiet machine.
+3. **4a, command audit and the diagnostic.** 3a has built `writeAudit` and step 10, so what is left is the Spec text on which outcomes emit a record and where a duration comes from, the sink, and Sc ALL-1 bound.
+4. **4c, the history view on paper.** 2c is done, so `OrderCancelled` and `AllocationReleased` exist for its fold.
+5. **4d, the receipts sweep.** The tenant list and `nextTenant` are built.
 
 ## Round 3
 
@@ -91,7 +106,7 @@ No record is copied into `evidence/` in round 1 or later: tactical decision 35 e
 
 - Layers 3 to 6: at their trigger, after Probe 7, as the doc and tactical decision 3 say. OD-050 to OD-054 and OD-056 stay waiting until an activation record names a consumer.
 - Probe 3's quota half: once on a hosted deployment after 2a, OD-036.
-- The build of the history view (Sc L2-6) and the aggregate form: at a view that needs them, OD-075. 4c gives them their rules first.
+- The aggregate form: at a view that needs it, OD-075. The history view is no longer deferred: ruling F10 keeps it in the first experiment, 4c writes its rules and 5d builds it.
 - Receipt tombstones, the derived mapping and `streamParts`, the import command: when a command needs them, OD-100, OD-113, OD-072.
 - OD-092's `transactionLimits` probe: before any budget or `maxStreams` is raised; nothing in rounds 1 to 5 raises one.
 - OD-035, the doc against the probed facts: after 2a, so one doc edit carries every number.

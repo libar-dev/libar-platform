@@ -4,6 +4,10 @@ A running file, addressed to the Protocol's maintainers. Each `adopt` unit and e
 
 Every number here was measured on this corpus on the date of its section. Re-run before relying on one.
 
+## 2026-10-03, round 2 of the roadmap
+
+- A model Spec now owns an example space: `orders-inventory-example.sdp.md` holds the `gwt-vocabulary` of its six examples, and the pinned Protocol validates it with 0 errors and 0 warnings, while the model template of this corpus's `design/PLAN.md` 6.1 lists only Intent and Model, so nothing told the author it was allowed.
+
 ## 2026-10-01, slice S0, the first build on the Protocol at `5993da7`
 
 ### A Spec with designed stubs is a maturity the Protocol cannot state
