@@ -25,6 +25,6 @@ And the number of stored receipts, events and state changes is {stored: 0}
 ## Verification — executable
 
 - Runs in the native tier on the production composition; every test owns its disposable backend.
-- The test creates stock through `ReceiveStock`, which declares no read model, and sends `PlaceOrder` before any first activation of the order summary.
+- The test creates stock through `ReceiveStock`, which declares no read model, and sends `PlaceOrder` before any generation of the order summary is started.
 - The test asserts that the caller's error is not a `ConvexError` of the outcome boundary, that the function log's record of the failure names the order summary, and that no receipt, no order stream, no order event and no change to the stock exists for the operation.
-- The test then runs the first activation, re-sends the same command with the same request key and asserts that it is applied.
+- The test then starts generation 1 of the order summary, re-sends the same command with the same request key while the generation is still being built, and asserts that it is applied and that its row is in generation 1.

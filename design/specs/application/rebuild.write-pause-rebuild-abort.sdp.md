@@ -33,4 +33,4 @@ And writes {writes: "reopen after the abort"}
 - The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type.
 - The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, interrupts after the second history batch and calls `abortGeneration`.
 - The test asserts that the generation is `aborted`, that the active generation is unchanged, that both source entries are gone from the gate, that `PlaceOrder` succeeds again, and that no query returns a row of the aborted generation.
-- The test runs `purgeGenerationBatch` until the generation is `purged` and asserts every batch deleted at most 500 rows.
+- The test runs `purgeGeneration` and asserts that its batches run until the generation is `purged` and that every batch deleted at most `limitPurgeBatch` rows.

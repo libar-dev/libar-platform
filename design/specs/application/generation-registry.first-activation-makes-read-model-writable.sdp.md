@@ -7,24 +7,26 @@ relations:
   refines: spec:application.generation-registry
   verifies: spec:application.generation-registry
 ---
-# The first activation makes a read model writable
+# A read model is installed through its first rebuild
 
-E-8 · native tier · production composition · no acceptance row; the example verifies the first activation, an extension under E-8.
+E-8 · native tier · production composition · no acceptance row; the example verifies that a read model's first generation is built like any other and serves the subjects that already exist, an extension under E-8.
 
 ## Intent
 
-- outcome: A read model with no generation gets generation 1 as active through one explicit transition, which a second call refuses. (E-8, D9)
+- outcome: Generation 1 starts as building, covers the subjects that existed before it, and is active only after it is verified and switched. (E-8, D9)
 
 ```gwt
-Given a read model with {generationRows: 0} generation rows
-When an operator runs the first activation with admin access
+Given a read model with {generationRows: 0} generation rows and {orders: 3} subjects that already have history
+When an operator starts a generation, its batches finish and the operator switches it
 Then generation {generation: 1} of the read model is {state: "active"}
-And a second first activation is {second: "refused"}
+And the read model holds {rows: 3} rows for the subjects that existed before it
+And a second start while generation 1 is being built is {second: "refused"}
 ```
 
 ## Verification — executable
 
 - Runs in the native tier on the production composition; every test owns its disposable backend.
-- The test runs the production composition's first activation for the order summary with admin access, then reads the `generations` table with admin access and asserts one row for the read model, generation 1, `active`, with the order summary projection's version.
-- The test runs the first activation a second time and asserts that its error names the read model, generation 1 and the state `active`, and that the table still holds one row.
-- The test then creates stock through `ReceiveStock`, sends `PlaceOrder`, and asserts that the order's summary row exists in generation 1.
+- The test places three orders through a command that declares no read model, or writes them before the read model is declared, then runs `internal.rebuild.startGeneration` for the order summary with admin access and a stated operator, and asserts one row in `generations`, generation 1, `building`, with the order summary's latest projection version and the operator as `startedBy`.
+- The test runs `startGeneration` again before the first generation is switched and asserts that its error names the read model, generation 1 and its state, and that the table still holds one row.
+- The test waits until the row is `verified`, asserts that a query over the read model still fails for want of an active generation, runs `switchGeneration`, and asserts that the row is `active`, that no row is `retired`, and that the list query returns the three orders.
+- The test runs the same sequence on a backend with no subject and asserts that the progress row shows one backfill batch and one verify batch before `verified`.
