@@ -89,7 +89,7 @@ This contract pins the shapes the parent establishes and passes into components:
 - validatorOperator: `const operatorValidator = v.string()` the `operator` argument of every operator entry that changes anything and the type of every field that records it (E-48)
 - fnAssertOperator: `assertOperator(operator: string): string` returning its argument, and throwing the plain `Error` `"An operator entry needs a stated operator"` when `operator.trim()` is empty and `"The stated operator is " + bytes + " bytes, above the limit of 512"` when `utf8Length(operator)` is above `limitOperatorBytes`; an operator entry calls it first, so a refused entry has read and written nothing (E-48, D19)
 - limitOperatorBytes: 512 bytes of UTF-8, the bound `limitCallText` of `spec:command.command-pipeline` gives an actor's `id` (E-48, E-34)
-- operatorRecordedWhere: `startedBy` and `changedBy` on the generation row of `spec:application.generation-registry`, `changedBy` on a closed entry of the gate and `operator` on its audit record in `spec:application.write-pause` and `spec:operations.baseline-operations`, and `operator` on the run record of `spec:application.restore` (E-48, D19)
+- operatorRecordedWhere: `startedBy` and `changedBy` on the generation row of `spec:application.generation-registry`, `changedBy` on a closed entry of the gate and `operator` on its audit record in `spec:application.write-pause` and `spec:operations.baseline-operations`, and `operator` and `finishedBy` on the run record of `spec:application.restore` (E-48, D19)
 
 ## Verification — reviewed
 

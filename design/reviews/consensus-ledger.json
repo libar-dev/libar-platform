@@ -3313,10 +3313,11 @@
    ],
    "issue": "Several Specs require an actor of kind `operator` and the one helper that turns an identity into an actor cannot return one. operator-operations says every operation 'runs under an actor of kind `operator` established by the parent' and its step1 is 'establish the actor from `ctx.auth` in the parent and authorize `obligations:repair` or `obligations:inspect`'. rebuild says its functions 'reach the dashboard through operator functions that authorize an operator actor'. actor-and-scope pins `establishActor` as returning '`null` ..., a `service` actor when the identity's issuer is in `serviceIssuers`, and a `human` actor otherwise'. Grants are read by kind, `.eq(\"principalKind\", actor.kind)`, so a grant with `principalKind: \"operator\"` is never matched by an actor the helper produced, and no Spec says what makes an identity an operator (an issuer, a grant, a deployment admin). The 'operator functions' that front `startGeneration`, `closeGate`, `startRestoreRun` and the other internal mutations taking `actor: actorValidator` are named and nowhere pinned. The same holds for `reviewer`, which is deferred with Layer 4; `operator` is needed from Layer 2.",
    "fix": "In `spec:command.actor-and-scope`, rule how an operator is established and extend the helper: for example `establishActor(ctx, config: { serviceIssuers: ReadonlySet⟨string⟩; operatorIssuers: ReadonlySet⟨string⟩ })` returning kind `operator` for an operator issuer, or a second helper `establishOperator` that requires a grant of a reserved permission and returns the same identity with kind `operator`. Mark it [extension] under E-37. Then pin one operator entry shape, a public `mutation` or `query` that establishes, authorizes and calls the internal function, and cite it from `spec:obligations.operator-operations` step1, `spec:application.rebuild`, `spec:application.write-pause` and `spec:application.restore`.",
-   "status": "partially-fixed",
-   "note": "the platform review of 2026-10-02, additional future work. Counterexample or trigger: An operator grant cannot be matched when establishActor returns only human or service, yet the maintenance and obligation contracts require operator kind. The build must show: Pure identity tests and convex-test must produce operator kind only by the ruled trust mechanism and match its grants, leaving ordinary humans and services unable to claim it; source review must align every maintenance caller with that mechanism. S4 on paper, 2026-10-02. `spec:command.actor-and-scope` E-48 answers it for the deployment's operator entries: no function establishes an actor of kind `operator` from a credential, and an entry records the operator admin access states. `spec:obligations.operator-operations` still says its repair operations run under an actor of kind `operator` established by the parent, which `establishActor` cannot return; the main thread ruled that those operations keep their tenant grant, and the actor they run under waits for its ruling.",
+   "status": "fixed",
+   "note": "the platform review of 2026-10-02, additional future work. Counterexample or trigger: An operator grant cannot be matched when establishActor returns only human or service, yet the maintenance and obligation contracts require operator kind. The build must show: Pure identity tests and convex-test must produce operator kind only by the ruled trust mechanism and match its grants, leaving ordinary humans and services unable to claim it; source review must align every maintenance caller with that mechanism. S4 on paper, 2026-10-02. `spec:command.actor-and-scope` E-48 answers it for the deployment's operator entries: no function establishes an actor of kind `operator` from a credential, and an entry records the operator admin access states. `spec:obligations.operator-operations` still says its repair operations run under an actor of kind `operator` established by the parent, which `establishActor` cannot return; the main thread ruled that those operations keep their tenant grant, and the actor they run under waits for its ruling. Ruled after the check, 2026-10-02. `spec:obligations.operator-operations` now runs the repair operations under the actor the parent establishes, human or service, holding `obligations:repair` or `obligations:inspect` in the tenant, and no Spec establishes an actor of kind `operator`.",
    "slice": "S4",
-   "detector": "pure unit test"
+   "detector": "pure unit test",
+   "unreviewed": true
   },
   {
    "round": 3,
@@ -4692,6 +4693,23 @@
    "note": "Found by the import scout of lane 1d on the native backend, local backend at the pinned release; it enters the ledger through lane 1c, the ledger's one writer in the round. Shown at the native backend tier by `tests/native/snapshot-replacement.test.ts` at commit d53c651 on unit/import-scout; the run and the commands are in report-d-import-scout.md.",
    "slice": "S5",
    "detector": "native run of the import scout"
+  },
+  {
+   "round": 3,
+   "id": "s4-paper-sdp-restore-read-model-check-compare-mode-undefined",
+   "lens": "sdp",
+   "severity": "major",
+   "files": [
+    "specs/application/restore.sdp.md",
+    "specs/application/projection-contract.sdp.md",
+    "specs/application/rebuild.sdp.md"
+   ],
+   "issue": "`spec:application.restore` `fnReadModelCheckBatch` reuses 'the rebuild's verify logic in compare mode against the active generation', but `spec:application.projection-contract` `typeApplyMode` names no compare mode, and the rebuild's verify pass (`spec:application.rebuild` `verifySteps`) now calls `applyProjection` in backfill mode, which inserts, updates and deletes rows. Read literally, the restore's read-model check would repair the active generation while the restore door is closed and write read-model rows the restore's door exemption says it never writes; read as a comparison, nothing pins the helper, its answer or what counts as a finding.",
+   "fix": "Pin in `spec:application.restore` a read-only comparison over `projectionOf` and the stored row: for each DTO of the active generation's source, the candidate row of the generation's projection version against the row by `by_key`, a finding for a missing row, an older or differing row, and a row whose DTO projects to `null`, with nothing written but the run record.",
+   "status": "open",
+   "note": "S4 on paper, 2026-10-02. Found by the mechanical read of the generations and gate text; older than that text, which made verify a repairing pass. The main thread ruled it is not fixed on paper and goes to the unit that builds the restore. The build must show: at convex-test, a read-model check over an active generation with a missing row, an older row and a row of a deleted subject records three findings and writes no read-model row; a clean generation records none.",
+   "slice": "S5",
+   "detector": "judgement"
   }
  ],
  "sessions": [
