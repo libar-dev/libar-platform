@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-206 specs · 5 packs · 105 anchors → 316 nodes · 1110 edges (0 errors, 0 warnings)
+208 specs · 5 packs · 107 anchors → 320 nodes · 1116 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -236,7 +236,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 
 ## Open questions for the owner
 
-A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact names the probe that would settle it; F17 is probed by the four native Probe 6 examples. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
+A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact names the probe that would settle it; F17 is probed by the six native Probe 6 examples. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
 
 The doc's own open questions:
 
@@ -320,8 +320,10 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-interruption-and-resume` | Probe 6: a migration resumes after interruption |
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-enumeration` | Probe 6: migration table scope and context enumeration |
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-batch-cursor` | Probe 6: a parent batch returns a context cursor to the migrations driver |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-operator-cancel` | Probe 6: an operator cancels a committed successor |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-transaction-failure` | Probe 6: a transaction failure preserves the saved cursor |
 
-Package A therefore has 83 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+Package A therefore has 85 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
 
 ## Integration notes
 

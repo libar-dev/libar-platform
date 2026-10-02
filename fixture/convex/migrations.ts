@@ -108,6 +108,7 @@ export const configure = internalMutation({
     failKey: v.union(v.string(), v.null()),
     reads: v.number(),
     clear: v.boolean(),
+    exhaustKey: v.optional(v.string()),
   },
   handler: async (ctx, { clear, ...settings }) => {
     const old = await ctx.db.query("migrationSettings").unique();
@@ -226,6 +227,8 @@ export const contextBatch = internalMutation({
       )
       .unique())!;
     const settings = await ctx.db.query("migrationSettings").unique();
+    for (let i = 0; i < (settings?.reads ?? 0); i++)
+      await ctx.db.get("generations", generation._id);
     for (const value of page.page) {
       const dto = value as Document;
       await writeSummary(ctx, "tenant", dto);
@@ -239,6 +242,15 @@ export const contextBatch = internalMutation({
       batchesDone: generation.batchesDone + 1,
       rowsWritten: generation.rowsWritten + page.page.length,
     });
+    if (
+      page.page.some(
+        (value) => (value as Document).documentId === settings?.exhaustKey,
+      )
+    )
+      await ctx.db
+        .query("blobs")
+        .withIndex("by_group", (q) => q.eq("group", "migration-budget"))
+        .collect();
     if (
       page.page.some(
         (value) => (value as Document).documentId === settings?.failKey,

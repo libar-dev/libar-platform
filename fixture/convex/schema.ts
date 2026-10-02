@@ -8,6 +8,7 @@ export default defineSchema({
   migrationSettings: defineTable({
     failKey: v.union(v.string(), v.null()),
     reads: v.number(),
+    exhaustKey: v.optional(v.string()),
   }),
   migrationVisits: defineTable({ key: v.string(), version: v.number() }),
   enumerationPages: defineTable({
