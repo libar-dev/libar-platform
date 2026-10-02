@@ -11,7 +11,9 @@
 import type * as depotCommands from "../depotCommands.js";
 import type * as depotQueries from "../depotQueries.js";
 import type * as depotRelay from "../depotRelay.js";
+import type * as documentTitles from "../documentTitles.js";
 import type * as failures from "../failures.js";
+import type * as filing from "../filing.js";
 import type * as grants from "../grants.js";
 import type * as identity from "../identity.js";
 import type * as limits from "../limits.js";
@@ -24,6 +26,7 @@ import type * as parentList from "../parentList.js";
 import type * as readCost from "../readCost.js";
 import type * as readModels from "../readModels.js";
 import type * as summaries from "../summaries.js";
+import type * as summarizedTwice from "../summarizedTwice.js";
 import type * as switches from "../switches.js";
 
 import type {
@@ -36,7 +39,9 @@ declare const fullApi: ApiFromModules<{
   depotCommands: typeof depotCommands;
   depotQueries: typeof depotQueries;
   depotRelay: typeof depotRelay;
+  documentTitles: typeof documentTitles;
   failures: typeof failures;
+  filing: typeof filing;
   grants: typeof grants;
   identity: typeof identity;
   limits: typeof limits;
@@ -49,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   readCost: typeof readCost;
   readModels: typeof readModels;
   summaries: typeof summaries;
+  summarizedTwice: typeof summarizedTwice;
   switches: typeof switches;
 }>;
 
@@ -81,4 +87,5 @@ export declare const internal: FilterApi<
 export declare const components: {
   annex: import("../annex/_generated/component.js").ComponentApi<"annex">;
   depot: import("../depot/_generated/component.js").ComponentApi<"depot">;
+  yard: import("../yard/_generated/component.js").ComponentApi<"yard">;
 };

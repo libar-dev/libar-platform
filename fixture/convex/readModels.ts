@@ -16,13 +16,14 @@ import {
   type AnyReadModel,
 } from "../../src/read-model/index.js";
 import { internalMutation, query } from "./_generated/server.js";
+import { documentTitle } from "./documentTitles.js";
 import {
   documentSummary,
   documentSummaryFields,
   documentSummaryStatus,
 } from "./summaries.js";
 export const readPermission = "depot.read";
-const readModels: readonly AnyReadModel[] = [documentSummary];
+const readModels: readonly AnyReadModel[] = [documentSummary, documentTitle];
 // Run once for each read model, before the first command that writes it.
 export const activate = internalMutation({
   args: { readModel: v.string(), startedBy: actorValidator },

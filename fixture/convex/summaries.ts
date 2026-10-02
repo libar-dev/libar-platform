@@ -1,5 +1,6 @@
-// The fixture composition's one read model: a summary row per depot document, written by
-// CreateSummarizedDocument at the pipeline's step 9 from the document's DTO.
+// The fixture composition's document summary: a summary row per depot document, written by
+// CreateSummarizedDocument and CreateTwiceSummarizedDocument at the pipeline's step 9 from the
+// document's DTO.
 import { v, type Infer } from "convex/values";
 import type { StreamVersion } from "../../src/kernel/index.js";
 import {
