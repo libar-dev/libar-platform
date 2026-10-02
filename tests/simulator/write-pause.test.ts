@@ -20,7 +20,9 @@ import {
   type CommandDeclaration,
   type PipelineCall,
 } from "../../src/command/index.js";
+import { internal as productionInternal } from "../../example/convex/_generated/api.js";
 import { gateAllows } from "../../src/gate/index.js";
+import { productionTest } from "./production.js";
 const { version } = JSON.parse(
   readFileSync(
     join(import.meta.dirname, "../../node_modules/convex-test/package.json"),
@@ -497,6 +499,104 @@ describe("the operator entries", () => {
         kind: "gate.close",
         reason: "r-0",
       });
+    },
+  );
+});
+
+describe("a grant under the gate", () => {
+  const grantArgs = (tenantId: string) => ({
+    tenantId,
+    principalKind: "human" as const,
+    principalId: "user-1",
+    permission: "documents.write",
+  });
+  const paused = (message: string) => ({
+    kind: "transient",
+    code: "writePaused",
+    message,
+  });
+  async function pausedData(promise: Promise<unknown>) {
+    const error = await failure(promise);
+    expect(error).toBeInstanceOf(ConvexError);
+    return (error as ConvexError<Value>).data;
+  }
+
+  test(
+    name(
+      "the fixture's grant and revoke mutations are refused with writePaused in a closed tenant and store nothing, and write in another tenant",
+    ),
+    async () => {
+      const t = app();
+      const stored = () =>
+        t.run(async (ctx) => ({
+          grants: await ctx.db.query("grants").collect(),
+          tenants: await ctx.db.query("tenants").collect(),
+        }));
+      await t.mutation(internal.grants.grant, {
+        ...grantArgs("t-1"),
+        grantedBy: "operator",
+      });
+      await close(t, "tenant:t-1", "move");
+      await close(t, "tenant:t-2", "hold");
+      const before = await stored();
+      // A first grant in a closed tenant: neither the grant nor the tenant row is written.
+      expect(
+        await pausedData(
+          t.mutation(internal.grants.grant, {
+            ...grantArgs("t-2"),
+            grantedBy: "operator",
+          }),
+        ),
+      ).toEqual(paused("write paused for tenant:t-2: hold"));
+      expect(
+        await pausedData(t.mutation(internal.grants.revoke, grantArgs("t-1"))),
+      ).toEqual(paused("write paused for tenant:t-1: move"));
+      expect(await stored()).toEqual(before);
+      await t.mutation(internal.grants.grant, {
+        ...grantArgs("t-3"),
+        grantedBy: "operator",
+      });
+      expect((await stored()).tenants).toHaveLength(2);
+    },
+  );
+
+  test(
+    name(
+      "the production composition's grant and revoke mutations are refused with writePaused in a closed tenant and under the restore door, and store nothing",
+    ),
+    async () => {
+      const t = productionTest();
+      const stored = () =>
+        t.run(async (ctx) => ({
+          grants: await ctx.db.query("grants").collect(),
+          tenants: await ctx.db.query("tenants").collect(),
+        }));
+      await t.mutation(productionInternal.grants.grant, {
+        ...grantArgs("t-1"),
+        grantedBy: "operator",
+      });
+      await t.mutation(productionInternal.gate.closeGate, {
+        scopeKey: "tenant:t-2",
+        reason: "hold",
+        operator: "ops-1",
+      });
+      const before = await stored();
+      expect(
+        await pausedData(
+          t.mutation(productionInternal.grants.grant, {
+            ...grantArgs("t-2"),
+            grantedBy: "operator",
+          }),
+        ),
+      ).toEqual(paused("write paused for tenant:t-2: hold"));
+      vi.stubEnv("MAINTENANCE_MODE", "restore");
+      expect(
+        await pausedData(
+          t.mutation(productionInternal.grants.revoke, grantArgs("t-1")),
+        ),
+      ).toEqual(paused("write paused for all: restore"));
+      vi.unstubAllEnvs();
+      expect(await stored()).toEqual(before);
     },
   );
 });

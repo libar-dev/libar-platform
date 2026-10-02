@@ -28,6 +28,17 @@ test("pure: assertOperator refuses an empty or whitespace-only operator and one 
   expect(assertOperator(" ops-1 ")).toBe(" ops-1 ");
 });
 
+test("pure: assertOperator trims before both checks, so whitespace of any length is empty and the bound counts the trimmed bytes", () => {
+  expect(() => assertOperator(" ".repeat(600))).toThrow(
+    "An operator entry needs a stated operator",
+  );
+  const padded = " ".repeat(300) + "x".repeat(512) + "\t";
+  expect(assertOperator(padded)).toBe(padded);
+  expect(() => assertOperator(" " + "x".repeat(513) + " ")).toThrow(
+    "The stated operator is 513 bytes, above the limit of 512",
+  );
+});
+
 test("pure: scopesOfUseCase answers all, the tenant scope, then one source scope per stream type the declaration writes, in that order", () => {
   expect(
     scopesOfUseCase("t-1", [

@@ -3,7 +3,9 @@
 // authorizeQuery, which a parent query calls before it discloses anything, the plain helpers an
 // operator's function uses to write and delete a grant, and nextTenant, which reads the tenant list.
 // None is registered here.
-import type { GenericQueryCtx } from "convex/server";
+import type { GenericDatabaseReader, GenericQueryCtx } from "convex/server";
+import { assertWritable, scopesOfUseCase } from "../gate/gate.js";
+import type { GateDataModel } from "../gate/tables.js";
 import type { Actor, AuthorizeInput, SubjectRef } from "./actor-and-scope.js";
 import { reject } from "./outcome-boundary.js";
 import type {
@@ -85,12 +87,25 @@ export type GrantInput = {
   subject?: SubjectRef;
   grantedBy: string;
 };
+// A grant is written like any other write: a closed "all" or tenant scope, or the restore door,
+// refuses it with writePaused before anything is read. The library types db with the command tables;
+// every composition that writes grants holds the gate's table too.
+async function assertGrantWritable(
+  ctx: { db: MutationCtx["db"] },
+  tenantId: string,
+): Promise<void> {
+  await assertWritable(
+    ctx as unknown as { db: GenericDatabaseReader<GateDataModel> },
+    scopesOfUseCase(tenantId, []),
+  );
+}
 // Inserts the tenant's row in the tenant list when it has none, then the grant, in one mutation, so no
 // tenant holds a grant without a row.
 export async function insertGrant(
   ctx: { db: MutationCtx["db"] },
   grant: GrantInput,
 ): Promise<GrantId> {
+  await assertGrantWritable(ctx, grant.tenantId);
   const now = Date.now();
   const tenant = await ctx.db
     .query("tenants")
@@ -118,12 +133,14 @@ export async function nextTenant(
   return row === null ? null : row.tenantId;
 }
 // Revocation deletes the rows that grant this permission to this principal, on this subject when one
-// is named and otherwise on any; the next command's read finds none. Returns the number deleted. It
-// reads past the command path's bound of limitGrantsRead, so it can reduce a principal that holds more.
+// is named and otherwise on any, after the same gate read as insertGrant; the next command's read
+// finds none. Returns the number deleted. It reads past the command path's bound of limitGrantsRead,
+// so it can reduce a principal that holds more.
 export async function revokeGrant(
   ctx: { db: MutationCtx["db"] },
   grant: Omit<GrantInput, "grantedBy">,
 ): Promise<number> {
+  await assertGrantWritable(ctx, grant.tenantId);
   const rows = (
     await ctx.db
       .query("grants")

@@ -146,12 +146,16 @@ test("convex-test: a duplicate in a closed tenant returns its receipt before adm
     await user.mutation(api.depotCommands.createDocument, call),
   ).toMatchObject({ replayed: true, operationId: first.operationId });
   expect(await stored(t)).toEqual(before);
+  // A grant mutation is a writer the gate holds (spec:command.actor-and-scope fnRevokeGrant), so the
+  // tenant is reopened for the revoke and closed again.
+  await resume(t);
   await t.mutation(internal.grants.revoke, {
     tenantId: "t",
     principalKind: "human",
     principalId: `${issuer}|caller`,
     permission: permissions.documents,
   });
+  await close(t);
   await expect(
     user.mutation(api.depotCommands.createDocument, call),
   ).rejects.toMatchObject({ data: { kind: "rejection", code: "forbidden" } });
