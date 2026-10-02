@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { convexToJson } from "convex/values";
 import { expect, onTestFinished, test } from "vitest";
 import type { Backend } from "../../harness/backend.js";
-import { runChild } from "../../harness/child.js";
+import { archiveEntries } from "./snapshot-archive.js";
 import { fixtureBackend, measure } from "../../harness/native.js";
 import { deploySnapshotFixture } from "../../harness/snapshot.js";
 
@@ -63,7 +63,12 @@ test("native: snapshot replacement restores parent and context data and preserve
   await schedulingComposition(directory);
   const source = await fixtureBackend();
   const deployed = await deploySnapshotFixture(source, directory, signal);
-  measure("fixture scheduling deployment command", { ...deployed });
+  measure("fixture scheduling deployment command", {
+    baseComposition: "fixture",
+    addedModule: "snapshotSchedule:schedule",
+    ...deployed,
+  });
+  expect(source.facts().composition).toBeNull();
   await createDocuments(source, "exported");
   await source.admin.setEnvironment({ SNAPSHOT_VALUE: "exported" });
   await source.admin.run("snapshotSchedule:schedule");
@@ -80,10 +85,7 @@ test("native: snapshot replacement restores parent and context data and preserve
   measure("snapshot source", convexToJson(before));
   const path = join(directory, "snapshot.zip");
   await source.admin.exportSnapshot(path);
-  const entries = await runChild("unzip", "unzip", ["-Z1", path], {
-    timeoutMs: 10000,
-    signal,
-  });
+  const entries = await archiveEntries(path);
   measure("snapshot archive entries", entries);
   for (const entry of [
     "markers/documents.jsonl",
@@ -92,7 +94,9 @@ test("native: snapshot replacement restores parent and context data and preserve
     "_components/depot/events/documents.jsonl",
   ])
     expect(entries).toContain(entry);
-  expect(entries).not.toContain("_scheduled_functions");
+  expect(entries.some((entry) => entry.includes("_scheduled_functions"))).toBe(
+    false,
+  );
   expect(await observe(source)).toEqual(before);
 
   const fresh = await fixtureBackend();

@@ -10,7 +10,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { redact, runChild } from "./child.js";
-import { createSnapshotAccess } from "./snapshot.js";
+import { snapshotCommand, createSnapshotAccess } from "./snapshot.js";
+import type { SnapshotCommand } from "./snapshot.js";
 import { projectDirectory } from "./composition.js";
 import type { Composition } from "./composition.js";
 const anchor = codeAnchor({
@@ -54,6 +55,7 @@ export interface CompletionRecord {
 }
 export interface AdminAccess {
   deploy(): Promise<void>;
+  deployTemporary(directory: string): Promise<SnapshotCommand>;
   codegen(): Promise<void>;
   setEnvironment(variables: Readonly<Record<string, string>>): Promise<void>;
   environment(): Promise<Record<string, string>>;
@@ -211,6 +213,16 @@ export function createAdminAccess(
     async deploy() {
       await cli("deploy");
       state.deployed = target.composition;
+    },
+    async deployTemporary(directory) {
+      const result = await snapshotCommand(
+        target,
+        [...commandArgs.deploy],
+        target.signal,
+        directory,
+      );
+      state.deployed = undefined;
+      return result;
     },
     codegen: () => cli("codegen"),
     async setEnvironment(variables) {

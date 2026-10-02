@@ -23,7 +23,7 @@ export interface SnapshotCommand {
 }
 
 // Uses the installed CLI and an isolated home, with no inherited deployment selection.
-async function snapshotCommand(
+export async function snapshotCommand(
   backend: Pick<Backend, "url" | "adminKey">,
   args: string[],
   signal: AbortSignal | undefined,
@@ -54,16 +54,12 @@ async function snapshotCommand(
 }
 
 export function deploySnapshotFixture(
-  backend: Pick<Backend, "url" | "adminKey">,
+  backend: Pick<Backend, "admin">,
   directory: string,
   signal: AbortSignal,
 ): Promise<SnapshotCommand> {
-  return snapshotCommand(
-    backend,
-    ["deploy", "--yes", "--codegen", "disable", "--typecheck", "disable"],
-    signal,
-    directory,
-  );
+  signal.throwIfAborted();
+  return backend.admin.deployTemporary(directory);
 }
 
 export function createSnapshotAccess(

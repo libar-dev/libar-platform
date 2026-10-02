@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-202 specs · 5 packs · 101 anchors → 308 nodes · 1097 edges (0 errors, 0 warnings)
+207 specs · 5 packs · 106 anchors → 318 nodes · 1112 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -316,6 +316,11 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap` | Probe 5: a parent list's page outgrows its row cap |
+| none | `spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-fresh-import` | Probe 7: replacement into a fresh backend restores context data without schedules |
+| none | `spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-in-place-import` | Probe 7: replacement in place preserves schedules that run against restored data |
+| none | `spec:facts.f13-transactions-have-limits.probe-7-arguments` | Probe 7: scheduled argument limits count encoded values |
+| none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-scan` | Probe 7: a failed-function scan reads unrelated schedules |
+| none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-states` | Probe 7: the five scheduler states remain readable |
 
 Package A therefore has 79 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
 

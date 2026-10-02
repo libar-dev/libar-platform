@@ -25,7 +25,7 @@ The numbers below were read from the limits page on 2026-09-30 and match the pla
 
 ## Design
 
-The numbers are the ceilings the design treats as such; every batch states a bound below them. The page's values were read on 2026-09-30 and match the plan's section 9.
+The documented numbers bound batches. Probe 4 observes transaction budgets; Probe 7 distinguishes the scheduled-argument page values from the pinned backend's enforced budget. A warning on this release does not remove the documented ceiling from the design.
 
 - limitDocument: 1 MiB per document, 1024 fields, nesting depth 16, 8192 array elements (F13, S9)
 - limitTransactionRead: 16 MiB read, 32,000 documents scanned and 4,096 index ranges read per transaction (F13, S9)
@@ -33,8 +33,10 @@ The numbers are the ceilings the design treats as such; every batch states a bou
 - limitFunctionPayload: 16 MiB per function argument set and 16 MiB per return value; a Node action's arguments are capped at 5 MiB (F13, S9)
 - limitQueryMutationTimeout: 1 second of execution per query or mutation (F13, S9)
 - limitActionTimeout: 30 minutes in the Convex runtime and 10 minutes in the Node runtime (F13, S9)
-- limitScheduling: 1000 scheduled functions per mutation, 4 MiB per scheduled argument set, 16 MiB of scheduled arguments per mutation, 1,000,000 outstanding scheduled functions (F13, S9)
+- limitScheduling: the limits page states 1000 scheduled functions per mutation, 4 MiB per scheduled argument set, 16 MiB summed arguments per mutation and 1000000 outstanding functions; the scheduling page states 8 MB total, both read 2026-10-02; the pinned native backend warns above 4 MiB per call, accepts calls above both 8 MB and 8 MiB, and refuses the sum above 16 MiB at `runAfter` (F13, S9, Probe 7)
 - limitSchema: 32 indexes per table, 16 fields per index, 10,000 tables per deployment (F13, S9)
 - limitNestedCalls: the limits page states no count of nested `runQuery` or `runMutation` calls per function; the page on writing data states that nested calls share the overall transaction limits, and Probe 4 showed the same across a component boundary for bytes read and bytes written; the pinned backend commits a call stack of nine functions and fails the tenth with "Cross component call depth limit exceeded", which is a backend default and not a documented limit (F13, S9, Probe 4)
 - transactionMetrics: `ctx.meta.getTransactionMetrics()` is asynchronous and returns `used` and `remaining` per metric, and a nested call accepts `transactionLimits`; Probe 4 read the metrics in a parent around a child's read, nested and in a component, and they grew by what the child read (F13, Probe 4)
 - limitsAreCeilings: platform limits are ceilings, not batch sizes; every bulk operation, sweeper and batch states a bound tested against the pinned Convex version (D19, F13)
+- schedulingObservation: native backend release `precompiled-2026-09-28-5c7cb5b`, Convex 1.46.0, `npx vitest run --project native tests/native/f13-transactions-have-limits.probe-7-arguments.test.ts --testTimeout 300000` as part of `evidence/runs/native-20261002T205553Z-592f1dc-97c74164-c3a8-4818-9f77-2f04b1456261.json`; the original 4 MiB hard-limit expectation failed; values are constructed inside the mutation, and the caught `runAfter` refusal returns normally with the number of earlier successful schedules, distinguishing this refusal from commit (F13, Probe 7)
+- schedulingBytes: native backend `precompiled-2026-09-28-5c7cb5b`, `npx vitest run --project native tests/native/f13-transactions-have-limits.probe-7-arguments.test.ts` as part of `evidence/runs/native-20261002T205857Z-592f1dc-194ec93d-d96c-4eb7-b639-f7e2c630e648.json`, passed exact-byte boundaries: one string, multibyte text, 1024 strings and eight calls each fit at 16777216 accounted bytes and refuse their first larger tested value; for the tested `{ payload: string }` shape accounting is UTF-8 content bytes plus 14 per call, and for `{ payload: string[] }` it is content bytes plus 14 plus two per element per call; three newline bytes count as three, unlike six JSON escape bytes, so this is Convex value accounting, not JSON text length (F13, Probe 7)
