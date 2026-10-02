@@ -8,10 +8,12 @@ import {
   getFunctionName,
   type FunctionReturnType,
 } from "convex/server";
+import { ConvexError, type Value } from "convex/values";
 import { expect } from "vitest";
 import { api, internal } from "../../example/convex/_generated/api.js";
 import {
   maxOrderLines,
+  maxStockItemIdBytes,
   placeOrderDeclaration,
   placeOrderPermission,
 } from "../../example/convex/ordering.js";
@@ -22,7 +24,7 @@ import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { measure, productionBackend, required } from "../../harness/native.js";
 import { scheduledRows } from "./scheduled-rows.js";
-import type { MutationCtx } from "../../src/command/index.js";
+import { utf8Length, type MutationCtx } from "../../src/command/index.js";
 export const tenantId = "t-1";
 export const subject = "user-1";
 const operator = { kind: "operator", id: "native-test" } as const;
@@ -390,4 +392,147 @@ export function recordUsage(world: ExperimentWorld) {
             ]),
           ),
   });
+}
+
+export async function storedOrderDocuments(backend: Backend) {
+  return {
+    receipts: await backend.admin.readTable("receipts"),
+    orderStreams: await backend.admin.readTable("streams", {
+      component: "orders",
+    }),
+    orderEvents: await backend.admin.readTable("events", {
+      component: "orders",
+    }),
+    stockStreams: await backend.admin.readTable("streams", {
+      component: "inventory",
+    }),
+    stockEvents: await backend.admin.readTable("events", {
+      component: "inventory",
+    }),
+    summaries: await backend.admin.readTable("orderSummaries"),
+  };
+}
+export interface StockItemIdWorld extends ExperimentWorld {
+  lines?: OrderLine[];
+  response?: PlaceOrderResponse;
+  error?: unknown;
+  own?: CompletionRecord;
+  before?: Awaited<ReturnType<typeof storedOrderDocuments>>;
+}
+export function orderAtIdBound(
+  world: StockItemIdWorld,
+  size: Size,
+  contention: "absent" | "present",
+) {
+  expect(size).toBe("the maximum");
+  expect(contention).toBe("absent");
+  world.lines = orderLines(linesOf[size], "sku");
+  expect(world.lines).toHaveLength(100);
+}
+export async function stockItemIdBytesAre(
+  world: StockItemIdWorld,
+  idBytes: number,
+  lastIdBytes: number,
+) {
+  const lines = required(world.lines, "the lines");
+  for (const [i, line] of lines.entries())
+    line.stockItemId =
+      i === lines.length - 1
+        ? (lastIdBytes % 2 === 1 ? "a" : "") +
+          "é".repeat(Math.floor(lastIdBytes / 2))
+        : line.stockItemId.padEnd(idBytes, "x");
+  expect(maxStockItemIdBytes).toBe(64);
+  expect(new Set(lines.map(({ stockItemId }) => stockItemId)).size).toBe(100);
+  for (const [i, { stockItemId }] of lines.entries())
+    expect(utf8Length(stockItemId)).toBe(
+      i === lines.length - 1 ? lastIdBytes : idBytes,
+    );
+  const lastId = required(lines.at(-1), "the last line").stockItemId;
+  expect(lastId.length).toBeLessThan(utf8Length(lastId));
+  await receive(world, lines);
+}
+export async function placeOrderAtIdBoundRuns(
+  world: StockItemIdWorld,
+  run: "the PlaceOrder use case" | "the end-to-end path",
+) {
+  expect(run).toBe("the PlaceOrder use case");
+  const backend = required(world.backend, "the backend");
+  const client = required(world.client, "the client");
+  world.before = await storedOrderDocuments(backend);
+  const mark = await backend.admin.logMark();
+  await client
+    .mutation(api.ordering.placeOrder, {
+      tenantId,
+      requestKey: "k-order-at-id-bound",
+      input: {
+        orderId: "order-at-id-bound",
+        lines: required(world.lines, "the lines"),
+      },
+    })
+    .then(
+      (response) => {
+        world.response = response;
+      },
+      (error: unknown) => {
+        world.error = error;
+      },
+    );
+  const records = await backend.admin.completionsSince(mark, (records) =>
+    records.some(
+      (record) =>
+        record.identifier === placeOrderIdentifier &&
+        record.componentPath === null,
+    ),
+  );
+  world.own = required(
+    records.find(
+      (record) =>
+        record.identifier === placeOrderIdentifier &&
+        record.componentPath === null,
+    ),
+    "the command's completion record",
+  );
+}
+export function stockItemIdAnswerIs(
+  world: StockItemIdWorld,
+  answer: "the result" | "the rejection invalidInput",
+) {
+  if (answer === "the result") {
+    expect(world.error).toBeUndefined();
+    expect(world.response).toMatchObject({
+      kind: "applied",
+      replayed: false,
+      result: { orderId: "order-at-id-bound", lineCount: 100, total: 14950 },
+    });
+    expect(required(world.own, "the completion record").error).toBeNull();
+  } else {
+    expect(world.response).toBeUndefined();
+    expect(world.error).toBeInstanceOf(ConvexError);
+    expect(required(world.own, "the completion record").error).toMatch(
+      /^Uncaught ConvexError: /,
+    );
+  }
+}
+export function stockItemIdRejectionIs(
+  world: StockItemIdWorld,
+  line: number,
+  length: number,
+  limit: number,
+) {
+  expect((world.error as ConvexError<Value>).data).toEqual({
+    kind: "rejection",
+    code: "invalidInput",
+    commandType: "PlaceOrder",
+    message: `Line ${line} needs a stock item ID of at most ${limit} bytes of UTF-8, not ${length}`,
+    details: { line, length, limit },
+  });
+}
+export function commandDocumentsAre(
+  world: StockItemIdWorld,
+  readDocuments: number,
+  writtenDocuments: number,
+) {
+  const usage = usageOf(required(world.own, "the completion record"));
+  expect(usage.databaseReadDocuments).toBe(readDocuments);
+  expect(usage.databaseWriteDocuments).toBe(writtenDocuments);
 }
