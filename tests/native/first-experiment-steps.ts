@@ -21,6 +21,7 @@ import type { CompletionRecord } from "../../harness/admin.js";
 import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { measure, productionBackend, required } from "../../harness/native.js";
+import { scheduledRows } from "./scheduled-rows.js";
 import type { MutationCtx } from "../../src/command/index.js";
 export const tenantId = "t-1";
 export const subject = "user-1";
@@ -209,6 +210,12 @@ export async function place(
     summaryKeys: summaries.page.map((row) => row.key),
   };
 }
+// The scheduled-function tables of the parent and both contexts, read after the commands: a job
+// scheduled with any delay is a row there.
+const scheduledAfter = new WeakMap<
+  ExperimentWorld,
+  Awaited<ReturnType<typeof scheduledRows>>
+>();
 export async function placeOrderRuns(
   world: ExperimentWorld,
   run: "the PlaceOrder use case" | "the end-to-end path",
@@ -222,6 +229,10 @@ export async function placeOrderRuns(
     world,
     "order-1",
     orderLines(linesOf[size], "sku"),
+  );
+  scheduledAfter.set(
+    world,
+    await scheduledRows(required(world.backend, "the backend")),
   );
 }
 const sent = (world: ExperimentWorld): Placed[] =>
@@ -244,8 +255,8 @@ export function commitsAre(world: ExperimentWorld, commits: number) {
     expect(placed.request).toEqual(committed);
   }
 }
-// Nothing ran between the command and the read sent after it returned, and that read already shows
-// the command's summary row: the command wrote it, and no job did.
+// Nothing ran between the command and the read sent after it returned, nothing is scheduled to run
+// later, and that read already shows the command's summary row: the command wrote it, and no job did.
 export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
   for (const placed of sent(world)) {
     const others = placed.window.filter(
@@ -253,6 +264,9 @@ export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
         record !== placed.own && record.identifier !== summariesIdentifier,
     );
     expect(others).toHaveLength(jobs);
+    expect(
+      required(scheduledAfter.get(world), "the scheduled-function rows"),
+    ).toHaveLength(jobs);
     expect(placed.summaryKeys).toContain(placed.orderId);
   }
 }

@@ -10,6 +10,7 @@ import { committedStateReadThroughQueryContract as contract } from "../../genera
 import { api } from "../../example/convex/_generated/api.js";
 import type { LogMark } from "../../harness/admin.js";
 import { required } from "../../harness/native.js";
+import { scheduledRows } from "./scheduled-rows.js";
 import {
   line,
   orderWorld,
@@ -118,6 +119,9 @@ bindExample(contract, (): World => ({}), {
           !clientCallers.has(entry.caller),
       ),
     ).toHaveLength(workers);
+    // The scheduled-function tables of the parent and both contexts also hold a job scheduled with
+    // a delay past the window.
+    expect(await scheduledRows(backend)).toHaveLength(workers);
     expect(
       records.find((entry) => entry.identifier === placeOrderIdentifier),
     ).toMatchObject({ udfType: "Mutation", caller: "HttpApi", error: null });
