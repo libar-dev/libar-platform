@@ -31,7 +31,7 @@ bindExample(
   (): CancelWorld => ({}),
   steps,
   async (world) => {
-    // Only a release planned from the lines the Orders call returned asks for 3.
+    // The call order and the quantities' source are shown at the pure tier, by the executor itself.
     expect(rejectionData(world)).toEqual({
       kind: "rejection",
       code: "insufficientAllocation",

@@ -511,6 +511,12 @@ test(
     const t = productionTest();
     const user = await placedOrder(t);
     expect(await stockItem(t)).toMatchObject({ onHand: 5, allocated: 3 });
+    const before = await user.query(api.orderQueries.getOrder, {
+      tenantId: "t-1",
+      orderId: "order-1",
+    });
+    const placedAt = before?.placedAt;
+    expect(placedAt).toEqual(expect.any(Number));
     const response = await user.mutation(
       api.ordering.cancelOrder,
       cancelCall("k-1"),
@@ -554,6 +560,7 @@ test(
       status: "cancelled",
       lines: [line("sku-1", 2, 250), line("sku-1", 1, 999)],
       total: 1499,
+      placedAt,
       version: orderVersion,
     });
     expect(await summaries(t)).toMatchObject([
@@ -564,7 +571,7 @@ test(
         status: "cancelled",
         lineCount: 2,
         total: 1499,
-        placedAt: order?.placedAt,
+        placedAt,
       },
     ]);
     const list = (status: "placed" | "cancelled") =>
@@ -717,6 +724,12 @@ test(
       message: "The caller may not run CancelOrder in this tenant",
       details: { reason: "no_grant" },
     });
+    // An order never placed is refused the same way: the check comes before Orders decides.
+    expect(
+      await errorData(
+        other.mutation(api.ordering.cancelOrder, cancelCall("k-2", "order-2")),
+      ),
+    ).toMatchObject({ code: "forbidden", commandType: "CancelOrder" });
     expect(await stockItem(t)).toMatchObject({ allocated: 3 });
     expect(await summaries(t)).toMatchObject([{ status: "placed" }]);
     expect(

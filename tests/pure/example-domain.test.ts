@@ -3,6 +3,7 @@ import {
   codeAnchorId,
   ref,
 } from "@libar-dev/software-delivery-protocol";
+import { validate } from "convex-helpers/validators";
 import { expect, test } from "vitest";
 import {
   checkInvariants,
@@ -23,7 +24,10 @@ import {
   type StockItemEvent,
   type StockItemState,
 } from "../../example/domain/index.js";
-import { orderStream } from "../../example/convex/orders/streams.js";
+import {
+  orderDtoValidator,
+  orderStream,
+} from "../../example/convex/orders/streams.js";
 import { orderSummary } from "../../example/convex/orderSummary.js";
 import type { StreamMeta } from "../../src/context/index.js";
 // Binds the production composition under example/ to the Spec of its domain. The composition is
@@ -169,8 +173,15 @@ test("pure: an order rebuilt from OrderPlaced and OrderCancelled equals the stat
     "OrderPlaced",
     "OrderCancelled",
   ]);
-  expect(rebuild(orderDecider, events)).toStrictEqual(state);
-  expect(state).toStrictEqual(cancelled());
+  // Written out, not folded: the status the cancel sets and what the order keeps.
+  const expected: OrderState = {
+    status: "cancelled",
+    lines,
+    total: 597,
+    placedAt: context.now,
+  };
+  expect(state).toStrictEqual(expected);
+  expect(rebuild(orderDecider, events)).toStrictEqual(expected);
 });
 
 test.each([
@@ -257,9 +268,16 @@ test("pure: a placed order's DTO carries its lines, total, time and stream versi
   expect(() =>
     orderStream.toDto(orderDecider.initial(), meta("order-2")),
   ).toThrow("Order order-2 is not placed and has no DTO");
+  const cancelledDto = orderStream.toDto(cancelled(), {
+    ...meta("order-1"),
+    streamVersion: 2,
+  });
+  // The DTO's validator, which the context's queries and operations return through, admits both.
+  expect(validate(orderDtoValidator, cancelledDto)).toBe(true);
   expect(
-    orderStream.toDto(cancelled(), { ...meta("order-1"), streamVersion: 2 }),
-  ).toMatchObject({
+    validate(orderDtoValidator, orderStream.toDto(placed(), meta("order-1"))),
+  ).toBe(true);
+  expect(cancelledDto).toMatchObject({
     orderId: "order-1",
     status: "cancelled",
     lines,

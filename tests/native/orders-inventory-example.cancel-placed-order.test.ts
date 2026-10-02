@@ -80,6 +80,8 @@ bindExample(
         (row) => row["requestKey"] === "k-1",
       ),
     ).toMatchObject([{ operationId: response.operationId }]);
+    // The cancel keeps the time the order was placed, on the order and on its summary row.
+    const placedAt = required(world.placedAt, "the time the order was placed");
     expect(await order.backend.admin.readTable("orderSummaries")).toMatchObject(
       [
         {
@@ -87,6 +89,7 @@ bindExample(
           sourceVersions: [orderVersion],
           lineCount: 2,
           total: 1499,
+          placedAt,
         },
       ],
     );
@@ -107,6 +110,7 @@ bindExample(
         { stockItemId, quantity: 1, unitPrice: 999 },
       ],
       total: 1499,
+      placedAt,
       version: orderVersion,
     });
     const list = (status: "placed" | "cancelled") =>
@@ -116,7 +120,7 @@ bindExample(
         paginationOpts: { cursor: null, numItems: 10 },
       });
     expect((await list("cancelled")).page).toMatchObject([
-      { orderId, status: "cancelled", placedAt: placed?.placedAt },
+      { orderId, status: "cancelled", placedAt },
     ]);
     expect((await list("placed")).page).toEqual([]);
   },

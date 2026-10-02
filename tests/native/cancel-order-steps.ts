@@ -30,6 +30,8 @@ export const orderId = "order-1";
 export const neverPlaced = "order-2";
 // A second user of the fixture issuer, who holds every grant of the composition except orders.cancel.
 const lackingUser = "user-2";
+// The client of the user who lacks orders.cancel, once a step has granted it the rest.
+const lackingClients = new WeakMap<OrderWorld, ConvexHttpClient>();
 export const cancelOrderIdentifier = getFunctionName(api.ordering.cancelOrder);
 type CancelResponse = FunctionReturnType<typeof api.ordering.cancelOrder>;
 type PlaceResponse = FunctionReturnType<typeof api.ordering.placeOrder>;
@@ -39,6 +41,8 @@ export interface CancelWorld {
   // The stock item's stream row as it was before PlaceOrder allocated.
   stockBefore?: Record<string, Value>;
   placed?: PlaceResponse;
+  // The time the parent's getOrder answered for the placed order, before any cancel.
+  placedAt?: number;
   // The cancel a Given step sent under k-1.
   first?: CancelResponse;
   target?: string;
@@ -80,6 +84,11 @@ export async function orderPlaced(world: CancelWorld, ordered: number) {
   });
   expect(world.placed).toMatchObject({ kind: "applied", replayed: false });
   world.ordered = ordered;
+  const read = await order.client.query(api.orderQueries.getOrder, {
+    tenantId,
+    orderId,
+  });
+  world.placedAt = required(read ?? undefined, "the placed order").placedAt;
 }
 export async function orderBefore(
   world: CancelWorld,
@@ -119,13 +128,19 @@ export async function orderBefore(
   );
   expect(outcome).toMatchObject({ kind: "applied" });
 }
-async function lackingClient(order: OrderWorld): Promise<ConvexHttpClient> {
+export async function lackingClient(
+  order: OrderWorld,
+): Promise<ConvexHttpClient> {
+  const known = lackingClients.get(order);
+  if (known !== undefined) return known;
   for (const permission of permissions)
     if (permission !== cancelOrderPermission)
       await grant(order.backend, lackingUser, permission);
-  return ordinaryClient(order.backend.url, {
+  const client = ordinaryClient(order.backend.url, {
     token: await order.backend.issuer.token(lackingUser),
   });
+  lackingClients.set(order, client);
+  return client;
 }
 export async function cancelSent(
   world: CancelWorld,
