@@ -71,17 +71,15 @@ function checkDetails(rejection: Rejection, commandType: string) {
       `A ${rejection.code} rejection of ${commandType} carries ${bytes} bytes of details, above ${limitDetailsBytes}`,
     );
 }
-export function reject(data: Omit<RejectionData, "kind">): never {
+export function reject(data: Omit<RejectionData<never>, "kind">): never {
   checkDetails(data, data.commandType);
   throw new ConvexError<RejectionData>({ kind: "rejection", ...data });
 }
 export function refuseTransient(data: Omit<TransientData, "kind">): never {
   throw new ConvexError<TransientData>({ kind: "transient", ...data });
 }
-// Rethrows every error. A bare kernel Rejection, as a context throws it, gains the discriminator and the
-// command type when its code is a platform code or one the declaration lists in rejections; any other
-// code is a technical failure, rethrown as a plain Error, and so are details above reject's bound.
-// Everything else, a ConvexError of this boundary included, passes through unchanged.
+// Every rejection passes the declaration's code list, command name and details bound. A bare
+// rejection gains the wire shape; a valid rejection already in that shape keeps its identity.
 export function normalizeThrown(
   error: unknown,
   commandType: string,
@@ -90,24 +88,41 @@ export function normalizeThrown(
   if (
     error instanceof ConvexError &&
     typeof error.data === "object" &&
-    error.data !== null &&
-    !("kind" in error.data) &&
-    validate(rejectionValidator, error.data)
+    error.data !== null
   ) {
-    const { code } = error.data;
+    const data = error.data;
+    const wire = "kind" in data && data.kind === "rejection";
     if (
-      !Object.hasOwn(platformRejectionCodes, code) &&
-      !rejections.includes(code)
+      wire &&
+      (!validate(errorDataValidator, data) || data.kind !== "rejection")
     )
       throw new Error(
-        `${commandType} was rejected with the code ${code}, which is neither a platform code nor one its declaration lists in rejections`,
+        `${commandType} received a rejection that does not fit the wire shape`,
       );
-    checkDetails(error.data, commandType);
-    throw new ConvexError<RejectionData>({
-      kind: "rejection",
-      commandType,
-      ...error.data,
-    });
+    const bare = !("kind" in data) && validate(rejectionValidator, data);
+    if (bare || wire) {
+      // The wire validator above establishes the rejection branch.
+      const rejection = data as RejectionData;
+      const { code } = rejection;
+      if (
+        !Object.hasOwn(platformRejectionCodes, code) &&
+        !rejections.includes(code)
+      )
+        throw new Error(
+          `${commandType} was rejected with the code ${code}, which is neither a platform code nor one its declaration lists in rejections`,
+        );
+      if (wire && rejection.commandType !== commandType)
+        throw new Error(
+          `${commandType} received a rejection naming ${rejection.commandType}`,
+        );
+      checkDetails(rejection, commandType);
+      if (wire) throw error;
+      throw new ConvexError<RejectionData>({
+        kind: "rejection",
+        commandType,
+        ...data,
+      });
+    }
   }
   throw error;
 }

@@ -23,6 +23,8 @@ export {
   append,
   createJournal,
   limitPayloadBytes,
+  limitEnvelopeBytes,
+  limitEventBytes,
   load,
   metaOf,
 } from "./journal.js";
@@ -64,3 +66,4 @@ export {
   limitListPage,
 } from "./queries.js";
 export type { GetArgs, ListArgs, PageLimit } from "./queries.js";
+export { limitActorIdLength, utf8Length } from "./text.js";

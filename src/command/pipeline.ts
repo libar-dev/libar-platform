@@ -1,6 +1,11 @@
 // The command pipeline of spec:command.command-pipeline: the steps between a caller's request and the
 // committed outcome, in one top-level mutation. Its only failure signal is a throw.
 import { getConvexSize, v, type Validator, type Value } from "convex/values";
+import {
+  limitActorIdLength,
+  limitIdLength,
+  utf8Length,
+} from "../context/text.js";
 import type { CausedBy, OperationRef } from "../context/envelope.js";
 import {
   affectedRefValidator,
@@ -15,7 +20,6 @@ import {
   classifyReceipt,
   fingerprintOf,
   insertReceipt,
-  limitIdLength,
   lookupReceipt,
   type ReceiptKey,
 } from "./receipts.js";
@@ -78,26 +82,61 @@ function itemsOf(input: unknown): number {
     0,
   );
 }
-// Step 1 after the entry's args validators: the lengths of the IDs a receipt row holds, the
-// declaration's bounds and its refinement, all before any read.
+// Step 1 after the entry's args validators: caller-set text, the declaration's bounds and its
+// refinement, all before any read.
 function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   const commandType = decl.name;
-  const ids = [
-    ["tenantId", call.tenantId, "A tenant ID"],
-    ["requestKey", call.requestKey, "A request key"],
-  ] as const;
-  for (const [field, value, what] of ids)
-    if (value !== undefined && value.length > limitIdLength)
+  const cause = call.causedBy;
+  const fields: readonly (readonly [string, string | undefined, number])[] = [
+    ["tenantId", call.tenantId, limitIdLength],
+    ["requestKey", call.requestKey, limitIdLength],
+    ["correlationId", call.correlationId, limitIdLength],
+    ["actor.id", call.actor.id, limitActorIdLength],
+    ["actor.issuer", call.actor.issuer, limitIdLength],
+    ["actor.onBehalfOf.id", call.actor.onBehalfOf?.id, limitActorIdLength],
+    ["actor.delegationRef", call.actor.delegationRef, limitIdLength],
+    [
+      "causedBy.commandType",
+      cause?.kind === "command" ? cause.commandType : undefined,
+      limitIdLength,
+    ],
+    [
+      "causedBy.tenantId",
+      cause?.kind === "event" ? cause.tenantId : undefined,
+      limitIdLength,
+    ],
+    [
+      "causedBy.contextId",
+      cause?.kind === "event" ? cause.contextId : undefined,
+      limitIdLength,
+    ],
+    [
+      "causedBy.eventId",
+      cause?.kind === "event" ? cause.eventId : undefined,
+      limitIdLength,
+    ],
+    [
+      "causedBy.migrationName",
+      cause?.kind === "migration" ? cause.migrationName : undefined,
+      limitIdLength,
+    ],
+  ];
+  for (const [field, value, limit] of fields) {
+    if (value === undefined) continue;
+    const length = utf8Length(value);
+    if (length > limit)
       reject({
         code: "invalidInput",
         commandType,
-        message: `${what} has at most ${limitIdLength} characters`,
-        details: { field, length: value.length, limit: limitIdLength },
+        message: `${field} has at most ${limit} bytes of UTF-8`,
+        details: { field, length, limit },
       });
+  }
   // The declaration's name is no caller's input: a long one is a defect.
-  if (commandType.length > limitIdLength)
+  const nameBytes = utf8Length(commandType);
+  if (nameBytes > limitIdLength)
     throw new Error(
-      `A command type has at most ${limitIdLength} characters, and this declaration's name has ${commandType.length}`,
+      `A command type has at most ${limitIdLength} bytes of UTF-8, and this declaration's name has ${nameBytes}`,
     );
   const { maxItems, maxBytes } = decl.bounds ?? {};
   const items = itemsOf(call.input);
@@ -173,19 +212,13 @@ export async function runPipeline<I, R>(
         reject({
           code: "unsupportedContractVersion",
           commandType,
-          message: `The receipt for this key was recorded under contract version ${classified.storedContractVersion}, not ${decl.contractVersion}`,
-          details: {
-            storedContractVersion: classified.storedContractVersion,
-            contractVersion: decl.contractVersion,
-            operationId: classified.storedOperationId,
-          },
+          message: "This request key was used under another contract version",
         });
       case "conflict":
         reject({
           code: "idempotencyConflict",
           commandType,
           message: "This request key was used with other input",
-          details: { operationId: classified.storedOperationId },
         });
       case "duplicate": {
         const stored = classified.receipt;

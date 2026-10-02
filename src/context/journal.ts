@@ -66,6 +66,8 @@ export type AppendResult = {
 };
 // spec:constraints.events-stay-small, measured as Convex measures a value.
 export const limitPayloadBytes = 16384;
+export const limitEnvelopeBytes = 4096;
+export const limitEventBytes = limitPayloadBytes + limitEnvelopeBytes;
 // Reads the stream row by by_identity, or returns initial() at version 0 when there is none.
 export async function load<S, C, E extends DomainEvent, R>(
   ctx: QueryCtx | MutationCtx,
@@ -201,6 +203,11 @@ export async function append<S, E extends DomainEvent>(
     if (envelope.operation.correlationId !== undefined)
       inserted.correlationId = envelope.operation.correlationId;
     if (event.occurredAt !== undefined) inserted.occurredAt = event.occurredAt;
+    const envelopeBytes = getConvexSize(inserted as Value) - bytes;
+    if (envelopeBytes > limitEnvelopeBytes)
+      throw new Error(
+        `A ${event.eventType} envelope of ${envelopeBytes} bytes exceeds the ${limitEnvelopeBytes} byte bound`,
+      );
     await ctx.db.insert("events", inserted);
     envelopes.push(inserted);
   }

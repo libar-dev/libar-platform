@@ -667,12 +667,12 @@ describe("receipts", () => {
 
   test(
     name(
-      "the same key with other input is idempotencyConflict naming the original operation, and changes nothing",
+      "the same key with other input is idempotencyConflict disclosing no stored receipt, and changes nothing",
     ),
     async () => {
       const t = app();
       const user = await caller(t, "user-1");
-      const first = await user.mutation(api.depotCommands.createDocument, {
+      await user.mutation(api.depotCommands.createDocument, {
         ...report(),
         requestKey: "k-1",
       });
@@ -689,7 +689,6 @@ describe("receipts", () => {
         code: "idempotencyConflict",
         commandType: "CreateDocument",
         message: "This request key was used with other input",
-        details: { operationId: first.operationId },
       });
       expect(await receipts(t)).toEqual(before);
     },
@@ -718,13 +717,11 @@ describe("receipts", () => {
             requestKey: "k-1",
           }),
         ),
-      ).toMatchObject({
+      ).toEqual({
+        kind: "rejection",
+        commandType: "CreateDocument",
         code: "unsupportedContractVersion",
-        details: {
-          storedContractVersion: 0,
-          contractVersion: 1,
-          operationId: stored.operationId,
-        },
+        message: "This request key was used under another contract version",
       });
     },
   );

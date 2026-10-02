@@ -147,7 +147,6 @@ test("pure: classifyReceipt answers new, duplicate or conflict by the fingerprin
   });
   expect(classifyReceipt(found, "f-2", 1, 999)).toEqual({
     class: "conflict",
-    storedOperationId: "op-1",
   });
 });
 
@@ -155,8 +154,6 @@ test("pure: classifyReceipt compares the contract version before the fingerprint
   for (const fingerprint of ["f-1", "f-2"])
     expect(classifyReceipt(receipt(), fingerprint, 2, 999)).toEqual({
       class: "unsupportedVersion",
-      storedContractVersion: 1,
-      storedOperationId: "op-1",
     });
 });
 
@@ -220,7 +217,7 @@ test("pure: reject throws a plain Error when its details measure above 16,384 by
   const atBound = detailsOf(16384 - getConvexSize(detailsOf(0)));
   expect(getConvexSize(atBound)).toBe(16384);
   const data = {
-    code: "forbidden",
+    code: "forbidden" as const,
     commandType: "CreateDocument",
     message: "No",
   };
@@ -254,21 +251,28 @@ test("pure: normalizeThrown wraps a bare kernel rejection with the discriminator
   });
 });
 
-test("pure: normalizeThrown rethrows everything else unchanged, and never turns a technical failure into a rejection", () => {
+test("pure: normalizeThrown rejects another command name and rethrows technical failures unchanged", () => {
   const passed = [
     new Error("Fault injected"),
     new ConvexError({ kind: "transient", code: "capacity", message: "Full" }),
-    new ConvexError({
-      kind: "rejection",
-      code: "forbidden",
-      commandType: "Other",
-      message: "No",
-    }),
     new ConvexError("a string"),
     new ConvexError({ code: "x", message: "y", extra: 1 }),
     new ConvexError({ code: 1, message: "y" }),
     "a thrown string",
   ];
+  const mismatched = new ConvexError({
+    kind: "rejection",
+    code: "forbidden",
+    commandType: "Other",
+    message: "No",
+  });
+  const normalized = thrown(() =>
+    normalizeThrown(mismatched, "ShipDocument", []),
+  );
+  expect(normalized).toBeInstanceOf(Error);
+  expect(normalized).not.toBeInstanceOf(ConvexError);
+  expect(String(normalized)).toContain("Other");
+  expect(String(normalized)).toContain("ShipDocument");
   for (const error of passed)
     expect(thrown(() => normalizeThrown(error, "ShipDocument", []))).toBe(
       error,
