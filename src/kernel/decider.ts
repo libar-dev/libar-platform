@@ -56,7 +56,11 @@ export function rebuild<S, C, E extends DomainEvent, R>(
   events: readonly E[],
   start?: S,
 ): S {
-  return fold(decider.evolve, start ?? decider.initial(), events);
+  return fold(
+    decider.evolve,
+    start === undefined ? decider.initial() : start,
+    events,
+  );
 }
 // Returns the names of the invariants that do not hold.
 export function checkInvariants<S>(

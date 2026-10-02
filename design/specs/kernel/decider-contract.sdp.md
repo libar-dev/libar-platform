@@ -56,7 +56,7 @@ One declaration per bullet. `Value` is the Convex value type in `Rejection.detai
 - typeDecideResult: `type DecideResult<E extends DomainEvent, R> = { kind: "applied"; events: readonly E[]; result: R } | { kind: "businessFailure"; events: readonly E[]; result: R } | { kind: "rejection"; rejection: Rejection }` (D3, D4, E-20)
 - typeDecider: `type Decider<S, C, E extends DomainEvent, R> = { streamType: string; initial: () => S; decide: (state: S, command: C, context: DecisionContext) => DecideResult<E, R>; evolve: (state: S, event: E) => S; invariants?: readonly Invariant<S>[] }` (D3, E-1, E-20)
 - fnFold: `fold<S, E>(evolve: (state: S, event: E) => S, state: S, events: readonly E[]): S` (D3)
-- fnRebuild: `rebuild<S, C, E extends DomainEvent, R>(decider: Decider<S, C, E, R>, events: readonly E[], start?: S): S` returns `fold(decider.evolve, start ?? decider.initial(), events)`, where `start` is the state the latest baseline event holds and `events` are the events after it (D3, D5)
+- fnRebuild: `rebuild<S, C, E extends DomainEvent, R>(decider: Decider<S, C, E, R>, events: readonly E[], start?: S): S` returns `fold(decider.evolve, start === undefined ? decider.initial() : start, events)`, where `start` is the state the latest baseline event holds and `events` are the events after it; an omitted or `undefined` start means no baseline (D3, D5)
 - typeInvariant: `type Invariant<S> = { name: string; holds: (state: S) => boolean }` (E-20)
 - fnCheckInvariants: `checkInvariants<S>(invariants: readonly Invariant<S>[], state: S): string[]` returns the names of the invariants that do not hold (E-20)
 - typeTransitions: `type Transitions<Status extends string, Trigger extends string> = Readonly<Record<Status, Readonly<Partial<Record<Trigger, Status>>>>>` (E-20)

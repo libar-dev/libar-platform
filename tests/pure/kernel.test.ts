@@ -68,6 +68,55 @@ test("pure: rebuild with a start folds from it and never calls initial()", () =>
   expect(decider.initial).not.toHaveBeenCalled();
 });
 
+test("pure: rebuild with an undefined start folds from initial()", () => {
+  const decider = counter(10);
+  expect(rebuild(decider, [added(1), added(2)], undefined)).toBe(13);
+  expect(decider.initial).toHaveBeenCalledTimes(1);
+});
+
+test("pure: rebuild with a null start folds from it and never calls initial()", () => {
+  const decider: Decider<number | null, number, Added, null> = {
+    streamType: "counter",
+    initial: vi.fn(() => 10),
+    decide: (_state, amount) => ({
+      kind: "applied",
+      events: [added(amount)],
+      result: null,
+    }),
+    evolve: (state, event) =>
+      state === null ? event.payload.amount : state + event.payload.amount,
+  };
+  expect(rebuild(decider, [], null)).toBeNull();
+  expect(rebuild(decider, [added(1), added(2)], null)).toBe(3);
+  expect(decider.initial).not.toHaveBeenCalled();
+});
+
+test("pure: rebuild with a zero start folds from it and never calls initial()", () => {
+  const decider = counter(10);
+  expect(rebuild(decider, [], 0)).toBe(0);
+  expect(rebuild(decider, [added(1), added(2)], 0)).toBe(3);
+  expect(decider.initial).not.toHaveBeenCalled();
+});
+
+test("pure: rebuild with an object start folds from it and never calls initial()", () => {
+  const decider: Decider<{ onHand: number }, number, Added, null> = {
+    streamType: "counter",
+    initial: vi.fn(() => ({ onHand: 10 })),
+    decide: (_state, amount) => ({
+      kind: "applied",
+      events: [added(amount)],
+      result: null,
+    }),
+    evolve: (state, event) => ({ onHand: state.onHand + event.payload.amount }),
+  };
+  const start = { onHand: 100 };
+  expect(rebuild(decider, [], start)).toBe(start);
+  expect(rebuild(decider, [added(1), added(2)], start)).toEqual({
+    onHand: 103,
+  });
+  expect(decider.initial).not.toHaveBeenCalled();
+});
+
 type Light = "red" | "green" | "off";
 type Signal = "go" | "stop" | "power";
 const lights: Transitions<Light, Signal> = {
