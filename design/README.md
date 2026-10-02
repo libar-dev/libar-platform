@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-200 specs · 5 packs · 77 anchors → 282 nodes · 1060 edges (0 errors, 0 warnings)
+201 specs · 5 packs · 83 anchors → 289 nodes · 1069 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -147,7 +147,7 @@ Every row of the doc's acceptance table is an example Spec that `refines` and `v
 | L1-11 | Two commands compete for the same stock or unique value | [`spec:context.context-component`](specs/context/context-component.sdp.md) | [`.competing-commands`](specs/context/context-component.competing-commands.sdp.md), [`.competing-unique-value`](specs/context/context-component.competing-unique-value.sdp.md) | native |
 | L1-12 | A rejected command's response is lost, and it is retried after state changed | [`spec:command.outcome-boundary`](specs/command/outcome-boundary.sdp.md) | [`.rejected-then-retried-after-change`](specs/command/outcome-boundary.rejected-then-retried-after-change.sdp.md) | native |
 | L2-1 | The first context writes, then the second rejects or throws | [`spec:application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | [`.second-context-rejects`](specs/application/parent-use-cases.second-context-rejects.sdp.md), [`.second-context-throws`](specs/application/parent-use-cases.second-context-throws.sdp.md) | native |
-| L2-2 | A successful command, then a query or subscription | [`spec:application.read-models`](specs/application/read-models.sdp.md) | [`.committed-state-visible`](specs/application/read-models.committed-state-visible.sdp.md) | native |
+| L2-2 | A successful command, then a query or subscription | [`spec:application.read-models`](specs/application/read-models.sdp.md) | [`.committed-state-visible`](specs/application/read-models.committed-state-visible.sdp.md), [`.committed-state-read-through-query`](specs/application/read-models.committed-state-read-through-query.sdp.md) | native |
 | L2-3 | Orders of 1 line, 10 lines and the maximum | [`spec:application.first-experiment`](specs/application/first-experiment.sdp.md) | [`.order-of-1-line`](specs/application/first-experiment.order-of-1-line.sdp.md), [`.order-of-10-lines`](specs/application/first-experiment.order-of-10-lines.sdp.md), [`.order-of-max-lines`](specs/application/first-experiment.order-of-max-lines.sdp.md) | native |
 | L2-4 | Rename a typed handler or break its argument contract | [`spec:command.command-declaration`](specs/command/command-declaration.sdp.md) | [`.renamed-handler-fails-build`](specs/command/command-declaration.renamed-handler-fails-build.sdp.md), [`.broken-argument-contract-fails-build`](specs/command/command-declaration.broken-argument-contract-fails-build.sdp.md) | build |
 | L2-5 | Rebuild a per-entity read model online while commands run; interrupt and resume | [`spec:application.rebuild`](specs/application/rebuild.sdp.md) | [`.online-rebuild-interrupt-resume`](specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md) | native |

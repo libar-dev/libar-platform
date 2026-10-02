@@ -371,8 +371,9 @@ describe("step 9", () => {
         user.mutation(api.depotCommands.createSummarizedDocument, call),
         "CreateSummarizedDocument writes the read model documentSummary, which has no generation to write",
       );
+      const reader = await caller(t, "user-1", readPermission);
       expect(
-        await t.query(api.depotQueries.getDocument, {
+        await reader.query(api.depotQueries.getDocument, {
           tenantId: "t-1",
           documentId: "doc-1",
         }),

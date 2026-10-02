@@ -4,6 +4,7 @@ import type { ConvexHttpClient } from "convex/browser";
 import { expect, onTestFinished, test } from "vitest";
 import { api, internal } from "../../fixture/convex/_generated/api.js";
 import { deletedTitle } from "../../fixture/convex/depot/streams.js";
+import { readPermission } from "../../fixture/convex/readModels.js";
 import type { Backend } from "../../harness/backend.js";
 import {
   ordinaryClient,
@@ -12,7 +13,8 @@ import {
 } from "../../harness/clients.js";
 import { fixtureBackend, measure } from "../../harness/native.js";
 // The depot's get and list, registered by defineGet and defineList, read by an ordinary client
-// through the fixture parent's relays across the component boundary.
+// through the fixture parent's relays across the component boundary. The relays authorize, so the
+// client's user holds the depot's read permission, granted with admin access as setup.
 type Page = PaginationResult<{ documentId: string }>;
 type Opts = { cursor: string | null; numItems: number; endCursor?: string };
 const pad = (n: number) => String(n).padStart(3, "0");
@@ -44,6 +46,18 @@ async function createDocuments(
       },
     );
 }
+// The user's fixture-issuer token, after granting the user the depot's read permission in each tenant.
+async function readerToken(backend: Backend, tenants = ["t-1"]) {
+  for (const tenantId of tenants)
+    await backend.admin.run(getFunctionName(internal.grants.grant), {
+      tenantId,
+      principalKind: "human",
+      principalId: `${backend.issuer.issuer}|user-1`,
+      permission: readPermission,
+      grantedBy: "native-test",
+    });
+  return backend.issuer.token("user-1");
+}
 const read = (
   client: ConvexHttpClient,
   paginationOpts: Opts,
@@ -57,7 +71,8 @@ const read = (
 test("native: get answers a subject's DTO through the parent, and null for an absent subject or another tenant's", async () => {
   const backend = await fixtureBackend();
   await createDocuments(backend, ["doc-1"]);
-  const client = ordinaryClient(backend.url);
+  const token = await readerToken(backend, ["t-1", "t-2"]);
+  const client = ordinaryClient(backend.url, { token });
   const get = (tenantId: string, documentId: string) =>
     client.query(api.depotQueries.getDocument, { tenantId, documentId });
   expect(await get("t-1", "doc-1")).toStrictEqual({
@@ -81,8 +96,9 @@ test("native: a list paged by the cursor pair across the boundary stays contiguo
   const backend = await fixtureBackend();
   await createDocuments(backend, documentIds(0, 30));
   await createDocuments(backend, documentIds(0, 3, "other-"), "t-2");
-  const client = ordinaryClient(backend.url);
-  const socket = ordinarySocketClient(backend.url);
+  const token = await readerToken(backend);
+  const client = ordinaryClient(backend.url, { token });
+  const socket = ordinarySocketClient(backend.url, { token });
   onTestFinished(() => socket.close());
   // Read each page once, then subscribe to it with the end cursor that read returned; the last page
   // is subscribed with no end cursor, so it follows rows added after it.
@@ -171,7 +187,8 @@ test("native: a list paged by the cursor pair across the boundary stays contiguo
 test("native: a cursor the list cannot read is a technical failure, not a rejection", async () => {
   const backend = await fixtureBackend();
   await createDocuments(backend, documentIds(0, 3));
-  const error = await read(ordinaryClient(backend.url), {
+  const token = await readerToken(backend);
+  const error = await read(ordinaryClient(backend.url, { token }), {
     cursor: "not a cursor",
     numItems: 10,
   }).then(
@@ -202,7 +219,9 @@ test("native: list leaves a deleted subject out by default, and a trusted caller
       .filter((row) => row["deletedAt"] !== undefined)
       .map((row) => row["streamId"]),
   ).toEqual(["doc-002"]);
-  const client = ordinaryClient(backend.url);
+  const client = ordinaryClient(backend.url, {
+    token: await readerToken(backend),
+  });
   const opts = { cursor: null, numItems: 10 };
   // A client reads through the parent, which does not relay includeDeleted.
   const relayed = await read(client, opts);

@@ -92,7 +92,7 @@ export function classifyReceipt(
   if (found === null || found.expiresAt <= now) return { class: "new" };
   if (found.tombstone)
     throw new Error(
-      `Receipt ${found.operationId} is a tombstone, and no tombstone is built`,
+      `Receipt ${found.operationId} is a tombstone, which no retention writes: afterExpiry is always delete`,
     );
   if (found.contractVersion !== contractVersion)
     return {

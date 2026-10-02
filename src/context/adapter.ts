@@ -139,10 +139,10 @@ async function executeMeasured<S, C, E extends DomainEvent, R>(
       details: { expected: target.expectedVersion, current: loaded.version },
     });
   const expected = target.expectedVersion ?? loaded.version;
-  // Where step 3a would migrate a row saved under an older meaning: with no migration here, a failure.
+  // This adapter runs no migration on load, so a row saved under an older meaning is a failure.
   if (loaded.meta.stateSchemaVersion !== registration.stateSchemaVersion)
     throw new Error(
-      `Stream ${streamType}/${streamId} was saved under state schema version ${loaded.meta.stateSchemaVersion}, not ${registration.stateSchemaVersion}, and no migration is built`,
+      `Stream ${streamType}/${streamId} was saved under state schema version ${loaded.meta.stateSchemaVersion}, older than this code's ${registration.stateSchemaVersion}, and this adapter migrates no row`,
     );
   // Step 4.
   const decision = registration.decider.decide(loaded.state, target.command, {

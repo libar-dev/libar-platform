@@ -168,10 +168,10 @@ test("pure: classifyReceipt treats a receipt at or past its expiry as absent, be
   expect(classifyReceipt(receipt(), "f-1", 1, 999).class).toBe("duplicate");
 });
 
-test("pure: classifyReceipt fails on a tombstone, which no code of this slice writes", () => {
+test("pure: classifyReceipt fails on a tombstone, which no retention writes", () => {
   expect(() =>
     classifyReceipt(receipt({ tombstone: true }), "f-1", 1, 0),
-  ).toThrow("no tombstone is built");
+  ).toThrow("is a tombstone, which no retention writes");
 });
 
 function thrown(run: () => unknown): unknown {

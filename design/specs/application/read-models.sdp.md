@@ -118,6 +118,7 @@ And {orders:number} orders placed in one tenant and {others:number} in another
 When {action:"the use case commits one successful command"|"the caller reads the order through the parent"|"a client reads the tenant's order list in pages by cursor"}
 Then the subscription shows the committed state with source versions {versionMatch:"equal to the command's returned versions"|"older than the command's returned versions"}
 And the number of workers, jobs or queues that ran is {workers:number}
+And a read of the parent query over the context's get shows the committed state with stream version {versionMatch:"equal to the command's returned versions"|"older than the command's returned versions"}
 And the read throws rejection {code:"unauthenticated"|"forbidden"} that names the query
 And the number of receipts the read wrote is {receipts:number}
 And pages of {pageSize:number} together hold {ordersHeld:number} orders, each once and in order of order ID, and none of the other tenant's

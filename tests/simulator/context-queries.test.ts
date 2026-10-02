@@ -15,6 +15,7 @@ import {
   documentStream,
   titleCopies,
 } from "../../fixture/convex/depot/streams.js";
+import { readPermission } from "../../fixture/convex/readModels.js";
 import schema from "../../fixture/convex/schema.js";
 import {
   createJournal,
@@ -57,6 +58,7 @@ function app() {
   return t;
 }
 const actor = { kind: "human", id: "user-1" } as const;
+const issuer = "https://fixture-issuer.test";
 function call<I>(input: I, operationId: string, tenantId = "t-1") {
   return {
     tenantId,
@@ -339,23 +341,34 @@ describe("the parent relays a context query across the component boundary", () =
           "create-1",
         ),
       );
-      const dto = (await t.query(parentApi.depotQueries.getDocument, {
+      // A caller granted the depot's read permission in both tenants, so each tenant's answer is
+      // the context's and not a refusal.
+      for (const tenantId of ["t-1", "t-2"])
+        await t.mutation(internal.grants.grant, {
+          tenantId,
+          principalKind: "human",
+          principalId: `${issuer}|user-1`,
+          permission: readPermission,
+          grantedBy: "operator",
+        });
+      const reader = t.withIdentity({ issuer, subject: "user-1" });
+      const dto = (await reader.query(parentApi.depotQueries.getDocument, {
         tenantId: "t-1",
         documentId: "doc-004",
       })) as { title: string; version: { version: number } };
       expect(dto.title).toBe("Report doc-004");
       expect(dto.version.version).toBe(1);
       expect(
-        await t.query(parentApi.depotQueries.getDocument, {
+        await reader.query(parentApi.depotQueries.getDocument, {
           tenantId: "t-2",
           documentId: "doc-004",
         }),
       ).toBeNull();
-      const first = (await t.query(parentApi.depotQueries.listDocuments, {
+      const first = (await reader.query(parentApi.depotQueries.listDocuments, {
         tenantId: "t-1",
         paginationOpts: { cursor: null, numItems: 10 },
       })) as Page;
-      const second = (await t.query(parentApi.depotQueries.listDocuments, {
+      const second = (await reader.query(parentApi.depotQueries.listDocuments, {
         tenantId: "t-1",
         paginationOpts: { cursor: first.continueCursor, numItems: 10 },
       })) as Page;

@@ -1065,7 +1065,7 @@ describe("the adapter's guards", () => {
         await technicalFailure(
           run(t, registration, [{ amounts: [1] }]),
           stateSchemaVersion === 0
-            ? /saved under state schema version 0, not 1, and no migration is built/
+            ? /saved under state schema version 0, older than this code's 1, and this adapter migrates no row/
             : /saved under state schema version 2, newer than this code's 1/,
         );
       }

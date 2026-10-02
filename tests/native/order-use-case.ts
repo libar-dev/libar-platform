@@ -25,22 +25,37 @@ export interface OrderWorld {
   token: string;
   client: ConvexHttpClient;
 }
-// A production backend, the user's grants and the order summary's first activation, all with admin
-// access, and an ordinary client with the user's fixture-issuer token.
-export async function orderWorld(): Promise<OrderWorld> {
-  const backend = await productionBackend();
-  for (const permission of permissions)
-    await backend.admin.run(getFunctionName(internal.grants.grant), {
-      tenantId,
-      principalKind: "human",
-      principalId: `${backend.issuer.issuer}|${subject}`,
-      permission,
-      grantedBy: "native-test",
-    });
-  await backend.admin.run(getFunctionName(internal.readModels.activate), {
+// Grants a user of the fixture issuer one permission in a tenant, with admin access.
+export function grant(
+  backend: Backend,
+  user: string,
+  permission: string,
+  tenant = tenantId,
+) {
+  return backend.admin.run(getFunctionName(internal.grants.grant), {
+    tenantId: tenant,
+    principalKind: "human",
+    principalId: `${backend.issuer.issuer}|${user}`,
+    permission,
+    grantedBy: "native-test",
+  });
+}
+// The order summary's first activation, run by an operator with admin access.
+export function activateOrderSummary(backend: Backend) {
+  return backend.admin.run(getFunctionName(internal.readModels.activate), {
     readModel: "orderSummary",
     startedBy: { kind: "operator", id: "native-test" },
   });
+}
+// A production backend, the user's grants and, unless asked not to, the order summary's first
+// activation, all with admin access, and an ordinary client with the user's fixture-issuer token.
+export async function orderWorld(
+  options: { activate?: boolean } = {},
+): Promise<OrderWorld> {
+  const backend = await productionBackend();
+  for (const permission of permissions)
+    await grant(backend, subject, permission);
+  if (options.activate ?? true) await activateOrderSummary(backend);
   const token = await backend.issuer.token(subject);
   return { backend, token, client: ordinaryClient(backend.url, { token }) };
 }
