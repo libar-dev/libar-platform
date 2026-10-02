@@ -16,7 +16,6 @@ import {
   application,
   budgetsAre,
   callsPerContextAre,
-  ceilings,
   commitsAre,
   configurationIs,
   orderLines,
@@ -24,6 +23,7 @@ import {
   projectionJobsAre,
   receive,
   recordUsage,
+  reportedExecutionSecondsBound,
   tenantId,
   type ExperimentWorld,
 } from "./first-experiment-steps.js";
@@ -84,7 +84,9 @@ bindExample(
     const placed = required(world.placed, "the order");
     expect(placed.lines).toHaveLength(100);
     expect(maxOrderLines).toBe(100);
-    expect(placed.own.executionTime).toBeLessThan(ceilings.executionSeconds);
+    expect(placed.own.executionTime).toBeLessThan(
+      reportedExecutionSecondsBound,
+    );
     recordUsage(world);
     // One line more than the maximum, every line with stock on hand, is refused before anything is
     // stored.

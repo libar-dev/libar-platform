@@ -41,14 +41,17 @@ export const authVariables = [
 export const placeOrderIdentifier = getFunctionName(api.ordering.placeOrder);
 const summariesIdentifier = getFunctionName(api.readModels.listOrderSummaries);
 // The F13 ceilings of one transaction: 16 MiB and 32,000 documents read, 16 MiB and 16,000
-// documents written, and 1 second of execution.
+// documents written.
 export const ceilings = {
   databaseReadBytes: 16 * 1024 * 1024,
   databaseReadDocuments: 32000,
   databaseWriteBytes: 16 * 1024 * 1024,
   databaseWriteDocuments: 16000,
-  executionSeconds: 1,
 };
+// A bound these examples set on the execution time the backend's log reports for a command. It is
+// not the engine's cap on completion time: the engine's limit is on the function's own computation,
+// and nested calls draw on a separate budget (F19).
+export const reportedExecutionSecondsBound = 1;
 export const usageKeys = [
   "databaseReadDocuments",
   "databaseWriteDocuments",
@@ -334,7 +337,8 @@ export const usageOf = (record: CompletionRecord): Usage =>
     usageKeys.map((key) => [key, required(record.usageStats[key], key)]),
   ) as Usage;
 // Every row stayed inside its budget, because a row above its budget fails the command and the command
-// applied; and what it read, wrote and took stayed under the transaction's ceilings.
+// applied; what it read and wrote stayed under the transaction's ceilings, and the execution time
+// the log reports stayed under the examples' bound.
 export function budgetsAre(
   world: ExperimentWorld,
   budgets: "hold" | "are exceeded",
@@ -356,7 +360,9 @@ export function budgetsAre(
     expect(usage.databaseWriteBytes).toBeLessThanOrEqual(
       ceilings.databaseWriteBytes,
     );
-    expect(placed.own.executionTime).toBeLessThan(ceilings.executionSeconds);
+    expect(placed.own.executionTime).toBeLessThan(
+      reportedExecutionSecondsBound,
+    );
   }
 }
 // What a PlaceOrder read and wrote, recorded on the test's entry in the run's evidence record. It is
