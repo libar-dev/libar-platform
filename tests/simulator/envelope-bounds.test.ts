@@ -429,6 +429,33 @@ const directArgs = (
   },
   input: { documents: [{ documentId: streamId, title: "Report" }] },
 });
+// spec:context.persistence-adapter, step1: every planned stream ID is checked, not only the first.
+test(
+  name(
+    "a direct context call rejects an overlong stream ID that is not the first planned",
+  ),
+  async () => {
+    const t = app();
+    const data = await rejection(
+      t.mutation(internal.depotRelay.createDocuments, {
+        ...directArgs("a", "x"),
+        input: {
+          documents: [
+            { documentId: "a", title: "Report" },
+            { documentId: "b".repeat(257), title: "Report" },
+          ],
+        },
+      }),
+    );
+    expect(data).toMatchObject({ code: "invalidInput" });
+    expect(data.details).toEqual({
+      field: "streamId",
+      length: 257,
+      limit: 256,
+    });
+    await expectEmpty(t);
+  },
+);
 function eventOf(outcome: unknown): Record<string, Value> & { payload: Value } {
   return (
     outcome as {

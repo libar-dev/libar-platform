@@ -72,6 +72,12 @@ const cases: Case[] = [
     contains: ["SomeOtherCommand", commandType],
   },
   {
+    name: "wire command that differs only in case",
+    error: wire("forbidden", "createDocument"),
+    result: "technical",
+    contains: ["createDocument", commandType],
+  },
+  {
     name: "wire code checked before command",
     error: wire("notDeclared", "SomeOtherCommand"),
     result: "technical",

@@ -91,6 +91,24 @@ test("pure: rebuild with a null start folds from it and never calls initial()", 
   expect(decider.initial).not.toHaveBeenCalled();
 });
 
+test("pure: rebuild with a false start folds from it and never calls initial()", () => {
+  type Toggled = DomainEvent<"toggled", Record<string, never>>;
+  const toggled: Toggled = {
+    eventType: "toggled",
+    eventSchemaVersion: 1,
+    payload: {},
+  };
+  const decider: Decider<boolean, null, Toggled, null> = {
+    streamType: "switch",
+    initial: vi.fn(() => true),
+    decide: () => ({ kind: "applied", events: [toggled], result: null }),
+    evolve: (state) => !state,
+  };
+  expect(rebuild(decider, [], false)).toBe(false);
+  expect(rebuild(decider, [toggled], false)).toBe(true);
+  expect(decider.initial).not.toHaveBeenCalled();
+});
+
 test("pure: rebuild with a zero start folds from it and never calls initial()", () => {
   const decider = counter(10);
   expect(rebuild(decider, [], 0)).toBe(0);

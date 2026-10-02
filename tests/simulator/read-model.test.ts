@@ -629,7 +629,7 @@ describe("applyProjection", () => {
 describe("step 1", () => {
   test(
     name(
-      "a tenant ID or request key above 256 bytes is invalidInput naming the field, and a declaration name above it a plain Error",
+      "a tenant ID or request key above 256 bytes is invalidInput naming the field, and a declaration name above 256 bytes of UTF-8 a plain Error",
     ),
     async () => {
       const t = app();
@@ -661,6 +661,11 @@ describe("step 1", () => {
       await technicalFailure(
         run(t, { ...returning([], []), name: "N".repeat(257) }),
         "A command type has at most 256 bytes of UTF-8, and this declaration's name has 257",
+      );
+      // 129 characters of two bytes each: the name is measured in UTF-8 bytes, not characters.
+      await technicalFailure(
+        run(t, { ...returning([], []), name: "é".repeat(129) }),
+        "A command type has at most 256 bytes of UTF-8, and this declaration's name has 258",
       );
     },
   );

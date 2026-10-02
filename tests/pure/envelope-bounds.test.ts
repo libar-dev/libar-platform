@@ -78,12 +78,18 @@ test("pure: stored document system fields add 61 bytes", () => {
 });
 
 // UTF-8 replaces an unpaired surrogate with U+FFFD. The pinned Convex size helper counts it differently.
-test("pure: UTF-8 length counts an unpaired high surrogate as three bytes", () => {
-  const value = "\ud800";
-  expect(new TextEncoder().encode(value)).toHaveLength(3);
-  expect(utf8Length(value)).toBe(3);
-  expect(contextUtf8Length(value)).toBe(3);
-});
+test.each([
+  ["high", "\ud800"],
+  ["low", "\udc00"],
+])(
+  "pure: UTF-8 length counts an unpaired %s surrogate as three bytes",
+  (_, value) => {
+    expect(new TextEncoder().encode(value)).toHaveLength(3);
+    expect(utf8Length(value)).toBe(3);
+    expect(contextUtf8Length(value)).toBe(3);
+    expect(utf8Length(`a${value}b`)).toBe(5);
+  },
+);
 // spec:command.command-pipeline, limitCallText: step 1 holds the Spec's list whole, in its order.
 test("pure: step 1 checks the caller-set text fields in the order and with the bounds limitCallText lists", () => {
   const spec = readFileSync(

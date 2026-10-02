@@ -113,16 +113,46 @@ export function requiredRows(graph: ScenarioGraph, specId: string): string[] {
   return rows;
 }
 
-// The parts of an example's opening line, the first line of its narrative, separated by " · ".
+const rowExact = /^Sc [A-Z]+\d*-\d+$/;
+// The parts of an example's opening line, the first line of its narrative, separated by " · ", with
+// the stop that ends the line taken off its last part.
 function openingParts(narrative: string | undefined): string[] {
   const line = (narrative ?? "").split("\n")[0]!.trim();
-  return line.split(" · ").map((part) => part.trim());
+  const parts = line.split(" · ").map((part) => part.trim());
+  parts[parts.length - 1] = parts.at(-1)!.replace(/\.$/, "");
+  return parts;
 }
-const withoutStop = (part: string | undefined) =>
-  (part ?? "").replace(/\.$/, "");
+const opensWithRow = (narrative: string | undefined) =>
+  (narrative ?? "").trimStart().startsWith("Sc ");
+
+// What an opening line that begins with "Sc " states, read whole: the first part is exactly a row,
+// the second exactly a tier's name and the word tier, and a third part that begins with a
+// composition's name is exactly that name and the word composition. Any other third part, and any
+// part after it, describes the case. A line that does not read so makes the check unable to answer.
+function readOpening(
+  id: string,
+  narrative: string | undefined,
+): Pick<RequiredScenario, "row" | "tier" | "composition"> {
+  const parts = openingParts(narrative);
+  const [row = "", tierPart, third] = parts;
+  const unreadable = (what: string) =>
+    new AcceptanceUnanswerable(
+      `The opening line of ${id} ${what}: ${parts.join(" · ")}`,
+    );
+  if (!rowExact.test(row)) throw unreadable("names no row");
+  const tier = tiers.find((name) => tierPart === `${name} tier`);
+  if (tier === undefined) throw unreadable("names no tier");
+  const named = compositions.find((name) => third?.startsWith(name));
+  const composition =
+    compositions.find((name) => third === `${name} composition`) ?? null;
+  if (named !== undefined && composition === null)
+    throw unreadable("names no composition it can read");
+  return { row, tier, composition };
+}
 
 // One entry per example whose opening line names a required row, and one entry with no example
-// for a required row that no example names.
+// for a required row that no example names. Every example whose opening line begins with "Sc " is
+// read whole first, so a malformed one never drops out of its row unseen.
 export function deriveRequiredScenarios(
   graph: ScenarioGraph,
   specId: string,
@@ -131,12 +161,16 @@ export function deriveRequiredScenarios(
   const examples = graph
     .specs()
     .filter((spec) => spec.specKind === "example")
-    .map((spec) => ({ id: spec.id, context: graph.specContext(spec.id) }));
+    .map((spec) => ({ id: spec.id, context: graph.specContext(spec.id) }))
+    .filter(({ context }) => opensWithRow(context?.narrative))
+    .map(({ id, context }) => ({
+      id,
+      context,
+      opening: readOpening(id, context?.narrative),
+    }));
   const scenarios: RequiredScenario[] = [];
   for (const row of rows) {
-    const named = examples.filter(
-      ({ context }) => withoutStop(openingParts(context?.narrative)[0]) === row,
-    );
+    const named = examples.filter(({ opening }) => opening.row === row);
     if (named.length === 0)
       scenarios.push({
         row,
@@ -145,22 +179,10 @@ export function deriveRequiredScenarios(
         composition: null,
         verifiers: [],
       });
-    for (const { id, context } of named) {
-      const parts = openingParts(context?.narrative);
-      const tier = tiers.find((name) => parts[1]?.startsWith(`${name} tier`));
-      if (tier === undefined)
-        throw new AcceptanceUnanswerable(
-          `The opening line of ${id} names no tier: ${parts.join(" · ")}`,
-        );
-      const composition =
-        compositions.find((name) =>
-          parts[2]?.startsWith(`${name} composition`),
-        ) ?? null;
+    for (const { id, context, opening } of named)
       scenarios.push({
-        row,
+        ...opening,
         example: id,
-        tier,
-        composition,
         verifiers: (context?.verifiers ?? [])
           .filter(
             (verifier) =>
@@ -173,7 +195,6 @@ export function deriveRequiredScenarios(
             file: verifier.file!,
           })),
       });
-    }
   }
   return scenarios;
 }
@@ -347,7 +368,8 @@ function readRecord(path: string): AcceptanceRecord {
   return record as unknown as AcceptanceRecord;
 }
 
-// The record of the run that started last, by the `startedAt` it states. Only a file with the
+// The record of the run that started last, by the `startedAt` it states, and of equal starts the one
+// whose file name sorts last. Only a file with the
 // shape of a run record is a candidate, so an unrelated JSON file hides no record.
 export function newestRecord(directory: string): string {
   let names: string[];
@@ -356,7 +378,8 @@ export function newestRecord(directory: string): string {
   } catch {
     names = [];
   }
-  let newest: { path: string; startedAt: string } | undefined;
+  // Equal start times are broken by the file name: the one that sorts last is the newest.
+  let newest: { path: string; name: string; startedAt: string } | undefined;
   for (const name of names) {
     const path = join(directory, name);
     let candidate: unknown;
@@ -368,8 +391,12 @@ export function newestRecord(directory: string): string {
     if (!hasRunRecordShape(candidate)) continue;
     const { startedAt } = candidate;
     if (typeof startedAt !== "string") continue;
-    if (newest === undefined || startedAt > newest.startedAt)
-      newest = { path, startedAt };
+    if (
+      newest === undefined ||
+      startedAt > newest.startedAt ||
+      (startedAt === newest.startedAt && name > newest.name)
+    )
+      newest = { path, name, startedAt };
   }
   if (newest === undefined)
     throw new AcceptanceUnanswerable(`No run record under ${directory}`);

@@ -34,6 +34,8 @@ interface SampleExample {
   id: string;
   opening: string;
   files: string[];
+  // Files of verifiers that are present and disabled.
+  disabled?: string[];
 }
 function sampleGraph(
   examples: SampleExample[] = [
@@ -67,10 +69,13 @@ function sampleGraph(
       if (example === undefined) return undefined;
       return {
         narrative: `${example.opening}\n\nMore of the narrative.`,
-        verifiers: example.files.map((file) => ({
+        verifiers: [
+          ...example.files.map((file) => ({ file, enabled: true })),
+          ...(example.disabled ?? []).map((file) => ({ file, enabled: false })),
+        ].map(({ file, enabled }) => ({
           verifierId: `test:${file}`,
           via: "test-anchor",
-          enabled: true,
+          enabled,
           file,
         })),
       };
@@ -506,6 +511,285 @@ test("pure: a graph that throws while it is read leaves the check unable to answ
     lines: ["acceptance: cannot answer · the reader broke"],
     exit: 2,
   });
+});
+
+const evaluate: SampleExample = {
+  id: "spec:sample.evaluate",
+  opening: "Sc L0-1 · domain tier.",
+  files: ["tests/pure/evaluate.test.ts"],
+};
+const transition: SampleExample = {
+  id: "spec:sample.transition",
+  opening: "Sc L1-1 · native tier · fixture composition.",
+  files: ["tests/native/transition.test.ts"],
+};
+const production: SampleExample = {
+  id: "spec:sample.production",
+  opening: "Sc L2-9 · end to end tier · production composition.",
+  files: ["tests/native/production.test.ts"],
+};
+const cannotAnswer = (graph: ScenarioGraph) =>
+  answered(graph, sampleRecord()).then((answer) => {
+    expect(answer.exit).toBe(2);
+    expect(answer.lines).toHaveLength(1);
+    expect(answer.lines[0]).toMatch(/^acceptance: cannot answer · /);
+    return answer.lines[0]!;
+  });
+
+test("pure: a tier part with anything after the word tier is unreadable, and the check exits 2", async () => {
+  const line = await cannotAnswer(
+    sampleGraph([
+      evaluate,
+      {
+        ...transition,
+        opening: "Sc L1-1 · native tierBROKEN · fixture composition.",
+      },
+      production,
+    ]),
+  );
+  expect(line).toContain("spec:sample.transition names no tier");
+});
+
+test("pure: a malformed sibling of a required row's example makes the check exit 2, and never drops out", async () => {
+  const line = await cannotAnswer(
+    sampleGraph([
+      evaluate,
+      transition,
+      {
+        id: "spec:sample.transition-sibling",
+        opening: "Sc L1-1: native tier · fixture composition.",
+        files: ["tests/native/transition.test.ts"],
+      },
+      production,
+    ]),
+  );
+  expect(line).toContain("spec:sample.transition-sibling names no row");
+});
+
+test("pure: every opening line that begins with Sc reads whole, of a required row or not, composition included", async () => {
+  for (const opening of [
+    "Sc L3-1 · native tier · fixture compositionBROKEN.",
+    "Sc L3-1 · natve tier.",
+    "Sc L3-1x · native tier.",
+  ])
+    await cannotAnswer(
+      sampleGraph([
+        evaluate,
+        transition,
+        production,
+        { id: "spec:sample.later", opening, files: [] },
+      ]),
+    );
+  // A part after the tier that names no composition describes the case, and an opening line that does
+  // not begin with Sc is no scenario's.
+  const answer = await answered(
+    sampleGraph([
+      { ...evaluate, opening: "Sc L0-1 · domain tier · the only case." },
+      {
+        ...transition,
+        opening:
+          "Sc L1-1 · native tier · fixture composition · first of two cases.",
+      },
+      production,
+      {
+        id: "spec:sample.probe",
+        opening: "Probe 1 · native tierX.",
+        files: [],
+      },
+    ]),
+    sampleRecord(),
+  );
+  expect(answer.exit).toBe(0);
+});
+
+test("pure: of two records that state the same start, the one whose file name sorts last is the newest", async () => {
+  const startedAt = "2026-01-01T00:00:00.000Z";
+  const passed = { ...sampleRecord(), startedAt };
+  const failed = { ...sampleRecord(), result: "failed", startedAt };
+  for (const [last, first, exit] of [
+    [passed, failed, 0],
+    [failed, passed, 1],
+  ] as const)
+    for (const order of ["last written first", "last written last"]) {
+      const directory = await mkdtemp(join(tmpdir(), "libar-acceptance-tie-"));
+      try {
+        const writes = [
+          () => writeFile(join(directory, "b.json"), JSON.stringify(last)),
+          () => writeFile(join(directory, "a.json"), JSON.stringify(first)),
+        ];
+        for (const write of order === "last written first"
+          ? writes
+          : writes.reverse())
+          await write();
+        const answer = answerAcceptance({
+          graph: sampleGraph(),
+          runsDirectory: directory,
+          specId: experiment,
+        });
+        expect(answer.record).toBe(join(directory, "b.json"));
+        expect(answer.exit).toBe(exit);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    }
+});
+
+test("pure: the newest record is chosen by the time of day as well as the date", async () => {
+  // In both namings, so neither the order of the directory nor the order of the names can choose.
+  for (const [morning, evening] of [
+    ["a.json", "b.json"],
+    ["b.json", "a.json"],
+  ]) {
+    const directory = await mkdtemp(join(tmpdir(), "libar-acceptance-time-"));
+    try {
+      await writeFile(
+        join(directory, morning!),
+        JSON.stringify({
+          ...sampleRecord(),
+          startedAt: "2026-01-01T09:00:00.000Z",
+        }),
+      );
+      await writeFile(
+        join(directory, evening!),
+        JSON.stringify({
+          ...sampleRecord(),
+          clean: false,
+          startedAt: "2026-01-01T17:00:00.000Z",
+        }),
+      );
+      const answer = answerAcceptance({
+        graph: sampleGraph(),
+        runsDirectory: directory,
+        specId: experiment,
+      });
+      expect(answer.record).toBe(join(directory, evening!));
+      expect(answer.exit).toBe(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }
+});
+
+test("pure: every example of a required row is judged, not only the first", () => {
+  const second: SampleExample = {
+    id: "spec:sample.transition-second",
+    opening: "Sc L1-1 · native tier · fixture composition · the second case.",
+    files: ["tests/native/transition-second.test.ts"],
+  };
+  const record = sampleRecord();
+  record.tests.push({
+    ...record.tests[1]!,
+    file: "tests/native/transition-second.test.ts",
+    result: "failed",
+  });
+  const verdict = checkAcceptance(
+    deriveRequiredScenarios(
+      sampleGraph([evaluate, transition, second, production]),
+      experiment,
+    ),
+    record,
+  );
+  expect(
+    verdict.scenarios.map(({ row, example, status }) => [row, example, status]),
+  ).toEqual([
+    ["Sc L0-1", "spec:sample.evaluate", "passed"],
+    ["Sc L1-1", "spec:sample.transition", "passed"],
+    ["Sc L1-1", "spec:sample.transition-second", "failed"],
+    ["Sc L2-9", "spec:sample.production", "passed"],
+  ]);
+});
+
+test("pure: a disabled verifier is not counted as enabled, so its example is missing", () => {
+  const verdict = checkAcceptance(
+    deriveRequiredScenarios(
+      sampleGraph([
+        evaluate,
+        {
+          ...transition,
+          files: [],
+          disabled: ["tests/native/transition.test.ts"],
+        },
+        production,
+      ]),
+      experiment,
+    ),
+    sampleRecord(),
+  );
+  expect(verdict.scenarios[1]).toMatchObject({
+    verifiers: [],
+    status: "missing",
+    reason: "the example has no enabled verifier",
+  });
+  expect(acceptanceExit(verdict)).toBe(3);
+});
+
+test("pure: the second verifier of an example is inspected as well as the first", () => {
+  const twoFiles: SampleExample = {
+    ...transition,
+    files: [
+      "tests/native/transition.test.ts",
+      "tests/native/transition-again.test.ts",
+    ],
+  };
+  const graph = sampleGraph([evaluate, twoFiles, production]);
+  const failed = sampleRecord();
+  failed.tests.push({
+    ...failed.tests[1]!,
+    file: "tests/native/transition-again.test.ts",
+    result: "failed",
+  });
+  expect(
+    checkAcceptance(deriveRequiredScenarios(graph, experiment), failed)
+      .scenarios[1]!.status,
+  ).toBe("failed");
+  expect(
+    checkAcceptance(deriveRequiredScenarios(graph, experiment), sampleRecord())
+      .scenarios[1]!.status,
+  ).toBe("absent");
+});
+
+test("pure: a build scenario passes only on a result of the types project, and a simulator scenario only on one of the simulator project", () => {
+  const graph = sampleGraph(
+    [
+      {
+        id: "spec:sample.build",
+        opening: "Sc L2-4 · build tier.",
+        files: ["tests/types/broken.test-d.ts"],
+      },
+      {
+        id: "spec:sample.simulated",
+        opening: "Sc L1-9 · simulator tier.",
+        files: ["tests/simulator/simulated.test.ts"],
+      },
+    ],
+    "the rows are Sc L2-4 and Sc L1-9",
+  );
+  const record = (types: string, simulator: string): AcceptanceRecord => ({
+    ...sampleRecord(),
+    tests: [
+      {
+        project: types,
+        name: "a broken caller fails the build",
+        file: "tests/types/broken.test-d.ts",
+        result: "passed",
+        backends: [],
+      },
+      {
+        project: simulator,
+        name: "simulated",
+        file: "tests/simulator/simulated.test.ts",
+        result: "passed",
+        backends: [],
+      },
+    ],
+  });
+  const statuses = (types: string, simulator: string) =>
+    checkAcceptance(
+      deriveRequiredScenarios(graph, experiment),
+      record(types, simulator),
+    ).scenarios.map(({ status }) => status);
+  expect(statuses("types", "simulator")).toEqual(["passed", "passed"]);
+  expect(statuses("native", "pure")).toEqual(["failed", "failed"]);
 });
 
 test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2, and every native example of them that has a verifier names its composition", async () => {
