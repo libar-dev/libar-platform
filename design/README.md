@@ -2,7 +2,7 @@
 
 ## What this is
 
-The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 223 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 228 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-223 specs · 5 packs · 121 anchors → 349 nodes · 1186 edges (0 errors, 0 warnings)
+228 specs · 5 packs · 126 anchors → 359 nodes · 1206 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -82,7 +82,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 
 | Layer | Families | Pack | Specs |
 |---|---|---|---|
-| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 93 |
+| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 98 |
 | 0 | `kernel` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) | 7 |
 | 1 | `context`, `command` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) (19 with the kernel), [`command-pipeline`](specs/command-pipeline.pack.sdp.md) | 12 + 24 |
 | 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 44 |
@@ -337,8 +337,13 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-batch-cursor` | Probe 6: a parent batch returns a context cursor to the migrations driver |
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-operator-cancel` | Probe 6: an operator cancels a committed successor |
 | none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-transaction-failure` | Probe 6: a transaction failure preserves the saved cursor |
+| none | `spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-fresh-import` | Probe 7: replacement into a fresh backend restores context data without schedules |
+| none | `spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-in-place-import` | Probe 7: replacement in place preserves schedules that run against restored data |
+| none | `spec:facts.f13-transactions-have-limits.probe-7-arguments` | Probe 7: scheduled argument limits count encoded values |
+| none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-scan` | Probe 7: a failed-function scan reads unrelated schedules |
+| none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-states` | Probe 7: the five scheduler states remain readable |
 
-Package A therefore has 93 Specs, Package C has 17 examples, Package D has 26, and the corpus has 60 examples that bind a doc row.
+Package A therefore has 98 Specs, Package C has 17 examples, Package D has 26, and the corpus has 60 examples that bind a doc row.
 
 The example domain's second lifecycle command added six examples that verify no doc row, each a child of `spec:application.orders-inventory-example` under E-46:
 

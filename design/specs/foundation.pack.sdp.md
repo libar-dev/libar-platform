@@ -62,10 +62,13 @@ specs:
   - spec:facts.f10-action-mutation-calls-are-separate-transactions
   - spec:facts.f11-components-have-no-ctx-auth
   - spec:facts.f12-backups-exclude-pending-scheduled-functions
+  - spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-fresh-import
+  - spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-in-place-import
   - spec:facts.f13-transactions-have-limits
   - spec:facts.f13-transactions-have-limits.probe-4-nested-call-shares-limits
   - spec:facts.f13-transactions-have-limits.probe-4-component-call-shares-limits
   - spec:facts.f13-transactions-have-limits.probe-4-nesting-depth
+  - spec:facts.f13-transactions-have-limits.probe-7-arguments
   - spec:facts.f14-convex-error-survives-nested-and-component-boundary
   - spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-nested-mutation
   - spec:facts.f14-convex-error-survives-nested-and-component-boundary.probe-2-component-boundary
@@ -79,6 +82,8 @@ specs:
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
+  - spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-scan
+  - spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-states
   - spec:facts.f17-migrations-fits-generation-backfill
   - spec:facts.f17-migrations-fits-generation-backfill.probe-6-batch-races-command
   - spec:facts.f17-migrations-fits-generation-backfill.probe-6-interruption-and-resume
@@ -101,4 +106,4 @@ modelRefs:
 
 Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract and the native harness, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
 
-Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Ninety-three Specs.
+Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Ninety-eight Specs.
