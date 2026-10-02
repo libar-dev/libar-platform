@@ -31,7 +31,7 @@ The documented numbers bound batches. Probe 4 observes transaction budgets; Prob
 - limitTransactionRead: 16 MiB read, 32,000 documents scanned and 4,096 index ranges read per transaction (F13, S9)
 - limitTransactionWrite: 16 MiB written and 16,000 documents written per transaction (F13, S9)
 - limitFunctionPayload: 16 MiB per function argument set and 16 MiB per return value; a Node action's arguments are capped at 5 MiB (F13, S9)
-- limitQueryMutationTimeout: 1 second of execution per query or mutation (F13, S9)
+- limitQueryMutationTimeout: 1 second of execution per query or mutation, a limit on the function's own computation and not on the elapsed time of its call tree, because nested calls draw on a separate system-operation budget (F13, S9, F19)
 - limitActionTimeout: 30 minutes in the Convex runtime and 10 minutes in the Node runtime (F13, S9)
 - limitScheduling: the limits page states 1000 scheduled functions per mutation, 4 MiB per scheduled argument set, 16 MiB summed arguments per mutation and 1000000 outstanding functions; the scheduling page states 8 MB total, both read 2026-10-02; the design keeps 4 MiB per call as its ceiling because this release names that limit as a future hard error (F13, S9, Probe 7)
 - limitSchema: 32 indexes per table, 16 fields per index, 10,000 tables per deployment (F13, S9)
