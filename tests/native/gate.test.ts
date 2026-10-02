@@ -251,6 +251,7 @@ test("native: two independent writers race a close and no successful command com
   const identifier = getFunctionName(api.depotCommands.createDocument);
   const closeIdentifier = getFunctionName(internal.gate.closeGate);
   let overlapping = 0;
+  let reruns = 0;
   for (let trial = 0; trial < 8; trial++) {
     const mark = await backend.admin.logMark();
     const settled = await Promise.allSettled([
@@ -271,29 +272,42 @@ test("native: two independent writers race a close and no successful command com
       else
         await expectPaused(Promise.reject(result.reason), "tenant:t", "repair");
     }
-    const records = await backend.admin.completionsSince(
-      mark,
-      (rows) =>
-        rows.filter(
-          (row) =>
-            row.componentPath === null &&
-            (row.identifier === identifier ||
-              row.identifier === closeIdentifier),
-        ).length >= 3,
-    );
+    // Wait for the close, both requests, and as many refused executions as the clients saw refused.
+    const refused = settled
+      .slice(0, 2)
+      .filter((result) => result.status === "rejected").length;
+    const records = await backend.admin.completionsSince(mark, (rows) => {
+      const top = rows.filter((row) => row.componentPath === null);
+      const commandRows = top.filter((row) => row.identifier === identifier);
+      return (
+        top.some((row) => row.identifier === closeIdentifier) &&
+        new Set(commandRows.map((row) => row.requestId)).size >= 2 &&
+        commandRows.filter((row) => row.error !== null).length >= refused
+      );
+    });
     const closeRecord = records.find(
       (row) => row.identifier === closeIdentifier && row.componentPath === null,
     );
     expect(closeRecord).toBeDefined();
-    const commands = records.filter(
+    // A writer that read the gate open and lost the race to the close re-runs (WP occSerialization),
+    // and the log shows each execution under the request's ID: the last one is the command's outcome.
+    const executions = records.filter(
       (row) => row.identifier === identifier && row.componentPath === null,
     );
+    const lastByRequest = new Map<string, CompletionRecord>();
+    for (const row of executions) {
+      const last = lastByRequest.get(row.requestId);
+      if (last === undefined || row.timestamp > last.timestamp)
+        lastByRequest.set(row.requestId, row);
+    }
+    reruns += executions.length - lastByRequest.size;
+    const commands = [...lastByRequest.values()];
     expect(commands).toHaveLength(2);
-    for (const command of commands) {
+    for (const command of commands)
       if (command.error === null)
         expect(command.timestamp).toBeLessThanOrEqual(closeRecord!.timestamp);
-      if (overlap(command, closeRecord!)) overlapping++;
-    }
+    for (const execution of executions)
+      if (overlap(execution, closeRecord!)) overlapping++;
     const cut = await stored(backend);
     await expectPaused(
       one.mutation(
@@ -310,8 +324,13 @@ test("native: two independent writers race a close and no successful command com
     "commands overlapping the gate close by completion interval",
     overlapping,
   );
-  // Without an overlapping invocation this run cannot witness the concurrency obligation.
-  expect(overlapping).toBeGreaterThan(0);
+  measure(
+    "command executions re-run after losing the race to the close",
+    reruns,
+  );
+  // Without an execution overlapping the close, or one that lost the race to it and re-ran, this run
+  // cannot witness the concurrency obligation.
+  expect(overlapping + reruns).toBeGreaterThan(0);
 });
 function overlap(a: CompletionRecord, b: CompletionRecord) {
   return (
