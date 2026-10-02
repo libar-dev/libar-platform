@@ -2479,7 +2479,8 @@
       "reason": "Rule 1: OQ1 is the doc's open question and D2 assumes a component per context [design/specs/context/context-component.sdp.md:49; design/PLAN.md:689]; answering it edits the doc.",
       "lean": {
         "do": "Keep a component per context: Probe 3 read a component call at about 2 ms over a helper call on a local backend and no read budget is shown broken [design/specs/context/context-component.sdp.md:41].",
-        "settles": "S3's measurement of one component call on the native backend, with Probe 3's quota half on a hosted deployment (OD-036), then the owner's choice."
+        "settles": "S3's measurement of one component call on the native backend, with Probe 3's quota half on a hosted deployment (OD-036), then the owner's choice.",
+        "restsOn": "Measured at the native backend tier on the pinned local backend, with other runs on the machine: a fixture component call cost 5.76 ms and 3.56 ms over a helper call in two readings of `npm run measure:place-order`, and F19's Probe 11 read 7.6 to 15.5 ms per empty component call; the backend's function log does not expose a component call inside a mutation. The quiet-machine reading is taken with `npm run measure:place-order -- --quiet`."
       },
       "checkedBy": null,
       "fork": null,
@@ -2534,7 +2535,8 @@
       "reason": "Rule 1, product direction: the doc calls the largest order a product decision [design/specs/application/first-experiment.sdp.md:60,109].",
       "lean": {
         "do": "Measure at the provisional 100 and hand the owner the per-line counts, with the design's own bound of 256 streams per call at the 16 KiB stock budget as the ceiling the owner chooses under [design/specs/application/first-experiment.sdp.md:112; design/README.md:204].",
-        "settles": "S3's measurement at 1, 10 and 100 lines on the native backend, reported per line, then the owner's choice; the owner may set it before the run, which STATE.md asks for, a pointer [design/STATE.md:139]."
+        "settles": "S3's measurement at 1, 10 and 100 lines on the native backend, reported per line, then the owner's choice; the owner may set it before the run, which STATE.md asks for, a pointer [design/STATE.md:139].",
+        "restsOn": "Measured at the native backend tier on the pinned local backend: a PlaceOrder of 1, 10 and 100 lines read 8, 35 and 305 documents and wrote 6, 24 and 204, reading 2,943, 14,454 and 129,564 bytes and writing 4,271, 18,410 and 159,800; the worst contention cell, 100 lines at 32 callers on one stock item, read 9,915 documents and 4,195,493 bytes for one applied order."
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-064.md",
@@ -2613,7 +2615,7 @@
       "reason": "Rule 3: what a command reads and whether the command path changes for it, settled by a measurement on the native backend [design/specs/application/first-experiment.sdp.md:63].",
       "lean": {
         "do": "Attribute the 2N reads on the native backend before any change to the command path, starting with the journal's reads per stream.",
-        "restsOn": "The design expected N + 6 reads and the pinned backend counted 3N + 5 at N of 1, 10 and 100 [design/specs/application/first-experiment.sdp.md:110-111]. As written, load reads the stream row through by_identity [src/context/journal.ts:82-88] and append reads up to two events of the stream's range from the expected version [src/context/journal.ts:159-168], so the code reads up to three documents per stream before it writes. **Judgment.** Those three per stream match the 3N, if the engine counts two events at a stream with one; which it counts is what the run attributes. The range read is also what serializes concurrent appends [src/context/journal.ts:157-158], so a change there changes contention, which is why attribution comes first.",
+        "restsOn": "The design expected N + 6 reads and the pinned backend counted 3N + 5 at N of 1, 10 and 100 [design/specs/application/first-experiment.sdp.md:110-111]. As written, load reads the stream row through by_identity [src/context/journal.ts:82-88] and append reads up to two events of the stream's range from the expected version [src/context/journal.ts:159-168], so the code reads up to three documents per stream before it writes. **Judgment.** Those three per stream match the 3N, if the engine counts two events at a stream with one; which it counts is what the run attributes. The range read is also what serializes concurrent appends [src/context/journal.ts:157-158], so a change there changes contention, which is why attribution comes first. Measured at the native backend tier on the pinned local backend: on the ten-line order the journal tail reads are 10 documents and 6,010 bytes, 29 percent of the 35 documents read.",
         "against": "A per-stream read set is the price of serializing appends and of the row-and-journal agreement check; removing a read to meet an expected count trades a check for a number nobody set as a target. The expected N + 6 is a design guess with no cited source.",
         "settles": "S3's attribution run on the native backend, the same PlaceOrder under controlled changes as the review asked, a pointer [design/STATE.md:157], with usageStats recorded per run.",
         "changes": "The limitExpectedDocuments and observedPlaceOrderDocuments entries of spec:application.first-experiment; if a read goes, spec:context.journal and src/context/journal.ts. S3.",
