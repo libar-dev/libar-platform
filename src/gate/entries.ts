@@ -98,8 +98,9 @@ export const getGateAudit = internalQuery({
       .query("operatorAudit")
       .withIndex("by_scope", (q) => q.eq("scopeKey", scopeKey))
       .order("desc")
+      // Only the cursor and the capped count: an end cursor would let one page pass the bound.
       .paginate({
-        ...paginationOpts,
+        cursor: paginationOpts.cursor,
         numItems: Math.min(paginationOpts.numItems, limitOperatorQuery),
       }),
 });

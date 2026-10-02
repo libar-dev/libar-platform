@@ -500,6 +500,41 @@ test("convex-test: getGateAudit pages one scope newest first with at most 100 re
   expect(small.page).toEqual(expected.slice(0, 1));
 });
 
+test("convex-test: getGateAudit ignores an end cursor, so a page past the first two still holds at most 100 records", async () => {
+  const t = gateApp();
+  await t.run(async (ctx) => {
+    for (let i = 0; i < 205; i++)
+      await ctx.db.insert("operatorAudit", {
+        kind: "gate.close",
+        scopeKey: "all",
+        reason: `reason-${i}`,
+        operator: "op",
+        recordedAt: i,
+      });
+  });
+  const page = (cursor: string | null, endCursor?: string) =>
+    t.query(internal.gate.getGateAudit, {
+      scopeKey: "all",
+      paginationOpts: {
+        numItems: 100,
+        cursor,
+        ...(endCursor === undefined ? {} : { endCursor }),
+      },
+    });
+  const first = await page(null);
+  const second = await page(first.continueCursor);
+  expect([first.page.length, second.page.length]).toEqual([100, 100]);
+  const ended = await t.query(internal.gate.getGateAudit, {
+    scopeKey: "all",
+    paginationOpts: {
+      numItems: 1,
+      cursor: null,
+      endCursor: second.continueCursor,
+    },
+  });
+  expect(ended.page).toEqual(first.page.slice(0, 1));
+});
+
 // spec:application.write-pause fnCloseScope; spec:operations.baseline-operations tableOperatorAudit, fnWriteOperatorAudit.
 test("convex-test: closeScope copies an existing generation into the entry and its audit", async () => {
   const t = gateApp();
