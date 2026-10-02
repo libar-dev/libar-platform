@@ -12,20 +12,20 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 
 | Round | Lane | Unit | Kind | Subject | Size | Needs first |
 |---|---|---|---|---|---|---|
-| 1 | a | Sitting one: forks for the rows that block S3 and S4, and the public-repository rows | decide | all four | an evening of forks, one check, one owner sitting | nothing |
-| 1 | b | Attribute the 3N + 5 reads of `PlaceOrder` under controlled changes, with a kept record | build | convex | an evening | nothing |
-| 1 | c | Confirm the thirty-three flagged fixes in the Spec text, family by family | design | product | an evening | nothing |
-| 1 | d | Scout: does the pinned local backend take a snapshot import with replacement | build | operator, convex | an afternoon | nothing |
+| 1 | a | Sitting one: forks for the rows that block S3 and S4, and the public-repository rows. Forks drafted and merged (#8); the owner's sitting is next | decide | all four | an evening of forks, one check, one owner sitting | nothing |
+| 1 | b | Attribute the 3N + 5 reads of `PlaceOrder` under controlled changes. Done (#9) | build | convex | an evening | nothing |
+| 1 | c | Confirm the thirty-three flagged fixes in the Spec text. Done (#6) | design | product | an evening | nothing |
+| 1 | d | Scout: does the pinned local backend take a snapshot import with replacement. Done, yes (#7) | build | operator, convex | an afternoon | nothing |
 | 2 | a | The S3 measurement: six cells, Measurement records, the six targets, Sc L2-9's concurrency half | build | convex | a night | 1b, OD-046, OD-064 |
 | 2 | b | S4 on paper: the per-entity generation lifecycle, the gate and the audit record, the operator entry contract | design | domain, operator | an evening | sitting one |
 | 2 | c | `CancelOrder` and `release` in the example domain | mixed | domain | an evening | the owner's answer on allocations |
 | 2 | d | Probe 6, before the rebuild is built on the component | build | convex | an evening to a night | OD-057's checked lean applied |
+| 2 | e | Probe 7, as far as the local backend can take it, with the scheduled-argument boundary | mixed | operator, convex | an evening | nothing: the import runs locally and admin access reads `_scheduled_functions` |
 | 3 | a | The gate, the restore door, and a gate change as audit that fails closed | mixed | operator | an evening | 2b |
 | 3 | b | The online rebuild of the order summary, Sc L2-5 at the native tier | build | domain | a night | 2b, 2d, 3a |
 | 3 | c | The two harness reads and the fact rows no Spec carries | mixed | convex | a session plus an evening | nothing |
 | 3 | d | Sitting two: the language, the pass sentence, and the S5 rows | decide | product, domain, operator | an evening of forks, one check, one owner sitting | nothing |
 | 4 | a | A command's audit fails closed and its diagnostic never aborts, Sc ALL-1 | mixed | operator | an evening | 3a |
-| 4 | b | Probe 7, as far as the local backend can take it, with the scheduled-argument boundary | mixed | operator, convex | an evening, unknown if the import fails | 1d, 3c |
 | 4 | c | The history view's fold, its memory and its rollback, on paper | design | domain | an evening | 2c |
 | 4 | d | The receipts sweep, one tenant per run | build | operator | under an evening | the tenant list from 2b |
 | 4 | e | `ready` on the built Specs, by family | decide | product | a session, one owner unit | 1c, sitting two |
@@ -34,6 +34,8 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 | 5 | c | The first adopter-facing cut: README, the example walkthrough, the package shape | mixed | product | a night | OD-047, OD-048, Sc L2-5 to L2-8 bound |
 
 ## Round 1: what blocks nothing
+
+Done on 2026-10-02, in one evening, as four lanes merged through pull requests #6 to #9. `STATE.md`, "Where the work stands", says what each showed. The lanes below are kept as they were cut; what differed: lane 1a ran without an advisor, by the owner's word, with the forks drafted by sol from the register's leans and read by an Opus agent; lane 1b's attribution was astra's whole job, sixteen comparisons and not three; lane 1d answered yes, so Probe 7 is round 2's lane 2e.
 
 **1a. Sitting one.** One launch per advisor with `task-fork.md`: OD-046 (product), OD-064 (convex), OD-123 (domain) for S3; OD-025, OD-148, OD-150 (operator) and OD-068, OD-069 (domain) for S4; OD-047 and OD-048 (product), which block no unit and need no evidence. Ten forks. The questions below that are not rows yet become rows first, so that the sitting answers them too. A sol check of every fork's facts, the advisors' corrections, then one `owner` unit applies the owner's words. Sitting one is the first thing the planning thread opens, because every lane of round 2 but one waits on it.
 
@@ -55,6 +57,8 @@ No record is copied into `evidence/` in round 1 or later: tactical decision 35 e
 
 **2d. Probe 6.** The three examples OD-057's checked lean names, with `@convex-dev/migrations` pinned, on the fixture composition's read model. F17 becomes probed or E-40's split stands.
 
+**2e. Probe 7.** Moved up from round 4 by ruling 2 once the import scout answered yes. One unit for both halves: the five states and the retention of `_scheduled_functions` confirmed on the pinned release, a scheduled argument grown until the backend refuses it, and, where 1d allows, a snapshot of the parent and the two context components imported into a fresh backend with what is there recorded. F12 and F16 move to probed or stay documented with the reason recorded. OD-081, OD-120 and OD-114 get the measurement their `settles` names; OD-115 waits for the Workpool and Workflow half, which comes before L3. The restore Spec's sentence on dropped schedules is already a ledger finding for S5, from the scout.
+
 ## Round 3
 
 **3a. The gate and the door.** The gates table, `gateAllows`, `assertWritable` at step 7, close, resume and get for the `all` and tenant scopes, the read of `MAINTENANCE_MODE` before the gate document, and the audit table with `writeAudit` inside every close, resume and abort. At `convex-test`: a command in a closed tenant is refused and nothing is stored, and a close whose audit insert fails leaves the gate open. On the native backend: the environment switch refuses every write, and two writers race a close.
@@ -68,8 +72,6 @@ No record is copied into `evidence/` in round 1 or later: tactical decision 35 e
 ## Round 4
 
 **4a. Command audit and the diagnostic.** `audit` on the declaration, `writeAudit` at step 10, `emitDiagnostic` at the end of the mutation through a sink that swallows every error and counts it, the two injection points in the fixture composition only, and both examples of Sc ALL-1 bound. The Spec text first says which outcomes emit a record and where a duration comes from.
-
-**4b. Probe 7.** One unit for both halves: the five states and the retention of `_scheduled_functions` confirmed on the pinned release, a scheduled argument grown until the backend refuses it, and, where 1d allows, a snapshot of the parent and the two context components imported into a fresh backend with what is there recorded. F12 and F16 move to probed or stay documented with the reason recorded. OD-081, OD-120 and OD-114 get the measurement their `settles` names; OD-115 waits for the Workpool and Workflow half, which comes before L3.
 
 **4c. The history view on paper.** One row whatever the order across streams, fold memory beyond a deleted row, rollback of a paused view as a refusal or a re-closing of the sources, the cross-context row narrowed to D8's parent query, the aggregate write split on a key change. Four ledger findings fixed on paper and one pure determinism test. The build of the view waits for a view that needs it.
 
@@ -101,7 +103,7 @@ No record is copied into `evidence/` in round 1 or later: tactical decision 35 e
 These are tactical: how the work runs. The owner can reopen any of them.
 
 1. **S3 before S4.** The convex and domain advisors both put attribution of the reads before any code on the command path, and the convex advisor puts attribution before the measurement, because a per-line number nobody can explain is a reading and not a cost line. Ruled so: 1b is an evening with no blocker, and 2a runs beside the S4 paper once sitting one has ruled OD-046 and OD-064.
-2. **Probe 7 first, or after the harness reads.** The operator advisor would run Probe 7 first if the local backend takes a snapshot import; the convex advisor puts it after the scheduler read. Ruled: the import scout in round 1 decides. If the import runs locally, 4b moves to round 2 with the scheduler read pulled forward; if not, it stays.
+2. **Probe 7 first, or after the harness reads.** The operator advisor would run Probe 7 first if the local backend takes a snapshot import; the convex advisor puts it after the scheduler read. Ruled: the import scout in round 1 decides. The scout answered yes on 2026-10-02 and admin access now reads `_scheduled_functions`, so Probe 7 is lane 2e of round 2.
 3. **The flags before `ready`.** The product advisor's own lean, against its own case for `ready` first: a `ready` Spec is not taken back by an edit, and most of the thirty-three flags sit on the built Specs, twenty-nine by the check's join of the ledger to the Specs with a code anchor. Ruled so. `STATE.md`'s guidance to confirm a flag when its subject is touched stands for the eight `partially-fixed` flags; a review scoped to the flags is not a corpus cycle.
 4. **One page for the language.** Five term rows share one fork file. The register's field holds a path, and five rows may hold the same one.
 5. **The size of a sitting.** Ten forks in sitting one and about nine rows in sitting two. The owner said on 2026-10-02 "I will need help with all owner decisions", and twenty rows in one sitting is where help ends.
@@ -110,11 +112,11 @@ These are tactical: how the work runs. The owner can reopen any of them.
 
 ## Questions for the owner that are not rows yet
 
-Each becomes a row before sitting one, so that a fork carries it.
+Three became rows in round 1: OD-151, OD-152 and OD-153, each with a fork. The fourth is OD-046 and OD-064 in plain words.
 
-- Does the stock item's state grow to hold per-order allocations for `release`, or does the example keep totals only, which E-46 leaves to the owner? (domain)
-- Does the order allocation history view stay in the first experiment, when it is not an essential read and is the one view that needs the write pause? (domain)
-- Is Sc L2-9 read as parity with a hosted release, which no native example can show, or as the local observation that is bound? (convex, OD-007's case against)
+- Does the stock item's state grow to hold per-order allocations for `release`, or does the example keep totals only, which E-46 leaves to the owner? (domain, OD-151)
+- Does the order allocation history view stay in the first experiment, when it is not an essential read and is the one view that needs the write pause? (domain, OD-152)
+- Is Sc L2-9 read as parity with a hosted release, which no native example can show, or as the local observation that is bound? (convex, OD-153)
 - Is 100 lines the largest order `PlaceOrder` promises, or only the size the run measures at? This is OD-046 and OD-064 in plain words. (convex, product)
 
 ## Findings beyond the roadmap
