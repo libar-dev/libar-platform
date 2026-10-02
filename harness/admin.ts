@@ -251,7 +251,7 @@ export function createAdminAccess(
         if (page.isDone) break;
         cursor = page.continueCursor;
       }
-      if (documents.length === 0) {
+      if (documents.length === 0 && table !== "_scheduled_functions") {
         const tables = (
           (await systemQuery(
             "_system/cli/tables",
