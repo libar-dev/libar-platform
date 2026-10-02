@@ -6173,6 +6173,103 @@
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
+    },
+    {
+      "id": "OD-151",
+      "title": "Whether the stock item's state holds per-order allocations for release, or the example keeps totals only",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "application.orders-inventory-example#e46-release",
+          "file": "design/specs/application/orders-inventory-example.sdp.md",
+          "line": 27
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-46"
+      ],
+      "provisionalReading": "the stock item holds allocated as one total",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "sorted",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Owner test 2, the example's policy under E-46, which the Spec leaves to the owner; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-152",
+      "title": "Whether the order allocation history view stays in the first experiment, when it is not an essential read and is the one view that needs the write pause",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "application.orders-inventory-example#history-view",
+          "file": "design/specs/application/orders-inventory-example.sdp.md",
+          "line": 52
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "Sc L2-6",
+        "D9"
+      ],
+      "provisionalReading": "the history view is in the first experiment and its rebuild pauses writes",
+      "blocks": "S4",
+      "advisor": "domain",
+      "status": "sorted",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Owner test 2, the scope of the experiment; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-153",
+      "title": "Whether Sc L2-9 is read as parity with a hosted release, which no native example can show, or as the local observation that is bound",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "application.first-experiment#production-configuration",
+          "file": "design/specs/application/first-experiment.sdp.md",
+          "line": 78
+        }
+      ],
+      "families": [
+        "application",
+        "platform"
+      ],
+      "cites": [
+        "Sc L2-9",
+        "E-13",
+        "E-15"
+      ],
+      "provisionalReading": "Sc L2-9 is bound to native runs on a local backend with production configuration",
+      "blocks": "S3",
+      "advisor": "convex",
+      "status": "sorted",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Owner test 1, the reading of a scenario of the doc; OD-007's lean carries the case against; raised by the convex advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
     }
   ],
   "possiblySame": [
