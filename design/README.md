@@ -2,7 +2,7 @@
 
 ## What this is
 
-The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 229 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 232 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
@@ -45,11 +45,11 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-229 specs · 5 packs · 127 anchors → 361 nodes · 1210 edges (0 errors, 0 warnings)
+232 specs · 5 packs · 130 anchors → 367 nodes · 1222 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
-Any warning and any error is a defect. Every example declares `verifies` toward its parent for fidelity to the acceptance contract, and no test anchor binds it yet. The Protocol reads an unbound example below `ready` as data and does not warn; recipe 10 lists each one as a declared verifier that is not enabled. `npx sdp validate --watch` is the authoring loop.
+Any warning and any error is a defect. Every example declares `verifies` toward its parent for fidelity to the acceptance contract. An example that a test's `specTest` anchor binds gives its parent a verifier; an example that no anchor binds is data below `ready`, and the Protocol does not warn; recipe 10 lists each such example as a declared verifier that is not enabled. `npx sdp validate --watch` is the authoring loop.
 
 ## The component map
 
@@ -85,7 +85,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 | all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 98 |
 | 0 | `kernel` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) | 7 |
 | 1 | `context`, `command` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) (19 with the kernel), [`command-pipeline`](specs/command-pipeline.pack.sdp.md) | 12 + 24 |
-| 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 45 |
+| 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 48 |
 | 3 | `obligations`, `effects` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 22 (of the pack's 43) |
 | 4 | `processes` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 6 |
 | 5 | `agents` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 7 |
@@ -224,7 +224,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 | E-43 | [`operations.baseline-operations`](specs/operations/baseline-operations.sdp.md) | The `auditRecords` table that fails closed, with `AuditRecordInput` and the source of each field in the command; the `operatorAudit` table for the gate changes an operator entry makes; Convex's own audit logging recorded as the do-nothing option; a 4 KiB diagnostic record through a sink that never throws; the `personalData` reference table |
 | E-44 | [`application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | `BusinessFailurePolicy` (`carry` or `reject`) per context call, applied in the executor body through the pinned helper `carryOrReject` |
 | E-45 | [`application.read-models`](specs/application/read-models.sdp.md) | At most 8 component reads per parent query and 4 read-model rows written per command, counted as the rows step 9 inserts, replaces or deletes and checked after each `streams` entry is applied, above which step 9 throws a plain error |
-| E-46 | [`application.first-experiment`](specs/application/first-experiment.sdp.md), [`application.orders-inventory-example`](specs/application/orders-inventory-example.sdp.md) | `CancelOrder` as the second lifecycle command, the order summary as the essential read model, a maximum of 100 lines, the bound `PlaceOrder`'s declaration carries; `ReceiveStock` as the command that creates stock, the only way a stock item comes to exist; a unit price in whole minor units on each order line; `insufficientStock` as the rejection for short stock; a 16 KiB budget on the stock item stream and the default on the order stream; `PlaceOrder` and `CancelOrder` call Orders first; the stock item keeps totals only and `CancelOrder` releases the cancelled order's own lines; `orderNotFound`, `orderAlreadyCancelled` and `insufficientAllocation` as `CancelOrder`'s rejections; the order allocation history view that Sc L2-6 builds |
+| E-46 | [`application.first-experiment`](specs/application/first-experiment.sdp.md), [`application.orders-inventory-example`](specs/application/orders-inventory-example.sdp.md) | `CancelOrder` as the second lifecycle command, the order summary as the essential read model, a maximum of 100 lines, the bound `PlaceOrder`'s declaration carries, and a stock item ID of at most 64 bytes in every command that names a stock item; `ReceiveStock` as the command that creates stock, the only way a stock item comes to exist; a unit price in whole minor units on each order line; `insufficientStock` as the rejection for short stock; a 16 KiB budget on the stock item stream and the default on the order stream; `PlaceOrder` and `CancelOrder` call Orders first; the stock item keeps totals only and `CancelOrder` releases the cancelled order's own lines; `orderNotFound`, `orderAlreadyCancelled` and `insufficientAllocation` as `CancelOrder`'s rejections; the order allocation history view that Sc L2-6 builds |
 | E-47 | [`application.first-experiment`](specs/application/first-experiment.sdp.md) | The `Measurement` record, one per measured run, and how each count is captured: commits from the backend's function log, documents and bytes from the `usageStats` of the command's top-level completion record, the calls per context from a pure test of the use case's executor because the log holds no record of a component call inside a mutation, and a count the backend does not expose recorded as a gap; the documents one `PlaceOrder` reads, expected near N + 6 and counted 3N + 5 on the pinned backend, left for the measurement run to explain |
 | E-48 | [`command.actor-and-scope`](specs/command/actor-and-scope.sdp.md) | The operator entry: an internal function that only admin access reaches, a required `operator` string of 1 to 512 bytes checked by `assertOperator`, no grant read, and the stated operator recorded on the generation row, the gate's entry and audit record, or the restore's run record; a stated operator proves no identity |
 | E-49 | [`command.actor-and-scope`](specs/command/actor-and-scope.sdp.md) | The tenant list: a `tenants` table written by `insertGrant` with a tenant's first grant and never deleted, read one tenant at a time through `nextTenant` in tenant-ID order by every pass over the whole deployment |
@@ -344,7 +344,9 @@ The Layer 2 design added two more for the same reason, and ten examples that ver
 | none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-scan` | Probe 7: a failed-function scan reads unrelated schedules |
 | none | `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-states` | Probe 7: the five scheduler states remain readable |
 
-Package A therefore has 98 Specs, Package C has 17 examples, Package D has 27, and the corpus has 60 examples that bind a doc row.
+The measurement of the first experiment added `spec:application.first-experiment.native-contention`, a second example of Sc L2-9 for its concurrency half, as the scenario table shows.
+
+Package A therefore has 98 Specs, Package C has 17 examples, Package D has 21, and the corpus has 60 examples that bind a doc row.
 
 The example domain's second lifecycle command added six examples that verify no doc row, each a child of `spec:application.orders-inventory-example` under E-46:
 
@@ -357,7 +359,15 @@ The example domain's second lifecycle command added six examples that verify no 
 | none | `spec:application.orders-inventory-example.cancel-second-context-rejects` | verifies that a release Inventory refuses rolls back the cancel Orders recorded |
 | none | `spec:application.orders-inventory-example.cancel-without-grant-refused` | verifies that `CancelOrder` requires its own permission |
 
-Package D therefore has 27 examples.
+The bound on a stock item ID added three examples that verify no doc row, each a child of `spec:application.first-experiment` under E-46:
+
+| Sc | Added example | Reason |
+|---|---|---|
+| none | `spec:application.first-experiment.order-at-stock-item-id-bound` | verifies that the maximum order with every stock item ID at its bound is applied and its `OrderPlaced` fits the payload bound |
+| none | `spec:application.first-experiment.stock-item-id-past-bound-refused` | verifies that a stock item ID one byte past its bound is refused `invalidInput` before any read |
+| none | `spec:application.first-experiment.receive-stock-item-id-past-bound-refused` | verifies that `ReceiveStock` refuses a stock item ID one byte past the same bound before any read |
+
+Package D therefore has 30 examples.
 
 ## Integration notes
 
