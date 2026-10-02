@@ -15,11 +15,18 @@ import {
   classifyReceipt,
   fingerprintOf,
   insertReceipt,
-  limitRequestKey,
+  limitIdLength,
   lookupReceipt,
   type ReceiptKey,
 } from "./receipts.js";
 import type { MutationCtx } from "./tables.js";
+import {
+  fromSource,
+  writeReadModels,
+  type ReadModelDataModel,
+  type RegistryReader,
+  type RowWriter,
+} from "../read-model/index.js";
 // The public entry fills namespace with "public" and actor from step 2, and never sets causedBy.
 export type PipelineCall<I> = {
   tenantId: string;
@@ -71,17 +78,27 @@ function itemsOf(input: unknown): number {
     0,
   );
 }
-// Step 1 after the entry's args validators: the request key's length, the declaration's bounds and its
-// refinement, all before any read.
+// Step 1 after the entry's args validators: the lengths of the IDs a receipt row holds, the
+// declaration's bounds and its refinement, all before any read.
 function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   const commandType = decl.name;
-  if (call.requestKey !== undefined && call.requestKey.length > limitRequestKey)
-    reject({
-      code: "invalidInput",
-      commandType,
-      message: `A request key has at most ${limitRequestKey} characters`,
-      details: { length: call.requestKey.length, limit: limitRequestKey },
-    });
+  const ids = [
+    ["tenantId", call.tenantId, "A tenant ID"],
+    ["requestKey", call.requestKey, "A request key"],
+  ] as const;
+  for (const [field, value, what] of ids)
+    if (value !== undefined && value.length > limitIdLength)
+      reject({
+        code: "invalidInput",
+        commandType,
+        message: `${what} has at most ${limitIdLength} characters`,
+        details: { field, length: value.length, limit: limitIdLength },
+      });
+  // The declaration's name is no caller's input: a long one is a defect.
+  if (commandType.length > limitIdLength)
+    throw new Error(
+      `A command type has at most ${limitIdLength} characters, and this declaration's name has ${commandType.length}`,
+    );
   const { maxItems, maxBytes } = decl.bounds ?? {};
   const items = itemsOf(call.input);
   if (maxItems !== undefined && items > maxItems)
@@ -103,9 +120,8 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   if (refused !== null)
     reject({ ...refused, code: "invalidInput", commandType });
 }
-// Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. The
-// read-model writes of step 9, the gate of step 7, the audit record and the diagnostic are later
-// slices' work.
+// Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. Step 7
+// reads no gate, and steps 10 and 11 write no audit record and emit no diagnostic.
 export async function runPipeline<I, R>(
   ctx: MutationCtx,
   decl: CommandDeclaration<I, R>,
@@ -219,6 +235,22 @@ export async function runPipeline<I, R>(
       streamId,
     }),
   );
+  // Step 9: the declaration's writes, proven against what the executor returned, then its read models.
+  for (const { version } of executed.streams)
+    if (!decl.writes.some((source) => fromSource(source, { version })))
+      throw new Error(
+        `${commandType} wrote ${version.contextId}/${version.streamType}, which its declaration does not list in writes`,
+      );
+  if (decl.readModels !== undefined && decl.readModels.length > 0)
+    // The library types ctx with the command tables. A parent that declares a read model holds the
+    // registry and the read model's table too, and at run time ctx is that parent's own.
+    await writeReadModels(
+      ctx as unknown as RegistryReader<ReadModelDataModel> &
+        RowWriter<ReadModelDataModel>,
+      commandType,
+      decl.readModels,
+      { tenantId, streams: executed.streams },
+    );
   // Step 10.
   if (receipt !== undefined)
     await insertReceipt(

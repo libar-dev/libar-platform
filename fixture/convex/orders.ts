@@ -38,6 +38,10 @@ const placeOrderDeclaration: CommandDeclaration<
       streamId: orderId,
     }),
   },
+  writes: [
+    { contextId: "depot", streamType: "document" },
+    { contextId: "depot", streamType: "stock" },
+  ],
   rejections: ["titleRequired", "insufficientStock", "invalidQuantity"],
   admission: switchedAdmission("PlaceOrder"),
   bounds: { maxItems: 100 },

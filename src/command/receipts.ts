@@ -10,7 +10,7 @@ export type ReceiptKey = {
   commandType: string;
   requestKey: string;
 };
-// No tombstone class: tombstones are a later slice's work, and an expired receipt is new intent.
+// No tombstone class: an expired receipt is new intent.
 export type ReceiptClass =
   | { class: "new" }
   | { class: "duplicate"; receipt: Receipt }
@@ -29,13 +29,14 @@ export type ReceiptInsert = ReceiptKey & {
   versions: StreamVersion[];
   actorId: string;
 };
-// afterExpiry has one value until tombstones are built: an expired receipt is deleted.
+// afterExpiry has one value: an expired receipt is deleted.
 export type Retention = { window: number; afterExpiry: "delete" };
 export const defaultRetention: Retention = {
   window: 7 * 24 * 60 * 60 * 1000,
   afterExpiry: "delete",
 };
-export const limitRequestKey = 256;
+// The longest tenant ID, request key and command type a receipt row holds.
+export const limitIdLength = 256;
 export const limitAffectedRefs = 1000;
 function sorted(json: JSONValue): string {
   if (Array.isArray(json)) return `[${json.map(sorted).join(",")}]`;

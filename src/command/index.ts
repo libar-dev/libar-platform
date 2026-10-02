@@ -20,12 +20,17 @@ export type {
 } from "./actor-and-scope.js";
 export {
   authorize,
+  authorizeQuery,
   establishActor,
   insertGrant,
   limitGrantsRead,
   revokeGrant,
 } from "./authority.js";
-export type { AuthorizeDecision, GrantInput } from "./authority.js";
+export type {
+  AuthorizeDecision,
+  GrantInput,
+  QueryPolicy,
+} from "./authority.js";
 export { internalCommand, publicCommand } from "./declaration.js";
 export type {
   AdmissionPolicy,
@@ -64,7 +69,7 @@ export {
   fingerprintOf,
   insertReceipt,
   limitAffectedRefs,
-  limitRequestKey,
+  limitIdLength,
   lookupReceipt,
 } from "./receipts.js";
 export type {

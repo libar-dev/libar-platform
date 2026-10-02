@@ -1,6 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { commandTables } from "../../src/command/index.js";
+import { readModelTables, rowConventions } from "../../src/read-model/index.js";
+import { documentSummaryFields } from "./summaries.js";
 export default defineSchema({
   notes: defineTable({ source: v.string() }),
   depthRows: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),
@@ -19,6 +21,14 @@ export default defineSchema({
   ),
   // The command library's receipts and grants.
   ...commandTables,
+  // The generation registry, and the rows of the fixture's one read model. See summaries.ts.
+  ...readModelTables,
+  documentSummaries: defineTable({
+    ...rowConventions,
+    ...documentSummaryFields,
+  })
+    .index("by_key", ["tenantId", "generation", "key"])
+    .index("by_status", ["tenantId", "generation", "status", "key"]),
   // A switch a test turns on with admin access to make one fixture command refuse admission or fail
   // after its context call returned. See switches.ts.
   switches: defineTable({

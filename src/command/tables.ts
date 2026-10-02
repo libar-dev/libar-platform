@@ -19,7 +19,7 @@ import {
   subjectRefValidator,
 } from "./actor-and-scope.js";
 export const commandTables = {
-  // tombstone is always false: tombstones are a later slice's work, and an expired row is deleted.
+  // tombstone is always false: an expired row is deleted.
   receipts: defineTable({
     tenantId: v.string(),
     namespace: callerNamespaceValidator,

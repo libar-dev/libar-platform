@@ -1,8 +1,17 @@
 // The parent's authority helpers of spec:command.actor-and-scope and spec:command.tenancy-and-authority:
-// establishActor, the one reader of ctx.auth, authorize, the one reader of grants on a command path, and
-// the plain helpers an operator's function uses to write and delete a grant. None is registered here.
+// establishActor, the one reader of ctx.auth, authorize, the one reader of grants on a command path,
+// authorizeQuery, which a parent query calls before it discloses anything, and the plain helpers an
+// operator's function uses to write and delete a grant. None is registered here.
+import type { GenericQueryCtx } from "convex/server";
 import type { Actor, AuthorizeInput, SubjectRef } from "./actor-and-scope.js";
-import type { Grant, GrantId, MutationCtx, QueryCtx } from "./tables.js";
+import { reject } from "./outcome-boundary.js";
+import type {
+  CommandDataModel,
+  Grant,
+  GrantId,
+  MutationCtx,
+  QueryCtx,
+} from "./tables.js";
 export type AuthorizeDecision =
   | { allowed: true; grantIds: GrantId[] }
   | { allowed: false; reason: "no_grant" | "subject_mismatch" };
@@ -106,4 +115,45 @@ export async function revokeGrant(
   );
   for (const row of rows) await ctx.db.delete(row._id);
   return rows.length;
+}
+// What a parent query states before it discloses anything: its own name, the tenant it reads and the
+// permission the read requires.
+export type QueryPolicy = {
+  name: string;
+  tenantId: string;
+  permission: string;
+  subject?: SubjectRef;
+};
+const noServiceIssuers: ReadonlySet<string> = new Set();
+// Establishes the actor and authorizes it for the tenant, as the pipeline's steps 2 and 4 do, and
+// returns the actor. A refusal is the rejection a command throws for the same refusal, with the
+// query's name where a command's type goes. It writes nothing.
+export async function authorizeQuery<DataModel extends CommandDataModel>(
+  parentCtx: GenericQueryCtx<DataModel>,
+  policy: QueryPolicy,
+  serviceIssuers: ReadonlySet<string> = noServiceIssuers,
+): Promise<Actor> {
+  // The parent's data model holds the command tables; a database reader is not covariant in its model.
+  const ctx = parentCtx as unknown as QueryCtx;
+  const actor = await establishActor(ctx, serviceIssuers);
+  if (actor === null)
+    reject({
+      code: "unauthenticated",
+      commandType: policy.name,
+      message: `${policy.name} needs an authenticated caller`,
+    });
+  const decision = await authorize(ctx, {
+    tenantId: policy.tenantId,
+    actor,
+    permission: policy.permission,
+    ...(policy.subject === undefined ? {} : { subject: policy.subject }),
+  });
+  if (!decision.allowed)
+    reject({
+      code: "forbidden",
+      commandType: policy.name,
+      message: `The caller may not read ${policy.name} in this tenant`,
+      details: { reason: decision.reason },
+    });
+  return actor;
 }

@@ -26,9 +26,9 @@ import {
   type CommandResponse,
   type PipelineCall,
 } from "./pipeline.js";
+import type { ReadModelBinding, SourceRef } from "../read-model/write.js";
 import type { Retention } from "./receipts.js";
 import type { CommandDataModel, MutationCtx } from "./tables.js";
-// Read models, writes, audit and irreversible are later slices' fields: nothing in this slice reads them.
 export type CommandDeclaration<I, R> = {
   name: string;
   contractVersion: number;
@@ -38,6 +38,10 @@ export type CommandDeclaration<I, R> = {
   output: Validator<R, "required", string>;
   permission: PermissionPolicy<I>;
   executor: Executor<I, R>;
+  // Every context and stream type pair the executor's context calls may write.
+  writes: readonly SourceRef[];
+  // The read models step 9 writes from the streams entries the executor returns. Absent means none.
+  readModels?: readonly ReadModelBinding[];
   rejections: readonly string[];
   admission?: AdmissionPolicy<I>;
   bounds?: Bounds;

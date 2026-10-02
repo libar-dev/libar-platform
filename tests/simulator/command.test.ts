@@ -124,6 +124,7 @@ function counted(
       input: v.object({ n: v.number() }),
       output: v.object({ n: v.number() }),
       permission: { permission: "probe" },
+      writes: [],
       rejections: [],
       ...(retention === undefined ? {} : { retention }),
       executor: async (_ctx, { input }) => {
@@ -288,7 +289,7 @@ describe("the public entry", () => {
         kind: "rejection",
         code: "invalidInput",
         commandType: "CreateDocument",
-        details: { length: 257, limit: 256 },
+        details: { field: "requestKey", length: 257, limit: 256 },
       });
       expect(
         await errorData(
@@ -1182,6 +1183,7 @@ describe("the internal entry", () => {
         input: v.object({ n: v.number() }),
         output: v.null(),
         permission: { permission: "probe" },
+        writes: [],
         rejections: [],
         executor: async (_ctx, { operation }) => {
           seen.push(operation);

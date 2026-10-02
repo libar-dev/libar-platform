@@ -11,6 +11,7 @@ import {
 import type { StreamDto } from "../../src/context/index.js";
 import type { StreamVersion } from "../../src/kernel/index.js";
 import { components } from "./_generated/api.js";
+import { documentSummary } from "./summaries.js";
 import { failBeforeReceiptIfSwitched, switchedAdmission } from "./switches.js";
 const { operations } = components.depot;
 // The permissions a grant names. Document commands also name the document as the grant's subject.
@@ -18,6 +19,10 @@ export const permissions = {
   documents: "depot.documents",
   stock: "depot.stock",
 } as const;
+// The depot stream types each command's executor may write.
+const documentSource = { contextId: "depot", streamType: "document" };
+const writesDocument = [documentSource];
+const writesStock = [{ contextId: "depot", streamType: "stock" }];
 const documentSubject = ({ documentId }: { documentId: string }) => ({
   contextId: "depot",
   streamType: "document",
@@ -95,6 +100,7 @@ const createDocumentDeclaration: CommandDeclaration<
     permission: permissions.documents,
     subjectFrom: documentSubject,
   },
+  writes: writesDocument,
   rejections: ["titleRequired"],
   admission: switchedAdmission("CreateDocument"),
   bounds: { maxBytes: 4096 },
@@ -115,6 +121,43 @@ const createDocumentDeclaration: CommandDeclaration<
 export const createDocument = publicCommand(createDocumentDeclaration);
 export const createDocumentInternal = internalCommand(
   createDocumentDeclaration,
+);
+// CreateDocument with the fixture's read model: step 9 writes the document's summary row.
+const createSummarizedDocumentDeclaration: CommandDeclaration<
+  Infer<typeof createDocumentInput>,
+  DocumentResult
+> = {
+  name: "CreateSummarizedDocument",
+  contractVersion: 1,
+  input: createDocumentInput,
+  refine: titleRefinement,
+  output: documentResult,
+  permission: {
+    permission: permissions.documents,
+    subjectFrom: documentSubject,
+  },
+  writes: writesDocument,
+  readModels: [{ readModel: documentSummary, source: documentSource }],
+  rejections: ["titleRequired"],
+  executor: async (ctx, { tenantId, actor, operation, input }) =>
+    settle(
+      ctx,
+      tenantId,
+      "CreateSummarizedDocument",
+      await ctx.runMutation(operations.createDocuments, {
+        tenantId,
+        actor,
+        operation,
+        input: { documents: [input] },
+      }),
+      onlyDocument,
+    ),
+};
+export const createSummarizedDocument = publicCommand(
+  createSummarizedDocumentDeclaration,
+);
+export const createSummarizedDocumentInternal = internalCommand(
+  createSummarizedDocumentDeclaration,
 );
 const documentStepInput = v.object({
   documentId: v.string(),
@@ -140,6 +183,7 @@ function documentStep(
       permission: permissions.documents,
       subjectFrom: documentSubject,
     },
+    writes: writesDocument,
     rejections,
     admission: switchedAdmission(name),
     executor: async (ctx, call) =>
@@ -200,6 +244,7 @@ const amendDocumentDeclaration: CommandDeclaration<
     permission: permissions.documents,
     subjectFrom: documentSubject,
   },
+  writes: writesDocument,
   rejections: ["invalidTransition", "titleRequired"],
   admission: switchedAdmission("AmendDocument"),
   executor: async (ctx, { tenantId, actor, operation, input }) =>
@@ -241,6 +286,7 @@ const registerDocumentDeclaration: CommandDeclaration<
     permission: permissions.documents,
     subjectFrom: documentSubject,
   },
+  writes: [...writesDocument, { contextId: "depot", streamType: "reference" }],
   rejections: ["referenceTaken", "holderRequired", "titleRequired"],
   admission: switchedAdmission("RegisterDocument"),
   executor: async (ctx, { tenantId, actor, operation, input }) =>
@@ -281,6 +327,7 @@ function stockCommand(
     input: stockLines,
     output: stockLines,
     permission: { permission: permissions.stock },
+    writes: writesStock,
     rejections,
     admission: switchedAdmission(name),
     bounds: { maxItems: 100 },
