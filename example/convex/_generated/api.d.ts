@@ -9,6 +9,11 @@
  */
 
 import type * as grants from "../grants.js";
+import type * as orderQueries from "../orderQueries.js";
+import type * as orderSummary from "../orderSummary.js";
+import type * as ordering from "../ordering.js";
+import type * as readModels from "../readModels.js";
+import type * as receiving from "../receiving.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +23,11 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   grants: typeof grants;
+  orderQueries: typeof orderQueries;
+  orderSummary: typeof orderSummary;
+  ordering: typeof ordering;
+  readModels: typeof readModels;
+  receiving: typeof receiving;
 }>;
 
 /**

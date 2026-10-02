@@ -8,6 +8,10 @@
  * @module
  */
 
+import type * as operations from "../operations.js";
+import type * as queries_stockItem from "../queries/stockItem.js";
+import type * as streams from "../streams.js";
+
 import type {
   ApiFromModules,
   FilterApi,
@@ -15,7 +19,11 @@ import type {
 } from "convex/server";
 import { anyApi, componentsGeneric } from "convex/server";
 
-const fullApi: ApiFromModules<{}> = anyApi as any;
+const fullApi: ApiFromModules<{
+  operations: typeof operations;
+  "queries/stockItem": typeof queries_stockItem;
+  streams: typeof streams;
+}> = anyApi as any;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
