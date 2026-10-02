@@ -40,6 +40,7 @@ import { redactedBuffer } from "../../harness/child.js";
 import { invocation } from "../../harness/evidence.js";
 import { createAdminAccess } from "../../harness/admin.js";
 import { fixtureComposition } from "../../harness/composition.js";
+import { deploySnapshotFixture } from "../../harness/snapshot.js";
 import {
   localWriteRateBytesPerSecond,
   paceAfterWrite,
@@ -277,6 +278,43 @@ test("pure: a rejected snapshot child retains the abort reason and removes its h
       reason,
     );
     expect(existsSync(runner.mock.calls[0]![3].env!.HOME!)).toBe(false);
+  } finally {
+    runner.mockRestore();
+  }
+});
+
+test("pure: aborting the caller's signal stops the deploy child of a temporary deployment, as the backend's own signal does", async () => {
+  // A deploy that never finishes by itself, so only an abort ends it.
+  const runner = vi.spyOn(child, "runChild").mockImplementation(
+    (_name, _file, _args, options) =>
+      new Promise<never>((_resolve, reject) => {
+        const signal = options.signal;
+        if (signal === undefined)
+          return reject(new Error("the deploy child got no signal"));
+        signal.addEventListener("abort", () => reject(signal.reason), {
+          once: true,
+        });
+      }),
+  );
+  try {
+    for (const [index, owner] of (["caller", "backend"] as const).entries()) {
+      const caller = new AbortController();
+      const backend = new AbortController();
+      const reason = new Error(`the ${owner} aborted the deploy`);
+      let outcome: unknown = "pending";
+      void deploySnapshotFixture(
+        { admin: testAdmin(backend.signal) },
+        "unused",
+        caller.signal,
+      ).then(
+        () => (outcome = "deployed"),
+        (error: unknown) => (outcome = error),
+      );
+      await vi.waitFor(() => expect(runner).toHaveBeenCalledTimes(index + 1));
+      expect(runner.mock.calls[index]![2].slice(1, 2)).toEqual(["deploy"]);
+      (owner === "caller" ? caller : backend).abort(reason);
+      await vi.waitFor(() => expect(outcome).toBe(reason), { timeout: 2000 });
+    }
   } finally {
     runner.mockRestore();
   }

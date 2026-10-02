@@ -59,7 +59,7 @@ export function deploySnapshotFixture(
   signal: AbortSignal,
 ): Promise<SnapshotCommand> {
   signal.throwIfAborted();
-  return backend.admin.deployTemporary(directory);
+  return backend.admin.deployTemporary(directory, signal);
 }
 
 export function createSnapshotAccess(

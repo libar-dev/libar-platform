@@ -56,7 +56,11 @@ export interface CompletionRecord {
 }
 export interface AdminAccess {
   deploy(): Promise<void>;
-  deployTemporary(directory: string): Promise<SnapshotCommand>;
+  // The child stops when the caller's signal or the backend's own aborts.
+  deployTemporary(
+    directory: string,
+    signal?: AbortSignal,
+  ): Promise<SnapshotCommand>;
   codegen(): Promise<void>;
   setEnvironment(variables: Readonly<Record<string, string>>): Promise<void>;
   environment(): Promise<Record<string, string>>;
@@ -215,11 +219,14 @@ export function createAdminAccess(
       await cli("deploy");
       state.deployed = target.composition;
     },
-    async deployTemporary(directory) {
+    async deployTemporary(directory, signal) {
+      const signals = [signal, target.signal].filter(
+        (one): one is AbortSignal => one !== undefined,
+      );
       const result = await snapshotCommand(
         target,
         [...commandArgs.deploy],
-        target.signal,
+        signals.length === 0 ? undefined : AbortSignal.any(signals),
         directory,
       );
       state.deployed = undefined;
