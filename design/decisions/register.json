@@ -257,7 +257,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which example proves a row; the strict reading, an example that sends commands at once on the production composition, goes against no scenario of the doc and an edit takes it back. Doubt: the acceptance contract is the product advisor's Spec, the example is this family's.",
@@ -271,9 +271,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:convex",
+      "decidedOn": "2026-10-02",
+      "ruling": "Bind Sc L2-9 to the experiment's contention run on the production composition, 2, 8 and 32 PlaceOrder commands at once, and keep the present example as the row's code-path half."
     },
     {
       "id": "OD-008",
