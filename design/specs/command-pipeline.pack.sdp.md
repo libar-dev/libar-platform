@@ -20,6 +20,7 @@ specs:
   - spec:command.tenancy-and-authority.client-claims-system-namespace
   - spec:command.tenancy-and-authority.client-claims-agent-namespace
   - spec:command.tenancy-and-authority.revoked-then-retried
+  - spec:command.tenancy-and-authority.shared-key-two-subjects
   - spec:command.actor-and-scope
   - spec:command.command-declaration
   - spec:command.command-declaration.renamed-handler-fails-build

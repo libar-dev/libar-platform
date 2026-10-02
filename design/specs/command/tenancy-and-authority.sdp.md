@@ -46,6 +46,7 @@ This Spec owns the rules of tenant scope, actor establishment, authorization and
 - rule: One authorization vocabulary covers humans, services, agents, reviewers and operators (D11)
 - rule: Grants are authoritative data, read in the same transaction as the command they authorize, never a read model that updates later (D11, Law 9)
 - rule: Authorization comes before execution and before any stored outcome is disclosed; a duplicate is disclosed only after the current call's authorization passed (Law 5, Sc L1-8)
+- rule: A grant that authorizes the current call's input gives no authority over a receipt another call stored under the same request key; a call whose key is taken by other input is answered as a conflict that discloses nothing of the stored receipt, as `spec:command.idempotency-and-receipts` pins (Law 5, D6, D11)
 - rule: A worker carries captured provenance and states whether it re-checks the delegating user's current rights or runs an accepted obligation under a narrow service authority (D11)
 - rule: The trust boundary is one trusted deployment; component privacy and type brands stop unauthorized clients and accidental cross-module access, not a malicious administrator, and no parent-signed token claims to (D11)
 - rule: Namespaces are server-assigned; the public entry assigns `public`, the internal entry accepts a namespace only from trusted server code, and a public caller cannot choose a system namespace (D6, D11, Sc L1-7)
@@ -81,10 +82,12 @@ Nothing here signs anything. The internal entry is unreachable by clients becaus
 ```gwt-vocabulary
 Given a tenant {tenantId:string} whose caller {principalId:string} holds a grant for the command
 And another tenant {otherTenantId:string} already applied a receipted command with request key {requestKey:string} and local ID {localId:string}
+And the caller's grant names the subject with local ID {grantedLocalId:string} and no other
+And another caller {otherPrincipalId:string} of the tenant already applied the receipted command with request key {takenKey:string} and local ID {takenLocalId:string}
 And the caller's grant is {grant:"still valid"|"revoked after a successful run"}
 And a public client claims namespace {claimed:"worker"|"agent"} by {via:"passing a namespace argument to the public entry"|"calling the internal entry directly"}
 When the caller sends the receipted command with request key {sentKey:string} and local ID {sentLocalId:string}
-Then the answer is {answer:"applied"|"replayed"|"forbidden"|"refused before the handler runs"}
+Then the answer is {answer:"applied"|"replayed"|"forbidden"|"conflict"|"refused before the handler runs"}
 And a stored outcome is disclosed to the caller {disclosed:boolean}
 And the namespace the server assigned is {namespace:"public"|"worker"|"agent"|"none"}
 ```
