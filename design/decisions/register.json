@@ -269,7 +269,7 @@
         "changes": "The example Spec spec:application.first-experiment.native-acceptance-production-configuration gains or rebinds one example; acceptanceRows of spec:application.first-experiment is unchanged. The alternative, the present example alone, changes nothing. S3 supplies the run.",
         "ifWrong": "An example that over-claims is rebound by one edit; an example missing leaves the row passed on a weaker proof, which the acceptance check cannot tell apart, so the cost is a false pass claim until the next read."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -386,7 +386,7 @@
         "changes": "For the lean: `design/specs/application/generation-registry.sdp.md` (the transitions, `activateFirstGeneration`, `firstActivationEntry`), `design/specs/application/rebuild.sdp.md`, `src/read-model/generations.ts`, the example's and the fixture's activation entries and the tests that use them as setup, in S4. For the alternative: the same registry Spec gains the emptiness refusal and `src/read-model/generations.ts` the read.",
         "ifWrong": "A deployment installed through a rebuild is correct either way; what is lost is the cheap setup, and an edit restores the shortcut with the refusal."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -560,7 +560,7 @@
         "changes": "For the lean: `design/specs/application/projection-contract.sdp.md` (the `ReadModel` declaration and the write rule), `design/specs/application/generation-registry.sdp.md` (`startGeneration` checks the version is declared), `src/read-model/projection.ts`, `src/read-model/write.ts`, in S4. For the alternative: the same two Specs and a narrower reading of D9.",
         "ifWrong": "Rows written by the wrong version are found by a verify pass and repaired by a rebuild; the declaration shape is taken back by an edit to one Spec and two files."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -727,7 +727,7 @@
         "changes": "The limitReturnBytesPerCall entry of spec:context.persistence-adapter and the comment at src/context/adapter.ts:100; the alternative, no return bound, the same entry. No unit blocked.",
         "ifWrong": "A bound too low fails a call as a technical failure, after the write bound by the Spec's order [design/specs/context/persistence-adapter.sdp.md:93]; raising it is one constant and one Spec line, and nothing stored depends on it."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -1046,7 +1046,7 @@
         "changes": "For the lean: nothing. For the alternative, a `scope` argument beside `tenantId`: `spec:command.actor-and-scope` at [design/specs/command/actor-and-scope.sdp.md:38], [design/specs/command/actor-and-scope.sdp.md:55] and [design/specs/command/actor-and-scope.sdp.md:56], every context operation and query signature under `spec:context`, `spec:application.parent-use-cases`, and every tenant-leading index.",
         "ifWrong": "A narrowing field added later is an edit to `TenantScope` and a widening of every index that reads it [design/specs/command/actor-and-scope.sdp.md:27], a migration of indexes and not of history; **Judgment.** the cost grows with the number of tables, which is why the row is decided now rather than left open."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -1626,7 +1626,7 @@
         "changes": "For the lean: one line in `design/specs/command/idempotency-and-receipts.sdp.md` or the obligation Spec that names the wrapper as a receipted caller, in L3. For the alternative: the same Spec says the attempt record stands in for the receipt, and D6's list gains an exception only the owner rules.",
         "ifWrong": "A receipt too many costs a row per reaction and an edit drops it; a receipt too few is a derived command run twice, which only the native tier shows."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -2241,7 +2241,7 @@
         "changes": "spec:facts.f17-migrations-fits-generation-backfill (status), spec:facts.probe-plan, spec:application.rebuild, spec:decisions.d09-rebuild-online-by-default; S4. The alternative, no component, edits spec:application.rebuild and the E-40 row and removes a dependency.",
         "ifWrong": "If the component is kept and does not fit, the parent-table driver is swapped for the self-scheduled one, an edit to one Spec and one driver; the cursor and the batch bound are the design's numbers, not the component's [design/README.md:219]."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -2580,7 +2580,7 @@
         "changes": "The capture entries of spec:application.first-experiment; the alternative adds a counter to spec:command.command-pipeline and a test-only reader. No unit blocked; S3 uses it.",
         "ifWrong": "A capture that stops on a new release is recorded as not exposed by the Spec's own rule [design/specs/application/first-experiment.sdp.md:104] and the record is rebuilt from another source; nothing stored depends on it."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -3378,7 +3378,7 @@
         "changes": "For the lean: nothing in `spec:application.write-pause`; `spec:command.command-pipeline` step 7 and `spec:application.rebuild` as they stand, built in S4. For the alternative, closing the tenant or `all` for every paused rebuild [design/specs/application/write-pause.sdp.md:34]: [design/specs/application/write-pause.sdp.md:41], [design/specs/application/write-pause.sdp.md:42] and `scopesOfUseCase` [design/specs/application/write-pause.sdp.md:64], and every writer of an unrelated stream in the tenant is held for the length of the rebuild.",
         "ifWrong": "If a writer slips the cut, the read-model check compares each row's source versions with the current versions and finds it [design/specs/application/restore.sdp.md:79], so the cost is a rebuild rerun and not lost events, and an edit to `scopesOfUseCase` takes the scope back; if the hot document costs more than one read's worth under contention, the S3 measurement repeated after S4 shows it."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -4087,7 +4087,7 @@
         "changes": "For the lean: nothing. For the alternative, grants in a dedicated access context with a journal: `spec:command.tenancy-and-authority` at [design/specs/command/tenancy-and-authority.sdp.md:64] and `spec:command.actor-and-scope` at [design/specs/command/actor-and-scope.sdp.md:76], the helper's read only, the decision type unchanged.",
         "ifWrong": "Moving grants into an access context is the edit [design/specs/command/actor-and-scope.sdp.md:76] already describes and changes the helper's read and nothing else; **Judgment.** a revocation record not kept cannot be recovered after the fact, which is the one cost an edit does not take back, so a product that needs it takes the context before production data."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -4526,7 +4526,7 @@
         "changes": "spec:context.tables and spec:kernel.state-document-mapping; the alternative, no streamParts, the same two and E-2's derived mapping. No unit blocked.",
         "ifWrong": "Before a release, a schema edit; after one, a migration of every context's tables. An unused index goes by an edit."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -5694,7 +5694,7 @@
         "changes": "For the lean, nothing: spec:platform.acceptance-contract keeps tierBuild and the join as they stand, and no unit waits. For the alternative, folding into the native tier: spec:platform.acceptance-contract drops tierBuild [design/specs/platform/acceptance-contract.sdp.md:62] and the types case of the join [design/specs/platform/acceptance-contract.sdp.md:69], the Sc L2-4 example moves to the native tier, and the two type tests run inside the native job; no unit is blocked.",
         "ifWrong": "An edit takes it back: one tier entry, one join case and two type tests move. The cost later is one more word, tier, with five values in the contract and four in the doc, a cost OD-009 already carries to the owner."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
