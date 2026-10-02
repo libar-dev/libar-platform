@@ -2,7 +2,7 @@
 
 ## What this is
 
-The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 217 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 223 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-217 specs · 5 packs · 115 anchors → 337 nodes · 1161 edges (0 errors, 0 warnings)
+223 specs · 5 packs · 121 anchors → 349 nodes · 1186 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -82,7 +82,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 
 | Layer | Families | Pack | Specs |
 |---|---|---|---|
-| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 87 |
+| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 93 |
 | 0 | `kernel` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) | 7 |
 | 1 | `context`, `command` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) (19 with the kernel), [`command-pipeline`](specs/command-pipeline.pack.sdp.md) | 12 + 24 |
 | 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 44 |
@@ -91,7 +91,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 | 5 | `agents` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 7 |
 | 6 | `advanced` | [`durable-and-later`](specs/durable-and-later.pack.sdp.md) | 8 |
 
-Counts by kind and by stated readiness are derived, not kept here: `npx sdp census` writes the census, and the session check prints the readiness tally. Two groups state `scoped`: every Layer 4 to 6 non-example Spec, held by its deferral, and the assumed fact F17, held by its probe. Nothing states `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
+Counts by kind and by stated readiness are derived, not kept here: `npx sdp census` writes the census, and the session check prints the readiness tally. Every Layer 4 to 6 non-example Spec states `scoped`, held by its deferral; F17 states `defined` with its native Probe 6 evidence. Nothing states `ready`. Every pack carries `modelRefs: [spec:platform.vocabulary]`; the application pack also refs the example domain's model.
 
 What each layer fixes, in one paragraph each.
 
@@ -240,7 +240,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 
 ## Open questions for the owner
 
-A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact (F17) names the probe that would settle it. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
+A `[blocking]` question in this corpus is one of two things. A deferral names the trigger that brings a Layer 4 to 6 Spec back. An assumed fact names the probe that would settle it; F17 is probed by the six native Probe 6 examples. Every other open question is `[non-blocking]`, which means the design took a provisional reading and says so where it did. The rulings that matter most, grouped by where they come from.
 
 The doc's own open questions:
 
@@ -274,7 +274,7 @@ Beyond the plan's list, three product decisions the packages surfaced:
 - The late-payment policy of `StartCheckout`: reallocate, ask a person, or refund as a separate operation ([`start-checkout-example`](specs/processes/start-checkout-example.sdp.md)).
 - Whether an old process run is kept, migrated or blocked on a given deploy ([`workflow-processes`](specs/processes/workflow-processes.sdp.md)).
 
-Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is recorded on its fact and on the Specs that rest on it, and [`probe-plan`](specs/facts/probe-plan.sdp.md) says what stays open: Probe 1 (the client guarantee holds across a restart, a closed client can lose a command, and the HTTP client does not retry, D6), Probe 2 (`ConvexError` data survives a nested mutation and a component boundary, F14, D7), Probe 3 (a component call costs about 2 ms more than a helper call on a local backend, with hosted cost and quota open, F4, D2, D8), Probe 4 (transaction limits are one budget across nested calls and components, F13, D10), Probe 5 (a parent query over a component query stays reactive and pinned pages stay contiguous, and the client hook loses rows after a capped split, F15, D8). Two are pending: Probe 6 (a backfill batch racing a live command; the migrations component, F17, D9) and Probe 7 (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
+Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is recorded on its fact and on the Specs that rest on it, and [`probe-plan`](specs/facts/probe-plan.sdp.md) says what stays open: Probe 1 (the client guarantee holds across a restart, a closed client can lose a command, and the HTTP client does not retry, D6), Probe 2 (`ConvexError` data survives a nested mutation and a component boundary, F14, D7), Probe 3 (a component call costs about 2 ms more than a helper call on a local backend, with hosted cost and quota open, F4, D2, D8), Probe 4 (transaction limits are one budget across nested calls and components, F13, D10), Probe 5 (a parent query over a component query stays reactive and pinned pages stay contiguous, and the client hook loses rows after a capped split, F15, D8). Probe 6 ran on backend `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `convex-helpers` 0.1.124 and `@convex-dev/migrations` 0.3.6 (the component drives parent-table batches and, through a parent mutation that returns the context's cursor, batches over a context's enumeration; a migration cannot walk another component's table; cancel, a thrown batch, a failed transaction and a restart resume from the saved cursor, F17, F1, D9). Probe 7 remains pending (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
 
 | Tier | Fact | Subject |
 |---|---|---|
@@ -331,8 +331,14 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-9-nested-time`](specs/facts/f19-nested-calls-share-time-budgets.probe-9-nested-time.sdp.md) | Probe 9: nested calls reach a time boundary |
 | none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-oversized-row`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-oversized-row.sdp.md) | Probe 10: a page keeps the row that crosses its byte bound |
 | none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-stream-budget`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-stream-budget.sdp.md) | Probe 10: a page of full stream rows reads past the library's byte bound |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-batch-races-command` | Probe 6: a migration batch races a live command |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-interruption-and-resume` | Probe 6: a migration resumes after interruption |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-enumeration` | Probe 6: migration table scope and context enumeration |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-batch-cursor` | Probe 6: a parent batch returns a context cursor to the migrations driver |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-operator-cancel` | Probe 6: an operator cancels a committed successor |
+| none | `spec:facts.f17-migrations-fits-generation-backfill.probe-6-transaction-failure` | Probe 6: a transaction failure preserves the saved cursor |
 
-Package A therefore has 87 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+Package A therefore has 93 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
 
 The example domain's second lifecycle command added six examples that verify no doc row, each a child of `spec:application.orders-inventory-example` under E-46:
 
@@ -404,7 +410,7 @@ Adopted from the Protocol on 2026-10-01, at the commit `package.json` pins:
 
 - Generics are written with real angle brackets inside inline code. The Unicode brackets the carrier once forced, 248 pairs on 114 lines of 29 Specs, are gone, so every pinned declaration can be pasted into source.
 - An unbound example below `ready` no longer warns. The expected validate verdict is 0 errors and 0 warnings.
-- The `ready` floor reads `constrainedBy` and `decidedBy` as well as `refines` and `dependsOn`. The assumed fact F17 states `scoped` behind a blocking question that names its probe, so no Spec resting on it can state `ready` until the probe has run; F14 and F15 did the same until their probes ran in slice S0. F16 stays `defined`: its states and retention are documented.
+- The `ready` floor reads `constrainedBy` and `decidedBy` as well as `refines` and `dependsOn`. F17 states `defined` with native Probe 6 evidence for the pinned releases; F14 and F15 previously stated `scoped` until their probes ran in slice S0. F16 stays `defined`: its states and retention are documented.
 - A deferral is a blocking open question that names its trigger, on the nine Layer 4 to 6 Specs.
 - The census sentence and the open-question table are no longer kept by hand. `sdp census` and recipe 20 derive them.
 - The extension register stays in this file. It is this project's policy, and `design/tools/check.py` keeps it honest.

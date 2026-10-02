@@ -9,6 +9,17 @@ export default defineSchema({
     "by_commit",
     ["commitTs"],
   ),
+  migrationSettings: defineTable({
+    failKey: v.union(v.string(), v.null()),
+    reads: v.number(),
+    exhaustKey: v.optional(v.string()),
+  }),
+  migrationVisits: defineTable({ key: v.string(), version: v.number() }),
+  enumerationPages: defineTable({
+    tenantId: v.string(),
+    cursor: v.union(v.string(), v.null()),
+    size: v.number(),
+  }),
   notes: defineTable({ source: v.string() }),
   depthRows: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),
   markers: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),

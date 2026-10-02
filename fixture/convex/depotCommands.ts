@@ -359,3 +359,10 @@ const claimStockDeclaration = stockCommand(
 );
 export const claimStock = publicCommand(claimStockDeclaration);
 export const claimStockInternal = internalCommand(claimStockDeclaration);
+
+// AmendDocument with the fixture's read model: step 9 updates the document's summary row.
+export const amendSummarizedDocument = publicCommand({
+  ...amendDocumentDeclaration,
+  name: "AmendSummarizedDocument",
+  readModels: [{ readModel: documentSummary, source: documentSource }],
+});

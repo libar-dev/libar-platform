@@ -80,6 +80,12 @@ specs:
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
   - spec:facts.f17-migrations-fits-generation-backfill
+  - spec:facts.f17-migrations-fits-generation-backfill.probe-6-batch-races-command
+  - spec:facts.f17-migrations-fits-generation-backfill.probe-6-interruption-and-resume
+  - spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-enumeration
+  - spec:facts.f17-migrations-fits-generation-backfill.probe-6-context-batch-cursor
+  - spec:facts.f17-migrations-fits-generation-backfill.probe-6-operator-cancel
+  - spec:facts.f17-migrations-fits-generation-backfill.probe-6-transaction-failure
   - spec:facts.f18-commit-timestamps.probe-8-parent-and-components
   - spec:facts.f18-commit-timestamps
   - spec:facts.f19-nested-calls-share-time-budgets.probe-11-component-calls
@@ -95,4 +101,4 @@ modelRefs:
 
 Package A. The decisions document carried into the graph: the platform epic, the twelve laws, the nineteen decisions, the fact ledger and its probe plan, the decision method, layers and profiles, the acceptance contract and the native harness, existing-systems rules and the vocabulary. Every other package cites these IDs; none of them redefines them.
 
-Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Seventy-nine Specs.
+Membership order follows the plan's inventory: the platform Specs, then the laws in number order, then the decisions in number order, then the fact ledger, the probe plan and the facts in number order. Each parent's examples follow it: the native harness and its four examples after the acceptance contract, and each probe's examples after the fact they verify. Ninety-three Specs.
