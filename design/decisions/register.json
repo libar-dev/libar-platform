@@ -1001,7 +1001,7 @@
         "restsOn": "[design/specs/command/actor-and-scope.sdp.md:70] and [design/specs/command/tenancy-and-authority.sdp.md:39] state the reading; [example/convex/grants.ts:2] and [fixture/convex/grants.ts:2] are the two internal mutations, and [tests/simulator/read-model.test.ts:151] inserts a grant through the helper at the `convex-test` tier; [design/specs/decisions/d11-tenant-scope-and-authority.sdp.md:32] rules that the trust boundary is one trusted deployment and no token claims to stop a malicious administrator, which is the boundary admin access already crosses. **Judgment.** The part only the owner decides is whether an adopter is promised a recorded bootstrap, a first-admin flow or an invitation; the fork gives the rest as this lean."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-025.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -1842,7 +1842,7 @@
         "settles": "The S3 measurement at 1, 10 and 100 lines on a native backend, after the single local runs design/STATE.md:158 records, then the owner's choice of the maximum and the targets."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-046.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -1869,7 +1869,7 @@
       "reason": "Rule 1, said in public: the paths are in a public repository's history, which an edit does not take back, and STATE.md:263 says the section is the owner's; nearer the owner when unsure, since the edit itself is layout.",
       "lean": null,
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-047.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -1896,7 +1896,7 @@
       "reason": "Rule 1, a licence; package.json:215 lists LICENSE under files and the root holds no such file, so a publish today ships none; the lens records what a licence text says and leans on none.",
       "lean": null,
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-048.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -2537,7 +2537,7 @@
         "settles": "S3's measurement at 1, 10 and 100 lines on the native backend, reported per line, then the owner's choice; the owner may set it before the run, which STATE.md asks for, a pointer [design/STATE.md:139]."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-064.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -2714,7 +2714,7 @@
         "do": "Keep the retired generation unwritten and the rollback that reopens it as `verifying` with one verify pass, the cheaper steady path."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-068.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -2752,7 +2752,7 @@
         "do": "Keep one generation per read model spanning every tenant, with the registry as operational data of the whole deployment and the marker table leading with the tenant."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-069.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -5100,7 +5100,7 @@
         "do": "Rule the largest supported order, with 100 lines as the configuration already measured under the 256 KiB single-document budget, and keep one document per stream as the default."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-123.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -6100,7 +6100,7 @@
         "settles": "The owner's word on whether a deployment-wide operator holds a grant, in which scope, or admin access alone; until then the S4 build takes the stated actor and records it."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-148.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -6169,7 +6169,7 @@
         "settles": "S4's measurement of a history-view rebuild under a pause on the native tier, for the batch time, then the owner's word on the acceptable length."
       },
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-150.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -6200,7 +6200,7 @@
       "reason": "Owner test 2, the example's policy under E-46, which the Spec leaves to the owner; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-151.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -6232,7 +6232,7 @@
       "reason": "Owner test 2, the scope of the experiment; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-152.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
@@ -6266,7 +6266,7 @@
       "reason": "Owner test 1, the reading of a scenario of the doc; OD-007's lean carries the case against; raised by the convex advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
-      "fork": null,
+      "fork": "design/decisions/forks/OD-153.md",
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
