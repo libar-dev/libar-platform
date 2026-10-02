@@ -18,6 +18,8 @@ The component can also be mounted inside a context component, where a migration 
 
 A batch that races a live command on one read-model row is ordered by optimistic concurrency, and the row ends at the source's newest stream version in either commit order. A cancel, in the starting mutation or in a separate one, keeps the committed rows and the saved cursor, and starting the migration again continues from that cursor. A batch that throws rolls back its own writes, and the component catches the error and records `failed` with it. A batch whose whole transaction fails, as one that reads past the 16 MiB limit does, leaves the component's row as it was before the batch; `getStatus` reports `failed` from the scheduled function, without the error. A backend restart on the same storage runs the pending batch. Completion of the component's run does not move the generation: it stays `building`.
 
+So the component does not fit a generation backfill as the platform needs one: it reaches a context's rows only through a parent mutation written by hand against a contract its README does not document and the compiled tier needs a cast for, its status and the generation's state are two vocabularies, and a failure past the read limit leaves no error on its row. The rebuild drives every batch, backfill, verify and purge, with its own self-scheduled internal mutation, uses the component for nothing, and keeps the progress row as the one checkpoint (D9).
+
 ## Intent
 
 - outcome: Record the native backend evidence for parent-table batches, context enumeration, interruption and checkpoint ownership, so designs resting on the migrations component distinguish its driver from its table helper. (F17, Probe 6)
