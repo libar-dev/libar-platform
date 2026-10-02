@@ -16,8 +16,8 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 - outcome: Replacement in place preserves schedules that run against restored data. (Probe 7)
 
 ```gwt
-Given a production composition exports business documents and all five scheduler states before more orders and schedules are created
-When replacement imports the exported snapshot in place before the pending reactions are due
+Given a production composition has temporary functions for scheduler references and reactions
+When it exports business documents and five scheduler states, adds orders and schedules, then imports the snapshot in place before pending reactions are due
 Then documents including ids and creation times in {scopes: "parent,orders,inventory"} equal the exported documents {equal: true}
 And every scheduler row in each scope is unchanged {unchanged: true}
 And later business changes are gone {removed: true} and the destination environment is unchanged {environmentUnchanged: true}

@@ -23,11 +23,11 @@ vi.setConfig({ testTimeout: 300000 });
 type World = SchedulerWorld<Awaited<ReturnType<typeof freshImport>>>;
 
 bindExample(contract, (): World => ({}), {
-  "a production composition has parent and context documents, stored scheduler ids and all five scheduler states":
+  "a production composition can store parent and context documents and typed scheduler references":
     async (world) => {
       Object.assign(world, await schedulingBackend());
     },
-  "its exported snapshot is imported with replacement into a fresh backend with its own environment":
+  "it creates documents and five scheduler states, then exports and imports the snapshot with replacement into a fresh backend with its own environment":
     async (world) => {
       world.observation = await freshImport(world.backend!, world.directory!);
     },

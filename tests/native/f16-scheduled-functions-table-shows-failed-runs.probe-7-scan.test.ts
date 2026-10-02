@@ -22,11 +22,11 @@ vi.setConfig({ testTimeout: 300000 });
 type World = SchedulerWorld<Awaited<ReturnType<typeof scanCase>>>;
 
 bindExample(contract, (): World => ({}), {
-  "a successful local reaction and a failed reaction share the scheduler with pending calls to several functions":
+  "temporary functions provide a local reaction, a failed reaction and unrelated scheduled calls":
     async (world) => {
       Object.assign(world, await schedulingBackend());
     },
-  "a query filters the system table for one function and failed state while unrelated schedules grow past the read boundary":
+  "a local reaction succeeds and a query filters the system table for one function and failed state while unrelated schedules grow past the read boundary":
     async (world) => {
       world.observation = await scanCase(world.backend!);
     },

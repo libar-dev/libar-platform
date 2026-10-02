@@ -23,11 +23,11 @@ vi.setConfig({ testTimeout: 300000 });
 type World = SchedulerWorld<Awaited<ReturnType<typeof inPlaceImport>>>;
 
 bindExample(contract, (): World => ({}), {
-  "a production composition exports business documents and all five scheduler states before more orders and schedules are created":
+  "a production composition has temporary functions for scheduler references and reactions":
     async (world) => {
       Object.assign(world, await schedulingBackend());
     },
-  "replacement imports the exported snapshot in place before the pending reactions are due":
+  "it exports business documents and five scheduler states, adds orders and schedules, then imports the snapshot in place before pending reactions are due":
     async (world) => {
       world.observation = await inPlaceImport(world.backend!, world.directory!);
     },

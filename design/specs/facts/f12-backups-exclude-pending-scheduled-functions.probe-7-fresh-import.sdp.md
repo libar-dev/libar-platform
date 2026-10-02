@@ -16,8 +16,8 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 - outcome: Replacement into a fresh backend restores context data without schedules. (Probe 7)
 
 ```gwt
-Given a production composition has parent and context documents, stored scheduler ids and all five scheduler states
-When its exported snapshot is imported with replacement into a fresh backend with its own environment
+Given a production composition can store parent and context documents and typed scheduler references
+When it creates documents and five scheduler states, then exports and imports the snapshot with replacement into a fresh backend with its own environment
 Then documents including ids and creation times in {scopes: "parent,orders,inventory"} equal the exported documents {equal: true}
 And the scheduler row counts are parent {parent: 0}, Orders {orders: 0} and Inventory {inventory: 0}
 And the destination environment is unchanged {unchanged: true}

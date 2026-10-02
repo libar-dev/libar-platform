@@ -16,8 +16,8 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 - outcome: A failed-function scan reads unrelated schedules. (Probe 7)
 
 ```gwt
-Given a successful local reaction and a failed reaction share the scheduler with pending calls to several functions
-When a query filters the system table for one function and failed state while unrelated schedules grow past the read boundary
+Given temporary functions provide a local reaction, a failed reaction and unrelated scheduled calls
+When a local reaction succeeds and a query filters the system table for one function and failed state while unrelated schedules grow past the read boundary
 Then the last accepted total is {accepted: 4091} and the first refused total is {refused: 4092} with text {refusal: "Too many reads in a single function execution (limit: 4096)"}
 And each successful scan reads {documents: 0} documents and {bytes: 0} bytes, adding {queriesPerRow: 1} database query per row plus {extraQueries: 1}
 And the table reaches {total: 32001} rows and scans at {documentCeiling: 32000} and above are refused before any document bound is measured
