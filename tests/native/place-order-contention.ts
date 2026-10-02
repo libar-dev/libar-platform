@@ -44,6 +44,9 @@ export async function contentionCell(lines: 1 | 10 | 100, callers: 2 | 8 | 32) {
     orderEvents: 0,
     stockStreams: stockItems,
     stockEvents: stockItems,
+    gates: 0,
+    auditRecords: 0,
+    operatorAudit: 0,
   });
   expect(result.value.rowsAfter).toEqual({
     grants: 4,
@@ -54,6 +57,9 @@ export async function contentionCell(lines: 1 | 10 | 100, callers: 2 | 8 | 32) {
     orderEvents: 1,
     stockStreams: stockItems,
     stockEvents: stockItems + lines,
+    gates: 0,
+    auditRecords: 0,
+    operatorAudit: 0,
   });
   expect(
     result.value.outcomeCounts.rejected + result.value.engineFailedCommands,

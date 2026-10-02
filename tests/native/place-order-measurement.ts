@@ -201,27 +201,37 @@ export async function schedules(backend: Backend) {
   );
   return Object.fromEntries(entries);
 }
-// Rows left behind are counted over every table the production composition deploys; markers, the
-// gate and audit records are reported as not deployed only while neither schema declares a table.
+// Rows left behind are counted over every table the production composition deploys that holds
+// neither state, events, receipts nor read-model rows: the registry, the gate and both audit tables.
+// Grants and the tenant list are setup. Markers are reported as not deployed while neither schema
+// declares a table for them; a table either schema adds fails this check until it is counted.
 export function leftBehind(before: Stored, after: Stored) {
   expect(Object.keys(schema.tables).sort()).toEqual([
+    "auditRecords",
     "generations",
     "grants",
+    "maintenanceGates",
+    "operatorAudit",
     "orderSummaries",
     "receipts",
+    "tenants",
   ]);
   expect(Object.keys(contextTables).sort()).toEqual(["events", "streams"]);
+  const counted = (
+    name: "generations" | "gates" | "auditRecords" | "operatorAudit",
+  ) => ({
+    before: before[name].length,
+    after: after[name].length,
+    created: after[name].filter(
+      (row) => !before[name].some((prior) => prior._id === row._id),
+    ).length,
+  });
   return {
-    generations: {
-      before: before.generations.length,
-      after: after.generations.length,
-      created: after.generations.filter(
-        (row) => !before.generations.some((prior) => prior._id === row._id),
-      ).length,
-    },
+    generations: counted("generations"),
     markers: "not deployed",
-    gate: "not deployed",
-    audit: "not deployed",
+    gate: counted("gates"),
+    audit: counted("auditRecords"),
+    operatorAudit: counted("operatorAudit"),
   };
 }
 // A complete experiment record, distinct from the harness's name/value Measurement envelope.

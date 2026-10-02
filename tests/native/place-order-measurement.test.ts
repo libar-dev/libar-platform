@@ -54,6 +54,9 @@ test.each([1, 10, 100] as const)(
       orderEvents: 1,
       stockStreams: lines,
       stockEvents: 2 * lines,
+      gates: 0,
+      auditRecords: 0,
+      operatorAudit: 0,
     });
     expect(
       result.after.orderEvents.length - result.before.orderEvents.length,
@@ -200,6 +203,9 @@ test.each([
       orderEvents: 8,
       stockStreams: 80,
       stockEvents: 160,
+      gates: 0,
+      auditRecords: 0,
+      operatorAudit: 0,
     });
     for (const record of result.records.filter((record) => !record.willRetry))
       expectUsage(record, healthyUsage[10]);
