@@ -26,6 +26,6 @@ And the number of workers, jobs or queues that ran is {workers: 0}
 ## Verification — executable
 
 - Runs in the native tier on the production composition; every test owns its disposable backend.
-- After grants, the first activation and `ReceiveStock` as setup, the test subscribes to `listOrderSummaries` with the tenant, the status a placed order has and `{ cursor: null, numItems: 10 }`, runs `PlaceOrder`, and asserts that the next subscription value's page carries the order's summary whose `sourceVersions` equal the `versions` the command returned.
-- The test asserts that the backend ran no scheduled function, cron or action between the command and the subscription update, by reading the disposable backend's function log.
+- After grants, the first activation and `ReceiveStock` as setup, the test subscribes to `listOrderSummaries` with the tenant, the status a placed order has and `{ cursor: null, numItems: 10 }`, runs `PlaceOrder`, and asserts that the next subscription value's page carries the order's summary whose `sourceVersions` equal the command's returned `versions` entry for the order's stream, the one stream the summary is projected from.
+- The test asserts that the backend ran no scheduled function, cron or action between the command and the subscription update, by reading the disposable backend's function log from before the command until it holds the command's mutation and the subscription's query, and finding no record that a client did not cause.
 - The test also calls `getOrder` and asserts that the DTO matches the committed state and that its `version` equals the order's entry in the command's `versions`.
