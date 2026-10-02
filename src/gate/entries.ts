@@ -2,7 +2,7 @@
 // composition's gate module, so they are reached as internal.gate.closeGate and so on. Each follows the
 // operator entry contract of spec:command.actor-and-scope: an internal function, so only admin access
 // reaches it, that reads no grant and no ctx.auth; the two that change the gate check the stated
-// operator first and record it. An operator entry closes and resumes only "all" or a tenant scope; a
+// operator first and record the trimmed text it returns. An operator entry closes and resumes only "all" or a tenant scope; a
 // source scope is closed and reopened by the rebuild alone. Every refusal is a plain Error.
 import {
   internalMutationGeneric,
@@ -52,8 +52,8 @@ export const closeGate = internalMutation({
     operator: operatorValidator,
   },
   returns: v.null(),
-  handler: async (ctx, { scopeKey, reason, operator }) => {
-    assertOperator(operator);
+  handler: async (ctx, { scopeKey, reason, operator: stated }) => {
+    const operator = assertOperator(stated);
     assertOperatorScope("closeGate", scopeKey);
     const bytes = utf8Length(reason);
     if (bytes < 1 || bytes > limitGateReasonBytes)
@@ -67,8 +67,8 @@ export const closeGate = internalMutation({
 export const resumeGate = internalMutation({
   args: { scopeKey: v.string(), operator: operatorValidator },
   returns: v.null(),
-  handler: async (ctx, { scopeKey, operator }) => {
-    assertOperator(operator);
+  handler: async (ctx, { scopeKey, operator: stated }) => {
+    const operator = assertOperator(stated);
     assertOperatorScope("resumeGate", scopeKey);
     await resumeScope(ctx, scopeKey, operator);
     return null;

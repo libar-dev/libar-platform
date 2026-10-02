@@ -140,8 +140,8 @@ test("convex-test: only an explicitly matching generation exempts an entry", asy
   });
 });
 
-// spec:application.write-pause fnCloseScope, fnResumeScope, validatorClosedEntry; spec:operations.baseline-operations tableOperatorAudit.
-test("convex-test: close and resume record exactly one audit each with unchanged operators", async () => {
+// spec:application.write-pause fnCloseScope, fnResumeScope, validatorClosedEntry; spec:operations.baseline-operations tableOperatorAudit; spec:command.actor-and-scope limitOperatorBytes, the trimmed text is the operator.
+test("convex-test: close and resume record exactly one audit each with the trimmed operator", async () => {
   const t = gateApp();
   const before = Date.now();
   expect(await close(t)).toBeNull();
@@ -155,7 +155,7 @@ test("convex-test: close and resume record exactly one audit each with unchanged
         scopeKey: "tenant:t",
         reason: "repair",
         changedAt: expect.any(Number),
-        changedBy: operator,
+        changedBy: operator.trim(),
       },
     ],
     updatedAt: expect.any(Number),
@@ -170,7 +170,7 @@ test("convex-test: close and resume record exactly one audit each with unchanged
       kind: "gate.close",
       scopeKey: "tenant:t",
       reason: "repair",
-      operator,
+      operator: operator.trim(),
       recordedAt: row!.updatedAt,
     },
   ]);
@@ -188,7 +188,7 @@ test("convex-test: close and resume record exactly one audit each with unchanged
       kind: "gate.close",
       scopeKey: "tenant:t",
       reason: "repair",
-      operator,
+      operator: operator.trim(),
       recordedAt: row!.updatedAt,
     },
     {
@@ -393,7 +393,7 @@ test("convex-test: resumeGate copies the removed entry's generation and reason t
       scopeKey: "tenant:t",
       reason: "restored entry",
       generationId,
-      operator,
+      operator: operator.trim(),
       recordedAt: expect.any(Number),
     },
   ]);

@@ -26,12 +26,12 @@ test.each(["", " ", "\t\n", "\u2003", " ".repeat(512), " ".repeat(513)])(
   },
 );
 
-// spec:command.actor-and-scope fnAssertOperator, limitOperatorBytes.
+// spec:command.actor-and-scope fnAssertOperator, limitOperatorBytes: the trimmed text is the operator.
 test.each(["a", " a ", "a".repeat(512), "é".repeat(256), "😀".repeat(128)])(
-  "pure: a bounded operator is returned unchanged, %j",
+  "pure: a bounded operator is returned trimmed, %j",
   (operator) => {
     expect(limitOperatorBytes).toBe(512);
-    expect(assertOperator(operator)).toBe(operator);
+    expect(assertOperator(operator)).toBe(operator.trim());
   },
 );
 

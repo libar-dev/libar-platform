@@ -77,9 +77,9 @@ export type AuthorizeInput = {
 export const operatorValidator = v.string();
 // The bound limitCallText gives an actor's id.
 export const limitOperatorBytes = limitActorIdLength;
-// An operator entry calls this first, so a refused entry has read and written nothing. The operator is
-// trimmed before both checks, so whitespace alone, of any length, is an empty operator; the argument is
-// returned and recorded unchanged.
+// An operator entry calls this first, so a refused entry has read and written nothing. The trimmed text
+// is the operator: it is what both checks read and what every caller records, so whitespace alone, of
+// any length, is an empty operator and no stored operator exceeds the bound.
 export function assertOperator(operator: string): string {
   const trimmed = operator.trim();
   if (trimmed === "")
@@ -89,5 +89,5 @@ export function assertOperator(operator: string): string {
     throw new Error(
       `The stated operator is ${bytes} bytes, above the limit of ${limitOperatorBytes}`,
     );
-  return operator;
+  return trimmed;
 }

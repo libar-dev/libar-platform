@@ -10,7 +10,7 @@ import {
   scopesOfUseCase,
 } from "../../src/gate/index.js";
 
-test("pure: assertOperator refuses an empty or whitespace-only operator and one above 512 bytes, and returns any other unchanged", () => {
+test("pure: assertOperator refuses an empty or whitespace-only operator and one above 512 bytes, and returns any other trimmed", () => {
   for (const operator of ["", " ", "\t\n "])
     expect(() => assertOperator(operator)).toThrow(
       "An operator entry needs a stated operator",
@@ -25,15 +25,15 @@ test("pure: assertOperator refuses an empty or whitespace-only operator and one 
   expect(() => assertOperator("é".repeat(256) + "x")).toThrow(
     "The stated operator is 513 bytes, above the limit of 512",
   );
-  expect(assertOperator(" ops-1 ")).toBe(" ops-1 ");
+  expect(assertOperator(" ops-1 ")).toBe("ops-1");
 });
 
-test("pure: assertOperator trims before both checks, so whitespace of any length is empty and the bound counts the trimmed bytes", () => {
+test("pure: the trimmed text is the operator, so whitespace of any length is empty and the bound counts the trimmed bytes", () => {
   expect(() => assertOperator(" ".repeat(600))).toThrow(
     "An operator entry needs a stated operator",
   );
   const padded = " ".repeat(300) + "x".repeat(512) + "\t";
-  expect(assertOperator(padded)).toBe(padded);
+  expect(assertOperator(padded)).toBe("x".repeat(512));
   expect(() => assertOperator(" " + "x".repeat(513) + " ")).toThrow(
     "The stated operator is 513 bytes, above the limit of 512",
   );

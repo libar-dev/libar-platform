@@ -503,6 +503,34 @@ describe("the operator entries", () => {
   );
 });
 
+describe("the stated operator", () => {
+  test(
+    name(
+      "a padded operator past 512 bytes whose text fits is stored trimmed on the closed entry and on both audit records",
+    ),
+    async () => {
+      const t = app();
+      const padded = " ".repeat(300) + "ops-1" + "\t".repeat(300);
+      await t.mutation(internal.gate.closeGate, {
+        scopeKey: "all",
+        reason: "release",
+        operator: padded,
+      });
+      expect((await gateDocuments(t))[0]?.closed).toMatchObject([
+        { scopeKey: "all", changedBy: "ops-1" },
+      ]);
+      await t.mutation(internal.gate.resumeGate, {
+        scopeKey: "all",
+        operator: padded,
+      });
+      expect((await operatorAudit(t)).map(({ operator }) => operator)).toEqual([
+        "ops-1",
+        "ops-1",
+      ]);
+    },
+  );
+});
+
 describe("a grant under the gate", () => {
   const grantArgs = (tenantId: string) => ({
     tenantId,
