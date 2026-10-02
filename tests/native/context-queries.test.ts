@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values";
 import type { ConvexHttpClient } from "convex/browser";
 import { expect, onTestFinished, test } from "vitest";
 import { api, internal } from "../../fixture/convex/_generated/api.js";
+import { deletedTitle } from "../../fixture/convex/depot/streams.js";
 import type { Backend } from "../../harness/backend.js";
 import {
   ordinaryClient,
@@ -180,4 +181,65 @@ test("native: a cursor the list cannot read is a technical failure, not a reject
   measure("malformedCursor", String(error).slice(0, 300));
   expect(error).toBeInstanceOf(Error);
   expect(error).not.toBeInstanceOf(ConvexError);
+});
+
+test("native: list leaves a deleted subject out by default, and a trusted caller that passes includeDeleted gets it in its place", async () => {
+  const backend = await fixtureBackend();
+  await createDocuments(backend, documentIds(0, 5));
+  // The depot's mapping marks a document deleted when it is amended to the fixture's deleted title.
+  await backend.admin.run(getFunctionName(internal.depotRelay.amendDocuments), {
+    tenantId: "t-1",
+    actor: { kind: "operator", id: "native-test" },
+    operation: {
+      operationId: "delete-doc-002",
+      causedBy: { kind: "command", commandType: "fixture" },
+    },
+    input: { documents: [{ documentId: "doc-002", title: deletedTitle }] },
+  });
+  const rows = await backend.admin.readTable("streams", { component: "depot" });
+  expect(
+    rows
+      .filter((row) => row["deletedAt"] !== undefined)
+      .map((row) => row["streamId"]),
+  ).toEqual(["doc-002"]);
+  const client = ordinaryClient(backend.url);
+  const opts = { cursor: null, numItems: 10 };
+  // A client reads through the parent, which does not relay includeDeleted.
+  const relayed = await read(client, opts);
+  expect(idsOf(relayed)).toEqual(["doc-000", "doc-001", "doc-003", "doc-004"]);
+  expect(
+    await client.query(api.depotQueries.getDocument, {
+      tenantId: "t-1",
+      documentId: "doc-002",
+    }),
+  ).toBeNull();
+  const refused = await client
+    .query(api.depotQueries.listDocuments, {
+      tenantId: "t-1",
+      paginationOpts: opts,
+      includeDeleted: true,
+    } as never)
+    .then(
+      () => undefined,
+      (thrown: unknown) => thrown,
+    );
+  measure("relayedIncludeDeleted", String(refused).slice(0, 300));
+  expect(refused).toBeInstanceOf(Error);
+  expect(refused).not.toBeInstanceOf(ConvexError);
+  expect(String(refused)).toContain("includeDeleted");
+  // The depot's list itself, called as a trusted caller inside the deployment calls it.
+  const list = async (args: Record<string, boolean>) =>
+    (await backend.admin.run(
+      "queries/document:list",
+      { tenantId: "t-1", paginationOpts: opts, ...args },
+      { component: "depot" },
+    )) as unknown as Page;
+  expect(idsOf(await list({}))).toEqual(idsOf(relayed));
+  expect(idsOf(await list({ includeDeleted: false }))).toEqual(idsOf(relayed));
+  const withDeleted = await list({ includeDeleted: true });
+  expect(idsOf(withDeleted)).toEqual(documentIds(0, 5));
+  expect(withDeleted.page[2]).toMatchObject({
+    documentId: "doc-002",
+    title: deletedTitle,
+  });
 });

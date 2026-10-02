@@ -220,6 +220,40 @@ describe("list", () => {
   );
   test(
     name(
+      "returns a deleted subject in its place when includeDeleted is true, and leaves it out when includeDeleted is false",
+    ),
+    async () => {
+      const t = depot();
+      await createDocuments(t, documentIds(0, 25));
+      await markDeleted(t, "doc-003");
+      const page = (includeDeleted: boolean) =>
+        t.query(api.queries.document.list, {
+          tenantId: "t-1",
+          paginationOpts: { cursor: null, numItems: 10 },
+          includeDeleted,
+        }) as Promise<Page>;
+      const withDeleted = await page(true);
+      expect(idsOf(withDeleted)).toEqual(documentIds(0, 10));
+      expect(withDeleted.isDone).toBe(false);
+      const second = await list(t, {
+        cursor: withDeleted.continueCursor,
+        numItems: 10,
+      });
+      expect(idsOf(second)[0]).toBe("doc-010");
+      const withoutDeleted = await page(false);
+      expect(withoutDeleted.page).toHaveLength(9);
+      expect(idsOf(withoutDeleted)).not.toContain("doc-003");
+      // includeDeleted shows another tenant's subjects no more than the default does.
+      const other = await t.query(api.queries.document.list, {
+        tenantId: "t-2",
+        paginationOpts: { cursor: null, numItems: 10 },
+        includeDeleted: true,
+      });
+      expect(other.page).toEqual([]);
+    },
+  );
+  test(
+    name(
       "caps numItems at the registration's item cap and ignores the caller's own row cap",
     ),
     async () => {

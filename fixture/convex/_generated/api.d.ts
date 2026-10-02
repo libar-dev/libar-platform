@@ -25,6 +25,7 @@ import type * as readCost from "../readCost.js";
 import type * as readModels from "../readModels.js";
 import type * as summaries from "../summaries.js";
 import type * as switches from "../switches.js";
+import type * as usage from "../usage.js";
 
 import type {
   ApiFromModules,
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   readModels: typeof readModels;
   summaries: typeof summaries;
   switches: typeof switches;
+  usage: typeof usage;
 }>;
 
 /**
