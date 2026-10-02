@@ -5,6 +5,10 @@ import { readModelTables, rowConventions } from "../../src/read-model/index.js";
 import { documentTitleFields } from "./documentTitles.js";
 import { documentSummaryFields } from "./summaries.js";
 export default defineSchema({
+  timestamps: defineTable({ label: v.string(), commitTs: v.any() }).index(
+    "by_commit",
+    ["commitTs"],
+  ),
   notes: defineTable({ source: v.string() }),
   depthRows: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),
   markers: defineTable({ trial: v.string() }).index("by_trial", ["trial"]),

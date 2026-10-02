@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as bytePage from "../bytePage.js";
+import type * as callBudget from "../callBudget.js";
 import type * as depotCommands from "../depotCommands.js";
 import type * as depotQueries from "../depotQueries.js";
 import type * as depotRelay from "../depotRelay.js";
@@ -26,9 +28,11 @@ import type * as parentList from "../parentList.js";
 import type * as readCost from "../readCost.js";
 import type * as readModels from "../readModels.js";
 import type * as rejectionCommands from "../rejectionCommands.js";
+import type * as scheduledRows from "../scheduledRows.js";
 import type * as summaries from "../summaries.js";
 import type * as summarizedTwice from "../summarizedTwice.js";
 import type * as switches from "../switches.js";
+import type * as timestamps from "../timestamps.js";
 import type * as usage from "../usage.js";
 
 import type {
@@ -38,6 +42,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  bytePage: typeof bytePage;
+  callBudget: typeof callBudget;
   depotCommands: typeof depotCommands;
   depotQueries: typeof depotQueries;
   depotRelay: typeof depotRelay;
@@ -56,9 +62,11 @@ declare const fullApi: ApiFromModules<{
   readCost: typeof readCost;
   readModels: typeof readModels;
   rejectionCommands: typeof rejectionCommands;
+  scheduledRows: typeof scheduledRows;
   summaries: typeof summaries;
   summarizedTwice: typeof summarizedTwice;
   switches: typeof switches;
+  timestamps: typeof timestamps;
   usage: typeof usage;
 }>;
 
@@ -90,6 +98,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   annex: import("../annex/_generated/component.js").ComponentApi<"annex">;
+  annexClock: import("../annex/_generated/component.js").ComponentApi<"annexClock">;
   depot: import("../depot/_generated/component.js").ComponentApi<"depot">;
   yard: import("../yard/_generated/component.js").ComponentApi<"yard">;
 };

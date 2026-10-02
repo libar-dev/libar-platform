@@ -6,6 +6,9 @@ readiness: defined
 relations:
   refines: spec:facts.fact-ledger
   dependsOn:
+    - spec:facts.f18-commit-timestamps
+    - spec:facts.f19-nested-calls-share-time-budgets
+    - spec:facts.f20-pagination-checks-bytes-after-reading
     - spec:facts.f14-convex-error-survives-nested-and-component-boundary
     - spec:facts.f15-parent-query-over-component-query-stays-reactive
     - spec:facts.f16-scheduled-functions-table-shows-failed-runs
@@ -62,6 +65,11 @@ The probes are not the first experiment. The experiment builds Layers 0 to 2 and
 - Probe 5 subscribes to a parent query that calls a component query, changes the component's data, and checks that the subscription updates; it then pages a component list built with `paginator` through the parent while live writes land inside the paged range, with the client passing the end cursor as `convex-helpers` describes, records whether the pages stay contiguous, and fills one page's range past the component's `maximumRowsRead` so that a re-run comes back `SplitRequired`, recording whether the `convex-helpers/react` hook splits it across the boundary without a gap; it serves D8 (Probe 5, F15, S4)
 - Probe 6 runs a backfill batch through the migrations component while a live command writes the same read-model row, and checks that neither overwrites newer data and that the batch resumes after interruption; it serves D9 (Probe 6, F1, F17)
 - Probe 7, before Layer 3, takes a backup with pending scheduled functions, Workpool jobs and a Workflow run in flight, restores it, and records what survives; it reads `_scheduled_functions` for a failed run and confirms the states and the retention window; it serves D13 and D19 (Probe 7, F12, F16)
+
+- Probe 8 writes commit timestamp placeholders in the parent and two components, compares committed rows and the runtime upper bound, and checks readback, return and scheduling behavior. (Probe 8, F18)
+- Probe 9 repeats nested calls until a time boundary fails and compares its error with direct computation. (Probe 9, F19)
+- Probe 10 reads component pages below and at a row's byte size and records the bytes kept beyond the requested bound. (Probe 10, F20)
+- Probe 11 increases component calls per mutation to the backend's refusal, records counts and time, and measures documents read and written. (Probe 11, F19)
 
 ## Design
 

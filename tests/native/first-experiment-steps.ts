@@ -21,6 +21,7 @@ import type { CompletionRecord } from "../../harness/admin.js";
 import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { measure, productionBackend, required } from "../../harness/native.js";
+import { scheduledRows } from "./scheduled-rows.js";
 import type { MutationCtx } from "../../src/command/index.js";
 export const tenantId = "t-1";
 export const subject = "user-1";
@@ -76,6 +77,10 @@ export interface Placed {
   window: CompletionRecord[];
   summaryKeys: string[];
 }
+const scheduledByOrder = new WeakMap<
+  Placed,
+  Awaited<ReturnType<typeof scheduledRows>>
+>();
 export interface ExperimentWorld {
   backend?: Backend;
   client?: ConvexHttpClient;
@@ -199,7 +204,7 @@ export async function place(
     ),
     "the command's completion record",
   );
-  return {
+  const placed: Placed = {
     orderId,
     lines,
     response,
@@ -208,6 +213,8 @@ export async function place(
     window,
     summaryKeys: summaries.page.map((row) => row.key),
   };
+  scheduledByOrder.set(placed, await scheduledRows(backend));
+  return placed;
 }
 export async function placeOrderRuns(
   world: ExperimentWorld,
@@ -244,15 +251,13 @@ export function commitsAre(world: ExperimentWorld, commits: number) {
     expect(placed.request).toEqual(committed);
   }
 }
-// Nothing ran between the command and the read sent after it returned, and that read already shows
-// the command's summary row: the command wrote it, and no job did.
+// Admin reads of all scheduled-function tables include delayed jobs. The ordinary query already
+// shows the command's summary row.
 export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
   for (const placed of sent(world)) {
-    const others = placed.window.filter(
-      (record) =>
-        record !== placed.own && record.identifier !== summariesIdentifier,
-    );
-    expect(others).toHaveLength(jobs);
+    expect(
+      required(scheduledByOrder.get(placed), "the scheduled-function rows"),
+    ).toHaveLength(jobs);
     expect(placed.summaryKeys).toContain(placed.orderId);
   }
 }

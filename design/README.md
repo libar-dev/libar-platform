@@ -2,7 +2,7 @@
 
 ## What this is
 
-The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 168 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 210 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-202 specs · 5 packs · 101 anchors → 308 nodes · 1097 edges (0 errors, 0 warnings)
+210 specs · 5 packs · 106 anchors → 321 nodes · 1127 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -82,7 +82,7 @@ Detail follows the build (decision method, rule 4). Full means interfaces, TypeS
 
 | Layer | Families | Pack | Specs |
 |---|---|---|---|
-| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 75 |
+| all | `platform`, `laws`, `decisions`, `facts` | [`foundation`](specs/foundation.pack.sdp.md) | 87 |
 | 0 | `kernel` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) | 7 |
 | 1 | `context`, `command` | [`kernel-and-context`](specs/kernel-and-context.pack.sdp.md) (19 with the kernel), [`command-pipeline`](specs/command-pipeline.pack.sdp.md) | 12 + 22 |
 | 2 | `application`, `operations`, `constraints` | [`application`](specs/application.pack.sdp.md) | 31 |
@@ -116,7 +116,9 @@ The doc numbers its decisions, laws, sources and probes. The plan numbers everyt
 | `D1` to `D19` | decision, in the doc's order |
 | `Law 1` to `Law 12` | law |
 | `F1` to `F17` | fact-ledger row, in table order |
+| `F18` to `F20` | commit timestamps, nested-call time budgets and the paginator byte check |
 | `Probe 1` to `Probe 7` | probe, in list order |
+| `Probe 8` to `Probe 11` | commit timestamps, nested-call time, paginator bytes and component calls per mutation |
 | `S1` to `S15` | source |
 | `Sc L0-1` to `Sc L6-4`, `Sc ALL-1` | acceptance scenario, by layer then table order |
 | `OQ1` to `OQ6` | open question of the doc, in bullet order |
@@ -272,6 +274,12 @@ Beyond the plan's list, three product decisions the packages surfaced:
 
 Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is recorded on its fact and on the Specs that rest on it, and [`probe-plan`](specs/facts/probe-plan.sdp.md) says what stays open: Probe 1 (the client guarantee holds across a restart, a closed client can lose a command, and the HTTP client does not retry, D6), Probe 2 (`ConvexError` data survives a nested mutation and a component boundary, F14, D7), Probe 3 (a component call costs about 2 ms more than a helper call on a local backend, with hosted cost and quota open, F4, D2, D8), Probe 4 (transaction limits are one budget across nested calls and components, F13, D10), Probe 5 (a parent query over a component query stays reactive and pinned pages stay contiguous, and the client hook loses rows after a capped split, F15, D8). Two are pending: Probe 6 (a backfill batch racing a live command; the migrations component, F17, D9) and Probe 7 (what a restore leaves of scheduler, Workpool and Workflow state; the system table's states and retention, F12, F16, D13, D19).
 
+| Tier | Fact | Subject |
+|---|---|---|
+| Native backend | [`spec:facts.f18-commit-timestamps`](specs/facts/f18-commit-timestamps.sdp.md) | Commit timestamps order committed rows |
+| Native backend | [`spec:facts.f19-nested-calls-share-time-budgets`](specs/facts/f19-nested-calls-share-time-budgets.sdp.md) | Nested calls share time budgets |
+| Native backend | [`spec:facts.f20-pagination-checks-bytes-after-reading`](specs/facts/f20-pagination-checks-bytes-after-reading.sdp.md) | Pagination checks bytes after reading |
+
 Every open question in the corpus, by Spec, is recipe 20 of the Protocol's catalog, the open-question register. It lists the Specs that hold a blocking question first and reports the totals, so no table is kept here:
 
 ```sh
@@ -316,8 +324,13 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap` | Probe 5: a parent list's page outgrows its row cap |
+| none | [`spec:facts.f18-commit-timestamps.probe-8-parent-and-components`](specs/facts/f18-commit-timestamps.probe-8-parent-and-components.sdp.md) | Commit timestamps in the parent and two components |
+| none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-11-component-calls`](specs/facts/f19-nested-calls-share-time-budgets.probe-11-component-calls.sdp.md) | Component calls per mutation |
+| none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-9-nested-time`](specs/facts/f19-nested-calls-share-time-budgets.probe-9-nested-time.sdp.md) | Nested calls reach a time boundary |
+| none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-oversized-row`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-oversized-row.sdp.md) | A page keeps the row that crosses its byte bound |
+| none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-stream-budget`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-stream-budget.sdp.md) | A page includes stored system fields in its byte check |
 
-Package A therefore has 79 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+Package A therefore has 87 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
 
 ## Integration notes
 

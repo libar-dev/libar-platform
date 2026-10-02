@@ -10,6 +10,7 @@ import { committedStateReadThroughQueryContract as contract } from "../../genera
 import { api } from "../../example/convex/_generated/api.js";
 import type { LogMark } from "../../harness/admin.js";
 import { required } from "../../harness/native.js";
+import { scheduledRows } from "./scheduled-rows.js";
 import {
   line,
   orderWorld,
@@ -28,7 +29,7 @@ const anchor = specTest({
 void anchor;
 // PlaceOrder commits in its own mutation, and the parent query getOrder, which relays the Orders
 // context's get, answers the committed order as soon as the command has returned. The function log
-// from the command to that read shows that nothing but the two calls the client made ran.
+// identifies both client calls. Admin reads of the scheduled-function tables check that no job exists.
 type Response = FunctionReturnType<typeof api.ordering.placeOrder>;
 interface World {
   order?: OrderWorld;
@@ -37,9 +38,6 @@ interface World {
 }
 const orderId = "order-1";
 const lines = [line("sku-1", 2, 250), line("sku-2", 1, 40)];
-// A record a client caused: a call over HTTP, or a query or mutation over the socket. A scheduled
-// function, a cron or an action is a worker.
-const clientCallers = new Set(["HttpApi", "SyncWorker"]);
 const placeOrderIdentifier = "ordering:placeOrder";
 const getOrderIdentifier = "orderQueries:getOrder";
 bindExample(contract, (): World => ({}), {
@@ -97,8 +95,7 @@ bindExample(contract, (): World => ({}), {
         version: orderVersions[0],
       });
     },
-  // Every record in the function log from the command to the read: the command's own mutation and
-  // the read's query, both caused by the client.
+  // The log identifies the two client calls; the tables include delayed scheduled functions.
   "the number of workers, jobs or queues that ran is {workers}": async (
     world,
     { workers },
@@ -110,14 +107,7 @@ bindExample(contract, (): World => ({}), {
         entries.some((entry) => entry.identifier === placeOrderIdentifier) &&
         entries.some((entry) => entry.identifier === getOrderIdentifier),
     );
-    expect(
-      records.filter(
-        (entry) =>
-          entry.udfType === "Action" ||
-          entry.udfType === "HttpAction" ||
-          !clientCallers.has(entry.caller),
-      ),
-    ).toHaveLength(workers);
+    expect(await scheduledRows(backend)).toHaveLength(workers);
     expect(
       records.find((entry) => entry.identifier === placeOrderIdentifier),
     ).toMatchObject({ udfType: "Mutation", caller: "HttpApi", error: null });

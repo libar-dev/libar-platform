@@ -7,6 +7,7 @@ relations:
   refines: spec:context.context-component
   decidedBy: spec:decisions.d08-read-models-in-command
   constrainedBy:
+    - spec:facts.f20-pagination-checks-bytes-after-reading
     - spec:laws.law11-tenant-scope-named
     - spec:laws.law05-authorization-before-execution-and-disclosure
     - spec:facts.f11-components-have-no-ctx-auth

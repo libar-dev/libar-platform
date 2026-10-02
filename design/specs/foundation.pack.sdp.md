@@ -80,6 +80,14 @@ specs:
   - spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
   - spec:facts.f17-migrations-fits-generation-backfill
+  - spec:facts.f18-commit-timestamps.probe-8-parent-and-components
+  - spec:facts.f18-commit-timestamps
+  - spec:facts.f19-nested-calls-share-time-budgets.probe-11-component-calls
+  - spec:facts.f19-nested-calls-share-time-budgets.probe-9-nested-time
+  - spec:facts.f19-nested-calls-share-time-budgets
+  - spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-oversized-row
+  - spec:facts.f20-pagination-checks-bytes-after-reading
+  - spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-stream-budget
 modelRefs:
   - spec:platform.vocabulary
 ---
