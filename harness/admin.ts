@@ -4,6 +4,7 @@ import {
   ref,
 } from "@libar-dev/software-delivery-protocol";
 import { BaseConvexClient, ConvexHttpClient } from "convex/browser";
+import { makeFunctionReference } from "convex/server";
 import type { Value } from "convex/values";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -64,6 +65,15 @@ export interface AdminAccess {
     table: string,
     options?: { component?: string; pageSize?: number },
   ): Promise<Record<string, Value>[]>;
+  // One document inserted, patched or deleted, for a test that sets up a state no command makes.
+  writeTable(
+    table: string,
+    write:
+      | { insert: Record<string, Value> }
+      | { patch: string; fields: Record<string, Value> }
+      | { delete: string },
+    options?: { component?: string },
+  ): Promise<void>;
   logMark(): Promise<LogMark>;
   completionsSince(
     mark: LogMark,
@@ -267,6 +277,42 @@ export function createAdminAccess(
           );
       }
       return documents;
+    },
+    // The pinned backend's own dashboard mutations; the application registers no function for this.
+    async writeTable(table, write, options = {}) {
+      const scope: Record<string, Value> = {};
+      if (options.component !== undefined) {
+        const components = (await http.query(
+          makeFunctionReference<"query">("_system/frontend/components:list"),
+          {},
+        )) as { id: string; path: string }[];
+        const component = components.find(
+          (entry) => entry.path === options.component,
+        );
+        if (component === undefined)
+          throw new Error(`No component "${options.component}" is mounted`);
+        scope["componentId"] = component.id;
+      }
+      const [name, args]: [string, Record<string, Value>] =
+        "insert" in write
+          ? ["addDocument", { table, documents: [write.insert] }]
+          : "patch" in write
+            ? [
+                "patchDocumentsFields",
+                { table, ids: [write.patch], fields: write.fields },
+              ]
+            : [
+                "deleteDocuments",
+                { toDelete: [{ id: write.delete, tableName: table }] },
+              ];
+      const result = (await http.mutation(
+        makeFunctionReference<"mutation">(`_system/frontend/${name}`),
+        { ...args, ...scope },
+      )) as { success?: boolean } | null;
+      if (result?.success !== true)
+        throw new Error(
+          `Writing table "${table}" failed: ${redact(JSON.stringify(result), target.secrets)}`,
+        );
     },
     async logMark() {
       // The log's cursor is a time in milliseconds on this machine's clock. Round up, then wait

@@ -226,7 +226,8 @@ async function executeMeasured<S, C, E extends DomainEvent, R>(
       `Stream ${streamType}/${streamId} would be saved at ${bytes} bytes, above its budget of ${registration.mapping.budgetBytes}`,
     );
   if (loaded.exists) {
-    // The row load read, replaced by its document ID with no second read.
+    // The load read the row; a replace by its document ID is charged as one document read on
+    // the pinned backend.
     if (loaded.rowId === undefined)
       throw new Error(
         `Stream ${streamType}/${streamId} was loaded as existing without its row's document ID`,

@@ -18,15 +18,7 @@ import {
   tenantId,
   type ExperimentWorld,
 } from "./first-experiment-steps.js";
-import {
-  add,
-  patch,
-  remove,
-  stored,
-  submit,
-  transactionMetrics,
-  type OrderArgs,
-} from "./place-order-attribution.js";
+import { stored, submit, type OrderArgs } from "./place-order-attribution.js";
 
 const anchor = specTest({
   id: testAnchorId("test:application.first-experiment.place-order-attribution"),
@@ -204,11 +196,9 @@ test.each(comparisons)(
         break;
       case "no generation": {
         const rows = await stored(backend);
-        await remove(
-          backend,
-          "generations",
-          required(rows.generations[0]?._id, "generation id"),
-        );
+        await backend.admin.writeTable("generations", {
+          delete: String(required(rows.generations[0]?._id, "generation id")),
+        });
         break;
       }
       case "missing journal tail":
@@ -220,19 +210,19 @@ test.each(comparisons)(
           "stock event",
         );
         if (comparison.name === "journal tail ahead of its stream row") {
-          await patch(
-            backend,
+          await backend.admin.writeTable(
             "events",
-            required(event["_id"], "event id"),
-            { streamVersion: 2 },
-            "inventory",
+            {
+              patch: String(required(event["_id"], "event id")),
+              fields: { streamVersion: 2 },
+            },
+            { component: "inventory" },
           );
         } else {
-          await remove(
-            backend,
+          await backend.admin.writeTable(
             "events",
-            required(event["_id"], "event id"),
-            "inventory",
+            { delete: String(required(event["_id"], "event id")) },
+            { component: "inventory" },
           );
           if (comparison.name === "stock row at version zero without events") {
             const stream = required(
@@ -241,20 +231,21 @@ test.each(comparisons)(
               ),
               "stock stream",
             );
-            await patch(
-              backend,
+            await backend.admin.writeTable(
               "streams",
-              required(stream["_id"], "stream id"),
-              { streamVersion: 0 },
-              "inventory",
+              {
+                patch: String(required(stream["_id"], "stream id")),
+                fields: { streamVersion: 0 },
+              },
+              { component: "inventory" },
             );
           }
         }
         break;
       }
       case "existing summary row":
-        expect(
-          await add(backend, "orderSummaries", {
+        await backend.admin.writeTable("orderSummaries", {
+          insert: {
             tenantId,
             generation: 1,
             key: "order-1",
@@ -265,21 +256,17 @@ test.each(comparisons)(
             lineCount: 0,
             total: 0,
             placedAt: 0,
-          }),
-        ).toEqual({ success: true });
+          },
+        });
         break;
       case "building generation": {
         const rows = await stored(backend);
         const generation = { ...required(rows.generations[0], "generation") };
         delete generation["_id"];
         delete generation["_creationTime"];
-        expect(
-          await add(backend, "generations", {
-            ...generation,
-            generation: 2,
-            state: "building",
-          }),
-        ).toEqual({ success: true });
+        await backend.admin.writeTable("generations", {
+          insert: { ...generation, generation: 2, state: "building" },
+        });
         break;
       }
       case "authorized duplicate":
@@ -356,7 +343,5 @@ test.each(comparisons)(
         );
       }
     }
-    if (comparison.name === "healthy ten distinct stock items")
-      await transactionMetrics(backend);
   },
 );

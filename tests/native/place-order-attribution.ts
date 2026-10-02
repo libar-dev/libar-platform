@@ -1,12 +1,10 @@
-// Admin setup and observations for PlaceOrder cost comparisons on the production composition.
-// No function is registered by this fixture. Commands always use the production public entry.
+// Observations for PlaceOrder cost comparisons on the production composition. Setup goes through
+// admin access; every command goes through the production public entry.
 import {
   getFunctionName,
-  makeFunctionReference,
   type FunctionArgs,
   type FunctionReturnType,
 } from "convex/server";
-import { ConvexHttpClient } from "convex/browser";
 import { ConvexError, getConvexSize, type Value } from "convex/values";
 import { expect } from "vitest";
 import { api } from "../../example/convex/_generated/api.js";
@@ -65,82 +63,6 @@ export const rowBytes = (rows: Stored) =>
       values.map((row) => getConvexSize(row)),
     ]),
   );
-
-// System mutations use the mutation endpoint. The generic function endpoint resolves application modules.
-async function systemMutation(
-  backend: Backend,
-  name: string,
-  args: Record<string, Value>,
-  component?: string,
-) {
-  const client = new ConvexHttpClient(backend.url) as ConvexHttpClient & {
-    setAdminAuth(key: string): void;
-  };
-  client.setAdminAuth(backend.adminKey);
-  if (component !== undefined) {
-    const components = await client.query(
-      makeFunctionReference<
-        "query",
-        Record<string, never>,
-        { id: string; path: string }[]
-      >("_system/frontend/components:list"),
-      {},
-    );
-    args["componentId"] = required(
-      components.find((entry) => entry.path === component)?.id,
-      "component id",
-    );
-  }
-  return client.mutation(makeFunctionReference<"mutation">(name), args);
-}
-// These are the pinned backend's existing admin functions, not functions added to the application.
-export async function patch(
-  backend: Backend,
-  table: string,
-  id: Value,
-  fields: Record<string, Value>,
-  component?: string,
-) {
-  expect(
-    await systemMutation(
-      backend,
-      "_system/frontend/patchDocumentsFields",
-      {
-        table,
-        ids: [id],
-        fields,
-      },
-      component,
-    ),
-  ).toEqual({ success: true });
-}
-export async function remove(
-  backend: Backend,
-  table: string,
-  id: Value,
-  component?: string,
-) {
-  expect(
-    await systemMutation(
-      backend,
-      "_system/frontend/deleteDocuments",
-      {
-        toDelete: [{ id, tableName: table }],
-      },
-      component,
-    ),
-  ).toEqual({ success: true });
-}
-export async function add(
-  backend: Backend,
-  table: string,
-  document: Record<string, Value>,
-) {
-  return systemMutation(backend, "_system/frontend/addDocument", {
-    table,
-    documents: [document],
-  });
-}
 
 export async function submit(
   world: ExperimentWorld,
@@ -215,47 +137,4 @@ export async function submit(
     expect(after).toEqual(before);
   } else expect(own.error).toBeNull();
   return { before, after, usage, outcome, error, response };
-}
-
-// The SDK's admin query endpoint evaluates one read-only query without deploying a function.
-export async function transactionMetrics(backend: Backend) {
-  const response = await fetch(`${backend.url}/api/run_test_function`, {
-    method: "POST",
-    headers: {
-      Authorization: `Convex ${backend.adminKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      adminKey: backend.adminKey,
-      args: {},
-      format: "convex_encoded_json",
-      bundle: {
-        path: "testQuery.js",
-        source: `import { query } from "convex:/_system/repl/wrappers.js";
-export default query({ handler: async (ctx) => {
-  const before = await ctx.meta.getTransactionMetrics();
-  await ctx.db.query("receipts").withIndex("by_key", q => q.eq("tenantId", "absent")).unique();
-  const absent = await ctx.meta.getTransactionMetrics();
-  await ctx.db.query("grants").collect();
-  const grants = await ctx.meta.getTransactionMetrics();
-  return { before, absent, grants };
-}});`,
-      },
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-  expect(response.ok).toBe(true);
-  const result = (await response.json()) as {
-    status: string;
-    value: {
-      before: { documentsRead: { used: number } };
-      absent: { documentsRead: { used: number } };
-      grants: { documentsRead: { used: number } };
-    };
-  };
-  measure("adminQueryMetrics", JSON.parse(JSON.stringify(result)) as JsonValue);
-  expect(result.status).toBe("success");
-  expect(result.value.before.documentsRead.used).toBe(0);
-  expect(result.value.absent.documentsRead.used).toBe(0);
-  expect(result.value.grants.documentsRead.used).toBe(4);
 }
