@@ -136,7 +136,7 @@ Eighteen more findings are `partially-fixed`, each waiting for its slice. Remove
 
 First, look at CI on `main` after the push of 2026-10-02: it is the first run on everything S2 and the platform review unit built, the Linux native job and the acceptance step included. The commits that copy the native run records of `e76e587` and `645130f` into `evidence/` are still not made.
 
-Then `slice` S3 or S4, the owner's choice. S3 measures, and it needs item 12 of the owner queue first: the maximum order size and the latency and throughput targets. S4 can open without an owner decision, and its paper decisions are listed below.
+Then `slice` S3 or S4, the owner's choice. S3 measures, and it needs `OD-046` of the register first: the maximum order size and the latency and throughput targets. S4 can open without an owner decision, and its paper decisions are listed below.
 
 How S2 was run, for the next slice. Tactical decisions 25 to 27 hold the rules. Two Fable designers with disjoint subjects took about twenty minutes. One workflow run of thirteen Opus agents then wrote the Specs, built four packages in sequence, bound the scenarios in four worktrees and integrated, in about an hour and a half. The main thread stopped and resumed that run once, at a seam between two packages, to add corrections: finished agents came back from the cache. The scripts, the rulings and the reports are in the S2 folder the project notes name.
 
@@ -207,62 +207,28 @@ The owner accepted the first nine on the session's recommendation. The session t
 
 ## Owner queue
 
-Platform decisions. The first item is new: what the platform review unit rests on.
+Every open decision is a row of `design/decisions/register.json`, and `python3 design/tools/decisions.py` filters it: `--owner` lists what waits for the owner, forks first, `--owner --before S4` what the owner must decide before S4, `--decided --by advisor --since <date>` what agents decided. The items that used to stand here are rows, each with its source and line; the register at the close:
 
-000. From the platform review unit, each provisional reading the code now rests on:
-    - A conflict answer and an unsupported-version answer carry no details. Their two codes still tell a caller whether the stored receipt's contract version is the declaration's.
-    - A rejection candidate is a `ConvexError` whose data is an object, not a list, with an own `code` and no `kind`, or with `kind` equal to `"rejection"`. One that does not fit its shape becomes a plain error. `reject` takes platform codes only.
-    - The byte bounds: 256 for the text fields a caller sets and for a stream ID, 512 for an actor's ID, 4,096 for the envelope beside the payload, 16,384 for a rejection's details. The fold bound of 500 events follows from them and nothing built reads it yet.
-    - E-17, the acceptance check: a pass of the first experiment is the check's answer over one run's record, with the required scenarios generated from the graph.
-    - Whether the experiment's pass includes Sc ALL-1. Taken: no, the 23 rows of Layers 0 to 2.
-    - Whether Sc L2-9 needs an example that runs commands at once on the production composition. Until it is ruled, the check shows the row passed on an example that binds no concurrency claim.
-    - The doc says the experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend, and the acceptance contract assigns Layer 0 to the pure test tier and Sc L2-4 to the compiled tier.
-    - Language. `CONTEXT.md` has no word for the acceptance check, a verifier or the build tier, "scenario" means both a row and a case, and the tiers have three sets of names (`AGENTS.md`, the acceptance contract, the test projects). "Run record" names both the harness's record and a restore run's row. The new example's step keeps `otherPrincipalId` beside the existing `principalId`.
-    - Sharpen the first-activation question already in item 00. Decide whether activation requires a proved empty source or whether installation over existing history always goes through rebuild. The acceptance case installs a new read model after subjects already have history: the native backend must either refuse empty activation before changing anything or make the ruled rebuild procedure cover those old subjects before serving the generation.
-    - Sharpen the `getOrder` question already in item 00. Decide whether an order-specific grant is intended to admit the parent query. A direct `authorizeQuery` test is not the public-entry proof: the native acceptance case uses the actual endpoint with a reader granted only that order, a forbidden second order and a tenant-wide positive control.
+```
+total: 150
+status: unsorted=0, sorted=106, waiting=27, decided=2, folded=15
+class: tactical=3, delegated=85, owner=47, null=15
+advisor: convex=34, domain=43, operator=34, product=39
+```
 
-00. From S2, each provisional reading the S2 code now rests on:
-    - The production composition as `example/`, with `example/package.json` a symbolic link to the root file.
-    - The first activation: one explicit transition, run as an internal mutation with admin access, legal only when the read model has no generation row. Adding a read model to a command on a live deployment fails that command from the deploy until an operator acts, and neither `activate` nor `startGeneration` can run before the deploy.
-    - How two projection versions are written at once. S2 built no version check.
-    - No command registry. Nothing now checks that two declarations do not share a `name`, and receipt keys use it.
-    - A context query takes `tenantId` and no `scope`; no client hook crosses the component boundary, although the Convex components page recommends the helper hook; a read-model list keeps the built-in `paginate`, whose row cap is advice on a pinned page.
-    - A query's refusal is `RejectionData` with the query's name in `commandType`.
-    - `getOrder` on the production composition authorizes with no subject, as `queries.sdp.md:85` pins it, so a reader granted one order only is refused. The fixture relay had the same omission and was fixed; the production query follows its Spec and waits for the ruling.
-    - `limitReturnBytesPerCall` at 8 MiB, which can fail a call before the write bound does, and whose stated reason does not match F13. `limitIdLength` at 256.
-    - The order summary without `allocated`; `unitPrice` on an order line in whole minor units.
-    - `projection-contract.sdp.md`: "a newer row is never overwritten" read as the rule of the backfill path only.
-    - Sc L2-9: the function-list observation is not built, `installedLayers` of the production composition is unpinned, and no native observation shows that concurrency matches a release.
-    - Language. `CONTEXT.md` has no word for a parent's read or a context's read (the Specs say parent query and context query), none for the first activation, and none for the name of a function that refused. "Rejection" is defined there as a command's outcome and the query Specs use it for a query. "Projection" lost its per-entity name to the read model. The fixture names `yard`, `copy` and `filing` are not in its list.
-0. From S1, each a provisional reading that the code now rests on:
-    - `ready` on the Specs S1 built and passed. Recipe 2 lists them as built and not `ready`.
-    - Who creates a tenant's first grant. Taken: the library registers no grant function; an operator runs an internal mutation with admin access.
-    - The tenant scope as the one `tenantId` argument, with no separate `scope`.
-    - `ctx.auth` and the environment in a component as the design's rule and not a Convex fact (F11). D10 and D11 still carry the doc's sentence.
-    - The request key stays optional on the public entry, so a caller of `ConvexHttpClient` that retries must supply one.
-    - The language. `CONTEXT.md` at the repository root is its first version, written on 2026-10-02, and `AGENTS.md` points every reader at it. Six terms wait for a ruling, each with the reading the file took: operation against context operation, command against stream command, subject against entity, actor against principal, receipt and generation (which the code now names), duplicate against replay. And whether `CONTEXT.md` or `spec:platform.vocabulary` leads. Nothing in the code or the Specs is renamed yet.
-    - `fixture/convex/nonUiCaller.ts`, a fixture action that stands for trusted server code and lets an ordinary client reach an internal entry. It must never leave the fixture composition.
+Of the 47 `owner` rows, these block S3, S4 or S5, in the order the units need them. No fork is written yet: an advisor writes one when the owner takes a row up.
 
-1. `ready` on `spec:platform.native-harness`. It is built, its tests pass, and recipe 2 lists it as waiting.
-2. E-13, both halves: the fixture issuer for tests, and what it means for production's `auth.config.ts`, which must then be a `customJwt` provider whose trust root the deployment's environment names.
-3. E-15: the harness rules, the reading of Sc L2-9 as the scenarios routed to the production composition, and evidence records kept in the repository.
-4. E-16: how a probe states its expectation and records a different result.
-5. F11: documented as unavailable in a component, observed as available. And D6 after Probe 1: whether a caller of `ConvexHttpClient` must supply a request key.
-6. The doc disagrees with what the probes showed in eleven places. The list is in the S0 reports the project notes name (the facts-pass scout, section 3). Only the owner edits the doc.
-7. Probe 3's quota half needs a hosted deployment. OQ1 has its first number: a component call costs 1.5 to 2.4 ms more than a helper call on a local backend, across three runs on one machine.
-8. The 140 open questions (recipe 20), the twelve ambiguities of `PLAN.md` 11 and three product decisions listed in `README.md`.
-9. Probes 6 and 7 have not run. They sit in S4 and S5.
-10. Rulings the round-3 findings ask for:
-    - D6 and the local wrapper: whether a derived command issued inside the reaction wrapper needs a receipt (`r3-fidelity-derived-command-receipt-question-not-on-a-spec`).
-    - D3 and a history-reading migration (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
-    - Restore policy: whether a failed check keeps every writer out with no override, and how often the drill runs (`r3-fidelity-restore-policies-cited-to-the-doc`).
-    - The `[extension]` marker: `PLAN.md` 6.5 asks for it on every extension bullet and about a fifth carry it (`r3-fidelity-extension-marker-applied-to-a-fifth-of-citations`).
-    - D2's premise: Convex documents a commit timestamp that increases in commit order (`r3-convex-commit-timestamp-not-weighed`).
-11. What code cannot choose, each at its slice: the grant bootstrap trust model, deployment-wide operator authority, tenant creation during a scan, the acceptable length of a write pause, history-deletion semantics, the restore override policy.
-12. The maximum order size and the latency and throughput targets, before S3 benchmarks.
-13. `AGENTS.md` names two files by their path on the owner's machine, in a public repository. A reviewer flagged it. The section is the owner's.
-14. A license. The repository is public and has no license file.
-15. Four proposals on how sessions are run, in the orchestration guide under "Proposals not yet ruled".
+- `OD-046`, S3, the product advisor: The maximum order size and the latency and throughput targets, before S3 benchmarks.
+- `OD-064`, S3, the convex advisor: OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum o
+- `OD-123`, S3, the domain advisor: OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions
+- `OD-025`, S4, the operator advisor: Who creates a tenant's first grant.
+- `OD-068`, S4, the domain advisor: Extension E-8: the doc names a generation registry, a marker and a gate without their shapes, and says to keep the old g
+- `OD-069`, S4, the domain advisor: Extension E-8, reach of a generation: the doc says nothing about tenants and rebuild; the option taken here is one gener
+- `OD-041`, S5, the domain advisor: D3 and a history-reading migration (`r3-fidelity-migrate-on-load-replays-history-against-d3`).
+- `OD-042`, S5, the operator advisor: Restore policy: whether a failed check keeps every writer out with no override, and how often the drill runs (`r3-fideli
+- `OD-114`, S5, the operator advisor: Probe 7 pending, the do-nothing check at activation: a plain scheduled mutation plus a scan of `_scheduled_functions` fo
+
+The 85 `delegated` rows carry 32 leans in full, whose facts a `gpt-6.1-sol` check read; `checkedBy` on a row says it held. A checked lean is applied to the Specs as a ruling by a later unit, one Spec family at a time, and the row becomes `decided`. The rest carry a one-line lean or wait for a probe, a measurement or a build (`--waiting`).
 
 ## Leads
 
