@@ -5,15 +5,19 @@ import {
 } from "@libar-dev/software-delivery-protocol";
 import { getFunctionAddress } from "convex/server";
 import { expect, test } from "vitest";
-import { placeOrderDeclaration } from "../../example/convex/ordering.js";
+import {
+  cancelOrderDeclaration,
+  placeOrderDeclaration,
+} from "../../example/convex/ordering.js";
 import { receiveStockDeclaration } from "../../example/convex/receiving.js";
 import type { MutationCtx } from "../../src/command/index.js";
 import type { OperationRef, StreamDto } from "../../src/context/index.js";
 import type { StreamVersion } from "../../src/kernel/index.js";
-// Binds PlaceOrder and ReceiveStock, the production composition's use cases, to their Spec.
+// Binds PlaceOrder, CancelOrder and ReceiveStock, the production composition's use cases, to their Spec.
 const anchor = codeAnchor({
   id: codeAnchorId("impl:application.parent-use-cases"),
-  label: "PlaceOrder over Orders and then Inventory, and ReceiveStock",
+  label:
+    "PlaceOrder and CancelOrder over Orders and then Inventory, and ReceiveStock",
   satisfies: ref("spec:application.parent-use-cases"),
 });
 void anchor;
@@ -54,6 +58,8 @@ function countingCtx(answers: Record<string, unknown>) {
 const place = "_reference/childComponent/orders/operations/place";
 const allocate = "_reference/childComponent/inventory/operations/allocate";
 const receive = "_reference/childComponent/inventory/operations/receive";
+const cancel = "_reference/childComponent/orders/operations/cancel";
+const release = "_reference/childComponent/inventory/operations/release";
 const actor = { kind: "human", id: "issuer|user-1" } as const;
 const operation: OperationRef = {
   operationId: "op-1",
@@ -224,4 +230,129 @@ test("pure: PlaceOrder and ReceiveStock declare what they write, the order summa
     bounds: { maxItems: 100 },
   });
   expect(receiveStockDeclaration.readModels).toBeUndefined();
+});
+
+// The lines Orders answers for the cancelled order: four lines over three stock items, with prices.
+const cancelledLines = [0, 1, 2, 0].map((i) => ({
+  stockItemId: `sku-${i}`,
+  quantity: 2 * i + 1,
+  unitPrice: 25,
+}));
+const released = [
+  { stockItemId: "sku-0", quantity: 2 },
+  { stockItemId: "sku-1", quantity: 3 },
+  { stockItemId: "sku-2", quantity: 5 },
+];
+function cancelOrderAnswers(
+  kinds: { orders?: string; inventory?: string } = {},
+) {
+  return {
+    [cancel]: {
+      kind: kinds.orders ?? "applied",
+      result: { orders: [{ orderId: "order-1", lines: cancelledLines }] },
+      versions: [orderVersion],
+      streams: [entry(orderVersion)],
+    },
+    [release]: {
+      kind: kinds.inventory ?? "applied",
+      result: { lines: released },
+      versions: stockVersions,
+      streams: stockVersions.map(entry),
+    },
+  };
+}
+const runCancel = (ctx: MutationCtx) =>
+  cancelOrderDeclaration.executor(ctx, {
+    tenantId: "t-1",
+    actor,
+    operation,
+    input: { orderId: "order-1" },
+  });
+
+test("pure: CancelOrder's executor calls Orders' cancel once and then Inventory's release once with the lines Orders returned, and returns both calls' versions and streams in that order", async () => {
+  const { ctx, calls } = countingCtx(cancelOrderAnswers());
+  const executed = await runCancel(ctx);
+  expect(calls.map((call) => call.reference)).toEqual([cancel, release]);
+  expect(calls[0]?.args).toEqual({
+    tenantId: "t-1",
+    actor,
+    operation,
+    input: { orders: [{ orderId: "order-1" }] },
+  });
+  // Inventory is given the stock item and quantity of each line Orders returned, without its price:
+  // the quantities come from the cancelled order, not from the caller.
+  expect(calls[1]?.args).toEqual({
+    tenantId: "t-1",
+    actor,
+    operation,
+    input: {
+      orderId: "order-1",
+      lines: cancelledLines.map(({ stockItemId, quantity }) => ({
+        stockItemId,
+        quantity,
+      })),
+    },
+  });
+  expect(executed).toEqual({
+    kind: "applied",
+    result: { orderId: "order-1", released },
+    versions: [orderVersion, ...stockVersions],
+    streams: [entry(orderVersion), ...stockVersions.map(entry)],
+  });
+});
+
+test("pure: CancelOrder's executor fails when either context answers a business failure, which CancelOrder does not declare", async () => {
+  for (const kinds of [
+    { orders: "businessFailure" },
+    { inventory: "businessFailure" },
+  ])
+    await expect(
+      runCancel(countingCtx(cancelOrderAnswers(kinds)).ctx),
+    ).rejects.toThrow(
+      `CancelOrder received a ${kinds.orders ?? "applied"} from Orders and a ${kinds.inventory ?? "applied"} from Inventory`,
+    );
+});
+
+test("pure: CancelOrder's executor fails when Orders answers other than one order, before it calls Inventory", async () => {
+  for (const orders of [
+    [],
+    [
+      { orderId: "order-1", lines: cancelledLines },
+      { orderId: "order-2", lines: cancelledLines },
+    ],
+  ]) {
+    const answers = cancelOrderAnswers();
+    (answers[cancel] as { result: { orders: unknown[] } }).result.orders =
+      orders;
+    const { ctx, calls } = countingCtx(answers);
+    await expect(runCancel(ctx)).rejects.toThrow(
+      `Orders answered ${orders.length} orders for one`,
+    );
+    expect(calls.map((call) => call.reference)).toEqual([cancel]);
+  }
+});
+
+test("pure: CancelOrder declares its permission, what it writes, the order summary, its three codes and no bounds", () => {
+  expect(cancelOrderDeclaration).toMatchObject({
+    name: "CancelOrder",
+    contractVersion: 1,
+    permission: { permission: "orders.cancel" },
+    writes: [
+      { contextId: "orders", streamType: "order" },
+      { contextId: "inventory", streamType: "stockItem" },
+    ],
+    readModels: [
+      {
+        readModel: { name: "orderSummary" },
+        source: { contextId: "orders", streamType: "order" },
+      },
+    ],
+    rejections: [
+      "orderNotFound",
+      "orderAlreadyCancelled",
+      "insufficientAllocation",
+    ],
+  });
+  expect(cancelOrderDeclaration.bounds).toBeUndefined();
+  expect(cancelOrderDeclaration.refine).toBeUndefined();
 });

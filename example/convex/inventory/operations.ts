@@ -80,3 +80,24 @@ export const allocate = defineOperation<
   combine: (results) => ({ lines: quantitiesOf(results) }),
   maxStreams,
 });
+const releaseInput = { orderId: v.string(), lines: quantities };
+const releaseResult = v.object({ lines: quantities });
+// Releases each stock item's summed quantity from the quantity allocated. The quantities are the
+// cancelled order's own lines, so the stock item keeps no allocation per order.
+export const release = defineOperation<
+  ObjectType<typeof releaseInput>,
+  Infer<typeof releaseResult>
+>(journal, {
+  name: "release",
+  streams: [stockItemStream],
+  input: releaseInput,
+  returns: releaseResult,
+  plan: ({ orderId, lines }) =>
+    plans(lines, (quantity) => ({
+      commandType: "release",
+      orderId,
+      quantity,
+    })),
+  combine: (results) => ({ lines: quantitiesOf(results) }),
+  maxStreams,
+});

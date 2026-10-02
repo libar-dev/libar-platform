@@ -7,7 +7,10 @@ import {
   components,
   internal,
 } from "../../example/convex/_generated/api.js";
-import { placeOrderPermission } from "../../example/convex/ordering.js";
+import {
+  cancelOrderPermission,
+  placeOrderPermission,
+} from "../../example/convex/ordering.js";
 import { orderSummary } from "../../example/convex/orderSummary.js";
 import { readOrdersPermission } from "../../example/convex/readModels.js";
 import {
@@ -45,6 +48,7 @@ async function caller(
 }
 const everything = [
   placeOrderPermission,
+  cancelOrderPermission,
   receiveStockPermission,
   readOrdersPermission,
   "inventory.read",
@@ -467,5 +471,256 @@ test(
       }),
     ).toBeNull();
     expect(await receipts(t)).toEqual([]);
+  },
+);
+
+// Stock of 5 on sku-1, and order-1 placed for 3 of them over two lines, by a caller with every grant.
+async function placedOrder(t: App) {
+  await activate(t);
+  const user = await caller(t, "user-1", everything);
+  await user.mutation(api.receiving.receiveStock, {
+    tenantId: "t-1",
+    input: { items: [{ stockItemId: "sku-1", quantity: 5 }] },
+  });
+  await user.mutation(api.ordering.placeOrder, {
+    tenantId: "t-1",
+    requestKey: "k-place",
+    input: {
+      orderId: "order-1",
+      lines: [line("sku-1", 2, 250), line("sku-1", 1, 999)],
+    },
+  });
+  return user;
+}
+const stockItem = (t: App) =>
+  t.query(components.inventory.queries.stockItem.get, {
+    tenantId: "t-1",
+    streamId: "sku-1",
+  });
+const cancelCall = (requestKey: string, orderId = "order-1") => ({
+  tenantId: "t-1",
+  requestKey,
+  input: { orderId },
+});
+
+test(
+  name(
+    "PlaceOrder then CancelOrder: the order is cancelled, its stock item's totals are back to what they were, and its summary row says cancelled, in one commit",
+  ),
+  async () => {
+    const t = productionTest();
+    const user = await placedOrder(t);
+    expect(await stockItem(t)).toMatchObject({ onHand: 5, allocated: 3 });
+    const response = await user.mutation(
+      api.ordering.cancelOrder,
+      cancelCall("k-1"),
+    );
+    const orderVersion = {
+      tenantId: "t-1",
+      contextId: "orders",
+      streamType: "order",
+      streamId: "order-1",
+      version: 2,
+    };
+    expect(response).toMatchObject({
+      kind: "applied",
+      replayed: false,
+      result: {
+        orderId: "order-1",
+        released: [{ stockItemId: "sku-1", quantity: 3 }],
+      },
+      versions: [
+        orderVersion,
+        {
+          ...orderVersion,
+          contextId: "inventory",
+          streamType: "stockItem",
+          streamId: "sku-1",
+          version: 3,
+        },
+      ],
+    });
+    expect(await stockItem(t)).toMatchObject({
+      onHand: 5,
+      allocated: 0,
+      version: { version: 3 },
+    });
+    const order = await user.query(api.orderQueries.getOrder, {
+      tenantId: "t-1",
+      orderId: "order-1",
+    });
+    expect(order).toMatchObject({
+      orderId: "order-1",
+      status: "cancelled",
+      lines: [line("sku-1", 2, 250), line("sku-1", 1, 999)],
+      total: 1499,
+      version: orderVersion,
+    });
+    expect(await summaries(t)).toMatchObject([
+      {
+        key: "order-1",
+        generation: 1,
+        sourceVersions: [orderVersion],
+        status: "cancelled",
+        lineCount: 2,
+        total: 1499,
+        placedAt: order?.placedAt,
+      },
+    ]);
+    const list = (status: "placed" | "cancelled") =>
+      user.query(api.readModels.listOrderSummaries, {
+        tenantId: "t-1",
+        status,
+        paginationOpts: { cursor: null, numItems: 10 },
+      });
+    expect((await list("cancelled")).page).toMatchObject([
+      { orderId: "order-1", status: "cancelled" },
+    ]);
+    expect((await list("placed")).page).toEqual([]);
+    expect(
+      (await receipts(t)).filter((row) => row.requestKey === "k-1"),
+    ).toMatchObject([{ operationId: response.operationId }]);
+  },
+);
+
+test(
+  name(
+    "a second CancelOrder under a new key is rejected orderAlreadyCancelled, the same key is answered from its receipt, and an order never placed is rejected orderNotFound, and none of them stores anything",
+  ),
+  async () => {
+    const t = productionTest();
+    const user = await placedOrder(t);
+    const first = await user.mutation(
+      api.ordering.cancelOrder,
+      cancelCall("k-1"),
+    );
+    const before = {
+      stock: await stockItem(t),
+      summaries: await summaries(t),
+      receipts: await receipts(t),
+    };
+    const after = async () => ({
+      stock: await stockItem(t),
+      summaries: await summaries(t),
+      receipts: await receipts(t),
+    });
+    expect(
+      await errorData(
+        user.mutation(api.ordering.cancelOrder, cancelCall("k-2")),
+      ),
+    ).toEqual({
+      kind: "rejection",
+      code: "orderAlreadyCancelled",
+      commandType: "CancelOrder",
+      message: "The order is already cancelled",
+    });
+    expect(await after()).toEqual(before);
+    expect(
+      await user.mutation(api.ordering.cancelOrder, cancelCall("k-1")),
+    ).toEqual({
+      kind: "applied",
+      result: null,
+      operationId: first.operationId,
+      affected: first.affected,
+      versions: first.versions,
+      replayed: true,
+    });
+    expect(await after()).toEqual(before);
+    expect(
+      await errorData(
+        user.mutation(api.ordering.cancelOrder, cancelCall("k-3", "order-2")),
+      ),
+    ).toEqual({
+      kind: "rejection",
+      code: "orderNotFound",
+      commandType: "CancelOrder",
+      message: "The order does not exist",
+    });
+    expect(
+      await user.query(api.orderQueries.getOrder, {
+        tenantId: "t-1",
+        orderId: "order-2",
+      }),
+    ).toBeNull();
+    expect(await after()).toEqual(before);
+  },
+);
+
+test(
+  name(
+    "CancelOrder after Inventory released the order's units alone is rejected insufficientAllocation after Orders cancelled, and nothing of it is stored",
+  ),
+  async () => {
+    const t = productionTest();
+    const user = await placedOrder(t);
+    // No command releases stock without cancelling its order: the setup calls the context's own
+    // operation, so the stock item's state stays the fold of its events.
+    await t.mutation(components.inventory.operations.release, {
+      tenantId: "t-1",
+      actor: operator,
+      operation: {
+        operationId: "setup-release",
+        causedBy: { kind: "command", commandType: "Setup" },
+      },
+      input: {
+        orderId: "order-1",
+        lines: [{ stockItemId: "sku-1", quantity: 3 }],
+      },
+    });
+    const stock = await stockItem(t);
+    expect(stock).toMatchObject({ allocated: 0, version: { version: 3 } });
+    expect(
+      await errorData(
+        user.mutation(api.ordering.cancelOrder, cancelCall("k-1")),
+      ),
+    ).toEqual({
+      kind: "rejection",
+      code: "insufficientAllocation",
+      commandType: "CancelOrder",
+      message: "Cannot release 3 when 0 are allocated",
+      details: { requested: 3, allocated: 0 },
+    });
+    expect(
+      await user.query(api.orderQueries.getOrder, {
+        tenantId: "t-1",
+        orderId: "order-1",
+      }),
+    ).toMatchObject({ status: "placed", version: { version: 1 } });
+    expect(await stockItem(t)).toEqual(stock);
+    expect(await summaries(t)).toMatchObject([{ status: "placed" }]);
+    expect(
+      (await receipts(t)).filter((row) => row.requestKey === "k-1"),
+    ).toEqual([]);
+  },
+);
+
+test(
+  name(
+    "CancelOrder refuses a caller who holds every other grant but orders.cancel, before it reads, and stores nothing",
+  ),
+  async () => {
+    const t = productionTest();
+    await placedOrder(t);
+    const other = await caller(
+      t,
+      "user-2",
+      everything.filter((permission) => permission !== cancelOrderPermission),
+    );
+    expect(
+      await errorData(
+        other.mutation(api.ordering.cancelOrder, cancelCall("k-1")),
+      ),
+    ).toEqual({
+      kind: "rejection",
+      code: "forbidden",
+      commandType: "CancelOrder",
+      message: "The caller may not run CancelOrder in this tenant",
+      details: { reason: "no_grant" },
+    });
+    expect(await stockItem(t)).toMatchObject({ allocated: 3 });
+    expect(await summaries(t)).toMatchObject([{ status: "placed" }]);
+    expect(
+      (await receipts(t)).filter((row) => row.requestKey === "k-1"),
+    ).toEqual([]);
   },
 );

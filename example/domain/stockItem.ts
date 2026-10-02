@@ -1,5 +1,6 @@
 // The Inventory context's stock item stream: the quantity on hand and the quantity allocated to
-// orders. The quantity available is the first less the second, and an allocation never passes it.
+// orders, two totals and nothing per order. The quantity available is the first less the second, an
+// allocation never passes it, and a release never passes the quantity allocated.
 import type {
   DecideResult,
   Decider,
@@ -10,16 +11,20 @@ import type {
 export type StockItemState = { onHand: number; allocated: number };
 export type StockItemCommand =
   | { commandType: "receive"; quantity: number }
-  | { commandType: "allocate"; orderId: string; quantity: number };
+  | { commandType: "allocate"; orderId: string; quantity: number }
+  | { commandType: "release"; orderId: string; quantity: number };
 export type StockItemEvent =
   | DomainEvent<"StockReceived", { quantity: number }>
-  | DomainEvent<"StockAllocated", { orderId: string; quantity: number }>;
-// The quantity the command received or allocated.
+  | DomainEvent<"StockAllocated", { orderId: string; quantity: number }>
+  | DomainEvent<"AllocationReleased", { orderId: string; quantity: number }>;
+// The quantity the command received, allocated or released.
 export type StockItemResult = { quantity: number };
 export const stockItemRejectionCodes = {
   // allocate of more than the quantity available.
   insufficientStock: "insufficientStock",
-  // receive or allocate with a quantity that is not a positive whole number.
+  // release of more than the quantity allocated.
+  insufficientAllocation: "insufficientAllocation",
+  // receive, allocate or release with a quantity that is not a positive whole number.
   invalidQuantity: "invalidQuantity",
   // receive that would take the quantity on hand past the largest safe whole number.
   stockLimitExceeded: "stockLimitExceeded",
@@ -35,7 +40,8 @@ function reject(
 ): DecideResult<StockItemEvent, StockItemResult> {
   return { kind: "rejection", rejection };
 }
-// A stock item with no stream decides against initial(), so an allocation of one is short of stock.
+// A stock item with no stream decides against initial(), so an allocation of one is short of stock and
+// a release of one is above the quantity allocated.
 function decide(
   state: StockItemState,
   command: StockItemCommand,
@@ -60,6 +66,26 @@ function decide(
       events: [
         {
           eventType: "StockAllocated",
+          eventSchemaVersion,
+          payload: { orderId: command.orderId, quantity },
+          occurredAt: context.now,
+        },
+      ],
+      result: { quantity },
+    };
+  }
+  if (command.commandType === "release") {
+    if (quantity > state.allocated)
+      return reject({
+        code: stockItemRejectionCodes.insufficientAllocation,
+        message: `Cannot release ${quantity} when ${state.allocated} are allocated`,
+        details: { requested: quantity, allocated: state.allocated },
+      });
+    return {
+      kind: "applied",
+      events: [
+        {
+          eventType: "AllocationReleased",
           eventSchemaVersion,
           payload: { orderId: command.orderId, quantity },
           occurredAt: context.now,
@@ -93,6 +119,8 @@ function evolve(state: StockItemState, event: StockItemEvent): StockItemState {
       return { ...state, onHand: state.onHand + event.payload.quantity };
     case "StockAllocated":
       return { ...state, allocated: state.allocated + event.payload.quantity };
+    case "AllocationReleased":
+      return { ...state, allocated: state.allocated - event.payload.quantity };
   }
 }
 export const stockItemDecider: Decider<

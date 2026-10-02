@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-202 specs · 5 packs · 101 anchors → 308 nodes · 1097 edges (0 errors, 0 warnings)
+208 specs · 5 packs · 107 anchors → 320 nodes · 1123 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -222,7 +222,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 | E-43 | [`operations.baseline-operations`](specs/operations/baseline-operations.sdp.md) | The `auditRecords` table that fails closed; a 4 KiB diagnostic record through a sink that never throws; the `personalData` reference table |
 | E-44 | [`application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | `BusinessFailurePolicy` (`carry` or `reject`) per context call, applied in the executor body through the pinned helper `carryOrReject` |
 | E-45 | [`application.read-models`](specs/application/read-models.sdp.md) | At most 8 component reads per parent query and 4 read-model rows written per command, counted as the rows step 9 inserts, replaces or deletes and checked after each `streams` entry is applied, above which step 9 throws a plain error |
-| E-46 | [`application.first-experiment`](specs/application/first-experiment.sdp.md), [`application.orders-inventory-example`](specs/application/orders-inventory-example.sdp.md) | `CancelOrder` as the second lifecycle command, the order summary as the essential read model, a provisional maximum of 100 lines; `ReceiveStock` as the command that creates stock, the only way a stock item comes to exist; a unit price in whole minor units on each order line; `insufficientStock` as the rejection for short stock; a 16 KiB budget on the stock item stream and the default on the order stream; `PlaceOrder` calls Orders first; the order allocation history view that Sc L2-6 builds |
+| E-46 | [`application.first-experiment`](specs/application/first-experiment.sdp.md), [`application.orders-inventory-example`](specs/application/orders-inventory-example.sdp.md) | `CancelOrder` as the second lifecycle command, the order summary as the essential read model, a provisional maximum of 100 lines; `ReceiveStock` as the command that creates stock, the only way a stock item comes to exist; a unit price in whole minor units on each order line; `insufficientStock` as the rejection for short stock; a 16 KiB budget on the stock item stream and the default on the order stream; `PlaceOrder` and `CancelOrder` call Orders first; the stock item keeps totals only and `CancelOrder` releases the cancelled order's own lines; `orderNotFound`, `orderAlreadyCancelled` and `insufficientAllocation` as `CancelOrder`'s rejections; the order allocation history view that Sc L2-6 builds |
 | E-47 | [`application.first-experiment`](specs/application/first-experiment.sdp.md) | The `Measurement` record, one per measured run, and how each count is captured: commits from the backend's function log, documents and bytes from the `usageStats` of the command's top-level completion record, the calls per context from a pure test of the use case's executor because the log holds no record of a component call inside a mutation, and a count the backend does not expose recorded as a gap; the documents one `PlaceOrder` reads, expected near N + 6 and counted 3N + 5 on the pinned backend, left for the measurement run to explain |
 | E-50 | [`obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | The module is a parent-side library plus two parent tables with a static handler registry, not a component |
 | E-51 | [`obligations.lifecycle-transitions`](specs/obligations/lifecycle-transitions.sdp.md), [`obligations.local-reaction-wrapper`](specs/obligations/local-reaction-wrapper.sdp.md), [`effects.external-effects`](specs/effects/external-effects.sdp.md) | A body's business failure settles `succeeded` with event evidence; a thrown rejection or a declined report settles `cancelled` with `businessRejection` evidence; backoff 1 s times 2 capped at 1 h; 8 attempts by default; a transient `writePaused` or `capacity` refusal defers the same attempt after `retryAfterMs` or 60 s without counting it |
@@ -318,6 +318,19 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap` | Probe 5: a parent list's page outgrows its row cap |
 
 Package A therefore has 79 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
+
+The example domain's second lifecycle command added six examples that verify no doc row, each a child of `spec:application.orders-inventory-example` under E-46:
+
+| Sc | Added example | Reason |
+|---|---|---|
+| none | `spec:application.orders-inventory-example.cancel-placed-order` | verifies that `CancelOrder` cancels a placed order, releases its lines and writes the summary's `cancelled` |
+| none | `spec:application.orders-inventory-example.cancel-twice-rejected` | verifies that the order's own state refuses a second cancel |
+| none | `spec:application.orders-inventory-example.cancel-duplicate-answered-from-receipt` | verifies that a repeated cancel request is answered from its receipt |
+| none | `spec:application.orders-inventory-example.cancel-unknown-order-rejected` | verifies that a cancel of an order never placed is refused |
+| none | `spec:application.orders-inventory-example.cancel-second-context-rejects` | verifies that a release Inventory refuses rolls back the cancel Orders recorded |
+| none | `spec:application.orders-inventory-example.cancel-without-grant-refused` | verifies that `CancelOrder` requires its own permission |
+
+Package D therefore has 25 examples.
 
 ## Integration notes
 
