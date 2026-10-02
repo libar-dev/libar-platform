@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "5.0.0",
+    "@convex-dev/migrations": "0.3.6",
     "@edge-runtime/vm": "5.0.0",
     "@eslint/js": "10.0.1",
     "@libar-dev/software-delivery-protocol": "file:vendor/libar-dev-software-delivery-protocol-0.0.0-5993da7.tgz",
@@ -49,8 +50,5 @@
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "typescript-eslint": "8.71.0",
     "vitest": "5.0.3"
-  },
-  "dependencies": {
-    "@convex-dev/migrations": "0.3.6"
   }
 }
