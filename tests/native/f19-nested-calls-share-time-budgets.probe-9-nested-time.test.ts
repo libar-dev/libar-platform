@@ -27,9 +27,11 @@ bindExample(contract, (): BudgetWorld => ({}), {
   ) => prepareBudget(world, "nested"),
   "the client increases the call count until the backend refuses the mutation":
     reachBudget,
-  "the error names {budget} time": (world, { budget }) => {
+  "the refused mutation's error is {budget}": (world, { budget }) => {
     expect(world.error).toContain(budget);
   },
-  "a direct computation fails with {cpu} time": async (world, { cpu }) =>
-    computeBudget(world, cpu),
+  "a loop of computation in one mutation fails with {cpu}": async (
+    world,
+    { cpu },
+  ) => computeBudget(world, cpu),
 });

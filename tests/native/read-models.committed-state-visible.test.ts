@@ -30,7 +30,7 @@ const anchor = specTest({
 void anchor;
 // The order summary is written by PlaceOrder's own mutation, in step 9 of the pipeline. A client
 // subscribed to the summary list sees the row the moment the command commits, and the function log
-// identifies those calls. Admin reads of the scheduled-function tables check that no job exists.
+// shows that nothing but the command and the subscription's query ran in between.
 type Summaries = FunctionReturnType<typeof api.readModels.listOrderSummaries>;
 type Response = FunctionReturnType<typeof api.ordering.placeOrder>;
 interface World {
@@ -41,6 +41,9 @@ interface World {
 }
 const orderId = "order-1";
 const lines = [line("sku-1", 2, 250), line("sku-2", 1, 40)];
+// A record a client caused: a call over HTTP, or a query or mutation over the socket. A scheduled
+// function, a cron or an action is a worker.
+const clientCallers = new Set(["HttpApi", "SyncWorker"]);
 bindExample(contract, (): World => ({}), {
   "a read model maintained by the {useCase} use case": async (
     world,
@@ -119,7 +122,8 @@ bindExample(contract, (): World => ({}), {
         },
       ]);
     },
-  // The log identifies the two client calls; the tables include delayed scheduled functions.
+  // Every record in the function log from the command to the subscription's update: the command's
+  // own mutation and the subscription's query, both caused by the client.
   "the number of workers, jobs or queues that ran is {workers}": async (
     world,
     { workers },
@@ -133,6 +137,16 @@ bindExample(contract, (): World => ({}), {
           (entry) => entry.identifier === "readModels:listOrderSummaries",
         ),
     );
+    expect(
+      records.filter(
+        (entry) =>
+          entry.udfType === "Action" ||
+          entry.udfType === "HttpAction" ||
+          !clientCallers.has(entry.caller),
+      ),
+    ).toHaveLength(workers);
+    // The scheduled-function tables of the parent and both contexts also hold a job scheduled with
+    // a delay past the window.
     expect(await scheduledRows(backend)).toHaveLength(workers);
     expect(
       records.find((entry) => entry.identifier === "ordering:placeOrder"),

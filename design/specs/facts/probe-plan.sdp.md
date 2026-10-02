@@ -25,6 +25,8 @@ Feature · Detail: full transcription · Traces: Probe 1 to Probe 7, F4, F5, F12
 
 Seven probes, in the order the decisions need them, each one small test on a native backend. A probe turns an assumed fact into a probed one, or measures a size the docs leave open. The recheck of 2026-09-30 narrowed two of them and left the rest standing: the limits page states no limit on nested calls, so Probe 4 stands; the application-errors page does not state that `ConvexError` data survives a component boundary, so Probe 2 stands; the scheduling page documents the states and the 7-day retention of `_scheduled_functions`, so Probe 7 need only confirm them and answer what a restore leaves; the backup page says nothing about component data or the scheduler, so that half of Probe 7 stands. Slice S0 ran probes 1 to 5 on a native backend on 2026-10-01, and each result is recorded on its fact; probes 6 and 7 have not run.
 
+Probes 8 to 11 settle three facts the doc's ledger does not list, F18 to F20, each written from the pinned package source: the commit timestamp, the time budget nested calls draw on with the count of component calls one mutation may make, and the byte check of `convex-helpers`.
+
 The probes are not the first experiment. The experiment builds Layers 0 to 2 and measures cost; the probes settle single facts and can run before it, in a fixture app that is separate from the example app.
 
 ## Intent
@@ -65,11 +67,10 @@ The probes are not the first experiment. The experiment builds Layers 0 to 2 and
 - Probe 5 subscribes to a parent query that calls a component query, changes the component's data, and checks that the subscription updates; it then pages a component list built with `paginator` through the parent while live writes land inside the paged range, with the client passing the end cursor as `convex-helpers` describes, records whether the pages stay contiguous, and fills one page's range past the component's `maximumRowsRead` so that a re-run comes back `SplitRequired`, recording whether the `convex-helpers/react` hook splits it across the boundary without a gap; it serves D8 (Probe 5, F15, S4)
 - Probe 6 runs a backfill batch through the migrations component while a live command writes the same read-model row, and checks that neither overwrites newer data and that the batch resumes after interruption; it serves D9 (Probe 6, F1, F17)
 - Probe 7, before Layer 3, takes a backup with pending scheduled functions, Workpool jobs and a Workflow run in flight, restores it, and records what survives; it reads `_scheduled_functions` for a failed run and confirms the states and the retention window; it serves D13 and D19 (Probe 7, F12, F16)
-
-- Probe 8 writes commit timestamp placeholders in the parent and two components, compares committed rows and the runtime upper bound, and checks readback, return and scheduling behavior. (Probe 8, F18)
-- Probe 9 repeats nested calls until a time boundary fails and compares its error with direct computation. (Probe 9, F19)
-- Probe 10 reads component pages below and at a row's byte size and records the bytes kept beyond the requested bound. (Probe 10, F20)
-- Probe 11 increases component calls per mutation to the backend's refusal, records counts and time, and measures documents read and written. (Probe 11, F19)
+- Probe 8 writes commit timestamp placeholders in the parent and two components, compares committed rows and the runtime upper bound, and checks readback, return and scheduling behavior (Probe 8, F18)
+- Probe 9 repeats empty nested calls in one mutation until the backend refuses it, and compares that error with the one a loop of computation gets (Probe 9, F19)
+- Probe 10 reads component pages below and at a row's byte size and records the bytes kept beyond the requested bound (Probe 10, F20)
+- Probe 11 increases component calls per mutation to the backend's refusal, records counts and time, and measures documents read and written (Probe 11, F19)
 
 ## Design
 

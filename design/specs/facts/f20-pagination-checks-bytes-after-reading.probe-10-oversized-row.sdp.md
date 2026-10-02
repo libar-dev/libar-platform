@@ -7,23 +7,23 @@ relations:
   refines: spec:facts.f20-pagination-checks-bytes-after-reading
   verifies: spec:facts.f20-pagination-checks-bytes-after-reading
 ---
-# A page keeps the row that crosses its byte bound
+# Probe 10: a page keeps the row that crosses its byte bound
 
-Native backend tier · Fixture composition · Backend `precompiled-2026-09-28-5c7cb5b`, `convex` 1.46.0, `convex-helpers` 0.1.124.
+Probe 10 · native tier · fixture composition.
 
 ## Intent
 
-- outcome: Establish the observed behavior on the pinned local backend.
+- outcome: A page read under a byte bound below one row's size, or equal to it, still reads and keeps that row and comes back `SplitRequired`. (Probe 10, F20)
 
 ```gwt
 Given a component list with two rows larger than the requested byte bound
 When the parent reads the component paginator with byte bounds below and at one row
 Then the first page keeps {rows: 1} row and reports {status: "SplitRequired"}
-And the recorded bytes exceed the smaller requested bound by {overshoot: true}
+And the bytes read are above every bound below the row's size {overshoot: true}
 ```
 
 ## Verification — executable
 
-- Every test owns a disposable native backend. Timings and call counts are recorded, not asserted, and say nothing about a hosted deployment.
-- The bound values are the expectation written before the first native run. A run that never reaches its boundary fails.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend. The stored size of the row and the bytes each page read, from `ctx.meta.getTransactionMetrics()`, are recorded in the run's evidence.
+- The bound values are the expectation written before the first run, which held. The bounds are zero, one, one byte below the stored size and the stored size; a page that kept no row would not have reached the boundary, and the test fails it.
 - The test also supplies a negative byte bound. The helper still reads and keeps one row, so the overshoot guarantee is stated only for finite non-negative bounds.

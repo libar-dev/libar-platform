@@ -77,10 +77,6 @@ export interface Placed {
   window: CompletionRecord[];
   summaryKeys: string[];
 }
-const scheduledByOrder = new WeakMap<
-  Placed,
-  Awaited<ReturnType<typeof scheduledRows>>
->();
 export interface ExperimentWorld {
   backend?: Backend;
   client?: ConvexHttpClient;
@@ -204,7 +200,7 @@ export async function place(
     ),
     "the command's completion record",
   );
-  const placed: Placed = {
+  return {
     orderId,
     lines,
     response,
@@ -213,9 +209,13 @@ export async function place(
     window,
     summaryKeys: summaries.page.map((row) => row.key),
   };
-  scheduledByOrder.set(placed, await scheduledRows(backend));
-  return placed;
 }
+// The scheduled-function tables of the parent and both contexts, read after the commands: a job
+// scheduled with any delay is a row there.
+const scheduledAfter = new WeakMap<
+  ExperimentWorld,
+  Awaited<ReturnType<typeof scheduledRows>>
+>();
 export async function placeOrderRuns(
   world: ExperimentWorld,
   run: "the PlaceOrder use case" | "the end-to-end path",
@@ -229,6 +229,10 @@ export async function placeOrderRuns(
     world,
     "order-1",
     orderLines(linesOf[size], "sku"),
+  );
+  scheduledAfter.set(
+    world,
+    await scheduledRows(required(world.backend, "the backend")),
   );
 }
 const sent = (world: ExperimentWorld): Placed[] =>
@@ -251,12 +255,17 @@ export function commitsAre(world: ExperimentWorld, commits: number) {
     expect(placed.request).toEqual(committed);
   }
 }
-// Admin reads of all scheduled-function tables include delayed jobs. The ordinary query already
-// shows the command's summary row.
+// Nothing ran between the command and the read sent after it returned, nothing is scheduled to run
+// later, and that read already shows the command's summary row: the command wrote it, and no job did.
 export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
   for (const placed of sent(world)) {
+    const others = placed.window.filter(
+      (record) =>
+        record !== placed.own && record.identifier !== summariesIdentifier,
+    );
+    expect(others).toHaveLength(jobs);
     expect(
-      required(scheduledByOrder.get(placed), "the scheduled-function rows"),
+      required(scheduledAfter.get(world), "the scheduled-function rows"),
     ).toHaveLength(jobs);
     expect(placed.summaryKeys).toContain(placed.orderId);
   }

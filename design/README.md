@@ -276,8 +276,8 @@ Probes 1 to 5 ran on a native backend in slice S0 on 2026-10-01. Each result is 
 
 | Tier | Fact | Subject |
 |---|---|---|
-| Native backend | [`spec:facts.f18-commit-timestamps`](specs/facts/f18-commit-timestamps.sdp.md) | Commit timestamps order committed rows |
-| Native backend | [`spec:facts.f19-nested-calls-share-time-budgets`](specs/facts/f19-nested-calls-share-time-budgets.sdp.md) | Nested calls share time budgets |
+| Native backend | [`spec:facts.f18-commit-timestamps`](specs/facts/f18-commit-timestamps.sdp.md) | Commit timestamps order committed transactions |
+| Native backend | [`spec:facts.f19-nested-calls-share-time-budgets`](specs/facts/f19-nested-calls-share-time-budgets.sdp.md) | Nested calls draw on a system-operation time budget |
 | Native backend | [`spec:facts.f20-pagination-checks-bytes-after-reading`](specs/facts/f20-pagination-checks-bytes-after-reading.sdp.md) | Pagination checks bytes after reading |
 
 Every open question in the corpus, by Spec, is recipe 20 of the Protocol's catalog, the open-question register. It lists the Specs that hold a blocking question first and reports the totals, so no table is kept here:
@@ -324,11 +324,11 @@ The Layer 2 design added two more for the same reason, and nine examples that ve
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-parent-page-outgrows-row-cap` | Probe 5: a parent list's page outgrows its row cap |
-| none | [`spec:facts.f18-commit-timestamps.probe-8-parent-and-components`](specs/facts/f18-commit-timestamps.probe-8-parent-and-components.sdp.md) | Commit timestamps in the parent and two components |
-| none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-11-component-calls`](specs/facts/f19-nested-calls-share-time-budgets.probe-11-component-calls.sdp.md) | Component calls per mutation |
-| none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-9-nested-time`](specs/facts/f19-nested-calls-share-time-budgets.probe-9-nested-time.sdp.md) | Nested calls reach a time boundary |
-| none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-oversized-row`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-oversized-row.sdp.md) | A page keeps the row that crosses its byte bound |
-| none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-stream-budget`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-stream-budget.sdp.md) | A page includes stored system fields in its byte check |
+| none | [`spec:facts.f18-commit-timestamps.probe-8-parent-and-components`](specs/facts/f18-commit-timestamps.probe-8-parent-and-components.sdp.md) | Probe 8: commit timestamps in the parent and two components |
+| none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-11-component-calls`](specs/facts/f19-nested-calls-share-time-budgets.probe-11-component-calls.sdp.md) | Probe 11: component calls per mutation |
+| none | [`spec:facts.f19-nested-calls-share-time-budgets.probe-9-nested-time`](specs/facts/f19-nested-calls-share-time-budgets.probe-9-nested-time.sdp.md) | Probe 9: nested calls reach a time boundary |
+| none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-oversized-row`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-oversized-row.sdp.md) | Probe 10: a page keeps the row that crosses its byte bound |
+| none | [`spec:facts.f20-pagination-checks-bytes-after-reading.probe-10-stream-budget`](specs/facts/f20-pagination-checks-bytes-after-reading.probe-10-stream-budget.sdp.md) | Probe 10: a page of full stream rows reads past the library's byte bound |
 
 Package A therefore has 87 Specs, Package C has 16 examples, Package D has 19, and the corpus has 59 examples that bind a doc row.
 

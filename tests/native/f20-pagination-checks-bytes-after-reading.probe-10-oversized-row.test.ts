@@ -80,7 +80,7 @@ bindExample(contract, (): World => ({}), {
       expect(read.result.pageStatus).toBe(status);
     }
   },
-  "the recorded bytes exceed the smaller requested bound by {overshoot}": (
+  "the bytes read are above every bound below the row's size {overshoot}": (
     world,
     { overshoot },
   ) => {

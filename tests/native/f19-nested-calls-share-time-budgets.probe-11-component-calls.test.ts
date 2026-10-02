@@ -27,7 +27,7 @@ bindExample(contract, (): BudgetWorld => ({}), {
   ) => prepareBudget(world, "component"),
   "the client increases the call count until the backend refuses the mutation":
     reachBudget,
-  "the error names {budget} time": (world, { budget }) => {
+  "the refused mutation's error is {budget}": (world, { budget }) => {
     expect(world.error).toContain(budget);
   },
   "each empty component call reads {reads} and writes {writes} documents":

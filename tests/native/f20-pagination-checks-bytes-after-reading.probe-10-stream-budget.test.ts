@@ -61,7 +61,7 @@ bindExample(contract, (): World => ({}), {
   ) => {
     expect(world.result).toMatchObject({ count: kept, status });
   },
-  "its measured bytes are above the library byte bound by {exceeds}": (
+  "the bytes the page read are above the library's byte bound {exceeds}": (
     world,
     { exceeds },
   ) => {
