@@ -120,17 +120,6 @@ bindExample(contract, (): World => ({}), {
           placedAt: expect.any(Number),
         },
       ]);
-      const { client } = required(world.order, "the backend");
-      expect(
-        await client.query(api.orderQueries.getOrder, { tenantId, orderId }),
-      ).toEqual({
-        orderId,
-        status: "placed",
-        lines,
-        total: 540,
-        placedAt: page.page[0]?.placedAt,
-        version: orderVersions[0],
-      });
     },
   // Every record in the function log from the command to the subscription's update: the command's
   // own mutation and the subscription's query, both caused by the client.

@@ -89,6 +89,10 @@ test.each([
     'export const f = () => import("../../harness/composition.js");\n',
   ],
   ["example/convex/probe.ts", 'import "../.././fixture";\n'],
+  [
+    "example/convex/probe.ts",
+    "export const f = () => import(`../../fixture/convex/schema.js`);\n",
+  ],
 ])("pure: lint refuses %s importing test code: %s", async (file, code) => {
   expect(await messages(file, code)).toContain(testCode);
 });

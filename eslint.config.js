@@ -4,7 +4,10 @@ import convex from "@convex-dev/eslint-plugin";
 const repositoryRoot = import.meta.dirname;
 // The production composition ships no test code: no module under example/ imports one under
 // fixture/, harness/ or tests/. The rule resolves each relative import against the importing file,
-// so a path that climbs out of example/ and into one of them is caught however it is spelled.
+// so a path that climbs out of example/ and into one of them is caught however it is spelled. A
+// string literal and a template literal with no expression are read; the rule does not catch a bare
+// specifier, such as a package name or a path alias, a dynamic import whose path is computed, or a
+// require call.
 const testCodeDirectories = /^(?:fixture|harness|tests)(?:\/|$)/;
 const production = {
   rules: {
@@ -12,15 +15,17 @@ const production = {
       meta: { type: "problem", schema: [] },
       create(context) {
         function check(source) {
-          if (
-            source?.type !== "Literal" ||
-            typeof source.value !== "string" ||
-            !source.value.startsWith(".")
-          )
-            return;
+          const path =
+            source?.type === "Literal"
+              ? source.value
+              : source?.type === "TemplateLiteral" &&
+                  source.expressions.length === 0
+                ? source.quasis[0]?.value.cooked
+                : undefined;
+          if (typeof path !== "string" || !path.startsWith(".")) return;
           const target = relative(
             repositoryRoot,
-            resolve(dirname(context.filename), source.value),
+            resolve(dirname(context.filename), path),
           ).replaceAll("\\", "/");
           if (testCodeDirectories.test(target))
             context.report({
@@ -146,7 +151,7 @@ export default tseslint.config(
     ],
     rules: { "no-restricted-syntax": noAuthNoEnv },
   },
-  // S0's probe of what ctx.auth answers inside a component, which is the one reason it is read there.
+  // The probe of what ctx.auth answers inside a component, which is the one reason it is read there.
   {
     files: ["fixture/convex/annex/identity.ts"],
     rules: { "no-restricted-syntax": "off" },

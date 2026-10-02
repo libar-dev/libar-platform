@@ -2,10 +2,19 @@ import { ConvexError, type Value } from "convex/values";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { api, internal } from "../../example/convex/_generated/api.js";
+import {
+  api,
+  components,
+  internal,
+} from "../../example/convex/_generated/api.js";
 import { placeOrderPermission } from "../../example/convex/ordering.js";
+import { orderSummary } from "../../example/convex/orderSummary.js";
 import { readOrdersPermission } from "../../example/convex/readModels.js";
-import { receiveStockPermission } from "../../example/convex/receiving.js";
+import {
+  receiveStockDeclaration,
+  receiveStockPermission,
+} from "../../example/convex/receiving.js";
+import { authorizeQuery, runPipeline } from "../../src/command/index.js";
 import { productionTest } from "./production.js";
 const { version } = JSON.parse(
   readFileSync(
@@ -370,5 +379,93 @@ test(
         ),
       ),
     ).toContain("This deployment declares no read model orderTotals");
+  },
+);
+
+test(
+  name(
+    "authorizeQuery hands the policy's subject to authorize: a grant for one order authorizes a read of that order and refuses a read of another",
+  ),
+  async () => {
+    const t = productionTest();
+    const order = { contextId: "orders", streamType: "order", streamId: "one" };
+    await t.mutation(internal.grants.grant, {
+      tenantId: "t-1",
+      principalKind: "human",
+      principalId: `${issuer}|reader`,
+      permission: readOrdersPermission,
+      subject: order,
+      grantedBy: "operator",
+    });
+    const reader = t.withIdentity({ issuer, subject: "reader" });
+    const policy = {
+      name: "getOrder",
+      tenantId: "t-1",
+      permission: readOrdersPermission,
+      subject: order,
+    };
+    expect(
+      await reader.run((ctx) => authorizeQuery(ctx, policy)),
+    ).toMatchObject({ kind: "human", id: `${issuer}|reader` });
+    expect(
+      await errorData(
+        reader.run((ctx) =>
+          authorizeQuery(ctx, {
+            ...policy,
+            subject: { ...order, streamId: "two" },
+          }),
+        ),
+      ),
+    ).toMatchObject({
+      code: "forbidden",
+      commandType: "getOrder",
+      details: { reason: "subject_mismatch" },
+    });
+  },
+);
+
+test(
+  name(
+    "a command that declares a read model with no generation fails and keeps nothing, even when none of its entries matches that read model's source",
+  ),
+  async () => {
+    const t = productionTest();
+    const actor = { kind: "human", id: `${issuer}|user-1`, issuer } as const;
+    await caller(t, "user-1", [receiveStockPermission]);
+    // ReceiveStock's real executor returns one stock item entry, which the order summary's source
+    // does not match.
+    const declaration = {
+      ...receiveStockDeclaration,
+      readModels: [
+        {
+          readModel: orderSummary,
+          source: { contextId: "orders", streamType: "order" },
+        },
+      ],
+    };
+    expect(
+      String(
+        await failure(
+          t.run((ctx) =>
+            runPipeline(ctx, declaration, {
+              tenantId: "t-1",
+              namespace: "public",
+              actor,
+              requestKey: "k-1",
+              input: { items: [{ stockItemId: "sku-1", quantity: 1 }] },
+            }),
+          ),
+        ),
+      ),
+    ).toContain(
+      "ReceiveStock writes the read model orderSummary, which has no generation to write",
+    );
+    expect(
+      await t.query(components.inventory.queries.stockItem.get, {
+        tenantId: "t-1",
+        streamId: "sku-1",
+      }),
+    ).toBeNull();
+    expect(await receipts(t)).toEqual([]);
   },
 );
