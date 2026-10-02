@@ -4,7 +4,7 @@ import type {
   FunctionArgs,
   FunctionReturnType,
   FunctionReference,
-  PaginationOptions,
+  paginationOptsValidator,
   PaginationResult,
   SchemaDefinition,
 } from "convex/server";
@@ -111,16 +111,14 @@ test("compiled: the fixture exposes the pinned internal gate entries", () => {
   expectTypeOf<
     FunctionReturnType<typeof gate.resumeGate>
   >().toEqualTypeOf<null>();
-  expectTypeOf<FunctionArgs<typeof gate.getGate>>().toEqualTypeOf<
-    Record<string, never>
-  >();
+  expectTypeOf<keyof FunctionArgs<typeof gate.getGate>>().toBeNever();
   expectTypeOf<FunctionReturnType<typeof gate.getGate>>().toEqualTypeOf<{
     restore: boolean;
     closed: ClosedEntry[];
   }>();
   expectTypeOf<FunctionArgs<typeof gate.getGateAudit>>().toEqualTypeOf<{
     scopeKey: string;
-    paginationOpts: PaginationOptions;
+    paginationOpts: Infer<typeof paginationOptsValidator>;
   }>();
   expectTypeOf<FunctionReturnType<typeof gate.getGateAudit>>().toEqualTypeOf<
     PaginationResult<OperatorDoc>
@@ -156,16 +154,14 @@ test("compiled: the example exposes the pinned internal gate entries", () => {
   expectTypeOf<
     FunctionReturnType<typeof gate.resumeGate>
   >().toEqualTypeOf<null>();
-  expectTypeOf<FunctionArgs<typeof gate.getGate>>().toEqualTypeOf<
-    Record<string, never>
-  >();
+  expectTypeOf<keyof FunctionArgs<typeof gate.getGate>>().toBeNever();
   expectTypeOf<FunctionReturnType<typeof gate.getGate>>().toEqualTypeOf<{
     restore: boolean;
     closed: ClosedEntry[];
   }>();
   expectTypeOf<FunctionArgs<typeof gate.getGateAudit>>().toEqualTypeOf<{
     scopeKey: string;
-    paginationOpts: PaginationOptions;
+    paginationOpts: Infer<typeof paginationOptsValidator>;
   }>();
   expectTypeOf<FunctionReturnType<typeof gate.getGateAudit>>().toEqualTypeOf<
     PaginationResult<OperatorDoc>
