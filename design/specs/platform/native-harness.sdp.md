@@ -32,7 +32,7 @@ The doc says that native tests prove component and nested-mutation behavior, sch
 - [extension] A composition that runs natively reads its issuer, its application ID and its key set from the deployment's environment variables, and the harness sets the key set to a data URI that holds the fixture issuer's public key (E-13, S13)
 - [extension] No caller under test carries the admin key, alone or acting as an identity, because a call made with it passes Convex's visibility check (E-13)
 - [extension] The fixture issuer is the identity source of a native run and its one named difference from production; it is recorded as the identity source and is not an adjusted configuration (E-13, Sc L2-9)
-- [extension] The harness uses the admin key to deploy, to generate code, to set and read environment variables, to read stored data and the function log, and to run fixture functions (E-15)
+- [extension] The harness uses the admin key to deploy, to generate code, to set and read environment variables, to read stored data and the function log, to run fixture functions, and to call a composition's internal functions that admin access reaches, its grant mutation and its operator entries (E-15, E-48)
 - [extension] Every Convex CLI call the harness makes names the backend it started on the command line and gets an environment of its own, so that no variable of the caller's shell and no dotenv file selects another deployment (E-15)
 - [extension] No generated secret, the instance secret or the admin key, reaches an error message, test output or a record (E-15)
 - [extension] An assertion about authority, identity or visibility is made through an ordinary client (E-15, E-13)

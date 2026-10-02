@@ -21,7 +21,7 @@ relations:
 
 Layer 3 · Detail: full where D13 rules; numbers provisional until the first experiment · Traces: D13, D11, D14, D19, F16, Law 5, Law 7, Law 8, Law 11, Sc L3-4, Sc L3-6, E-53.
 
-The module ships five scoped operations: inspect, retry, reconcile, cancel and abandon. They are ordinary authorized parent functions on the obligation record, not domain commands, and every repair writes an `obligationRepairs` row in its own transaction, so the audit fails closed with the repair. An operator is an actor kind in the one authorization vocabulary, named on every call with the tenant scope, and a repair is refused before it is executed when the grant is missing. No operation can create a success without evidence. A reconcile without supplied evidence is a claimed attempt like every other dispatch: the operator mints the attempt and moves the obligation to pending, the claim mutation of `spec:effects.claim-call-settle` takes the lease, and the reconcile action's report meets the settle's fence; no operator operation schedules the reconcile action itself.
+The module ships five scoped operations: inspect, retry, reconcile, cancel and abandon. They are ordinary authorized parent functions on the obligation record, not domain commands, and every repair writes an `obligationRepairs` row in its own transaction, so the audit fails closed with the repair. A repair is run by the actor the parent establishes, human or service, holding the repair grant in the tenant, named on every call with the tenant scope, and a repair is refused before it is executed when the grant is missing. No operation can create a success without evidence. A reconcile without supplied evidence is a claimed attempt like every other dispatch: the operator mints the attempt and moves the obligation to pending, the claim mutation of `spec:effects.claim-call-settle` takes the lease, and the reconcile action's report meets the settle's fence; no operator operation schedules the reconcile action itself.
 
 ## Intent
 
@@ -33,7 +33,7 @@ The module ships five scoped operations: inspect, retry, reconcile, cancel and a
 
 ## Contract
 
-- Every operation names the tenant scope and runs under an actor of kind `operator` established by the parent; the grant is read in the transaction before execution and before any obligation is disclosed (D11, Law 5, Law 11)
+- Every operation names the tenant scope and runs under the actor the parent establishes, human or service, that holds `obligations:repair` or `obligations:inspect` in that tenant; the grant is read in the transaction before execution and before any obligation is disclosed (D11, Law 5, Law 11)
 - `inspect` returns one obligation with its repair history and its dispatch state read from `_scheduled_functions`, and it discloses nothing across tenants (D13, D19, F16)
 - `listByStatus` returns one tenant's obligations in a status, paginated by `updatedAt`, for the needs attention queue and the pending backlog (D13, Law 8)
 - `retry` is allowed from needs attention, and from pending when the next attempt is past due; it mints a new attempt, resets the rearm count, schedules the wrapper or the claim now by the record's `kind`, and writes a repair; from pending it is the fourth cause of the `pending` to `pending` transition in `spec:obligations.lifecycle-transitions`, and the old dispatch is fenced out by the new attempt ID (D13, Law 8)
@@ -66,4 +66,4 @@ The module ships five scoped operations: inspect, retry, reconcile, cancel and a
 - errorCodeEvidenceRequired: thrown by reconcile when supplied evidence is not of kind `provider` (D13, Law 7)
 - errorCodeReconcileUnsupported: thrown by reconcile without evidence when the obligation's `kind` is `local` or the resolved handler declares no `reconcile`; carries `kind` and `handlerKey` (D14, E-53)
 - transactionBoundary: one top-level authorized mutation per repair; the schedule commits with it (D13, F8)
-- disclosureRule: authorization is checked before the obligation is read and again before its evidence is returned by inspect, so a revoked operator sees nothing (Law 5)
+- disclosureRule: authorization is checked before the obligation is read and again before its evidence is returned by inspect, so an actor whose grant is revoked sees nothing (Law 5)
