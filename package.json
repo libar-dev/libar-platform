@@ -25,7 +25,8 @@
     "test:all": "npm run sdp:build && vitest run",
     "acceptance": "node scripts/acceptance.mjs",
     "codegen": "node scripts/codegen.mjs",
-    "dev": "node scripts/dev.mjs"
+    "dev": "node scripts/dev.mjs",
+    "measure:place-order": "node scripts/measure-place-order.mjs"
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "5.0.0",

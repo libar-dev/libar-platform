@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-202 specs · 5 packs · 101 anchors → 308 nodes · 1097 edges (0 errors, 0 warnings)
+203 specs · 5 packs · 104 anchors → 312 nodes · 1102 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -154,7 +154,7 @@ Every row of the doc's acceptance table is an example Spec that `refines` and `v
 | L2-6 | Rebuild a cross-stream history view under a write pause; interrupt | [`spec:application.rebuild`](specs/application/rebuild.sdp.md) | [`.write-pause-rebuild-interrupt`](specs/application/rebuild.write-pause-rebuild-interrupt.sdp.md), [`.write-pause-rebuild-abort`](specs/application/rebuild.write-pause-rebuild-abort.sdp.md) | native |
 | L2-7 | Rebuild a stream that has a baseline event | [`spec:context.journal`](specs/context/journal.sdp.md) | [`.rebuild-from-baseline`](specs/context/journal.rebuild-from-baseline.sdp.md) | native |
 | L2-8 | Restore a representative dataset with matching code and configuration | [`spec:application.restore`](specs/application/restore.sdp.md) | [`.restore-representative-dataset`](specs/application/restore.restore-representative-dataset.sdp.md) | end to end |
-| L2-9 | Run native acceptance with production configuration | [`spec:application.first-experiment`](specs/application/first-experiment.sdp.md) | [`.native-acceptance-production-configuration`](specs/application/first-experiment.native-acceptance-production-configuration.sdp.md) | end to end |
+| L2-9 | Run native acceptance with production configuration | [`spec:application.first-experiment`](specs/application/first-experiment.sdp.md) | [`.native-acceptance-production-configuration`](specs/application/first-experiment.native-acceptance-production-configuration.sdp.md), [`.native-contention`](specs/application/first-experiment.native-contention.sdp.md) | end to end; native |
 | L3-1 | Duplicate a local worker and lose any completion callback | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.duplicate-worker-lost-callback`](specs/obligations/obligation-module.duplicate-worker-lost-callback.sdp.md) | native |
 | L3-2 | Kill a dispatch before work, or fail the scheduled wrapper | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.dispatch-killed-rearmed`](specs/obligations/obligation-module.dispatch-killed-rearmed.sdp.md), [`.wrapper-failed-rearmed`](specs/obligations/obligation-module.wrapper-failed-rearmed.sdp.md) | native |
 | L3-3 | Legitimate backlog builds up | [`spec:obligations.obligation-module`](specs/obligations/obligation-module.sdp.md) | [`.backlog-left-alone`](specs/obligations/obligation-module.backlog-left-alone.sdp.md) | native |
