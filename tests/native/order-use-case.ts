@@ -1,4 +1,4 @@
-// Shared steps of the scenarios that run PlaceOrder on the production composition: a backend whose
+// Shared steps of the scenarios that run PlaceOrder and CancelOrder on the production composition: a backend whose
 // user holds every grant the use cases need, the order summary's first activation, stock through
 // ReceiveStock, and every stored document of both contexts and the parent, to count what a call
 // changed. Admin access is used for setup and for reading stored documents only.
@@ -6,7 +6,10 @@ import { getFunctionName } from "convex/server";
 import type { ConvexHttpClient } from "convex/browser";
 import type { Value } from "convex/values";
 import { api, internal } from "../../example/convex/_generated/api.js";
-import { placeOrderPermission } from "../../example/convex/ordering.js";
+import {
+  cancelOrderPermission,
+  placeOrderPermission,
+} from "../../example/convex/ordering.js";
 import { readOrdersPermission } from "../../example/convex/readModels.js";
 import { receiveStockPermission } from "../../example/convex/receiving.js";
 import type { Backend } from "../../harness/backend.js";
@@ -14,8 +17,9 @@ import { ordinaryClient } from "../../harness/clients.js";
 import { productionBackend } from "../../harness/native.js";
 export const tenantId = "t-1";
 const subject = "user-1";
-const permissions = [
+export const permissions = [
   placeOrderPermission,
+  cancelOrderPermission,
   receiveStockPermission,
   readOrdersPermission,
   "inventory.read",
