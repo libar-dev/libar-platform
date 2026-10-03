@@ -1451,7 +1451,7 @@
           "kind": "specQuestion",
           "ref": "spec:facts.probe-plan#2",
           "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 39
+          "line": 44
         }
       ],
       "families": [
@@ -1469,12 +1469,13 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "waiting",
       "foldedInto": [],
       "class": "owner",
-      "reason": "Rule 1, money: a hosted deployment is the owner's account, and the quota half cannot run on a local backend [design/specs/facts/probe-plan.sdp.md:39]. Doubt: it is a need more than a decision; the decision it serves is OD-063.",
+      "reason": "Rule 1, money: a hosted deployment is the owner's account, and the quota half cannot run on a local backend [design/specs/facts/probe-plan.sdp.md:44]. Doubt: it is a need more than a decision; the decision it serves is OD-063. The account it needs is OD-155's.",
       "lean": {
-        "do": "Run Probe 3's quota half once on a hosted deployment after S3's local numbers, so that OQ1 (OD-063) has both halves."
+        "do": "Run Probe 3's quota half as the hosted example spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-hosted-function-calls on the one hosted deployment of E-59, once the owner provides what OD-155 names, so that OQ1 (OD-063) has both halves.",
+        "settles": "A run on the hosted deployment in which the helper set of calls adds exactly one function call per parent call between two component sets that add the same number, every seedStatus is complete and no UTC day boundary falls between the first and last reading; otherwise its record says the count is not settled and this row stays open."
       },
       "checkedBy": null,
       "fork": null,
@@ -6322,6 +6323,46 @@
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
+    },
+    {
+      "id": "OD-155",
+      "title": "The hosted arrangement and account of E-59: one shared development deployment, each developer's own, a preview per run, or a fresh development deployment per run",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.native-harness#4",
+          "file": "design/specs/platform/native-harness.sdp.md",
+          "line": 27
+        }
+      ],
+      "families": [
+        "platform",
+        "facts"
+      ],
+      "cites": [
+        "E-59",
+        "Sc L2-9",
+        "F4",
+        "F12",
+        "F16",
+        "Probe 3",
+        "Probe 7"
+      ],
+      "provisionalReading": "the option taken here: the same harness, run record and compositions run natively on one hosted development deployment in a team and project of their own, selected only by `npm run test:hosted`, one run at a time, from a workflow whose failure fails no other check, with one development deploy key limited to the actions `deployKeyActions` lists",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Rule 1, money: the team, the plan, the project and the deploy key are the owner's account; raised by the hosted lane of the tooling unit and made a row by its patch.",
+      "lean": {
+        "do": "One hosted development deployment in a project of its own, in the owner's otherwise unused team on the Professional plan, with one development deploy key held as one secret by a GitHub environment that admits the default branch only, run twice a week and on dispatch."
+      },
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The owner's words in the tooling unit, on the advisor's eight hosted recommendations: \"I agree with all recommendations. We have unused Convex Professional account. Let me know how to login.\" Taken as the lean: one hosted development deployment, dev/hosted in the project libar-platform-hosted of the owner's otherwise unused team on the Professional plan, with one development deploy key, hosted-ci-scoped, limited to the fourteen actions, held as the one secret HOSTED_DEPLOY_KEY by the GitHub environment hosted, which admits the default branch only; run twice a week and on dispatch. The owner made the key, the environment and the secret by hand on 2026-10-03."
     }
   ],
   "possiblySame": [
