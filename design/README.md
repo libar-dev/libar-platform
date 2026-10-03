@@ -2,7 +2,7 @@
 
 ## What this is
 
-The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 232 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
+The decisions document at [`../docs/convex-transactional-domain-platform-decisions.md`](../docs/convex-transactional-domain-platform-decisions.md) is the source of truth for what the platform is: nineteen decisions, twelve laws, a ledger of the Convex facts they rest on, seven probes and forty-three acceptance scenarios. This directory is the design written down as a Libar Software Delivery Protocol corpus: 237 Specs in five packs, each Spec a Markdown carrier under `specs/`, each claim cited back to the doc or marked as an extension the doc does not make. The Design Review that `sdp view` writes to `generated/design-review/` is the rendering of the corpus for a human reader. The plan the authoring agents followed is [`PLAN.md`](PLAN.md); it fixes IDs, layout and conventions and stays binding for anyone who edits a Spec. Work on the corpus continues in sessions. [`SESSIONS.md`](SESSIONS.md) is the protocol, [`STATE.md`](STATE.md) says where the work stands, and [`ROADMAP.md`](ROADMAP.md) orders the next units.
 
 The thesis, in the doc's words. Ownership follows bounded contexts. Atomicity follows the business operation. Asynchrony follows a concrete need to defer work. The default operation is one Convex mutation that authorizes a command, makes the domain decision, saves current state with its events, updates essential read models and records the outcome. A second transaction exists only to wait, to spread load, or to reach an external system. The design succeeds when adding domain sophistication does not add infrastructure.
 
@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-237 specs · 5 packs · 142 anchors → 384 nodes · 1246 edges (0 errors, 0 warnings)
+237 specs · 5 packs · 142 anchors → 384 nodes · 1251 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 

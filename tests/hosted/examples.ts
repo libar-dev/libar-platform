@@ -49,6 +49,7 @@ async function deployCopy(backend: HostedBackend) {
 export interface RetentionWorld {
   backend?: HostedBackend;
   readNothing?: boolean;
+  readAt?: number;
   earlier?: Row[];
   observations?: {
     scheduledId: string;
@@ -81,6 +82,7 @@ export async function readThenPlant(world: RetentionWorld) {
   const scheduled = await backend.admin.readTable("_scheduled_functions");
   const readAt = Date.now();
   const present = new Set(scheduled.map((row) => String(row._id)));
+  world.readAt = readAt;
   world.earlier = earlier;
   world.observations = earlier.map((record) => ({
     scheduledId: String(record.scheduledId),
@@ -112,16 +114,21 @@ export async function readThenPlant(world: RetentionWorld) {
   );
   measureValue("own planted schedules", world.own);
 }
+// Each age is the reading's time minus the time its planting record holds, and null when the record
+// holds none.
 export function earlierRecorded(world: RetentionWorld, recorded: boolean) {
   const earlier = required(world.earlier, "the earlier planting records");
   const observations = required(world.observations, "the observations");
+  const readAt = required(world.readAt, "the time of the reading");
   expect(
     observations.length === earlier.length &&
       observations.every(
         (observation) =>
           typeof observation.read === "boolean" &&
-          (typeof observation.ageMs === "number" ||
-            observation.completedTime === null),
+          observation.ageMs ===
+            (typeof observation.completedTime === "number"
+              ? readAt - observation.completedTime
+              : null),
       ),
   ).toBe(recorded);
 }
@@ -167,13 +174,14 @@ async function storedData(backend: Backend, entries: string[]) {
   }
   return data;
 }
+// The scheduler rows of the parent and of every mounted component, keyed by scope.
 async function schedulerRows(backend: Backend) {
   const rows: Record<string, Row[]> = {};
-  for (const scope of copyScopes)
-    rows[scopeName(scope)] = await backend.admin.readTable(
-      "_scheduled_functions",
-      scopeOptions(scope),
-    );
+  rows.parent = await backend.admin.readTable("_scheduled_functions");
+  for (const component of mountedComponents)
+    rows[component] = await backend.admin.readTable("_scheduled_functions", {
+      component,
+    });
   return rows;
 }
 // The state kinds of the scheduler rows this run's labels name, in one scope.
@@ -386,8 +394,8 @@ export async function hostedInPlace(
     });
   }
   measureValue("kept reactions", { due, reactions });
-  // Every kept schedule has run or is released before the example ends, so that no later example
-  // finds one pending or in progress.
+  // The restored pending reference was cancelled above; every other kept schedule has run or is
+  // released before the example ends, so that no later example finds one pending or in progress.
   for (const scope of copyScopes)
     for (const row of await backend.admin.readTable(
       "schedulerData",
@@ -519,21 +527,26 @@ const functionCalls = (usage: HostedUsage): number => {
     throw new Error("The usage reading holds no function calls for the day");
   return value;
 };
-// Reads the usage until two readings in a row agree on the function calls, and keeps every reading.
+// Reads the usage every 5 s until two readings in a row agree on the function calls, and keeps every
+// reading; the deadline is 300 s from the first reading's start, and no reading starts after it.
+const limitSettleMs = 300000;
 async function settledReading(
   backend: HostedBackend,
   readings: HostedUsage[],
 ): Promise<HostedUsage> {
+  const deadline = Date.now() + limitSettleMs;
   let last = await backend.admin.usage();
   readings.push(last);
-  for (let attempt = 0; attempt < 60; attempt++) {
+  while (Date.now() + 5000 <= deadline) {
     await new Promise((resolve) => setTimeout(resolve, 5000));
     const next = await backend.admin.usage();
     readings.push(next);
     if (functionCalls(next) === functionCalls(last)) return next;
     last = next;
   }
-  throw new Error("Two usage readings in a row never agreed in 300 s");
+  throw new Error(
+    `Two usage readings in a row never agreed in ${limitSettleMs / 1000} s`,
+  );
 }
 export async function quotaDeployment(world: QuotaWorld, reads: number) {
   const backend = await hostedBackend({ deploy: false });
@@ -558,12 +571,19 @@ export async function quotaSets(world: QuotaWorld, calls: number) {
   for (const [index, path] of (
     ["component", "helper", "component"] as const
   ).entries()) {
+    // Each call counts only when the backend's own count of the documents it read is the bound number.
     for (let call = 0; call < calls; call++)
-      await client.mutation(fixtureApi.readCost.viaMutation, {
-        ...seeds,
-        path,
-        reads,
-        cacheBuster: Date.now() * 100 + index * calls + call,
+      expect(
+        await client.mutation(fixtureApi.readCost.viaMutation, {
+          ...seeds,
+          path,
+          reads,
+          cacheBuster: Date.now() * 100 + index * calls + call,
+        }),
+        "the documents one call read",
+      ).toEqual({
+        documentsRead: reads,
+        id: path === "component" ? seeds.annex : seeds.own,
       });
     const readings: HostedUsage[] = [];
     const after = await settledReading(backend, readings);

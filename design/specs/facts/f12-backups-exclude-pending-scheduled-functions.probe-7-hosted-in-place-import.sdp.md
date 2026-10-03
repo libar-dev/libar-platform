@@ -17,7 +17,7 @@ Probe 7 · native backend tier · temporary copy of the fixture composition · h
 
 ```gwt
 Given the hosted deployment running the hosted driver's temporary copy of the fixture composition, which adds the scheduler references and reactions of the local in-place example
-When it exports business documents and five scheduler states with the deploy key, adds documents and schedules, then imports the backup archive in place before pending reactions are due
+When it plants business documents and five scheduler states, exports with the deploy key a backup archive that holds no scheduler table, adds documents and schedules, imports the backup archive in place before pending reactions are due, and reads the five states after the import
 Then documents including ids and creation times in {scopes: "parent and every mounted component"} equal the exported documents {equal: true}
 And every scheduler row in each scope is unchanged {unchanged: true}
 And later business changes are gone {removed: true} and the destination environment is unchanged {environmentUnchanged: true}
@@ -30,5 +30,5 @@ And each restored scheduler reference resolves to the kept row {found: true} and
 - Runs second in the hosted driver, after F16's retention example; it starts no local backend.
 - The copy is the one the retention example ran on, so the table `plantedSchedules` stays in the export and the import restores it as it was at the export.
 - The bound values are what the local backend showed on F12; a hosted answer that differs is a finding on F12.
-- The test changes business data before the import and fails if it does not reach that boundary; every kept pending schedule is let run before the test ends, so that no later example finds it pending.
+- The test changes business data before the import and fails if it does not reach that boundary; the restored pending reference is cancelled, and every other kept schedule is let run before the test ends, so that no later example finds it pending.
 - Hosted dashboard restore is not run: the deploy key reaches the deployment through the CLI's export and import only. The fresh-destination case needs a second deployment and is not run.

@@ -21,7 +21,6 @@ import {
   earlierRecorded,
   hostedInPlace,
   inPlaceDeployment,
-  mountedComponents,
   ownStates,
   placeOrderRecords,
   quotaDeployment,
@@ -84,6 +83,15 @@ bindExample(probe7HostedRetentionContract, (): RetentionWorld => ({}), {
       ownStates(world, states, completedTime),
 });
 
+// The scopes the copy mounts: the parent and every component of the fixture composition.
+const copyMounts = [
+  "parent",
+  "annex",
+  "annexClock",
+  "migrations",
+  "depot",
+  "yard",
+];
 type InPlace = InPlaceWorld & {
   observation?: Awaited<ReturnType<typeof hostedInPlace>>;
 };
@@ -92,7 +100,7 @@ const observed = (world: InPlace) =>
 bindExample(probe7HostedInPlaceImportContract, (): InPlace => ({}), {
   "the hosted deployment running the hosted driver's temporary copy of the fixture composition, which adds the scheduler references and reactions of the local in-place example":
     (world) => inPlaceDeployment(world),
-  "it exports business documents and five scheduler states with the deploy key, adds documents and schedules, then imports the backup archive in place before pending reactions are due":
+  "it plants business documents and five scheduler states, exports with the deploy key a backup archive that holds no scheduler table, adds documents and schedules, imports the backup archive in place before pending reactions are due, and reads the five states after the import":
     async (world) => {
       world.observation = await hostedInPlace(
         required(world.backend, "the hosted backend"),
@@ -107,13 +115,7 @@ bindExample(probe7HostedInPlaceImportContract, (): InPlace => ({}), {
       const read = new Set(
         Object.keys(o.exported).map((key) => key.split("/")[0]),
       );
-      expect(read).toEqual(
-        new Set(
-          ["parent", ...mountedComponents].filter((scope) => read.has(scope)),
-        ),
-      );
-      for (const scope of ["parent", "depot", "yard"])
-        expect(read).toContain(scope);
+      expect(read).toEqual(new Set(copyMounts));
       expect(isDeepStrictEqual(o.restored, o.exported)).toBe(equal);
     },
   "every scheduler row in each scope is unchanged {unchanged}": (
@@ -121,7 +123,8 @@ bindExample(probe7HostedInPlaceImportContract, (): InPlace => ({}), {
     { unchanged },
   ) => {
     const o = observed(world);
-    expect(Object.keys(o.after).sort()).toEqual(["depot", "parent", "yard"]);
+    expect(Object.keys(o.before).sort()).toEqual([...copyMounts].sort());
+    expect(Object.keys(o.after).sort()).toEqual([...copyMounts].sort());
     for (const scope of Object.keys(o.after))
       expect(isDeepStrictEqual(o.after[scope], o.before[scope])).toBe(
         unchanged,

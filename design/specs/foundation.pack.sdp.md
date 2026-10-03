@@ -11,6 +11,8 @@ specs:
   - spec:platform.native-harness.ordinary-client-refused-internal-function
   - spec:platform.native-harness.ordinary-client-refused-component-function
   - spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function
+  - spec:platform.native-harness.undeclared-table-survives-another-composition-deploy
+  - spec:platform.native-harness.hosted-deployment-accepts-production-composition
   - spec:platform.existing-systems
   - spec:laws.law01-sanctioned-writes-only
   - spec:laws.law02-state-and-events-commit-together
@@ -51,6 +53,7 @@ specs:
   - spec:facts.f04-nested-calls-cost-more-than-helpers
   - spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-mutation
   - spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-component-call-from-query
+  - spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-hosted-function-calls
   - spec:facts.f05-react-client-retries-until-confirmed
   - spec:facts.f05-react-client-retries-until-confirmed.probe-1-client-closed-with-pending-mutation
   - spec:facts.f05-react-client-retries-until-confirmed.probe-1-backend-restart-with-pending-mutation
@@ -64,6 +67,7 @@ specs:
   - spec:facts.f12-backups-exclude-pending-scheduled-functions
   - spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-fresh-import
   - spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-in-place-import
+  - spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-hosted-in-place-import
   - spec:facts.f13-transactions-have-limits
   - spec:facts.f13-transactions-have-limits.probe-4-nested-call-shares-limits
   - spec:facts.f13-transactions-have-limits.probe-4-component-call-shares-limits
@@ -84,6 +88,7 @@ specs:
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-scan
   - spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-states
+  - spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-hosted-retention
   - spec:facts.f17-migrations-fits-generation-backfill
   - spec:facts.f17-migrations-fits-generation-backfill.probe-6-batch-races-command
   - spec:facts.f17-migrations-fits-generation-backfill.probe-6-interruption-and-resume
