@@ -1,4 +1,5 @@
-// The parent list over the read model in its active generation.
+// The parent list over the order summary in its active generation. A read model is installed through its
+// first rebuild, in rebuild.ts.
 import {
   paginationOptsValidator,
   paginationResultValidator,

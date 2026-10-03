@@ -1,4 +1,5 @@
-// The parent's generation registry of spec:application.generation-registry and the conventions every
+// The parent's generation registry of spec:application.generation-registry, with its progress rows,
+// aggregate markers and the tenant fill's row, and the conventions every
 // per-entity read-model row follows (spec:application.projection-contract), as fragments the parent's
 // schema.ts spreads into defineSchema.
 import {

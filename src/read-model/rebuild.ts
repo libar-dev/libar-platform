@@ -29,18 +29,21 @@ export type RebuildTarget<D = any> = {
   source: SourceRef;
   list: FunctionReference<"query", "internal", ListArgs, PaginationResult<D>>;
 };
+// A composition's own registered batch of a generation, which a batch schedules by reference.
 export type BatchRef = FunctionReference<
   "mutation",
   "internal",
   { generationId: GenericId<"generations">; fence: number },
   null
 >;
+// A composition's own registered tenant fill batch.
 export type FillBatchRef = FunctionReference<
   "mutation",
   "internal",
   { fence: number },
   null
 >;
+// The read models a composition can rebuild and its four registered batches.
 export type RebuildConfig = {
   targets: readonly RebuildTarget[];
   refs: {
@@ -63,14 +66,20 @@ type BatchArgs = { generationId: GenericId<"generations">; fence: number };
 const mutationContext = <D extends RebuildDataModel>(
   ctx: GenericMutationCtx<D>,
 ) => ctx as unknown as MutationCtx;
+// The tenants one fill batch takes from the grants.
 export const limitTenantFillBatch = 8;
+// The generations one getGenerations answer lists, the newest first.
 export const limitGenerationsListed = 20;
+// The most entities one backfill or verify batch reads, from the read model's row budget.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const rebuildBatchCeiling = (readModel: ReadModel<any, any>): number =>
   Math.min(100, Math.floor(4194304 / (2 * readModel.rowBudgetBytes)));
+// The most rows one purge batch deletes, from the read model's row budget.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const limitPurgeBatch = (readModel: ReadModel<any, any>): number =>
   Math.min(500, Math.floor(4194304 / readModel.rowBudgetBytes));
+// The batch size startGeneration stores: the request, refused below 1 or fractional, lowered to the
+// ceiling, or the ceiling when none is asked.
 export function batchSizeFor(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readModel: ReadModel<any, any>,
@@ -242,6 +251,7 @@ export async function interruptGeneration<D extends RebuildDataModel>(
   });
   return null;
 }
+// Bumps the fence and schedules the batch of the pass the progress row names, in the caller's mutation.
 export async function resumeChain<D extends RebuildDataModel>(
   parentCtx: GenericMutationCtx<D>,
   config: RebuildConfig,

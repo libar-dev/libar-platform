@@ -1,7 +1,8 @@
 // The fixture composition's second read model: a title row per depot document. Only
-// CreateTwiceSummarizedDocument binds it, after the document summary, and its projection throws for
+// CreateTwiceSummarizedDocument binds it, after the document summary, and its projections throw for
 // the fault title, so a failure after step 9 has written the summary row runs on the fixture
-// composition and no other command meets the fault.
+// composition and no other command meets the fault. Version 2 projects the deleted document to no
+// row; version 1 projects every document.
 import { v, type Infer } from "convex/values";
 import {
   defaultRowBudgetBytes,
