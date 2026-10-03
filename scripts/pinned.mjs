@@ -1,26 +1,22 @@
-// Emits the pinned module of one scope of Specs, a TypeScript module the type tests import:
-// `node scripts/pinned.mjs --pack <packId>` or `node scripts/pinned.mjs --specs <id,id,...> --name <name>`
-// writes generated/pinned/<name>.ts, where a Pack's name is its id without `pack:`. It reads the body
-// of recipe 24, "Pinned declarations", from the pinned Protocol's recipes.md and runs it with the
-// pinned CLI, so the list of declarations is the Protocol's own. spec:extraction.contract-declarations
-// rules what the module is: a projection, regenerated and never edited, which earns its place when a
-// changed pinned signature fails the typecheck against the implementation.
+// Emits the pinned module of one Pack, which the type tests import:
+// `node scripts/pinned.mjs --pack <packId> [--name <name>]` writes generated/pinned/<name>.ts, by
+// default the Pack's id without `pack:`. It runs the body of recipe 24, "Pinned declarations", read
+// from the pinned Protocol's recipes.md, with the pinned CLI. spec:extraction.contract-declarations
+// rules the module: a projection, regenerated and never edited, which earns its place when a
+// changed pin fails the typecheck against the code.
 //
-// Which entries become declarations is this project's policy, by the prefix of the entry's key:
-// - `type*` whose span opens with `type ` or `interface `: `export ` and the span.
-// - `validator*` whose span opens with `const `: `export ` and the span.
-// - `fn*` whose span is a call signature `name<...>(...): R`: `export declare function ` and the span,
-//   where a parameter's default value, which a declaration cannot carry, makes the parameter optional.
-// - `table*` whose span is `name: defineTable(...)`: one member of `export const tables = { ... }`.
-// Every other entry is skipped and counted by its prefix. The module holds the scope's own entries
-// and, marked, every entry of another Spec that pins a name they use, and so on until nothing is
-// missing. A name pinned twice is never merged: the second pin is compiled beside the first and held
-// identical to it. The summary goes to stderr.
-// Exit 0: written. 1: written, but a name a declaration uses is declared nowhere, which the summary
-// names. 2: it cannot run.
+// This project's policy, by the prefix of the entry's key: `type*` opening with `type ` or
+// `interface ` and `validator*` opening with `const ` are exported as written; `fn*` that is a call
+// signature `name<...>(...): R` becomes `export declare function`, where a default value makes its
+// parameter optional; `table*` of the form `name: defineTable(...)` is a member of
+// `export const tables`. Every other entry is skipped and counted by its prefix on stderr. Each pin
+// of another Spec that a declaration uses is pulled in, marked. A name pinned twice is emitted twice,
+// so the compiler refuses it, and stderr names it.
+// Exit 0: written. 2: it cannot emit.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
+import { parseArgs } from "node:util";
 import ts from "typescript";
 
 const root = join(import.meta.dirname, "..");
@@ -28,185 +24,66 @@ const protocol = join(
   root,
   "node_modules/@libar-dev/software-delivery-protocol",
 );
-
 function cannot(reason) {
   console.error(`pinned: cannot emit · ${reason}`);
   process.exit(2);
 }
 
-// The preamble. Convex's own names are imported; a name Convex or a composition's generated code
-// provides gets a placeholder over Convex's generic types.
-const imports = [
-  "import {",
-  "  defineTable,",
-  "  paginationOptsValidator,",
-  "  paginationResultValidator,",
-  "  type FunctionReference,",
-  "  type GenericDataModel,",
-  "  type GenericDatabaseReader,",
-  "  type GenericDatabaseWriter,",
-  "  type GenericDocument,",
-  "  type GenericMutationCtx,",
-  "  type GenericQueryCtx,",
-  "  type PaginationOptions,",
-  "  type PaginationResult,",
-  "  type RegisteredMutation,",
-  "  type RegisteredQuery,",
-  '} from "convex/server";',
-  "import {",
-  "  v,",
-  "  type GenericId,",
-  "  type PropertyValidators,",
-  "  type Validator,",
-  "  type Value,",
-  '} from "convex/values";',
-];
-const importedNames = [
-  ...imports.join("\n").matchAll(/^ {2}(?:type )?([A-Za-z]\w*),$/gm),
-].map(([, name]) => name);
-const placeholders = {
-  MutationCtx: [
-    "type MutationCtx = GenericMutationCtx<GenericDataModel>;",
-    "A composition's _generated/server.js, over its own data model.",
-  ],
-  QueryCtx: [
-    "type QueryCtx = GenericQueryCtx<GenericDataModel>;",
-    "A composition's _generated/server.js, over its own data model.",
-  ],
-  Id: [
-    "type Id<TableName extends string> = GenericId<TableName>;",
-    "A composition's _generated/dataModel.js.",
-  ],
-  Doc: [
-    "type Doc<TableName extends string> = GenericDocument & { _id: Id<TableName>; _creationTime: number };",
-    "A composition's _generated/dataModel.js, over its own tables.",
-  ],
-};
+const preamble = `import {
+  defineTable,
+  type FunctionReference,
+  type GenericDataModel,
+  type GenericDatabaseReader,
+  type GenericDatabaseWriter,
+  type GenericMutationCtx,
+  type GenericQueryCtx,
+  type PaginationOptions,
+  type PaginationResult,
+  type RegisteredMutation,
+  type RegisteredQuery,
+} from "convex/server";
+import { v, type GenericId, type Validator, type Value } from "convex/values";
 
-// Names the design uses that no Spec pins and Convex does not provide: each is a design gap. Where
-// the implementation exports the name, its declaration stands in, so that a pin using the name can
-// still be compared with the code; the module emits the gaps its own declarations use.
+// Provided by Convex or by a composition's generated code.
+type MutationCtx = GenericMutationCtx<GenericDataModel>; // _generated/server.js, over the composition's data model.
+type QueryCtx = GenericQueryCtx<GenericDataModel>; // _generated/server.js, over the composition's data model.
+type Id<TableName extends string> = GenericId<TableName>; // _generated/dataModel.js.`;
+
+// Names the design uses that no Spec pins as a declaration: the code's module that declares each,
+// or the type that stands in when the code declares none.
 const gaps = {
-  ReadModelDataModel: [
-    'type ReadModelDataModel = import("../../src/read-model/index.js").ReadModelDataModel;',
-    "src/read-model/tables.ts",
-  ],
-  RowDataModel: [
-    'type RowDataModel = import("../../src/read-model/index.js").RowDataModel;',
-    "src/read-model/tables.ts",
-  ],
-  GateDataModel: [
-    'type GateDataModel = import("../../src/gate/index.js").GateDataModel;',
-    "src/gate/tables.ts",
-  ],
-  ListArgs: [
-    'type ListArgs = import("../../src/context/index.js").ListArgs;',
-    "src/context/queries.ts",
-  ],
-  AppendResult: [
-    'type AppendResult = import("../../src/context/index.js").AppendResult;',
-    "src/context/journal.ts",
-  ],
-  BatchRef: [
-    'type BatchRef = import("../../src/read-model/index.js").BatchRef;',
-    "src/read-model/rebuild.ts",
-  ],
-  FillBatchRef: [
-    'type FillBatchRef = import("../../src/read-model/index.js").FillBatchRef;',
-    "src/read-model/rebuild.ts",
-  ],
-  SubjectRef: [
-    'type SubjectRef = import("../../src/command/index.js").SubjectRef;',
-    "src/command/actor-and-scope.ts",
-  ],
-  DiagnosticSink: [
-    'type DiagnosticSink = import("../../src/operations/index.js").DiagnosticSink;',
-    "src/operations/diagnostic.ts",
-  ],
-  FailedCall: [
-    'type FailedCall = import("../../src/command/index.js").FailedCall;',
-    "src/command/pipeline.ts",
-  ],
-  HistoryEvent: [
-    'type HistoryEvent = import("../../example/domain/orderAllocationHistory.js").HistoryEvent;',
-    "example/domain/orderAllocationHistory.ts",
-  ],
-  OrderAllocation: [
-    'type OrderAllocation = import("../../example/domain/orderAllocationHistory.js").OrderAllocation;',
-    "example/domain/orderAllocationHistory.ts",
-  ],
-  outcomeKindValidator: [
-    'declare const outcomeKindValidator: typeof import("../../src/command/index.js").outcomeKindValidator;',
-    "src/command/pipeline.ts",
-  ],
-  actorValidator: [
-    'declare const actorValidator: typeof import("../../src/command/index.js").actorValidator;',
-    "src/command/actor-and-scope.ts",
-  ],
-  WriteBaselineArgs: [
-    "type WriteBaselineArgs = Record<string, unknown>;",
-    null,
-  ],
-  WriteBaselineResult: ["type WriteBaselineResult = unknown;", null],
+  AppendResult: "src/context",
+  BatchRef: "src/read-model",
+  DiagnosticSink: "src/operations",
+  FailedCall: "src/command",
+  FillBatchRef: "src/read-model",
+  GateDataModel: "src/gate",
+  ListArgs: "src/context",
+  ReadModelDataModel: "src/read-model",
+  RowDataModel: "src/read-model",
+  SubjectRef: "src/command",
+  WriteBaselineArgs: "Record<string, unknown>",
+  WriteBaselineResult: "unknown",
+  actorKindValidator: "src/command",
+  outcomeKindValidator: "src/command",
 };
-
-// The names of TypeScript's own library a declaration may use.
-const globals = new Set([
-  "Array",
-  "Awaited",
-  "Date",
-  "Error",
-  "Exclude",
-  "Extract",
-  "NonNullable",
-  "Omit",
-  "Parameters",
-  "Partial",
-  "Pick",
-  "Promise",
-  "Readonly",
-  "ReadonlyArray",
-  "ReadonlyMap",
-  "ReadonlySet",
-  "Record",
-  "Required",
-  "ReturnType",
-  "Set",
-  "crypto",
-  "undefined",
-]);
-
-function parseArguments(argv) {
-  const options = {};
-  for (let at = 0; at < argv.length; at += 2) {
-    const [flag, value] = [argv[at], argv[at + 1]];
-    if (!["--pack", "--specs", "--name"].includes(flag))
-      cannot(`unknown argument ${flag}`);
-    if (value === undefined || value.startsWith("--"))
-      cannot(`${flag} takes a value`);
-    options[flag.slice(2)] = value;
-  }
-  if ((options.pack === undefined) === (options.specs === undefined))
-    cannot("name one scope: --pack <packId> or --specs <id,id,...>");
-  if (options.specs !== undefined && options.name === undefined)
-    cannot("--specs needs --name <name> for the module's file");
-  const name = options.name ?? options.pack.replace(/^pack:/, "");
-  if (!/^[a-z0-9][a-z0-9.-]*$/.test(name))
-    cannot(`${name} is not a module name`);
-  return { ...options, name };
+function gapDeclaration(name) {
+  const source = gaps[name];
+  const code = `import("../../${source}/index.js").${name}`;
+  if (!source.startsWith("src/"))
+    return `type ${name} = ${source}; // nothing in the code stands in.`;
+  return /^[a-z]/.test(name)
+    ? `declare const ${name}: typeof ${code};`
+    : `type ${name} = ${code};`;
 }
 
 function query(body) {
+  const sdp = join(protocol, "dist/cli/sdp.js");
   try {
     const out = execFileSync(
       process.execPath,
-      [join(protocol, "dist/cli/sdp.js"), "q", body, "--root", root, "--json"],
-      {
-        cwd: root,
-        encoding: "utf8",
-        maxBuffer: 1 << 27,
-        stdio: ["ignore", "pipe", "inherit"],
-      },
+      [sdp, "q", body, "--root", root, "--json"],
+      { cwd: root, encoding: "utf8", maxBuffer: 1 << 27 },
     );
     return JSON.parse(out);
   } catch (error) {
@@ -220,50 +97,22 @@ function recipe24() {
     join(protocol, "docs/agent-surface/recipes.md"),
     "utf8",
   );
-  const heading = /^## 24\. .*$/m.exec(recipes);
-  if (heading === null) cannot("recipes.md has no heading 24");
-  const section = recipes
-    .slice(heading.index + heading[0].length)
-    .split(/^## /m)[0];
-  const fence = /^```js\n([\s\S]*?)^```$/m.exec(section);
-  if (fence === null) cannot("recipe 24 has no js fence");
+  const section = recipes.split(/^## /m).find((part) => /^24\. /.test(part));
+  const fence = /^```js\n([\s\S]*?)^```$/m.exec(section ?? "");
+  if (fence === null) cannot("recipes.md has no recipe 24 with a js fence");
   return fence[1];
-}
-
-function scopeOf(options) {
-  if (options.pack !== undefined) {
-    const members = query(
-      `const context = g.packContext(${JSON.stringify(options.pack)});\nreturn context === undefined ? null : context.members.map((member) => member.id);`,
-    );
-    if (members === null) cannot(`the graph has no ${options.pack}`);
-    return members;
-  }
-  const specs = options.specs.split(",").filter((id) => id !== "");
-  const unknown = query(
-    `const known = new Set(g.specs().map((spec) => spec.id));\nreturn ${JSON.stringify(specs)}.filter((id) => !known.has(id));`,
-  );
-  if (unknown.length > 0) cannot(`the graph has no ${unknown.join(", ")}`);
-  return specs;
 }
 
 const parse = (text) =>
   ts.createSourceFile("pin.ts", text, ts.ScriptTarget.Latest, true);
-// The parser's own diagnostics: a span that does not parse alone is no call signature.
-const parsedCleanly = (file) => {
-  if (!Array.isArray(file.parseDiagnostics))
-    cannot("this TypeScript parser keeps no parseDiagnostics");
-  return file.parseDiagnostics.length === 0;
-};
 
-// A call signature: one bodiless function declaration with a return type. A default value becomes
-// an optional parameter, with the value kept in a comment.
+// A call signature parses alone as one bodiless function declaration with a return type.
 function callSignature(span) {
-  if (!/^[A-Za-z_$][\w$]*\s*[<(]/.test(span)) return null;
-  const prefix = "export declare function ";
-  const file = parse(`${prefix}${span};`);
+  if (!/^[\w$]+\s*[<(]/.test(span)) return null;
+  const file = parse(`export declare function ${span}`);
   const [statement] = file.statements;
   if (
-    !parsedCleanly(file) ||
+    file.parseDiagnostics.length > 0 ||
     file.statements.length !== 1 ||
     !ts.isFunctionDeclaration(statement) ||
     statement.body !== undefined ||
@@ -271,301 +120,175 @@ function callSignature(span) {
   )
     return null;
   let text = file.text;
-  const defaults = statement.parameters
-    .filter((parameter) => parameter.initializer !== undefined)
-    .reverse();
-  for (const parameter of defaults) {
-    const value = parameter.initializer.getText(file);
-    const end = parameter.initializer.getEnd();
-    const typeEnd = (parameter.type ?? parameter.name).getEnd();
-    const nameEnd = parameter.name.getEnd();
-    text = `${text.slice(0, typeEnd)} /* = ${value} */${text.slice(end)}`;
-    text = `${text.slice(0, nameEnd)}?${text.slice(nameEnd)}`;
-  }
-  return { name: statement.name.text, text: text.replace(/;$/, "") };
+  for (const { name, type, initializer } of [...statement.parameters].reverse())
+    if (initializer !== undefined)
+      text = `${text.slice(0, name.end)}?${text.slice(name.end, (type ?? name).end)} /* = ${initializer.getText(file)} */${text.slice(initializer.end)}`;
+  return { name: statement.name.text, text };
 }
 
-// What one entry declares, or null when the policy skips it.
+// What one entry declares under the policy, or kind null.
+const exported = {
+  type: [/^(?:type|interface)\s+([\w$]+)/, "type"],
+  validator: [/^const\s+([\w$]+)/, "value"],
+};
 function declarationOf(row) {
-  const prefix = /^[a-z]+/.exec(row.key)?.[0] ?? row.key;
+  const prefix = /^[a-z]+/.exec(row.key)[0];
   const span = row.declaration.trim();
   const base = { ...row, prefix, address: `${row.spec}#design.${row.key}` };
-  if (prefix === "type") {
-    const named = /^(?:type|interface)\s+([A-Za-z_$][\w$]*)/.exec(span);
-    if (named !== null)
-      return { ...base, kind: "type", name: named[1], text: `export ${span}` };
-  }
-  if (prefix === "validator") {
-    const named = /^const\s+([A-Za-z_$][\w$]*)/.exec(span);
-    if (named !== null)
-      return { ...base, kind: "value", name: named[1], text: `export ${span}` };
-  }
-  if (prefix === "fn") {
-    const signature = callSignature(span);
-    if (signature !== null) return { ...base, kind: "function", ...signature };
-  }
-  if (prefix === "table") {
-    const named = /^([A-Za-z_$][\w$]*):\s*defineTable\(/.exec(span);
-    if (named !== null)
-      return { ...base, kind: "table", name: named[1], text: span };
-  }
+  const named = exported[prefix]?.[0].exec(span)?.[1];
+  if (named !== undefined)
+    return {
+      ...base,
+      kind: exported[prefix][1],
+      name: named,
+      text: `export ${span}`,
+    };
+  const signature = prefix === "fn" ? callSignature(span) : null;
+  if (signature !== null) return { ...base, kind: "type", ...signature };
+  if (prefix === "table" && /^[\w$]+:\s*defineTable\(/.test(span))
+    return { ...base, kind: "table", name: "", text: span };
   return { ...base, kind: null };
 }
 
-// An identifier refers to a declaration unless it names a property, a member or what it declares.
-function refersToADeclaration(node) {
-  const parent = node.parent;
-  if (ts.isShorthandPropertyAssignment(parent)) return true;
-  if (ts.isPropertyAccessExpression(parent)) return parent.expression === node;
-  if (ts.isQualifiedName(parent)) return parent.left === node;
-  return parent.name !== node && parent.propertyName !== node;
-}
-
-// The names a declaration uses, less its own name and those of its parameters and type parameters.
+// The names a declaration uses: identifiers that are not a property, a member, what is declared, or
+// one of its parameters or type parameters.
 function namesUsedBy(declaration) {
-  const text =
-    declaration.kind === "table"
-      ? `const tables = { ${declaration.text} };`
-      : declaration.text;
-  const own = new Set();
+  const own = new Set([declaration.name]);
   const used = new Set();
   const visit = (node) => {
+    const parent = node.parent;
     if (
-      (ts.isTypeParameterDeclaration(node) ||
-        ts.isParameter(node) ||
-        ts.isBindingElement(node)) &&
+      (ts.isTypeParameterDeclaration(node) || ts.isParameter(node)) &&
       ts.isIdentifier(node.name)
     )
       own.add(node.name.text);
-    if (ts.isIdentifier(node) && refersToADeclaration(node))
+    else if (
+      ts.isIdentifier(node) &&
+      (ts.isShorthandPropertyAssignment(parent) ||
+        (ts.isPropertyAccessExpression(parent)
+          ? parent.expression === node
+          : ts.isQualifiedName(parent)
+            ? parent.left === node
+            : parent.name !== node))
+    )
       used.add(node.text);
     ts.forEachChild(node, visit);
   };
-  visit(parse(text));
-  for (const name of own) used.delete(name);
-  used.delete(declaration.name);
-  return used;
+  visit(
+    parse(
+      declaration.kind === "table"
+        ? `const tables = { ${declaration.text} };`
+        : declaration.text,
+    ),
+  );
+  return [...used].filter((name) => !own.has(name));
 }
 
-function emit(options) {
-  const scope = scopeOf(options);
-  const { totals, rows } = query(recipe24());
-  const all = rows.map(declarationOf);
-  const pinnedBy = new Map();
-  for (const declaration of all) {
-    if (declaration.kind === null || declaration.kind === "table") continue;
-    pinnedBy.set(declaration.name, [
-      ...(pinnedBy.get(declaration.name) ?? []),
-      declaration,
-    ]);
-  }
-  for (const name of [...Object.keys(gaps), ...Object.keys(placeholders)]) {
-    const pins = pinnedBy.get(name);
-    if (pins !== undefined)
-      cannot(
-        `the preamble declares ${name}, which ${pins.map((pin) => pin.address).join(" and ")} pins: take it out of the preamble`,
-      );
-  }
-  const inScope = new Set(scope);
-  const own = all.filter((row) => inScope.has(row.spec));
-  const emitted = own.filter((row) => row.kind !== null);
-  const skipped = own.filter((row) => row.kind === null);
+const { values: options } = parseArgs({
+  options: { pack: { type: "string" }, name: { type: "string" } },
+});
+if (options.pack === undefined) cannot("name the Pack: --pack <packId>");
+const name = options.name ?? options.pack.replace(/^pack:/, "");
+const scope = query(
+  `return g.packContext(${JSON.stringify(options.pack)})?.members.map((member) => member.id) ?? null;`,
+);
+if (scope === null) cannot(`the graph has no ${options.pack}`);
 
-  // The closure: a name an emitted declaration uses is declared by the module, pinned by another
-  // Spec, which is then pulled in, or provided by the preamble or TypeScript.
-  const declared = new Set(emitted.map((row) => row.name));
-  const pulled = [];
-  const gapUses = new Map();
-  const missing = new Map();
-  const queue = [...emitted];
-  while (queue.length > 0) {
-    const declaration = queue.shift();
-    for (const name of namesUsedBy(declaration)) {
-      if (declared.has(name)) continue;
-      if (pinnedBy.has(name)) {
-        declared.add(name);
-        for (const pin of pinnedBy.get(name)) {
-          pulled.push({ ...pin, pulledFor: declaration.address });
-          queue.push(pin);
-        }
-      } else if (name in gaps) {
-        gapUses.set(name, [...(gapUses.get(name) ?? []), declaration.address]);
-      } else if (
-        !(name in placeholders) &&
-        !importedNames.includes(name) &&
-        !globals.has(name)
-      ) {
-        missing.set(name, [...(missing.get(name) ?? []), declaration.address]);
-      }
-    }
-  }
-
-  const everything = [...emitted, ...pulled];
-  const comment = (declaration) =>
-    declaration.pulledFor === undefined
-      ? `// ${declaration.address}`
-      : `// ${declaration.address} (pulled in: ${declaration.pulledFor} uses ${declaration.name})`;
-
-  // A name pinned twice: the first pin declares it, each later one is compiled apart and held
-  // identical to the first.
-  const firstPin = new Map();
-  const twice = [];
-  for (const declaration of everything) {
-    if (declaration.kind === "table") continue;
-    if (!firstPin.has(declaration.name))
-      firstPin.set(declaration.name, declaration);
-    else twice.push(declaration);
-  }
-  const pinnedAgain = (declaration, index) => {
-    const first = firstPin.get(declaration.name);
-    const label = `PinnedAgain${index + 1}`;
-    const body =
-      declaration.kind === "value"
-        ? `const ${label} = (() => {\n  ${declaration.text.replace(/^export /, "")};\n  return ${declaration.name};\n})();`
-        : `declare namespace ${label} {\n  ${declaration.text.replace(/^export (declare )?/, "export ")}${declaration.kind === "function" ? ";" : ""}\n}`;
-    const second =
-      declaration.kind === "value"
-        ? `typeof ${label}`
-        : declaration.kind === "function"
-          ? `typeof ${label}.${declaration.name}`
-          : `${label}.${declaration.name}`;
-    const firstType =
-      declaration.kind === "type"
-        ? declaration.name
-        : `typeof ${declaration.name}`;
-    return [
-      `${comment(declaration)}`,
-      `// ${declaration.name} is pinned again here, and first at ${first.address}.`,
-      body,
-      `type ${label}HoldsTheFirstPin = Holds<Same<${firstType}, ${second}>>;`,
-    ];
-  };
-
-  // Values are declared after the values they use.
-  const values = [];
-  const placed = new Set();
-  const valueNames = new Set(
-    everything
-      .filter((row) => row.kind === "value" && !twice.includes(row))
-      .map((row) => row.name),
-  );
-  const place = (declaration, path) => {
-    if (placed.has(declaration) || path.has(declaration)) return;
-    path.add(declaration);
-    for (const name of namesUsedBy(declaration))
-      if (valueNames.has(name)) place(firstPin.get(name), path);
-    placed.add(declaration);
-    values.push(declaration);
-  };
-  for (const declaration of everything)
-    if (declaration.kind === "value" && !twice.includes(declaration))
-      place(declaration, new Set());
-
-  // A gap's name may open an entry the policy skips, such as an assignment without const.
-  const skippedPinOf = (name) =>
-    all
-      .filter(
-        (row) =>
-          row.kind === null &&
-          new RegExp(`^(?:export\\s+)?(?:const\\s+)?${name}\\s*=`).test(
-            row.declaration.trim(),
-          ),
-      )
-      .map((row) => row.address);
-  const lines = [
-    `// The pinned declarations of ${options.pack ?? `${scope.length} Specs`}, emitted by scripts/pinned.mjs from recipe 24 of`,
-    "// the pinned Protocol. Never edit it: change the Spec, then run `npm run sdp:build`. Each",
-    "// declaration follows the address of its Design entry.",
-    ...(options.pack === undefined ? scope.map((id) => `// - ${id}`) : []),
-    ...imports,
-    "",
-    "// Provided by Convex or by a composition's generated code.",
-    ...Object.values(placeholders).map(
-      ([declaration, source]) => `${declaration} // ${source}`,
-    ),
-    "",
-    "// Used by the design and pinned by no Spec: each is a design gap. Where the implementation",
-    "// exports the name, its declaration stands in.",
-    ...[...gapUses.keys()].sort().flatMap((name) => {
-      const [declaration, source] = gaps[name];
-      const skippedPin = skippedPinOf(name);
-      return [
-        `// ${name}: used by ${[...new Set(gapUses.get(name))].join(", ")}.`,
-        ...(skippedPin.length === 0
-          ? []
-          : [
-              `// Opens ${skippedPin.join(", ")}, as an assignment and not a declaration.`,
-            ]),
-        source === null
-          ? "// Nothing in the code stands in."
-          : `// From ${source}.`,
-        declaration,
-      ];
-    }),
-    "",
-    "type Same<A, B> =",
-    "  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2",
-    "    ? true",
-    "    : false;",
-    "type Holds<Check extends true> = Check;",
-  ];
-  const section = (title, declarations) => {
-    if (declarations.length === 0) return;
-    lines.push("", `// ${title}`);
-    for (const declaration of declarations)
-      lines.push(comment(declaration), declaration.text);
-  };
-  section(
-    "Types and functions.",
-    everything.filter(
-      (row) =>
-        (row.kind === "type" || row.kind === "function") &&
-        !twice.includes(row),
-    ),
-  );
-  section("Validators.", values);
-  const tables = everything.filter((row) => row.kind === "table");
-  if (tables.length > 0) {
-    lines.push("", "// Tables.", "export const tables = {");
-    for (const table of tables)
-      lines.push(`  ${comment(table)}`, `  ${table.text},`);
-    lines.push("};");
-  }
-  if (twice.length > 0) {
-    lines.push("", "// Names pinned more than once.");
-    twice.forEach((declaration, index) =>
-      lines.push(...pinnedAgain(declaration, index)),
+const all = query(recipe24()).rows.map(declarationOf);
+const pinnedBy = Map.groupBy(
+  all.filter((row) => row.kind === "type" || row.kind === "value"),
+  (row) => row.name,
+);
+for (const provided of ["MutationCtx", "QueryCtx", "Id", ...Object.keys(gaps)])
+  if (pinnedBy.has(provided))
+    cannot(
+      `the preamble declares ${provided}, which ${pinnedBy
+        .get(provided)
+        .map((pin) => pin.address)
+        .join(" and ")} pins: take it out of the preamble`,
     );
+
+// The scope's own entries, then every other pin of a name the module declares or uses.
+const own = all.filter((row) => scope.includes(row.spec));
+const emitted = own.filter((row) => row.kind !== null);
+const gapUses = new Map();
+const pull = (name, why) => {
+  for (const pin of pinnedBy.get(name) ?? [])
+    if (!emitted.includes(pin)) emitted.push(Object.assign(pin, { why }));
+};
+for (let at = 0; at < emitted.length; at++) {
+  const { address, name: declares } = emitted[at];
+  pull(declares, `${address} pins ${declares} too`);
+  for (const used of namesUsedBy(emitted[at])) {
+    if (used in gaps)
+      gapUses.set(used, [...(gapUses.get(used) ?? []), address]);
+    pull(used, `${address} uses ${used}`);
   }
-
-  const file = join(root, "generated/pinned", `${options.name}.ts`);
-  mkdirSync(join(root, "generated/pinned"), { recursive: true });
-  writeFileSync(file, `${lines.join("\n")}\n`);
-
-  const byPrefix = (list) => {
-    const counts = new Map();
-    for (const row of list)
-      counts.set(row.prefix, (counts.get(row.prefix) ?? 0) + 1);
-    return [...counts]
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([prefix, count]) => `${prefix} ${count}`)
-      .join(", ");
-  };
-  const notes = [
-    ...[...missing].map(
-      ([name, uses]) =>
-        `${name}, used by ${[...new Set(uses)].join(", ")}, is declared nowhere`,
-    ),
-    ...twice.map(
-      (declaration) =>
-        `${declaration.name} is pinned at ${firstPin.get(declaration.name).address} and at ${declaration.address}`,
-    ),
-  ];
-  console.error(
-    `pinned: ${relative(root, file)} · ${scope.length} Specs in scope; recipe 24 lists ${totals.entries} entries in ${totals.specs} Specs · emitted ${emitted.length} (${byPrefix(emitted)}) and ${pulled.length} pulled in · skipped ${skipped.length} (${byPrefix(skipped)}) · ${gapUses.size} names pinned by no Spec · ${twice.length} pinned twice`,
-  );
-  for (const note of notes) console.error(`pinned: ${note}`);
-  return missing.size === 0 ? 0 : 1;
 }
 
-process.exit(emit(parseArguments(process.argv.slice(2))));
+// A value is declared after the values it uses.
+const values = [];
+const place = (declaration, path = new Set()) => {
+  if (values.includes(declaration) || path.has(declaration)) return;
+  path.add(declaration);
+  for (const used of namesUsedBy(declaration))
+    for (const pin of pinnedBy.get(used) ?? [])
+      if (pin.kind === "value") place(pin, path);
+  values.push(declaration);
+};
+emitted.filter((row) => row.kind === "value").forEach((row) => place(row));
+
+const comment = (row) =>
+  `// ${row.address}${row.why === undefined ? "" : ` (pulled in: ${row.why})`}`;
+const block = (rows, indent = "") =>
+  rows.flatMap((row) => [
+    `${indent}${comment(row)}`,
+    `${indent}${row.text}${indent === "" ? "" : ","}`,
+  ]);
+const lines = [
+  `// The pinned declarations of ${options.pack}, emitted by scripts/pinned.mjs from recipe 24 of the`,
+  "// pinned Protocol. Never edit it: change the Spec, then run `npm run sdp:build`. Each declaration",
+  "// follows the address of its Design entry.",
+  preamble,
+  "",
+  "// Used by the design and pinned by no Spec. Where the code declares one, its declaration stands in.",
+  ...[...gapUses.keys()].sort().flatMap((gap) => {
+    const skippedPin = all.find(
+      (row) => row.kind === null && row.declaration.startsWith(`${gap} =`),
+    );
+    return [
+      `// ${gap}: used by ${[...new Set(gapUses.get(gap))].join(", ")}.${skippedPin === undefined ? "" : ` ${skippedPin.address} opens with it, without const.`}`,
+      gapDeclaration(gap),
+    ];
+  }),
+  "",
+  ...block(emitted.filter((row) => row.kind === "type")),
+  ...block(values),
+  "export const tables = {",
+  ...block(
+    emitted.filter((row) => row.kind === "table"),
+    "  ",
+  ),
+  "};",
+];
+mkdirSync(join(root, "generated/pinned"), { recursive: true });
+writeFileSync(
+  join(root, "generated/pinned", `${name}.ts`),
+  `${lines.join("\n")}\n`,
+);
+
+const counted = (rows) =>
+  [...Map.groupBy(rows, (row) => row.prefix)]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([prefix, group]) => `${prefix} ${group.length}`)
+    .join(", ");
+const ownEmitted = emitted.filter((row) => row.why === undefined);
+const skipped = own.filter((row) => row.kind === null);
+console.error(
+  `pinned: generated/pinned/${name}.ts · ${scope.length} Specs · emitted ${ownEmitted.length} (${counted(ownEmitted)}) and ${emitted.length - ownEmitted.length} pulled in · skipped ${skipped.length} (${counted(skipped)}) · ${gapUses.size} names pinned by no Spec`,
+);
+for (const [twice, pins] of pinnedBy)
+  if (pins.length > 1 && emitted.includes(pins[0]))
+    console.error(
+      `pinned: ${twice} is pinned twice, at ${pins.map((pin) => pin.address).join(" and ")}`,
+    );
