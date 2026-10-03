@@ -159,15 +159,11 @@ describe("the gate read", () => {
           projectionVersion: 1,
           state: "building" as const,
           pauseRequired: true,
-          batchSize: 1,
           fence: 0,
-          batchesDone: 0,
-          rowsWritten: 0,
-          rowsSkipped: 0,
-          misses: 0,
           startedAt: 0,
-          startedBy: { kind: "operator" as const, id: "ops-1" },
-          updatedAt: 0,
+          startedBy: "ops-1",
+          changedAt: 0,
+          changedBy: "ops-1",
         };
         return [
           await ctx.db.insert("generations", { ...row, generation: 1 }),

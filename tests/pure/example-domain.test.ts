@@ -289,9 +289,9 @@ test("pure: a placed order's DTO carries its lines, total, time and stream versi
 
 test("pure: the order summary projects the order's DTO to its status, line count, total and time, keyed by the order ID", () => {
   const dto = orderStream.toDto(placed(), meta("order-1")) as Parameters<
-    typeof orderSummary.projection.project
+    (typeof orderSummary.projections)[0]["project"]
   >[1];
-  const { projection } = orderSummary;
+  const [projection] = orderSummary.projections;
   expect(projection.keyOf("t-1", dto)).toBe("order-1");
   const row = projection.project("t-1", dto, [dto.version]);
   expect(row).toStrictEqual({
@@ -315,7 +315,7 @@ test("pure: the order summary projects the order's DTO to its status, line count
     name: "orderSummary",
     table: "orderSummaries",
     rowBudgetBytes: 16384,
-    projection: { version: 1 },
+    projections: [{ version: 1 }],
   });
 });
 
