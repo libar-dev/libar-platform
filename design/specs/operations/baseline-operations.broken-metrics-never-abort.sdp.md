@@ -9,7 +9,9 @@ relations:
 ---
 # Break metrics and logging
 
-Sc ALL-1 · native tier · the first of the two enumerated cases; applies to every installed layer.
+Sc ALL-1 · native tier · fixture composition · the first of the two enumerated cases; applies to every installed layer.
+
+The fault sits in the fixture composition's diagnostic sink: `PlaceOrder` names `fixtureDiagnosticSink`, which throws for every line of the tenant `sinkFaultTenant`. An ordinary client with grants sends the receipted `PlaceOrder` in that tenant. The command commits its events, its receipt and its audit record; at step 11 the sink throws, `emitDiagnostic` swallows the error and writes one gap line in place of the lost record, and the client receives the applied answer.
 
 ## Intent
 
@@ -25,6 +27,10 @@ And the failure is {surfaced: "reported as a diagnostic gap without touching the
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
-- The test replaces the fixture app's diagnostic sink with one that throws on every call and runs `PlaceOrder`.
-- The test asserts that the command returned applied, that the order, its events, its receipt, its summary row and its audit record exist, and that the fixture's swallowed-error counter is one.
+- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- The verifier is `tests/native/baseline-operations.broken-metrics-never-abort.test.ts`, whose `specTest` anchor `test:operations.baseline-operations.broken-metrics-never-abort` verifies this example.
+- The first Given step and the When step are those of `spec:operations.baseline-operations.broken-audit-aborts`.
+- The subsystem step for metrics and logging selects the tenant `sinkFaultTenant` and the order ID `order-all-1`.
+- The Then step for a command that commits asserts that the answer has `kind` `applied` and `replayed` false; that the depot's `events` hold exactly two events whose `operationId` is the one returned, one on the `document` stream `order-all-1` and one on the `stock` stream `p-1`; that `receipts` holds exactly one receipt, with the request key `all-1-key`, that operation ID and the outcome `applied`; and that `auditRecords` holds exactly one record, with the tenant `tenant-sink-fault`, that operation ID, the request key `all-1-key`, the `commandType` `PlaceOrder`, the `kind` `business`, the `decision` `applied` and the subject `{ contextId: "depot", streamType: "document", streamId: "order-all-1" }`.
+- The step for a diagnostic gap asserts that the completion record's `error` is null, that exactly one of its `logLines` contains `diagnostic gap` and that line contains the operation ID returned and `applied`, and that none of its `logLines` contains `diagnostic {`; that one gap line is the count of one swallowed error.
+- The test then shows on the same deployment that the sink runs: `orders:placeOrder` in `tenant-all-1` with the order ID `order-control` and the request key `all-1-control` returns `applied`, and its completion record holds exactly one line that contains `diagnostic {`, a line that also contains its operation ID and `applied`, and no line that contains `diagnostic gap`.
