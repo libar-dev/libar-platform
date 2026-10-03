@@ -11,7 +11,7 @@ An advisor is three layers, kept apart so that a change to one leaves the other 
 | Layer | File | Changes when |
 |---|---|---|
 | The lens: the questions a field asks of any decision, its hazards, its reading list | `lenses/<slug>.md` | The field's questions get sharper |
-| The protocol: how an advisor stands on the corpus, what a lean is, the limits | `protocol.md`, with `task-sort.md` and `task-fork.md` | The way of working changes |
+| The protocol: how an advisor stands on the corpus, what a lean is, the limits | `protocol.md`, with `task-sort.md`, `task-fork.md`, `task-roadmap.md` and `task-pass.md` | The way of working changes |
 | The project: what the corpus holds and where to look | `project-context.md` | A close moves a path |
 
 | Advisor | Slug | Lens | Definition |
@@ -43,6 +43,17 @@ The main thread merges each patch with `python3 design/tools/decisions.py apply 
 ## How the main thread runs a fork
 
 `python3 design/tools/decisions.py --owner --before <unit>` lists what the owner must decide first. One launch for each fork, or one for a few forks of the same advisor, with `design/advisors/task-fork.md`, the ids and a patch path. Forks of different advisors run at once: each writes `design/decisions/forks/<id>.md` and its own patch.
+
+## How the main thread runs a pass
+
+The owner asked on 2026-10-03 for designs of coming work to be first-class in the corpus and iterated from several perspectives before the work is committed to. A pass is one advisor reading one capability's Pack from its lens, with `task-pass.md`, before the capability is built; `design/PLAN.md` 6.7 says how such a design sits in the graph and what each lens asks of it. Passes of different lenses over one Pack may run at once, since each writes only its memo.
+
+```
+Agent(subagent_type: "advisor-convex",
+      prompt: "Your task is design/advisors/task-pass.md. Your slug is convex. Your Pack is pack:history-view. Write your memo to <folder>/pass-convex.md.")
+```
+
+The memo's facts are checked like a roadmap memo's, on a copy with a plant. The main thread then rules each finding: a Spec change written by an Opus agent, an open question, a register row, or nothing. The pass closes as `design: <pack>, the <lens> pass`, and the next pass reads the Specs as that one left them. The implementation and verification pass needs no advisor: `npm run test:types` compiles the Pack's pinned module, recipe 21 gives its dependency footing, and the main thread rules on what they show.
 
 ## How the main thread runs a roadmap
 
