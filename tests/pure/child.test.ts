@@ -368,3 +368,39 @@ test("pure: captured child output redacts both streams and abort rejects with th
   controller.abort(reason);
   await expect(result).rejects.toBe(reason);
 });
+
+test("pure: a succeeded child's output is redacted in either output mode", async () => {
+  const args = [
+    "-e",
+    "console.log(process.argv[1]); console.error(process.argv[1])",
+    secret,
+  ];
+  expect(
+    await runChild("the child", process.execPath, args, {
+      timeoutMs: 10000,
+      secrets: [secret],
+    }),
+  ).toBe("[redacted]\n");
+});
+
+test("pure: an abort reason that carries a secret is redacted, and one that carries none is returned as it is", async () => {
+  for (const carries of [true, false]) {
+    const controller = new AbortController();
+    const reason = new Error(carries ? `stopped ${secret}` : "stopped");
+    const result = runChild(
+      "the child",
+      process.execPath,
+      ["-e", "setInterval(() => {}, 1000)"],
+      { timeoutMs: 10000, signal: controller.signal, secrets: [secret] },
+    );
+    controller.abort(reason);
+    const error = await result.catch((thrown: unknown) => thrown);
+    if (!carries) {
+      expect(error).toBe(reason);
+      continue;
+    }
+    expect(error).not.toBe(reason);
+    expect((error as Error).message).toBe("stopped [redacted]");
+    expect((error as Error).stack).not.toContain(secret);
+  }
+});

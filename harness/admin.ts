@@ -9,7 +9,7 @@ import type { Value } from "convex/values";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { redact, runChild } from "./child.js";
+import { redact, redactError, redactingLogger, runChild } from "./child.js";
 import { isolatedCli, createBackupArchiveAccess } from "./backup-archive.js";
 import type { CliOutput } from "./backup-archive.js";
 import { projectDirectory } from "./composition.js";
@@ -149,7 +149,10 @@ export function createAdminAccess(
   state: AdminState,
 ): AdminAccess {
   const marks = new WeakMap<LogMark, object | undefined>();
-  const http = new ConvexHttpClient(target.url) as AdminHttpClient;
+  const logger = redactingLogger(target.secrets);
+  const http = new ConvexHttpClient(target.url, {
+    logger,
+  }) as AdminHttpClient;
   http.setAdminAuth(target.adminKey);
   const authorization = { Authorization: `Convex ${target.adminKey}` };
   async function cli(command: "deploy" | "codegen") {
@@ -191,7 +194,7 @@ export function createAdminAccess(
             if (value !== undefined) return settle(() => resolve(value));
           }
         },
-        { unsavedChangesWarning: false },
+        { unsavedChangesWarning: false, logger },
       ) as unknown as AdminSocketClient;
       const timer = setTimeout(
         () =>
@@ -210,7 +213,7 @@ export function createAdminAccess(
       );
     });
   }
-  return {
+  return guarded(target.secrets, {
     ...createBackupArchiveAccess(target),
     async deploy() {
       await cli("deploy");
@@ -394,5 +397,30 @@ export function createAdminAccess(
       assertProcess();
       return records;
     },
-  };
+  });
+}
+// Every member's rejection, and anything one throws at once, passes through redaction where it is
+// first seen, so no secret leaves the admin access in an error.
+export function guarded<T extends object>(
+  secrets: readonly string[],
+  access: T,
+): T {
+  const result: Record<string, unknown> = {};
+  for (const [name, member] of Object.entries(access))
+    result[name] =
+      typeof member === "function"
+        ? (...args: unknown[]) => {
+            try {
+              const value: unknown = member.apply(access, args);
+              return value instanceof Promise
+                ? value.catch((error: unknown) => {
+                    throw redactError(error, secrets);
+                  })
+                : value;
+            } catch (error) {
+              throw redactError(error, secrets);
+            }
+          }
+        : member;
+  return result as T;
 }

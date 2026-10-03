@@ -4,6 +4,7 @@ import {
   ref,
 } from "@libar-dev/software-delivery-protocol";
 import { execFile } from "node:child_process";
+import { format } from "node:util";
 const anchor = codeAnchor({
   id: codeAnchorId("impl:platform.native-harness.child"),
   label: "child processes and redaction",
@@ -35,6 +36,73 @@ export function redact(text: string, secrets: readonly string[]): string {
     }
   }
   return result;
+}
+// Everything of an error that a reporter or a log can print: its name, message and stack, its own
+// properties and its causes.
+function printable(error: unknown, depth = 0): string {
+  const text = (value: unknown) => {
+    try {
+      return typeof value === "string" ? value : String(value);
+    } catch {
+      return "";
+    }
+  };
+  const json = (value: unknown) => {
+    try {
+      return JSON.stringify(value) ?? "";
+    } catch {
+      return text(value);
+    }
+  };
+  if (!(error instanceof Error)) return `${text(error)}\n${json(error)}`;
+  const parts = [error.name, error.message, error.stack ?? ""];
+  for (const [key, value] of Object.entries(error))
+    parts.push(key, text(value), json(value));
+  if (error.cause !== undefined && depth < 3)
+    parts.push(printable(error.cause, depth + 1));
+  return parts.join("\n");
+}
+// An error that carries no secret anywhere it can be printed is returned as it is, so that a caller
+// can still tell it by identity. One that carries a secret is replaced by an Error of the same name
+// whose message and stack have every secret replaced, and which keeps none of its properties.
+export function redactError(
+  error: unknown,
+  secrets: readonly string[],
+): unknown {
+  const keys = secrets.filter((secret) => secret !== "");
+  if (keys.length === 0) return error;
+  const printed = printable(error);
+  if (!keys.some((key) => printed.includes(key))) return error;
+  const original = error instanceof Error ? error : undefined;
+  const replaced = new Error(redact(original?.message ?? String(error), keys));
+  if (original !== undefined) {
+    replaced.name = original.name;
+    replaced.stack = redact(
+      original.stack ?? `${original.name}: ${original.message}`,
+      keys,
+    );
+  }
+  return replaced;
+}
+// A logger for Convex's clients, which log a function's log lines and their own warnings, with
+// every secret replaced before it reaches the console.
+export interface ClientLogger {
+  logVerbose(...args: unknown[]): void;
+  log(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+}
+export function redactingLogger(secrets: readonly string[]): ClientLogger {
+  const write =
+    (method: "debug" | "log" | "warn" | "error") =>
+    (...args: unknown[]) =>
+      console[method](redact(format(...args), secrets));
+  return {
+    logVerbose: write("debug"),
+    log: write("log"),
+    warn: write("warn"),
+    error: write("error"),
+  };
 }
 export interface ChildOutput {
   stdout: string;
@@ -78,9 +146,12 @@ export function runChild(
                   stdout: redact(stdout, options.secrets ?? []),
                   stderr: redact(stderr, options.secrets ?? []),
                 }
-              : stdout,
+              : redact(stdout, options.secrets ?? []),
           );
-        if (options.signal?.aborted) return reject(options.signal.reason);
+        if (options.signal?.aborted)
+          return reject(
+            redactError(options.signal.reason, options.secrets ?? []),
+          );
         if (options.output === "both")
           return reject(
             new Error(

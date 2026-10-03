@@ -319,3 +319,64 @@ test("pure: aborting the caller's signal stops the deploy child of a temporary d
     runner.mockRestore();
   }
 });
+
+test("pure: every admin member's rejection and every client log line has its secrets replaced, a fetch that rejects included", async () => {
+  const key = "REVIEW_DUMMY_ADMIN_SECRET_0123456789";
+  const admin = createAdminAccess(
+    {
+      url: "http://127.0.0.1:1",
+      adminKey: key,
+      home: "unused",
+      composition: fixtureComposition,
+      secrets: [key],
+    },
+    { deployed: undefined, environment: new Set(), logProcess: {} },
+  );
+  const printed: string[] = [];
+  const consoles = (["log", "warn", "error", "debug", "info"] as const).map(
+    (method) =>
+      vi
+        .spyOn(console, method)
+        .mockImplementation((...args: unknown[]) =>
+          printed.push(args.map(String).join(" ")),
+        ),
+  );
+  try {
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError(`fetch failed for ${key}`);
+    });
+    const failures: unknown[] = [];
+    for (const call of [
+      () => admin.setEnvironment({ NAME: "value" }),
+      () => admin.run("notes:add"),
+      async () => admin.completionsSince(await admin.logMark(), () => false),
+    ])
+      failures.push(await call().catch((error: unknown) => error));
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            status: "success",
+            value: null,
+            logLines: [`[LOG] ${key}`],
+          }),
+        ),
+    );
+    await admin.run("notes:add");
+    expect(failures).toHaveLength(3);
+    for (const failure of failures) {
+      expect(failure).toBeInstanceOf(Error);
+      expect((failure as Error).message).toContain("[redacted]");
+    }
+    const seen = JSON.stringify([
+      failures.map((failure) => [String(failure), (failure as Error).stack]),
+      printed,
+    ]);
+    expect(printed.join("\n")).toContain("[redacted]");
+    expect(seen).not.toContain(key);
+  } finally {
+    vi.unstubAllGlobals();
+    for (const spy of consoles) spy.mockRestore();
+  }
+});
