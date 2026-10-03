@@ -152,8 +152,11 @@ test("pure: function log marks reject a changed process even when the predicate 
   };
   const admin = createAdminAccess(
     {
-      url: "http://127.0.0.1:1",
-      adminKey: "dummy",
+      selection: {
+        kind: "local",
+        url: "http://127.0.0.1:1",
+        adminKey: "dummy",
+      },
       home: "unused",
       composition: fixtureComposition,
       secrets: [],
@@ -205,8 +208,11 @@ test("pure: every TypeScript file under harness/ reaches a Spec through its own 
 function testAdmin(signal?: AbortSignal) {
   return createAdminAccess(
     {
-      url: "http://127.0.0.1:1",
-      adminKey: "dummy",
+      selection: {
+        kind: "local",
+        url: "http://127.0.0.1:1",
+        adminKey: "dummy",
+      },
       home: "unused",
       composition: fixtureComposition,
       secrets: ["dummy"],
@@ -324,8 +330,7 @@ test("pure: every admin member's rejection and every client log line has its sec
   const key = "REVIEW_DUMMY_ADMIN_SECRET_0123456789";
   const admin = createAdminAccess(
     {
-      url: "http://127.0.0.1:1",
-      adminKey: key,
+      selection: { kind: "local", url: "http://127.0.0.1:1", adminKey: key },
       home: "unused",
       composition: fixtureComposition,
       secrets: [key],

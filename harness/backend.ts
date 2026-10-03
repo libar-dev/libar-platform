@@ -238,8 +238,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
     const url = `http://127.0.0.1:${port}`;
     const access = createAdminAccess(
       {
-        url,
-        adminKey,
+        selection: { kind: "local", url, adminKey },
         home,
         composition: options.composition ?? fixtureComposition,
         secrets,
