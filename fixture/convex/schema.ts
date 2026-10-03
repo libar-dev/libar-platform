@@ -33,7 +33,9 @@ export default defineSchema({
     "by_position",
     ["position"],
   ),
-  blobs: defineTable({ group: v.string(), bytes: v.bytes() }).index(
+  // An ASCII payload, so its length is its size in bytes. Writing and reading it takes a small part
+  // of the execution time that bytes take, which `convex/values` converts to base64 in JavaScript.
+  blobs: defineTable({ group: v.string(), payload: v.string() }).index(
     "by_group",
     ["group"],
   ),

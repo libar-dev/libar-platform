@@ -174,11 +174,13 @@ async function writtenRows(world: LimitsWorld, group: string) {
   return [...own, ...child].filter((row) => row.group === group).length;
 }
 export async function writeLimits(world: LimitsWorld, expected: string) {
-  const client = ordinaryClient(required(world.backend, "the backend").url);
+  const backend = required(world.backend, "the backend");
+  const client = ordinaryClient(backend.url);
   const through = required(world.through, "the boundary");
   const parentCount = required(world.parentCount, "the parent count");
   const childCount = required(world.childCount, "the child count");
   const size = required(world.size, "the size");
+  const mark = await backend.admin.logMark();
   const together = await outcome(
     client.mutation(api.limits.writeThenCall, {
       through,
@@ -192,6 +194,15 @@ export async function writeLimits(world: LimitsWorld, expected: string) {
     "written",
   );
   measure("writesTogether", together);
+  const records = await backend.admin.completionsSince(mark, (entries) =>
+    entries.some((entry) => entry.identifier === "limits:writeThenCall"),
+  );
+  // The local backend logs one completion for the call; the nested call has none of its own.
+  const execution = required(
+    records.find((entry) => entry.identifier === "limits:writeThenCall"),
+    "the combined write's completion",
+  );
+  measure("combinedWriteSeconds", execution.executionTime);
   // Pace even a failed attempt before testing the two committing halves.
   await paceAfterWrite((parentCount + childCount) * (size + 256));
   const failedRows = await writtenRows(world, "failed-write");

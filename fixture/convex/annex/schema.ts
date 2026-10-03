@@ -8,7 +8,7 @@ export default defineSchema({
   notes: defineTable({ source: v.string() }),
   throwerWrites: defineTable({ by: v.string() }).index("by_by", ["by"]),
   samples: defineTable({ value: v.number() }),
-  blobs: defineTable({ group: v.string(), bytes: v.bytes() }).index(
+  blobs: defineTable({ group: v.string(), payload: v.string() }).index(
     "by_group",
     ["group"],
   ),
