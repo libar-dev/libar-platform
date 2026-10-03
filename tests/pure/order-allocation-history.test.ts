@@ -152,24 +152,80 @@ test("pure: folding one order's events in every interleaving of its three stream
     );
 });
 
-test("pure: folding one order's events in one call, one call per event, or two calls split anywhere gives the same row", () => {
+// Every way to cut a sequence into contiguous calls: one split per subset of the gaps between events.
+function splits<T>(events: readonly T[]): T[][][] {
+  const gaps = events.length - 1;
+  const result: T[][][] = [];
+  for (let mask = 0; mask < 2 ** Math.max(gaps, 0); mask += 1) {
+    const calls: T[][] = [[]];
+    events.forEach((event, at) => {
+      calls.at(-1)!.push(event);
+      if (at < gaps && (mask >> at) & 1) calls.push([]);
+    });
+    result.push(calls);
+  }
+  return result;
+}
+
+test("pure: folding one order's events split into contiguous calls in every way gives the same row", () => {
   for (const events of interleavings(streams)) {
-    const oneByOne = events.reduce<OrderAllocationHistoryFields | null>(
-      (row, event) => projectOrderAllocationHistory(tenantId, row, [event]),
-      null,
-    );
-    expect(oneByOne).toStrictEqual(expected);
-    for (let cut = 1; cut < events.length; cut += 1) {
-      const head = projectOrderAllocationHistory(
-        tenantId,
-        null,
-        events.slice(0, cut),
-      );
+    const ways = splits(events);
+    // 2 ** 5 ways to cut six events, from one call to one call per event.
+    expect(ways).toHaveLength(32);
+    for (const calls of ways) {
+      expect(calls.flat()).toStrictEqual(events);
       expect(
-        projectOrderAllocationHistory(tenantId, head, events.slice(cut)),
+        calls.reduce<OrderAllocationHistoryFields | null>(
+          (row, call) => projectOrderAllocationHistory(tenantId, row, call),
+          null,
+        ),
       ).toStrictEqual(expected);
     }
   }
+});
+
+test("pure: a second StockAllocated from the same stock item replaces that stock item's allocation", () => {
+  const reallocated = stock(
+    "s-1",
+    4,
+    "StockAllocated",
+    { orderId: "o-1", quantity: 4 },
+    300,
+  );
+  const replaced: OrderAllocationHistoryFields = {
+    ...expected,
+    allocations: [
+      { stockItemId: "s-1", quantity: 4, allocatedAt: 300 },
+      expected.allocations[1]!,
+    ],
+  };
+  expect(
+    projectOrderAllocationHistory(tenantId, expected, [reallocated]),
+  ).toStrictEqual(replaced);
+  expect(
+    projectOrderAllocationHistory(tenantId, null, [
+      ...orderStream,
+      ...ofOrder(firstStock),
+      reallocated,
+      ...ofOrder(secondStock),
+    ]),
+  ).toStrictEqual(replaced);
+});
+
+test("pure: an event the fold does not name, folded into a prior row, changes nothing", () => {
+  const unrelated = [
+    firstStock[0]!,
+    stock("s-1", 4, "baseline", { state: {}, stateSchemaVersion: 2 }, 300),
+    order(3, "OrderNoted", { note: "n" }, 301),
+    stock("s-3", 2, "AllocationReleased", { orderId: "o-1", quantity: 1 }, 302),
+  ];
+  for (const event of unrelated)
+    expect(
+      projectOrderAllocationHistory(tenantId, expected, [event]),
+    ).toStrictEqual(expected);
+  expect(
+    projectOrderAllocationHistory(tenantId, expected, unrelated),
+  ).toStrictEqual(expected);
 });
 
 test("pure: a cancelled order keeps its row, and a release after the cancel folds into it", () => {

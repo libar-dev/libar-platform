@@ -11,7 +11,8 @@ import {
   run,
   assertResult,
   assertFailure,
-  type AuditWorld,
+  sendControl,
+  type BaselineOperationsWorld,
 } from "./baseline-operations-steps.js";
 const anchor = specTest({
   id: testAnchorId(
@@ -22,18 +23,21 @@ const anchor = specTest({
   ),
 });
 void anchor;
-bindExample(contract, (): AuditWorld => ({}), {
-  "a valid command whose use case emits diagnostics and writes {audit}": async (
-    world,
-    { audit },
-  ) => prepare(world, audit),
-  "the {subsystem} subsystem is broken by fault injection": (
-    world,
-    { subsystem },
-  ) => select(world, subsystem),
-  "the command runs": async (world) => run(world),
-  "the command {result}": async (world, { result }) =>
-    assertResult(world, result),
-  "the failure is {surfaced}": async (world, { surfaced }) =>
-    assertFailure(world, surfaced),
-});
+bindExample(
+  contract,
+  (): BaselineOperationsWorld => ({}),
+  {
+    "a valid command whose use case emits diagnostics and writes {audit}":
+      async (world, { audit }) => prepare(world, audit),
+    "the {subsystem} subsystem is broken by fault injection": (
+      world,
+      { subsystem },
+    ) => select(world, subsystem),
+    "the command runs": async (world) => run(world),
+    "the command {result}": async (world, { result }) =>
+      assertResult(world, result),
+    "the failure is {surfaced}": async (world, { surfaced }) =>
+      assertFailure(world, surfaced),
+  },
+  sendControl,
+);

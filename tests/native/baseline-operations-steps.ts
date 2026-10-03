@@ -15,7 +15,7 @@ import { fixtureBackend, required } from "../../harness/native.js";
 import { classifyThrown } from "../../src/command/index.js";
 
 type Answer = FunctionReturnType<typeof api.orders.placeOrder>;
-export interface AuditWorld {
+export interface BaselineOperationsWorld {
   backend?: Backend;
   client?: ReturnType<typeof ordinaryClient>;
   tenantId?: string;
@@ -33,7 +33,7 @@ async function tables(backend: Backend) {
     audits: await backend.admin.readTable("auditRecords"),
   };
 }
-export async function prepare(world: AuditWorld, audit: string) {
+export async function prepare(world: BaselineOperationsWorld, audit: string) {
   expect(audit).toBe("a mandatory audit record");
   const backend = await fixtureBackend();
   world.backend = backend;
@@ -58,7 +58,7 @@ export async function prepare(world: AuditWorld, audit: string) {
     });
   }
 }
-export function select(world: AuditWorld, subsystem: string) {
+export function select(world: BaselineOperationsWorld, subsystem: string) {
   expect(["mandatory audit", "metrics and logging"]).toContain(subsystem);
   world.tenantId =
     subsystem === "mandatory audit" ? "tenant-all-1" : sinkFaultTenant;
@@ -66,7 +66,7 @@ export function select(world: AuditWorld, subsystem: string) {
     subsystem === "mandatory audit" ? auditFaultOrderId : "order-all-1";
 }
 async function send(
-  world: AuditWorld,
+  world: BaselineOperationsWorld,
   tenantId: string,
   orderId: string,
   requestKey: string,
@@ -102,7 +102,7 @@ async function send(
     completion: required(records.find(own), "PlaceOrder completion"),
   };
 }
-export async function run(world: AuditWorld) {
+export async function run(world: BaselineOperationsWorld) {
   world.before = await tables(required(world.backend, "backend"));
   Object.assign(
     world,
@@ -114,7 +114,10 @@ export async function run(world: AuditWorld) {
     ),
   );
 }
-export async function assertResult(world: AuditWorld, result: string) {
+export async function assertResult(
+  world: BaselineOperationsWorld,
+  result: string,
+) {
   const after = await tables(required(world.backend, "backend"));
   if (result === "rolls back") {
     expect(world.answer).toBeUndefined();
@@ -164,7 +167,10 @@ export async function assertResult(world: AuditWorld, result: string) {
     }),
   ]);
 }
-export async function assertFailure(world: AuditWorld, surfaced: string) {
+export async function assertFailure(
+  world: BaselineOperationsWorld,
+  surfaced: string,
+) {
   const record = required(world.completion, "completion");
   const diagnostics = record.logLines.filter((line) =>
     line.includes("diagnostic {"),
@@ -195,6 +201,12 @@ export async function assertFailure(world: AuditWorld, surfaced: string) {
     expect(gaps[0]).toContain("applied");
     expect(diagnostics).toEqual([]);
   }
+}
+// After the bound steps: on the same deployment a healthy command in tenant-all-1 commits with its
+// one audit record and its one diagnostic line, so the audit writer and the sink still run.
+export async function sendControl(world: BaselineOperationsWorld) {
+  const backend = required(world.backend, "backend");
+  const before = (await tables(backend)).audits;
   const control = await send(
     world,
     "tenant-all-1",
@@ -204,10 +216,8 @@ export async function assertFailure(world: AuditWorld, surfaced: string) {
   expect(control.error).toBeUndefined();
   expect(control.answer).toMatchObject({ kind: "applied", replayed: false });
   const operationId = (control.answer as { operationId: string }).operationId;
-  const audits = (await tables(required(world.backend, "backend"))).audits;
-  expect(audits).toHaveLength(
-    surfaced === "returned to the caller as a technical failure" ? 1 : 2,
-  );
+  const audits = (await tables(backend)).audits;
+  expect(audits).toHaveLength(before.length + 1);
   expect(audits.filter((row) => row.operationId === operationId)).toEqual([
     expect.objectContaining({ operationId, decision: "applied" }),
   ]);
