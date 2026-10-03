@@ -27,7 +27,7 @@ bindExample(contract, (): World => ({}), {
     async (world) => {
       Object.assign(world, await schedulingBackend());
     },
-  "it creates documents and five scheduler states, then exports and imports the snapshot with replacement into a fresh backend with its own environment":
+  "it creates documents and five scheduler states, then exports and imports the backup archive with replacement into a fresh backend with its own environment":
     async (world) => {
       world.observation = await freshImport(world.backend!, world.directory!);
     },

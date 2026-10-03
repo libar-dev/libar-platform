@@ -21,7 +21,7 @@ And every writer is refused while the restore door is closed
 When the restore procedure runs its journal, domain, read-model and receipt checks and its pending-work inventory
 Then the invariants {invariants: "hold"}
 And writes {reopen: "reopen after the checks pass"}
-And a generation stranded in the snapshot is {stranded: "resumed by the accepted branch"}
+And a generation stranded in the backup archive is {stranded: "resumed by the accepted branch"}
 ```
 
 ## Verification — executable

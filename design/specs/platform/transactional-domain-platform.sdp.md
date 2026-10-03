@@ -35,7 +35,7 @@ Citations in this corpus use the tokens the plan fixes: D for a decision, Law fo
 - outcome: Adding domain sophistication does not add infrastructure: one mutation per business operation, contexts that own their state and journal, and layers each usable before the next exists (Thesis)
 - value: A new feature needs only its domain input, events and decision, one command or use-case binding, and the read model it actually uses; a maintainer traces its success and failure without unrelated queue, agent or governance registries (Thesis)
 - risk: Every read of context data from the parent is a component call, whose cost the first experiment measured on the local backend and which keeps every context a component; a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, changes the shape of the context component before Layer 3 is designed (D2, Probe 3, OQ1)
-- risk: Nothing has run yet; the sources support the Convex facts, not the correctness or performance of the design (Sources)
+- risk: The sources support the Convex facts, not the correctness or performance of the design, which only the acceptance scenarios, each passing at its tier, show (Sources)
 - assumption: Mutations are serializable under optimistic concurrency, and component calls commit or roll back with the calling mutation (F1, F2)
 - assumption: One ledger fact is still assumed, and three that the doc lists as assumed are rechecked or probed in the corpus; each Spec that rests on one names it and the probe plan names the probe (F14, F15, F16, F17)
 
@@ -53,7 +53,7 @@ Citations in this corpus use the tokens the plan fixes: D for a decision, Law fo
 - rule: The design succeeds when adding domain sophistication does not add infrastructure (Thesis)
 - rule: The twelve laws are the review surface; the decisions give the detail (Laws)
 - rule: Every mechanism is a decision whose first option is the do-nothing option that relies on Convex as it is, and only a failing acceptance scenario justifies a mechanism (Decision method rule 2, Decision method rule 3)
-- rule: Layers 0 to 2 get full detail now; Layer 3 is written from what the first experiment shows; Layers 4 to 6 stay as a trigger, a promise and their scenarios until something triggers them (Decision method rule 4)
+- rule: Layers 0 to 2 get full detail; Layer 3 is written from what the first experiment shows; Layers 4 to 6 stay as a trigger, a promise and their scenarios until something triggers them (Decision method rule 4)
 - rule: The design authorizes no deletion or migration of existing data (Existing systems)
 
 ## Verification — reviewed

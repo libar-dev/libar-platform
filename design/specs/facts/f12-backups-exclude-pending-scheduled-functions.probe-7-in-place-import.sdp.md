@@ -17,7 +17,7 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 
 ```gwt
 Given a production composition has temporary functions for scheduler references and reactions
-When it exports business documents and five scheduler states, adds orders and schedules, then imports the snapshot in place before pending reactions are due
+When it exports business documents and five scheduler states, adds orders and schedules, then imports the backup archive in place before pending reactions are due
 Then documents including ids and creation times in {scopes: "parent,orders,inventory"} equal the exported documents {equal: true}
 And every scheduler row in each scope is unchanged {unchanged: true}
 And later business changes are gone {removed: true} and the destination environment is unchanged {environmentUnchanged: true}
@@ -29,4 +29,4 @@ And each restored scheduler reference resolves to the kept row {found: true} and
 
 - On the first run of this example, on 2026-10-02 on release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, the bound values held: the scheduler rows were unchanged in all three scopes and the kept pending reactions read the restored value at or after their time.
 - The test changes business data in the parent and both contexts before import and fails if it does not reach that boundary. It records execution times; it binds only that execution is no earlier than the due time.
-- The exported snapshot is the archive. Hosted dashboard restore, file storage, Workpool and Workflow are not run.
+- The exported file is the backup archive. Hosted dashboard restore, file storage, Workpool and Workflow are not run.

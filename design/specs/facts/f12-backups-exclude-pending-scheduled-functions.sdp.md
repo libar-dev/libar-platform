@@ -10,7 +10,7 @@ relations:
 
 F12 · Status: documented · Doc status: Documented, S8 · Decisions: D13, D19.
 
-The backup page excludes scheduled functions, code, configuration and environment variables. On the pinned native backend, CLI snapshot export and replacement import carry the parent, Orders and Inventory documents, including their IDs and creation times, but no scheduler table. Import into a fresh backend leaves its scheduler tables empty; import in place preserves its scheduler rows, including rows created after export. The inference that every restore leaves no dispatches does not hold for this CLI import. The destination environment variables are unchanged. Hosted dashboard restore is not run, so the fact retains documented status for that wider claim. Here snapshot means the exported archive, not current state or a baseline event.
+The backup page excludes scheduled functions, code, configuration and environment variables. On the pinned native backend, a backup archive that the CLI exports and imports with replacement carries the parent, Orders and Inventory documents, including their IDs and creation times, but no scheduler table. Import into a fresh backend leaves its scheduler tables empty; import in place preserves its scheduler rows, including rows created after export. The inference that every restore leaves no dispatches does not hold for this CLI import. The destination environment variables are unchanged. Hosted dashboard restore is not run, so the fact retains documented status for that wider claim. The backup archive here is the exported file, not current state or a baseline event.
 
 ## Intent
 

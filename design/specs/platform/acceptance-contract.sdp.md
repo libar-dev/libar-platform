@@ -41,7 +41,7 @@ The doc's acceptance table is the contract. It lists forty-three scenario rows b
 - A link between source and test is not a passing run (Acceptance scenarios)
 - A run with adjusted configuration states how it differs from production (Acceptance scenarios)
 - Readiness is stated plainly as specified, implemented, tested under named conditions, or operationally accepted (Acceptance scenarios)
-- The first experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend (First experiment)
+- The first experiment passes when every Layer 0, 1 and 2 scenario and Sc ALL-1 passes, each at the tier this Spec names for it (First experiment, Sc ALL-1)
 - The one all-layer scenario, breaking metrics and logging and separately breaking mandatory audit, applies to every installed layer (Sc ALL-1)
 - [extension] A compiled-tier scenario passes when a typed caller that states the change fails `tsc` before any deployment; the compiled tier, which the doc's four tiers lack, is named by Sc L2-4 alone and needs no backend (E-14, Sc L2-4)
 - [extension] Three statements about a scenario stay apart: it is bound when a verifier of its example resolves in the graph, it passed when a run's record holds a passing result of that verifier, and a set of scenarios is accepted only when the acceptance check finds every one of them passed in one record (E-17, Acceptance scenarios)
