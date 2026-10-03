@@ -51,7 +51,8 @@ export const publicRef = makeFunctionReference<
   PublicCommandArgs<typeof input>,
   CommandResponse<null>
 >("diagnostic:public");
-export function entry(appended = 1, streamId = "document"): StreamDto {
+// A `streams` entry an executor returns, for a stream that stood at version 100 before the command.
+export function streamsEntry(appended = 1, streamId = "document"): StreamDto {
   const version = {
     tenantId: call.tenantId,
     contextId: "depot",
@@ -102,6 +103,9 @@ export function diagnosticApp(
   };
   const execute = vi.fn(decl.executor);
   decl.executor = execute;
+  // Two modules these tests add under their function paths, neither a file on disk: the parent's
+  // diagnostic module with the declaration's two entries, and the depot component's diagnosticContext
+  // module, which tests/simulator/diagnostic-context.ts holds.
   const t = convexTest(schema, {
     ...import.meta.glob("../../fixture/convex/**/*.ts"),
     "../../fixture/convex/diagnostic.ts": async () => ({

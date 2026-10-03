@@ -78,12 +78,20 @@ function cutLine(line: string): string {
 export function diagnosticLine(record: DiagnosticRecord): string {
   const whole = recordLine(record);
   if (whole.bytes <= limitDiagnosticBytes) return whole.line;
-  // Keep the longest prefix of versions for which the line, versionsOmitted counted, fits.
-  for (let kept = record.versions.length - 1; kept >= 0; kept--) {
+  // Keep the longest prefix of versions for which the line, versionsOmitted counted, fits. A line grows
+  // with each version kept, so the longest fitting prefix is found by a binary search on the count.
+  let fitting: string | undefined;
+  let low = 0;
+  let high = record.versions.length - 1;
+  while (low <= high) {
+    const kept = Math.floor((low + high) / 2);
     const cut = recordLine(record, kept);
-    if (cut.bytes <= limitDiagnosticBytes) return cut.line;
+    if (cut.bytes <= limitDiagnosticBytes) {
+      fitting = cut.line;
+      low = kept + 1;
+    } else high = kept - 1;
   }
-  return cutLine(recordLine(record, 0).line);
+  return fitting ?? cutLine(recordLine(record, 0).line);
 }
 export function diagnosticGapLine(record: DiagnosticRecord): string {
   const fields: Record<string, unknown> = {
@@ -95,12 +103,22 @@ export function diagnosticGapLine(record: DiagnosticRecord): string {
   return cutLine(gapPrefix + JSON.stringify(fields));
 }
 // Reads and writes no table. Each error the sink throws, whatever is thrown, is counted by one gap line.
+// A sink is synchronous: one that returns a thenable has its record counted as lost by one gap line,
+// and the thenable gets a rejection handler that does nothing, so no rejection escapes.
 export function emitDiagnostic(
   record: DiagnosticRecord,
   sink: DiagnosticSink = consoleSink,
 ): void {
   try {
-    sink(diagnosticLine(record));
+    const returned: unknown = sink(diagnosticLine(record));
+    if (
+      (typeof returned === "object" || typeof returned === "function") &&
+      returned !== null &&
+      typeof (returned as { then?: unknown }).then === "function"
+    ) {
+      (returned as PromiseLike<unknown>).then(undefined, () => {});
+      throw new Error("A diagnostic sink is synchronous");
+    }
   } catch {
     try {
       console.error(diagnosticGapLine(record));

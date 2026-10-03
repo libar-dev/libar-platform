@@ -17,7 +17,7 @@ import {
   issuer,
   internalRef,
   publicRef,
-  entry,
+  streamsEntry,
 } from "./diagnostic-support.js";
 import { caught } from "./gate-support.js";
 
@@ -347,8 +347,8 @@ for (const failGap of [false, true]) {
 }
 for (const appended of [1, 2]) {
   for (const rows of [0, 1, 2]) {
-    test(`convex-test: ${appended} appended at version 100 and ${rows} generation rows count actual work`, async () => {
-      const stream = entry(appended);
+    test(`convex-test: a stubbed streams entry of ${appended} appended events and ${rows} generation rows written gives eventsAppended ${appended} and readModelRows ${rows}`, async () => {
+      const stream = streamsEntry(appended);
       const a = diagnosticApp({
         executor: async () => ({
           kind: "applied",
@@ -418,8 +418,72 @@ for (const appended of [1, 2]) {
     });
   }
 }
+// readModelRows of spec:operations.baseline-operations counts rows inserted, replaced or deleted.
+test("convex-test: a generation whose live update writes no row is left out of readModelRows", async () => {
+  const stream = streamsEntry(1);
+  const a = diagnosticApp({
+    executor: async () => ({
+      kind: "applied",
+      result: null,
+      versions: [stream.version],
+      streams: [stream],
+    }),
+    readModels: [
+      {
+        readModel: documentSummary,
+        source: { contextId: "depot", streamType: "document" },
+      },
+    ],
+  });
+  await a.grant();
+  await a.t.run(async (ctx) => {
+    for (const generation of [1, 2])
+      await ctx.db.insert("generations", {
+        readModel: "documentSummary",
+        generation,
+        projectionVersion: 1,
+        state: generation === 1 ? "active" : "building",
+        pauseRequired: false,
+        fence: 0,
+        startedAt: 0,
+        startedBy: "operator",
+        changedAt: 0,
+        changedBy: "operator",
+      });
+    // The active generation has the row; the building one has none, so a live update skips it.
+    await ctx.db.insert("documentSummaries", {
+      tenantId: call.tenantId,
+      generation: 1,
+      key: "document",
+      projectionVersion: 1,
+      sourceVersions: [{ ...stream.version, version: 100 }],
+      documentId: "document",
+      status: "draft",
+      title: "Before",
+    });
+  });
+  const response = await a.t.mutation(internalRef, call);
+  expect.soft(a.records()).toEqual([
+    {
+      ...fields,
+      kind: "applied",
+      replayed: false,
+      operationId: response.operationId,
+      eventsAppended: 1,
+      readModelRows: 1,
+      versions: [stream.version],
+    },
+  ]);
+  const stored = await a.stored();
+  expect(stored.rows).toHaveLength(1);
+  expect(stored.rows[0]).toMatchObject({
+    generation: 1,
+    title: "Title",
+    sourceVersions: [stream.version],
+  });
+});
 test("convex-test: eventsAppended sums all streams rather than counting streams or final versions", async () => {
-  const streams = [entry(1, "first"), entry(2, "second")];
+  const streams = [streamsEntry(1, "first"), streamsEntry(2, "second")];
   const a = diagnosticApp({
     executor: async () => ({
       kind: "businessFailure",
@@ -516,7 +580,8 @@ for (const appended of [1, 2]) {
   });
 }
 
-// Step 10's order is observable even though either wrong order could roll back cleanly.
+// At step 10 the receipt is inserted before the audit record, and the diagnostic sink is called after
+// both: a proxy over db.insert and the sink write one list in the order the three happen.
 test("convex-test: the receipt insert finishes before audit, and both finish before the diagnostic sink", async () => {
   const writes: string[] = [];
   const a = diagnosticApp({

@@ -124,7 +124,12 @@ test("pure: versions are cut to the longest fitting prefix with versionsOmitted 
     streamId: `subject-${i}-🦊`,
     version: 100 + i,
   }));
-  const input = { ...record, versions };
+  // 64 more bytes of actorId make a line that leaves versionsOmitted out of the fit go over the bound.
+  const input = {
+    ...record,
+    actorId: record.actorId + "a".repeat(64),
+    versions,
+  };
   const { versions: all, ...fields } = input;
   const candidate = (kept: number) =>
     `diagnostic ${JSON.stringify({ ...fields, versionsOmitted: all.length - kept, versions: all.slice(0, kept) })}`;
@@ -137,6 +142,25 @@ test("pure: versions are cut to the longest fitting prefix with versionsOmitted 
   expect(kept).toBeLessThan(all.length);
   expect(diagnosticLine(input)).toBe(candidate(kept));
   expect(bytes(candidate(kept + 1))).toBeGreaterThan(4096);
+});
+test("pure: at 1,000 versions the cut keeps the same prefix as a linear search down from the whole list", () => {
+  const versions = Array.from({ length: 1000 }, (_, i) => ({
+    ...record.versions[0]!,
+    streamId: `subject-${i}-${"é".repeat(i % 7)}`,
+    version: 100 + i,
+  }));
+  const input = { ...record, versions };
+  const { versions: all, ...fields } = input;
+  const candidate = (kept: number) =>
+    `diagnostic ${JSON.stringify({ ...fields, versionsOmitted: all.length - kept, versions: all.slice(0, kept) })}`;
+  let linear = prefix(candidate(0));
+  for (let kept = all.length - 1; kept >= 0; kept--)
+    if (bytes(candidate(kept)) <= 4096) {
+      linear = candidate(kept);
+      break;
+    }
+  expect(diagnosticLine(input)).toBe(linear);
+  expect(bytes(linear)).toBeLessThanOrEqual(4096);
 });
 test("pure: an oversized record is never dropped and the final cut preserves whole code points", () => {
   const input = { ...record, tenantId: "a🦊é".repeat(1600) };
@@ -202,6 +226,32 @@ for (const thrown of [
     expect(log).not.toHaveBeenCalled();
   });
 }
+for (const [name, settle] of [
+  ["rejects", () => Promise.reject(new Error("async sink broke"))],
+  ["resolves", () => Promise.resolve()],
+] as const)
+  test(`pure: an async sink that ${name} counts its record as lost by one gap line, and no rejection escapes`, async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    try {
+      // A plain function: a vi.fn spy would attach its own handler to the promise it returns.
+      const lines: string[] = [];
+      const sink = (line: string) => {
+        lines.push(line);
+        return settle();
+      };
+      expect(emitDiagnostic(record, sink as DiagnosticSink)).toBeUndefined();
+      expect(lines).toEqual([diagnosticLine(record)]);
+      expect(error).toHaveBeenCalledExactlyOnceWith(diagnosticGapLine(record));
+      expect(log).not.toHaveBeenCalled();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off("unhandledRejection", unhandled);
+    }
+  });
 test("pure: the fixture sink faults only for the pinned tenant and otherwise uses consoleSink", () => {
   expect(auditFaultOrderId).toBe("order-audit-fault");
   expect(sinkFaultTenant).toBe("tenant-sink-fault");
