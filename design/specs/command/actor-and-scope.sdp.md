@@ -60,7 +60,7 @@ This contract pins the shapes the parent establishes and passes into components:
 - typeActorRef: `type ActorRef = { kind: ActorKind; id: string }` (D11, E-6)
 - typeActor: `type Actor = { kind: ActorKind; id: string; issuer?: string; onBehalfOf?: ActorRef; delegationRef?: string }` where `delegationRef` names the obligation, approval or agent run the delegation rests on (D11, D2, E-6)
 - validatorActorKind: `actorKindValidator = v.union(v.literal("human"), v.literal("service"), v.literal("agent"), v.literal("reviewer"), v.literal("operator"))` (D11)
-- validatorActor: `actorValidator = v.object({ kind: actorKindValidator, id: v.string(), issuer: v.optional(v.string()), onBehalfOf: v.optional(v.object({ kind: actorKindValidator, id: v.string() })), delegationRef: v.optional(v.string()) })` (D11, D2, E-6)
+- validatorActor: `const actorValidator = v.object({ kind: actorKindValidator, id: v.string(), issuer: v.optional(v.string()), onBehalfOf: v.optional(v.object({ kind: actorKindValidator, id: v.string() })), delegationRef: v.optional(v.string()) })` (D11, D2, E-6)
 - typeTenantScope: `type TenantScope = { tenantId: string }` (Law 11)
 - validatorTenantScope: `tenantScopeValidator = v.object({ tenantId: v.string() })` (Law 11)
 - typeCallerNamespace: `type CallerNamespace = "public" | "service" | "worker" | "agent" | "system"` (D6, D11, D13, E-6)

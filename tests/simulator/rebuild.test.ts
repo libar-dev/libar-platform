@@ -928,8 +928,8 @@ test.each(projectionCases)(
   },
 );
 
-// projection-contract.sdp.md step3:92; generation-registry.sdp.md typeWritableGeneration;
-// rebuild.sdp.md rule:69, rule:70, step5:125.
+// spec:application.projection-contract#design.step3, spec:application.generation-registry#design.writableGenerationRole,
+// spec:application.rebuild#design.step5 and its rule that live commands also write the generation being built.
 test.each(["building", "verifying", "verified"] as const)(
   "convex-test: live commands create and update rows in %s with that state's role",
   async (state) => {
