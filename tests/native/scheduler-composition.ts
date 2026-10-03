@@ -62,6 +62,19 @@ export async function schedulingBackend() {
   expect(backend.facts().composition).toBeNull();
   return { backend, directory };
 }
+// The kinds of the scheduler states' rows in one scope. A setup that installs a read model through
+// its first rebuild leaves its batches' rows in the parent; they are the setup's, not the states'.
+export async function stateKinds(
+  backend: Backend,
+  component: (typeof scopes)[number],
+) {
+  return (
+    await backend.admin.readTable("_scheduled_functions", options(component))
+  )
+    .filter((row) => !String(row.name).startsWith("rebuild"))
+    .map((row) => (row.state as { kind: string }).kind)
+    .sort();
+}
 export async function initialize(
   backend: Backend,
   due: number,
@@ -81,18 +94,7 @@ export async function initialize(
   }
   for (const component of scopes)
     await expect
-      .poll(
-        async () =>
-          (
-            await backend.admin.readTable(
-              "_scheduled_functions",
-              options(component),
-            )
-          )
-            .map((row) => (row.state as { kind: string }).kind)
-            .sort(),
-        { timeout: 15000 },
-      )
+      .poll(() => stateKinds(backend, component), { timeout: 15000 })
       .toEqual(["canceled", "failed", "inProgress", "pending", "success"]);
 }
 export async function schedulerRows(backend: Backend) {

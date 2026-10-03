@@ -26,7 +26,7 @@ import type { CompletionRecord } from "../../harness/admin.js";
 import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { measure, productionBackend, required } from "../../harness/native.js";
-import { scheduledRows } from "./scheduled-rows.js";
+import { scheduledRows, scheduledSince } from "./scheduled-rows.js";
 import { utf8Length, type MutationCtx } from "../../src/command/index.js";
 export const tenantId = "t-1";
 export const subject = "user-1";
@@ -214,7 +214,7 @@ export async function place(
     summaryKeys: summaries.page.map((row) => row.key),
   };
 }
-// The scheduled-function tables of the parent and both contexts, read after the commands: a job
+// The scheduled-function rows of the parent and both contexts that the commands added: a job
 // scheduled with any delay is a row there.
 const scheduledAfter = new WeakMap<
   ExperimentWorld,
@@ -230,6 +230,7 @@ export async function placeOrderRuns(
   if (run !== "the PlaceOrder use case")
     throw new Error(`These examples run the PlaceOrder use case, not ${run}`);
   const size = required(world.size, "the order's size");
+  const before = await scheduledRows(required(world.backend, "the backend"));
   if (linesOf[size] > 1)
     world.reference = await place(world, "order-ref", orderLines(1, "ref"));
   world.placed = await place(
@@ -239,7 +240,10 @@ export async function placeOrderRuns(
   );
   scheduledAfter.set(
     world,
-    await scheduledRows(required(world.backend, "the backend")),
+    scheduledSince(
+      before,
+      await scheduledRows(required(world.backend, "the backend")),
+    ),
   );
 }
 const sent = (world: ExperimentWorld): Placed[] =>

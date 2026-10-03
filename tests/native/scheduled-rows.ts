@@ -11,3 +11,11 @@ export async function scheduledRows(backend: Backend) {
   );
   return rows.flat();
 }
+// The rows of a later read that an earlier read did not hold: what was scheduled between the two.
+// A setup that installs a read model through its first rebuild leaves its batches' rows behind.
+export function scheduledSince(
+  before: Awaited<ReturnType<typeof scheduledRows>>,
+  after: Awaited<ReturnType<typeof scheduledRows>>,
+) {
+  return after.filter((row) => !before.some((prior) => prior._id === row._id));
+}

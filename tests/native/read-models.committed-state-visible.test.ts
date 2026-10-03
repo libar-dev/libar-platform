@@ -15,7 +15,7 @@ import {
   type QueryWatch,
 } from "../../harness/clients.js";
 import { required } from "../../harness/native.js";
-import { scheduledRows } from "./scheduled-rows.js";
+import { scheduledRows, scheduledSince } from "./scheduled-rows.js";
 import {
   line,
   orderWorld,
@@ -37,6 +37,7 @@ interface World {
   order?: OrderWorld;
   summaries?: QueryWatch<Summaries>;
   mark?: LogMark;
+  scheduledBefore?: Awaited<ReturnType<typeof scheduledRows>>;
   response?: Response;
 }
 const orderId = "order-1";
@@ -81,6 +82,7 @@ bindExample(contract, (): World => ({}), {
     if (action !== "the use case commits one successful command")
       throw new Error(`This test binds one successful command`);
     const { backend, client } = required(world.order, "the backend");
+    world.scheduledBefore = await scheduledRows(backend);
     world.mark = await backend.admin.logMark();
     world.response = await client.mutation(api.ordering.placeOrder, {
       tenantId,
@@ -147,7 +149,12 @@ bindExample(contract, (): World => ({}), {
     ).toHaveLength(workers);
     // The scheduled-function tables of the parent and both contexts also hold a job scheduled with
     // a delay past the window.
-    expect(await scheduledRows(backend)).toHaveLength(workers);
+    expect(
+      scheduledSince(
+        required(world.scheduledBefore, "the scheduled rows before"),
+        await scheduledRows(backend),
+      ),
+    ).toHaveLength(workers);
     expect(
       records.find((entry) => entry.identifier === "ordering:placeOrder"),
     ).toMatchObject({ udfType: "Mutation", caller: "HttpApi", error: null });

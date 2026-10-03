@@ -8,6 +8,7 @@ import {
   scopes,
   options,
   record,
+  stateKinds,
 } from "./scheduler-composition.js";
 export async function freshImport(backend: Backend, directory: string) {
   const exported = await exportData(backend, directory, Date.now() + 3600000);
@@ -96,18 +97,7 @@ export async function inPlaceImport(backend: Backend, directory: string) {
   }
   for (const component of scopes)
     await expect
-      .poll(
-        async () =>
-          (
-            await backend.admin.readTable(
-              "_scheduled_functions",
-              options(component),
-            )
-          )
-            .map((row) => (row.state as { kind: string }).kind)
-            .sort(),
-        { timeout: 15000 },
-      )
+      .poll(() => stateKinds(backend, component), { timeout: 15000 })
       .toEqual([
         "canceled",
         "canceled",
