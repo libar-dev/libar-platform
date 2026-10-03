@@ -25,13 +25,15 @@ const anchor = codeAnchor({
   satisfies: ref("spec:platform.native-harness"),
 });
 void anchor;
+// On a hosted deployment the executable is unknown and the data is kept from earlier runs.
 export interface BackendFacts {
   composition: Composition["name"] | null;
   installedLayers: string[];
-  executable: Pick<Executable, "release" | "sha256" | "source">;
+  target: "local backend" | "hosted deployment";
+  executable: Pick<Executable, "release" | "sha256" | "source"> | null;
   identitySource: { kind: "fixture issuer"; issuer: string };
   environment: string[];
-  dataset: "empty at start";
+  dataset: "empty at start" | "kept from earlier runs";
 }
 export interface StartOptions {
   executable: Executable;
@@ -293,6 +295,7 @@ export async function startBackend(options: StartOptions): Promise<Backend> {
       facts: () => ({
         composition: state.deployed?.name ?? null,
         installedLayers: [...(state.deployed?.installedLayers ?? [])],
+        target: "local backend",
         executable: {
           release: options.executable.release,
           sha256: options.executable.sha256,

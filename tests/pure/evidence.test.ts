@@ -23,6 +23,7 @@ test("pure: simultaneous evidence records differ and an existing record cannot b
   const directory = await mkdtemp(join(tmpdir(), "libar-evidence-"));
   const record: NativeRunRecord = {
     tier: "native",
+    target: "local backend",
     commit: "abcdefg",
     clean: false,
     command: "vitest run",
@@ -32,6 +33,7 @@ test("pure: simultaneous evidence records differ and an existing record cannot b
     versions: {},
     tests: [],
     unhandledErrors: [],
+    hosted: null,
   };
   try {
     vi.mocked(randomUUID)
@@ -56,6 +58,7 @@ test("pure: an amendment that fails leaves the old record whole", async () => {
   const directory = await mkdtemp(join(tmpdir(), "libar-evidence-amend-"));
   const record: NativeRunRecord = {
     tier: "native",
+    target: "local backend",
     commit: "abcdefg",
     clean: true,
     command: "vitest run --project native",
@@ -65,6 +68,7 @@ test("pure: an amendment that fails leaves the old record whole", async () => {
     versions: {},
     tests: [],
     unhandledErrors: [],
+    hosted: null,
   };
   const actual = await vi.importActual<typeof import("node:fs")>("node:fs");
   try {
