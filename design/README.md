@@ -317,7 +317,7 @@ The Layer 2 design added two more for the same reason, and ten examples that ver
 |---|---|---|
 | L2-2 | `spec:application.read-models.committed-state-read-through-query` | the row says "a query or subscription" |
 | L2-4 | `spec:command.command-declaration.broken-argument-contract-fails-build` | the row says "rename a typed handler or break its argument contract" |
-| none | `spec:application.generation-registry.first-activation-makes-read-model-writable` | verifies that a read model is installed through its first rebuild, under E-8 |
+| none | `spec:application.generation-registry.first-rebuild-installs-read-model` | verifies that a read model is installed through its first rebuild, under E-8 |
 | none | `spec:application.generation-registry.command-without-generation-fails` | verifies that a command whose read model has no generation fails, under E-8 |
 | none | `spec:application.read-models.query-refused-before-disclosure` | verifies Law 5 for a parent query called with no identity |
 | none | `spec:application.read-models.query-refused-without-grant` | verifies Law 5 for a parent query called with no grant in the tenant |
