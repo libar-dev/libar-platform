@@ -47,15 +47,17 @@ const recordKeys = [
   "eventsAppended",
   "readModelRows",
 ] as const;
+// kept is undefined for the whole line. A cut line always carries versionsOmitted, 0 when versions
+// is empty.
 function recordLine(
   record: DiagnosticRecord,
-  kept: number,
+  kept?: number,
 ): { line: string; bytes: number } {
   const fields: Record<string, unknown> = {};
   for (const key of recordKeys)
     if (record[key] !== undefined) fields[key] = record[key];
-  const omitted = record.versions.length - kept;
-  if (omitted > 0) fields.versionsOmitted = omitted;
+  if (kept !== undefined)
+    fields.versionsOmitted = record.versions.length - kept;
   fields.versions = record.versions.slice(0, kept);
   const line = recordPrefix + JSON.stringify(fields);
   return { line, bytes: utf8Length(line) };
@@ -74,7 +76,7 @@ function cutLine(line: string): string {
   return line.slice(0, end);
 }
 export function diagnosticLine(record: DiagnosticRecord): string {
-  const whole = recordLine(record, record.versions.length);
+  const whole = recordLine(record);
   if (whole.bytes <= limitDiagnosticBytes) return whole.line;
   // Keep the longest prefix of versions for which the line, versionsOmitted counted, fits.
   for (let kept = record.versions.length - 1; kept >= 0; kept--) {
