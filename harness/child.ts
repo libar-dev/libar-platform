@@ -98,7 +98,8 @@ export function redactingLogger(secrets: readonly string[]): ClientLogger {
     (...args: unknown[]) =>
       console[method](redact(format(...args), secrets));
   return {
-    logVerbose: write("debug"),
+    // Convex logs its verbose lines only when asked to, and the harness never asks.
+    logVerbose: () => undefined,
     log: write("log"),
     warn: write("warn"),
     error: write("error"),

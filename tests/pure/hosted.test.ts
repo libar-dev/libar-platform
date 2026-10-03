@@ -367,7 +367,15 @@ test("pure: no CLI call of the hosted path names the backend by an argument, and
     runner.mockRestore();
   }
   const root = join(import.meta.dirname, "../..");
-  for (const file of ["harness/hosted.ts", "harness/hosted-run.ts"])
+  const hostedFiles = [
+    "harness/hosted.ts",
+    "harness/hosted-run.ts",
+    ...(await readdir(join(root, "tests/hosted"))).map(
+      (name) => `tests/hosted/${name}`,
+    ),
+  ];
+  expect(hostedFiles.length).toBeGreaterThan(2);
+  for (const file of hostedFiles)
     expect(await readFile(join(root, file), "utf8")).not.toContain(
       "--admin-key",
     );
