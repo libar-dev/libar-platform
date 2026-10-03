@@ -2229,7 +2229,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which Convex mechanism drives a backfill batch, settled by a probe and taken back by an edit [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:22; design/README.md:219].",
@@ -2243,9 +2243,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:convex",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as the rebuild Specs build it, every batch its own self-scheduled internal mutation, @convex-dev/migrations used for nothing, the progress row the one checkpoint"
     },
     {
       "id": "OD-058",
@@ -2819,7 +2819,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of a table and which row holds a cursor; the doc binds batching to the component and fixes no checkpoint [design/specs/application/generation-registry.sdp.md:37]; an edit to one Spec and one file takes it back. Doubt: the lean goes against the built reading of [design/specs/application/generation-registry.sdp.md:47] on a contention judgment that only the native tier shows, and S4's guidance [design/STATE.md:160], a pointer, asks for progress away from rows every command reads.",
@@ -2833,9 +2833,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as built, the generation row patched by a batch only at a pass end and the progress row the checkpoint; an interrupt that meets a batch may rerun on the progress row, counted beside the generations reruns"
     },
     {
       "id": "OD-072",
@@ -2990,7 +2990,7 @@
       "provisionalReading": "The option taken here: a per-entity read model declared as a `ReadModel<D, Row>` with `name`, `table`, `rowBudgetBytes` and its `Projection<D, Row>`, which holds `version`, `keyOf` and `project` alone, rows with `tenantId`, `generation`, `key`, `projectionVersion` and `sourceVersions`, one `applyProjection` helper with a mode per caller that writes each generation by its role, active or building, for an `AggregateProjection<D>` an aggregate row with `value` and `entityCount` and no `sourceVersions`, because the markers carry them, written by `applyAggregate` under the marker's version compare with the mode ignored, and for a history-dependent view a `HistoryProjection<Row>` that folds events into the prior row, fed on the live path by the events the operation appended, which the adapter's `streams` entry now carries, and on the backfill by the context's `history` pages under the write pause, with `sourceVersions` recording the highest version folded per stream so that an event is never folded twice; a cross-context or cross-stream row is built by one projection bound once per source stream type; the owner confirms the three forms and has not ruled on the split of a per-entity read model into `ReadModel` and `Projection`, on the write by generation role or on the row measured against its budget at every write; no check ties a generation to the projection version it records, and how a command writes two projection versions at once is the next question (E-9, E-23, E-24, D8, D9)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, signatures and the shape of a row: the doc gives no signature, row shape or input for the three forms [design/specs/application/projection-contract.sdp.md:33]; an edit to one Spec and the read-model files takes it back. The order in which the forms are bound is the main thread's [design/STATE.md:160], a pointer.",
@@ -3004,9 +3004,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as built, a ReadModel with its projections, the latest first, and applyProjection writing each generation by its role and its own projection version"
     },
     {
       "id": "OD-076",
@@ -3220,7 +3220,7 @@
       "provisionalReading": "The option taken here: a batch is one mutation with one cursor and a bound of at most 100 entities, capped twice, by the read model's declared `rowBudgetBytes` so that the parent's point reads and writes stay under 4 MiB, and by the context's byte-derived `list` page bound, which is 16 items at the default 256 KiB stream budget, a design choice under F13 that is a field of the generation row and that `resumeGeneration` lowers down to 1 when a generation stalls on optimistic-concurrency conflicts over a hot key range, because a mutation that loses the race never commits and cannot count its own losses; the migrations component drives batches whose source is a parent table, and a self-scheduled internal mutation with the same batch contract drives batches whose source is a context's enumeration until Probe 6 shows the component can; Probe 6 also measures the contention and decides whether an automatic stall check earns its function (E-40, E-24, E-9, F17, F13, F1)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number and which mechanism drives a batch: the doc gives no batch size [design/specs/application/rebuild.sdp.md:58], and the Spec itself leaves the component's reach to Probe 6, so a probe comes first.",
@@ -3234,9 +3234,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as built, the batch size the read model's by batchSizeFor and a field of the progress row, the context's list page bounding a batch's bytes and not its size"
     },
     {
       "id": "OD-081",
