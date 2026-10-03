@@ -42,11 +42,12 @@ const projectNames: readonly string[] = [
 // native backend tier, not a tier of its own.
 export type Target = "local backend" | "hosted deployment";
 // The deployment's answer to GET /api/v1/get_current_usage, with the time it was read.
-export interface HostedUsage {
+// A type and not an interface, so that a reading is itself a JSON value a measurement can hold.
+export type HostedUsage = {
   readAt: string;
   seedStatus: string | null;
   response: JsonValue;
-}
+};
 export interface HostedDeploy {
   composition: "fixture" | "production" | null;
   wallMs: number;
