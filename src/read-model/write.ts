@@ -27,7 +27,8 @@ export const fromSource = (
   entry.version.contextId === source.contextId &&
   entry.version.streamType === source.streamType;
 // Every binding's read model must have a generation to write, whether or not an entry matches it.
-// Returns the number of entries fed to the bindings.
+// Returns the number of read-model rows inserted, replaced or deleted, a row in each generation once:
+// the count held against limitReadModelWritesPerCommand, which the diagnostic record carries.
 export async function writeReadModels<DataModel extends ReadModelDataModel>(
   ctx: RegistryReader<DataModel> & RowWriter<DataModel>,
   commandType: string,
@@ -36,7 +37,6 @@ export async function writeReadModels<DataModel extends ReadModelDataModel>(
 ): Promise<number> {
   // One registry read per read model, however many sources bind it.
   const registry = new Map<string, WritableGeneration[]>();
-  let fed = 0;
   let rows = 0;
   for (const { readModel, source } of bindings) {
     let generations = registry.get(readModel.name);
@@ -50,7 +50,6 @@ export async function writeReadModels<DataModel extends ReadModelDataModel>(
       );
     for (const entry of input.streams) {
       if (!fromSource(source, entry)) continue;
-      fed += 1;
       const results = await applyProjection(ctx, readModel, {
         tenantId: input.tenantId,
         dto: entry.dto,
@@ -69,5 +68,5 @@ export async function writeReadModels<DataModel extends ReadModelDataModel>(
         );
     }
   }
-  return fed;
+  return rows;
 }

@@ -75,7 +75,7 @@ What generation would emit, once two modules show the pattern: for each declarat
 - generationTrigger: after two real modules; the generator is a deterministic script that emits the export pairs and the rejection-code union, and CI fails on a diff against the committed output (D12)
 - moduleGrouping: `class OrdersModule { static readonly commands = [placeOrderDeclaration, cancelOrderDeclaration] as const }` is allowed as grouping and holds no state the pipeline reads (D12)
 - canonicalSchema: `input` is a Convex validator and `refine` runs over its output; there is no second schema and no converter, so a refinement is never dropped silently (D12)
-- refineResult: `refine` returns `null` when the validated input passes and otherwise the kernel's `Rejection` of `spec:kernel.outcome-model` without its `code`, a `message` and the failing path in `details`; the pipeline's step 1 throws that value through `reject` of `spec:command.outcome-boundary` with `code: "invalidInput"` and `commandType: decl.name`, so the refinement never chooses a code and never names the command (D12, D4, E-5)
+- refineResult: `refine` returns `null` when the validated input passes and otherwise the kernel's `Rejection` of `spec:kernel.outcome-model` without its `code`, a `message` and the failing path in `details`; the pipeline's step 1 throws that value through `reject` of `spec:command.outcome-boundary` with `code: "invalidInput"` and `entry: decl.name`, so the refinement never chooses a code and never names the command (D12, D4, E-5)
 
 ## Example space
 
