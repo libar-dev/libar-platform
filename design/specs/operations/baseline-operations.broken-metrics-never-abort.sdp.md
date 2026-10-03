@@ -9,7 +9,7 @@ relations:
 ---
 # Break metrics and logging
 
-Sc ALL-1 · native tier · fixture composition · the first of the two enumerated cases; applies to every installed layer.
+Sc ALL-1 · native backend tier · fixture composition · the first of the two enumerated cases; applies to every installed layer.
 
 The fault sits in the fixture composition's diagnostic sink: `PlaceOrder` names `fixtureDiagnosticSink`, which throws for every line of the tenant `sinkFaultTenant`. An ordinary client with grants sends the receipted `PlaceOrder` in that tenant. The command commits its events, its receipt and its audit record; at step 11 the sink throws, `emitDiagnostic` swallows the error and writes one gap line in place of the lost record, and the client receives the applied answer.
 
@@ -27,7 +27,7 @@ And the failure is {surfaced: "reported as a diagnostic gap without touching the
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The verifier is `tests/native/baseline-operations.broken-metrics-never-abort.test.ts`, whose `specTest` anchor `test:operations.baseline-operations.broken-metrics-never-abort` verifies this example.
 - The first Given step and the When step are those of `spec:operations.baseline-operations.broken-audit-aborts`.
 - The subsystem step for metrics and logging selects the tenant `sinkFaultTenant` and the order ID `order-all-1`.
