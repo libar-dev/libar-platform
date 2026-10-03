@@ -77,6 +77,7 @@ interface World {
   mark?: LogMark;
   batchStart?: number;
   batchEnd?: number;
+  subjectsAtVerified?: number;
   cursors: string[];
   live: boolean;
   workers: Promise<void>[];
@@ -207,6 +208,28 @@ async function verifyBatchCount(w: World, batchSize: number) {
   }
   return count;
 }
+// The orders the Orders context's list enumerates in both tenants, deleted ones included.
+async function subjects(w: World) {
+  let count = 0;
+  for (const tenantId of tenants) {
+    let cursor: string | null = null;
+    for (;;) {
+      const page = (await backendOf(w).admin.run(
+        "queries/order:list",
+        {
+          tenantId,
+          includeDeleted: true,
+          paginationOpts: { cursor, numItems: 100 },
+        },
+        { component: "orders" },
+      )) as unknown as PaginationResult<OrderDto>;
+      count += page.page.length;
+      if (page.isDone) break;
+      cursor = page.continueCursor;
+    }
+  }
+  return count;
+}
 async function assertCoverage(w: World, generation: number) {
   const target = await rows(w, generation);
   const expected: { tenantId: string; key: string }[] = [];
@@ -324,6 +347,29 @@ async function assertLog(w: World) {
   expect(during.filter((record) => !allowed.has(record.identifier))).toEqual(
     [],
   );
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:33: the batches that wrote, by pass, are the progress
+  // row's batchesDone; a batch under a replaced fence completes without writing and is not counted.
+  const wrote = (identifier: string) =>
+    during.filter(
+      (record) =>
+        record.identifier === identifier &&
+        !record.willRetry &&
+        record.error === null &&
+        (record.usageStats["databaseWriteDocuments"] ?? 0) > 0,
+    ).length;
+  const backfills = wrote("rebuild:backfillBatch");
+  const verifies = wrote("rebuild:verifyBatch");
+  expect(backfills + verifies).toBe(
+    required(w.verified, "verified generation").progress.batchesDone,
+  );
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:33: at a batch size of 1 each pass takes one batch per
+  // subject it visits and at most one more per tenant.
+  for (const count of [backfills, verifies]) {
+    expect(count).toBeGreaterThanOrEqual(350);
+    expect(count).toBeLessThanOrEqual(
+      required(w.subjectsAtVerified, "subjects at verified") + tenants.length,
+    );
+  }
   // rebuild.online-rebuild-interrupt-resume.sdp.md:35: the batch log assertion is not vacuous.
   expect(
     during.filter(
@@ -722,6 +768,7 @@ bindExample(
         );
         await stopLive(w);
         w.batchEnd = (await backendOf(w).admin.logMark()).cursorMs;
+        w.subjectsAtVerified = await subjects(w);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:35: the backfill cursor visits the first tenant before the second.
         expect(w.cursors.indexOf(tenants[0])).toBeGreaterThanOrEqual(0);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:35: the cursor crosses to the second tenant after resume.
