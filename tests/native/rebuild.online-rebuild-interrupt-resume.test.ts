@@ -331,9 +331,18 @@ async function assertLog(w: World) {
         record.identifier === "rebuild:backfillBatch" && !record.willRetry,
     ).length,
   ).toBeGreaterThanOrEqual(350);
-  // rebuild.online-rebuild-interrupt-resume.sdp.md:36: no completion names progress as its conflict table.
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:36: no PlaceOrder, CancelOrder or parent query names progress
+  // as its conflict table; an operator entry and a batch may, and the run record counts them.
+  const live = new Set([
+    getFunctionName(api.ordering.placeOrder),
+    getFunctionName(api.ordering.cancelOrder),
+  ]);
   expect(
-    log.filter((record) => record.occInfo?.tableName === "generationProgress"),
+    log.filter(
+      (record) =>
+        record.occInfo?.tableName === "generationProgress" &&
+        (live.has(record.identifier) || record.udfType === "Query"),
+    ),
   ).toEqual([]);
   const commands = new Set([
     getFunctionName(api.ordering.placeOrder),
@@ -472,6 +481,12 @@ bindExample(
               completions: records(w),
               registryReruns: records(w).filter(
                 (record) => record.occInfo?.tableName === "generations",
+              ),
+              // rebuild.online-rebuild-interrupt-resume.sdp.md:36: operator entries and batches that reran on the progress row.
+              progressReruns: records(w).filter(
+                (record) =>
+                  record.occInfo?.tableName === "generationProgress" &&
+                  record.identifier.startsWith("rebuild:"),
               ),
             },
             null,
