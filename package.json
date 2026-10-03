@@ -14,7 +14,7 @@
     "validate": "sdp validate",
     "view": "sdp view",
     "census": "sdp census",
-    "sdp:build": "npx sdp build",
+    "sdp:build": "npx sdp build && node scripts/pinned.mjs --name history-view --specs spec:application.projection-contract,spec:application.rebuild,spec:application.write-pause,spec:application.generation-registry,spec:application.orders-inventory-example,spec:context.queries,spec:context.journal,spec:context.event-envelope,spec:command.command-declaration,spec:command.command-pipeline # becomes --pack pack:history-view once the Pack exists",
     "typecheck": "npm run sdp:build && tsc",
     "lint": "eslint src fixture example harness tests scripts vitest.config.ts vitest.hosted.config.ts eslint.config.js",
     "format:check": "prettier --check src fixture example harness tests scripts evidence/README.md README.md package.json tsconfig.json convex.json vitest.config.ts vitest.hosted.config.ts eslint.config.js .github/workflows/ci.yml .github/workflows/hosted.yml .prettierrc.json",
