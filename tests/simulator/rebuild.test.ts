@@ -1274,6 +1274,35 @@ test("convex-test: rollback checks period, purge, pause, in-flight generation an
   );
   await patchGeneration(t, old, { pauseRequired: false });
   const other = await start(t);
+  // rebuild.sdp.md:84: a fill and a reopened generation exclude each other; the fill refusal
+  // precedes the in-flight refusal.
+  const fillRow = {
+    fence: 1,
+    cursor: null,
+    batchesDone: 0,
+    tenantsRead: 0,
+    tenantsInserted: 0,
+    startedAt: Date.now(),
+    startedBy: operator,
+    changedAt: Date.now(),
+    changedBy: operator,
+    updatedAt: Date.now(),
+  };
+  const fillId = await t.run(async (ctx) => {
+    const prior = await ctx.db.query("tenantFill").first();
+    if (prior !== null) await ctx.db.delete(prior._id);
+    return ctx.db.insert("tenantFill", { ...fillRow, pass: "fill" });
+  });
+  await refused(
+    t,
+    () =>
+      t.mutation(internal.rebuild.rollbackGeneration, {
+        generationId: old,
+        operator,
+      }),
+    "The tenant list is being filled; rollbackGeneration waits until fillTenants has ended",
+  );
+  await t.run((ctx) => ctx.db.patch(fillId, { pass: "idle" }));
   for (const state of ["building", "verifying", "verified"] as const) {
     await patchGeneration(t, other, { state });
     await refused(
