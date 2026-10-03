@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 8: commit timestamps in the parent and two components
 
-Probe 8 · native tier · fixture composition.
+Probe 8 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,7 +24,7 @@ And returning a placeholder {returned: "resolves to a bigint"} and scheduling it
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition, where `annex` is mounted twice so that two components write; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition, where `annex` is mounted twice so that two components write; every test owns its disposable backend.
 - Inside the writing mutation the test asserts that a read of the row yields the unresolved placeholder, in the parent and in each component, and in each component that converting it to a number throws.
 - The expectation written before the first run was that returning the placeholder is refused; the pinned release returned the committed bigint, and the example is bound to that observed value. The refusal to schedule it held, with `Field name $commitTs starts with '$', which is reserved.`
 - The query uses the internal runtime `getSnapshotTs()` through an explicit cast. A compiled type assertion checks that the public `QueryMeta` declaration has no such method. A local backend cannot say whether a hosted deployment behaves the same, and no public upper bound is shown; both stay open on F18.

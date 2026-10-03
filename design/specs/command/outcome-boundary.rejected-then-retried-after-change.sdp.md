@@ -9,7 +9,7 @@ relations:
 ---
 # A rejected command's response is lost, and it is retried after state changed
 
-Sc L1-12 · native tier · fixture composition.
+Sc L1-12 · native backend tier · fixture composition.
 
 On the fixture composition, the depot's stock stream for product `p-1` in tenant `t-1` stands at version 5 with nothing on hand, and an ordinary client that holds a stock grant sends the receipted `ClaimStock` for one unit. The first run is rejected because the stream's state refuses the command, an allocation against empty stock. The test keeps the thrown error for its assertions and otherwise acts as the caller whose response was lost. Another command then changes the stream, `AddStock` of one unit, a restock. The retry carries the same request key and input and must run against the new state, because the first attempt stored nothing, not even its key.
 
@@ -28,7 +28,7 @@ And a receipt or record of the first attempt exists {firstAttemptRecorded: false
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test asserts that the first run's thrown error has `data.kind` equal to `"rejection"` and `data.code` equal to `"insufficientStock"`, a domain code the `ClaimStock` declaration names.
 - The test asserts that the receipts table holds no row for the key after the first run, and exactly one row with `replayed` false in the retry's response after the second.
 - The test asserts that the retry's returned stream version is 7, one past the restock, which proves it decided against version 6 and not against the state the first attempt saw.

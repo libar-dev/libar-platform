@@ -102,7 +102,7 @@ bindExample(contract, (): World => ({}), {
     expect((world.error as ConvexError<Value>).data).toEqual({
       kind: "rejection",
       code: "insufficientStock",
-      commandType: "PlaceOrder",
+      entry: "PlaceOrder",
       message: "Cannot allocate 3 when 2 are available",
       details: { requested: 3, available: 2 },
     });

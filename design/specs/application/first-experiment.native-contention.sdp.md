@@ -9,7 +9,7 @@ relations:
 ---
 # Concurrent commands on the production composition
 
-Sc L2-9 · native tier · production composition · Traces: First experiment, Sc L1-11, Sc L2-9, E-47.
+Sc L2-9 · native backend tier · production composition · Traces: First experiment, Sc L1-11, Sc L2-9, E-47.
 
 The concurrency half of native acceptance observes the production composition on the pinned local backend. The separate production-configuration example carries the code-path half. Neither claims parity with a hosted deployment.
 

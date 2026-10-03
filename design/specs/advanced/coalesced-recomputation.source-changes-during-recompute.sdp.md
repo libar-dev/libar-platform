@@ -9,7 +9,7 @@ relations:
 ---
 # Source changes during a coalesced recompute
 
-Sc L6-1 · native tier.
+Sc L6-1 · native backend tier.
 
 ## Intent
 
@@ -26,5 +26,5 @@ And the view reports its staleness
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test asserts the recompute's clear conflicts under optimistic concurrency with the later mark or clears only the earlier one, and that a following recompute covers the change (D18, F1).

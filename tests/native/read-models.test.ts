@@ -207,13 +207,13 @@ test("native: a refused parent query throws the rejection shape to an HTTP clien
   expect((anonymous as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "unauthenticated",
-    commandType: "listDocumentSummaries",
+    entry: "listDocumentSummaries",
     message: "listDocumentSummaries needs an authenticated caller",
   });
   expect((stranger as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "forbidden",
-    commandType: "listDocumentSummaries",
+    entry: "listDocumentSummaries",
     message: "The caller may not read listDocumentSummaries in this tenant",
     details: { reason: "no_grant" },
   });
@@ -231,7 +231,7 @@ test("native: a refused parent query throws the rejection shape to an HTTP clien
   expect(subscribed).toBeInstanceOf(ConvexError);
   expect((subscribed as ConvexError<Value>).data).toMatchObject({
     code: "unauthenticated",
-    commandType: "listDocumentSummaries",
+    entry: "listDocumentSummaries",
   });
   // The command was sent with no request key, and a read writes nothing: no receipt exists.
   expect(await backend.admin.readTable("receipts")).toEqual([]);

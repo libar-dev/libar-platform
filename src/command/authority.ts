@@ -181,7 +181,7 @@ export type QueryPolicy = {
 const noServiceIssuers: ReadonlySet<string> = new Set();
 // Establishes the actor and authorizes it for the tenant, as the pipeline's steps 2 and 4 do, and
 // returns the actor. A refusal is the rejection a command throws for the same refusal, with the
-// query's name where a command's type goes. It writes nothing.
+// query's name as the entry that refused. It writes nothing.
 export async function authorizeQuery<DataModel extends CommandDataModel>(
   parentCtx: GenericQueryCtx<DataModel>,
   policy: QueryPolicy,
@@ -193,7 +193,7 @@ export async function authorizeQuery<DataModel extends CommandDataModel>(
   if (actor === null)
     reject({
       code: "unauthenticated",
-      commandType: policy.name,
+      entry: policy.name,
       message: `${policy.name} needs an authenticated caller`,
     });
   const decision = await authorize(ctx, {
@@ -205,7 +205,7 @@ export async function authorizeQuery<DataModel extends CommandDataModel>(
   if (!decision.allowed)
     reject({
       code: "forbidden",
-      commandType: policy.name,
+      entry: policy.name,
       message: `The caller may not read ${policy.name} in this tenant`,
       details: { reason: decision.reason },
     });

@@ -9,7 +9,7 @@ relations:
 ---
 # A caller without the cancel grant is refused
 
-E-46 · native tier · production composition · no acceptance row; the example verifies that `CancelOrder` requires its own permission, under Law 5 and D11.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies that `CancelOrder` requires its own permission, under Law 5 and D11.
 
 ## Intent
 
@@ -28,6 +28,6 @@ And the number of documents the command wrote is {written: 0}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
-- The refused caller is a second user of the fixture issuer holding `orders.place`, `inventory.receive`, `orders.read` and `inventory.read` in the tenant; the test asserts that the caller's error is a `ConvexError` whose data is `{ kind: "rejection", code: "forbidden", commandType: "CancelOrder", message: "The caller may not run CancelOrder in this tenant", details: { reason: "no_grant" } }`.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
+- The refused caller is a second user of the fixture issuer holding `orders.place`, `inventory.receive`, `orders.read` and `inventory.read` in the tenant; the test asserts that the caller's error is a `ConvexError` whose data is `{ kind: "rejection", code: "forbidden", entry: "CancelOrder", message: "The caller may not run CancelOrder in this tenant", details: { reason: "no_grant" } }`.
 - The refused caller then sends `CancelOrder` for `order-2`, an order never placed, and the test asserts the same `forbidden` data, which shows the refusal comes before Orders decides: an execution before the check would answer `orderNotFound`.

@@ -9,7 +9,7 @@ relations:
 ---
 # Rebuild a per-entity read model online while commands run; interrupt and resume
 
-Sc L2-5 · native tier · production composition.
+Sc L2-5 · native backend tier · production composition.
 
 ## Intent
 
@@ -29,7 +29,7 @@ And writes {writes: "never stopped"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test, in a file whose own timeout is 300 s, installs the order summary's generation 1 through its first rebuild, seeds 350 orders across two tenants, 250 in the first in tenant-ID order and 100 in the second, starts generation 2 with `projectionVersion` 1 stated, a batch size of 1 and a stated operator, runs `PlaceOrder` and `CancelOrder` concurrently with the batches in both tenants, and calls `interruptGeneration` once the progress row shows at least 3 batches; it asserts that `batchesDone` then stops advancing below 350 and that the cursor names a tenant; while a chain is expected to run, a progress row whose `batchesDone` has not advanced for 30 s fails the test with the generation row and the progress row in the message; once generation 2 is `verified` it asserts that the backfill and verify completions in the function log that wrote number the progress row's `batchesDone`, and that each pass took at least the 350 seeded orders and at most the orders at `verified` plus one per tenant.
 - While the chain is interrupted the test sends `CancelOrder` to one of the second tenant's 100 seeded orders and to an order of the first tenant whose row generation 2 already holds, read from the table before the command; it asserts at once that the first tenant's order has its row in generation 2 `cancelled`, and, once generation 2 is `verified`, that the second tenant's order has its row in generation 2 `cancelled`, whichever pass wrote it.
 - After `resumeGeneration` the test asserts that the batch cursor advanced from the first tenant to the second and that, once the generation is `verified`, every order the Orders context's `list` enumerates in either tenant, read with admin access and `includeDeleted`, has a row in the new generation whose `sourceVersions` equal the order's current stream version, that no row is older than the state read through the component query, that `backfillBatch` run with admin access under the fence the interrupt replaced leaves the progress row unchanged, that the function log shows no action and no completion during the batches other than a batch, an operator entry or a live command, and that the journals, read by operation, hold the event and receipt counts the live commands produced.

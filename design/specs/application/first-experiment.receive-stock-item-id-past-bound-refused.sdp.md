@@ -9,7 +9,7 @@ relations:
 ---
 # ReceiveStock refuses a stock item ID one byte past its bound
 
-E-46 · native tier · production composition · no acceptance row; the example verifies that `ReceiveStock` refuses a stock item ID longer than the bound `PlaceOrder` also carries at step 1, before any read and before the Inventory context is called.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies that `ReceiveStock` refuses a stock item ID longer than the bound `PlaceOrder` also carries at step 1, before any read and before the Inventory context is called.
 
 ## Intent
 
@@ -27,6 +27,6 @@ And the command read {readDocuments: 0} documents and wrote {writtenDocuments: 0
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
 - After grants and the order summary's first rebuild through to its switch as setup, the test sends one `ReceiveStock` of 100 items with distinct stock item IDs from an ordinary client under a request key, the last ID built from multi-byte UTF-8 characters so that its character count is below its byte count.
-- It asserts the `ConvexError` data exactly, `{ kind: "rejection", code: "invalidInput", commandType: "ReceiveStock", message: "Line 99 needs a stock item ID of at most 64 bytes of UTF-8, not 65", details: { line: 99, length: 65, limit: 64 } }`, reads zero documents read and written from the command's own top-level completion record's `usageStats`, and asserts that the receipts and the Inventory context's stream rows and events are unchanged.
+- It asserts the `ConvexError` data exactly, `{ kind: "rejection", code: "invalidInput", entry: "ReceiveStock", message: "Line 99 needs a stock item ID of at most 64 bytes of UTF-8, not 65", details: { line: 99, length: 65, limit: 64 } }`, reads zero documents read and written from the command's own top-level completion record's `usageStats`, and asserts that the receipts and the Inventory context's stream rows and events are unchanged.

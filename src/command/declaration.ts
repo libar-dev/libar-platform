@@ -115,7 +115,7 @@ export function publicCommand<I, R>(
         if (actor === null)
           reject({
             code: "unauthenticated",
-            commandType: decl.name,
+            entry: decl.name,
             message: `${decl.name} needs an authenticated caller`,
           });
         return await runPipeline(ctx, decl, {

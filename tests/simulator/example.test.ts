@@ -216,7 +216,7 @@ test(
     expect(await errorData(send())).toEqual({
       kind: "rejection",
       code: "insufficientStock",
-      commandType: "PlaceOrder",
+      entry: "PlaceOrder",
       message: "Cannot allocate 3 when 2 are available",
       details: { requested: 3, available: 2 },
     });
@@ -245,7 +245,7 @@ test(
           input: { orderId: "order-1", lines: [line("sku-1", 3)] },
         }),
       ),
-    ).toMatchObject({ code: "entityExists", commandType: "PlaceOrder" });
+    ).toMatchObject({ code: "entityExists", entry: "PlaceOrder" });
   },
 );
 
@@ -280,7 +280,7 @@ test(
     ).toBeNull();
     expect(await errorData(send([]))).toMatchObject({
       code: "invalidInput",
-      commandType: "PlaceOrder",
+      entry: "PlaceOrder",
       message: "An order needs at least one line",
     });
     // rebuild.sdp.md:115,133: installing returns a generation ID; its number is on the row.
@@ -302,7 +302,7 @@ test(
     expect(await errorData(t.query(api.orderQueries.getOrder, args))).toEqual({
       kind: "rejection",
       code: "unauthenticated",
-      commandType: "getOrder",
+      entry: "getOrder",
       message: "getOrder needs an authenticated caller",
     });
     const stranger = t.withIdentity({ issuer, subject: "user-2" });
@@ -316,7 +316,7 @@ test(
     ).toEqual({
       kind: "rejection",
       code: "forbidden",
-      commandType: "listOrders",
+      entry: "listOrders",
       message: "The caller may not read listOrders in this tenant",
       details: { reason: "no_grant" },
     });
@@ -324,7 +324,7 @@ test(
     const reader = await caller(t, "user-3", [readOrdersPermission], "t-2");
     expect(
       await errorData(reader.query(api.orderQueries.getOrder, args)),
-    ).toMatchObject({ code: "forbidden", commandType: "getOrder" });
+    ).toMatchObject({ code: "forbidden", entry: "getOrder" });
     const summaryArgs = {
       tenantId: "t-1",
       status: "placed" as const,
@@ -335,7 +335,7 @@ test(
       await errorData(
         stranger.query(api.readModels.listOrderSummaries, summaryArgs),
       ),
-    ).toMatchObject({ code: "forbidden", commandType: "listOrderSummaries" });
+    ).toMatchObject({ code: "forbidden", entry: "listOrderSummaries" });
     const granted = await caller(t, "user-3", [readOrdersPermission]);
     expect(await granted.query(api.orderQueries.getOrder, args)).toBeNull();
     const list = failure(
@@ -370,7 +370,7 @@ test(
     ).toEqual({
       kind: "rejection",
       code: "invalidQuantity",
-      commandType: "ReceiveStock",
+      entry: "ReceiveStock",
       message: "A quantity must be a positive whole number, not 0",
       details: { quantity: 0 },
     });
@@ -424,7 +424,7 @@ test(
       ),
     ).toMatchObject({
       code: "forbidden",
-      commandType: "getOrder",
+      entry: "getOrder",
       details: { reason: "subject_mismatch" },
     });
   },
@@ -620,7 +620,7 @@ test(
     ).toEqual({
       kind: "rejection",
       code: "orderAlreadyCancelled",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "The order is already cancelled",
     });
     expect(await after()).toEqual(before);
@@ -642,7 +642,7 @@ test(
     ).toEqual({
       kind: "rejection",
       code: "orderNotFound",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "The order does not exist",
     });
     expect(
@@ -685,7 +685,7 @@ test(
     ).toEqual({
       kind: "rejection",
       code: "insufficientAllocation",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "Cannot release 3 when 0 are allocated",
       details: { requested: 3, allocated: 0 },
     });
@@ -722,7 +722,7 @@ test(
     ).toEqual({
       kind: "rejection",
       code: "forbidden",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "The caller may not run CancelOrder in this tenant",
       details: { reason: "no_grant" },
     });
@@ -731,7 +731,7 @@ test(
       await errorData(
         other.mutation(api.ordering.cancelOrder, cancelCall("k-2", "order-2")),
       ),
-    ).toMatchObject({ code: "forbidden", commandType: "CancelOrder" });
+    ).toMatchObject({ code: "forbidden", entry: "CancelOrder" });
     expect(await stockItem(t)).toMatchObject({ allocated: 3 });
     expect(await summaries(t)).toMatchObject([{ status: "placed" }]);
     expect(

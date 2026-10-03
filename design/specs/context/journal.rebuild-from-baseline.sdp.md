@@ -9,7 +9,7 @@ relations:
 ---
 # Rebuild a stream that has a baseline event
 
-Sc L2-7 · native tier.
+Sc L2-7 · native backend tier.
 
 ## Intent
 
@@ -28,6 +28,6 @@ And the number of events applied through evolve is {applied: 2}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend, the five earlier events are written by the old reducer's version of the context, and the new version registers a `BaselineMigration` on the stream type whose `migrate` maps the saved state to the new meaning and raises the registration's `stateSchemaVersion`.
+- Runs in the native backend tier; every test owns its disposable backend, the five earlier events are written by the old reducer's version of the context, and the new version registers a `BaselineMigration` on the stream type whose `migrate` maps the saved state to the new meaning and raises the registration's `stateSchemaVersion`.
 - The test runs the same bound point under both orderings of the migration window. In the sweep-first run a parent test mutation calls `maintenance.writeBaseline` through `ctx.runMutation` with the migration's name before any command; the call returns `written` of 1 and `nextAfterStreamId` of `null`, and the two later commands append versions 7 and 8. In the command-first run a command reaches the stream before the driver: the adapter writes the baseline at 6 on load and the command's event at 7 in one sub-transaction, the second command appends 8, and the driver's batch, run afterwards, returns `written` of 0, `skipped` of 1 and `nextAfterStreamId` of `null`, so the sweep and the live command never race and no second baseline exists.
 - In both runs the `rebuild` query reports `fromBaseline` of 6, `eventsApplied` of 2 and `equal` true; the `history` query returns all eight events in version order, the first five with their original payloads and the sixth with `causedBy` of kind `migration`; and before the baseline is written in the command-first run the `rebuild` query answers `refused` with reason `awaitingBaseline`, never `equal` false.

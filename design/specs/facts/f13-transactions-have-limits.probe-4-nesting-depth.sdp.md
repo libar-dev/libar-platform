@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 4: how deep nested calls may go
 
-Probe 4 · native tier · fixture composition.
+Probe 4 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,6 +24,6 @@ And the first stack that does not commit is refused with an error whose text hol
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The value is observed, not expected: the expectation written before the first run was 8 functions, and the run on release `precompiled-2026-09-28-5c7cb5b` showed 9.
 - The bound is a limit the backend enforces, a default of this release and not a platform contract. Its error text names components, although the recursion crosses none.

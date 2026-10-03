@@ -9,7 +9,7 @@ relations:
 ---
 # A repeated cancel request is answered from its receipt
 
-E-46 · native tier · production composition · no acceptance row; the example verifies that `CancelOrder` is answered from its receipt when its request is repeated.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies that `CancelOrder` is answered from its receipt when its request is repeated.
 
 ## Intent
 
@@ -28,5 +28,5 @@ And the number of documents the command wrote is {written: 0}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
 - The test asserts that the response is `{ kind: "applied", replayed: true, result: null }` with the first cancel's `operationId` and versions, and that the receipts table holds one receipt for `k-1`.

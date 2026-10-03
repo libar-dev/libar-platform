@@ -202,7 +202,7 @@ describe("the public entry", () => {
       ).toEqual({
         kind: "rejection",
         code: "unauthenticated",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         message: "CreateDocument needs an authenticated caller",
       });
       const stranger = t.withIdentity({ issuer, subject: "user-2" });
@@ -213,7 +213,7 @@ describe("the public entry", () => {
       ).toMatchObject({
         kind: "rejection",
         code: "forbidden",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         details: { reason: "no_grant" },
       });
       const narrow = await caller(t, "user-3", {
@@ -288,7 +288,7 @@ describe("the public entry", () => {
       ).toMatchObject({
         kind: "rejection",
         code: "invalidInput",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         details: { field: "requestKey", length: 257, limit: 256 },
       });
       expect(
@@ -327,7 +327,7 @@ describe("the public entry", () => {
         ),
       ).toMatchObject({
         code: "operationTooLarge",
-        commandType: "AddStock",
+        entry: "AddStock",
         details: { items: 101, maxItems: 100 },
       });
       expect(
@@ -341,7 +341,7 @@ describe("the public entry", () => {
 
   test(
     name(
-      "a context's rejection reaches the caller with the discriminator and the command type, and commits nothing",
+      "a context's rejection reaches the caller with the discriminator and the entry, and commits nothing",
     ),
     async () => {
       const t = app();
@@ -357,7 +357,7 @@ describe("the public entry", () => {
         ),
       ).toEqual({
         kind: "rejection",
-        commandType: "ShipDocument",
+        entry: "ShipDocument",
         code: "invalidTransition",
         message: "A document cannot ship from draft",
         details: { from: "draft", trigger: "ship" },
@@ -387,7 +387,7 @@ describe("the public entry", () => {
         ),
       ).toMatchObject({
         kind: "rejection",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         code: "entityExists",
         details: { existing: "doc-1", current: 1 },
       });
@@ -399,7 +399,7 @@ describe("the public entry", () => {
             input: { documentId: "doc-1", expectedVersion: 0 },
           }),
         ),
-      ).toMatchObject({ code: "entityExists", commandType: "FailIfDecided" });
+      ).toMatchObject({ code: "entityExists", entry: "FailIfDecided" });
       expect(
         await errorData(
           user.mutation(api.depotCommands.failIfDecided, {
@@ -687,7 +687,7 @@ describe("receipts", () => {
       ).toEqual({
         kind: "rejection",
         code: "idempotencyConflict",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         message: "This request key was used with other input",
       });
       expect(await receipts(t)).toEqual(before);
@@ -719,7 +719,7 @@ describe("receipts", () => {
         ),
       ).toEqual({
         kind: "rejection",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         code: "unsupportedContractVersion",
         message: "This request key was used under another contract version",
       });
@@ -808,7 +808,7 @@ describe("receipts", () => {
       expect(data).toEqual({
         kind: "rejection",
         code: "forbidden",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
         message: "The caller may not run CreateDocument in this tenant",
         details: { reason: "no_grant" },
       });
@@ -1131,7 +1131,7 @@ describe("the internal entry", () => {
             input: { documentId: "doc-2", title: "Report" },
           }),
         ),
-      ).toMatchObject({ code: "forbidden", commandType: "CreateDocument" });
+      ).toMatchObject({ code: "forbidden", entry: "CreateDocument" });
     },
   );
 

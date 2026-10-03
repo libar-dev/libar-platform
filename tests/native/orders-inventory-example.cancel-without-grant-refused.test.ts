@@ -30,7 +30,7 @@ void anchor;
 const forbidden = {
   kind: "rejection",
   code: "forbidden",
-  commandType: "CancelOrder",
+  entry: "CancelOrder",
   message: "The caller may not run CancelOrder in this tenant",
   details: { reason: "no_grant" },
 };

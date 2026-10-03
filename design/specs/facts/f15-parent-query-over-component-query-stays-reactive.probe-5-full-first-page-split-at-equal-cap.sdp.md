@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 5: a full first page with a row cap equal to its size comes back split
 
-Probe 5 · native tier · fixture composition.
+Probe 5 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -23,5 +23,5 @@ Then the page holds {rowsHeld: 10} rows and carries pageStatus {pageStatus: "Spl
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that the relayed page carries a `splitCursor`, so the status is the helper's and not an artifact of the relay.

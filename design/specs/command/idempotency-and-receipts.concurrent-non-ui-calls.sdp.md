@@ -9,7 +9,7 @@ relations:
 ---
 # A non-UI caller sends the same command concurrently
 
-Sc L1-3 · native tier · fixture composition · first of two cases.
+Sc L1-3 · native backend tier · fixture composition · first of two cases.
 
 A worker holding a grant for `depot.stock` calls the internal entry of the depot's `AddStock` command twice at once with the same request key and input, through the fixture action `nonUiCaller:send` that an ordinary client calls; the input f-1 adds 5 units of product p-1. Both mutations read the empty key range; one commits its insert, the other's read set is invalidated, the engine retries it, and the retry finds the receipt and answers as a duplicate.
 
@@ -32,7 +32,7 @@ And the original outcome and state are unchanged {unchanged: true}
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that both responses carry the same `operationId` and that the journal holds exactly one event set with that operation ID.
 - The test asserts that which call is answered as the duplicate is not fixed; it checks the pair, not the order.
 - The test asserts from the function log that one of the two internal-entry mutations failed its commit on a conflict the engine reports as an OCC conflict with a retry to follow, and that its rerun in the same request completed without error.

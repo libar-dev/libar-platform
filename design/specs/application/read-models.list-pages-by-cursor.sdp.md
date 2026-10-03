@@ -9,7 +9,7 @@ relations:
 ---
 # A client reads a tenant's order list in pages by cursor
 
-E-24 · native tier · production composition · no acceptance row; the example verifies paging by an explicit cursor pair and the row cap of twice the item cap, an extension under E-24.
+E-24 · native backend tier · production composition · no acceptance row; the example verifies paging by an explicit cursor pair and the row cap of twice the item cap, an extension under E-24.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And the number of pages that carry pageStatus SplitRequired is {splitPages: 0}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
 - After grants, the first rebuild of the order summary through to its switch and `ReceiveStock` as setup, the test places the orders through `PlaceOrder`, then reads `listOrders` for the first tenant as a caller granted `orders.read`, each page with `cursor` and `numItems` and then subscribed with `endCursor` set to the `continueCursor` that read returned, the next page starting at the previous page's `endCursor`, until a read answers `isDone`; with every page subscribed, it places two orders whose order IDs sort inside the first page, `order-00a` and `order-05a`.
 - The test asserts that the first page, pinned by its end cursor, still starts and ends at the orders it held and grows from 10 to 12 orders, that the second page starts at the order after it, that the pages then hold 12, 10 and 5 orders, that no page carries `pageStatus` `SplitRequired`, and that every order ID of the first tenant appears once, none missing or repeated.

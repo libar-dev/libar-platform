@@ -9,7 +9,7 @@ relations:
 ---
 # A second cancel of one order is rejected
 
-E-46 · native tier · production composition · no acceptance row; the example verifies that the order's own state refuses a second cancel.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies that the order's own state refuses a second cancel.
 
 ## Intent
 
@@ -29,6 +29,6 @@ And the number of documents the command wrote is {written: 0}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
-- The test asserts that the caller's error is a `ConvexError` whose data is `{ kind: "rejection", code: "orderAlreadyCancelled", commandType: "CancelOrder", message: "The order is already cancelled" }`, and that no receipt exists for `k-2`.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
+- The test asserts that the caller's error is a `ConvexError` whose data is `{ kind: "rejection", code: "orderAlreadyCancelled", entry: "CancelOrder", message: "The order is already cancelled" }`, and that no receipt exists for `k-2`.
 - The stock item's state stays `{ onHand: 5, allocated: 0 }`; had the second cancel reached Inventory, its release of 3 would have been refused `insufficientAllocation`, so the code `orderAlreadyCancelled` shows that Orders refused it first.

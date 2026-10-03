@@ -25,7 +25,7 @@ test("native: an ordinary client without a grant is refused with forbidden, and 
   expect((error as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "forbidden",
-    commandType: "CreateDocument",
+    entry: "CreateDocument",
     message: "The caller may not run CreateDocument in this tenant",
     details: { reason: "no_grant" },
   });

@@ -9,7 +9,7 @@ relations:
 ---
 # Rebuild a cross-stream history view under a write pause; interrupt, then abort
 
-Sc L2-6 · native tier · the abort case, the doc's second enumerated case of the row.
+Sc L2-6 · native backend tier · the abort case, the doc's second enumerated case of the row.
 
 ## Intent
 
@@ -29,7 +29,7 @@ And writes {writes: "reopen after the abort"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type.
 - The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, interrupts after the second history batch and calls `abortGeneration`.
 - The test asserts that the generation is `aborted`, that the active generation is unchanged, that both source entries are gone from the gate, that `PlaceOrder` succeeds again, and that no query returns a row of the aborted generation.

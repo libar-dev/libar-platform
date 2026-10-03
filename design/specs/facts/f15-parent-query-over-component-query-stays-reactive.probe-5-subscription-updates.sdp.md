@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 5: a subscription to a parent query follows the component's data
 
-Probe 5 · native tier · fixture composition.
+Probe 5 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -23,6 +23,6 @@ Then the subscription delivers {updates: 1} changed value without the client ask
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The client is a `ConvexClient` over a WebSocket, and the test fails if no update arrives within a stated wait.
 - On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

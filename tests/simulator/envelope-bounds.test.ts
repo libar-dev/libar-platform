@@ -52,7 +52,7 @@ test.each([
     expect(data).toMatchObject({
       kind: "rejection",
       code: "invalidInput",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
     });
     expect(data.details).toEqual({
       field: "correlationId",
@@ -224,7 +224,7 @@ test.each(fields)(
     );
     expect(data).toMatchObject({
       code: "invalidInput",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
     });
     expect(data.details).toEqual({ field, length: limit + 1, limit });
     await expectEmpty(t);
@@ -242,7 +242,7 @@ test.each(fields)(
     );
     expect(data).toMatchObject({
       code: "invalidInput",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
     });
     expect(data.details).toEqual({ field, length: limit + 1, limit });
     await expectEmpty(t);
@@ -409,7 +409,7 @@ test.each([
     expect(data).toMatchObject({
       kind: "rejection",
       code: "invalidInput",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
     });
     expect(data.details).toEqual({ field: "streamId", length, limit: 256 });
     await expectEmpty(t);

@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 3: the cost of a component call from a query
 
-Probe 3 · native tier · fixture composition.
+Probe 3 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,7 +24,7 @@ And the local function log holds {recordsPerCall: 1} completion record for one p
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The execution time is the one the backend's function log reports for the parent call, because the clock inside a query does not advance; the run's evidence holds the three medians and the difference per call.
 - The test checks that each path read the document the bound number of times before it accepts a sample.
 - A cached query also logs a completion record, with `cachedResult` true and a time near zero, so the test gives each call fresh arguments and counts a sample only when its record says the result was not cached.

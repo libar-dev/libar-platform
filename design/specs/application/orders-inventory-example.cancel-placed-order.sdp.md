@@ -9,7 +9,7 @@ relations:
 ---
 # A placed order is cancelled
 
-E-46 · native tier · production composition · no acceptance row; the example verifies `CancelOrder`, the example domain's second lifecycle command under E-46.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies `CancelOrder`, the example domain's second lifecycle command under E-46.
 
 ## Intent
 
@@ -27,7 +27,7 @@ And the number of documents the command wrote is {written: 6}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
 - The order is `order-1` with two lines on the stock item `sku-1`, of 2 and 1 units; the test asserts that the stock item's state after the cancel equals its state before `PlaceOrder`, `{ onHand: 5, allocated: 0 }`.
 - The test asserts the response `{ kind: "applied", replayed: false, result: { orderId: "order-1", released: [{ stockItemId: "sku-1", quantity: 3 }] } }` with versions naming the order at version 2 and the stock item at version 3, Orders first; the order of the two calls, Orders and then Inventory, is shown at the pure tier by the same executor run against a ctx that records each `runMutation` by its function reference, which this native test cannot tell apart.
 - The six documents are the receipt, the order's state and its `OrderCancelled` event, the stock item's state and its one `AllocationReleased` event of quantity 3, and the summary row, whose `sourceVersions` name the order at version 2; the parent's `getOrder` answers the order with status `cancelled` and the lines, total and `placedAt` it answered before the cancel, and the summary row keeps that `placedAt`.
