@@ -48,6 +48,9 @@ test.each([1, 10, 100] as const)(
     expect(result.value.rowsAfter).toEqual({
       grants: 4,
       generations: 1,
+      progress: 1,
+      tenantFill: 0,
+      markers: 0,
       receipts: 1,
       summaries: 1,
       orderStreams: 1,
@@ -209,6 +212,9 @@ test.each([
     expect(result.value.rowsAfter).toEqual({
       grants: separateTenants ? 32 : 4,
       generations: 1,
+      progress: 1,
+      tenantFill: 0,
+      markers: 0,
       receipts: 8,
       summaries: 8,
       orderStreams: 8,

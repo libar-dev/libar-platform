@@ -202,23 +202,33 @@ export async function schedules(backend: Backend) {
   return Object.fromEntries(entries);
 }
 // Rows left behind are counted over every table the production composition deploys that holds
-// neither state, events, receipts nor read-model rows: the registry, the gate and both audit tables.
-// Grants and the tenant list are setup. Markers are reported as not deployed while neither schema
-// declares a table for them; a table either schema adds fails this check until it is counted.
+// neither state, events, receipts nor read-model rows: the markers, the registry's generations,
+// progress and tenant-fill rows, the gate and both audit tables (first-experiment.sdp.md:113).
+// Grants and the tenant list are setup. A table either schema adds fails this check until it is counted.
 export function leftBehind(before: Stored, after: Stored) {
   expect(Object.keys(schema.tables).sort()).toEqual([
     "auditRecords",
+    "generationProgress",
     "generations",
     "grants",
     "maintenanceGates",
     "operatorAudit",
     "orderSummaries",
+    "projectionMarkers",
     "receipts",
+    "tenantFill",
     "tenants",
   ]);
   expect(Object.keys(contextTables).sort()).toEqual(["events", "streams"]);
   const counted = (
-    name: "generations" | "gates" | "auditRecords" | "operatorAudit",
+    name:
+      | "markers"
+      | "generations"
+      | "progress"
+      | "tenantFill"
+      | "gates"
+      | "auditRecords"
+      | "operatorAudit",
   ) => ({
     before: before[name].length,
     after: after[name].length,
@@ -227,8 +237,10 @@ export function leftBehind(before: Stored, after: Stored) {
     ).length,
   });
   return {
+    markers: counted("markers"),
     generations: counted("generations"),
-    markers: "not deployed",
+    progress: counted("progress"),
+    tenantFill: counted("tenantFill"),
     gate: counted("gates"),
     audit: counted("auditRecords"),
     operatorAudit: counted("operatorAudit"),
