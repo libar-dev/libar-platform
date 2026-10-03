@@ -4,6 +4,8 @@ import { convexToJson, type JSONValue, type Value } from "convex/values";
 import type { AffectedRef, StreamVersion } from "../kernel/index.js";
 import type { CallerNamespace } from "./actor-and-scope.js";
 import type { MutationCtx, Receipt } from "./tables.js";
+import { nextTenant } from "./authority.js";
+import { v } from "convex/values";
 export type ReceiptKey = {
   tenantId: string;
   namespace: CallerNamespace;
@@ -113,4 +115,76 @@ export async function insertReceipt(
     expiresAt: recordedAt + retention.window,
     tombstone: false,
   });
+}
+
+// spec:command.receipt-table fnSweep. Operations supplies the time and batch size.
+export const limitSweepBatch = 1000;
+export const sweepArgs = {
+  tenantId: v.string(),
+  now: v.number(),
+  limit: v.number(),
+};
+export const sweepResultValidator = v.object({
+  deleted: v.number(),
+  compacted: v.number(),
+  more: v.boolean(),
+});
+export type SweepResult = { deleted: number; compacted: number; more: boolean };
+export async function sweep(
+  ctx: MutationCtx,
+  { tenantId, now, limit }: { tenantId: string; now: number; limit: number },
+): Promise<SweepResult> {
+  if (!Number.isFinite(now))
+    throw new Error("Receipt sweep now must be finite");
+  if (!Number.isSafeInteger(limit) || limit < 1)
+    throw new Error("Receipt sweep limit must be a positive safe integer");
+  const size = Math.min(limit, limitSweepBatch);
+  const expired = () =>
+    ctx.db
+      .query("receipts")
+      .withIndex("by_tenant_expiry", (q) =>
+        q.eq("tenantId", tenantId).lte("expiresAt", now),
+      );
+  const rows = await expired().take(size);
+  let deleted = 0;
+  for (const row of rows) {
+    // The command path has no tombstone retention or replay. Refuse rather than destroy one.
+    if (row.tombstone)
+      throw new Error(
+        "Receipt sweep cannot handle tombstones until lookup supports them",
+      );
+    const classified = classifyReceipt(
+      row,
+      row.fingerprint,
+      row.contractVersion,
+      now,
+    );
+    if (classified.class !== "new")
+      throw new Error("Receipt sweep expected an expired receipt");
+    await ctx.db.delete(row._id);
+    deleted++;
+  }
+  return { deleted, compacted: 0, more: (await expired().first()) !== null };
+}
+// The operations caller carries after between runs. A tenant with more stays on the same cursor;
+// a null tenant ends the pass. Nothing schedules another run.
+export const sweepNextArgs = {
+  after: v.union(v.string(), v.null()),
+  now: v.number(),
+  limit: v.number(),
+};
+export const sweepNextResultValidator = v.object({
+  ...sweepResultValidator.fields,
+  tenantId: v.union(v.string(), v.null()),
+  after: v.union(v.string(), v.null()),
+});
+export async function sweepNext(
+  ctx: MutationCtx,
+  args: { after: string | null; now: number; limit: number },
+): Promise<SweepResult & { tenantId: string | null; after: string | null }> {
+  const tenantId = await nextTenant(ctx, args.after);
+  if (tenantId === null)
+    return { tenantId, after: null, deleted: 0, compacted: 0, more: false };
+  const result = await sweep(ctx, { ...args, tenantId });
+  return { ...result, tenantId, after: result.more ? args.after : tenantId };
 }

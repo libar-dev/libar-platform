@@ -15,6 +15,7 @@ import type * as orderSummary from "../orderSummary.js";
 import type * as ordering from "../ordering.js";
 import type * as readModels from "../readModels.js";
 import type * as rebuild from "../rebuild.js";
+import type * as receipts from "../receipts.js";
 import type * as receiving from "../receiving.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   ordering: typeof ordering;
   readModels: typeof readModels;
   rebuild: typeof rebuild;
+  receipts: typeof receipts;
   receiving: typeof receiving;
 }>;
 
