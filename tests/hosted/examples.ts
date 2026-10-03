@@ -146,25 +146,34 @@ export function ownStates(
 }
 
 // Probe 7's replacement in place.
-// The copy mounts these components beside the parent; a component that another composition's
-// deploy left unmounted is not among them.
+// The copy mounts these components beside the parent, a nested one by its path; a component that
+// another composition's deploy left unmounted is not among them.
 export const mountedComponents = [
   "annex",
   "annexClock",
   "migrations",
   "depot",
+  "depot/migrations",
   "yard",
 ];
 const scopeName = (scope: CopyScope) => scope ?? "parent";
 // Every user table of the parent and of every mounted component, read whole, keyed by
-// scope/table, from the tables a backup archive holds.
+// scope/table, from the tables a backup archive holds. The archive names a nested component's table
+// _components/depot/_components/migrations/<table>.
 async function storedData(backend: Backend, entries: string[]) {
   const data: Record<string, Row[]> = {};
   for (const entry of entries) {
     const match =
-      /^(?:_components\/([^/]+)\/)?([^_/][^/]*)\/documents\.jsonl$/.exec(entry);
+      /^((?:_components\/[^/]+\/)*)([^_/][^/]*)\/documents\.jsonl$/.exec(entry);
     if (match === null) continue;
-    const [, component, table] = match;
+    const [, prefix, table] = match;
+    const component =
+      prefix === ""
+        ? undefined
+        : prefix!
+            .slice("_components/".length, -1)
+            .split("/_components/")
+            .join("/");
     if (component !== undefined && !mountedComponents.includes(component))
       continue;
     data[`${component ?? "parent"}/${table!}`] = await backend.admin.readTable(

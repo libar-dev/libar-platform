@@ -83,13 +83,15 @@ bindExample(probe7HostedRetentionContract, (): RetentionWorld => ({}), {
       ownStates(world, states, completedTime),
 });
 
-// The scopes the copy mounts: the parent and every component of the fixture composition.
+// The scopes the copy mounts: the parent and every component of the fixture composition, the
+// migrations component the depot mounts included.
 const copyMounts = [
   "parent",
   "annex",
   "annexClock",
   "migrations",
   "depot",
+  "depot/migrations",
   "yard",
 ];
 type InPlace = InPlaceWorld & {
@@ -112,8 +114,11 @@ bindExample(probe7HostedInPlaceImportContract, (): InPlace => ({}), {
     (world, { scopes, equal }) => {
       const o = observed(world);
       expect(scopes).toBe("parent and every mounted component");
+      // A key is scope/table, and a nested scope holds a slash of its own.
       const read = new Set(
-        Object.keys(o.exported).map((key) => key.split("/")[0]),
+        Object.keys(o.exported).map((key) =>
+          key.slice(0, key.lastIndexOf("/")),
+        ),
       );
       expect(read).toEqual(new Set(copyMounts));
       expect(isDeepStrictEqual(o.restored, o.exported)).toBe(equal);
