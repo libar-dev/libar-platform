@@ -5,6 +5,7 @@ import {
   paginationResultValidator,
 } from "convex/server";
 import { v } from "convex/values";
+import { paginator } from "convex-helpers/server/pagination";
 import { authorizeQuery } from "../../src/command/index.js";
 import {
   boundedPage,
@@ -13,9 +14,11 @@ import {
 import {
   activeGeneration,
   limitReadModelList,
+  pageInGeneration,
   readModelView,
 } from "../../src/read-model/index.js";
 import { query } from "./_generated/server.js";
+import schema from "./schema.js";
 import {
   orderSummary,
   orderSummaryFields,
@@ -48,7 +51,7 @@ export const listOrderSummaries = query({
       throw new Error(
         `The read model ${orderSummary.name} has no active generation`,
       );
-    const result = await ctx.db
+    const result = await paginator(ctx.db, schema)
       .query("orderSummaries")
       .withIndex("by_status", (q) =>
         q
@@ -56,7 +59,12 @@ export const listOrderSummaries = query({
           .eq("generation", generation)
           .eq("status", status),
       )
-      .paginate(boundedPage(paginationOpts, limitReadModelList(orderSummary)));
+      .paginate(
+        boundedPage(
+          pageInGeneration(paginationOpts, generation),
+          limitReadModelList(orderSummary),
+        ),
+      );
     return { ...result, page: result.page.map(readModelView) };
   },
 });

@@ -5,15 +5,18 @@ import {
   paginationResultValidator,
 } from "convex/server";
 import { v } from "convex/values";
+import { paginator } from "convex-helpers/server/pagination";
 import { authorizeQuery } from "../../src/command/index.js";
 import { boundedPage } from "../../src/context/index.js";
 import { streamVersionValidator } from "../../src/context/index.js";
 import {
   activeGeneration,
   limitReadModelList,
+  pageInGeneration,
   readModelView,
 } from "../../src/read-model/index.js";
 import { query } from "./_generated/server.js";
+import schema from "./schema.js";
 import {
   documentSummary,
   documentSummaryFields,
@@ -46,7 +49,7 @@ export const listDocumentSummaries = query({
       throw new Error(
         `The read model ${documentSummary.name} has no active generation`,
       );
-    const result = await ctx.db
+    const result = await paginator(ctx.db, schema)
       .query("documentSummaries")
       .withIndex("by_status", (q) =>
         q
@@ -55,7 +58,10 @@ export const listDocumentSummaries = query({
           .eq("status", status),
       )
       .paginate(
-        boundedPage(paginationOpts, limitReadModelList(documentSummary)),
+        boundedPage(
+          pageInGeneration(paginationOpts, generation),
+          limitReadModelList(documentSummary),
+        ),
       );
     return { ...result, page: result.page.map(readModelView) };
   },
