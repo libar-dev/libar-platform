@@ -1,5 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import type { SchemaDefinition } from "convex/server";
+import { getDocumentSize } from "convex/values";
+import { limitSweepBytes } from "../../src/command/index.js";
 import { commandTables } from "../../src/command/tables.js";
 import { expect, test } from "vitest";
 import schema from "../../fixture/convex/schema.js";
@@ -118,6 +120,81 @@ for (const composition of compositions) {
       }),
     ).toEqual({ deleted: 2, compacted: 0, more: true });
   });
+  // spec:command.receipt-table fnSweep: a bad now, a now later than the current time.
+  test(`convex-test: ${composition.name} sweep refuses a non-finite now and a now later than the current time, and deletes nothing`, async () => {
+    const t = composition.app();
+    const later = Date.now() + 60 * 60 * 1000;
+    const stored = await t.run(async (ctx) => {
+      await ctx.db.insert("receipts", receipt("a", "expired"));
+      await ctx.db.insert("receipts", receipt("a", "live", later - 1));
+      await ctx.db.insert("receipts", {
+        ...receipt("a", "tombstone", Number.MAX_SAFE_INTEGER),
+        tombstone: true,
+        affected: [],
+        versions: [],
+      });
+      return ctx.db.query("receipts").collect();
+    });
+    for (const [bad, message] of [
+      [NaN, "must be finite"],
+      [Infinity, "must be finite"],
+      [-Infinity, "must be finite"],
+      [later, "must not be later than the current time"],
+    ] as const)
+      await expect(
+        t.mutation(composition.internal.receipts.sweep, {
+          tenantId: "a",
+          now: bad,
+          limit: 1000,
+        }),
+      ).rejects.toThrow(message);
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
+      stored,
+    );
+  });
+  // spec:command.idempotency-and-receipts limitSweepBatch: the byte bound of a run.
+  test(`convex-test: ${composition.name} sweep ends a run at the byte bound and reports more`, async () => {
+    const t = composition.app();
+    const rows = await t.run(async (ctx) => {
+      for (let i = 0; i < 20; i++)
+        await ctx.db.insert("receipts", {
+          ...receipt("a", `large-${i}`),
+          actorId: "x".repeat(512 * 1024),
+        });
+      return ctx.db
+        .query("receipts")
+        .withIndex("by_tenant_expiry", (q) => q.eq("tenantId", "a"))
+        .collect();
+    });
+    // The rows read up to and including the one whose size reaches the bound.
+    let bytes = 0;
+    let read = 0;
+    for (const row of rows) {
+      bytes += getDocumentSize(row);
+      read++;
+      if (bytes >= limitSweepBytes) break;
+    }
+    expect(read).toBeLessThan(rows.length);
+    expect(
+      await t.mutation(composition.internal.receipts.sweep, {
+        tenantId: "a",
+        now,
+        limit: 1000,
+      }),
+    ).toEqual({ deleted: read, compacted: 0, more: true });
+    expect(
+      (await t.run((ctx) => ctx.db.query("receipts").collect())).map(
+        (row) => row.requestKey,
+      ),
+    ).toEqual(rows.slice(read).map((row) => row.requestKey));
+    expect(
+      await t.mutation(composition.internal.receipts.sweep, {
+        tenantId: "a",
+        now,
+        limit: 1000,
+      }),
+    ).toEqual({ deleted: rows.length - read, compacted: 0, more: false });
+  });
   // spec:command.receipt-table tombstoneShape, expiryDefaults and fnSweep.
   test(`convex-test: ${composition.name} deletes an expired tombstone and leaves an unexpired tombstone untouched`, async () => {
     const t = composition.app();
@@ -215,5 +292,39 @@ for (const composition of compositions) {
         ctx.db.system.query("_scheduled_functions").collect(),
       ),
     ).toEqual([]);
+  });
+  // spec:command.receipt-table fnSweepNext checks now and limit before anything else.
+  test(`convex-test: ${composition.name} sweep loop refuses a bad now or limit whether or not a tenant follows`, async () => {
+    const t = composition.app();
+    const later = Date.now() + 60 * 60 * 1000;
+    const bad = [
+      [{ now: NaN, limit: 1 }, "must be finite"],
+      [{ now: Infinity, limit: 1 }, "must be finite"],
+      [{ now: later, limit: 1 }, "must not be later than the current time"],
+      [{ now, limit: 0 }, "positive safe integer"],
+      [{ now, limit: 1.5 }, "positive safe integer"],
+    ] as const;
+    for (const after of [null, "z"])
+      for (const [args, message] of bad)
+        await expect(
+          t.mutation(composition.internal.receipts.sweepNext, {
+            after,
+            ...args,
+          }),
+        ).rejects.toThrow(message);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", { tenantId: "a", createdAt: 0 });
+      await ctx.db.insert("receipts", receipt("a", "expired"));
+    });
+    for (const [args, message] of bad)
+      await expect(
+        t.mutation(composition.internal.receipts.sweepNext, {
+          after: null,
+          ...args,
+        }),
+      ).rejects.toThrow(message);
+    expect(
+      await t.run((ctx) => ctx.db.query("receipts").collect()),
+    ).toHaveLength(1);
   });
 }

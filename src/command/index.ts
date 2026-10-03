@@ -74,13 +74,22 @@ export {
   fingerprintOf,
   insertReceipt,
   limitAffectedRefs,
+  limitSweepBatch,
+  limitSweepBytes,
   lookupReceipt,
+  sweep,
+  sweepArgs,
+  sweepNext,
+  sweepNextArgs,
+  sweepNextResultValidator,
+  sweepResultValidator,
 } from "./receipts.js";
 export type {
   ReceiptClass,
   ReceiptInsert,
   ReceiptKey,
   Retention,
+  SweepResult,
 } from "./receipts.js";
 export { commandTables } from "./tables.js";
 export type {

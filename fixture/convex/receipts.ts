@@ -1,5 +1,5 @@
 // The composition's receipt sweep, called by operations.
-import * as receipts from "../../src/command/receipts.js";
+import * as receipts from "../../src/command/index.js";
 import { internalMutation } from "./_generated/server.js";
 export const sweep = internalMutation({
   args: receipts.sweepArgs,

@@ -1,11 +1,14 @@
 // Receipts of spec:command.idempotency-and-receipts: the key, the fingerprint, the lookup, the
-// classification and the insert. Helpers inside the pipeline's mutation, never registered functions.
-import { convexToJson, type JSONValue, type Value } from "convex/values";
+// classification and the insert, helpers inside the pipeline's mutation; and the sweep and its loop
+// over tenants, handlers that each composition registers as internal mutations for operations.
+import { paginator } from "convex-helpers/server/pagination";
+import { defineSchema } from "convex/server";
+import { convexToJson, v, type JSONValue, type Value } from "convex/values";
+import { boundedPage, limitListBytes } from "../context/queries.js";
 import type { AffectedRef, StreamVersion } from "../kernel/index.js";
 import type { CallerNamespace } from "./actor-and-scope.js";
-import type { MutationCtx, Receipt } from "./tables.js";
 import { nextTenant } from "./authority.js";
-import { v } from "convex/values";
+import { commandTables, type MutationCtx, type Receipt } from "./tables.js";
 export type ReceiptKey = {
   tenantId: string;
   namespace: CallerNamespace;
@@ -117,8 +120,12 @@ export async function insertReceipt(
   });
 }
 
-// spec:command.receipt-table fnSweep. Operations supplies the time and batch size.
+// spec:command.receipt-table fnSweep and fnSweepNext. Operations supplies the time and batch size.
 export const limitSweepBatch = 1000;
+// The byte bound of a sweep's read: list's bound, through the same boundedPage helper.
+export const limitSweepBytes = limitListBytes;
+// paginator reads index fields from a schema: the command tables the parent's schema spreads.
+const commandSchema = defineSchema(commandTables);
 export const sweepArgs = {
   tenantId: v.string(),
   now: v.number(),
@@ -130,38 +137,44 @@ export const sweepResultValidator = v.object({
   more: v.boolean(),
 });
 export type SweepResult = { deleted: number; compacted: number; more: boolean };
+// A bad now or limit is a plain error, and so is a now later than the mutation's Date.now(), which
+// would delete receipts still inside their window.
+function checkSweepArgs(now: number, limit: number) {
+  if (!Number.isFinite(now))
+    throw new Error("Receipt sweep now must be finite");
+  if (now > Date.now())
+    throw new Error(
+      "Receipt sweep now must not be later than the current time",
+    );
+  if (!Number.isSafeInteger(limit) || limit < 1)
+    throw new Error("Receipt sweep limit must be a positive safe integer");
+}
+// One run reads expired rows until it holds min(limit, 1000) or has read limitSweepBytes, whichever
+// comes first, and deletes each row it read, an expired tombstone included. Compaction waits for
+// tombstones, so compacted is 0.
 export async function sweep(
   ctx: MutationCtx,
   { tenantId, now, limit }: { tenantId: string; now: number; limit: number },
 ): Promise<SweepResult> {
-  if (!Number.isFinite(now))
-    throw new Error("Receipt sweep now must be finite");
-  if (!Number.isSafeInteger(limit) || limit < 1)
-    throw new Error("Receipt sweep limit must be a positive safe integer");
-  const size = Math.min(limit, limitSweepBatch);
+  checkSweepArgs(now, limit);
   const expired = () =>
-    ctx.db
+    paginator(ctx.db, commandSchema)
       .query("receipts")
       .withIndex("by_tenant_expiry", (q) =>
         q.eq("tenantId", tenantId).lte("expiresAt", now),
       );
-  const rows = await expired().take(size);
-  let deleted = 0;
-  for (const row of rows) {
-    if (!row.tombstone) {
-      const classified = classifyReceipt(
-        row,
-        row.fingerprint,
-        row.contractVersion,
-        now,
-      );
-      if (classified.class !== "new")
-        throw new Error("Receipt sweep expected an expired receipt");
-    }
-    await ctx.db.delete(row._id);
-    deleted++;
-  }
-  return { deleted, compacted: 0, more: (await expired().first()) !== null };
+  const { page } = await expired().paginate(
+    boundedPage(
+      { cursor: null, numItems: limit },
+      { items: limitSweepBatch, bytes: limitSweepBytes },
+    ),
+  );
+  for (const row of page) await ctx.db.delete(row._id);
+  return {
+    deleted: page.length,
+    compacted: 0,
+    more: (await expired().first()) !== null,
+  };
 }
 // The operations caller carries after between runs. A tenant with more stays on the same cursor;
 // a null tenant ends the pass. Nothing schedules another run.
@@ -179,6 +192,7 @@ export async function sweepNext(
   ctx: MutationCtx,
   args: { after: string | null; now: number; limit: number },
 ): Promise<SweepResult & { tenantId: string | null; after: string | null }> {
+  checkSweepArgs(args.now, args.limit);
   const tenantId = await nextTenant(ctx, args.after);
   if (tenantId === null)
     return { tenantId, after: null, deleted: 0, compacted: 0, more: false };
