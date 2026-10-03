@@ -36,6 +36,37 @@ import {
   hostedTarget,
 } from "../../harness/hosted.js";
 import setupHostedRun, { crossesUtcDay } from "../../harness/hosted-run.js";
+// The socket client the admin access builds when no test replaces its factory, standing in for
+// Convex's BaseConvexClient: it keeps the options it was built with and answers every subscription.
+const builtSockets = vi.hoisted(
+  () => [] as { options: { logger?: unknown } }[],
+);
+vi.mock("convex/browser", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("convex/browser")>();
+  class BaseConvexClient {
+    options: { logger?: unknown };
+    onTransition: (tokens: string[]) => void;
+    constructor(
+      _url: string,
+      onTransition: (tokens: string[]) => void,
+      options: { logger?: unknown },
+    ) {
+      this.onTransition = onTransition;
+      this.options = options;
+      builtSockets.push(this);
+    }
+    setAdminAuth() {}
+    subscribe() {
+      queueMicrotask(() => this.onTransition(["token"]));
+      return undefined;
+    }
+    localQueryResultByToken() {
+      return [];
+    }
+    async close() {}
+  }
+  return { ...actual, BaseConvexClient };
+});
 // Binds this file to the harness Spec, whose rules for a native run on a hosted deployment it
 // checks with no network and no deploy key.
 const anchor = specTest({
@@ -425,13 +456,19 @@ test("pure: a planted deploy key appears in no error, output, log line or record
       throw new TypeError(`fetch failed: ${echo}`);
     return new Response(echo, { status: 500 });
   };
-  const socket: SocketFactory = (_url, onTransition): AdminSocketClient => ({
+  // The stub socket logs through the logger it is given, as Convex's client logs a function's lines.
+  const socket: SocketFactory = (
+    _url,
+    onTransition,
+    logger,
+  ): AdminSocketClient => ({
     setAdminAuth() {},
     subscribe() {
       queueMicrotask(() => onTransition(["token"]));
       return undefined;
     },
     localQueryResultByToken() {
+      logger.log(`socket log line: ${echo}`);
       throw new Error(`the socket answered: ${echo}`);
     },
     async close() {},
@@ -544,6 +581,13 @@ test("pure: a planted deploy key appears in no error, output, log line or record
     expect(String((failure as Error).message)).toContain("[redacted]");
   expect(JSON.stringify(outputs[1])).toContain("[redacted]");
   expect(printed.join("\n")).toContain("[redacted]");
+  expect(
+    printed.filter((line) => line.startsWith("socket log line: ")),
+  ).not.toEqual([]);
+  for (const line of printed.filter((one) =>
+    one.startsWith("socket log line: "),
+  ))
+    expect(line).toContain("[redacted]");
   expect(recordText).toContain("[redacted]");
   const json = (value: unknown) => {
     try {
@@ -567,6 +611,35 @@ test("pure: a planted deploy key appears in no error, output, log line or record
       seen.filter((text) => text.includes(form)),
       "a form of the planted key appeared",
     ).toEqual([]);
+});
+
+test("pure: the hosted kind's socket client gets the redacting logger, so a socket log line carrying a planted key comes out redacted", async () => {
+  const key = plantedKey();
+  const forms = deployKeyForms(key);
+  const { access } = createHostedAccess({
+    variables: variables(key),
+    composition: await temporaryComposition(),
+    home: await temporary("libar-hosted-home-"),
+    state: { deployed: undefined, environment: new Set() },
+  });
+  builtSockets.length = 0;
+  expect(await access.environment()).toEqual({});
+  expect(builtSockets).toHaveLength(1);
+  const logger = builtSockets[0]!.options.logger as child.ClientLogger;
+  const printed: string[] = [];
+  const spy = vi
+    .spyOn(console, "log")
+    .mockImplementation((...args: unknown[]) => {
+      printed.push(format(...args));
+    });
+  try {
+    logger.log(`socket log line: ${forms.join(" ")}`);
+  } finally {
+    spy.mockRestore();
+  }
+  expect(printed).toHaveLength(1);
+  expect(printed[0]).toMatch(/^socket log line: .*\[redacted\]/);
+  for (const form of forms) expect(printed[0]).not.toContain(form);
 });
 
 test("pure: the run setup reads the version and the usage before the run, and after it amends the record in one step", async () => {

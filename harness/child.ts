@@ -38,7 +38,8 @@ export function redact(text: string, secrets: readonly string[]): string {
   return result;
 }
 // Everything of an error that a reporter or a log can print: its name, message and stack, its own
-// properties and its causes.
+// properties, its cause and the errors an AggregateError holds, each walked to the same depth, so
+// that a cycle ends.
 function printable(error: unknown, depth = 0): string {
   const text = (value: unknown) => {
     try {
@@ -58,13 +59,20 @@ function printable(error: unknown, depth = 0): string {
   const parts = [error.name, error.message, error.stack ?? ""];
   for (const [key, value] of Object.entries(error))
     parts.push(key, text(value), json(value));
-  if (error.cause !== undefined && depth < 3)
-    parts.push(printable(error.cause, depth + 1));
+  if (depth < 3) {
+    if (error.cause !== undefined)
+      parts.push(printable(error.cause, depth + 1));
+    const nested: unknown = (error as { errors?: unknown }).errors;
+    if (Array.isArray(nested))
+      for (const inner of nested as unknown[])
+        parts.push(printable(inner, depth + 1));
+  }
   return parts.join("\n");
 }
 // An error that carries no secret anywhere it can be printed is returned as it is, so that a caller
-// can still tell it by identity. One that carries a secret is replaced by an Error of the same name
-// whose message and stack have every secret replaced, and which keeps none of its properties.
+// can still tell it by identity. One that carries a secret is replaced by an Error whose name,
+// message and stack have every secret replaced, and which keeps none of its properties, its cause
+// and its nested errors included.
 export function redactError(
   error: unknown,
   secrets: readonly string[],
@@ -76,7 +84,7 @@ export function redactError(
   const original = error instanceof Error ? error : undefined;
   const replaced = new Error(redact(original?.message ?? String(error), keys));
   if (original !== undefined) {
-    replaced.name = original.name;
+    replaced.name = redact(original.name, keys);
     replaced.stack = redact(
       original.stack ?? `${original.name}: ${original.message}`,
       keys,

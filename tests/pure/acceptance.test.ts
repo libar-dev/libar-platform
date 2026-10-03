@@ -3,7 +3,15 @@ import {
   specTest,
   testAnchorId,
 } from "@libar-dev/software-delivery-protocol";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
@@ -838,4 +846,129 @@ test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2,
       )
       .map((scenario) => scenario.example),
   ).toEqual([]);
+});
+
+// scripts/acceptance.mjs derives the graph of the repository it sits in. Run through a link with the
+// link's path kept, it sits in a temporary repository of one required row and one example, so its
+// build writes nothing in this tree; the corpus walk skips the links to the harness and node_modules.
+test("pure: the acceptance script exits 1 on a record that fails a scenario and 0 on one that fails none", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "libar-acceptance-script-"));
+  try {
+    for (const path of ["scripts", "design/specs", "tests"])
+      await mkdir(join(directory, path), { recursive: true });
+    await symlink(
+      join(root, "scripts/acceptance.mjs"),
+      join(directory, "scripts/acceptance.mjs"),
+    );
+    for (const path of ["harness", "node_modules"])
+      await symlink(join(root, path), join(directory, path));
+    await writeFile(
+      join(directory, "design/specs/first-experiment.sdp.md"),
+      [
+        "---",
+        `id: ${firstExperimentSpec}`,
+        "kind: workflow",
+        "altitude: feature",
+        "readiness: idea",
+        "relations: {}",
+        "---",
+        "# First experiment",
+        "",
+        "## Intent",
+        "",
+        "- outcome: The rows the acceptance check requires.",
+        "",
+        "## Design",
+        "",
+        "- acceptanceRows: the one required row is Sc L0-1",
+        "",
+      ].join("\n"),
+    );
+    await writeFile(
+      join(directory, "design/specs/first-experiment.sample.sdp.md"),
+      [
+        "---",
+        `id: ${firstExperimentSpec}.sample`,
+        "kind: example",
+        "altitude: story",
+        "readiness: idea",
+        "relations:",
+        `  refines: ${firstExperimentSpec}`,
+        `  verifies: ${firstExperimentSpec}`,
+        "---",
+        "# A sample scenario",
+        "",
+        "Sc L0-1 · pure test tier.",
+        "",
+        "## Intent",
+        "",
+        "- outcome: The sample passes.",
+        "",
+        "```gwt",
+        "Given a sample",
+        "When it runs",
+        "Then it passes {passed: true}",
+        "```",
+        "",
+      ].join("\n"),
+    );
+    await writeFile(
+      join(directory, "tests/sample.test.ts"),
+      [
+        'import { ref, specTest, testAnchorId } from "@libar-dev/software-delivery-protocol";',
+        "const anchor = specTest({",
+        '  id: testAnchorId("test:application.first-experiment.sample"),',
+        `  verifies: ref("${firstExperimentSpec}.sample"),`,
+        "});",
+        "void anchor;",
+        "",
+      ].join("\n"),
+    );
+    const run = async (result: "passed" | "failed") => {
+      const record = join(directory, `${result}.json`);
+      await writeFile(
+        record,
+        JSON.stringify({
+          commit: "abc",
+          clean: true,
+          result: "passed",
+          startedAt: "2026-01-01T00:00:00.000Z",
+          tests: [
+            {
+              project: "pure",
+              name: "sample",
+              file: "tests/sample.test.ts",
+              result,
+              backends: [],
+            },
+          ],
+        }),
+      );
+      return new Promise<{ code: number; last: string }>((resolve) =>
+        execFile(
+          process.execPath,
+          [
+            "--preserve-symlinks",
+            "--preserve-symlinks-main",
+            join(directory, "scripts/acceptance.mjs"),
+            record,
+          ],
+          { cwd: directory, env: { PATH: process.env.PATH ?? "" } },
+          (error, stdout) =>
+            resolve({
+              code: error === null ? 0 : Number(error.code),
+              last: stdout.trim().split("\n").at(-1) ?? "",
+            }),
+        ),
+      );
+    };
+    const failed = await run("failed");
+    expect(failed.last).toMatch(/^acceptance: not passed · 0 passed, 1 failed/);
+    expect(failed.code).toBe(1);
+    const passed = await run("passed");
+    expect(passed.last).toMatch(/^acceptance: passed · 1 passed, 0 failed/);
+    expect(passed.code).toBe(0);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
