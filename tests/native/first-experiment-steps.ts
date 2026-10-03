@@ -281,7 +281,7 @@ export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
     expect(placed.summaryKeys).toContain(placed.orderId);
   }
 }
-// The calls are counted at the pure tier: the backend's log holds no record of a component call
+// The calls are counted at the pure test tier: the backend's log holds no record of a component call
 // inside a mutation. The executor runs on the input the test sent, against a ctx whose runMutation
 // records each call by its function reference and answers a canned applied outcome.
 export async function callsPerContextAre(
@@ -533,12 +533,12 @@ export function stockItemIdRejectionIs(
   line: number,
   length: number,
   limit: number,
-  commandType: "PlaceOrder" | "ReceiveStock" = "PlaceOrder",
+  entry: "PlaceOrder" | "ReceiveStock" = "PlaceOrder",
 ) {
   expect((world.error as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "invalidInput",
-    commandType,
+    entry,
     message: `Line ${line} needs a stock item ID of at most ${limit} bytes of UTF-8, not ${length}`,
     details: { line, length, limit },
   });

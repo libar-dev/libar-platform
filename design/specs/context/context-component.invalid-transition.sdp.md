@@ -9,7 +9,7 @@ relations:
 ---
 # A command asks for an invalid state transition
 
-Sc L1-1 · native tier · fixture composition.
+Sc L1-1 · native backend tier · fixture composition.
 
 The fixture composition binds it. An ordinary client creates a document in the depot context and then sends the ShipDocument command through its public entry; the parent mutation calls the depot's shipDocuments operation through `ctx.runMutation` on the component API, and the document stream's transition table has no ship from draft.
 
@@ -31,6 +31,6 @@ And decide ran against {evaluated: "the fresh state"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend; the caller is an ordinary client holding a fixture-issuer token and a grant, and admin access only grants and reads the depot's tables and the function log.
+- Runs in the native backend tier; every test owns its disposable backend; the caller is an ordinary client holding a fixture-issuer token and a grant, and admin access only grants and reads the depot's tables and the function log.
 - The rejection arrives as a `ConvexError` whose `data.code` is the context's documented `invalidTransition` and whose `data.details` are the ones `decide` gives, `from` naming the status stored before the call and `trigger` naming ship; the depot's streams and events tables are read afterwards and equal their contents before the call.
 - The function log holds one attempt of the parent mutation, not rerun by the engine, and it failed with that rejection.

@@ -9,7 +9,7 @@ relations:
 ---
 # Legitimate backlog builds up
 
-Sc L3-3 · native tier.
+Sc L3-3 · native backend tier.
 
 ## Intent
 
@@ -28,7 +28,7 @@ And the queued dispatch is {queued: "left alone"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test creates enough scheduled work ahead of the dispatch that its `_scheduled_functions` row stays Pending past the grace, then runs `sweep` (F16).
 - The test asserts that the obligation's `activeAttemptId`, `dispatchId` and `rearmCount` are unchanged after the sweep, and that the sweep's counts show it as left alone (D13, Sc L3-3).
 - The test asserts that once the backlog drains the original dispatch runs and the obligation succeeds with one effect (D13).

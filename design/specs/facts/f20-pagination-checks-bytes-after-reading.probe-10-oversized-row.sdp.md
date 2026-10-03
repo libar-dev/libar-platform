@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 10: a page keeps the row that crosses its byte bound
 
-Probe 10 · native tier · fixture composition.
+Probe 10 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,6 +24,6 @@ And the bytes read are above every bound below the row's size {overshoot: true}
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend. The stored size of the row and the bytes each page read, from `ctx.meta.getTransactionMetrics()`, are recorded in the run's evidence.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend. The stored size of the row and the bytes each page read, from `ctx.meta.getTransactionMetrics()`, are recorded in the run's evidence.
 - The bound values are the expectation written before the first run, which held. The bounds are zero, one, one byte below the stored size and the stored size; a page that kept no row would not have reached the boundary, and the test fails it.
 - The test also supplies a negative byte bound. The helper still reads and keeps one row, so the overshoot guarantee is stated only for finite non-negative bounds.

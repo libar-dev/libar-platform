@@ -9,7 +9,7 @@ relations:
 ---
 # Break a typed handler's argument contract
 
-Sc L2-4 · build tier · the second of the row's two cases.
+Sc L2-4 · compiled tier · the second of the row's two cases.
 
 A typed caller calls `api.ordering.placeOrder` with an input that no longer fits the declaration's `input` validator: a required field is missing, or a field has another type. The generated `api` type carries the argument type of the public entry, which the composition helper builds from the declaration, so the caller fails `tsc` before anything is deployed.
 
@@ -27,6 +27,6 @@ And it fails {when: "before any traffic"}
 
 ## Verification — executable
 
-- Runs in the build tier, the fifth tier `spec:platform.acceptance-contract` adds under E-14, with no backend, as a type test of the production composition's generated `api`.
+- Runs in the compiled tier, which the doc's four tiers lack and `spec:platform.acceptance-contract` adds under E-14, with no backend, as a type test of the production composition's generated `api`.
 - The binding is a type test: the compiler is the check, and no step body runs.
 - The test asserts that a call of `api.ordering.placeOrder` whose input lacks a required field, and one whose field has another type, each fail `tsc` through the compiler's expected-error directive.

@@ -9,7 +9,7 @@ relations:
 ---
 # A cancel of an order never placed is rejected
 
-E-46 · native tier · production composition · no acceptance row; the example verifies that the order decider refuses a cancel of an order with no event.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies that the order decider refuses a cancel of an order with no event.
 
 ## Intent
 
@@ -28,6 +28,6 @@ And the number of documents the command wrote is {written: 0}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
-- The order never placed is `order-2`; the test asserts that the caller's error is a `ConvexError` whose data is `{ kind: "rejection", code: "orderNotFound", commandType: "CancelOrder", message: "The order does not exist" }`, that the Orders context holds no stream row and no event for `order-2`, and that the parent's `getOrder` answers null for it.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
+- The order never placed is `order-2`; the test asserts that the caller's error is a `ConvexError` whose data is `{ kind: "rejection", code: "orderNotFound", entry: "CancelOrder", message: "The order does not exist" }`, that the Orders context holds no stream row and no event for `order-2`, and that the parent's `getOrder` answers null for it.
 - The order summary's status is that of the placed order `order-1`, the one row the table holds.

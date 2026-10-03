@@ -682,7 +682,7 @@ describe("step 1", () => {
         expect(await errorData(create(tenantId, requestKey))).toEqual({
           kind: "rejection",
           code: "invalidInput",
-          commandType: "CreateDocument",
+          entry: "CreateDocument",
           message: `${field} has at most 256 bytes of UTF-8`,
           details: { field, length: 257, limit: 256 },
         });
@@ -728,14 +728,14 @@ describe("authorizeQuery and the parent list", () => {
       expect(await errorData(list(t))).toEqual({
         kind: "rejection",
         code: "unauthenticated",
-        commandType: "listDocumentSummaries",
+        entry: "listDocumentSummaries",
         message: "listDocumentSummaries needs an authenticated caller",
       });
       const stranger = await caller(t, "user-2", permissions.documents);
       expect(await errorData(list(stranger))).toEqual({
         kind: "rejection",
         code: "forbidden",
-        commandType: "listDocumentSummaries",
+        entry: "listDocumentSummaries",
         message: "The caller may not read listDocumentSummaries in this tenant",
         details: { reason: "no_grant" },
       });

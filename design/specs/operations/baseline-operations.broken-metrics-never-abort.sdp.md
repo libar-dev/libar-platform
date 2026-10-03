@@ -9,7 +9,7 @@ relations:
 ---
 # Break metrics and logging
 
-Sc ALL-1 · native tier · the first of the two enumerated cases; applies to every installed layer.
+Sc ALL-1 · native backend tier · the first of the two enumerated cases; applies to every installed layer.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And the failure is {surfaced: "reported as a diagnostic gap without touching the
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test replaces the fixture app's diagnostic sink with one that throws on every call and runs `PlaceOrder`.
 - The test asserts that the command returned applied, that the order, its events, its receipt, its summary row and its audit record exist, and that the fixture's swallowed-error counter is one.

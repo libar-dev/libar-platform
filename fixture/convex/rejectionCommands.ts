@@ -11,7 +11,7 @@ import { listDetailsTitle } from "./depot/streams.js";
 const { operations } = components.depot;
 const writesDocument = [{ contextId: "depot", streamType: "document" }];
 // Its executor throws a rejection in the wire shape that is invalid twice over: its code is one the
-// declaration does not list, and it names another command.
+// declaration does not list, and it names another entry.
 const createRejectedDocumentDeclaration: CommandDeclaration<
   { documentId: string },
   null
@@ -33,7 +33,7 @@ const createRejectedDocumentDeclaration: CommandDeclaration<
     throw new ConvexError({
       kind: "rejection",
       code: "notDeclared",
-      commandType: "SomeOtherCommand",
+      entry: "SomeOtherCommand",
       message: "x",
     });
   },

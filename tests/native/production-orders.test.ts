@@ -280,7 +280,7 @@ test("native: an order for stock that is not there is rejected insufficientStock
   expect((error as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "insufficientStock",
-    commandType: "PlaceOrder",
+    entry: "PlaceOrder",
     message: "Cannot allocate 1 when 0 are available",
     details: { requested: 1, available: 0 },
   });

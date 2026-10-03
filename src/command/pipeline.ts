@@ -153,7 +153,7 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
     if (length > limit)
       reject({
         code: "invalidInput",
-        commandType,
+        entry: decl.name,
         message: `${field} has at most ${limit} bytes of UTF-8`,
         details: { field, length, limit },
       });
@@ -169,7 +169,7 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   if (maxItems !== undefined && items > maxItems)
     reject({
       code: "operationTooLarge",
-      commandType,
+      entry: decl.name,
       message: `${commandType} takes at most ${maxItems} items, not ${items}`,
       details: { items, maxItems },
     });
@@ -177,13 +177,13 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   if (maxBytes !== undefined && bytes > maxBytes)
     reject({
       code: "operationTooLarge",
-      commandType,
+      entry: decl.name,
       message: `${commandType} takes at most ${maxBytes} bytes of input, not ${bytes}`,
       details: { bytes, maxBytes },
     });
   const refused = decl.refine?.(call.input) ?? null;
   if (refused !== null)
-    reject({ ...refused, code: "invalidInput", commandType });
+    reject({ ...refused, code: "invalidInput", entry: decl.name });
 }
 // Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. Step 11
 // emits no diagnostic.
@@ -208,7 +208,7 @@ export async function runPipeline<I, R>(
   if (!decision.allowed)
     reject({
       code: "forbidden",
-      commandType,
+      entry: decl.name,
       message: `The caller may not run ${commandType} in this tenant`,
       details: { reason: decision.reason },
     });
@@ -237,13 +237,13 @@ export async function runPipeline<I, R>(
       case "unsupportedVersion":
         reject({
           code: "unsupportedContractVersion",
-          commandType,
+          entry: decl.name,
           message: "This request key was used under another contract version",
         });
       case "conflict":
         reject({
           code: "idempotencyConflict",
-          commandType,
+          entry: decl.name,
           message: "This request key was used with other input",
         });
       case "duplicate": {

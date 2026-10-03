@@ -16,8 +16,10 @@ const anchor = codeAnchor({
 });
 void anchor;
 
+// The tiers an example's opening line names. The doc's end to end tier is no tier of its own: an
+// example of it names the native backend tier and the production composition.
 export type AcceptanceTier =
-  "domain" | "simulator" | "native" | "end to end" | "build";
+  "compiled" | "pure test" | "convex-test" | "native backend";
 export type AcceptanceComposition = "fixture" | "production";
 export interface RequiredScenario {
   row: string;
@@ -75,22 +77,21 @@ export interface AcceptanceRecord {
 export class AcceptanceUnanswerable extends Error {}
 
 const tiers: readonly AcceptanceTier[] = [
-  "domain",
-  "simulator",
-  "native",
-  "end to end",
-  "build",
+  "compiled",
+  "pure test",
+  "convex-test",
+  "native backend",
 ];
 const compositions: readonly AcceptanceComposition[] = [
   "fixture",
   "production",
 ];
+// The Vitest project that runs each tier.
 const projectOfTier: Record<AcceptanceTier, TestProjectName> = {
-  domain: "pure",
-  simulator: "simulator",
-  native: "native",
-  "end to end": "native",
-  build: "types",
+  compiled: "types",
+  "pure test": "pure",
+  "convex-test": "simulator",
+  "native backend": "native",
 };
 const rowPattern = /\bSc [A-Z]+\d*-\d+\b/g;
 
@@ -224,10 +225,7 @@ function judge(
         `${test.file} ran in the ${test.project ?? "unnamed"} project, not ${project}`,
       );
   }
-  if (
-    results.length > 0 &&
-    (scenario.tier === "native" || scenario.tier === "end to end")
-  ) {
+  if (results.length > 0 && scenario.tier === "native backend") {
     const backends = results.flatMap((test) => test.backends);
     if (scenario.composition === null)
       failures.push("the example names no composition");

@@ -34,7 +34,7 @@ bindExample(
     expect(rejectionData(world)).toEqual({
       kind: "rejection",
       code: "orderNotFound",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "The order does not exist",
     });
     const order = required(world.order, "the backend");

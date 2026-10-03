@@ -9,7 +9,7 @@ relations:
 ---
 # The admin key acting as an identity reaches an internal function
 
-E-13 · native tier · fixture composition.
+E-13 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And the table the internal mutation writes holds {rows: 1} row
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that a public query called by the same client returns the identity it acts as, so the client is indistinguishable from an ordinary caller inside a handler.
 - This is the one test in which a caller holds the admin key.

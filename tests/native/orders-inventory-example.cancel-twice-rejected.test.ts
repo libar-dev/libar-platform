@@ -31,7 +31,7 @@ bindExample(
     expect(rejectionData(world)).toEqual({
       kind: "rejection",
       code: "orderAlreadyCancelled",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "The order is already cancelled",
     });
     const { backend } = required(world.order, "the backend");

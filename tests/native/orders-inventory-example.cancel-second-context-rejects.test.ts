@@ -31,11 +31,11 @@ bindExample(
   (): CancelWorld => ({}),
   steps,
   async (world) => {
-    // The call order and the quantities' source are shown at the pure tier, by the executor itself.
+    // The call order and the quantities' source are shown at the pure test tier, by the executor itself.
     expect(rejectionData(world)).toEqual({
       kind: "rejection",
       code: "insufficientAllocation",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
       message: "Cannot release 3 when 0 are allocated",
       details: { requested: 3, allocated: 0 },
     });

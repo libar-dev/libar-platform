@@ -9,7 +9,7 @@ relations:
 ---
 # Proposal input changes after approval
 
-Sc L5-2 · native tier · first of two cases: the input changed after the approval was given.
+Sc L5-2 · native backend tier · first of two cases: the input changed after the approval was given.
 
 ## Intent
 
@@ -25,5 +25,5 @@ And the approval is void and the process record shows an explicit transition
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test asserts the execution check compares the current input hash to the approval's hash before any context call, and that nothing commits (D17, D16, Law 5).

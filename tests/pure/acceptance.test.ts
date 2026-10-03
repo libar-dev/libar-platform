@@ -41,17 +41,17 @@ function sampleGraph(
   examples: SampleExample[] = [
     {
       id: "spec:sample.evaluate",
-      opening: "Sc L0-1 · domain tier.",
+      opening: "Sc L0-1 · pure test tier.",
       files: ["tests/pure/evaluate.test.ts"],
     },
     {
       id: "spec:sample.transition",
-      opening: "Sc L1-1 · native tier · fixture composition.",
+      opening: "Sc L1-1 · native backend tier · fixture composition.",
       files: ["tests/native/transition.test.ts"],
     },
     {
       id: "spec:sample.production",
-      opening: "Sc L2-9 · end to end tier · production composition.",
+      opening: "Sc L2-9 · native backend tier · production composition.",
       files: ["tests/native/production.test.ts"],
     },
   ],
@@ -164,17 +164,17 @@ test("pure: a required scenario whose verifier is removed from the graph is miss
   const graph = sampleGraph([
     {
       id: "spec:sample.evaluate",
-      opening: "Sc L0-1 · domain tier.",
+      opening: "Sc L0-1 · pure test tier.",
       files: ["tests/pure/evaluate.test.ts"],
     },
     {
       id: "spec:sample.transition",
-      opening: "Sc L1-1 · native tier · fixture composition.",
+      opening: "Sc L1-1 · native backend tier · fixture composition.",
       files: [],
     },
     {
       id: "spec:sample.production",
-      opening: "Sc L2-9 · end to end tier · production composition.",
+      opening: "Sc L2-9 · native backend tier · production composition.",
       files: ["tests/native/production.test.ts"],
     },
   ]);
@@ -208,7 +208,7 @@ test("pure: a file with two tests passes only when both passed", () => {
   expect(statusOf(record, "Sc L1-1")).toBe("failed");
 });
 
-test("pure: a native scenario fails on another composition, on no backend, or when its example names no composition", () => {
+test("pure: a native backend scenario fails on another composition, on no backend, or when its example names no composition", () => {
   const wrong = sampleRecord();
   wrong.tests[2]!.backends = [{ composition: "fixture" }];
   expect(statusOf(wrong, "Sc L2-9")).toBe("failed");
@@ -224,17 +224,17 @@ test("pure: a native scenario fails on another composition, on no backend, or wh
   const unnamed = sampleGraph([
     {
       id: "spec:sample.evaluate",
-      opening: "Sc L0-1 · domain tier.",
+      opening: "Sc L0-1 · pure test tier.",
       files: ["tests/pure/evaluate.test.ts"],
     },
     {
       id: "spec:sample.transition",
-      opening: "Sc L1-1 · native tier.",
+      opening: "Sc L1-1 · native backend tier.",
       files: ["tests/native/transition.test.ts"],
     },
     {
       id: "spec:sample.production",
-      opening: "Sc L2-9 · end to end tier · production composition.",
+      opening: "Sc L2-9 · native backend tier · production composition.",
       files: ["tests/native/production.test.ts"],
     },
   ]);
@@ -252,17 +252,17 @@ test("pure: a native scenario fails on another composition, on no backend, or wh
   });
 });
 
-test("pure: a native scenario whose only result came from the pure project is failed", () => {
+test("pure: a native backend scenario whose only result came from the pure project is failed", () => {
   const record = sampleRecord();
   record.tests[1]!.project = "pure";
   expect(statusOf(record, "Sc L1-1")).toBe("failed");
   const unnamed = sampleRecord();
   delete unnamed.tests[1]!.project;
   expect(statusOf(unnamed, "Sc L1-1")).toBe("failed");
-  // A domain scenario does not pass on a native result either.
-  const domain = sampleRecord();
-  domain.tests[0]!.project = "native";
-  expect(statusOf(domain, "Sc L0-1")).toBe("failed");
+  // A pure test scenario does not pass on a result of the native project either.
+  const pure = sampleRecord();
+  pure.tests[0]!.project = "native";
+  expect(statusOf(pure, "Sc L0-1")).toBe("failed");
 });
 
 test("pure: every scenario passed, and a run that failed or a tree that was not clean still fails the check with exit 1", async () => {
@@ -375,7 +375,7 @@ test("pure: a scenario with one verifier failed and another absent is failed", (
   const graph = sampleGraph([
     {
       id: "spec:sample.evaluate",
-      opening: "Sc L0-1 · domain tier.",
+      opening: "Sc L0-1 · pure test tier.",
       files: [
         "tests/pure/evaluate.test.ts",
         "tests/pure/evaluate-again.test.ts",
@@ -515,17 +515,17 @@ test("pure: a graph that throws while it is read leaves the check unable to answ
 
 const evaluate: SampleExample = {
   id: "spec:sample.evaluate",
-  opening: "Sc L0-1 · domain tier.",
+  opening: "Sc L0-1 · pure test tier.",
   files: ["tests/pure/evaluate.test.ts"],
 };
 const transition: SampleExample = {
   id: "spec:sample.transition",
-  opening: "Sc L1-1 · native tier · fixture composition.",
+  opening: "Sc L1-1 · native backend tier · fixture composition.",
   files: ["tests/native/transition.test.ts"],
 };
 const production: SampleExample = {
   id: "spec:sample.production",
-  opening: "Sc L2-9 · end to end tier · production composition.",
+  opening: "Sc L2-9 · native backend tier · production composition.",
   files: ["tests/native/production.test.ts"],
 };
 const cannotAnswer = (graph: ScenarioGraph) =>
@@ -542,12 +542,25 @@ test("pure: a tier part with anything after the word tier is unreadable, and the
       evaluate,
       {
         ...transition,
-        opening: "Sc L1-1 · native tierBROKEN · fixture composition.",
+        opening: "Sc L1-1 · native backend tierBROKEN · fixture composition.",
       },
       production,
     ]),
   );
   expect(line).toContain("spec:sample.transition names no tier");
+});
+
+test("pure: an opening line that names a tier by an old name names no tier, and the check exits 2", async () => {
+  for (const tier of ["domain", "simulator", "native", "build", "end to end"]) {
+    const line = await cannotAnswer(
+      sampleGraph([
+        evaluate,
+        { ...transition, opening: `Sc L1-1 · ${tier} tier.` },
+        production,
+      ]),
+    );
+    expect(line).toContain("spec:sample.transition names no tier");
+  }
 });
 
 test("pure: a malformed sibling of a required row's example makes the check exit 2, and never drops out", async () => {
@@ -557,7 +570,7 @@ test("pure: a malformed sibling of a required row's example makes the check exit
       transition,
       {
         id: "spec:sample.transition-sibling",
-        opening: "Sc L1-1: native tier · fixture composition.",
+        opening: "Sc L1-1: native backend tier · fixture composition.",
         files: ["tests/native/transition.test.ts"],
       },
       production,
@@ -568,9 +581,9 @@ test("pure: a malformed sibling of a required row's example makes the check exit
 
 test("pure: every opening line that begins with Sc reads whole, of a required row or not, composition included", async () => {
   for (const opening of [
-    "Sc L3-1 · native tier · fixture compositionBROKEN.",
-    "Sc L3-1 · natve tier.",
-    "Sc L3-1x · native tier.",
+    "Sc L3-1 · native backend tier · fixture compositionBROKEN.",
+    "Sc L3-1 · natve backend tier.",
+    "Sc L3-1x · native backend tier.",
   ])
     await cannotAnswer(
       sampleGraph([
@@ -584,16 +597,16 @@ test("pure: every opening line that begins with Sc reads whole, of a required ro
   // not begin with Sc is no scenario's.
   const answer = await answered(
     sampleGraph([
-      { ...evaluate, opening: "Sc L0-1 · domain tier · the only case." },
+      { ...evaluate, opening: "Sc L0-1 · pure test tier · the only case." },
       {
         ...transition,
         opening:
-          "Sc L1-1 · native tier · fixture composition · first of two cases.",
+          "Sc L1-1 · native backend tier · fixture composition · first of two cases.",
       },
       production,
       {
         id: "spec:sample.probe",
-        opening: "Probe 1 · native tierX.",
+        opening: "Probe 1 · native backend tierX.",
         files: [],
       },
     ]),
@@ -673,7 +686,8 @@ test("pure: the newest record is chosen by the time of day as well as the date",
 test("pure: every example of a required row is judged, not only the first", () => {
   const second: SampleExample = {
     id: "spec:sample.transition-second",
-    opening: "Sc L1-1 · native tier · fixture composition · the second case.",
+    opening:
+      "Sc L1-1 · native backend tier · fixture composition · the second case.",
     files: ["tests/native/transition-second.test.ts"],
   };
   const record = sampleRecord();
@@ -748,17 +762,17 @@ test("pure: the second verifier of an example is inspected as well as the first"
   ).toBe("absent");
 });
 
-test("pure: a build scenario passes only on a result of the types project, and a simulator scenario only on one of the simulator project", () => {
+test("pure: a compiled scenario passes only on a result of the types project, and a convex-test scenario only on one of the simulator project", () => {
   const graph = sampleGraph(
     [
       {
         id: "spec:sample.build",
-        opening: "Sc L2-4 · build tier.",
+        opening: "Sc L2-4 · compiled tier.",
         files: ["tests/types/broken.test-d.ts"],
       },
       {
         id: "spec:sample.simulated",
-        opening: "Sc L1-9 · simulator tier.",
+        opening: "Sc L1-9 · convex-test tier.",
         files: ["tests/simulator/simulated.test.ts"],
       },
     ],
@@ -792,7 +806,7 @@ test("pure: a build scenario passes only on a result of the types project, and a
   expect(statuses("native", "pure")).toEqual(["failed", "failed"]);
 });
 
-test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2, and every native example of them that has a verifier names its composition", async () => {
+test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2, and every native backend example of them that has a verifier names its composition", async () => {
   const doc = await readFile(
     join(root, "docs/convex-transactional-domain-platform-decisions.md"),
     "utf8",
@@ -818,7 +832,7 @@ test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2,
     scenarios
       .filter(
         (scenario) =>
-          (scenario.tier === "native" || scenario.tier === "end to end") &&
+          scenario.tier === "native backend" &&
           scenario.verifiers.length > 0 &&
           scenario.composition === null,
       )

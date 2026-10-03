@@ -180,7 +180,7 @@ export function callerReceives(
     expect(world.error).toBeInstanceOf(ConvexError);
     expect(rejectionData(world)).toMatchObject({
       kind: "rejection",
-      commandType: "CancelOrder",
+      entry: "CancelOrder",
     });
     return;
   }

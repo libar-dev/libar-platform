@@ -9,7 +9,7 @@ relations:
 ---
 # The restore door closes and opens with no deploy
 
-E-42 · native tier · fixture composition · no acceptance row; the example shows, on the pinned backend release, that a change of the deployment's environment reaches the next function run, which the restore door rests on.
+E-42 · native backend tier · fixture composition · no acceptance row; the example shows, on the pinned backend release, that a change of the deployment's environment reaches the next function run, which the restore door rests on.
 
 ## Intent
 
@@ -26,7 +26,7 @@ And once the variable is set to {reopen: "off"} each refused request key applies
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test sets the variable through the admin API's update of environment variables, with no deploy between the change and the next call, and asserts the refusal's data exactly, `{ kind: "transient", code: "writePaused", message }`, and that no receipt beyond the first command's exists while the door is closed.
 - The test also sets the value `Restore` and asserts that `getGate` answers `restore` false, because only the exact value closes the door.
 - The observation is of the pinned release and is read again when the pin moves.

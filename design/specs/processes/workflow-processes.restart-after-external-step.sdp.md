@@ -9,7 +9,7 @@ relations:
 ---
 # Restart a process after an external step completed
 
-Sc L4-1 · native tier.
+Sc L4-1 · native backend tier.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And the process continues from the confirmation step with the obligation's evide
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test interrupts the run after the obligation settled and before the workflow journaled the wait's result, restarts the run, and asserts the provider stub recorded one effect and the obligation has one attempt (D16, D15).
 - The test asserts the process record's status moved from awaiting payment to confirmed exactly once (D16, Law 7).

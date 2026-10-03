@@ -9,7 +9,7 @@ relations:
 ---
 # A stock item ID one byte past its bound is refused
 
-E-46 · native tier · production composition · no acceptance row; the example verifies that `PlaceOrder` refuses a stock item ID longer than its bound at step 1, before any read and before either context is called.
+E-46 · native backend tier · production composition · no acceptance row; the example verifies that `PlaceOrder` refuses a stock item ID longer than its bound at step 1, before any read and before either context is called.
 
 ## Intent
 
@@ -28,6 +28,6 @@ And the command read {readDocuments: 0} documents and wrote {writtenDocuments: 0
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
 - After grants and the order summary's first rebuild through to its switch as setup, the test receives stock through `ReceiveStock` for the 99 stock items of the order within the bound, the last one being an ID `ReceiveStock` refuses too, so a refusal later than step 1 would be short stock and not `invalidInput`, and sends one `PlaceOrder` with one line on each from an ordinary client under a request key.
-- It asserts the `ConvexError` data exactly, `{ kind: "rejection", code: "invalidInput", commandType: "PlaceOrder", message: "Line 99 needs a stock item ID of at most 64 bytes of UTF-8, not 65", details: { line: 99, length: 65, limit: 64 } }`, reads zero documents read and written from the command's own top-level completion record's `usageStats`, which places the refusal before the grant read and before either context's sub-transaction, and asserts that the receipts, both contexts' stream rows and events and the order summaries are unchanged.
+- It asserts the `ConvexError` data exactly, `{ kind: "rejection", code: "invalidInput", entry: "PlaceOrder", message: "Line 99 needs a stock item ID of at most 64 bytes of UTF-8, not 65", details: { line: 99, length: 65, limit: 64 } }`, reads zero documents read and written from the command's own top-level completion record's `usageStats`, which places the refusal before the grant read and before either context's sub-transaction, and asserts that the receipts, both contexts' stream rows and events and the order summaries are unchanged.

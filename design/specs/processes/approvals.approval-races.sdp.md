@@ -9,7 +9,7 @@ relations:
 ---
 # Race approval, expiry, revocation and execution
 
-Sc L4-2 · native tier.
+Sc L4-2 · native backend tier.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And every proposal ends approved and executed, rejected, or expired, with no pro
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test enumerates the interleavings of approve, expire, revoke and execute and asserts each ends in one explicit transition, that an execution after revocation is refused by the current grant check, and that a changed input hash voids the approval (D16, Law 5).
 - The test asserts concurrent executions of one approved proposal commit once, because execution consumes the approval (D16, D1).

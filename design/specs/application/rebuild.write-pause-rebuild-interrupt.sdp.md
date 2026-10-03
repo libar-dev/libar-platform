@@ -9,7 +9,7 @@ relations:
 ---
 # Rebuild a cross-stream history view under a write pause; interrupt, then resume
 
-Sc L2-6 · native tier · the resume case.
+Sc L2-6 · native backend tier · the resume case.
 
 ## Intent
 
@@ -29,7 +29,7 @@ And writes {writes: "reopen only after verification"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type.
 - The test starts a generation with `pauseRequired` and asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation.
 - The test asserts that `PlaceOrder` and `CancelOrder` are refused with `writePaused` because their declarations' `writes` name a closed source, that the error's `data.kind` is `"transient"`, and that nothing is stored.

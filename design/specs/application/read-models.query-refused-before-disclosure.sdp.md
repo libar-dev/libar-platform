@@ -9,7 +9,7 @@ relations:
 ---
 # A caller with no identity reads an order through the parent
 
-Law 5 · native tier · production composition · no acceptance row; the first of two refusals of a parent query, the caller with no identity.
+Law 5 · native backend tier · production composition · no acceptance row; the first of two refusals of a parent query, the caller with no identity.
 
 ## Intent
 
@@ -25,7 +25,7 @@ And the number of receipts the read wrote is {receipts: 0}
 
 ## Verification — executable
 
-- Runs in the native tier on the production composition; every test owns its disposable backend.
-- The test calls `getOrder` from an HTTP client with no token and subscribes to it from a client with no token, reads `error.data` from the call and from the subscription's error callback, and asserts for both that `kind` is `rejection`, `code` is `unauthenticated` and `commandType` is `getOrder`, and that `classifyThrown` answers `rejection`.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
+- The test calls `getOrder` from an HTTP client with no token and subscribes to it from a client with no token, reads `error.data` from the call and from the subscription's error callback, and asserts for both that `kind` is `rejection`, `code` is `unauthenticated` and `entry` is `getOrder`, and that `classifyThrown` answers `rejection`.
 - The test asserts that the receipts table holds no row written by the read.
 - The test then calls `getOrder` as a caller granted `orders.read` in the tenant and asserts that it returns the order's DTO.

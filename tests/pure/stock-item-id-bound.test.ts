@@ -140,12 +140,12 @@ test("pure: the pipeline refuses a long ID before any read and checks the line c
             ...refusal(0, 65),
             kind: "rejection",
             code: "invalidInput",
-            commandType: "PlaceOrder",
+            entry: "PlaceOrder",
           }
         : {
             kind: "rejection",
             code: "operationTooLarge",
-            commandType: "PlaceOrder",
+            entry: "PlaceOrder",
             message: "PlaceOrder takes at most 100 items, not 101",
             details: { items: 101, maxItems: 100 },
           },
