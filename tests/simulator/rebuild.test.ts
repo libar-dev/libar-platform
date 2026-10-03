@@ -1263,19 +1263,9 @@ test("convex-test: rollback checks period, purge, pause, in-flight generation an
     "Generation 1 of documentTitle is already being purged",
   );
   await patchGeneration(t, old, {}, { pass: "idle" });
-  await refused(
-    t,
-    () =>
-      t.mutation(internal.rebuild.rollbackGeneration, {
-        generationId: old,
-        operator,
-      }),
-    "Generation 1 of documentTitle needs a write pause and cannot be rolled back",
-  );
-  await patchGeneration(t, old, { pauseRequired: false });
   const other = await start(t);
-  // rebuild.sdp.md:84: a fill and a reopened generation exclude each other; the fill refusal
-  // precedes the in-flight refusal.
+  // rebuild.sdp.md:84, :134: a fill and a reopened generation exclude each other; the pause refusal
+  // precedes the fill refusal, which precedes the in-flight refusal.
   const fillRow = {
     fence: 1,
     cursor: null,
@@ -1293,6 +1283,16 @@ test("convex-test: rollback checks period, purge, pause, in-flight generation an
     if (prior !== null) await ctx.db.delete(prior._id);
     return ctx.db.insert("tenantFill", { ...fillRow, pass: "fill" });
   });
+  await refused(
+    t,
+    () =>
+      t.mutation(internal.rebuild.rollbackGeneration, {
+        generationId: old,
+        operator,
+      }),
+    "Generation 1 of documentTitle needs a write pause and cannot be rolled back",
+  );
+  await patchGeneration(t, old, { pauseRequired: false });
   await refused(
     t,
     () =>
