@@ -442,9 +442,38 @@ test("pure: redactError finds a secret in an AggregateError's errors and in a ca
     expect(printedOf(redacted)).not.toContain(secret);
   }
 });
-test("pure: redactError's walk of causes and nested errors is bounded, so a cycle without a secret comes back as it is", () => {
+test("pure: redactError fails closed past its depth bound: a key four cause links down, a deep chain without one and a cycle each come back as a redacted stub", () => {
+  const chain = (last: string) =>
+    new Error("one", {
+      cause: new Error("two", {
+        cause: new Error("three", {
+          cause: new Error("four", { cause: new Error(last) }),
+        }),
+      }),
+    });
   const cycle = new AggregateError([], "cycle");
   cycle.errors.push(cycle);
   cycle.cause = cycle;
-  expect(redactError(cycle, [secret])).toBe(cycle);
+  for (const error of [chain(`deep ${secret}`), chain("deep"), cycle]) {
+    const redacted = redactError(error, [secret]);
+    expect(redacted).not.toBe(error);
+    expect((redacted as Error).message).toBe(error.message);
+    expect((redacted as Error).cause).toBeUndefined();
+    expect((redacted as { errors?: unknown }).errors).toBeUndefined();
+    expect(printedOf(redacted)).not.toContain(secret);
+  }
+  const shallow = new Error("one", { cause: new Error("two") });
+  expect(redactError(shallow, [secret])).toBe(shallow);
+});
+test("pure: redactError walks the values of a plain object in a cause, so a key in an error held there is found and dropped", () => {
+  const error = new Error("outer", {
+    cause: { error: new Error(`held ${secret}`) },
+  });
+  const redacted = redactError(error, [secret]);
+  expect(redacted).not.toBe(error);
+  expect((redacted as Error).message).toBe("outer");
+  expect((redacted as Error).cause).toBeUndefined();
+  expect(printedOf(redacted)).not.toContain(secret);
+  const clean = new Error("outer", { cause: { error: new Error("held") } });
+  expect(redactError(clean, [secret])).toBe(clean);
 });

@@ -1,7 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import type { SchemaDefinition } from "convex/server";
 import { getDocumentSize } from "convex/values";
-import { limitSweepBytes } from "../../src/command/index.js";
 import { commandTables } from "../../src/command/tables.js";
 import { expect, test } from "vitest";
 import schema from "../../fixture/convex/schema.js";
@@ -172,7 +171,7 @@ for (const composition of compositions) {
     for (const row of rows) {
       bytes += getDocumentSize(row);
       read++;
-      if (bytes >= limitSweepBytes) break;
+      if (bytes >= 8 * 1024 * 1024) break;
     }
     expect(read).toBeLessThan(rows.length);
     expect(

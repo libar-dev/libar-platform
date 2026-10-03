@@ -37,42 +37,64 @@ export function redact(text: string, secrets: readonly string[]): string {
   }
   return result;
 }
+// How deep the walk of causes, nested errors and object values goes.
+const limitRedactionDepth = 3;
 // Everything of an error that a reporter or a log can print: its name, message and stack, its own
-// properties, its cause and the errors an AggregateError holds, each walked to the same depth, so
-// that a cycle ends.
-function printable(error: unknown, depth = 0): string {
-  const text = (value: unknown) => {
+// properties, and, walked to a bounded depth, its cause, the errors an AggregateError holds, the
+// values of its own properties and the values of a plain object among them. cut is true when the walk
+// reached its bound with something left to read, which a cycle always does.
+function printable(value: unknown, depth = 0): { text: string; cut: boolean } {
+  const text = (one: unknown) => {
     try {
-      return typeof value === "string" ? value : String(value);
+      return typeof one === "string" ? one : String(one);
     } catch {
       return "";
     }
   };
-  const json = (value: unknown) => {
+  const json = (one: unknown) => {
     try {
-      return JSON.stringify(value) ?? "";
+      return JSON.stringify(one) ?? "";
     } catch {
-      return text(value);
+      return text(one);
     }
   };
-  if (!(error instanceof Error)) return `${text(error)}\n${json(error)}`;
-  const parts = [error.name, error.message, error.stack ?? ""];
-  for (const [key, value] of Object.entries(error))
-    parts.push(key, text(value), json(value));
-  if (depth < 3) {
-    if (error.cause !== undefined)
-      parts.push(printable(error.cause, depth + 1));
-    const nested: unknown = (error as { errors?: unknown }).errors;
-    if (Array.isArray(nested))
-      for (const inner of nested as unknown[])
-        parts.push(printable(inner, depth + 1));
+  const parts: string[] = [];
+  const inner: unknown[] = [];
+  if (value instanceof Error) {
+    parts.push(value.name, value.message, value.stack ?? "");
+    for (const [key, one] of Object.entries(value)) {
+      parts.push(key, text(one), json(one));
+      inner.push(one);
+    }
+    inner.push(value.cause);
+    const errors: unknown = (value as { errors?: unknown }).errors;
+    if (Array.isArray(errors)) inner.push(...(errors as unknown[]));
+  } else {
+    parts.push(text(value), json(value));
+    if (typeof value === "object" && value !== null)
+      inner.push(...Object.values(value));
   }
-  return parts.join("\n");
+  // A value that is not an object is printed as it is; an object is walked.
+  const objects: object[] = [];
+  for (const one of inner)
+    if (typeof one === "object" && one !== null) objects.push(one);
+    else if (one !== undefined) parts.push(text(one));
+  if (objects.length === 0) return { text: parts.join("\n"), cut: false };
+  if (depth >= limitRedactionDepth)
+    return { text: parts.join("\n"), cut: true };
+  let cut = false;
+  for (const one of objects) {
+    const walked = printable(one, depth + 1);
+    parts.push(walked.text);
+    cut ||= walked.cut;
+  }
+  return { text: parts.join("\n"), cut };
 }
 // An error that carries no secret anywhere it can be printed is returned as it is, so that a caller
-// can still tell it by identity. One that carries a secret is replaced by an Error whose name,
-// message and stack have every secret replaced, and which keeps none of its properties, its cause
-// and its nested errors included.
+// can still tell it by identity. One that carries a secret, or whose walk reached its bound with
+// something left to read, fails closed: it is replaced by an Error whose name, message and stack
+// have every secret replaced, and which keeps none of its properties, its cause and its nested
+// errors included.
 export function redactError(
   error: unknown,
   secrets: readonly string[],
@@ -80,7 +102,8 @@ export function redactError(
   const keys = secrets.filter((secret) => secret !== "");
   if (keys.length === 0) return error;
   const printed = printable(error);
-  if (!keys.some((key) => printed.includes(key))) return error;
+  if (!printed.cut && !keys.some((key) => printed.text.includes(key)))
+    return error;
   const original = error instanceof Error ? error : undefined;
   const replaced = new Error(redact(original?.message ?? String(error), keys));
   if (original !== undefined) {

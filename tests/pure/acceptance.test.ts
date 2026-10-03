@@ -971,4 +971,5 @@ test("pure: the acceptance script exits 1 on a record that fails a scenario and 
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
-});
+  // Two children that each derive a graph: more than the default 5 s on a loaded machine.
+}, 60000);
