@@ -9,9 +9,10 @@
 // `interface ` and `validator*` opening with `const ` are exported as written; `fn*` that is a call
 // signature `name<...>(...): R` becomes `export declare function`, where a default value makes its
 // parameter optional; `table*` of the form `name: defineTable(...)` is a member of
-// `export const tables`. Every other entry is skipped and counted by its prefix on stderr. Each pin
-// of another Spec that a declaration uses is pulled in, marked. A name pinned twice is emitted twice,
-// so the compiler refuses it, and stderr names it.
+// `export const tables`, and each `index*` of the form `.index(...)` is chained onto the table
+// entry its Spec wrote last before it. Every other entry is skipped and counted by its prefix on
+// stderr. Each pin of another Spec that a declaration uses is pulled in, marked. A name pinned in two
+// entries, in any form, is refused, as is a preamble name a Spec pins.
 // Exit 0: written. 2: it cannot emit.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -145,7 +146,9 @@ function declarationOf(row) {
   const signature = prefix === "fn" ? callSignature(span) : null;
   if (signature !== null) return { ...base, kind: "type", ...signature };
   if (prefix === "table" && /^[\w$]+:\s*defineTable\(/.test(span))
-    return { ...base, kind: "table", name: "", text: span };
+    return { ...base, kind: "table", name: "", text: span, indexes: [] };
+  if (prefix === "index" && /^\.index\(/.test(span))
+    return { ...base, kind: "index", name: "", text: span };
   return { ...base, kind: null };
 }
 
@@ -194,34 +197,38 @@ const scope = query(
 if (scope === null) cannot(`the graph has no ${options.pack}`);
 
 const all = query(recipe24()).rows.map(declarationOf);
+let table;
+for (const row of all)
+  if (row.kind === "table") table = row;
+  else if (row.kind === "index" && table?.spec === row.spec)
+    table.indexes.push(row);
+  else if (row.kind === "index") row.kind = null;
 const pinnedBy = Map.groupBy(
   all.filter((row) => row.kind === "type" || row.kind === "value"),
   (row) => row.name,
 );
+const addresses = (pins) => pins.map((pin) => pin.address).join(" and ");
+for (const [twice, pins] of pinnedBy)
+  if (pins.length > 1)
+    cannot(`${twice} is pinned in two entries, ${addresses(pins)}`);
 for (const provided of ["MutationCtx", "QueryCtx", "Id", ...Object.keys(gaps)])
   if (pinnedBy.has(provided))
     cannot(
-      `the preamble declares ${provided}, which ${pinnedBy
-        .get(provided)
-        .map((pin) => pin.address)
-        .join(" and ")} pins: take it out of the preamble`,
+      `the preamble declares ${provided}, which ${addresses(pinnedBy.get(provided))} pins: take it out of the preamble`,
     );
 
-// The scope's own entries, then every other pin of a name the module declares or uses.
+// The scope's own entries, then the pin of each name they use that another Spec pins.
 const own = all.filter((row) => scope.includes(row.spec));
-const emitted = own.filter((row) => row.kind !== null);
+const emitted = own.filter((row) => row.kind !== null && row.kind !== "index");
 const gapUses = new Map();
-const pull = (name, why) => {
-  for (const pin of pinnedBy.get(name) ?? [])
-    if (!emitted.includes(pin)) emitted.push(Object.assign(pin, { why }));
-};
 for (let at = 0; at < emitted.length; at++) {
-  const { address, name: declares } = emitted[at];
-  pull(declares, `${address} pins ${declares} too`);
+  const { address } = emitted[at];
   for (const used of namesUsedBy(emitted[at])) {
     if (used in gaps)
       gapUses.set(used, [...(gapUses.get(used) ?? []), address]);
-    pull(used, `${address} uses ${used}`);
+    const [pin] = pinnedBy.get(used) ?? [];
+    if (pin !== undefined && !emitted.includes(pin))
+      emitted.push(Object.assign(pin, { why: `${address} uses ${used}` }));
   }
 }
 
@@ -239,11 +246,11 @@ emitted.filter((row) => row.kind === "value").forEach((row) => place(row));
 
 const comment = (row) =>
   `// ${row.address}${row.why === undefined ? "" : ` (pulled in: ${row.why})`}`;
-const block = (rows, indent = "") =>
-  rows.flatMap((row) => [
-    `${indent}${comment(row)}`,
-    `${indent}${row.text}${indent === "" ? "" : ","}`,
-  ]);
+const block = (rows) => rows.flatMap((row) => [comment(row), row.text]);
+const member = (table) =>
+  [...block([table]), ...block(table.indexes).map((line) => `  ${line}`)].map(
+    (line, at, lines) => `  ${line}${at === lines.length - 1 ? "," : ""}`,
+  );
 const lines = [
   `// The pinned declarations of ${options.pack}, emitted by scripts/pinned.mjs from recipe 24 of the`,
   "// pinned Protocol. Never edit it: change the Spec, then run `npm run sdp:build`. Each declaration",
@@ -264,10 +271,7 @@ const lines = [
   ...block(emitted.filter((row) => row.kind === "type")),
   ...block(values),
   "export const tables = {",
-  ...block(
-    emitted.filter((row) => row.kind === "table"),
-    "  ",
-  ),
+  ...emitted.filter((row) => row.kind === "table").flatMap(member),
   "};",
 ];
 mkdirSync(join(root, "generated/pinned"), { recursive: true });
@@ -281,13 +285,8 @@ const counted = (rows) =>
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([prefix, group]) => `${prefix} ${group.length}`)
     .join(", ");
-const ownEmitted = emitted.filter((row) => row.why === undefined);
+const ownEmitted = own.filter((row) => row.kind !== null);
 const skipped = own.filter((row) => row.kind === null);
 console.error(
-  `pinned: generated/pinned/${name}.ts · ${scope.length} Specs · emitted ${ownEmitted.length} (${counted(ownEmitted)}) and ${emitted.length - ownEmitted.length} pulled in · skipped ${skipped.length} (${counted(skipped)}) · ${gapUses.size} names pinned by no Spec`,
+  `pinned: generated/pinned/${name}.ts · ${scope.length} Specs · emitted ${ownEmitted.length} (${counted(ownEmitted)}) and ${emitted.length - emitted.filter((row) => row.why === undefined).length} pulled in · skipped ${skipped.length} (${counted(skipped)}) · ${gapUses.size} names pinned by no Spec`,
 );
-for (const [twice, pins] of pinnedBy)
-  if (pins.length > 1 && emitted.includes(pins[0]))
-    console.error(
-      `pinned: ${twice} is pinned twice, at ${pins.map((pin) => pin.address).join(" and ")}`,
-    );
