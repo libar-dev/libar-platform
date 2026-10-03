@@ -64,7 +64,6 @@ const gaps = {
   SubjectRef: "src/command",
   WriteBaselineArgs: "Record<string, unknown>",
   WriteBaselineResult: "unknown",
-  actorKindValidator: "src/command",
   outcomeKindValidator: "src/command",
 };
 function gapDeclaration(name) {

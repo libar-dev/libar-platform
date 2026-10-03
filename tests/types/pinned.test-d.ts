@@ -131,6 +131,11 @@ describe("bound: the code equals the pin", () => {
       (typeof pinned.tables)["orderSummaries"]
     >();
   });
+  test("spec:application.read-models#design.fnPageInGeneration", () => {
+    expectTypeOf<typeof readModel.pageInGeneration>().toEqualTypeOf<
+      typeof pinned.pageInGeneration
+    >();
+  });
   test("spec:application.read-models#design.fnReadModelView", () => {
     expectTypeOf<typeof readModel.readModelView<Document>>().toEqualTypeOf<
       typeof pinned.readModelView<Document>
