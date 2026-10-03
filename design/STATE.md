@@ -206,10 +206,8 @@ The five register rows are recorded with new leans, four of them checked (Owner 
 
 After 3b, the hosted tier's build, as a unit commissioned from `design-hosted-tier.md` in the tooling unit's folder: its build cut, its order and its "built when" list. The owner's words of 2026-10-03: "Local backend should be primary, IMO. But happy to take the hosted as default if easier for start." So the local backend stays the primary target, and the hosted deployment is a target of the native tier on a schedule, never in `test:all`. Before it starts:
 
-- The owner creates the GitHub environment `hosted` with its three variables. That means running the commands in the setup record at the owner's own prompt, or granting the agent a permission rule and rerunning the setup from its step 4.
-- The owner makes the deploy key `hosted-ci` in the dashboard, with the fourteen actions or, by the CLI, with all of them.
-- The owner stores the key with `gh secret set` at an interactive prompt.
-- The owner checks the dashboard: one deployment, no production deployment, one key.
+- Done by the owner at the owner's own prompt on 2026-10-03, after the close commit: the GitHub environment `hosted` with its `main` branch policy and the three variables (`HOSTED_DEPLOYMENT_URL` as the printed URL with the region, `HOSTED_DEPLOY_KEY_NAME` as `hosted-ci`, `HOSTED_PLAN` as `Professional`), the deploy key `hosted-ci` made in the dashboard on `wandering-mule-403` (its value begins `dev:wandering-mule-403|`, the owner's reading), and the secret `HOSTED_DEPLOY_KEY` in that environment. `gh secret list --env hosted` and `gh variable list --env hosted` showed them.
+- Still the owner's: the dashboard check. The project showed a second development deployment, `clean-capybara-16`, which no agent created and which is most likely the owner's personal dev deployment from the dashboard's first open; if nothing uses it, the owner deletes it so that the project holds `dev/hosted` only, no production deployment and one key.
 - `patch-hosted-specs.diff` is applied after sitting two rules its words.
 
 Its first runs are the owner's from this machine. The four hosted examples run by the workflow once it is on `main`, because GitHub runs a schedule from the default branch.
