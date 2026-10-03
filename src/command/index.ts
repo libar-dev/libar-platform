@@ -63,9 +63,10 @@ export type {
 export {
   commandResponseValidator,
   outcomeKindValidator,
+  relayFailure,
   runPipeline,
 } from "./pipeline.js";
-export type { CommandResponse, PipelineCall } from "./pipeline.js";
+export type { CommandResponse, FailedCall, PipelineCall } from "./pipeline.js";
 export {
   canonicalJson,
   classifyReceipt,
