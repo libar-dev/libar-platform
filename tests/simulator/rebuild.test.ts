@@ -2347,3 +2347,17 @@ test("convex-test: startGeneration schedules exactly one batch and an install le
     await t.run((ctx) => ctx.db.query("projectionMarkers").collect()),
   ).toStrictEqual([]);
 });
+
+// rebuild.sdp.md fnGetGenerations:137: only a declared read model's rows are listed.
+test("convex-test: getGenerations answers [] for an undeclared read model even when rows name it", async () => {
+  const t = rebuildApp();
+  const id = await start(t);
+  await t.run(async (ctx) => {
+    const { _id, _creationTime, ...row } = (await ctx.db.get(id))!;
+    void [_id, _creationTime];
+    await ctx.db.insert("generations", { ...row, readModel: "undeclared" });
+  });
+  expect(
+    await t.query(internal.rebuild.getGenerations, { readModel: "undeclared" }),
+  ).toStrictEqual([]);
+});

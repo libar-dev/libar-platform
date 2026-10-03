@@ -631,9 +631,14 @@ export async function purgeBatch<D extends RebuildDataModel>(
 }
 export async function getGenerations<D extends RebuildDataModel>(
   parentCtx: GenericQueryCtx<D>,
-  _config: RebuildConfig,
+  config: RebuildConfig,
   args: { readModel: string },
 ) {
+  // rebuild.sdp.md:137: a read model the composition does not declare has no generations to list.
+  if (
+    !config.targets.some(({ readModel }) => readModel.name === args.readModel)
+  )
+    return [];
   const ctx = parentCtx as unknown as GenericQueryCtx<RebuildDataModel>;
   const generations = await ctx.db
     .query("generations")
