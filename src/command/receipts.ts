@@ -148,19 +148,16 @@ export async function sweep(
   const rows = await expired().take(size);
   let deleted = 0;
   for (const row of rows) {
-    // The command path has no tombstone retention or replay. Refuse rather than destroy one.
-    if (row.tombstone)
-      throw new Error(
-        "Receipt sweep cannot handle tombstones until lookup supports them",
+    if (!row.tombstone) {
+      const classified = classifyReceipt(
+        row,
+        row.fingerprint,
+        row.contractVersion,
+        now,
       );
-    const classified = classifyReceipt(
-      row,
-      row.fingerprint,
-      row.contractVersion,
-      now,
-    );
-    if (classified.class !== "new")
-      throw new Error("Receipt sweep expected an expired receipt");
+      if (classified.class !== "new")
+        throw new Error("Receipt sweep expected an expired receipt");
+    }
     await ctx.db.delete(row._id);
     deleted++;
   }

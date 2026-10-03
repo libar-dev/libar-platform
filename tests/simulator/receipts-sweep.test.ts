@@ -118,29 +118,35 @@ for (const composition of compositions) {
       }),
     ).toEqual({ deleted: 2, compacted: 0, more: true });
   });
-  // The absent irreversible retention path is a gap against the Spec's expiry narrative.
-  test(`convex-test: ${composition.name} refuses a tombstone and rolls back all sweep deletes`, async () => {
+  // spec:command.receipt-table tombstoneShape, expiryDefaults and fnSweep.
+  test(`convex-test: ${composition.name} deletes an expired tombstone and leaves an unexpired tombstone untouched`, async () => {
     const t = composition.app();
-    await t.run(async (ctx) => {
+    const kept = await t.run(async (ctx) => {
       await ctx.db.insert("receipts", receipt("a", "reversible", now - 1));
       await ctx.db.insert("receipts", {
-        ...receipt("a", "irreversible"),
+        ...receipt("a", "expired-tombstone"),
         tombstone: true,
         affected: [],
         versions: [],
       });
+      const id = await ctx.db.insert("receipts", {
+        ...receipt("a", "unexpired-tombstone", Number.MAX_SAFE_INTEGER),
+        tombstone: true,
+        affected: [],
+        versions: [],
+      });
+      return ctx.db.get(id);
     });
-    const before = await t.run((ctx) => ctx.db.query("receipts").collect());
-    await expect(
-      t.mutation(composition.internal.receipts.sweep, {
+    expect(
+      await t.mutation(composition.internal.receipts.sweep, {
         tenantId: "a",
         now,
         limit: 1000,
       }),
-    ).rejects.toThrow("until lookup supports them");
-    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
-      before,
-    );
+    ).toEqual({ deleted: 2, compacted: 0, more: false });
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual([
+      kept,
+    ]);
   });
   // spec:command.actor-and-scope fnNextTenant and the receipt sweep's per-tenant boundary.
   test(`convex-test: ${composition.name} sweep loop visits one tenant per run and finishes the current tenant first`, async () => {
