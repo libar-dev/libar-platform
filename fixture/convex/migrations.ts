@@ -36,7 +36,9 @@ const summaryMigration = makeFunctionReference(
 const enumerationMigration = makeFunctionReference(
   "migrations:enumeration",
 ) as unknown as MigrationFunctionReference;
-type Document = Parameters<typeof documentSummary.projection.project>[1];
+type Document = Parameters<
+  (typeof documentSummary.projections)[0]["project"]
+>[1];
 
 async function writeSummary(ctx: MutationCtx, tenantId: string, dto: Document) {
   const existing = await ctx.db
@@ -48,7 +50,7 @@ async function writeSummary(ctx: MutationCtx, tenantId: string, dto: Document) {
   if (existing && existing.sourceVersions[0]!.version >= dto.version.version)
     return;
   const row = {
-    ...documentSummary.projection.project(tenantId, dto, [dto.version])!,
+    ...documentSummary.projections[0].project(tenantId, dto, [dto.version])!,
     tenantId,
     generation: 2,
     key: dto.documentId,
@@ -242,10 +244,15 @@ export const contextBatch = internalMutation({
         version: dto.version.version,
       });
     }
-    await ctx.db.patch("generations", generation._id, {
+    const progress = (await ctx.db
+      .query("generationProgress")
+      .withIndex("by_generation", (q) => q.eq("generationId", generation._id))
+      .unique())!;
+    await ctx.db.patch("generationProgress", progress._id, {
       cursor: { tenantId: "tenant", pageCursor: page.continueCursor },
-      batchesDone: generation.batchesDone + 1,
-      rowsWritten: generation.rowsWritten + page.page.length,
+      batchesDone: progress.batchesDone + 1,
+      rowsWritten: progress.rowsWritten + page.page.length,
+      updatedAt: Date.now(),
     });
     if (
       page.page.some(

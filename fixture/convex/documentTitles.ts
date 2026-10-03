@@ -7,6 +7,7 @@ import {
   defaultRowBudgetBytes,
   type ReadModel,
 } from "../../src/read-model/index.js";
+import { deletedTitle } from "./depot/streams.js";
 // A document created under this title makes the title projection throw.
 export const projectionFaultTitle = "fault: in the documentTitle projection";
 // The projected fields, which the table spreads.
@@ -25,15 +26,29 @@ export const documentTitle: ReadModel<DocumentDto, DocumentTitleFields> = {
   name: "documentTitle",
   table: "documentTitles",
   rowBudgetBytes: defaultRowBudgetBytes,
-  projection: {
-    version: 1,
-    keyOf: (_tenantId, document) => document.documentId,
-    project: (_tenantId, { documentId, title }) => {
-      if (title === projectionFaultTitle)
-        throw new Error(
-          `Fault injected: ${projectionFaultTitle}, projecting document ${documentId}`,
-        );
-      return { documentId, title };
+  projections: [
+    {
+      version: 2,
+      keyOf: (_tenantId, document) => document.documentId,
+      project: (_tenantId, { documentId, title }) => {
+        if (title === projectionFaultTitle)
+          throw new Error(
+            `Fault injected: ${projectionFaultTitle}, projecting document ${documentId}`,
+          );
+        if (title === deletedTitle) return null;
+        return { documentId, title };
+      },
     },
-  },
+    {
+      version: 1,
+      keyOf: (_tenantId, document) => document.documentId,
+      project: (_tenantId, { documentId, title }) => {
+        if (title === projectionFaultTitle)
+          throw new Error(
+            `Fault injected: ${projectionFaultTitle}, projecting document ${documentId}`,
+          );
+        return { documentId, title };
+      },
+    },
+  ],
 };

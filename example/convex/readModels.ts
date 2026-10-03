@@ -1,41 +1,26 @@
-// The production composition's read-model functions: the first activation an operator runs with admin
-// access, and the parent list over the order summary in its active generation.
+// The parent list over the read model in its active generation.
 import {
   paginationOptsValidator,
   paginationResultValidator,
 } from "convex/server";
 import { v } from "convex/values";
-import { actorValidator, authorizeQuery } from "../../src/command/index.js";
+import { authorizeQuery } from "../../src/command/index.js";
 import {
   boundedPage,
   streamVersionValidator,
 } from "../../src/context/index.js";
 import {
-  activateFirstGeneration,
   activeGeneration,
   limitReadModelList,
   readModelView,
-  type AnyReadModel,
 } from "../../src/read-model/index.js";
-import { internalMutation, query } from "./_generated/server.js";
+import { query } from "./_generated/server.js";
 import {
   orderSummary,
   orderSummaryFields,
   orderSummaryStatus,
 } from "./orderSummary.js";
 export const readOrdersPermission = "orders.read";
-const readModels: readonly AnyReadModel[] = [orderSummary];
-// Run once for each read model, before the first command that writes it.
-export const activate = internalMutation({
-  args: { readModel: v.string(), startedBy: actorValidator },
-  returns: v.number(),
-  handler: async (ctx, { readModel, startedBy }) => {
-    const declared = readModels.find(({ name }) => name === readModel);
-    if (declared === undefined)
-      throw new Error(`This deployment declares no read model ${readModel}`);
-    return activateFirstGeneration(ctx, declared, startedBy);
-  },
-});
 const orderSummaryView = v.object({
   tenantId: v.string(),
   key: v.string(),

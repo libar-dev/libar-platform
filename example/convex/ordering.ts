@@ -19,7 +19,7 @@ export const placeOrderPermission = "orders.place";
 export const cancelOrderPermission = "orders.cancel";
 // The largest order PlaceOrder accepts: the example's promise, chosen under the adapter's ceilings.
 export const maxOrderLines = 100;
-const orderSource = { contextId: "orders", streamType: "order" };
+export const orderSource = { contextId: "orders", streamType: "order" };
 const stockItemSource = { contextId: "inventory", streamType: "stockItem" };
 const placeOrderInput = v.object({
   orderId: v.string(),

@@ -1,11 +1,8 @@
-// The read-model library: what the parent uses to declare, activate, write and read a read model.
-export {
-  activateFirstGeneration,
-  activeGeneration,
-  generationsToWrite,
-} from "./generations.js";
+// The read-model library: what the parent uses to declare, rebuild, write and read a read model.
+export { activeGeneration, generationsToWrite } from "./generations.js";
 export {
   applyProjection,
+  projectionOf,
   defaultRowBudgetBytes,
   limitRowBudgetBytes,
 } from "./projection.js";
@@ -22,6 +19,7 @@ export { limitReadModelList, readModelView } from "./queries.js";
 export {
   batchCursorValidator,
   generationStateValidator,
+  progressPassValidator,
   readModelTables,
   rowConventions,
 } from "./tables.js";
@@ -39,3 +37,30 @@ export {
   writeReadModels,
 } from "./write.js";
 export type { ReadModelBinding, SourceRef } from "./write.js";
+export {
+  startGeneration,
+  interruptGeneration,
+  resumeGeneration,
+  switchGeneration,
+  rollbackGeneration,
+  abortGeneration,
+  purgeGeneration,
+  fillTenants,
+  backfillBatch,
+  verifyBatch,
+  purgeBatch,
+  fillTenantsBatch,
+  getGenerations,
+  batchSizeFor,
+  rebuildBatchCeiling,
+  limitPurgeBatch,
+  resumeChain,
+  limitTenantFillBatch,
+  limitGenerationsListed,
+} from "./rebuild.js";
+export type {
+  RebuildConfig,
+  RebuildTarget,
+  BatchRef,
+  FillBatchRef,
+} from "./rebuild.js";

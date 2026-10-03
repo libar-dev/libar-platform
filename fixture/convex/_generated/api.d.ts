@@ -29,6 +29,7 @@ import type * as orders from "../orders.js";
 import type * as parentList from "../parentList.js";
 import type * as readCost from "../readCost.js";
 import type * as readModels from "../readModels.js";
+import type * as rebuild from "../rebuild.js";
 import type * as rejectionCommands from "../rejectionCommands.js";
 import type * as scheduledRows from "../scheduledRows.js";
 import type * as summaries from "../summaries.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   parentList: typeof parentList;
   readCost: typeof readCost;
   readModels: typeof readModels;
+  rebuild: typeof rebuild;
   rejectionCommands: typeof rejectionCommands;
   scheduledRows: typeof scheduledRows;
   summaries: typeof summaries;
