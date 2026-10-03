@@ -1,7 +1,8 @@
 // The largest row of the order allocation history measures 55,803 bytes with getConvexSize, within
 // the row budget the view declares, the ceiling of 65,536
-// (spec:application.history-projection#design.tableOrderAllocationHistory). The row is the stored
-// document: the row conventions every read-model row carries
+// (spec:application.history-projection#design.tableOrderAllocationHistory). The row is what
+// applyProjection measures before a write, without the system fields _id and _creationTime, which
+// the stored document adds: the row conventions every read-model row carries
 // (spec:application.projection-contract#design.validatorRowConventions) beside the fields the fold
 // writes, with the tenant and order IDs at their bound, the most stock items an order names, each
 // ID at the example's bound, and every allocation released.

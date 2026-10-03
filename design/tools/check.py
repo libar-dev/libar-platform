@@ -41,8 +41,11 @@ GRAPH_FACTS = (
 )
 PROSE_MENTIONS = os.path.join(DESIGN, "tools", "prose-mentions.json")
 # An entry address, spec:<id>#design.<key> or #ui.<key>, as the Protocol's checked-mentions record rules it.
-ADDRESS = re.compile(r"spec:[a-z][a-z0-9-]*(?:\.[A-Za-z0-9][A-Za-z0-9-]*)+#(?:design|ui)\.[A-Za-z0-9_]*")
-ADDRESS_KEY = re.compile(r"^[a-z][A-Za-z0-9]*$")
+# A token runs from `spec:` to a separator, loses trailing punctuation, and is checked whole, so a malformed
+# key is refused rather than read as its valid prefix. A `#` that opens neither section is the register's
+# own reference to an open question by number, which is not an address.
+MENTION_TOKEN = re.compile(r"spec:[^\s`'\"()\[\]{}<>|,;]+")
+ADDRESS = re.compile(r"^(spec:[a-z][a-z0-9-]*(?:\.[A-Za-z0-9][A-Za-z0-9-]*)*)#(design|ui)\.([a-z][A-Za-z0-9]*)$")
 # Where an address outside the Specs lives: the code, the tests, the register, the ledger and the work documents.
 # The Protocol checks an address inside a Spec's prose; nothing checks these unless this script does.
 ADDRESS_SOURCES = ("src", "fixture", "example", "harness", "tests", "scripts")
@@ -114,14 +117,18 @@ if facts:
     files += [os.path.join(DESIGN, name) for name in ADDRESS_RECORDS]
     for path in sorted(files):
         for number, line in enumerate(open(path, encoding="utf-8"), 1):
-            for token in ADDRESS.findall(line):
+            for token in MENTION_TOKEN.findall(line):
+                token = token.rstrip(".:!?")
+                if not re.search(r"#(design|ui)\b", token):
+                    continue
                 addresses += 1
-                spec_id, entry = token.split("#", 1)
-                section, key = entry.split(".", 1)
                 where = f"{os.path.relpath(path, ROOT)}:{number}"
-                if not ADDRESS_KEY.match(key) or key == "description":
-                    fail(f"entry address {token} at {where} has a key outside the address grammar")
-                elif spec_id not in facts["keys"]:
+                match = ADDRESS.match(token)
+                if not match or match.group(3) == "description":
+                    fail(f"entry address {token} at {where} is outside the address grammar")
+                    continue
+                spec_id, section, key = match.groups()
+                if spec_id not in facts["keys"]:
                     fail(f"entry address {token} at {where} names no Spec")
                 elif key not in facts["keys"][spec_id][section]:
                     fail(f"entry address {token} at {where}: {spec_id} has no {section} entry {key}")
