@@ -36,7 +36,7 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 | 5 | a | Baselines, migration and the fold bound, Sc L2-7 at the native tier; the history-reading sweep with its transient refusal and the restore check's pending-work inventory, at `convex-test` for the interleavings and natively for the sweep | mixed | domain | a night or more | OD-041 (ruled), 3b |
 | 5 | b | The restore procedure and the drill, Sc L2-8 | mixed | operator | unknown until 4b | 4b, 5a |
 | 5 | c | The first adopter-facing cut: README, the example walkthrough, the package shape | mixed | product | a night | OD-047, OD-048, Sc L2-5 to L2-8 bound |
-| 5 | d | The build of the order allocation history view, Sc L2-6 at the native tier, by ruling F10 | build | domain | a night | 3b, 4c |
+| 5 | d | The build of the order allocation history view, Sc L2-6 at the native tier, by ruling F10. Its design is `pack:history-view`; the implementation and Convex passes ran in the unit `design-in-the-graph` | build | domain | a night | 3b, 4c, the domain and operator passes over `pack:history-view` |
 
 ## Round 1: what blocks nothing
 
@@ -106,6 +106,8 @@ Every item is done but the hosted tier's first runs, which are the owner's after
 **5b. The restore procedure and the drill.** After Probe 7 has shown what a restore leaves. The four checks on the representative dataset, which needs `CancelOrder` and a generation stranded in `building`; the restore's batches get their runner. OD-042's three policies go to the owner once the drill has shown how long the checks take.
 
 **5c. The adopter-facing cut.** The root README's first hour, an `example/README.md` that walks `PlaceOrder` from its declaration to the order summary, and the package kept private with nothing of the first-release list. No name, export or version is a contract yet.
+
+**5d. The history view's build.** Its design is `pack:history-view`, read before the build in passes, one lens each (`PLAN.md` 6.7, `design/advisors/task-pass.md`). The implementation pass ran in the unit `design-in-the-graph`: the pinned module compiles the Pack's declarations and binds 53 of them to the code, and the pass pinned the two names the history design used and no Spec pinned. The Convex pass ran in the same unit and left its open questions on the rebuild, the write pause and the two projection Specs. The domain and operator passes come next, one advisor launch each, at once; the Convex pass's memo names what it left to each. The build then binds `spec:application.history-projection` to its code, moves the pairs it closes from the ahead list of `tests/types/pinned.test-d.ts` to the bound list, and binds the two Sc L2-6 examples at the native tier.
 
 ## Deferred, with the trigger
 

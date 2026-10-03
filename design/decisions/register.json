@@ -6363,6 +6363,204 @@
       "decidedBy": "owner",
       "decidedOn": "2026-10-03",
       "ruling": "The owner's words in the tooling unit, on the advisor's eight hosted recommendations: \"I agree with all recommendations. We have unused Convex Professional account. Let me know how to login.\" Taken as the lean: one hosted development deployment, dev/hosted in the project libar-platform-hosted of the owner's otherwise unused team on the Professional plan, with one development deploy key, hosted-ci-scoped, limited to the fourteen actions, held as the one secret HOSTED_DEPLOY_KEY by the GitHub environment hosted, which admits the default branch only; run twice a week and on dispatch. The owner made the key, the environment and the secret by hand on 2026-10-03."
+    },
+    {
+      "id": "OD-156",
+      "title": "Extension E-40, the shape of a history batch: a batch takes one stream, so a pass costs at least one scheduled mutation ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.rebuild#6",
+          "file": "design/specs/application/rebuild.sdp.md",
+          "line": 66
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-40",
+        "E-9",
+        "D9",
+        "F13",
+        "F19"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "unsorted",
+      "foldedInto": [],
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-157",
+      "title": "The verify pass under the write pause: a history view's generation is built while no source changes, so its verify pass ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.rebuild#7",
+          "file": "design/specs/application/rebuild.sdp.md",
+          "line": 67
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "D9",
+        "Sc L2-6"
+      ],
+      "provisionalReading": "the option kept here is the pass, as D9's \"Verify coverage, then switch\" and Sc L2-6's \"writes reopen only after verification\" read",
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "sorted",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Reads the doc's words of D9 and Sc L2-6 for one row of the acceptance table, which only the owner rules.",
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-158",
+      "title": "Whether a history view's batch chain, at up to 2 MiB of rows per batch scheduled with `runAfter(0)`, is held by the depl",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.rebuild#8",
+          "file": "design/specs/application/rebuild.sdp.md",
+          "line": 68
+        }
+      ],
+      "families": [
+        "application",
+        "facts"
+      ],
+      "cites": [
+        "E-40",
+        "F13"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "unsorted",
+      "foldedInto": [],
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-159",
+      "title": "Extension E-9, the cost of `sourceVersions`: a history row's entries repeat the row's tenant ID once per source stream, ",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.projection-contract#5",
+          "file": "design/specs/application/projection-contract.sdp.md",
+          "line": 37
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "F13",
+        "Law 11"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "unsorted",
+      "foldedInto": [],
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-160",
+      "title": "The cost of the binding on the live path, one row read and one write of up to `rowBudgetBytes` per command and the measu",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.history-projection#3",
+          "file": "design/specs/application/history-projection.sdp.md",
+          "line": 36
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "E-47",
+        "F13"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "unsorted",
+      "foldedInto": [],
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
+    },
+    {
+      "id": "OD-161",
+      "title": "Extension E-8, the generation exemption: a batch reads the gate with the scopes `all` and its tenant, and no entry of ei",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:application.write-pause#2",
+          "file": "design/specs/application/write-pause.sdp.md",
+          "line": 40
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-8",
+        "D9"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "convex",
+      "status": "unsorted",
+      "foldedInto": [],
+      "class": null,
+      "reason": null,
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": null,
+      "decidedOn": null,
+      "ruling": null
     }
   ],
   "possiblySame": [
