@@ -1,6 +1,6 @@
 # Roadmap: the next units
 
-Written on 2026-10-02 by the main thread, from four advisor memos written the same day under `design/advisors/task-roadmap.md`. It is a work document: it orders units and names what each needs and shows, and it says nothing a Spec should say. The owner rules on it. The memos, the plants and the check are in the roadmap unit's folder, which the project notes name. It is kept current at each close, last at the close of round 3's sitting two on 2026-10-03.
+Written on 2026-10-02 by the main thread, from four advisor memos written the same day under `design/advisors/task-roadmap.md`. It is a work document: it orders units and names what each needs and shows, and it says nothing a Spec should say. The owner rules on it. The memos, the plants and the check are in the roadmap unit's folder, which the project notes name. It is kept current at each close, last at the close of round 3 on 2026-10-03.
 
 ## How to read it
 
@@ -25,14 +25,14 @@ The slices of `STATE.md` keep their names. S3 is round 1's attribution and round
 | 2 | g | Also done in round 2: the review's fold-in, the caller's signal in the harness, three `CancelOrder` tests, `fillTenants` and the resumed batch size on paper | mixed | operator, domain | under an evening | the review |
 | 3 | a | The gate, the restore door, and a gate change as audit that fails closed. Done in round 2: 106 proof tests written apart from the fix, all passing at the merge, the fix wrong nowhere | mixed | operator | an evening | 2b |
 | 3 | b | The online rebuild of the order summary, Sc L2-5 at the native tier: thirteen functions per composition, laid out in `layout-3b.md` of the tooling unit as three lanes and 33 proof obligations | build | domain | a night | 2b, 2d, 3a, the layout's eight questions ruled, the five register rows recorded |
-| 3 | e | The hosted tier, commissioned from `design-hosted-tier.md` of the tooling unit: four hosted examples on one shared development deployment, the local backend primary | build | convex, operator | unknown until the first run | 3b, the deploy key and its secret (done), sitting two's words (done), `patch-hosted-specs.diff` applied with its two word changes |
+| 3 | e | The hosted tier, commissioned from `design-hosted-tier.md` of the tooling unit: four hosted examples on one shared development deployment, the local backend primary. Built in the close of round 3; its first runs are the owner's after the merge | build | convex, operator | unknown until the first run | 3b, the deploy key and its secret (done), sitting two's words (done), `patch-hosted-specs.diff` applied with its two word changes |
 | 3 | c | The two harness reads and the fact rows no Spec carries. Done in round 2: F18 to F20 probed, the "no job" assertions read `_scheduled_functions`; the deployed-function read stays deferred | mixed | convex | a session plus an evening | nothing |
 | 3 | d | Sitting two: the language, the pass sentence, and the S5 rows. Done: sixteen rows ruled from one recommendations page after one Opus and one astra read | decide | product, domain, operator | an evening | nothing |
-| 4 | a | A command's audit fails closed and its diagnostic never aborts, Sc ALL-1 | mixed | operator | an evening | 3a |
-| 4 | c | The history view's fold, its memory and its rollback, on paper | design | domain | an evening | 2c |
-| 4 | d | The receipts sweep, one tenant per run | build | operator | under an evening | the tenant list from 2b |
+| 4 | a | A command's audit fails closed and its diagnostic never aborts, Sc ALL-1. Done in the close of round 3: both Sc ALL-1 examples pass natively, the proof written apart from the fix | mixed | operator | an evening | 3a |
+| 4 | c | The history view's fold, its memory and its rollback, on paper. Done in the close of round 3: ten choices ruled, ten ledger findings on paper, one pure fold with its test | design | domain | an evening | 2c |
+| 4 | d | The receipts sweep, one tenant per run. Done in the close of round 3: `receipts.sweep` and `sweepNext` in both compositions, at `convex-test` | build | operator | under an evening | the tenant list from 2b |
 | 4 | e | `ready` on the built Specs, by family | decide | product | a session, one owner unit | 1c, sitting two |
-| 4 | f | The language in the code: the refusal field `entry`, the tier names in the examples' opening lines and the harness parser, the harness's backup archive names | build | product | under an evening | sitting two |
+| 4 | f | The language in the code: the refusal field `entry`, the tier names in the examples' opening lines and the harness parser, the harness's backup archive names. Done in the close of round 3 | build | product | under an evening | sitting two |
 | 5 | a | Baselines, migration and the fold bound, Sc L2-7 at the native tier; the history-reading sweep with its transient refusal and the restore check's pending-work inventory, at `convex-test` for the interleavings and natively for the sweep | mixed | domain | a night or more | OD-041 (ruled), 3b |
 | 5 | b | The restore procedure and the drill, Sc L2-8 | mixed | operator | unknown until 4b | 4b, 5a |
 | 5 | c | The first adopter-facing cut: README, the example walkthrough, the package shape | mixed | product | a night | OD-047, OD-048, Sc L2-5 to L2-8 bound |
@@ -68,14 +68,14 @@ Done on 2026-10-02 and 2026-10-03, as nine lanes merged into `feature/round-2`, 
 
 ## Round 3, as it now stands
 
-The owner discusses the next session's work before it is prepared. In this order:
+Every item is done but the hosted tier's first runs, which are the owner's after the merge of `feature/round-2`. `STATE.md`, "Where the work stands", has the numbers of each. The owner discusses the next session's work before it is prepared.
 
-1. **3b, the online rebuild of the order summary**, is done, on 2026-10-03: thirteen functions per composition, every read model installed through its first rebuild, the parent list paged across a switch, and Sc L2-5 passing at the native tier on the production composition. `STATE.md`, "Where the work stands", has its numbers: 325 of 325 proof tests at the merge, the L2-5 run's times, the review and three reads of the fold-in.
-2. **The hosted tier**, a build unit commissioned from `design-hosted-tier.md` of the tooling unit, is next. Its prerequisites are met but one: the environment `hosted` with its three variables and the deploy key `hosted-ci-scoped`, scoped to the fourteen actions and checked, exist since 2026-10-03; sitting two ruled the words; `patch-hosted-specs.diff` is applied first in the unit, with its "marker" read as planting record and its test "pass" as test result. The one thing still the owner's is the dashboard check: `clean-capybara-16` is a production deployment the design does not want. It shows the four hosted examples run by the workflow on `main`: F16's retention, F12's in-place import, the production composition's acceptance and Probe 3's function calls. The local backend stays primary.
-3. **3d, sitting two**, is done, on 2026-10-03: sixteen rows ruled (the five language rows with OD-017 and OD-110, OD-006 with OD-008, OD-138, OD-041, OD-042, OD-114, OD-044, OD-063 and OD-048), each applied at the Spec that owns it, `CONTEXT.md` carrying the words. The method: one recommendations page by the main thread, one Opus and one astra read of it, then the ruling. Two doc hunks wait for the owner's hand, and the language in the code is lane 4f.
-4. **4a, command audit and the diagnostic.** 3a has built `writeAudit` and step 10, so what is left is the Spec text on which outcomes emit a record and where a duration comes from, the sink, and Sc ALL-1 bound.
-5. **4c, the history view on paper.** 2c is done, so `OrderCancelled` and `AllocationReleased` exist for its fold.
-6. **4d, the receipts sweep.** The tenant list and `nextTenant` are built.
+1. **3b, the online rebuild of the order summary**, is done, on 2026-10-03: thirteen functions per composition, every read model installed through its first rebuild, the parent list paged across a switch, and Sc L2-5 passing at the native tier on the production composition; `STATE.md` has its numbers.
+2. **The hosted tier** is built, in the close of round 3: steps 1 to 9 of section 7 of `design-hosted-tier.md`, redaction and the record's target at the pure tier, the undeclared table's example on the local backend, the four hosted examples written and compiled. Its first runs, from the owner's machine and then by the workflow on `main`, and the dashboard check of `clean-capybara-16` are the owner's after the merge; `STATE.md` has the rest.
+3. **3d, sitting two**, is done, on 2026-10-03: sixteen rows ruled, each applied at the Spec that owns it, `CONTEXT.md` carrying the words; two doc hunks wait for the owner's hand, and the language in the code, lane 4f, is done in the close of round 3; `STATE.md` has its numbers.
+4. **4a, command audit and the diagnostic**, is done, in the close of round 3: the Spec text ruled, the code and its proof written apart from it, both Sc ALL-1 examples passing at the native tier; `STATE.md` has its numbers.
+5. **4c, the history view on paper**, is done, in the close of round 3: ten choices ruled and one pure fold with its test, the build left to 5d; `STATE.md` has its numbers.
+6. **4d, the receipts sweep**, is done, in the close of round 3: `receipts.sweep` and `sweepNext` in both compositions, bounded by 1,000 rows and 8 MiB, at `convex-test`; `STATE.md` has its numbers.
 
 ## Round 3
 
@@ -83,7 +83,7 @@ The owner discusses the next session's work before it is prepared. In this order
 
 **3b. The online rebuild.** The rebuild's thirteen functions per composition (eight operator entries, four batches and `getGenerations`, as `layout-3b.md` counts them) and the progress row, with the version-selected projection of 2b. A version 2 of the order summary built as generation 2 while `PlaceOrder` runs, a fence bump as the interrupt, verify, switch, intervening writes, rollback, verify again, switch back. Sc L2-5 on the native backend with a record. Built on 2026-10-03 as round 3's unit 3b, with generation 2 at version 1 and the two versions on the fixture's `documentTitle` at `convex-test`, as Q1 of its rulings says.
 
-**The hosted tier.** Built from `design-hosted-tier.md` section 1, decision 7, in its order: redaction first, then the record shape and the acceptance filter, `hostedTarget`, the selection kinds, the run setup, the local example of the undeclared table, the copy's modules, the four examples and the workflow. It is built when one record carries `target: "hosted deployment"` with no form of the key, the acceptance example passed, and a CI run on `main` says so. Previews, a second deployment, deletion and cost in money are out. The project and the deployment `dev/hosted` exist since 2026-10-03.
+**The hosted tier.** Built from `design-hosted-tier.md` section 1, decision 7, in its order: redaction first, then the record shape and the acceptance filter, `hostedTarget`, the selection kinds, the run setup, the local example of the undeclared table, the copy's modules, the four examples and the workflow. It is built when one record carries `target: "hosted deployment"` with no form of the key, the acceptance example passed, and a CI run on `main` says so. Previews, a second deployment, deletion and cost in money are out. The project and the deployment `dev/hosted` exist since 2026-10-03. Steps 1 to 9 were built in the close of round 3, and the design's eight "built when" items wait for the owner's first run after the merge.
 
 **3c. The harness reads and the fact rows.** A read of `_scheduled_functions` through admin access, so that the "no job" assertions of Sc L2-2 and L2-3 close on the table and not on a window; three fact Specs written from the pinned package source and a probe on the pinned release, and not from the leads that point at them: the commit timestamp as OD-044's lean says, the time budget nested calls draw on, and the late byte check of `convex-helpers`; the scheduled-argument size discrepancy recorded on F13; one probe counting component calls per mutation on the pinned release. The native read of the deployed function list is deferred: OD-021's lean takes the committed generated api as the pinned list, and the main thread judges that compiled check sufficient until a scenario needs more.
 
@@ -91,11 +91,11 @@ The owner discusses the next session's work before it is prepared. In this order
 
 ## Round 4
 
-**4a. Command audit and the diagnostic.** `audit` on the declaration, `writeAudit` at step 10, `emitDiagnostic` at the end of the mutation through a sink that swallows every error and counts it, the two injection points in the fixture composition only, and both examples of Sc ALL-1 bound. The Spec text first says which outcomes emit a record and where a duration comes from.
+**4a. Command audit and the diagnostic.** `audit` on the declaration, `writeAudit` at step 10, `emitDiagnostic` at the end of the mutation through a sink that swallows every error and counts it, the two injection points in the fixture composition only, and both examples of Sc ALL-1 bound. The Spec text first says which outcomes emit a record and where a duration comes from. Done in the close of round 3, the proof written apart from the fix.
 
-**4c. The history view on paper.** One row whatever the order across streams, fold memory beyond a deleted row, rollback of a paused view as a refusal or a re-closing of the sources, the cross-context row narrowed to D8's parent query, the aggregate write split on a key change. Four ledger findings fixed on paper and one pure determinism test. The build of the view waits for a view that needs it.
+**4c. The history view on paper.** One row whatever the order across streams, fold memory beyond a deleted row, rollback of a paused view as a refusal or a re-closing of the sources, the cross-context row narrowed to D8's parent query, the aggregate write split on a key change. Four ledger findings fixed on paper and one pure determinism test. The build of the view waits for a view that needs it. Done in the close of round 3, with ten findings fixed or partially fixed on paper.
 
-**4d. The receipts sweep.** One internal mutation per tenant over the expiry index, at most the bound, returning what it deleted and whether more remains, with the loop over tenants from 2b's ruling.
+**4d. The receipts sweep.** One internal mutation per tenant over the expiry index, at most the bound, returning what it deleted and whether more remains, with the loop over tenants from 2b's ruling. Done in the close of round 3, as `receipts.sweep` and `sweepNext`.
 
 **4e. `ready` by family.** The fork for OD-024 lists the built Specs with their floors and their open questions and asks for `ready` by family: kernel and context first, then command, then application without the generation registry. A Spec with an unruled `owner` row stays `defined`.
 
@@ -110,7 +110,7 @@ The owner discusses the next session's work before it is prepared. In this order
 ## Deferred, with the trigger
 
 - Layers 3 to 6: at their trigger, after Probe 7, as the doc and tactical decision 3 say. OD-050 to OD-054 and OD-056 stay waiting until an activation record names a consumer.
-- Probe 3's quota half, OD-036: no longer deferred. It is the fourth example of the hosted tier, the unit after 3b.
+- Probe 3's quota half, OD-036: no longer deferred. It is the fourth example of the hosted tier, built in the close of round 3, and OD-036 waits for its first run.
 - The aggregate form: at a view that needs it, OD-075. The history view is no longer deferred: ruling F10 keeps it in the first experiment, 4c writes its rules and 5d builds it.
 - Receipt tombstones, the derived mapping and `streamParts`, the import command: when a command needs them, OD-100, OD-113, OD-072.
 - OD-092's `transactionLimits` probe: before any budget or `maxStreams` is raised; nothing in rounds 1 to 5 raises one.
