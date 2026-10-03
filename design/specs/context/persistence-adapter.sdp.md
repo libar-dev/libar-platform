@@ -9,6 +9,9 @@ relations:
     - spec:kernel.decider-contract
     - spec:kernel.state-document-mapping
     - spec:context.tables
+    - spec:context.journal
+    - spec:command.outcome-boundary
+    - spec:context.event-envelope
   decidedBy:
     - spec:decisions.d03-events-only-source-of-next-state
     - spec:decisions.d04-four-outcomes

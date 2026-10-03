@@ -14,6 +14,7 @@ relations:
   decidedBy:
     - spec:decisions.d11-tenant-scope-and-authority
     - spec:decisions.d06-idempotency-client-and-receipts
+  dependsOn: spec:application.write-pause
 ---
 # Tenancy and authority
 

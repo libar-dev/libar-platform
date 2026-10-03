@@ -13,6 +13,11 @@ relations:
     - spec:facts.f11-components-have-no-ctx-auth
     - spec:facts.f15-parent-query-over-component-query-stays-reactive
     - spec:facts.f13-transactions-have-limits
+  dependsOn:
+    - spec:context.journal
+    - spec:command.actor-and-scope
+    - spec:command.outcome-boundary
+    - spec:context.event-envelope
 ---
 # The context queries
 

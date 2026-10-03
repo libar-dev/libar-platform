@@ -9,6 +9,7 @@ relations:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
     - spec:command.tenancy-and-authority
+    - spec:effects.claim-call-settle
   constrainedBy:
     - spec:laws.law05-authorization-before-execution-and-disclosure
     - spec:laws.law08-durable-capability-ships-operations

@@ -10,6 +10,16 @@ relations:
     - spec:command.idempotency-and-receipts
     - spec:command.tenancy-and-authority
     - spec:command.outcome-boundary
+    - spec:command.actor-and-scope
+    - spec:application.projection-contract
+    - spec:application.aggregate-projection
+    - spec:application.history-projection
+    - spec:application.write-pause
+    - spec:command.receipt-table
+    - spec:context.persistence-adapter
+    - spec:context.event-envelope
+    - spec:kernel.outcome-model
+    - spec:operations.baseline-operations
   constrainedBy:
     - spec:laws.law01-sanctioned-writes-only
     - spec:laws.law02-state-and-events-commit-together

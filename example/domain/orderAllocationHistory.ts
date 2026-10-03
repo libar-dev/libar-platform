@@ -1,10 +1,10 @@
 // The order allocation history's rules: keyOf maps an event to the order it belongs to, and project
-// folds one order's events into its row (spec:application.projection-contract,
-// orderAllocationHistoryFold). Each field of the row is written by the events of one stream,
-// placedAt and cancelledAt by the order's and each allocation by its stock item's, and the
-// allocations are kept in stock item ID order, so the row is one value whatever the order in which
-// the events of different streams arrive. The parent's HistoryProjection holds these rules; no
-// context mounts them, so index.ts does not export them.
+// folds one order's events into its row
+// (spec:application.history-projection#design.orderAllocationHistoryFold). Each field of the row
+// is written by the events of one stream, placedAt and cancelledAt by the order's and each
+// allocation by its stock item's, and the allocations are kept in stock item ID order, so the row
+// is one value whatever the order in which the events of different streams arrive. The parent's
+// HistoryProjection holds these rules; no context mounts them, so index.ts does not export them.
 import type { OrderEvent } from "./order.js";
 import type { StockItemEvent } from "./stockItem.js";
 // The part of an event envelope the rules read; the context library's EventEnvelope has each field.

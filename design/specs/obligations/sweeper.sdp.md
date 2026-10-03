@@ -8,6 +8,7 @@ relations:
   dependsOn:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
+    - spec:effects.claim-call-settle
   constrainedBy:
     - spec:facts.f16-scheduled-functions-table-shows-failed-runs
     - spec:facts.f13-transactions-have-limits

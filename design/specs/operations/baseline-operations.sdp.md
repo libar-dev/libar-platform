@@ -18,6 +18,10 @@ relations:
     - spec:constraints.bulk-operations-bounded
     - spec:laws.law05-authorization-before-execution-and-disclosure
     - spec:facts.f01-serializable-mutations-under-occ
+  dependsOn:
+    - spec:command.actor-and-scope
+    - spec:command.outcome-boundary
+    - spec:context.event-envelope
 ---
 # Baseline operations
 

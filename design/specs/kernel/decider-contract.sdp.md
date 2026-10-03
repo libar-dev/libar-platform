@@ -5,7 +5,9 @@ altitude: story
 readiness: defined
 relations:
   refines: spec:kernel.domain-kernel
-  dependsOn: spec:kernel.initial-state
+  dependsOn:
+    - spec:kernel.initial-state
+    - spec:kernel.outcome-model
   decidedBy: spec:decisions.d03-events-only-source-of-next-state
   constrainedBy:
     - spec:laws.law03-events-only-source-of-state

@@ -10,6 +10,7 @@ relations:
     - spec:obligations.sweeper
     - spec:effects.claim-call-settle
     - spec:operations.baseline-operations
+    - spec:application.restore
   decidedBy: spec:decisions.d19-operations-travel-with-capability
   constrainedBy:
     - spec:facts.f12-backups-exclude-pending-scheduled-functions

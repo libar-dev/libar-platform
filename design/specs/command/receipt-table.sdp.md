@@ -5,7 +5,10 @@ altitude: story
 readiness: defined
 relations:
   refines: spec:command.idempotency-and-receipts
-  dependsOn: spec:command.actor-and-scope
+  dependsOn:
+    - spec:command.actor-and-scope
+    - spec:context.queries
+    - spec:kernel.outcome-model
   constrainedBy:
     - spec:facts.f13-transactions-have-limits
     - spec:laws.law11-tenant-scope-named

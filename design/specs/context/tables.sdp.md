@@ -5,7 +5,9 @@ altitude: story
 readiness: defined
 relations:
   refines: spec:context.context-component
-  dependsOn: spec:kernel.state-document-mapping
+  dependsOn:
+    - spec:kernel.state-document-mapping
+    - spec:context.event-envelope
   decidedBy: spec:decisions.d02-context-owns-state-and-journal
   constrainedBy:
     - spec:facts.f13-transactions-have-limits

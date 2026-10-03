@@ -14,6 +14,7 @@ relations:
     - spec:application.parent-use-cases
     - spec:context.journal
     - spec:context.queries
+    - spec:command.actor-and-scope
   constrainedBy:
     - spec:laws.law03-events-only-source-of-state
     - spec:laws.law08-durable-capability-ships-operations

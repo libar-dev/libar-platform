@@ -6,14 +6,13 @@ readiness: defined
 relations:
   refines: spec:context.journal
   dependsOn:
-    - spec:context.persistence-adapter
     - spec:command.actor-and-scope
-    - spec:command.command-pipeline
   decidedBy: spec:decisions.d02-context-owns-state-and-journal
   constrainedBy:
     - spec:facts.f13-transactions-have-limits
     - spec:facts.f01-serializable-mutations-under-occ
     - spec:laws.law06-technical-failure-never-a-rejection
+    - spec:constraints.events-stay-small
 ---
 # The event envelope
 

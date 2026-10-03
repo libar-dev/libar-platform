@@ -5,7 +5,9 @@ altitude: feature
 readiness: defined
 relations:
   refines: spec:command.command-pipeline
-  dependsOn: spec:command.tenancy-and-authority
+  dependsOn:
+    - spec:command.tenancy-and-authority
+    - spec:context.queries
   constrainedBy:
     - spec:laws.law04-server-scoped-idempotency-key
     - spec:laws.law05-authorization-before-execution-and-disclosure

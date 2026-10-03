@@ -9,6 +9,11 @@ relations:
     - spec:command.command-pipeline
     - spec:command.outcome-boundary
     - spec:kernel.outcome-model
+    - spec:application.projection-contract
+    - spec:application.aggregate-projection
+    - spec:application.history-projection
+    - spec:context.persistence-adapter
+    - spec:operations.baseline-operations
   decidedBy: spec:decisions.d12-one-declaration-per-command
   constrainedBy:
     - spec:facts.f13-transactions-have-limits
@@ -63,7 +68,7 @@ What generation would emit, once two modules show the pattern: for each declarat
 - typePermissionPolicy: `type PermissionPolicy<I> = { permission: string; subjectFrom?: (input: I) => SubjectRef }` (D11, D12)
 - typeExecutor: `type Executor<I, R> = (ctx: MutationCtx, call: { tenantId: string; actor: Actor; operation: OperationRef; input: I }) => Promise<ExecutorResult<R>>` where `OperationRef` is the one the pipeline minted at step 7, forwarded unchanged to every context call, and the executor's context calls are `ctx.runMutation` on component APIs with the facts it captured (D12, D10, D4, D3, E-26)
 - typeExecutorResult: `type ExecutorResult<R> = CommittedOutcome<R> & { streams: StreamDto[] }` where `CommittedOutcome<R>` is the kernel's committed half of `Outcome<R>` and `streams` concatenates the `streams` of every context outcome the executor received, the `StreamDto` of `spec:context.persistence-adapter`, so the pipeline's step 9 has every DTO, version and created flag it needs (D12, D4, D8, E-7, E-23)
-- typeReadModelBinding: `type ReadModelBinding = { readModel: ReadModel<any, any> | AggregateProjection<any> | HistoryProjection<any>; source: SourceRef }`, where `readModel` is a per-entity read model, an aggregate projection or a history projection as `spec:application.projection-contract` pins them and `source` selects which `streams` entries feed it; the binding repeats neither the read model's name nor its projection's version, a history projection is bound once per source stream type it folds while a per-entity read model or an aggregate projection is bound to its one source stream type, and the binding has no update function of its own (D8, D12, E-7, E-9)
+- typeReadModelBinding: `type ReadModelBinding = { readModel: ReadModel<any, any> | AggregateProjection<any> | HistoryProjection<any>; source: SourceRef }`, where `readModel` is a per-entity read model, an aggregate projection or a history projection as `spec:application.projection-contract`, `spec:application.aggregate-projection` and `spec:application.history-projection` pin them and `source` selects which `streams` entries feed it; the binding repeats neither the read model's name nor its projection's version, a history projection is bound once per source stream type it folds while a per-entity read model or an aggregate projection is bound to its one source stream type, and the binding has no update function of its own (D8, D12, E-7, E-9)
 - typeAudit: `audit?: { kind: "security" | "business" }` asks the pipeline's step 10 to write one audit record through `writeAudit` of `spec:operations.baseline-operations`, which fails closed, after an applied command and after a business failure; absent, the default, the command writes none (D19, E-38, E-43)
 - typeDiagnosticSinkField: `diagnosticSink?: DiagnosticSink`, the sink type of `spec:operations.baseline-operations`, names where the pipeline writes the command's diagnostic lines; absent, the default, it is `consoleSink`; the production composition names none, and the fixture composition's `PlaceOrder` names the sink through which Sc ALL-1 breaks metrics and logging (D19, E-38, E-43)
 - typeAdmissionPolicy: `type AdmissionPolicy<I> = (ctx: MutationCtx, call: PipelineCall<I>) => Promise<{ admitted: true } | { admitted: false; code: "rateLimited" | "capacity"; retryAfterMs?: number }>`; a consumption it writes commits only with the command, so it counts committed intent (D6, E-32)
