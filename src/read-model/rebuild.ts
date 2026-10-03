@@ -466,6 +466,8 @@ async function generationBatch(
     .query("generationProgress")
     .withIndex("by_generation", (q) => q.eq("generationId", args.generationId))
     .unique();
+  if (progress === null)
+    throw new Error(`No progress for generation ${args.generationId}`);
   const stateMatches =
     pass === "backfill"
       ? generation.state === "building"
@@ -474,7 +476,6 @@ async function generationBatch(
         : generation.state === "retired" || generation.state === "aborted";
   if (
     !stateMatches ||
-    progress === null ||
     progress.pass !== pass ||
     generation.fence !== args.fence
   )
