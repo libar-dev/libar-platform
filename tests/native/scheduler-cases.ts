@@ -6,7 +6,7 @@ import type { Value } from "convex/values";
 import type { Backend } from "../../harness/backend.js";
 import { measure } from "../../harness/native.js";
 import { paceAfterWrite } from "../../harness/wait.js";
-import { archiveEntries } from "./snapshot-archive.js";
+import { archiveEntries } from "./backup-archive-entries.js";
 import {
   initialize,
   schedulerRows,
@@ -334,8 +334,8 @@ export async function exportData(
   const schedules = await schedulerRows(backend);
   record("exported data", data);
   record("exported schedules", schedules);
-  const path = join(directory, "snapshot.zip");
-  await backend.admin.exportSnapshot(path);
+  const path = join(directory, "backup-archive.zip");
+  await backend.admin.exportBackupArchive(path);
   const entries = await archiveEntries(path);
   measure("archive entries", entries);
   for (const entry of [

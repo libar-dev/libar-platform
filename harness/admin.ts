@@ -10,8 +10,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { redact, runChild } from "./child.js";
-import { snapshotCommand, createSnapshotAccess } from "./snapshot.js";
-import type { SnapshotCommand } from "./snapshot.js";
+import { isolatedCli, createBackupArchiveAccess } from "./backup-archive.js";
+import type { CliOutput } from "./backup-archive.js";
 import { projectDirectory } from "./composition.js";
 import type { Composition } from "./composition.js";
 const anchor = codeAnchor({
@@ -57,10 +57,7 @@ export interface CompletionRecord {
 export interface AdminAccess {
   deploy(): Promise<void>;
   // The child stops when the caller's signal or the backend's own aborts.
-  deployTemporary(
-    directory: string,
-    signal?: AbortSignal,
-  ): Promise<SnapshotCommand>;
+  deployTemporary(directory: string, signal?: AbortSignal): Promise<CliOutput>;
   codegen(): Promise<void>;
   setEnvironment(variables: Readonly<Record<string, string>>): Promise<void>;
   environment(): Promise<Record<string, string>>;
@@ -82,8 +79,8 @@ export interface AdminAccess {
       | { delete: string },
     options?: { component?: string },
   ): Promise<void>;
-  exportSnapshot(path: string): Promise<void>;
-  replaceSnapshot(path: string): Promise<void>;
+  exportBackupArchive(path: string): Promise<void>;
+  importBackupArchive(path: string): Promise<void>;
   logMark(): Promise<LogMark>;
   completionsSince(
     mark: LogMark,
@@ -214,7 +211,7 @@ export function createAdminAccess(
     });
   }
   return {
-    ...createSnapshotAccess(target),
+    ...createBackupArchiveAccess(target),
     async deploy() {
       await cli("deploy");
       state.deployed = target.composition;
@@ -223,7 +220,7 @@ export function createAdminAccess(
       const signals = [signal, target.signal].filter(
         (one): one is AbortSignal => one !== undefined,
       );
-      const result = await snapshotCommand(
+      const result = await isolatedCli(
         target,
         [...commandArgs.deploy],
         signals.length === 0 ? undefined : AbortSignal.any(signals),

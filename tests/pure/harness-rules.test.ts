@@ -40,7 +40,7 @@ import { redactedBuffer } from "../../harness/child.js";
 import { invocation } from "../../harness/evidence.js";
 import { createAdminAccess } from "../../harness/admin.js";
 import { fixtureComposition } from "../../harness/composition.js";
-import { deploySnapshotFixture } from "../../harness/snapshot.js";
+import { deployTemporaryCopy } from "../../harness/backup-archive.js";
 import {
   localWriteRateBytesPerSecond,
   paceAfterWrite,
@@ -225,15 +225,15 @@ test("pure: admin access reads an empty scheduled-functions table and refuses a 
   );
 });
 
-test("pure: the snapshot members use the pinned CLI and shared child runner with an isolated home", async () => {
+test("pure: the backup archive members use the pinned CLI and shared child runner with an isolated home", async () => {
   const runner = vi
     .spyOn(child, "runChild")
     .mockResolvedValue({ stdout: "", stderr: "" });
   try {
     const controller = new AbortController();
     const admin = testAdmin(controller.signal);
-    expect(await admin.exportSnapshot("archive.zip")).toBeUndefined();
-    expect(await admin.replaceSnapshot("archive.zip")).toBeUndefined();
+    expect(await admin.exportBackupArchive("archive.zip")).toBeUndefined();
+    expect(await admin.importBackupArchive("archive.zip")).toBeUndefined();
     expect(runner).toHaveBeenCalledTimes(2);
     for (const [index, args] of [
       ["export", "--path", "archive.zip"],
@@ -270,11 +270,11 @@ test("pure: the snapshot members use the pinned CLI and shared child runner with
   }
 });
 
-test("pure: a rejected snapshot child retains the abort reason and removes its home", async () => {
-  const reason = new Error("snapshot aborted");
+test("pure: a rejected backup archive child retains the abort reason and removes its home", async () => {
+  const reason = new Error("archive export aborted");
   const runner = vi.spyOn(child, "runChild").mockRejectedValue(reason);
   try {
-    await expect(testAdmin().exportSnapshot("archive.zip")).rejects.toBe(
+    await expect(testAdmin().exportBackupArchive("archive.zip")).rejects.toBe(
       reason,
     );
     expect(existsSync(runner.mock.calls[0]![3].env!.HOME!)).toBe(false);
@@ -302,7 +302,7 @@ test("pure: aborting the caller's signal stops the deploy child of a temporary d
       const backend = new AbortController();
       const reason = new Error(`the ${owner} aborted the deploy`);
       let outcome: unknown = "pending";
-      void deploySnapshotFixture(
+      void deployTemporaryCopy(
         { admin: testAdmin(backend.signal) },
         "unused",
         caller.signal,

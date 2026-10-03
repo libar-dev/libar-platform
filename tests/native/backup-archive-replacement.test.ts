@@ -4,9 +4,9 @@ import { join } from "node:path";
 import { convexToJson } from "convex/values";
 import { expect, onTestFinished, test } from "vitest";
 import type { Backend } from "../../harness/backend.js";
-import { archiveEntries } from "./snapshot-archive.js";
+import { archiveEntries } from "./backup-archive-entries.js";
 import { fixtureBackend, measure } from "../../harness/native.js";
-import { deploySnapshotFixture } from "../../harness/snapshot.js";
+import { deployTemporaryCopy } from "../../harness/backup-archive.js";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -16,19 +16,19 @@ async function schedulingComposition(directory: string) {
   await symlink(join(root, "node_modules"), join(directory, "node_modules"));
   await mkdir(join(directory, "tests/native"), { recursive: true });
   await cp(
-    join(import.meta.dirname, "snapshot-scheduler.ts"),
-    join(directory, "tests/native/snapshot-scheduler.ts"),
+    join(import.meta.dirname, "backup-archive-scheduler.ts"),
+    join(directory, "tests/native/backup-archive-scheduler.ts"),
   );
   await writeFile(
-    join(directory, "fixture/convex/snapshotSchedule.ts"),
-    'export { schedule } from "../../tests/native/snapshot-scheduler.js";\n',
+    join(directory, "fixture/convex/archiveSchedule.ts"),
+    'export { schedule } from "../../tests/native/backup-archive-scheduler.js";\n',
   );
 }
 
 async function createDocuments(backend: Backend, prefix: string) {
   await backend.admin.run("depotRelay:createDocuments", {
     tenantId: "t-1",
-    actor: { kind: "operator", id: "snapshot-test" },
+    actor: { kind: "operator", id: "backup-archive-test" },
     operation: {
       operationId: prefix,
       causedBy: { kind: "command", commandType: "fixture" },
@@ -55,23 +55,23 @@ async function observe(backend: Backend) {
   };
 }
 
-test("native: snapshot replacement restores parent and context data and preserves destination configuration and schedules", async ({
+test("native: a backup archive imported with replacement restores parent and context data and preserves destination configuration and schedules", async ({
   signal,
 }) => {
-  const directory = await mkdtemp(join(tmpdir(), "snapshot-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "backup-archive-test-"));
   onTestFinished(() => rm(directory, { recursive: true, force: true }));
   await schedulingComposition(directory);
   const source = await fixtureBackend();
-  const deployed = await deploySnapshotFixture(source, directory, signal);
+  const deployed = await deployTemporaryCopy(source, directory, signal);
   measure("fixture scheduling deployment command", {
     baseComposition: "fixture",
-    addedModule: "snapshotSchedule:schedule",
+    addedModule: "archiveSchedule:schedule",
     ...deployed,
   });
   expect(source.facts().composition).toBeNull();
   await createDocuments(source, "exported");
-  await source.admin.setEnvironment({ SNAPSHOT_VALUE: "exported" });
-  await source.admin.run("snapshotSchedule:schedule");
+  await source.admin.setEnvironment({ ARCHIVE_VALUE: "exported" });
+  await source.admin.run("archiveSchedule:schedule");
   await expect
     .poll(
       async () => {
@@ -82,11 +82,11 @@ test("native: snapshot replacement restores parent and context data and preserve
     )
     .toEqual(["failed", "pending", "success"]);
   const before = await observe(source);
-  measure("snapshot source", convexToJson(before));
-  const path = join(directory, "snapshot.zip");
-  await source.admin.exportSnapshot(path);
+  measure("backup archive source", convexToJson(before));
+  const path = join(directory, "backup-archive.zip");
+  await source.admin.exportBackupArchive(path);
   const entries = await archiveEntries(path);
-  measure("snapshot archive entries", entries);
+  measure("backup archive entries", entries);
   for (const entry of [
     "markers/documents.jsonl",
     "notes/documents.jsonl",
@@ -102,9 +102,9 @@ test("native: snapshot replacement restores parent and context data and preserve
   const fresh = await fixtureBackend();
   // A table the backend holds but does not list among the tables reads as empty, not as missing.
   expect(await fresh.admin.readTable("_scheduled_functions")).toEqual([]);
-  await fresh.admin.setEnvironment({ SNAPSHOT_VALUE: "destination" });
+  await fresh.admin.setEnvironment({ ARCHIVE_VALUE: "destination" });
   const freshEnvironment = await fresh.admin.environment();
-  await fresh.admin.replaceSnapshot(path);
+  await fresh.admin.importBackupArchive(path);
   const freshAfter = await observe(fresh);
   measure("fresh replacement contents", convexToJson(freshAfter));
   expect(freshAfter).toEqual({
@@ -114,7 +114,7 @@ test("native: snapshot replacement restores parent and context data and preserve
   });
 
   await createDocuments(source, "after-export");
-  await source.admin.run("snapshotSchedule:schedule");
+  await source.admin.run("archiveSchedule:schedule");
   await expect
     .poll(
       async () => {
@@ -124,10 +124,10 @@ test("native: snapshot replacement restores parent and context data and preserve
       { timeout: 10000 },
     )
     .toEqual(["failed", "failed", "pending", "pending", "success", "success"]);
-  await source.admin.setEnvironment({ SNAPSHOT_VALUE: "after-export" });
+  await source.admin.setEnvironment({ ARCHIVE_VALUE: "after-export" });
   const sameBefore = await observe(source);
   measure("same backend before replacement", convexToJson(sameBefore));
-  await source.admin.replaceSnapshot(path);
+  await source.admin.importBackupArchive(path);
   const sameAfter = await observe(source);
   measure("same backend replacement contents", convexToJson(sameAfter));
   expect(sameAfter).toEqual({

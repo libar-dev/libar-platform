@@ -314,7 +314,7 @@ test("pure: captured child failures carry the redacted command, exit code and la
     "process.stdout.write('stdout omitted'); for (let n = 1; n <= 25; n++) console.error(n + ':' + process.argv[1]); process.exit(7)",
     secret,
   ];
-  const error = await runChild("snapshot child", process.execPath, args, {
+  const error = await runChild("archive child", process.execPath, args, {
     timeoutMs: 10000,
     secrets: [secret],
     output: "both",
@@ -339,7 +339,7 @@ test("pure: captured child failures carry the redacted command, exit code and la
 test("pure: captured child output redacts both streams and abort rejects with the signal reason", async () => {
   expect(
     await runChild(
-      "snapshot child",
+      "archive child",
       process.execPath,
       [
         "-e",
@@ -354,9 +354,9 @@ test("pure: captured child output redacts both streams and abort rejects with th
     ),
   ).toEqual({ stdout: "[redacted]\n", stderr: "[redacted]\n" });
   const controller = new AbortController();
-  const reason = new Error("snapshot stopped");
+  const reason = new Error("archive export stopped");
   const result = runChild(
-    "snapshot child",
+    "archive child",
     process.execPath,
     ["-e", "setInterval(() => {}, 1000)"],
     {

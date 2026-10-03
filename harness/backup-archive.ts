@@ -10,26 +10,26 @@ import type { AdminAccess, AdminTarget } from "./admin.js";
 import type { Backend } from "./backend.js";
 import { redact, runChild } from "./child.js";
 const anchor = codeAnchor({
-  id: codeAnchorId("impl:platform.native-harness.snapshot"),
-  label: "snapshot export and replacement import through the Convex CLI",
+  id: codeAnchorId("impl:platform.native-harness.backup-archive"),
+  label: "backup archive export and replacement import through the Convex CLI",
   satisfies: ref("spec:platform.native-harness"),
 });
 void anchor;
 
-export interface SnapshotCommand {
+export interface CliOutput {
   command: string[];
   stdout: string;
   stderr: string;
 }
 
 // Uses the installed CLI and an isolated home, with no inherited deployment selection.
-export async function snapshotCommand(
+export async function isolatedCli(
   backend: Pick<Backend, "url" | "adminKey">,
   args: string[],
   signal: AbortSignal | undefined,
   directory = join(import.meta.dirname, ".."),
-): Promise<SnapshotCommand> {
-  const home = await mkdtemp(join(tmpdir(), "convex-snapshot-"));
+): Promise<CliOutput> {
+  const home = await mkdtemp(join(tmpdir(), "convex-cli-"));
   const selection = ["--url", backend.url, "--admin-key", backend.adminKey];
   const file = process.execPath;
   const command = [
@@ -53,24 +53,24 @@ export async function snapshotCommand(
   }
 }
 
-export function deploySnapshotFixture(
+export function deployTemporaryCopy(
   backend: Pick<Backend, "admin">,
   directory: string,
   signal: AbortSignal,
-): Promise<SnapshotCommand> {
+): Promise<CliOutput> {
   signal.throwIfAborted();
   return backend.admin.deployTemporary(directory, signal);
 }
 
-export function createSnapshotAccess(
+export function createBackupArchiveAccess(
   target: Pick<AdminTarget, "url" | "adminKey" | "signal">,
-): Pick<AdminAccess, "exportSnapshot" | "replaceSnapshot"> {
+): Pick<AdminAccess, "exportBackupArchive" | "importBackupArchive"> {
   return {
-    async exportSnapshot(path) {
-      await snapshotCommand(target, ["export", "--path", path], target.signal);
+    async exportBackupArchive(path) {
+      await isolatedCli(target, ["export", "--path", path], target.signal);
     },
-    async replaceSnapshot(path) {
-      await snapshotCommand(
+    async importBackupArchive(path) {
+      await isolatedCli(
         target,
         ["import", "--replace", "--yes", path],
         target.signal,
