@@ -33,13 +33,15 @@ export const documentSummary: ReadModel<DocumentDto, DocumentSummaryFields> = {
   name: "documentSummary",
   table: "documentSummaries",
   rowBudgetBytes: defaultRowBudgetBytes,
-  projection: {
-    version: 1,
-    keyOf: (_tenantId, document) => document.documentId,
-    project: (_tenantId, { documentId, status, title }) => ({
-      documentId,
-      status,
-      title,
-    }),
-  },
+  projections: [
+    {
+      version: 1,
+      keyOf: (_tenantId, document) => document.documentId,
+      project: (_tenantId, { documentId, status, title }) => ({
+        documentId,
+        status,
+        title,
+      }),
+    },
+  ],
 };
