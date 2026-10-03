@@ -1,3 +1,4 @@
+import { installFixtureReadModel } from "./gate-support.js";
 import { v } from "convex/values";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
@@ -67,10 +68,7 @@ async function stored(t: GateApp) {
 test("convex-test: a paused audited command stores no receipt, event, state, read-model row or audit and its key applies after resume", async () => {
   const t = gateApp();
   await caller(t);
-  await t.mutation(internal.readModels.activate, {
-    readModel: "documentSummary",
-    startedBy: { kind: "operator", id: "admin" },
-  });
+  await installFixtureReadModel(t, "documentSummary", "admin");
   const declaration: CommandDeclaration<
     { documentId: string; title: string },
     null

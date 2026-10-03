@@ -75,8 +75,10 @@ bindExample(contract, (): World => ({ rows: 0, batch: 0 }), {
       expect((failed.worker!.args as { cursor: string }[])[0]!.cursor).toBe(
         failed.component.cursor,
       );
-      expect(failed.generation.batchesDone).toBe(1);
-      expect(failed.generation.rowsWritten).toBe(world.batch);
+      // generation-registry.sdp.md:74: failed batches leave the progress checkpoint unchanged.
+      expect(failed.progress.batchesDone).toBe(1);
+      // generation-registry.sdp.md:74: only the committed batch contributed rowsWritten.
+      expect(failed.progress.rowsWritten).toBe(world.batch);
       expect(failed.rows.map((row) => row.key).sort()).toEqual([
         "doc-00",
         "doc-01",

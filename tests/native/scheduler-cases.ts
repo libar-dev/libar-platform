@@ -1,3 +1,4 @@
+import { installOrderSummary } from "./rebuild-install.js";
 import { expect } from "vitest";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -286,10 +287,7 @@ export async function scanCase(backend: Backend) {
 
 async function productionData(backend: Backend) {
   await grant(backend, subject, grantedPermissions);
-  await backend.admin.run("readModels:activate", {
-    readModel: "orderSummary",
-    startedBy: { kind: "operator", id: "native-test" },
-  });
+  await installOrderSummary(backend);
   const client = ordinaryClient(backend.url, {
     token: await backend.issuer.token(subject),
   });

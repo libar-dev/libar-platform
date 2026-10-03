@@ -43,7 +43,8 @@ const internalFunctions = [
   internal.receiving.receiveStockInternal,
   internal.grants.grant,
   internal.grants.revoke,
-  internal.readModels.activate,
+  internal.rebuild.startGeneration,
+  internal.rebuild.switchGeneration,
 ].map((reference) => getFunctionName(reference));
 type Answer = { returned: unknown } | { threw: unknown };
 interface AcceptanceWorld {

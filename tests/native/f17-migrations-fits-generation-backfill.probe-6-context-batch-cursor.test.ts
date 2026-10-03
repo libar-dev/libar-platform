@@ -34,7 +34,11 @@ async function checkpoint(backend: Backend) {
   const generation = (await backend.admin.readTable("generations")).find(
     (row) => row.generation === 2,
   )!;
-  expect((generation.cursor as { pageCursor: string }).pageCursor).toBe(
+  const progress = (await backend.admin.readTable("generationProgress")).find(
+    (row) => row.generationId === generation._id,
+  )!;
+  // generation-registry.sdp.md:74: the parent checkpoint cursor is on generationProgress.
+  expect((progress.cursor as { pageCursor: string }).pageCursor).toBe(
     component.cursor,
   );
   return { component, generation };

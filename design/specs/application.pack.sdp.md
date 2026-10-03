@@ -16,7 +16,7 @@ specs:
   - spec:application.rebuild.write-pause-rebuild-interrupt
   - spec:application.rebuild.write-pause-rebuild-abort
   - spec:application.generation-registry
-  - spec:application.generation-registry.first-activation-makes-read-model-writable
+  - spec:application.generation-registry.first-rebuild-installs-read-model
   - spec:application.generation-registry.command-without-generation-fails
   - spec:application.write-pause
   - spec:application.write-pause.restore-door-without-deploy
