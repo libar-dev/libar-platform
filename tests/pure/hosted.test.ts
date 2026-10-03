@@ -3,6 +3,7 @@ import {
   specTest,
   testAnchorId,
 } from "@libar-dev/software-delivery-protocol";
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
   mkdir,
@@ -34,6 +35,7 @@ import {
   deployKeyForms,
   hostedTarget,
 } from "../../harness/hosted.js";
+import setupHostedRun, { crossesUtcDay } from "../../harness/hosted-run.js";
 // Binds this file to the harness Spec, whose rules for a native run on a hosted deployment it
 // checks with no network and no deploy key.
 const anchor = specTest({
@@ -365,7 +367,7 @@ test("pure: no CLI call of the hosted path names the backend by an argument, and
     runner.mockRestore();
   }
   const root = join(import.meta.dirname, "../..");
-  for (const file of ["harness/hosted.ts"])
+  for (const file of ["harness/hosted.ts", "harness/hosted-run.ts"])
     expect(await readFile(join(root, file), "utf8")).not.toContain(
       "--admin-key",
     );
@@ -557,4 +559,118 @@ test("pure: a planted deploy key appears in no error, output, log line or record
       seen.filter((text) => text.includes(form)),
       "a form of the planted key appeared",
     ).toEqual([]);
+});
+
+test("pure: the run setup reads the version and the usage before the run, and after it amends the record in one step", async () => {
+  const key = plantedKey();
+  const echo = deployKeyForms(key).join(" ");
+  for (const [name, value] of Object.entries(variables(key)))
+    vi.stubEnv(name, value);
+  vi.stubEnv("GITHUB_ACTIONS", "true");
+  let readings = 0;
+  vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+    const url = input instanceof Request ? input.url : String(input);
+    if (url.endsWith("/instance_version")) return new Response("1.29.0\n");
+    if (url.endsWith("/api/v1/get_current_usage"))
+      return new Response(
+        JSON.stringify({ seedStatus: "complete", reading: ++readings, echo }),
+      );
+    return new Response("unexpected", { status: 500 });
+  });
+  const provided: [string, unknown][] = [];
+  const directory = await temporary("libar-hosted-run-record-");
+  try {
+    const teardown = await setupHostedRun({
+      provide: (name: string, value: unknown) => provided.push([name, value]),
+    } as never);
+    expect(provided).toEqual([
+      [
+        "hostedRun",
+        { target: hostedTarget(variables(key)), startedAt: expect.any(String) },
+      ],
+    ]);
+    const reporter = new EvidenceReporter({ directory });
+    reporter.onTestRunStart([{ project: { name: "hosted" } }] as never);
+    reporter.onTestCaseResult(finished("hosted"));
+    await reporter.onTestRunEnd([] as never, [] as never, "passed" as never);
+    const [name] = await readdir(directory);
+    await teardown();
+    const text = await readFile(join(directory, name!), "utf8");
+    const record = JSON.parse(text) as NativeRunRecord;
+    expect(record.hosted).toMatchObject({
+      deployment: "happy-animal-123",
+      keyName: "hosted-ci-scoped",
+      statedPlan: "Professional",
+      ranBy: "continuous integration",
+      cliVersion: "1.46.0",
+      backendVersion: "1.29.0",
+      usageBefore: { seedStatus: "complete", response: { reading: 1 } },
+      usageAfter: { seedStatus: "complete", response: { reading: 2 } },
+      windowCrossed: crossesUtcDay(
+        record.hosted!.usageBefore!.readAt,
+        record.hosted!.usageAfter!.readAt,
+      ),
+      deploys: [],
+    });
+    for (const form of deployKeyForms(key)) expect(text).not.toContain(form);
+    expect(await readdir(directory)).toEqual([name]);
+  } finally {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  }
+  expect(
+    crossesUtcDay("2026-10-05T23:59:59.000Z", "2026-10-06T00:00:01.000Z"),
+  ).toBe(true);
+  expect(
+    crossesUtcDay("2026-10-05T00:00:00.000Z", "2026-10-05T23:59:59.000Z"),
+  ).toBe(false);
+});
+
+function recordCheck(files: string[], key?: string) {
+  return new Promise<{ code: number; output: string }>((resolve) =>
+    execFile(
+      process.execPath,
+      [
+        join(import.meta.dirname, "../../scripts/hosted-record-check.mjs"),
+        ...files,
+      ],
+      {
+        env: {
+          PATH: process.env.PATH ?? "",
+          ...(key === undefined ? {} : { HOSTED_DEPLOY_KEY: key }),
+        },
+      },
+      (error, stdout) =>
+        resolve({
+          code: error === null ? 0 : Number(error.code),
+          output: stdout,
+        }),
+    ),
+  );
+}
+
+test("pure: the record check finds each form of the deploy key in a file, names the file and the form's kind, and prints no form", async () => {
+  const key = plantedKey();
+  const directory = await temporary("libar-hosted-check-");
+  const clean = join(directory, "clean.log");
+  await writeFile(clean, "a run that printed no key\n[redacted]\n");
+  expect(await recordCheck([clean], key)).toEqual({
+    code: 0,
+    output: "hosted record check: no form of the deploy key in 1 file\n",
+  });
+  for (const [index, form] of deployKeyForms(key).entries()) {
+    const file = join(directory, `form-${index}.json`);
+    await writeFile(file, `{"error": "x${form}x"}`);
+    const answer = await recordCheck([clean, file], key);
+    expect(answer.code).toBe(1);
+    expect(answer.output).toContain(`hosted record check: ${file} holds `);
+    expect(answer.output).not.toContain(clean + " holds");
+    for (const any of deployKeyForms(key))
+      expect(answer.output).not.toContain(any);
+  }
+  expect((await recordCheck([clean])).code).toBe(2);
+  expect((await recordCheck([], key)).code).toBe(2);
+  expect((await recordCheck([join(directory, "missing.json")], key)).code).toBe(
+    2,
+  );
 });
