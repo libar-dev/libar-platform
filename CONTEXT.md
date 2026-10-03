@@ -221,7 +221,7 @@ Deleting a retired generation's rows.
 _Avoid_: cleanup, garbage collection, drop
 
 **Fence**:
-The number a generation's batches carry so that a batch from before an interruption writes nothing.
+The number a generation's batches carry so that a batch from before an interruption writes no read-model row and schedules nothing.
 _Avoid_: epoch, token, lease
 
 **Progress row**:

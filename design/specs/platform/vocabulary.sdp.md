@@ -70,7 +70,7 @@ The two clashes are answered: a row that proves an effect happened is completion
 - **rollback** — Making a retired generation the one readers see again (D9).
 - **retired generation** — A generation readers no longer see, kept until it is purged (D9).
 - **purge** — Deleting a retired generation's rows (D9).
-- **fence** — The number a generation's batches carry so that a stale batch writes nothing (D9).
+- **fence** — The number a generation's batches carry so that a stale batch writes no read-model row and schedules nothing (D9).
 - **progress row** — The row that holds where a rebuild stands, read by its batches and by no command (D9).
 - **tenant list** — The parent's list of tenants, which a rebuild and a sweep walk (D11, D19).
 - **backup archive** — The exported file of a deployment's table data at one moment, which a restore imports; a snapshot is a transaction's view of the database, never the archive (D19).
