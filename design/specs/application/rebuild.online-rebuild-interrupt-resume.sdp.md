@@ -9,7 +9,7 @@ relations:
 ---
 # Rebuild a per-entity read model online while commands run; interrupt and resume
 
-Sc L2-5 · native tier.
+Sc L2-5 · native tier · production composition.
 
 ## Intent
 
