@@ -3855,7 +3855,7 @@
       "lean": {
         "do": "Keep the 7-day default retry window, expiry checked at lookup, the per-tenant sweep of at most 1,000, the 256-byte key and tenant bounds and the 1,000 affected refs."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held, 6 of 6, at idempotency-and-receipts.sdp.md:69,83,99,100,101,102 (job-mus2kbol-a1d74933, plant caught); the lean has only its do, so it waits for its advisor's lean in full before it is applied",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -5627,7 +5627,7 @@
         "changes": "For the lean: nothing in `spec:operations.baseline-operations`; the pipeline's step 10 gains `writeAudit` for declarations whose `audit` field is set [design/specs/operations/baseline-operations.sdp.md:66], which `spec:command.command-declaration` must carry. For the alternative, audit as events in a context or one table per kind: [design/specs/operations/baseline-operations.sdp.md:71] to [design/specs/operations/baseline-operations.sdp.md:83] and the restore's receipt check that reads audit by operation [design/specs/operations/baseline-operations.sdp.md:79].",
         "ifWrong": "A wrong table shape is an edit and a migration of an operational table, never of history; a wrong failure rule is found by the fault-injection scenario before production data; **Judgment.** a missing bound on `details` costs a failed command that the operator finds by the diagnostic record's error code, and a bound is one edit."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: 9 of 19 claims held; the do holds at corrected lines (baseline-operations.sdp.md:72,81,83,85,88,93,94,95,96; d19:40,43), but the against's unbounded details field does not exist (the audit schema at :78 has none) and 'nothing is built' is stale (src/audit/write.ts, tests/simulator/audit.test.ts); the lean needs its advisor's correction before it is applied (job-mus2kbol-a1d74933, plant caught)",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -6140,7 +6140,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the order of steps of an enumeration and what it records, inside what D9 and Law 11 rule; no Spec under `design/specs` names where the application's tenant list comes from, which the lean names as the gap.",
@@ -6152,11 +6152,11 @@
         "changes": "No Spec: `spec:application.rebuild` at its tenant rules and `spec:application.generation-registry` at its `startGeneration` Contract bullet carry it. The register row alone. The alternative, the enumerated-tenants record, would add a field to `tableGenerationProgress` and to the restore's check scope [design/specs/application/restore.sdp.md:96] and a growth bound under F13.",
         "ifWrong": "A tenant with streams older than a generation and no row in the list when a pass reached its position is served no row of the new generation until `fillTenants` and a rebuild, one tenant's stale read model, found when its queries answer no rows; a count of tenants visited on the progress row, or the record the earlier lean asked for, is a field added by an edit and changes no stored row's meaning."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: 26 of 31 claims held; corrections: CONTEXT.md:135-136 for the grant read in the same transaction, the earlier lean is not kept in the row, native L2-5 runs exist, journal.sdp.md:41 says affected rows stay one version behind until a command or verify pass rewrites them, and rebuild.sdp.md:70 lets live writes insert missing rows in verifying and verified, which narrows the downside the ifWrong names (job-mus2kbol-a1d74933, plant caught)",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:operator",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the lean of the domain lens on this operator row, under the owner's one-advisor word, its facts checked with the corrections in checkedBy, none of which touches its do: the Specs as written; a tenant whose row enters the list behind a backfill's cursor is not visited by that pass and needs no visit, the verify pass starts again at the first tenant, a tenant fill and a generation in flight exclude each other, an operator runs fillTenants before the first startGeneration on a deployment whose grants predate the list, and no pass records the tenants it enumerated"
     },
     {
       "id": "OD-150",
