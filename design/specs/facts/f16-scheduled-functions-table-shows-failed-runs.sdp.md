@@ -18,7 +18,7 @@ The scheduled-functions page documents five states and a seven-day completion-re
 
 ### Open questions
 
-- [non-blocking] Seven-day retention and expiry, hosted dashboard restore, Workpool and Workflow are not run; the short native retention observation does not establish the documented window. (F16, Probe 7, F12)
+- [non-blocking] Seven-day retention and expiry, hosted dashboard restore, Workpool and Workflow are not run; the short native retention observation does not establish the documented window. The hosted example `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-hosted-retention` records the ages at which planted schedules are read or missing, so that runs bracket the window a hosted deployment keeps. (F16, Probe 7, F12, E-59)
 
 ## Constraints
 

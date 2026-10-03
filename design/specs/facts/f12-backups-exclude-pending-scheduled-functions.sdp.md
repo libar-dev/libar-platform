@@ -18,7 +18,7 @@ The backup page excludes scheduled functions, code, configuration and environmen
 
 ### Open questions
 
-- [non-blocking] Hosted dashboard restore, file storage, Workpool and Workflow are not run; local CLI import does not settle those paths. (F12, Probe 7)
+- [non-blocking] Hosted dashboard restore, file storage, Workpool and Workflow are not run; local CLI import does not settle those paths. CLI replacement in place on a hosted deployment is the hosted example `spec:facts.f12-backups-exclude-pending-scheduled-functions.probe-7-hosted-in-place-import`; dashboard restore has no example. (F12, Probe 7, E-59)
 
 ## Constraints
 

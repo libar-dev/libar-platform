@@ -15,7 +15,7 @@ export async function freshImport(backend: Backend, directory: string) {
   const { backend: fresh } = await schedulingBackend();
   await fresh.admin.setEnvironment({ SCHEDULER_VALUE: "destination" });
   const environment = await fresh.admin.environment();
-  await fresh.admin.replaceSnapshot(exported.path);
+  await fresh.admin.importBackupArchive(exported.path);
   const restored = await dataRows(fresh);
   record("fresh restored data", restored);
 
@@ -125,7 +125,7 @@ export async function inPlaceImport(backend: Backend, directory: string) {
     expect(changedData[table]).not.toEqual(exported.data[table]);
   const before = await schedulerRows(backend);
   record("in-place scheduler tables before import", before);
-  await backend.admin.replaceSnapshot(exported.path);
+  await backend.admin.importBackupArchive(exported.path);
   expect(Date.now()).toBeLessThan(due);
   const after = await schedulerRows(backend);
   record("in-place scheduler tables after import", after);

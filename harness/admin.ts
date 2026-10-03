@@ -7,11 +7,16 @@ import { BaseConvexClient, ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import type { Value } from "convex/values";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { redact, runChild } from "./child.js";
-import { snapshotCommand, createSnapshotAccess } from "./snapshot.js";
-import type { SnapshotCommand } from "./snapshot.js";
+import { redact, redactError, redactingLogger, runChild } from "./child.js";
+import {
+  cliSelection,
+  convexCliScript,
+  createBackupArchiveAccess,
+  isolatedCli,
+  refuseDotenv,
+} from "./backup-archive.js";
+import type { CliOutput } from "./backup-archive.js";
 import { projectDirectory } from "./composition.js";
 import type { Composition } from "./composition.js";
 const anchor = codeAnchor({
@@ -20,9 +25,14 @@ const anchor = codeAnchor({
   satisfies: ref("spec:platform.native-harness"),
 });
 void anchor;
+// How the harness selects the backend it acts on: the local backend it started, by its URL and admin
+// key, or a hosted deployment, by its URL and deploy key. A CLI call on a hosted deployment gets the
+// key only as CONVEX_DEPLOY_KEY in its environment, never as an argument.
+export type Selection =
+  | { kind: "local"; url: string; adminKey: string }
+  | { kind: "hosted"; url: string; key: string };
 export interface AdminTarget {
-  url: string;
-  adminKey: string;
+  selection: Selection;
   home: string;
   // The composition that deploy and codegen act on.
   composition: Composition;
@@ -57,10 +67,7 @@ export interface CompletionRecord {
 export interface AdminAccess {
   deploy(): Promise<void>;
   // The child stops when the caller's signal or the backend's own aborts.
-  deployTemporary(
-    directory: string,
-    signal?: AbortSignal,
-  ): Promise<SnapshotCommand>;
+  deployTemporary(directory: string, signal?: AbortSignal): Promise<CliOutput>;
   codegen(): Promise<void>;
   setEnvironment(variables: Readonly<Record<string, string>>): Promise<void>;
   environment(): Promise<Record<string, string>>;
@@ -82,8 +89,8 @@ export interface AdminAccess {
       | { delete: string },
     options?: { component?: string },
   ): Promise<void>;
-  exportSnapshot(path: string): Promise<void>;
-  replaceSnapshot(path: string): Promise<void>;
+  exportBackupArchive(path: string): Promise<void>;
+  importBackupArchive(path: string): Promise<void>;
   logMark(): Promise<LogMark>;
   completionsSince(
     mark: LogMark,
@@ -99,7 +106,20 @@ export interface CliCall {
   // Infinity for a call that runs until it is stopped. runChild refuses it.
   timeoutMs: number;
 }
-const repositoryRoot = join(import.meta.dirname, "..");
+// What a test of the admin access replaces: the fetch of its HTTP calls, the socket client of its
+// system reads and the CLI script its children run.
+export type SocketFactory = (
+  url: string,
+  onTransition: (tokens: string[]) => void,
+  logger: ReturnType<typeof redactingLogger>,
+) => AdminSocketClient;
+export interface AdminDependencies {
+  fetch?: typeof globalThis.fetch;
+  socket?: SocketFactory;
+  cliScript?: string;
+}
+const credential = (selection: Selection) =>
+  selection.kind === "local" ? selection.adminKey : selection.key;
 const commandArgs = {
   deploy: ["deploy", "--yes", "--codegen", "disable", "--typecheck", "disable"],
   codegen: ["codegen", "--typecheck", "disable"],
@@ -112,19 +132,23 @@ const commandTimeoutMs = {
 } as const;
 // The CLI runs in the composition's project directory, the one place it reads convex.json from.
 export function convexCli(
-  target: Pick<AdminTarget, "url" | "adminKey" | "home" | "composition">,
+  target: Pick<AdminTarget, "selection" | "home" | "composition">,
   command: "deploy" | "codegen" | "dev",
+  script = convexCliScript,
 ): CliCall {
-  const selection = ["--url", target.url, "--admin-key", target.adminKey];
+  const selection = cliSelection(target.selection);
+  const cwd = projectDirectory(target.composition);
+  if (target.selection.kind === "hosted") refuseDotenv(cwd);
   return {
     file: process.execPath,
-    args: [
-      join(repositoryRoot, "node_modules/convex/bin/main.js"),
-      ...commandArgs[command],
-      ...selection,
-    ],
-    cwd: projectDirectory(target.composition),
-    env: { PATH: process.env.PATH ?? "", HOME: target.home, TMPDIR: tmpdir() },
+    args: [script, ...commandArgs[command], ...selection.args],
+    cwd,
+    env: {
+      PATH: process.env.PATH ?? "",
+      HOME: target.home,
+      TMPDIR: tmpdir(),
+      ...selection.env,
+    },
     timeoutMs: commandTimeoutMs[command],
   };
 }
@@ -137,7 +161,7 @@ type AdminHttpClient = ConvexHttpClient & {
     args: Record<string, Value>,
   ): Promise<Value>;
 };
-type AdminSocketClient = {
+export type AdminSocketClient = {
   setAdminAuth(key: string): void;
   subscribe(
     name: string,
@@ -150,13 +174,29 @@ type AdminSocketClient = {
 export function createAdminAccess(
   target: AdminTarget,
   state: AdminState,
+  dependencies: AdminDependencies = {},
 ): AdminAccess {
   const marks = new WeakMap<LogMark, object | undefined>();
-  const http = new ConvexHttpClient(target.url) as AdminHttpClient;
-  http.setAdminAuth(target.adminKey);
-  const authorization = { Authorization: `Convex ${target.adminKey}` };
+  const logger = redactingLogger(target.secrets);
+  const url = target.selection.url;
+  const hosted = target.selection.kind === "hosted";
+  // Read at each call, so that a test that replaces the global fetch reaches every call.
+  const fetch: typeof globalThis.fetch = (input, init) =>
+    (dependencies.fetch ?? globalThis.fetch)(input, init);
+  const http = new ConvexHttpClient(url, { logger, fetch }) as AdminHttpClient;
+  http.setAdminAuth(credential(target.selection));
+  const authorization = {
+    Authorization: `Convex ${credential(target.selection)}`,
+  };
+  const socket: SocketFactory =
+    dependencies.socket ??
+    ((socketUrl, onTransition, socketLogger) =>
+      new BaseConvexClient(socketUrl, onTransition, {
+        unsavedChangesWarning: false,
+        logger: socketLogger,
+      }) as unknown as AdminSocketClient);
   async function cli(command: "deploy" | "codegen") {
-    const call = convexCli(target, command);
+    const call = convexCli(target, command, dependencies.cliScript);
     // CLI children are short and bounded; they lose their backend when a run is swept.
     await runChild(`convex ${command}`, call.file, call.args, {
       cwd: call.cwd,
@@ -181,8 +221,8 @@ export function createAdminAccess(
         void client.close();
         finish();
       };
-      const client = new BaseConvexClient(
-        target.url,
+      const client = socket(
+        url,
         (tokens) => {
           for (const token of tokens) {
             let value: Value | undefined;
@@ -194,8 +234,8 @@ export function createAdminAccess(
             if (value !== undefined) return settle(() => resolve(value));
           }
         },
-        { unsavedChangesWarning: false },
-      ) as unknown as AdminSocketClient;
+        logger,
+      );
       const timer = setTimeout(
         () =>
           settle(() =>
@@ -205,7 +245,7 @@ export function createAdminAccess(
           ),
         timeoutMs,
       );
-      client.setAdminAuth(target.adminKey);
+      client.setAdminAuth(credential(target.selection));
       client.subscribe(
         name,
         args,
@@ -213,8 +253,8 @@ export function createAdminAccess(
       );
     });
   }
-  return {
-    ...createSnapshotAccess(target),
+  return guarded(target.secrets, {
+    ...createBackupArchiveAccess(target, dependencies.cliScript),
     async deploy() {
       await cli("deploy");
       state.deployed = target.composition;
@@ -223,31 +263,29 @@ export function createAdminAccess(
       const signals = [signal, target.signal].filter(
         (one): one is AbortSignal => one !== undefined,
       );
-      const result = await snapshotCommand(
+      const result = await isolatedCli(
         target,
         [...commandArgs.deploy],
         signals.length === 0 ? undefined : AbortSignal.any(signals),
         directory,
+        dependencies.cliScript,
       );
       state.deployed = undefined;
       return result;
     },
     codegen: () => cli("codegen"),
     async setEnvironment(variables) {
-      const response = await fetch(
-        `${target.url}/api/update_environment_variables`,
-        {
-          method: "POST",
-          headers: { ...authorization, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            changes: Object.entries(variables).map(([name, value]) => ({
-              name,
-              value,
-            })),
-          }),
-          signal: AbortSignal.timeout(10000),
-        },
-      );
+      const response = await fetch(`${url}/api/update_environment_variables`, {
+        method: "POST",
+        headers: { ...authorization, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          changes: Object.entries(variables).map(([name, value]) => ({
+            name,
+            value,
+          })),
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
       if (!response.ok)
         throw new Error(
           `Setting environment variables failed with status ${response.status}: ${redact(await response.text(), target.secrets)}`,
@@ -369,7 +407,7 @@ export function createAdminAccess(
         let response: Response;
         try {
           response = await fetch(
-            `${target.url}/api/stream_function_logs?cursor=${cursor}`,
+            `${url}/api/stream_function_logs?cursor=${cursor}`,
             { headers: authorization, signal: AbortSignal.timeout(left) },
           );
         } catch (error) {
@@ -385,7 +423,9 @@ export function createAdminAccess(
           entries: { kind: string }[];
           newCursor: number;
         };
-        if (body.entries.length >= 1000)
+        // The local backend keeps its last 1000 entries. A hosted deployment's bound is not
+        // published, so the hosted path reads as it goes and promotes no local bound.
+        if (!hosted && body.entries.length >= 1000)
           throw new Error(
             `One function log read returned ${body.entries.length} entries. The backend keeps its last 1000, so records may be lost. Read the log more often.`,
           );
@@ -397,5 +437,30 @@ export function createAdminAccess(
       assertProcess();
       return records;
     },
-  };
+  });
+}
+// Every member's rejection, and anything one throws at once, passes through redaction where it is
+// first seen, so no secret leaves the admin access in an error.
+export function guarded<T extends object>(
+  secrets: readonly string[],
+  access: T,
+): T {
+  const result: Record<string, unknown> = {};
+  for (const [name, member] of Object.entries(access))
+    result[name] =
+      typeof member === "function"
+        ? (...args: unknown[]) => {
+            try {
+              const value: unknown = member.apply(access, args);
+              return value instanceof Promise
+                ? value.catch((error: unknown) => {
+                    throw redactError(error, secrets);
+                  })
+                : value;
+            } catch (error) {
+              throw redactError(error, secrets);
+            }
+          }
+        : member;
+  return result as T;
 }

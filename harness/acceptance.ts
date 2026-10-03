@@ -323,6 +323,10 @@ function hasRunRecordShape(value: unknown): value is Record<string, unknown> {
     Array.isArray(value.tests)
   );
 }
+// A native run on a hosted deployment passes no scenario, so the check reads only a record whose
+// target is absent or the local backend.
+const targetsLocalBackend = (value: Record<string, unknown>) =>
+  value.target === undefined || value.target === "local backend";
 // Why a test entry cannot be read, or null when it can.
 function entryProblem(entry: unknown): string | null {
   if (!isObject(entry)) return "is not an object";
@@ -356,6 +360,10 @@ function readRecord(path: string): AcceptanceRecord {
   }
   if (!hasRunRecordShape(record))
     throw new AcceptanceUnanswerable(`The file ${path} is not a run record`);
+  if (!targetsLocalBackend(record))
+    throw new AcceptanceUnanswerable(
+      `The record ${path} is not a run on the local backend, and a native run on a hosted deployment passes no scenario`,
+    );
   for (const [index, entry] of (record.tests as unknown[]).entries()) {
     const problem = entryProblem(entry);
     if (problem !== null)
@@ -386,7 +394,8 @@ export function newestRecord(directory: string): string {
     } catch {
       continue;
     }
-    if (!hasRunRecordShape(candidate)) continue;
+    if (!hasRunRecordShape(candidate) || !targetsLocalBackend(candidate))
+      continue;
     const { startedAt } = candidate;
     if (typeof startedAt !== "string") continue;
     if (

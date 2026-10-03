@@ -5,9 +5,13 @@ import { afterEach, expect, test, vi } from "vitest";
 import { convexCli } from "../../harness/admin.js";
 import { compositions, fixtureComposition } from "../../harness/composition.js";
 import { runChild } from "../../harness/child.js";
-const target = {
+const selection = {
+  kind: "local" as const,
   url: "http://127.0.0.1:1",
   adminKey: "the-admin-key",
+};
+const target = {
+  selection,
   home: "/the/backend/home",
   composition: fixtureComposition,
 };
@@ -22,9 +26,9 @@ test.each(["deploy", "codegen", "dev"] as const)(
     expect(call.args[1]).toBe(command);
     expect(call.args.slice(-4)).toEqual([
       "--url",
-      target.url,
+      selection.url,
       "--admin-key",
-      target.adminKey,
+      selection.adminKey,
     ]);
     expect(Object.keys(call.env).sort()).toEqual(["HOME", "PATH", "TMPDIR"]);
     expect(call.env.HOME).toBe(target.home);

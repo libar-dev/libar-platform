@@ -10,6 +10,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Reporter, TestCase } from "vitest/node";
 import type { BackendFacts } from "./backend.js";
+import { redact } from "./child.js";
 const anchor = codeAnchor({
   id: codeAnchorId("impl:platform.native-harness.evidence"),
   label: "the run record",
@@ -27,13 +28,45 @@ export interface NativeTestFacts {
   measurements: Measurement[];
 }
 // The Vitest project that ran a test. The acceptance check reads it to confirm a scenario's tier.
-export type TestProjectName = "types" | "pure" | "simulator" | "native";
+// `hosted` is the project of a test that ran on a hosted deployment.
+export type TestProjectName =
+  "types" | "pure" | "simulator" | "native" | "hosted";
 const projectNames: readonly string[] = [
   "types",
   "pure",
   "simulator",
   "native",
+  "hosted",
 ];
+// Where a native run ran, recorded apart from the tier: a hosted deployment is a target of the
+// native backend tier, not a tier of its own.
+export type Target = "local backend" | "hosted deployment";
+// The deployment's answer to GET /api/v1/get_current_usage, with the time it was read.
+// A type and not an interface, so that a reading is itself a JSON value a measurement can hold.
+export type HostedUsage = {
+  readAt: string;
+  seedStatus: string | null;
+  response: JsonValue;
+};
+export interface HostedDeploy {
+  composition: "fixture" | "production" | null;
+  wallMs: number;
+}
+export interface HostedRunFacts {
+  deployment: string;
+  keyName: string;
+  statedPlan: string;
+  ranBy: "continuous integration" | "developer";
+  cliVersion: string;
+  backendVersion: string | null;
+  usageBefore: HostedUsage | null;
+  usageAfter: HostedUsage | null;
+  windowCrossed: boolean;
+  deploys: HostedDeploy[];
+}
+// The measurement a test on a hosted deployment stores for each deploy, which the record gathers
+// into its hosted facts.
+export const hostedDeployMeasurement = "hosted deploy";
 export interface NativeTestEntry extends NativeTestFacts {
   project: TestProjectName;
   name: string;
@@ -44,6 +77,7 @@ export interface NativeTestEntry extends NativeTestFacts {
 }
 export interface NativeRunRecord {
   tier: "native";
+  target: Target;
   commit: string;
   clean: boolean;
   command: string;
@@ -53,6 +87,7 @@ export interface NativeRunRecord {
   versions: Record<string, string>;
   tests: NativeTestEntry[];
   unhandledErrors: string[];
+  hosted: HostedRunFacts | null;
 }
 declare module "vitest" {
   interface TaskMeta {
@@ -86,6 +121,7 @@ export default class EvidenceReporter implements Reporter {
     this.directory = options.directory ?? join(repositoryRoot, "evidence/runs");
   }
   private native = false;
+  private hostedRun = false;
   private startedAt = "";
   private commit = "unknown";
   private clean = false;
@@ -93,9 +129,14 @@ export default class EvidenceReporter implements Reporter {
   onTestRunStart(
     specifications: Parameters<NonNullable<Reporter["onTestRunStart"]>>[0],
   ) {
-    this.native = specifications.some(
-      (specification) => specification.project.name === "native",
+    this.hostedRun = specifications.some(
+      (specification) => specification.project.name === "hosted",
     );
+    this.native =
+      this.hostedRun ||
+      specifications.some(
+        (specification) => specification.project.name === "native",
+      );
     this.startedAt = new Date().toISOString();
     this.commit = git("rev-parse", "HEAD") ?? "unknown";
     this.clean = git("status", "--porcelain") === "";
@@ -136,8 +177,10 @@ export default class EvidenceReporter implements Reporter {
           ),
         ) as { version: string }
       ).version;
+    const run = onProcess[runRecordKey];
     const record: NativeRunRecord = {
       tier: "native",
+      target: this.hostedRun ? "hosted deployment" : "local backend",
       commit: this.commit,
       clean: this.clean,
       command: invocation(process.argv.slice(2)),
@@ -147,12 +190,16 @@ export default class EvidenceReporter implements Reporter {
       versions,
       tests: this.tests,
       unhandledErrors: unhandledErrors.map((error) => error.message),
+      hosted:
+        this.hostedRun && run?.hosted !== undefined
+          ? { ...run.hosted, deploys: deploysOf(this.tests) }
+          : null,
     };
     const directory = this.directory;
     await mkdir(directory, { recursive: true });
-    const name = await writeRunRecord(directory, record);
+    const name = await writeRunRecord(directory, record, run?.secrets ?? []);
     rememberRunRecord(join(directory, name));
-    console.log(`Native run record: evidence/runs/${name}`);
+    console.log(`Native run record (${record.target}): evidence/runs/${name}`);
   }
 }
 
@@ -164,16 +211,35 @@ export function invocation(args: readonly string[]): string {
   return ["vitest", ...args].map(quote).join(" ");
 }
 
+// The deploys that the tests of a run on a hosted deployment stored, in the order they ran.
+function deploysOf(tests: readonly NativeTestEntry[]): HostedDeploy[] {
+  return tests.flatMap((test) =>
+    test.measurements
+      .filter((measurement) => measurement.name === hostedDeployMeasurement)
+      .map((measurement) => measurement.value as unknown as HostedDeploy),
+  );
+}
+
+// The record serialized with every secret replaced, a second net behind the redaction where each
+// response is first seen.
+export function serializeRunRecord(
+  record: NativeRunRecord,
+  secrets: readonly string[] = [],
+): string {
+  return redact(JSON.stringify(record, null, 2), secrets) + "\n";
+}
+
+// A run on a hosted deployment writes its record as hosted- and its start time.
 export async function writeRunRecord(
   directory: string,
   record: NativeRunRecord,
+  secrets: readonly string[] = [],
 ): Promise<string> {
-  const name = `native-${record.startedAt.replace(/[-:]|\.\d+/g, "")}-${record.commit.slice(0, 7)}-${randomUUID()}.json`;
-  await writeFile(
-    join(directory, name),
-    JSON.stringify(record, null, 2) + "\n",
-    { flag: "wx" },
-  );
+  const prefix = record.target === "hosted deployment" ? "hosted" : "native";
+  const name = `${prefix}-${record.startedAt.replace(/[-:]|\.\d+/g, "")}-${record.commit.slice(0, 7)}-${randomUUID()}.json`;
+  await writeFile(join(directory, name), serializeRunRecord(record, secrets), {
+    flag: "wx",
+  });
   return name;
 }
 
@@ -184,6 +250,10 @@ export async function writeRunRecord(
 export interface RunRecordSlot {
   path?: string;
   swept?: boolean;
+  // What a run on a hosted deployment knows before its tests: the secrets the record is redacted
+  // by and its hosted facts, without the deploys its tests store.
+  secrets?: readonly string[];
+  hosted?: Omit<HostedRunFacts, "deploys">;
 }
 const runRecordKey = Symbol.for("libar-platform.native-run-record");
 const onProcess = globalThis as Record<symbol, RunRecordSlot | undefined>;
@@ -201,13 +271,23 @@ export function failRunRecord(
   run: RunRecordSlot,
   message: string,
 ): string | undefined {
+  return amendRunRecord(run, (record) => {
+    record.result = "failed";
+    if (!record.unhandledErrors.includes(message))
+      record.unhandledErrors.push(message);
+  });
+}
+// Changes the run's record and replaces the old record in one step, redacted as it was written.
+// Returns the record's path, if the run has one.
+export function amendRunRecord(
+  run: RunRecordSlot,
+  change: (record: NativeRunRecord) => void,
+): string | undefined {
   const path = run.path;
   if (path === undefined) return undefined;
   const record = JSON.parse(readFileSync(path, "utf8")) as NativeRunRecord;
-  record.result = "failed";
-  if (!record.unhandledErrors.includes(message))
-    record.unhandledErrors.push(message);
-  writeFileSync(`${path}.next`, JSON.stringify(record, null, 2) + "\n");
+  change(record);
+  writeFileSync(`${path}.next`, serializeRunRecord(record, run.secrets));
   renameSync(`${path}.next`, path);
   return path;
 }

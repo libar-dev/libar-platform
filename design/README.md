@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-232 specs · 5 packs · 133 anchors → 370 nodes · 1227 edges (0 errors, 0 warnings)
+237 specs · 5 packs · 142 anchors → 384 nodes · 1246 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -122,7 +122,7 @@ The doc numbers its decisions, laws, sources and probes. The plan numbers everyt
 | `S1` to `S15` | source |
 | `Sc L0-1` to `Sc L6-4`, `Sc ALL-1` | acceptance scenario, by layer then table order |
 | `OQ1` to `OQ6` | open question of the doc, in bullet order |
-| `E-1` to `E-58` | design extension beyond the doc, register below |
+| `E-1` to `E-59` | design extension beyond the doc, register below |
 | `Vocab: term` | a term of the vocabulary Spec |
 | `Thesis`, `Decision method rule n`, `Fact ledger`, `Probes`, `Acceptance scenarios`, `First experiment`, `Existing systems`, `Vocabulary`, `Sources` | an unnumbered section of the doc, cited by name |
 
@@ -180,7 +180,7 @@ Every row of the doc's acceptance table is an example Spec that `refines` and `v
 
 ## The extension register
 
-An extension is a design claim the doc does not make. Each one is three things together: a bullet that starts with `[extension]` and cites its E-number, and a `[non-blocking] Extension E-n` open question in the Intent of the Spec that owns it. The register lists every E-number once. "Owned by" names the Specs that carry the open question and the ruling; other Specs cite the number as a cross-reference without repeating the question. Every extension is a provisional ruling the owner confirms, changes or rejects; none is blocking, because each has a working default. E-18, E-19, E-27 to E-29 and E-59 are unused; E-13 and E-39 were assigned by the integration round from the unassigned and the Package C range, E-14 by review round 2, and E-15 and E-16 by slice S0.
+An extension is a design claim the doc does not make. Each one is three things together: a bullet that starts with `[extension]` and cites its E-number, and a `[non-blocking] Extension E-n` open question in the Intent of the Spec that owns it. The register lists every E-number once. "Owned by" names the Specs that carry the open question and the ruling; other Specs cite the number as a cross-reference without repeating the question. Every extension is a provisional ruling the owner confirms, changes or rejects; none is blocking, because each has a working default. E-18, E-19 and E-27 to E-29 are unused; E-13 and E-39 were assigned by the integration round from the unassigned and the Package C range, E-14 by review round 2, and E-15 and E-16 by slice S0.
 
 | E | Owned by | What the doc leaves open, and the option taken |
 |---|---|---|
@@ -237,6 +237,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 | E-56 | [`obligations.retention-and-restore`](specs/obligations/retention-and-restore.sdp.md) | External dispatch switched by the `OBLIGATIONS_DISPATCH` environment variable, read only in the parent; the cursor-driven `rebuildSchedules` operation, which refuses while `MAINTENANCE_MODE` is `restore`; the switch order, dispatch off before the snapshot and on last, after the transactional restore has reopened writers |
 | E-57 | [`obligations.record-contract`](specs/obligations/record-contract.sdp.md), [`obligations.sweeper`](specs/obligations/sweeper.sdp.md) | Three deployment-wide indexes lead with `status`, not `tenantId`; a recorded deviation from the review rubric's item 25 |
 | E-58 | [`effects.claim-call-settle`](specs/effects/claim-call-settle.sdp.md), [`effects.external-effects`](specs/effects/external-effects.sdp.md) | The lease is the runtime's action timeout plus 5 minutes; the provider key is `tenantId:effectKey`; ten late reports kept; a reconcile returns the same report union; plus three bounded repeats of a thrown settle call with a duplicate rule in the settle, so a repeat is not an attempt under Law 12 |
+| E-59 | [`platform.native-harness`](specs/platform/native-harness.sdp.md) | A native run on a hosted deployment: the same harness, run record and compositions on one hosted development deployment in a team and project of their own, selected only by `npm run test:hosted` from process variables, one run at a time, from a workflow whose failure fails no other check; the deploy key reaches a CLI child only as `CONVEX_DEPLOY_KEY` in its environment, and the admin access removes every form of it where a response is first seen; the record names the deployment as the backend it ran on, claims no parity under Sc L2-9 and passes no scenario; the hosted halves of Probe 3 and Probe 7, the production composition's acceptance on the deployment, and one local example that a table's documents survive another composition's deploy, are its examples |
 
 ## Open questions for the owner
 
