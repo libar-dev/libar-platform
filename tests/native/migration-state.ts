@@ -13,6 +13,9 @@ export async function migrationState(backend: Backend, name: string) {
   const generation = (await backend.admin.readTable("generations")).find(
     (row) => row.generation === 2,
   )!;
+  const progress = (await backend.admin.readTable("generationProgress")).find(
+    (row) => row.generationId === generation._id,
+  )!;
   const rows = (await backend.admin.readTable("documentSummaries")).filter(
     (row) => row.generation === 2,
   );
@@ -22,6 +25,7 @@ export async function migrationState(backend: Backend, name: string) {
     component,
     worker,
     generation,
+    progress,
     rows,
     visits,
   };
@@ -29,7 +33,8 @@ export async function migrationState(backend: Backend, name: string) {
 export function equalContextCursor(
   state: Awaited<ReturnType<typeof migrationState>>,
 ) {
-  expect((state.generation.cursor as { pageCursor: string }).pageCursor).toBe(
+  // generation-registry.sdp.md:74: the cursor is held by the progress row.
+  expect((state.progress.cursor as { pageCursor: string }).pageCursor).toBe(
     state.component.cursor,
   );
 }

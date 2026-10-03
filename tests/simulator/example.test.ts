@@ -1,3 +1,4 @@
+import { installOrderSummary } from "./gate-support.js";
 import { ConvexError, type Value } from "convex/values";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -53,11 +54,7 @@ const everything = [
   readOrdersPermission,
   "inventory.read",
 ];
-const activate = (t: App) =>
-  t.mutation(internal.readModels.activate, {
-    readModel: "orderSummary",
-    startedBy: operator,
-  });
+const install = (t: App) => installOrderSummary(t);
 async function failure(promise: Promise<unknown>): Promise<unknown> {
   return promise.then(
     () => {
@@ -86,7 +83,7 @@ test(
   ),
   async () => {
     const t = productionTest();
-    await activate(t);
+    await install(t);
     const user = await caller(t, "user-1", everything);
     const received = await user.mutation(api.receiving.receiveStock, {
       tenantId: "t-1",
@@ -200,7 +197,7 @@ test(
   ),
   async () => {
     const t = productionTest();
-    await activate(t);
+    await install(t);
     const user = await caller(t, "user-1", everything);
     await user.mutation(api.receiving.receiveStock, {
       tenantId: "t-1",
@@ -286,7 +283,11 @@ test(
       commandType: "PlaceOrder",
       message: "An order needs at least one line",
     });
-    expect(await activate(t)).toBe(1);
+    // rebuild.sdp.md:115,133: installing returns a generation ID; its number is on the row.
+    await install(t);
+    expect(
+      await t.run((ctx) => ctx.db.query("generations").collect()),
+    ).toMatchObject([{ generation: 1, state: "active" }]);
     expect(await send([line("sku-1", 1)])).toMatchObject({ kind: "applied" });
   },
 );
@@ -373,16 +374,17 @@ test(
       message: "A quantity must be a positive whole number, not 0",
       details: { quantity: 0 },
     });
+    // rebuild.sdp.md:115: an unknown read model is refused with the exact message.
     expect(
       String(
         await failure(
-          t.mutation(internal.readModels.activate, {
+          t.mutation(internal.rebuild.startGeneration, {
             readModel: "orderTotals",
-            startedBy: operator,
+            operator: "operator-1",
           }),
         ),
       ),
-    ).toContain("This deployment declares no read model orderTotals");
+    ).toBe("Error: This deployment declares no read model orderTotals");
   },
 );
 
@@ -476,7 +478,7 @@ test(
 
 // Stock of 5 on sku-1, and order-1 placed for 3 of them over two lines, by a caller with every grant.
 async function placedOrder(t: App) {
-  await activate(t);
+  await install(t);
   const user = await caller(t, "user-1", everything);
   await user.mutation(api.receiving.receiveStock, {
     tenantId: "t-1",
@@ -777,7 +779,7 @@ test(
   ),
   async () => {
     const t = productionTest();
-    await activate(t);
+    await install(t);
     const user = await placedOverTwoItems(t, "t-1");
     expect(await stockItems(t, "t-1")).toMatchObject([
       { onHand: 5, allocated: 2, version: { version: 2 } },
@@ -810,7 +812,7 @@ test(
   ),
   async () => {
     const t = productionTest();
-    await activate(t);
+    await install(t);
     await placedOverTwoItems(t, "t-1");
     const user = await placedOverTwoItems(t, "t-2");
     const untouched = await stockItems(t, "t-1");

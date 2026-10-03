@@ -1,6 +1,7 @@
+import { installOrderSummary } from "./rebuild-install.js";
 // The steps of spec:application.first-experiment's example space, shared by its native examples. They
 // run on the production composition: admin access seeds the grants and runs the order summary's first
-// activation as setup, and reads stored documents and the function log; every command and query is
+// rebuild as setup, and reads stored documents and the function log; every command and query is
 // sent by an ordinary client whose token the fixture issuer signs.
 import type { ConvexHttpClient } from "convex/browser";
 import {
@@ -29,7 +30,6 @@ import { scheduledRows } from "./scheduled-rows.js";
 import { utf8Length, type MutationCtx } from "../../src/command/index.js";
 export const tenantId = "t-1";
 export const subject = "user-1";
-const operator = { kind: "operator", id: "native-test" } as const;
 export const grantedPermissions = [
   placeOrderPermission,
   receiveStockPermission,
@@ -107,17 +107,14 @@ export async function grant(
     });
 }
 // The production composition on its own backend, with the setup every run takes before its first
-// command: the grants and the order summary's first activation, both with admin access.
+// command: the grants and the order summary's first rebuild, both with admin access.
 export async function application(world: {
   backend?: Backend;
   client?: ConvexHttpClient;
 }) {
   const backend = await productionBackend();
   await grant(backend, subject, grantedPermissions);
-  await backend.admin.run(getFunctionName(internal.readModels.activate), {
-    readModel: "orderSummary",
-    startedBy: operator,
-  });
+  await installOrderSummary(backend);
   Object.assign(world, {
     backend,
     client: ordinaryClient(backend.url, {

@@ -1,3 +1,4 @@
+import { installFixtureReadModel } from "./rebuild-install.js";
 import {
   ref,
   specTest,
@@ -79,10 +80,7 @@ async function readModelTables(backend: Backend) {
 test("native: a projection that throws after step 9 wrote the first read model's row leaves no read-model row, no receipt and no event or state change", async () => {
   const backend = await fixtureBackend();
   for (const readModel of ["documentSummary", "documentTitle"])
-    await backend.admin.run(getFunctionName(internal.readModels.activate), {
-      readModel,
-      startedBy: { kind: "operator", id: "native-test" },
-    });
+    await installFixtureReadModel(backend, readModel);
   await backend.admin.run(getFunctionName(internal.grants.grant), {
     tenantId: "t-1",
     principalKind: "human",

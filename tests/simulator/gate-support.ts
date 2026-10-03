@@ -6,7 +6,9 @@ import {
   type FunctionReference,
 } from "convex/server";
 import { ConvexError, v, type Value } from "convex/values";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
+import { internal as production } from "../../example/convex/_generated/api.js";
+import type { productionTest } from "./production.js";
 import { internal } from "../../fixture/convex/_generated/api.js";
 import annexSchema from "../../fixture/convex/annex/schema.js";
 import depotSchema from "../../fixture/convex/depot/schema.js";
@@ -90,14 +92,8 @@ export async function refusal(
   });
 }
 export async function generationIds(t: GateApp) {
-  await t.mutation(internal.readModels.activate, {
-    readModel: "documentSummary",
-    startedBy: { kind: "operator", id: "setup" },
-  });
-  await t.mutation(internal.readModels.activate, {
-    readModel: "documentTitle",
-    startedBy: { kind: "operator", id: "setup" },
-  });
+  await installFixtureReadModel(t, "documentSummary", "setup");
+  await installFixtureReadModel(t, "documentTitle", "setup");
   const rows = await t.run((ctx) => ctx.db.query("generations").collect());
   const [first, second] = rows;
   if (!first || !second) throw new Error("Two generation rows are required");
@@ -120,3 +116,51 @@ export const inspection = (
 ).depot.gateInspection.stored;
 export const depotRows = (t: GateApp) =>
   t.run((ctx) => ctx.runQuery(inspection, {}));
+
+// generation-registry.sdp.md:37; rebuild.sdp.md:115,127,133: scheduled batches finish before switch.
+export async function installFixtureReadModel(
+  t: GateApp,
+  readModel = "documentSummary",
+  operator = "operator-1",
+) {
+  const ownedTimers = !vi.isFakeTimers();
+  if (ownedTimers) vi.useFakeTimers();
+  try {
+    // native-harness.sdp.md:90: documentTitle setups select version 1.
+    const generationId = await t.mutation(internal.rebuild.startGeneration, {
+      readModel,
+      projectionVersion: 1,
+      operator,
+    });
+    await t.finishAllScheduledFunctions(() => vi.runOnlyPendingTimers(), 1000);
+    await t.mutation(internal.rebuild.switchGeneration, {
+      generationId,
+      operator,
+    });
+    return generationId;
+  } finally {
+    if (ownedTimers) vi.useRealTimers();
+  }
+}
+export async function installOrderSummary(
+  t: ReturnType<typeof productionTest>,
+  operator = "operator-1",
+) {
+  const ownedTimers = !vi.isFakeTimers();
+  if (ownedTimers) vi.useFakeTimers();
+  try {
+    const generationId = await t.mutation(production.rebuild.startGeneration, {
+      readModel: "orderSummary",
+      projectionVersion: 1,
+      operator,
+    });
+    await t.finishAllScheduledFunctions(() => vi.runOnlyPendingTimers(), 1000);
+    await t.mutation(production.rebuild.switchGeneration, {
+      generationId,
+      operator,
+    });
+    return generationId;
+  } finally {
+    if (ownedTimers) vi.useRealTimers();
+  }
+}

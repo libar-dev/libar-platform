@@ -1,3 +1,4 @@
+import { installFixtureReadModel } from "./rebuild-install.js";
 import {
   getFunctionName,
   makeFunctionReference,
@@ -120,10 +121,7 @@ test("native: a closed tenant refuses a public command, another tenant writes, a
 test("native: setting restore on the running backend refuses every declared command route without a deploy and clearing it admits the same keys", async () => {
   const backend = await fixtureBackend();
   const client = await clientFor(backend);
-  await backend.admin.run(getFunctionName(internal.readModels.activate), {
-    readModel: "documentSummary",
-    startedBy: { kind: "operator", id: "setup" },
-  });
+  await installFixtureReadModel(backend, "documentSummary", "setup");
   type Write = {
     name: string;
     input: Record<string, Value>;

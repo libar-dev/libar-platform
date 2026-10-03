@@ -1,3 +1,4 @@
+import { installFixtureReadModel } from "./rebuild-install.js";
 import { setTimeout as sleep } from "node:timers/promises";
 import { expect } from "vitest";
 import type { MigrationStatus } from "@convex-dev/migrations";
@@ -17,17 +18,32 @@ export async function setup(rows: number) {
     "convex-helpers": "0.1.124",
     "@convex-dev/migrations": "0.3.6",
   });
-  await backend.admin.run("readModels:activate", {
-    readModel: "documentSummary",
-    startedBy: { kind: "operator", id: "native-test" },
-  });
+  await installFixtureReadModel(backend, "documentSummary");
   const generation = (await backend.admin.readTable("generations"))[0]!;
   const { _id, _creationTime, switchedAt, ...fields } = generation;
   void _id;
   void _creationTime;
   void switchedAt;
   await backend.admin.writeTable("generations", {
-    insert: { ...fields, generation: 2, state: "building", batchSize: 2 },
+    insert: { ...fields, generation: 2, state: "building" },
+  });
+  const building = (await backend.admin.readTable("generations")).find(
+    (row) => row.generation === 2,
+  )!;
+  // generation-registry.sdp.md:74: the checkpoint belongs to the progress row.
+  await backend.admin.writeTable("generationProgress", {
+    insert: {
+      generationId: building._id!,
+      pass: "backfill",
+      batchSize: 2,
+      cursor: null,
+      batchesDone: 0,
+      rowsWritten: 0,
+      rowsSkipped: 0,
+      misses: 0,
+      rowsPurged: 0,
+      updatedAt: Date.now(),
+    },
   });
   await backend.admin.run("grants:grant", {
     tenantId: "tenant",
