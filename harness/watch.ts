@@ -193,8 +193,11 @@ export async function watch(options: WatchOptions): Promise<number> {
     child = steps.spawn(
       convexCli(
         {
-          url: backend.url,
-          adminKey: backend.adminKey,
+          selection: {
+            kind: "local",
+            url: backend.url,
+            adminKey: backend.adminKey,
+          },
           home,
           composition: options.composition,
         },

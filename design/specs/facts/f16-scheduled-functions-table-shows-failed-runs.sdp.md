@@ -10,7 +10,7 @@ relations:
 
 F16 · Status: rechecked · Doc status: Assumed in the doc; found documented on S6 by the recheck of 2026-09-30 · Decisions: D13.
 
-The doc lists this fact as assumed. The lead read S6 on 2026-09-30 and this package read it again the same day: the `_scheduled_functions` system table carries `name`, `args`, `scheduledTime`, `completedTime` and `state`; the states are Pending, InProgress, Success, Failed and Canceled; and scheduled function results are available for 7 days after they have completed. The corpus records the recheck here and the target states it; the doc keeps its own status until the owner edits it, which is why `measurableBy` still names the doc's status. The do-nothing check of D13 depends on this fact: a plain scheduled mutation plus a scan of this table may cover a local reaction, and the obligation table must earn its cost through restore, retention past the 7-day window, and business visibility and operator exits.
+The scheduled-functions page documents five states and a seven-day completion-result window. The pinned native backend exposes `pending`, `inProgress`, `success`, `failed` and `canceled` through admin access in the parent, Orders and Inventory. Rows carry `name`, `args`, `scheduledTime` and `state`; terminal rows carry `completedTime`; failed rows carry `state.error`. The native test observes a short retention interval only. Seven-day retention and expiry remain documented and are not run, so the fact retains rechecked status. The do-nothing check must also distinguish a fresh replacement, which has no scheduler intent, from replacement in place, which preserves intent created after export.
 
 ## Intent
 
@@ -18,11 +18,18 @@ The doc lists this fact as assumed. The lead read S6 on 2026-09-30 and this pack
 
 ### Open questions
 
-- [non-blocking] Probe 7 pending: the states and the 7-day retention are documented, so the probe need only confirm them on a native backend and show what a restore leaves of scheduler, Workpool and Workflow state (F16, Probe 7, F12)
+- [non-blocking] Seven-day retention and expiry, hosted dashboard restore, Workpool and Workflow are not run; the short native retention observation does not establish the documented window. The hosted example `spec:facts.f16-scheduled-functions-table-shows-failed-runs.probe-7-hosted-retention` records the ages at which planted schedules are read or missing, so that runs bracket the window a hosted deployment keeps. (F16, Probe 7, F12, E-59)
 
 ## Constraints
 
 - statement: `_scheduled_functions` shows failed runs for some retention window (F16)
 - flavor: convex-fact
 - target: evidence.status:rechecked
-- measurableBy: S6 https://docs.convex.dev/scheduling/scheduled-functions, states Pending, InProgress, Success, Failed and Canceled, results available for 7 days after completion; doc status Assumed in the doc; found documented on S6 by the recheck of 2026-09-30; Probe 7 confirms the states and retention on a native backend and what a restore leaves (F16, D13)
+- measurableBy: S6 https://docs.convex.dev/scheduling/scheduled-functions, read 2026-10-02; native examples bind the five states and failed-function scan cost; the seven-day retention window remains documented on S6 (F16, D13, Probe 7)
+
+## Design
+
+- nativeStates: native backend release `precompiled-2026-09-28-5c7cb5b`, Convex 1.46.0, on 2026-10-02, all five states appear in the parent, Orders and Inventory; `completedTime` appears exactly on success, failed and canceled rows, and the failed reaction carries its error text; the held action supplies `inProgress` (F16, Probe 7)
+- shortRetention: native backend release `precompiled-2026-09-28-5c7cb5b`, Convex 1.46.0, on 2026-10-02, the completed rows remain readable and unchanged across a measured short interval; this does not establish seven-day retention or expiry (F16, Probe 7)
+- scanObservation: native backend release `precompiled-2026-09-28-5c7cb5b`, Convex 1.46.0, on 2026-10-02, the expectation was that filtered-out scheduler rows consume the 32000-document allowance; the release instead reports zero documents and bytes read and adds N + 1 database queries to four already used; both plain and instrumented scans accept 4091 total rows and refuse 4092 with "Too many reads in a single function execution (limit: 4096)" (F16, F13, Probe 7)
+- populatedScan: native backend release `precompiled-2026-09-28-5c7cb5b`, Convex 1.46.0, on 2026-10-02, scans with 32000 and 32001 populated rows refuse on the read limit or time out performing too many system operations; the document ceiling is not the first boundary (F16, F13, Probe 7)

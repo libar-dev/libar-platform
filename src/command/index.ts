@@ -2,8 +2,11 @@
 export {
   actorKindValidator,
   actorValidator,
+  assertOperator,
   authorityValidator,
   callerNamespaceValidator,
+  limitOperatorBytes,
+  operatorValidator,
   subjectRefValidator,
   tenantScopeValidator,
 } from "./actor-and-scope.js";
@@ -24,6 +27,7 @@ export {
   establishActor,
   insertGrant,
   limitGrantsRead,
+  nextTenant,
   revokeGrant,
 } from "./authority.js";
 export type {
@@ -59,9 +63,10 @@ export type {
 export {
   commandResponseValidator,
   outcomeKindValidator,
+  relayFailure,
   runPipeline,
 } from "./pipeline.js";
-export type { CommandResponse, PipelineCall } from "./pipeline.js";
+export type { CommandResponse, FailedCall, PipelineCall } from "./pipeline.js";
 export {
   canonicalJson,
   classifyReceipt,
@@ -69,13 +74,22 @@ export {
   fingerprintOf,
   insertReceipt,
   limitAffectedRefs,
+  limitSweepBatch,
+  limitSweepBytes,
   lookupReceipt,
+  sweep,
+  sweepArgs,
+  sweepNext,
+  sweepNextArgs,
+  sweepNextResultValidator,
+  sweepResultValidator,
 } from "./receipts.js";
 export type {
   ReceiptClass,
   ReceiptInsert,
   ReceiptKey,
   Retention,
+  SweepResult,
 } from "./receipts.js";
 export { commandTables } from "./tables.js";
 export type {
@@ -85,6 +99,7 @@ export type {
   MutationCtx,
   QueryCtx,
   Receipt,
+  Tenant,
 } from "./tables.js";
 export {
   limitActorIdLength,

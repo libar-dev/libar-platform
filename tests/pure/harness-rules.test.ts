@@ -40,6 +40,7 @@ import { redactedBuffer } from "../../harness/child.js";
 import { invocation } from "../../harness/evidence.js";
 import { createAdminAccess } from "../../harness/admin.js";
 import { fixtureComposition } from "../../harness/composition.js";
+import { deployTemporaryCopy } from "../../harness/backup-archive.js";
 import {
   localWriteRateBytesPerSecond,
   paceAfterWrite,
@@ -151,8 +152,11 @@ test("pure: function log marks reject a changed process even when the predicate 
   };
   const admin = createAdminAccess(
     {
-      url: "http://127.0.0.1:1",
-      adminKey: "dummy",
+      selection: {
+        kind: "local",
+        url: "http://127.0.0.1:1",
+        adminKey: "dummy",
+      },
       home: "unused",
       composition: fixtureComposition,
       secrets: [],
@@ -204,8 +208,11 @@ test("pure: every TypeScript file under harness/ reaches a Spec through its own 
 function testAdmin(signal?: AbortSignal) {
   return createAdminAccess(
     {
-      url: "http://127.0.0.1:1",
-      adminKey: "dummy",
+      selection: {
+        kind: "local",
+        url: "http://127.0.0.1:1",
+        adminKey: "dummy",
+      },
       home: "unused",
       composition: fixtureComposition,
       secrets: ["dummy"],
@@ -224,15 +231,15 @@ test("pure: admin access reads an empty scheduled-functions table and refuses a 
   );
 });
 
-test("pure: the snapshot members use the pinned CLI and shared child runner with an isolated home", async () => {
+test("pure: the backup archive members use the pinned CLI and shared child runner with an isolated home", async () => {
   const runner = vi
     .spyOn(child, "runChild")
     .mockResolvedValue({ stdout: "", stderr: "" });
   try {
     const controller = new AbortController();
     const admin = testAdmin(controller.signal);
-    expect(await admin.exportSnapshot("archive.zip")).toBeUndefined();
-    expect(await admin.replaceSnapshot("archive.zip")).toBeUndefined();
+    expect(await admin.exportBackupArchive("archive.zip")).toBeUndefined();
+    expect(await admin.importBackupArchive("archive.zip")).toBeUndefined();
     expect(runner).toHaveBeenCalledTimes(2);
     for (const [index, args] of [
       ["export", "--path", "archive.zip"],
@@ -269,15 +276,112 @@ test("pure: the snapshot members use the pinned CLI and shared child runner with
   }
 });
 
-test("pure: a rejected snapshot child retains the abort reason and removes its home", async () => {
-  const reason = new Error("snapshot aborted");
+test("pure: a rejected backup archive child retains the abort reason and removes its home", async () => {
+  const reason = new Error("archive export aborted");
   const runner = vi.spyOn(child, "runChild").mockRejectedValue(reason);
   try {
-    await expect(testAdmin().exportSnapshot("archive.zip")).rejects.toBe(
+    await expect(testAdmin().exportBackupArchive("archive.zip")).rejects.toBe(
       reason,
     );
     expect(existsSync(runner.mock.calls[0]![3].env!.HOME!)).toBe(false);
   } finally {
     runner.mockRestore();
+  }
+});
+
+test("pure: aborting the caller's signal stops the deploy child of a temporary deployment, as the backend's own signal does", async () => {
+  // A deploy that never finishes by itself, so only an abort ends it.
+  const runner = vi.spyOn(child, "runChild").mockImplementation(
+    (_name, _file, _args, options) =>
+      new Promise<never>((_resolve, reject) => {
+        const signal = options.signal;
+        if (signal === undefined)
+          return reject(new Error("the deploy child got no signal"));
+        signal.addEventListener("abort", () => reject(signal.reason), {
+          once: true,
+        });
+      }),
+  );
+  try {
+    for (const [index, owner] of (["caller", "backend"] as const).entries()) {
+      const caller = new AbortController();
+      const backend = new AbortController();
+      const reason = new Error(`the ${owner} aborted the deploy`);
+      let outcome: unknown = "pending";
+      void deployTemporaryCopy(
+        { admin: testAdmin(backend.signal) },
+        "unused",
+        caller.signal,
+      ).then(
+        () => (outcome = "deployed"),
+        (error: unknown) => (outcome = error),
+      );
+      await vi.waitFor(() => expect(runner).toHaveBeenCalledTimes(index + 1));
+      expect(runner.mock.calls[index]![2].slice(1, 2)).toEqual(["deploy"]);
+      (owner === "caller" ? caller : backend).abort(reason);
+      await vi.waitFor(() => expect(outcome).toBe(reason), { timeout: 2000 });
+    }
+  } finally {
+    runner.mockRestore();
+  }
+});
+
+test("pure: every admin member's rejection and every client log line has its secrets replaced, a fetch that rejects included", async () => {
+  const key = "REVIEW_DUMMY_ADMIN_SECRET_0123456789";
+  const admin = createAdminAccess(
+    {
+      selection: { kind: "local", url: "http://127.0.0.1:1", adminKey: key },
+      home: "unused",
+      composition: fixtureComposition,
+      secrets: [key],
+    },
+    { deployed: undefined, environment: new Set(), logProcess: {} },
+  );
+  const printed: string[] = [];
+  const consoles = (["log", "warn", "error", "debug", "info"] as const).map(
+    (method) =>
+      vi
+        .spyOn(console, method)
+        .mockImplementation((...args: unknown[]) =>
+          printed.push(args.map(String).join(" ")),
+        ),
+  );
+  try {
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError(`fetch failed for ${key}`);
+    });
+    const failures: unknown[] = [];
+    for (const call of [
+      () => admin.setEnvironment({ NAME: "value" }),
+      () => admin.run("notes:add"),
+      async () => admin.completionsSince(await admin.logMark(), () => false),
+    ])
+      failures.push(await call().catch((error: unknown) => error));
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            status: "success",
+            value: null,
+            logLines: [`[LOG] ${key}`],
+          }),
+        ),
+    );
+    await admin.run("notes:add");
+    expect(failures).toHaveLength(3);
+    for (const failure of failures) {
+      expect(failure).toBeInstanceOf(Error);
+      expect((failure as Error).message).toContain("[redacted]");
+    }
+    const seen = JSON.stringify([
+      failures.map((failure) => [String(failure), (failure as Error).stack]),
+      printed,
+    ]);
+    expect(printed.join("\n")).toContain("[redacted]");
+    expect(seen).not.toContain(key);
+  } finally {
+    vi.unstubAllGlobals();
+    for (const spy of consoles) spy.mockRestore();
   }
 });

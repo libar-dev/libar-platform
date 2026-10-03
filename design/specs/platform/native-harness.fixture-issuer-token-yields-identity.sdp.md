@@ -9,7 +9,7 @@ relations:
 ---
 # A token signed by the fixture issuer yields the caller's identity
 
-E-13 · native tier · fixture composition.
+E-13 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -25,5 +25,5 @@ And the same query from a client with no token returns no identity
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that `tokenIdentifier` is the issuer and the subject joined by a vertical bar, and that a token signed by a key outside the key set is refused.

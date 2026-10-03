@@ -32,12 +32,12 @@ An obligation records one promise. It commits in the same transaction as the bus
 
 ### Open questions
 
-- [non-blocking] Probe 7 pending, the do-nothing check at activation: a plain scheduled mutation plus a scan of `_scheduled_functions` for failed runs may cover a local reaction; the obligation table earns its cost through restore, since backups exclude scheduled functions, through retention past the system table's window, and through business visibility and operator exits; the probe confirms the system table's states and retention and what a restore leaves before Layer 3 is built (Probe 7, D13, F12, F16)
+- [non-blocking] Probe 7 observes the local scheduled reaction, states, scan boundary and both CLI replacement modes; the owner confirmed D13 on these observations; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain unprobed (Probe 7, D13, F12, F16)
 
 ## Decision
 
 - context: The concern is deferred work: an effect after the transaction, a wait, background isolation or external I/O; Convex gives scheduling that commits with the mutation, scheduled mutations that run exactly once with internal retries, scheduled actions that run at most once, a system table of scheduled runs kept for 7 days, and backups that exclude pending scheduled functions (D13, F8, F9, F12, F16)
-- alternative: Do nothing beyond Convex: a plain scheduled mutation plus a scan of `_scheduled_functions` for failed runs; it may cover a local reaction and is checked at activation by Probe 7; rejected for the durable profile because restore drops pending scheduled functions, the system table keeps results for 7 days only, and neither gives business visibility or operator exits (D13, F12, F16, Decision method rule 2)
+- alternative: Do nothing beyond Convex: a plain scheduled mutation plus a scan of `_scheduled_functions` for failed runs; it may cover a local reaction and is checked at activation by Probe 7; rejected for the durable profile because fresh CLI replacement has no scheduled intent and in-place replacement can retain intent outside restored data, the system table keeps results for 7 days only, and neither gives business visibility or operator exits (D13, F12, F16, Decision method rule 2)
 - alternative: A copy of every event as an outbox that workers consume; rejected, because an obligation is not a copy of every event (D13)
 - alternative: An `onComplete` callback that decides whether the effect happened; rejected, because no callback decides and the obligation or an identified domain record is the evidence (D13, Law 7)
 - alternative: A specialized record per effect type; rejected as the default and kept only where a record carries distinct business evidence, such as payment attempts or approvals (D13)

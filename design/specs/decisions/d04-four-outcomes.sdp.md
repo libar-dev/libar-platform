@@ -31,4 +31,4 @@ A command ends in one of four outcomes, each with a fixed commit behavior. Appli
 - consequence: The `Outcome` union is defined once in the kernel and mapped to the wire once at the command boundary; no Spec defines a second one (D4)
 - consequence: A business failure is an event and a result, so it is journaled and visible to read models exactly like an applied command (D4)
 - consequence: A rejection is a thrown `ConvexError` at the public boundary and stores nothing, which D7 rules (D4, D7)
-- consequence: The standing cost is one union type, one closed error-code list and a simulator tier that covers the outcome combinations (D4, Acceptance scenarios)
+- consequence: The standing cost is one union type, one closed error-code list and a `convex-test` tier that covers the outcome combinations (D4, Acceptance scenarios)

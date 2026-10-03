@@ -1,8 +1,9 @@
+import { installFixtureReadModel } from "./gate-support.js";
 import { convexTest } from "convex-test";
 import { ConvexError, getConvexSize, v, type Value } from "convex/values";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { api, internal } from "../../fixture/convex/_generated/api.js";
 import annexSchema from "../../fixture/convex/annex/schema.js";
 import depotSchema from "../../fixture/convex/depot/schema.js";
@@ -54,7 +55,7 @@ function app() {
 }
 type App = ReturnType<typeof app>;
 const issuer = "https://fixture-issuer.test";
-const operator = { kind: "operator", id: "operator-1" } as const;
+const operator = "operator-1";
 async function caller(t: App, subject: string, permission: string) {
   await t.mutation(internal.grants.grant, {
     tenantId: "t-1",
@@ -65,8 +66,8 @@ async function caller(t: App, subject: string, permission: string) {
   });
   return t.withIdentity({ issuer, subject });
 }
-const activate = (t: App, readModel = "documentSummary") =>
-  t.mutation(internal.readModels.activate, { readModel, startedBy: operator });
+const install = (t: App, readModel = "documentSummary") =>
+  installFixtureReadModel(t, readModel);
 async function failure(promise: Promise<unknown>): Promise<unknown> {
   return promise.then(
     () => {
@@ -184,8 +185,7 @@ type GenerationState =
   | "retired"
   | "aborted"
   | "purged";
-// A registry row in the given state, written directly: only the first activation exists as a
-// transition, and the reads must be shown against every state.
+// generation-registry.sdp.md:67: seed each state to exercise registry reads independently of transitions.
 const generationRow = (generation: number, state: GenerationState) =>
   ({
     readModel: "documentSummary",
@@ -193,15 +193,11 @@ const generationRow = (generation: number, state: GenerationState) =>
     projectionVersion: 1,
     state,
     pauseRequired: false,
-    batchSize: 0,
     fence: 0,
-    batchesDone: 0,
-    rowsWritten: 0,
-    rowsSkipped: 0,
-    misses: 0,
     startedAt: 0,
     startedBy: operator,
-    updatedAt: 0,
+    changedAt: 0,
+    changedBy: operator,
   }) as const;
 async function registry(t: App, rows: [number, GenerationState][]) {
   await t.run(async (ctx) => {
@@ -210,49 +206,74 @@ async function registry(t: App, rows: [number, GenerationState][]) {
   });
 }
 
-describe("the first activation", () => {
+describe("the first rebuild", () => {
   test(
     name(
-      "inserts generation 1 as active with the projection's version, and a second activation is refused with the generation and its state",
+      "installs generation 1 and refuses another start while a generation is in flight",
     ),
     async () => {
       const t = app();
-      expect(await activate(t)).toBe(1);
+      const generationId = await install(t);
+      // generation-registry.sdp.md:37; rebuild.sdp.md:115,133: installation is the first rebuild.
       expect(await generations(t)).toMatchObject([
         {
-          readModel: "documentSummary",
+          _id: generationId,
           generation: 1,
           projectionVersion: 1,
           state: "active",
-          pauseRequired: false,
           startedBy: operator,
-          batchesDone: 0,
-          rowsWritten: 0,
         },
       ]);
-      await technicalFailure(
-        activate(t),
-        "Read model documentSummary already has generation 1, which is active",
-      );
-      expect(await generations(t)).toHaveLength(1);
+      vi.useFakeTimers();
+      try {
+        const second = await t.mutation(internal.rebuild.startGeneration, {
+          readModel: "documentSummary",
+          operator,
+        });
+        // rebuild.sdp.md:115: active does not refuse a start; building does, by this exact message.
+        await expect(
+          t.mutation(internal.rebuild.startGeneration, {
+            readModel: "documentSummary",
+            operator,
+          }),
+        ).rejects.toThrow(
+          /^Read model documentSummary already has generation 2 in building$/,
+        );
+        // rebuild.sdp.md:115: the refused start inserted no third generation.
+        expect(await generations(t)).toHaveLength(2);
+        await t.finishAllScheduledFunctions(() => vi.runOnlyPendingTimers());
+        await t.mutation(internal.rebuild.switchGeneration, {
+          generationId: second,
+          operator,
+        });
+      } finally {
+        vi.useRealTimers();
+      }
     },
   );
-
   test(
     name(
-      "is refused for a read model with a row in any other state, and for a name the composition does not declare",
+      "starts after an aborted generation and refuses an undeclared read model",
     ),
     async () => {
       const t = app();
       await registry(t, [[3, "aborted"]]);
-      await technicalFailure(
-        activate(t),
-        "Read model documentSummary already has generation 3, which is aborted",
+      const generationId = await install(t);
+      // rebuild.sdp.md:115: the next generation is one above the last, including an aborted one.
+      expect(await generations(t)).toContainEqual(
+        expect.objectContaining({
+          _id: generationId,
+          generation: 4,
+          state: "active",
+        }),
       );
-      await technicalFailure(
-        activate(t, "nope"),
-        "This deployment declares no read model nope",
-      );
+      // rebuild.sdp.md:115: an unknown read model is refused before registration.
+      await expect(
+        t.mutation(internal.rebuild.startGeneration, {
+          readModel: "nope",
+          operator,
+        }),
+      ).rejects.toThrow(/^This deployment declares no read model nope$/);
     },
   );
 });
@@ -287,8 +308,12 @@ describe("the registry's reads", () => {
           [4, state],
           [3, "active"],
         ]);
+        // generation-registry.sdp.md:81: verifying and verified use the verifying role.
         expect(await read(other)).toEqual({
-          write: [writable("active", 3), writable("building", 4)],
+          write: [
+            writable("active", 3),
+            writable(state === "building" ? "building" : "verifying", 4),
+          ],
           query: 3,
         });
       }
@@ -331,7 +356,7 @@ describe("step 9", () => {
     ),
     async () => {
       const t = app();
-      await activate(t);
+      await install(t);
       const user = await caller(t, "user-1", permissions.documents);
       const response = await user.mutation(
         api.depotCommands.createSummarizedDocument,
@@ -397,7 +422,7 @@ describe("step 9", () => {
     ),
     async () => {
       const t = app();
-      await activate(t);
+      await install(t);
       const stock = documentEntry("p-1", 1, "x", "stock");
       for (const readModels of [
         [],
@@ -426,7 +451,7 @@ describe("step 9", () => {
     ),
     async () => {
       const t = app();
-      await activate(t);
+      await install(t);
       const entries = (count: number) =>
         Array.from({ length: count }, (_, i) => documentEntry(`doc-${i}`));
       const binding = { readModel: documentSummary, source: documentSource };
@@ -438,17 +463,23 @@ describe("step 9", () => {
       expect(await summaries(t)).toEqual([]);
       // A projection that answers no row for one of five entries writes four rows.
       const skipping = variant({
-        projection: {
-          ...documentSummary.projection,
-          project: (tenantId, dto, versions) =>
-            dto["documentId"] === "doc-0"
-              ? null
-              : documentSummary.projection.project(
-                  tenantId,
-                  dto as never,
-                  versions,
-                ),
-        },
+        projections: [
+          {
+            ...documentSummary.projections[0]!,
+            project: (
+              tenantId: string,
+              dto: Record<string, Value>,
+              versions: StreamVersion[],
+            ) =>
+              dto["documentId"] === "doc-0"
+                ? null
+                : documentSummary.projections[0]!.project(
+                    tenantId,
+                    dto as never,
+                    versions,
+                  ),
+          },
+        ],
       });
       await run(
         t,
@@ -471,7 +502,7 @@ describe("step 9", () => {
     ),
     async () => {
       const t = app();
-      await activate(t);
+      await install(t);
       const entry = documentEntry("doc-1", 1, "x".repeat(300));
       const bytes = getConvexSize({
         documentId: "doc-1",
@@ -592,7 +623,9 @@ describe("applyProjection", () => {
     async () => {
       const t = app();
       const none = variant({
-        projection: { ...documentSummary.projection, project: () => null },
+        projections: [
+          { ...documentSummary.projections[0]!, project: () => null },
+        ],
       });
       await apply(t, documentEntry("doc-1").dto, "live-created", [
         active as WritableGeneration,
@@ -611,17 +644,19 @@ describe("applyProjection", () => {
   );
 
   test(
-    name(
-      "a generation is written with the declared projection whatever projection version it records, and the row records the projection's",
-    ),
+    name("an undeclared projection version is refused before a row is written"),
     async () => {
       const t = app();
-      await apply(t, documentEntry("doc-1").dto, "live-created", [
-        { role: "active", generation: 1, projectionVersion: 7 },
-      ]);
-      expect(await summaries(t)).toMatchObject([
-        { generation: 1, projectionVersion: 1 },
-      ]);
+      // projection-contract.sdp.md:68: projectionOf refuses a version absent from projections.
+      await expect(
+        apply(t, documentEntry("doc-1").dto, "live-created", [
+          { role: "active", generation: 1, projectionVersion: 7 },
+        ]),
+      ).rejects.toThrow(
+        /^Read model documentSummary declares no projection of version 7$/,
+      );
+      // projection-contract.sdp.md:68: an undeclared projection writes no row.
+      expect(await summaries(t)).toEqual([]);
     },
   );
 });
@@ -647,7 +682,7 @@ describe("step 1", () => {
         expect(await errorData(create(tenantId, requestKey))).toEqual({
           kind: "rejection",
           code: "invalidInput",
-          commandType: "CreateDocument",
+          entry: "CreateDocument",
           message: `${field} has at most 256 bytes of UTF-8`,
           details: { field, length: 257, limit: 256 },
         });
@@ -693,14 +728,14 @@ describe("authorizeQuery and the parent list", () => {
       expect(await errorData(list(t))).toEqual({
         kind: "rejection",
         code: "unauthenticated",
-        commandType: "listDocumentSummaries",
+        entry: "listDocumentSummaries",
         message: "listDocumentSummaries needs an authenticated caller",
       });
       const stranger = await caller(t, "user-2", permissions.documents);
       expect(await errorData(list(stranger))).toEqual({
         kind: "rejection",
         code: "forbidden",
-        commandType: "listDocumentSummaries",
+        entry: "listDocumentSummaries",
         message: "The caller may not read listDocumentSummaries in this tenant",
         details: { reason: "no_grant" },
       });

@@ -28,15 +28,17 @@ export const orderSummary: ReadModel<OrderDto, OrderSummaryFields> = {
   name: "orderSummary",
   table: "orderSummaries",
   rowBudgetBytes: defaultRowBudgetBytes,
-  projection: {
-    version: 1,
-    keyOf: (_tenantId, order) => order.orderId,
-    project: (_tenantId, { orderId, status, lines, total, placedAt }) => ({
-      orderId,
-      status,
-      lineCount: lines.length,
-      total,
-      placedAt,
-    }),
-  },
+  projections: [
+    {
+      version: 1,
+      keyOf: (_tenantId, order) => order.orderId,
+      project: (_tenantId, { orderId, status, lines, total, placedAt }) => ({
+        orderId,
+        status,
+        lineCount: lines.length,
+        total,
+        placedAt,
+      }),
+    },
+  ],
 };

@@ -28,7 +28,8 @@ const contextSchema = defineSchema(contextTables);
 const mebibyte = 1024 * 1024;
 export const limitListBytes = 8 * mebibyte;
 // Items per list page: half of limitListBytes in whole stream budgets, so a page read to its row
-// cap of twice the items stays within limitListBytes.
+// cap of twice the items reads at most limitListBytes and one row: the paginator adds each stored
+// row's size, _id and _creationTime included, after it has read the row.
 export const limitListPage = (budgetBytes: number): number =>
   Math.max(1, Math.min(100, Math.floor((4 * mebibyte) / budgetBytes)));
 export type PageLimit = { items: number; bytes: number };

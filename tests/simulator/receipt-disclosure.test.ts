@@ -31,7 +31,7 @@ test(
     );
     expect.soft(data).toEqual({
       kind: "rejection",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
       code: "idempotencyConflict",
       message: "This request key was used with other input",
     });
@@ -53,7 +53,7 @@ test(
     ).toMatchObject({
       kind: "rejection",
       code: "forbidden",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
     });
     expect(await stored(t)).toEqual(before);
   },
@@ -95,7 +95,7 @@ test.each(["same input", "other subject"])(
     );
     expect.soft(data).toEqual({
       kind: "rejection",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
       code: "unsupportedContractVersion",
       message: "This request key was used under another contract version",
     });

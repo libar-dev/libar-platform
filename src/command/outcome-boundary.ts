@@ -32,7 +32,8 @@ export type TransientCode = "rateLimited" | "capacity" | "writePaused";
 export type RejectionData<Domain extends string = string> = Rejection & {
   kind: "rejection";
   code: RejectionCode<Domain>;
-  commandType: string;
+  // The name of the entry that refused.
+  entry: string;
 };
 export type TransientData = {
   kind: "transient";
@@ -45,7 +46,7 @@ const wireRejectionValidator = v.object({
   kind: v.literal("rejection"),
   code: v.string(),
   message: v.string(),
-  commandType: v.string(),
+  entry: v.string(),
   details: v.optional(v.record(v.string(), v.any())),
 });
 export const errorDataValidator = v.union(
@@ -99,27 +100,27 @@ function fitsShape({ form, data }: Candidate): boolean {
 // The bound on a rejection's details, measured as Convex measures a value.
 const limitDetailsBytes = 16384;
 // Throws a plain Error, a technical failure, when the details measure above the bound.
-function checkDetails(rejection: Rejection, commandType: string) {
+function checkDetails(rejection: Rejection, entry: string) {
   if (rejection.details === undefined) return;
   const bytes = getConvexSize(rejection.details);
   if (bytes > limitDetailsBytes)
     throw new Error(
-      `A ${rejection.code} rejection of ${commandType} carries ${bytes} bytes of details, above ${limitDetailsBytes}`,
+      `A ${rejection.code} rejection of ${entry} carries ${bytes} bytes of details, above ${limitDetailsBytes}`,
     );
 }
 export function reject(data: Omit<RejectionData<never>, "kind">): never {
-  checkDetails(data, data.commandType);
+  checkDetails(data, data.entry);
   throw new ConvexError<RejectionData>({ kind: "rejection", ...data });
 }
 export function refuseTransient(data: Omit<TransientData, "kind">): never {
   throw new ConvexError<TransientData>({ kind: "transient", ...data });
 }
-// Every rejection candidate passes its shape, the declaration's code list, its command name and the
+// Every rejection candidate passes its shape, the declaration's code list, the entry it names and the
 // details bound. A bare rejection gains the wire shape; a valid rejection already in that shape keeps
 // its identity. Every other throw passes unchanged.
 export function normalizeThrown(
   error: unknown,
-  commandType: string,
+  entry: string,
   rejections: readonly string[],
 ): never {
   const candidate =
@@ -128,27 +129,27 @@ export function normalizeThrown(
   const wire = candidate.form === "wire";
   if (!fitsShape(candidate))
     throw new Error(
-      `${commandType} received a rejection that does not fit the ${candidate.form} shape`,
+      `${entry} received a rejection that does not fit the ${candidate.form} shape`,
     );
-  // fitsShape established code, message and details for both forms, and commandType for the wire form.
-  const rejection = candidate.data as Rejection & { commandType?: string };
+  // fitsShape established code, message and details for both forms, and entry for the wire form.
+  const rejection = candidate.data as Rejection & { entry?: string };
   const { code } = rejection;
   if (
     !Object.hasOwn(platformRejectionCodes, code) &&
     !rejections.includes(code)
   )
     throw new Error(
-      `${commandType} was rejected with the code ${code}, which is neither a platform code nor one its declaration lists in rejections`,
+      `${entry} was rejected with the code ${code}, which is neither a platform code nor one its declaration lists in rejections`,
     );
-  if (wire && rejection.commandType !== commandType)
+  if (wire && rejection.entry !== entry)
     throw new Error(
-      `${commandType} received a rejection naming ${String(rejection.commandType)}`,
+      `${entry} received a rejection naming ${String(rejection.entry)}`,
     );
-  checkDetails(rejection, commandType);
+  checkDetails(rejection, entry);
   if (wire) throw error;
   throw new ConvexError<RejectionData>({
     kind: "rejection",
-    commandType,
+    entry,
     ...rejection,
   });
 }

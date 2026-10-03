@@ -682,11 +682,11 @@ Ranges for new extensions: B uses E-20 to E-29, C uses E-30 to E-39, D uses E-40
 
 Recorded here and in README section 8. The corpus proceeds on the provisional reading shown; nothing is silently decided.
 
-1. Vocabulary clashes (OQ6). The doc says to pick one meaning of "receipt" and "generation" before code names them. Provisional: receipt is the stored idempotency outcome; the row that proves an effect happened is "completion evidence"; generation is a numbered read-model build; an attempt number is "attempt".
-2. Facts as constraints (OQ5). The plan maps ledger rows to `constraint` Specs with an evidence-status target. Confirm, or choose `rule` Specs instead; the change is mechanical.
+1. Vocabulary clashes (OQ6). The doc says to pick one meaning of "receipt" and "generation" before code names them. Provisional: receipt is the stored idempotency outcome; the row that proves an effect happened is "completion evidence"; generation is a numbered read-model build; an attempt number is "attempt". Ruled: as provisional.
+2. Facts as constraints (OQ5). The plan maps ledger rows to `constraint` Specs with an evidence-status target. Confirm, or choose `rule` Specs instead; the change is mechanical. Ruled: confirmed.
 3. Plan-imposed numbering. F1 to F17, Sc L0-1 to ALL-1, OQ1 to OQ6 and E-numbers exist only in this plan. The doc should adopt them or the citations stay plan-relative.
 4. Refused-command records (OQ2). Whether security audit or agent proposals need a record of refusals decides whether the generic internal dispatcher of D7 exists. The design carries it as a conditional.
-5. Trivial contexts as plain tables (OQ1). The design assumes a component per context everywhere; the experiment decides.
+5. Trivial contexts as plain tables (OQ1). The design assumes a component per context everywhere; the experiment decides. Ruled: a component per context, reopened only for a measured workload that misses an agreed target or a hosted usage reading above an agreed share.
 6. One document per stream and the maximum order size (OQ3). The design assumes one document per stream and leaves the maximum lines as a product number with a placeholder.
 7. Where the experiment lives (OQ4). Not decided by the corpus.
 8. Readiness. No agent states `ready`. After consensus the owner may state it on Layer 0 to 2 Specs whose floor clears; recipe 9 lists the floor per Spec.

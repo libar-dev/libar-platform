@@ -9,7 +9,7 @@ relations:
 ---
 # A paid call times out and usage arrives later
 
-Sc L5-3 · native tier.
+Sc L5-3 · native backend tier.
 
 ## Intent
 
@@ -26,6 +26,6 @@ And the slot is released by reconciliation or by the operator exit, never lost f
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test asserts that between the timeout and the report the reservation shows unknown cost, not zero, and that a second copy of the same usage report is refused (D17, Law 7).
 - The test asserts the slot is held until reconciliation and that the operator exit releases it with a repair record when no report ever arrives (D17, D13).

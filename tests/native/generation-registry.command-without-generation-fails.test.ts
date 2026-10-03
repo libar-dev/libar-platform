@@ -12,7 +12,7 @@ import type { LogMark } from "../../harness/admin.js";
 import { required } from "../../harness/native.js";
 import { classifyThrown } from "../../src/command/index.js";
 import {
-  activateOrderSummary,
+  installOrderSummary,
   caught,
   changedDocuments,
   line,
@@ -53,7 +53,7 @@ bindExample(contract, (): World => ({}), {
     world,
     { generationRows },
   ) => {
-    const order = await orderWorld({ activate: false });
+    const order = await orderWorld({ install: false });
     world.order = order;
     expect(await order.backend.admin.readTable("generations")).toHaveLength(
       generationRows,
@@ -102,7 +102,7 @@ bindExample(contract, (): World => ({}), {
       "orders.events": [],
       orderSummaries: [],
     });
-    await activateOrderSummary(order.backend);
+    await installOrderSummary(order.backend);
     expect(
       await order.client.mutation(api.ordering.placeOrder, call),
     ).toMatchObject({ kind: "applied", replayed: false });

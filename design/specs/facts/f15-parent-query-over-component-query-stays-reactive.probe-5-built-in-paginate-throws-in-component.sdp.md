@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 5: the built-in paginate throws inside a component
 
-Probe 5 · native tier · fixture composition.
+Probe 5 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -23,5 +23,5 @@ Then the read fails with an error that says paginate is only supported in the ap
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test reads the component query through the parent query `list:builtinPage` and asserts that the error's message contains `paginate() is only supported in the app`, and that the parent query `list:page`, which relays the component's query built with `paginator` on the same table, returns its page.

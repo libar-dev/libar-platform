@@ -24,7 +24,7 @@ export const orderLineValidator = v.object({
 });
 export const orderDtoValidator = v.object({
   orderId: v.string(),
-  status: v.literal("placed"),
+  status: v.union(v.literal("placed"), v.literal("cancelled")),
   lines: v.array(orderLineValidator),
   total: v.number(),
   placedAt: v.number(),
@@ -46,6 +46,7 @@ export const orderStream: StreamRegistration<
       lines: v.array(orderLineValidator),
       total: v.number(),
     }),
+    OrderCancelled: v.object({}),
   },
   dto: orderDtoValidator,
   // A stream row exists only once its order is placed, so an order with no event has no DTO.

@@ -33,7 +33,7 @@ Each installed capability carries its own operations: logging that never cancels
 ## Decision
 
 - context: The concern is operating what the layers create: logging, audit, restore, bounds, retention, diagnosis, release; Convex gives backups that exclude pending scheduled functions, per-transaction limits, a scheduled-functions table with 7-day retention, and dashboard logs that are observations, not authority (D19, F12, F13, F16)
-- alternative: Do nothing beyond Convex: rely on the dashboard, its logs and its backups without design-level operations; rejected, because a restore drops pending scheduled functions, logs are observations and not authority, and a telemetry failure must never cancel a valid write (D19, F12, Decision method rule 2)
+- alternative: Do nothing beyond Convex: rely on the dashboard, its logs and its backups without design-level operations; rejected, because fresh CLI replacement has no scheduled intent and in-place replacement can keep intent outside restored data, logs are observations and not authority, and a telemetry failure must never cancel a valid write (D19, F12, Decision method rule 2)
 - alternative: Telemetry that can veto a business write; rejected (D19, D18)
 - alternative: Reset-only upgrades; rejected for anything but disposable environments (D19)
 - alternative: Operations shipped with each capability as the rules below; this is the option chosen (D19)

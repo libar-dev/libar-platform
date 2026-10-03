@@ -9,7 +9,7 @@ relations:
 ---
 # Exhaust retries, including failures of recovery itself
 
-Sc L3-4 · native tier.
+Sc L3-4 · native backend tier.
 
 ## Intent
 
@@ -29,7 +29,7 @@ And the operator exit {exit: "works"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test drives the body to throw a transient error on every attempt until `attemptCount` reaches `maxAttempts`, and asserts the obligation is in needs attention with reason `exhausted`, no event committed, and `lastError` of class `retryable` (D13, F3).
 - The test separately drives `recoverOne` to throw on every rearm and asserts that the rearm count still climbs and the obligation reaches needs attention with reason `recoveryFailing` (D13, Sc L3-4).
 - The test calls `retry`, `cancel` and `abandon` as an operator and asserts each allowed transition writes a repair and each refused one writes nothing (D13, Law 8).

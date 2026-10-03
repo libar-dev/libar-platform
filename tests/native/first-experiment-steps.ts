@@ -1,6 +1,7 @@
+import { installOrderSummary } from "./rebuild-install.js";
 // The steps of spec:application.first-experiment's example space, shared by its native examples. They
 // run on the production composition: admin access seeds the grants and runs the order summary's first
-// activation as setup, and reads stored documents and the function log; every command and query is
+// rebuild as setup, and reads stored documents and the function log; every command and query is
 // sent by an ordinary client whose token the fixture issuer signs.
 import type { ConvexHttpClient } from "convex/browser";
 import {
@@ -8,6 +9,7 @@ import {
   getFunctionName,
   type FunctionReturnType,
 } from "convex/server";
+import { ConvexError, type Value } from "convex/values";
 import { expect } from "vitest";
 import { api, internal } from "../../example/convex/_generated/api.js";
 import {
@@ -16,15 +18,18 @@ import {
   placeOrderPermission,
 } from "../../example/convex/ordering.js";
 import { readOrdersPermission } from "../../example/convex/readModels.js";
-import { receiveStockPermission } from "../../example/convex/receiving.js";
+import {
+  maxStockItemIdBytes,
+  receiveStockPermission,
+} from "../../example/convex/receiving.js";
 import type { CompletionRecord } from "../../harness/admin.js";
 import type { Backend } from "../../harness/backend.js";
 import { ordinaryClient } from "../../harness/clients.js";
 import { measure, productionBackend, required } from "../../harness/native.js";
-import type { MutationCtx } from "../../src/command/index.js";
+import { scheduledRows, scheduledSince } from "./scheduled-rows.js";
+import { utf8Length, type MutationCtx } from "../../src/command/index.js";
 export const tenantId = "t-1";
 export const subject = "user-1";
-const operator = { kind: "operator", id: "native-test" } as const;
 export const grantedPermissions = [
   placeOrderPermission,
   receiveStockPermission,
@@ -40,14 +45,17 @@ export const authVariables = [
 export const placeOrderIdentifier = getFunctionName(api.ordering.placeOrder);
 const summariesIdentifier = getFunctionName(api.readModels.listOrderSummaries);
 // The F13 ceilings of one transaction: 16 MiB and 32,000 documents read, 16 MiB and 16,000
-// documents written, and 1 second of execution.
+// documents written.
 export const ceilings = {
   databaseReadBytes: 16 * 1024 * 1024,
   databaseReadDocuments: 32000,
   databaseWriteBytes: 16 * 1024 * 1024,
   databaseWriteDocuments: 16000,
-  executionSeconds: 1,
 };
+// A bound these examples set on the execution time the backend's log reports for a command. It is
+// not the engine's cap on completion time: the engine's limit is on the function's own computation,
+// and nested calls draw on a separate budget (F19).
+export const reportedExecutionSecondsBound = 1;
 export const usageKeys = [
   "databaseReadDocuments",
   "databaseWriteDocuments",
@@ -99,17 +107,14 @@ export async function grant(
     });
 }
 // The production composition on its own backend, with the setup every run takes before its first
-// command: the grants and the order summary's first activation, both with admin access.
+// command: the grants and the order summary's first rebuild, both with admin access.
 export async function application(world: {
   backend?: Backend;
   client?: ConvexHttpClient;
 }) {
   const backend = await productionBackend();
   await grant(backend, subject, grantedPermissions);
-  await backend.admin.run(getFunctionName(internal.readModels.activate), {
-    readModel: "orderSummary",
-    startedBy: operator,
-  });
+  await installOrderSummary(backend);
   Object.assign(world, {
     backend,
     client: ordinaryClient(backend.url, {
@@ -209,19 +214,36 @@ export async function place(
     summaryKeys: summaries.page.map((row) => row.key),
   };
 }
+// The scheduled-function rows of the parent and both contexts that the commands added: a job
+// scheduled with any delay is a row there.
+const scheduledAfter = new WeakMap<
+  ExperimentWorld,
+  Awaited<ReturnType<typeof scheduledRows>>
+>();
 export async function placeOrderRuns(
   world: ExperimentWorld,
-  run: "the PlaceOrder use case" | "the end-to-end path",
+  run:
+    | "the PlaceOrder use case"
+    | "the end-to-end path"
+    | "the ReceiveStock command",
 ) {
   if (run !== "the PlaceOrder use case")
     throw new Error(`These examples run the PlaceOrder use case, not ${run}`);
   const size = required(world.size, "the order's size");
+  const before = await scheduledRows(required(world.backend, "the backend"));
   if (linesOf[size] > 1)
     world.reference = await place(world, "order-ref", orderLines(1, "ref"));
   world.placed = await place(
     world,
     "order-1",
     orderLines(linesOf[size], "sku"),
+  );
+  scheduledAfter.set(
+    world,
+    scheduledSince(
+      before,
+      await scheduledRows(required(world.backend, "the backend")),
+    ),
   );
 }
 const sent = (world: ExperimentWorld): Placed[] =>
@@ -244,8 +266,8 @@ export function commitsAre(world: ExperimentWorld, commits: number) {
     expect(placed.request).toEqual(committed);
   }
 }
-// Nothing ran between the command and the read sent after it returned, and that read already shows
-// the command's summary row: the command wrote it, and no job did.
+// Nothing ran between the command and the read sent after it returned, nothing is scheduled to run
+// later, and that read already shows the command's summary row: the command wrote it, and no job did.
 export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
   for (const placed of sent(world)) {
     const others = placed.window.filter(
@@ -253,10 +275,13 @@ export function projectionJobsAre(world: ExperimentWorld, jobs: number) {
         record !== placed.own && record.identifier !== summariesIdentifier,
     );
     expect(others).toHaveLength(jobs);
+    expect(
+      required(scheduledAfter.get(world), "the scheduled-function rows"),
+    ).toHaveLength(jobs);
     expect(placed.summaryKeys).toContain(placed.orderId);
   }
 }
-// The calls are counted at the pure tier: the backend's log holds no record of a component call
+// The calls are counted at the pure test tier: the backend's log holds no record of a component call
 // inside a mutation. The executor runs on the input the test sent, against a ctx whose runMutation
 // records each call by its function reference and answers a canned applied outcome.
 export async function callsPerContextAre(
@@ -320,7 +345,8 @@ export const usageOf = (record: CompletionRecord): Usage =>
     usageKeys.map((key) => [key, required(record.usageStats[key], key)]),
   ) as Usage;
 // Every row stayed inside its budget, because a row above its budget fails the command and the command
-// applied; and what it read, wrote and took stayed under the transaction's ceilings.
+// applied; what it read and wrote stayed under the transaction's ceilings, and the execution time
+// the log reports stayed under the examples' bound.
 export function budgetsAre(
   world: ExperimentWorld,
   budgets: "hold" | "are exceeded",
@@ -342,7 +368,9 @@ export function budgetsAre(
     expect(usage.databaseWriteBytes).toBeLessThanOrEqual(
       ceilings.databaseWriteBytes,
     );
-    expect(placed.own.executionTime).toBeLessThan(ceilings.executionSeconds);
+    expect(placed.own.executionTime).toBeLessThan(
+      reportedExecutionSecondsBound,
+    );
   }
 }
 // What a PlaceOrder read and wrote, recorded on the test's entry in the run's evidence record. It is
@@ -370,4 +398,227 @@ export function recordUsage(world: ExperimentWorld) {
             ]),
           ),
   });
+}
+
+export async function storedOrderDocuments(backend: Backend) {
+  return {
+    receipts: await backend.admin.readTable("receipts"),
+    orderStreams: await backend.admin.readTable("streams", {
+      component: "orders",
+    }),
+    orderEvents: await backend.admin.readTable("events", {
+      component: "orders",
+    }),
+    stockStreams: await backend.admin.readTable("streams", {
+      component: "inventory",
+    }),
+    stockEvents: await backend.admin.readTable("events", {
+      component: "inventory",
+    }),
+    summaries: await backend.admin.readTable("orderSummaries"),
+  };
+}
+export interface StockItemIdWorld extends ExperimentWorld {
+  lines?: OrderLine[];
+  response?: PlaceOrderResponse;
+  error?: unknown;
+  own?: CompletionRecord;
+  before?: Awaited<ReturnType<typeof storedOrderDocuments>>;
+}
+export function orderAtIdBound(
+  world: StockItemIdWorld,
+  size: Size,
+  contention: "absent" | "present",
+) {
+  expect(size).toBe("the maximum");
+  expect(contention).toBe("absent");
+  world.lines = orderLines(linesOf[size], "sku");
+  expect(world.lines).toHaveLength(100);
+}
+export async function stockItemIdBytesAre(
+  world: StockItemIdWorld,
+  idBytes: number,
+  lastIdBytes: number,
+) {
+  const lines = required(world.lines, "the lines");
+  for (const [i, line] of lines.entries())
+    line.stockItemId =
+      i === lines.length - 1
+        ? (lastIdBytes % 2 === 1 ? "a" : "") +
+          "é".repeat(Math.floor(lastIdBytes / 2))
+        : line.stockItemId.padEnd(idBytes, "x");
+  expect(maxStockItemIdBytes).toBe(64);
+  expect(new Set(lines.map(({ stockItemId }) => stockItemId)).size).toBe(100);
+  for (const [i, { stockItemId }] of lines.entries())
+    expect(utf8Length(stockItemId)).toBe(
+      i === lines.length - 1 ? lastIdBytes : idBytes,
+    );
+  const lastId = required(lines.at(-1), "the last line").stockItemId;
+  expect(lastId.length).toBeLessThan(utf8Length(lastId));
+  // Only stock item IDs within the bound can be received: a longer one is refused by ReceiveStock too.
+  await receive(
+    world,
+    lines.filter(
+      ({ stockItemId }) => utf8Length(stockItemId) <= maxStockItemIdBytes,
+    ),
+  );
+}
+export async function placeOrderAtIdBoundRuns(
+  world: StockItemIdWorld,
+  run:
+    | "the PlaceOrder use case"
+    | "the end-to-end path"
+    | "the ReceiveStock command",
+) {
+  expect(run).toBe("the PlaceOrder use case");
+  const backend = required(world.backend, "the backend");
+  const client = required(world.client, "the client");
+  world.before = await storedOrderDocuments(backend);
+  const mark = await backend.admin.logMark();
+  await client
+    .mutation(api.ordering.placeOrder, {
+      tenantId,
+      requestKey: "k-order-at-id-bound",
+      input: {
+        orderId: "order-at-id-bound",
+        lines: required(world.lines, "the lines"),
+      },
+    })
+    .then(
+      (response) => {
+        world.response = response;
+      },
+      (error: unknown) => {
+        world.error = error;
+      },
+    );
+  const records = await backend.admin.completionsSince(mark, (records) =>
+    records.some(
+      (record) =>
+        record.identifier === placeOrderIdentifier &&
+        record.componentPath === null,
+    ),
+  );
+  world.own = required(
+    records.find(
+      (record) =>
+        record.identifier === placeOrderIdentifier &&
+        record.componentPath === null,
+    ),
+    "the command's completion record",
+  );
+}
+export function stockItemIdAnswerIs(
+  world: StockItemIdWorld,
+  answer: "the result" | "the rejection invalidInput",
+) {
+  if (answer === "the result") {
+    expect(world.error).toBeUndefined();
+    expect(world.response).toMatchObject({
+      kind: "applied",
+      replayed: false,
+      result: { orderId: "order-at-id-bound", lineCount: 100, total: 14950 },
+    });
+    expect(required(world.own, "the completion record").error).toBeNull();
+  } else {
+    expect(world.response).toBeUndefined();
+    expect(world.error).toBeInstanceOf(ConvexError);
+    expect(required(world.own, "the completion record").error).toMatch(
+      /^Uncaught ConvexError: /,
+    );
+  }
+}
+export function stockItemIdRejectionIs(
+  world: StockItemIdWorld,
+  line: number,
+  length: number,
+  limit: number,
+  entry: "PlaceOrder" | "ReceiveStock" = "PlaceOrder",
+) {
+  expect((world.error as ConvexError<Value>).data).toEqual({
+    kind: "rejection",
+    code: "invalidInput",
+    entry,
+    message: `Line ${line} needs a stock item ID of at most ${limit} bytes of UTF-8, not ${length}`,
+    details: { line, length, limit },
+  });
+}
+export function commandDocumentsAre(
+  world: StockItemIdWorld,
+  readDocuments: number,
+  writtenDocuments: number,
+) {
+  const usage = usageOf(required(world.own, "the completion record"));
+  expect(usage.databaseReadDocuments).toBe(readDocuments);
+  expect(usage.databaseWriteDocuments).toBe(writtenDocuments);
+}
+// ReceiveStock of stock items whose IDs have exact byte lengths, the last built from two-byte
+// characters so that its character count is below its byte count.
+export function receiveItemsWithIdBytes(
+  world: StockItemIdWorld,
+  items: number,
+  idBytes: number,
+  lastIdBytes: number,
+) {
+  world.lines = orderLines(items, "sku");
+  for (const [i, line] of world.lines.entries())
+    line.stockItemId =
+      i === items - 1
+        ? (lastIdBytes % 2 === 1 ? "a" : "") +
+          "é".repeat(Math.floor(lastIdBytes / 2))
+        : line.stockItemId.padEnd(idBytes, "x");
+  for (const [i, { stockItemId }] of world.lines.entries())
+    expect(utf8Length(stockItemId)).toBe(
+      i === items - 1 ? lastIdBytes : idBytes,
+    );
+  const lastId = required(world.lines.at(-1), "the last item").stockItemId;
+  expect(lastId.length).toBeLessThan(utf8Length(lastId));
+}
+const receiveStockIdentifier = getFunctionName(api.receiving.receiveStock);
+export async function receiveStockRuns(
+  world: StockItemIdWorld,
+  run:
+    | "the PlaceOrder use case"
+    | "the end-to-end path"
+    | "the ReceiveStock command",
+) {
+  expect(run).toBe("the ReceiveStock command");
+  const backend = required(world.backend, "the backend");
+  const client = required(world.client, "the client");
+  world.before = await storedOrderDocuments(backend);
+  const mark = await backend.admin.logMark();
+  await client
+    .mutation(api.receiving.receiveStock, {
+      tenantId,
+      requestKey: "k-receive-past-id-bound",
+      input: {
+        items: required(world.lines, "the items").map(({ stockItemId }) => ({
+          stockItemId,
+          quantity: 2,
+        })),
+      },
+    })
+    .then(
+      () => {
+        throw new Error("ReceiveStock past the stock item ID bound applied");
+      },
+      (error: unknown) => {
+        world.error = error;
+      },
+    );
+  const records = await backend.admin.completionsSince(mark, (records) =>
+    records.some(
+      (record) =>
+        record.identifier === receiveStockIdentifier &&
+        record.componentPath === null,
+    ),
+  );
+  world.own = required(
+    records.find(
+      (record) =>
+        record.identifier === receiveStockIdentifier &&
+        record.componentPath === null,
+    ),
+    "the command's completion record",
+  );
 }

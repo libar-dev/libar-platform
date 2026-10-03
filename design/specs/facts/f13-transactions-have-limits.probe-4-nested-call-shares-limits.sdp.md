@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 4: a nested call draws on the caller's transaction limits
 
-Probe 4 · native tier · fixture composition.
+Probe 4 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -25,8 +25,9 @@ And the same split of bytes written by a parent mutation and a nested mutation {
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test also reads `ctx.meta.getTransactionMetrics()` in the parent before and after a nested read that stays under the limit and asserts that `bytesRead.used` and `documentsRead.used` grew by what the child read.
 - The test also shows that each half of the write commits alone, so the failure is the sum.
 - The local backend refuses writes past a rate, with `TooManyWrites` and the text "limited to 4 MiB bytes written per 1 second", so the test paces the transactions that seed and write its documents.
+- Each document holds an ASCII string, whose length is its size in bytes. Bytes would spend most of a mutation's 1 second of execution under load, because `convex/values` converts them to base64 in JavaScript, and the run would show the time limit instead of the bytes-written limit.
 - On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

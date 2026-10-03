@@ -43,7 +43,8 @@ const internalFunctions = [
   internal.receiving.receiveStockInternal,
   internal.grants.grant,
   internal.grants.revoke,
-  internal.readModels.activate,
+  internal.rebuild.startGeneration,
+  internal.rebuild.switchGeneration,
 ].map((reference) => getFunctionName(reference));
 type Answer = { returned: unknown } | { threw: unknown };
 interface AcceptanceWorld {
@@ -168,12 +169,12 @@ function authorityHolds(world: AcceptanceWorld) {
   expect(dataOf(thrown(answers, "placeOrder short of stock"))).toMatchObject({
     kind: "rejection",
     code: "insufficientStock",
-    commandType: "PlaceOrder",
+    entry: "PlaceOrder",
   });
   expect(dataOf(thrown(answers, "placeOrder without a grant"))).toMatchObject({
     kind: "rejection",
     code: "forbidden",
-    commandType: "PlaceOrder",
+    entry: "PlaceOrder",
   });
   expect(returned(answers, "getOrder")).toMatchObject({
     orderId: "order-1",
@@ -181,12 +182,12 @@ function authorityHolds(world: AcceptanceWorld) {
     total: 300,
   });
   expect(dataOf(thrown(answers, "getOrder without an identity"))).toMatchObject(
-    { kind: "rejection", code: "unauthenticated", commandType: "getOrder" },
+    { kind: "rejection", code: "unauthenticated", entry: "getOrder" },
   );
   expect(dataOf(thrown(answers, "getOrder without a grant"))).toMatchObject({
     kind: "rejection",
     code: "forbidden",
-    commandType: "getOrder",
+    entry: "getOrder",
   });
   expect(returned(answers, "listOrders")).toMatchObject({
     page: [{ orderId: "order-1" }],

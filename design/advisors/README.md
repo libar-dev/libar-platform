@@ -25,7 +25,7 @@ A definition holds three paths and nothing else. A fifth advisor is one lens fil
 
 ## How the main thread runs a sort
 
-One launch for each advisor. The four run at once, because each writes its own patch and nothing else. `<folder>` is where the unit keeps its reports, outside the repository.
+One launch for each advisor. The four run at once, because each writes its own patch and nothing else. `<folder>` is where the unit keeps its patches and memos, outside the repository.
 
 A Claude agent:
 
@@ -58,7 +58,7 @@ Agent(subagent_type: "advisor-domain",
 Then, in this order:
 
 1. The memos are copied to `<folder>/check-copy/`, and the main thread plants one false citation in each copy and records the plants in `<folder>/plants.md`, as tactical decision 31 of `STATE.md` asks for a review copy.
-2. One `gpt:codex` job, `gpt-6.1-sol` at medium with the fast tier, checks the copies: every cited claim held, not held or not checked, every unlabelled fact listed. Its brief is `<folder>/check-brief.md`, and its report is saved to `<folder>/check-report.md` the moment it arrives.
+2. One `gpt:codex` job, `gpt-6.1-sol` at medium with the fast tier, checks the copies: every cited claim held, not held or not checked, every unlabelled fact listed. Its brief is `<folder>/check-brief.md`, and its report stays in its job directory under `~/.codex-jobs`.
 3. While the check runs, the main thread writes `design/ROADMAP.md`: the cut as one table, the rounds, what is deferred with its trigger, where the advisors differed and what was ruled, the questions that are not rows yet, the findings beyond the roadmap, and the words the advisors needed that `CONTEXT.md` lacks.
 4. The claims the check marked not held are corrected in the roadmap, or the advisor is continued with the check's findings where the memo must change. The plants caught go into `plants.md` and the project notes.
 5. The unit closes as any unit does: the check prints `OK`, `STATE.md` points at the roadmap, the commit goes up through a pull request.

@@ -9,7 +9,7 @@ relations:
 ---
 # Two commands compete for the same unique value
 
-Sc L1-11 · native tier · fixture composition · second of two cases.
+Sc L1-11 · native backend tier · fixture composition · second of two cases.
 
 The fixture composition binds it. Two ordinary clients send the RegisterDocument command at once, each creating its own document under one reference, the unique value. The depot's registerDocuments operation claims the reference on a reference stream of its own at expected version 0 and then creates the document, both in one sub-transaction. Both calls read the absent reference row; one commits, the engine reruns the other, and the rerun loads the claimed row and is answered by the version check before decide.
 
@@ -32,7 +32,7 @@ And the callers saw {saw: "no engine retry and no version conflict"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend, and two ordinary clients, each holding a fixture-issuer token and a grant an operator gave with admin access, send RegisterDocument through its public entry at once with one reference and two document IDs.
+- Runs in the native backend tier; every test owns its disposable backend, and two ordinary clients, each holding a fixture-issuer token and a grant an operator gave with admin access, send RegisterDocument through its public entry at once with one reference and two document IDs.
 - The first and second callers are the callers in the order their final attempts complete in the function log; the stream of the Given and of the version afterwards is the reference stream, and the events appended are the reference stream's `referenceClaimed` and the winner's document stream's `created`, both at version 1.
 - The reference stream's state names the winner's document as holder, and the loser's document has no stream row and no event, so no document exists without its claim.
 - The loser's `ConvexError` carries `entityExists` with `details.existing` equal to the reference and `details.current` equal to 1, the answer step 3 gives from the row the rerun loaded before `decide` runs; the reference decider would answer a held reference with `referenceTaken`, and that code is absent.

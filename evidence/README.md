@@ -10,6 +10,7 @@ A record that backs a claim says `"clean": true`. It was made on a tree with no 
 - `command`, `startedAt`, `finishedAt` and `result`.
 - `versions`: Node and the packages the tiers depend on, read from the installed packages.
 - `tests`: one entry per test, with its result, its error messages, its backends and its measurements. A run that includes the native project records the tests of every project it ran, each with its `project`: `types`, `pure`, `simulator` or `native`.
+- `target`: `local backend`, or `hosted deployment` for a run of `npm run test:hosted`, which is the native backend tier on a hosted deployment and not a tier of its own. Such a record is named `hosted-` and its start time, its tests are of the project `hosted`, and its `hosted` facts name the deployment, the deploy key by its name, the stated plan, who ran it, the CLI and backend versions, the usage readings before and after, and each deploy's wall time. The acceptance check reads no such record. A record with no `target` is of the local backend.
 
 A test's `backends` has one entry per backend that became ready. The harness writes the entry from the backend that ran:
 
@@ -17,7 +18,8 @@ A test's `backends` has one entry per backend that became ready. The harness wri
 - `identitySource`: the fixture issuer that the backend's environment variables named. The fixture issuer is the one difference from production in how a caller gets an identity. It is not adjusted configuration.
 - `composition` and `installedLayers`: what the harness deployed.
 - `environment`: the names of the environment variables the harness set.
-- `dataset`: every backend starts on empty storage, so a test's data is what the test wrote.
+- `dataset`: every local backend starts on empty storage, so a test's data is what the test wrote. A hosted deployment keeps its data between runs, and says `kept from earlier runs`.
+- `target`: the local backend or a hosted deployment. On a hosted deployment `executable` is `null`.
 
 ## Measurements
 

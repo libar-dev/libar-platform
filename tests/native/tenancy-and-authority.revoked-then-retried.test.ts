@@ -58,7 +58,7 @@ bindExample(
     expect((error as ConvexError<Value>).data).toEqual({
       kind: "rejection",
       code: "forbidden",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
       message: "The caller may not run CreateDocument in this tenant",
       details: { reason: "no_grant" },
     });

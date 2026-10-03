@@ -23,8 +23,7 @@ const anchorProjection = codeAnchor({
 });
 const anchorRegistry = codeAnchor({
   id: codeAnchorId("impl:application.generation-registry"),
-  label:
-    "the generations table, activateFirstGeneration, generationsToWrite and activeGeneration",
+  label: "the generations table, generationsToWrite and activeGeneration",
   satisfies: ref("spec:application.generation-registry"),
 });
 const anchorReadModels = codeAnchor({
@@ -98,7 +97,7 @@ test("pure: the fixture's projection keys a summary by document ID and keeps its
     amendments: 2,
     version,
   };
-  const { projection } = documentSummary;
+  const projection = documentSummary.projections[0]!;
   expect(projection.keyOf("t-1", dto)).toBe("doc-1");
   expect(projection.project("t-1", dto, [version])).toStrictEqual({
     documentId: "doc-1",

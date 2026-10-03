@@ -1,4 +1,5 @@
-// The parent's generation registry of spec:application.generation-registry and the conventions every
+// The parent's generation registry of spec:application.generation-registry, with its progress rows,
+// aggregate markers and the tenant fill's row, and the conventions every
 // per-entity read-model row follows (spec:application.projection-contract), as fragments the parent's
 // schema.ts spreads into defineSchema.
 import {
@@ -11,7 +12,6 @@ import {
   type SchemaDefinition,
 } from "convex/server";
 import { v } from "convex/values";
-import { actorValidator } from "../command/actor-and-scope.js";
 import { streamVersionValidator } from "../context/outcome.js";
 export const generationStateValidator = v.union(
   v.literal("building"),
@@ -28,6 +28,12 @@ export const batchCursorValidator = v.object({
   streamId: v.optional(v.string()),
   eventCursor: v.optional(v.union(v.string(), v.null())),
 });
+export const progressPassValidator = v.union(
+  v.literal("backfill"),
+  v.literal("verify"),
+  v.literal("purge"),
+  v.literal("idle"),
+);
 // One row per generation of a read model, spanning every tenant, so neither index leads with one.
 export const readModelTables = {
   generations: defineTable({
@@ -36,23 +42,54 @@ export const readModelTables = {
     projectionVersion: v.number(),
     state: generationStateValidator,
     pauseRequired: v.boolean(),
-    batchSize: v.number(),
     fence: v.number(),
-    cursor: v.optional(batchCursorValidator),
-    verifyCursor: v.optional(batchCursorValidator),
+    startedAt: v.number(),
+    startedBy: v.string(),
+    changedAt: v.number(),
+    changedBy: v.string(),
+    switchedAt: v.optional(v.number()),
+    retiredAt: v.optional(v.number()),
+    retireAfter: v.optional(v.number()),
+    interruptedFence: v.optional(v.number()),
+  })
+    .index("by_read_model", ["readModel", "generation"])
+    .index("by_read_model_state", ["readModel", "state"]),
+  generationProgress: defineTable({
+    generationId: v.id("generations"),
+    pass: progressPassValidator,
+    batchSize: v.number(),
+    cursor: v.union(batchCursorValidator, v.null()),
     batchesDone: v.number(),
     rowsWritten: v.number(),
     rowsSkipped: v.number(),
     misses: v.number(),
-    startedAt: v.number(),
-    startedBy: actorValidator,
-    switchedAt: v.optional(v.number()),
-    retireAfter: v.optional(v.number()),
+    rowsPurged: v.number(),
     lastError: v.optional(v.string()),
     updatedAt: v.number(),
-  })
-    .index("by_read_model", ["readModel", "generation"])
-    .index("by_read_model_state", ["readModel", "state"]),
+  }).index("by_generation", ["generationId"]),
+  projectionMarkers: defineTable({
+    tenantId: v.string(),
+    readModel: v.string(),
+    generation: v.number(),
+    entityKey: v.string(),
+    aggregateKey: v.string(),
+    contribution: v.number(),
+    sourceVersions: v.array(streamVersionValidator),
+  }).index("by_entity", ["tenantId", "readModel", "generation", "entityKey"]),
+  tenantFill: defineTable({
+    pass: v.union(v.literal("fill"), v.literal("idle")),
+    fence: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    batchesDone: v.number(),
+    tenantsRead: v.number(),
+    tenantsInserted: v.number(),
+    lastError: v.optional(v.string()),
+    startedAt: v.number(),
+    startedBy: v.string(),
+    changedAt: v.number(),
+    changedBy: v.string(),
+    updatedAt: v.number(),
+  }),
 };
 // Spread into every per-entity read-model table, which also declares
 // .index("by_key", ["tenantId", "generation", "key"]).

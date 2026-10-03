@@ -72,4 +72,4 @@ The union below is the kernel's. Applied and business failure are the value a co
 ## Verification — reviewed
 
 - A reviewer confirms that no other Spec in the corpus defines a second outcome union and that `spec:command.outcome-boundary` maps from this one.
-- A reviewer confirms that the simulator tier covers every outcome kind and the three reserved codes.
+- A reviewer confirms that the `convex-test` tier covers every outcome kind and the three reserved codes.

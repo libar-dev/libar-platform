@@ -1,0 +1,67 @@
+name: Hosted
+# The native backend tier on the one hosted deployment, by npm run test:hosted. It runs on a
+# schedule and on dispatch. GitHub runs a schedule from the default branch, and the environment
+# hosted admits the default branch only, so a dispatch from another branch gets no key. No other
+# workflow waits on this one, and its failure fails no other check.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1,4"
+permissions:
+  contents: read
+# One run at a time on the deployment; a queued run waits and no running run is cancelled.
+concurrency:
+  group: hosted
+  cancel-in-progress: false
+jobs:
+  hosted:
+    runs-on: ubuntu-latest
+    environment: hosted
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # The install runs before any step is given the key.
+      - run: npm ci
+      # GitHub masks the whole key; the part after the | and both URL-encoded forms are masked too.
+      - name: Mask the deploy key's forms
+        env:
+          HOSTED_DEPLOY_KEY: ${{ secrets.HOSTED_DEPLOY_KEY }}
+        run: |
+          node -e '
+            const key = process.env.HOSTED_DEPLOY_KEY ?? "";
+            const secret = key.slice(key.indexOf("|") + 1);
+            for (const form of [key, secret, encodeURIComponent(key), encodeURIComponent(secret)])
+              if (form !== "") console.log("::add-mask::" + form);
+          '
+      # The run's output goes to a file. The log is printed and the record uploaded only after the
+      # record check finds no form of the key in either.
+      - name: Native run on the hosted deployment
+        id: run
+        env:
+          HOSTED_DEPLOYMENT_URL: ${{ vars.HOSTED_DEPLOYMENT_URL }}
+          HOSTED_DEPLOY_KEY: ${{ secrets.HOSTED_DEPLOY_KEY }}
+          HOSTED_DEPLOY_KEY_NAME: ${{ vars.HOSTED_DEPLOY_KEY_NAME }}
+          HOSTED_PLAN: ${{ vars.HOSTED_PLAN }}
+        run: |
+          set +e
+          npm run test:hosted > "$RUNNER_TEMP/hosted.log" 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Record check
+        env:
+          HOSTED_DEPLOY_KEY: ${{ secrets.HOSTED_DEPLOY_KEY }}
+        run: |
+          shopt -s nullglob
+          records=(evidence/runs/hosted-*.json)
+          node scripts/hosted-record-check.mjs "$RUNNER_TEMP/hosted.log" "${records[@]}"
+      - name: The run's log
+        run: cat "$RUNNER_TEMP/hosted.log"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hosted-evidence
+          path: evidence/runs/hosted-*.json
+      - name: The run's result
+        run: test "${{ steps.run.outputs.code }}" = "0"

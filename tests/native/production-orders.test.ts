@@ -1,3 +1,4 @@
+import { installOrderSummary } from "./rebuild-install.js";
 import { getFunctionName, type PaginationResult } from "convex/server";
 import { ConvexError, convexToJson, type Value } from "convex/values";
 import { expect, onTestFinished, test } from "vitest";
@@ -14,9 +15,8 @@ import {
 import { measure, productionBackend, required } from "../../harness/native.js";
 import { classifyThrown } from "../../src/command/index.js";
 // The production composition on its own backend, reached by ordinary clients whose tokens the
-// fixture issuer signs: grants and the order summary's first activation with admin access as setup,
+// fixture issuer signs: grants and the order summary's first rebuild with admin access as setup,
 // stock through ReceiveStock, then PlaceOrder over Orders and Inventory.
-const operator = { kind: "operator", id: "native-test" } as const;
 const readInventoryPermission = "inventory.read";
 const everything = [
   placeOrderPermission,
@@ -39,15 +39,11 @@ async function grant(
       grantedBy: "native-test",
     });
 }
-const activate = (backend: Backend) =>
-  backend.admin.run(getFunctionName(internal.readModels.activate), {
-    readModel: "orderSummary",
-    startedBy: operator,
-  });
-// Grants, the first activation and a client for a granted user.
+const install = (backend: Backend) => installOrderSummary(backend);
+// Grants, the first rebuild and a client for a granted user.
 async function setUp(backend: Backend) {
   await grant(backend, "user-1", everything);
-  await activate(backend);
+  await install(backend);
   const token = await backend.issuer.token("user-1");
   return { token, client: ordinaryClient(backend.url, { token }) };
 }
@@ -284,7 +280,7 @@ test("native: an order for stock that is not there is rejected insufficientStock
   expect((error as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "insufficientStock",
-    commandType: "PlaceOrder",
+    entry: "PlaceOrder",
     message: "Cannot allocate 1 when 0 are available",
     details: { requested: 1, available: 0 },
   });

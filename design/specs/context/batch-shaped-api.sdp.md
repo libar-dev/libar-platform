@@ -21,10 +21,6 @@ Context APIs take lists, such as `inventory.allocate({ lines })`, so a use case 
 - risk: The transaction limits are one budget across nested calls and components, as Probe 4 showed, so every bound here is checked against the sum (F13, Probe 4)
 - assumption: Transactions have limits, and platform limits are ceilings, not batch sizes (F13, D19)
 
-### Open questions
-
-- [non-blocking] OQ3: the largest order the placement command supports is a product decision; each operation's `maxStreams` is set from it and the default ceiling of 256 stands until then (OQ3, D10)
-
 ## Rule
 
 - Context APIs take lists, so a use case makes one call per context rather than one per line (D10)
@@ -46,7 +42,7 @@ Context APIs take lists, such as `inventory.allocate({ lines })`, so a use case 
 - exampleAllocate: `inventory.allocate({ orderId, lines: [{ stockItemId, quantity }] })` plans one stream command `{ commandType: "allocate", orderId, quantity }` per distinct stock item, with the quantities of its lines summed, and returns `{ lines: [{ stockItemId, quantity }] }`, one entry per stock item with the quantity allocated, with the stream versions on the outcome (D10, Sc L2-3)
 - limitStreamsPerCall: `maxStreams` per operation, ceiling 256, and 8 MiB of stream documents at the planned stream types' `budgetBytes`, so the allocation operation's 100 stock streams fit only because the stock stream type declares a small budget, 16 KiB as `spec:application.orders-inventory-example` pins, under which the byte bound admits 512 and the count bound the full 256 (E-22, E-2, E-46, F13)
 - limitDocumentsWrittenPerCall: 800 documents and 8 MiB per call (E-22, F13)
-- limitOrderLines: the maximum lines per `PlaceOrder` is a product decision and a placeholder in the first experiment; `maxStreams` of the allocation operation follows it (OQ3, D10, F13)
+- limitOrderLines: `PlaceOrder`'s declaration carries its own bound, 100 lines, the largest order the example supports, chosen under the stream and byte ceilings above and no platform limit; `maxStreams` of the allocation operation follows it, under the ceiling of 256 (OQ3, D10, F13)
 - importCommand: a list above the bound is served by a separate import command that records honest partial progress per batch in its own stream, never by the operation splitting silently (D10)
 
 ## Verification — reviewed

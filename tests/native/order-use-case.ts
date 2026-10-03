@@ -1,12 +1,16 @@
-// Shared steps of the scenarios that run PlaceOrder on the production composition: a backend whose
-// user holds every grant the use cases need, the order summary's first activation, stock through
+// Shared steps of the scenarios that run PlaceOrder and CancelOrder on the production composition: a backend whose
+// user holds every grant the use cases need, the order summary's first rebuild, stock through
 // ReceiveStock, and every stored document of both contexts and the parent, to count what a call
 // changed. Admin access is used for setup and for reading stored documents only.
 import { getFunctionName } from "convex/server";
 import type { ConvexHttpClient } from "convex/browser";
 import type { Value } from "convex/values";
 import { api, internal } from "../../example/convex/_generated/api.js";
-import { placeOrderPermission } from "../../example/convex/ordering.js";
+import { installOrderSummary } from "./rebuild-install.js";
+import {
+  cancelOrderPermission,
+  placeOrderPermission,
+} from "../../example/convex/ordering.js";
 import { readOrdersPermission } from "../../example/convex/readModels.js";
 import { receiveStockPermission } from "../../example/convex/receiving.js";
 import type { Backend } from "../../harness/backend.js";
@@ -14,8 +18,9 @@ import { ordinaryClient } from "../../harness/clients.js";
 import { productionBackend } from "../../harness/native.js";
 export const tenantId = "t-1";
 const subject = "user-1";
-const permissions = [
+export const permissions = [
   placeOrderPermission,
+  cancelOrderPermission,
   receiveStockPermission,
   readOrdersPermission,
   "inventory.read",
@@ -40,22 +45,17 @@ export function grant(
     grantedBy: "native-test",
   });
 }
-// The order summary's first activation, run by an operator with admin access.
-export function activateOrderSummary(backend: Backend) {
-  return backend.admin.run(getFunctionName(internal.readModels.activate), {
-    readModel: "orderSummary",
-    startedBy: { kind: "operator", id: "native-test" },
-  });
-}
+// The order summary's first rebuild, run by an operator with admin access.
+export { installOrderSummary };
 // A production backend, the user's grants and, unless asked not to, the order summary's first
-// activation, all with admin access, and an ordinary client with the user's fixture-issuer token.
+// rebuild, all with admin access, and an ordinary client with the user's fixture-issuer token.
 export async function orderWorld(
-  options: { activate?: boolean } = {},
+  options: { install?: boolean } = {},
 ): Promise<OrderWorld> {
   const backend = await productionBackend();
   for (const permission of permissions)
     await grant(backend, subject, permission);
-  if (options.activate ?? true) await activateOrderSummary(backend);
+  if (options.install ?? true) await installOrderSummary(backend);
   const token = await backend.issuer.token(subject);
   return { backend, token, client: ordinaryClient(backend.url, { token }) };
 }
@@ -81,6 +81,9 @@ export const line = (
 const tables = [
   { table: "receipts" },
   { table: "generations" },
+  { table: "generationProgress" },
+  { table: "tenantFill" },
+  { table: "projectionMarkers" },
   { table: "orderSummaries" },
   { table: "streams", component: "orders" },
   { table: "events", component: "orders" },
