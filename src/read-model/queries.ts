@@ -6,6 +6,7 @@ import {
   type PageLimit,
 } from "../context/queries.js";
 import type { PaginationOptions } from "convex/server";
+import type { Value } from "convex/values";
 import type { AnyReadModel } from "./projection.js";
 // A read-model row as a query returns it: the document ID, its creation time and the generation stay
 // in the parent.
@@ -22,39 +23,46 @@ export const limitReadModelList = (readModel: AnyReadModel): PageLimit => ({
   bytes: limitListBytes,
 });
 // A client's page options with each cursor moved into the generation now active. A cursor of
-// paginator is the JSON of a row's index key, whose second element is the generation that wrote the
-// row; a key of the index's fields plus two also carries that document's _creationTime and _id, which
-// are dropped. A cursor already moved keeps its length, so moving it again replaces the generation alone.
+// paginator is the JSON of a row's index key. Its equality prefix must be the query's, apart from the
+// generation at the second place, which is replaced; a key of the index's fields plus two also carries
+// that document's _creationTime and _id, which are dropped. A cursor already moved keeps its length, so
+// moving it again replaces the generation alone. Any other cursor is refused before a read.
 export function pageInGeneration(
   opts: PaginationOptions,
-  generation: number,
+  prefix: readonly Value[],
   indexFields: number,
 ): PaginationOptions {
   const moved = {
     ...opts,
-    cursor: moveCursor(opts.cursor, generation, indexFields),
+    cursor: moveCursor(opts.cursor, prefix, indexFields),
   };
   if (opts.endCursor !== undefined && opts.endCursor !== null)
-    moved.endCursor = moveCursor(opts.endCursor, generation, indexFields);
+    moved.endCursor = moveCursor(opts.endCursor, prefix, indexFields);
   return moved;
 }
+const generationAt = 1;
 function moveCursor(
   cursor: string | null,
-  generation: number,
+  prefix: readonly Value[],
   indexFields: number,
 ) {
-  if (cursor === null) return cursor;
+  // null starts the list; "[]" is paginator's end of the list.
+  if (cursor === null || cursor === "[]") return cursor;
   let key: unknown;
   try {
     key = JSON.parse(cursor);
   } catch {
-    return cursor;
+    key = undefined;
   }
   if (
     !Array.isArray(key) ||
     (key.length !== indexFields && key.length !== indexFields + 2) ||
-    typeof key[1] !== "number"
+    typeof key[generationAt] !== "number" ||
+    prefix.some(
+      (value, i) =>
+        i !== generationAt && JSON.stringify(key[i]) !== JSON.stringify(value),
+    )
   )
-    return cursor;
-  return JSON.stringify([key[0], generation, ...key.slice(2, indexFields)]);
+    throw new Error("The cursor is not from this list");
+  return JSON.stringify([...prefix, ...key.slice(prefix.length, indexFields)]);
 }

@@ -63,7 +63,11 @@ export const listDocumentSummaries = query({
       )
       .paginate(
         boundedPage(
-          pageInGeneration(paginationOpts, generation, byStatusFields),
+          pageInGeneration(
+            paginationOpts,
+            [tenantId, generation, status],
+            byStatusFields,
+          ),
           limitReadModelList(documentSummary),
         ),
       );
