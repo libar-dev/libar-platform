@@ -2317,3 +2317,33 @@ test("convex-test: a failed activation commits neither half of the switch", asyn
   expect((await read(t, old)).generation.state).toBe("active");
   expect((await read(t, id)).generation.state).toBe("verified");
 });
+
+// rebuild.sdp.md fnStartGeneration:115, Design:107; projection-contract.sdp.md readModelRowShape.
+test("convex-test: startGeneration schedules exactly one batch and an install leaves one row per subject and no marker", async () => {
+  const t = rebuildApp();
+  for (const documentId of ["a1", "a2", "a3"]) await create(t, documentId);
+  const before = await scheduled(t);
+  const id = await start(t);
+  const added = (await scheduled(t)).filter(
+    (row) => !before.some((prior) => prior._id === row._id),
+  );
+  expect(added.map(({ name, args }) => ({ name, args }))).toStrictEqual([
+    { name: "rebuild:backfillBatch", args: [{ generationId: id, fence: 1 }] },
+  ]);
+  await finish(t, id);
+  await t.mutation(internal.rebuild.switchGeneration, {
+    generationId: id,
+    operator,
+  });
+  const generation = (await read(t, id)).generation.generation;
+  expect(
+    (await rows(t))
+      .filter((row) => row.generation === generation)
+      .map(({ key }) => key)
+      .sort(),
+  ).toStrictEqual(["a1", "a2", "a3"]);
+  // documentTitle is a per-entity read model: markers belong to aggregate rows, so none is written.
+  expect(
+    await t.run((ctx) => ctx.db.query("projectionMarkers").collect()),
+  ).toStrictEqual([]);
+});
