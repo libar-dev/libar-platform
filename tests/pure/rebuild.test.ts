@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { documentTitle } from "../../fixture/convex/documentTitles.js";
+import { deletedTitle } from "../../fixture/convex/depot/streams.js";
+import {
+  documentTitle,
+  projectionFaultTitle,
+} from "../../fixture/convex/documentTitles.js";
 import {
   applyProjection,
   projectionOf,
@@ -23,6 +27,26 @@ test("pure: projectionOf selects the declared version and the latest projection 
   expect(() => projectionOf(readModel, 7)).toThrowError(
     new Error("Read model documentTitle declares no projection of version 7"),
   );
+});
+
+// native-harness.sdp.md fixtureReadModel:90: version 2 projects the deleted document to null,
+// version 1 projects it as any other, and both throw for the fault title.
+test("pure: the fixture's documentTitle versions differ only on the deleted document", () => {
+  const [second, first] = documentTitle.projections;
+  const live = { documentId: "d", title: "live" };
+  const deleted = { documentId: "d", title: deletedTitle };
+  expect(second.project("tenant-a", live, [])).toStrictEqual(live);
+  expect(first?.project("tenant-a", live, [])).toStrictEqual(live);
+  expect(second.project("tenant-a", deleted, [])).toBeNull();
+  expect(first?.project("tenant-a", deleted, [])).toStrictEqual(deleted);
+  for (const projection of [second, first])
+    expect(() =>
+      projection?.project(
+        "tenant-a",
+        { documentId: "d", title: projectionFaultTitle },
+        [],
+      ),
+    ).toThrow();
 });
 
 // rebuild.sdp.md fnBatchSizeFor:116, limitBatchSize:146, limitPurgeBatch:147.

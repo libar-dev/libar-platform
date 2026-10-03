@@ -419,12 +419,15 @@ test("convex-test: page cursors continue, tenants cross in tenant-ID order and v
       updatedAt: 1010,
     },
   });
+  // step6: a pass that is not done schedules the same batch with the same fence.
+  await lastSchedule(t, "backfillBatch", { generationId: id, fence: 1 });
   later();
   await batch(t, id);
   expect((await read(t, id)).progress.cursor).toStrictEqual({
     tenantId: "tenant-z",
     pageCursor: null,
   });
+  await lastSchedule(t, "backfillBatch", { generationId: id, fence: 1 });
   expect((await rows(t)).map((r) => r.key).sort()).toEqual(["a1", "a2", "a3"]);
   later();
   await batch(t, id);
@@ -448,6 +451,8 @@ test("convex-test: page cursors continue, tenants cross in tenant-ID order and v
     pageCursor: first.continueCursor,
   });
   expect((await read(t, id)).progress.rowsSkipped).toBe(2);
+  // verifySteps: a verify pass that is not done schedules verifyBatch with the same fence.
+  await lastSchedule(t, "verifyBatch", { generationId: id, fence: 1 });
 });
 
 // rebuild.sdp.md step2:122, step6:126. The empty tenant is an independent tenant-list obligation.
@@ -1490,6 +1495,11 @@ test("convex-test: purge crosses tenants and checkpoints only progress until the
     "tenant-a",
     "tenant-z",
   ]);
+  // purgeSteps: a purge pass that is not done schedules purgeBatch with the same fence.
+  await lastSchedule(t, "purgeBatch", {
+    generationId: id,
+    fence: before.generation.fence,
+  });
   later();
   await batch(t, id);
   expect(await read(t, id)).toStrictEqual({
