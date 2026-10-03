@@ -9,6 +9,9 @@ relations:
     - spec:command.command-pipeline
     - spec:command.outcome-boundary
     - spec:kernel.outcome-model
+    - spec:application.projection-contract
+    - spec:context.persistence-adapter
+    - spec:operations.baseline-operations
   decidedBy: spec:decisions.d12-one-declaration-per-command
   constrainedBy:
     - spec:facts.f13-transactions-have-limits

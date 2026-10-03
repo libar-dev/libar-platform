@@ -14,6 +14,9 @@ relations:
     - spec:laws.law11-tenant-scope-named
     - spec:facts.f17-migrations-fits-generation-backfill
     - spec:laws.law06-technical-failure-never-a-rejection
+  dependsOn:
+    - spec:application.projection-contract
+    - spec:command.actor-and-scope
 ---
 # Generation registry
 

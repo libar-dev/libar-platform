@@ -8,6 +8,7 @@ relations:
   dependsOn:
     - spec:kernel.domain-kernel
     - spec:command.actor-and-scope
+    - spec:context.event-envelope
   decidedBy:
     - spec:decisions.d02-context-owns-state-and-journal
     - spec:decisions.d05-rebuildable-history-with-baselines
@@ -23,6 +24,7 @@ relations:
     - spec:facts.f01-serializable-mutations-under-occ
     - spec:facts.f03-nested-run-mutation-partial-rollback
     - spec:facts.f13-transactions-have-limits
+    - spec:facts.f19-nested-calls-share-time-budgets
 ---
 # The context component
 

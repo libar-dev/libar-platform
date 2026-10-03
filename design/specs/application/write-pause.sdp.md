@@ -15,6 +15,9 @@ relations:
     - spec:facts.f11-components-have-no-ctx-auth
     - spec:facts.f12-backups-exclude-pending-scheduled-functions
     - spec:facts.f09-scheduled-mutation-and-action-retry-semantics
+  dependsOn:
+    - spec:command.actor-and-scope
+    - spec:operations.baseline-operations
 ---
 # Write pause
 

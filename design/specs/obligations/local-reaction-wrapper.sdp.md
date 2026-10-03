@@ -9,6 +9,9 @@ relations:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
     - spec:command.outcome-boundary
+    - spec:application.write-pause
+    - spec:command.actor-and-scope
+    - spec:obligations.fan-out-and-chains
   constrainedBy:
     - spec:facts.f03-nested-run-mutation-partial-rollback
     - spec:facts.f08-scheduling-commits-with-mutation

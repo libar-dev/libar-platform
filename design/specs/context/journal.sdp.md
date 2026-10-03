@@ -8,6 +8,7 @@ relations:
   decidedBy:
     - spec:decisions.d02-context-owns-state-and-journal
     - spec:decisions.d05-rebuildable-history-with-baselines
+    - spec:kernel.state-document-mapping
   constrainedBy:
     - spec:laws.law03-events-only-source-of-state
     - spec:laws.law10-replay-never-runs-commands-or-effects
@@ -20,6 +21,10 @@ relations:
     - spec:facts.f02-component-calls-commit-with-caller
     - spec:facts.f08-scheduling-commits-with-mutation
     - spec:facts.f09-scheduled-mutation-and-action-retry-semantics
+    - spec:constraints.events-stay-small
+  dependsOn:
+    - spec:application.write-pause
+    - spec:context.tables
 ---
 # The journal
 

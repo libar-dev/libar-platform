@@ -14,6 +14,7 @@ relations:
   constrainedBy:
     - spec:laws.law01-sanctioned-writes-only
     - spec:laws.law09-no-invariant-on-late-read-model
+  dependsOn: spec:context.batch-shaped-api
 ---
 # Orders and Inventory, the example domain
 

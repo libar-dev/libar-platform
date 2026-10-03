@@ -13,6 +13,7 @@ relations:
     - spec:facts.f15-parent-query-over-component-query-stays-reactive
     - spec:facts.f16-scheduled-functions-table-shows-failed-runs
     - spec:facts.f17-migrations-fits-generation-backfill
+    - spec:platform.native-harness
   constrainedBy:
     - spec:facts.f04-nested-calls-cost-more-than-helpers
     - spec:facts.f05-react-client-retries-until-confirmed

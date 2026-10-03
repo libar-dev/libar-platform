@@ -9,6 +9,7 @@ relations:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
     - spec:obligations.local-reaction-wrapper
+    - spec:command.actor-and-scope
   constrainedBy:
     - spec:facts.f09-scheduled-mutation-and-action-retry-semantics
     - spec:facts.f10-action-mutation-calls-are-separate-transactions

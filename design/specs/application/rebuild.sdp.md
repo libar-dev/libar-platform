@@ -11,6 +11,7 @@ relations:
     - spec:application.generation-registry
     - spec:application.write-pause
     - spec:context.queries
+    - spec:command.actor-and-scope
   constrainedBy:
     - spec:laws.law10-replay-never-runs-commands-or-effects
     - spec:laws.law11-tenant-scope-named

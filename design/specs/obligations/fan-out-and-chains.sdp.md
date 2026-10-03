@@ -9,6 +9,8 @@ relations:
     - spec:obligations.record-contract
     - spec:command.command-pipeline
     - spec:command.actor-and-scope
+    - spec:command.command-declaration
+    - spec:context.event-envelope
   constrainedBy:
     - spec:facts.f13-transactions-have-limits
     - spec:facts.f08-scheduling-commits-with-mutation

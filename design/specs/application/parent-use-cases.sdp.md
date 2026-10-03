@@ -9,6 +9,8 @@ relations:
     - spec:context.context-component
     - spec:context.batch-shaped-api
     - spec:command.command-pipeline
+    - spec:command.command-declaration
+    - spec:context.persistence-adapter
   constrainedBy:
     - spec:laws.law01-sanctioned-writes-only
     - spec:laws.law02-state-and-events-commit-together

@@ -19,6 +19,9 @@ relations:
     - spec:application.read-models
     - spec:application.rebuild
     - spec:application.restore
+    - spec:application.generation-registry
+    - spec:command.actor-and-scope
+    - spec:platform.native-harness
   constrainedBy:
     - spec:constraints.one-commit-per-successful-command
     - spec:constraints.zero-core-projection-jobs

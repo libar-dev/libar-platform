@@ -1,0 +1,64 @@
+{
+  "pairs": [
+    {
+      "from": "spec:application.rebuild.write-pause-rebuild-abort",
+      "to": "spec:application.orders-inventory-example",
+      "reason": "An example keeps only its refines and verifies edges; the Verification bullet names the fixture view it runs on."
+    },
+    {
+      "from": "spec:application.rebuild.write-pause-rebuild-interrupt",
+      "to": "spec:application.orders-inventory-example",
+      "reason": "An example keeps only its refines and verifies edges; the Verification bullet names the fixture view it runs on."
+    },
+    {
+      "from": "spec:command.command-declaration.broken-argument-contract-fails-build",
+      "to": "spec:platform.acceptance-contract",
+      "reason": "An example keeps only its refines and verifies edges; the Verification bullet names where the compiled tier comes from."
+    },
+    {
+      "from": "spec:command.command-declaration.renamed-handler-fails-build",
+      "to": "spec:platform.acceptance-contract",
+      "reason": "An example keeps only its refines and verifies edges; the Verification bullet names where the compiled tier comes from."
+    },
+    {
+      "from": "spec:command.idempotency-and-receipts.ui-double-submit",
+      "to": "spec:application.parent-use-cases",
+      "reason": "An example keeps only its refines and verifies edges; the Verification bullet cites the call order the use case rules."
+    },
+    {
+      "from": "spec:command.tenancy-and-authority.client-claims-agent-namespace",
+      "to": "spec:command.tenancy-and-authority.client-claims-system-namespace",
+      "reason": "The narrative names a sibling example as the first case; an example keeps only its refines and verifies edges."
+    },
+    {
+      "from": "spec:command.tenancy-and-authority.client-claims-system-namespace",
+      "to": "spec:command.tenancy-and-authority.client-claims-agent-namespace",
+      "reason": "The narrative names a sibling example as the second case; an example keeps only its refines and verifies edges."
+    },
+    {
+      "from": "spec:facts.probe-plan",
+      "to": "spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-hosted-function-calls",
+      "reason": "An open question points at the hosted example that runs Probe 3's quota half; the plan does not build on it."
+    },
+    {
+      "from": "spec:kernel.decider-contract",
+      "to": "spec:command.actor-and-scope",
+      "reason": "The kernel's actor type is structural and imports nothing from the command family; the mention names what is passed."
+    },
+    {
+      "from": "spec:operations.baseline-operations.broken-metrics-never-abort",
+      "to": "spec:operations.baseline-operations.broken-audit-aborts",
+      "reason": "A Verification bullet says two steps match a sibling example's; an example keeps only its refines and verifies edges."
+    },
+    {
+      "from": "spec:platform.native-harness",
+      "to": "spec:command.tenancy-and-authority",
+      "reason": "An open question names the rule the fixture's stand-in entry bends; the harness does not build on it."
+    },
+    {
+      "from": "spec:platform.vocabulary",
+      "to": "spec:command.actor-and-scope",
+      "reason": "A vocabulary term points at where the caller namespace union is pinned; the glossary depends on nothing here."
+    }
+  ]
+}
