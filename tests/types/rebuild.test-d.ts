@@ -101,10 +101,10 @@ test("compiled: example startGeneration arguments, visibility and return", () =>
     projectionVersion: 2,
     batchSize: 1,
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.startGeneration, {
     readModel: "documentTitle",
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     projectionVersion: "2",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -165,10 +165,10 @@ test("compiled: example resumeGeneration arguments, visibility and return", () =
     generationId,
     operator: "operator",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.resumeGeneration, {
     generationId,
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     batchSize: 2,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -208,10 +208,10 @@ test("compiled: example switchGeneration arguments, visibility and return", () =
     operator: "operator",
     rollbackPeriodMs: 0,
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.switchGeneration, {
     generationId,
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     rollbackPeriodMs: "0",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -242,9 +242,9 @@ test("compiled: example rollbackGeneration arguments, visibility and return", ()
     generationId,
     operator: "operator",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.rollbackGeneration, {
     generationId,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     operator: 1,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -313,10 +313,10 @@ test("compiled: example purgeGeneration arguments, visibility and return", () =>
     generationId,
     operator: "operator",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.purgeGeneration, {
     generationId,
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     batchSize: 1,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -347,9 +347,9 @@ test("compiled: example backfillBatch arguments, visibility and return", () => {
     generationId,
     fence: 1,
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.backfillBatch, {
     generationId,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     fence: "1",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -402,10 +402,10 @@ test("compiled: example purgeBatch arguments, visibility and return", () => {
   const ctx = {} as MutationCtx;
   const generationId = "generation" as Id<"generations">;
   void ctx.runMutation(example.rebuild.purgeBatch, { generationId, fence: 1 });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.purgeBatch, {
     generationId,
     fence: 1,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     batchSize: 1,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -448,9 +448,9 @@ test("compiled: example fillTenantsBatch arguments, visibility and return", () =
   const ctx = {} as MutationCtx;
   const generationId = "generation" as Id<"generations">;
   void ctx.runMutation(example.rebuild.fillTenantsBatch, { fence: 1 });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(example.rebuild.fillTenantsBatch, {
     fence: 1,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     generationId,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -480,9 +480,9 @@ test("compiled: example getGenerations arguments, visibility and return", () => 
   void ctx.runQuery(example.rebuild.getGenerations, {
     readModel: "documentTitle",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runQuery(example.rebuild.getGenerations, {
     readModel: "documentTitle",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     operator: "operator",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -524,10 +524,10 @@ test("compiled: fixture startGeneration arguments, visibility and return", () =>
     projectionVersion: 2,
     batchSize: 1,
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.startGeneration, {
     readModel: "documentTitle",
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     projectionVersion: "2",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -588,10 +588,10 @@ test("compiled: fixture resumeGeneration arguments, visibility and return", () =
     generationId,
     operator: "operator",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.resumeGeneration, {
     generationId,
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     batchSize: 2,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -631,10 +631,10 @@ test("compiled: fixture switchGeneration arguments, visibility and return", () =
     operator: "operator",
     rollbackPeriodMs: 0,
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.switchGeneration, {
     generationId,
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     rollbackPeriodMs: "0",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -665,9 +665,9 @@ test("compiled: fixture rollbackGeneration arguments, visibility and return", ()
     generationId,
     operator: "operator",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.rollbackGeneration, {
     generationId,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     operator: 1,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -736,10 +736,10 @@ test("compiled: fixture purgeGeneration arguments, visibility and return", () =>
     generationId,
     operator: "operator",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.purgeGeneration, {
     generationId,
     operator: "operator",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     batchSize: 1,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -770,9 +770,9 @@ test("compiled: fixture backfillBatch arguments, visibility and return", () => {
     generationId,
     fence: 1,
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.backfillBatch, {
     generationId,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     fence: "1",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -825,10 +825,10 @@ test("compiled: fixture purgeBatch arguments, visibility and return", () => {
   const ctx = {} as MutationCtx;
   const generationId = "generation" as Id<"generations">;
   void ctx.runMutation(fixture.rebuild.purgeBatch, { generationId, fence: 1 });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.purgeBatch, {
     generationId,
     fence: 1,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     batchSize: 1,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -871,9 +871,9 @@ test("compiled: fixture fillTenantsBatch arguments, visibility and return", () =
   const ctx = {} as MutationCtx;
   const generationId = "generation" as Id<"generations">;
   void ctx.runMutation(fixture.rebuild.fillTenantsBatch, { fence: 1 });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runMutation(fixture.rebuild.fillTenantsBatch, {
     fence: 1,
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     generationId,
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -903,9 +903,9 @@ test("compiled: fixture getGenerations arguments, visibility and return", () => 
   void ctx.runQuery(fixture.rebuild.getGenerations, {
     readModel: "documentTitle",
   });
-  // @ts-expect-error The entry accepts only the arguments its validator declares.
   void ctx.runQuery(fixture.rebuild.getGenerations, {
     readModel: "documentTitle",
+    // @ts-expect-error The entry accepts only the arguments its validator declares.
     operator: "operator",
   });
   // @ts-expect-error The return validator does not accept a boolean.
@@ -950,7 +950,7 @@ test("compiled: rebuild configuration and helpers have the pinned signatures", (
   }>();
   type AnyModel = RebuildTarget["readModel"];
   expectTypeOf<typeof batchSizeFor>().parameters.toEqualTypeOf<
-    [readModel: AnyModel, requested?: number]
+    [readModel: AnyModel, requested?: number | undefined]
   >();
   expectTypeOf<typeof rebuildBatchCeiling>().parameters.toEqualTypeOf<
     [readModel: AnyModel]
