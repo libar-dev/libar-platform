@@ -56,16 +56,16 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 
 ### Open questions
 
-- [non-blocking] OQ1: whether a trivial context with no invariants of its own may be plain tables behind lint rules is decided after this experiment measures component call cost (OQ1, Probe 3)
+- [non-blocking] OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on this experiment's local measurement of component call cost, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, Probe 3)
 - [non-blocking] Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model (E-46, First experiment)
 - [non-blocking] Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)
 - [non-blocking] Extension E-47, the documents a command reads: the design expected one `PlaceOrder` of N lines to read about N + 6 documents, and the pinned backend counted 3N + 5; the measurement run decides where the other 2N reads come from (E-47, F13)
 - [non-blocking] Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a run seeds its grants and makes the order summary writable with admin access before its first command, the production composition names no service issuer, its `auth.config.ts` reads its issuer from environment variables, and it is the Convex app whose project directory is `example/`; these are options taken here and the owner has not ruled (E-8, E-13, E-15, E-37, E-46)
-- [non-blocking] Extension E-17, the rows the experiment requires: the doc says the experiment passes when every Layer 0, 1 and 2 scenario passes, and its one all-layer row, Sc ALL-1, applies to every installed layer; the option taken here requires the twenty-three rows the doc's table gives Layer 0, 1 or 2 and leaves Sc ALL-1 to the Spec that owns it; the owner rules whether the experiment's pass includes Sc ALL-1 (E-17, First experiment, Sc ALL-1)
+- [non-blocking] Extension E-17, the rows the experiment requires: the doc says the experiment passes when every Layer 0, 1 and 2 scenario passes, and its one all-layer row, Sc ALL-1, applies to every installed layer; the option taken here requires the twenty-three rows the doc's table gives Layer 0, 1 or 2 and Sc ALL-1, each at the tier the acceptance contract names for it, so that the native proof of the audit and the diagnostic is part of the experiment; the owner confirmed both (E-17, First experiment, Sc ALL-1)
 
 ## Workflow
 
-- rule: The experiment passes when every Layer 0, 1 and 2 scenario passes on a native backend (First experiment)
+- rule: The experiment passes when every Layer 0, 1 and 2 scenario and Sc ALL-1 passes, each at the tier `spec:platform.acceptance-contract` names for it (First experiment, Sc ALL-1)
 - rule: [extension] Whether the experiment passed is answered by the acceptance check of `spec:platform.acceptance-contract`, over the rows `acceptanceRows` names and one run's record; no single example and no single test answers it (E-17, First experiment)
 - rule: It builds Layers 0 to 2 in a small, clean application: Orders and Inventory, complete order placement, one more lifecycle command, one essential summary, journal inspection and rebuild (First experiment)
 - rule: It reuses the pure deciders and state machines where they fit, under the one-authority rule of D3, and leaves the current app's infrastructure behind (First experiment, D3)
@@ -132,7 +132,7 @@ The experiment is an application, a test suite and a report. The application is 
 - targetContention: with N `PlaceOrder` commands at once on one stock item that has stock for one, at N of 2 and 8 every command ends applied or rejected, one applied and the rest rejected for short stock, and the engine fails none after its bounded retries; at N of 32 the same count is reported, and a command the engine failed is a recorded cost and no failure of the experiment, because the caller repeats it under the same request key (First experiment, Sc L1-11, F1)
 - deliverables: the application in this repository, beside the design, which settles OQ4, the native evidence records of every scenario run, and the measurement report with the six cost targets and the speed targets marked held or not held against measured fields; one explicit timing command records the latency distribution after discarded warmups and throughput with its write cap, prints each fixed speed target as held or not held, and labels readings taken under load for replacement by a quiet-machine reading; speed misses are report values, not failing assertions (First experiment, OQ4, Acceptance scenarios, E-47)
 - authProvider: [extension] the production composition's `auth.config.ts` declares one `customJwt` provider whose `issuer`, `applicationID` and `jwks` are environment variables of the deployment, as `spec:platform.native-harness` pins for a composition that runs natively (E-13, D11)
-- acceptanceRows: [extension] the rows the experiment's acceptance check requires are Sc L0-1, Sc L0-2, Sc L1-1, Sc L1-2, Sc L1-3, Sc L1-4, Sc L1-5, Sc L1-6, Sc L1-7, Sc L1-8, Sc L1-9, Sc L1-10, Sc L1-11, Sc L1-12, Sc L2-1, Sc L2-2, Sc L2-3, Sc L2-4, Sc L2-5, Sc L2-6, Sc L2-7, Sc L2-8 and Sc L2-9, which are the rows the doc's table gives Layer 0, 1 or 2 (E-17, First experiment, Acceptance scenarios)
+- acceptanceRows: [extension] the rows the experiment's acceptance check requires are Sc L0-1, Sc L0-2, Sc L1-1, Sc L1-2, Sc L1-3, Sc L1-4, Sc L1-5, Sc L1-6, Sc L1-7, Sc L1-8, Sc L1-9, Sc L1-10, Sc L1-11, Sc L1-12, Sc L2-1, Sc L2-2, Sc L2-3, Sc L2-4, Sc L2-5, Sc L2-6, Sc L2-7, Sc L2-8, Sc L2-9 and Sc ALL-1, which are the rows the doc's table gives Layer 0, 1 or 2 and the one all-layer row (E-17, First experiment, Acceptance scenarios)
 
 ## Example space
 
@@ -158,6 +158,6 @@ And the order's OrderPlaced payload measures {payloadBytes:number} bytes
 
 ## Verification — reviewed
 
-- The acceptance check confirms that every row `acceptanceRows` names has an example with a verifier and a passing result in one run's record, and a pure test confirms that `acceptanceRows` names exactly the rows the doc's table gives Layer 0, 1 or 2.
+- The acceptance check confirms that every row `acceptanceRows` names has an example with a verifier and a passing result in one run's record, and a pure test confirms that `acceptanceRows` names exactly the rows the doc's table gives Layer 0, 1 or 2 and Sc ALL-1.
 - A reviewer confirms that each of the six constraint targets is compared against a measurement field and that the comparison is in the report.
 - A reviewer confirms that the reused deciders return events and a result only, never a state patch.

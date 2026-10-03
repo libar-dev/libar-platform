@@ -8,6 +8,7 @@ relations:
   constrainedBy:
     - spec:laws.law10-replay-never-runs-commands-or-effects
     - spec:facts.f01-serializable-mutations-under-occ
+    - spec:facts.f18-commit-timestamps
 ---
 # Ordered event consumer
 
@@ -36,7 +37,7 @@ Order is per tenant, consumer, generation and partition, with the smallest parti
 - rule: A duplicate delivery is applied once because the consumer position advances only past applied sequence numbers (D18, F1)
 - rule: A poison event blocks only its partition; skipping it is an authorized, recorded data-loss decision, and the consumer contract says whether it is allowed (D18)
 - rule: The consumer never runs commands or external effects while applying events (D18, Law 10)
-- rule: No deployment-wide order token exists; a global ordered feed is a separate capability with its own trigger (D18, D2)
+- rule: The journal keeps no deployment-wide order token; a global ordered feed is a separate capability with its own trigger, and the engine's commit timestamp of F18 is weighed as its position when that consumer is designed (D18, D2, F18)
 
 ## Design
 

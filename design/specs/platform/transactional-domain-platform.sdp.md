@@ -34,14 +34,14 @@ Citations in this corpus use the tokens the plan fixes: D for a decision, Law fo
 - problem: Adding a domain capability to today's platform adds a queue, a projection job, a registry or a governance table before it adds a business rule, and each of those then needs its own recovery, inspection and retention; a maintainer cannot trace one command's success or failure without unrelated machinery (Thesis, Decision method rule 7)
 - outcome: Adding domain sophistication does not add infrastructure: one mutation per business operation, contexts that own their state and journal, and layers each usable before the next exists (Thesis)
 - value: A new feature needs only its domain input, events and decision, one command or use-case binding, and the read model it actually uses; a maintainer traces its success and failure without unrelated queue, agent or governance registries (Thesis)
-- risk: Every read of context data from the parent is a component call whose cost the first experiment must measure; if it breaks the read budgets, the shape of the context component changes before Layer 3 is designed (D2, Probe 3, OQ1)
+- risk: Every read of context data from the parent is a component call, whose cost the first experiment measured on the local backend and which keeps every context a component; a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, changes the shape of the context component before Layer 3 is designed (D2, Probe 3, OQ1)
 - risk: Nothing has run yet; the sources support the Convex facts, not the correctness or performance of the design (Sources)
 - assumption: Mutations are serializable under optimistic concurrency, and component calls commit or roll back with the calling mutation (F1, F2)
 - assumption: One ledger fact is still assumed, and three that the doc lists as assumed are rechecked or probed in the corpus; each Spec that rests on one names it and the probe plan names the probe (F14, F15, F16, F17)
 
 ### Open questions
 
-- [non-blocking] OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability; the owner confirms the mapping or chooses rule Specs for facts, which is a mechanical change (OQ5)
+- [non-blocking] OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability, which is the form the doc's behavior rules with examples take here; the owner confirmed the mapping (OQ5)
 
 ## Behavior
 

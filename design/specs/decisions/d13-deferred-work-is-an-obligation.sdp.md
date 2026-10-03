@@ -32,7 +32,7 @@ An obligation records one promise. It commits in the same transaction as the bus
 
 ### Open questions
 
-- [non-blocking] Probe 7 observes the local scheduled reaction, states, scan boundary and both CLI replacement modes; the owner must apply those measurements to the do-nothing check before activation; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain unprobed (Probe 7, D13, F12, F16)
+- [non-blocking] Probe 7 observes the local scheduled reaction, states, scan boundary and both CLI replacement modes; the owner confirmed D13 on these observations; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain unprobed (Probe 7, D13, F12, F16)
 
 ## Decision
 

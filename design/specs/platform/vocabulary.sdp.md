@@ -10,20 +10,20 @@ relations:
 
 Feature · Detail: full transcription · Traces: Vocabulary, D2, D3, D4, D6, D8, D9, D11, D13, OQ6.
 
-The doc fixes nine terms and names two clashes with today's glossary. This model carries those nine, the words the doc uses without defining them separately, and the terms the other packages need so that every family names one concept with one word. Where a Convex term and a doc term differ, the doc's word names the design concept and the Convex word names the mechanism: an obligation is the record, a scheduled function is the dispatch. Stream version, never revision. Obligation for the record, effect for the change it makes, attempt for one try. Receipt for the stored idempotency outcome. Generation for a numbered read-model build.
+`CONTEXT.md` is the platform's language and this model follows it: where the two differ, `CONTEXT.md`'s word wins and this list is corrected. The doc fixes nine terms and names two clashes with today's glossary. This model carries those nine, the words the doc uses without defining them separately, and the terms the other packages need so that every family names one concept with one word. Where a Convex term and a doc term differ, the doc's word names the design concept and the Convex word names the mechanism: an obligation is the record, a scheduled function is the dispatch. Stream version, never revision. Obligation for the record, effect for the change it makes, attempt for one try. Receipt for the stored idempotency outcome. Generation for a numbered read-model build.
 
-The two clashes stay open for the owner. The corpus proceeds on the provisional reading recorded in the open questions: a row that proves an effect happened is completion evidence, and the attempt number of watched work is the attempt.
+The two clashes are answered: a row that proves an effect happened is completion evidence, and the attempt number of watched work is the attempt.
 
 ## Intent
 
-- outcome: One word per concept across every package of the corpus, with the doc's meaning where the doc fixes one and the two glossary clashes recorded rather than resolved (Vocabulary, OQ6)
+- outcome: One word per concept across every package of the corpus, with the doc's meaning where the doc fixes one and `CONTEXT.md`'s word where the two glossary clashes were answered (Vocabulary, OQ6)
 - value: Specs, code and tests name the same things the same way, and a reviewer can reject a synonym for a locked term by pointing at one list (Vocabulary)
-- risk: Two terms clash with today's glossary; until the owner picks one meaning each, code must not name a receipt or a generation (OQ6)
+- risk: A word used for two things is a gap in the language; a reviewer reports it against `CONTEXT.md`, and the owner rules on the term (OQ6)
 
 ### Open questions
 
-- [non-blocking] OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the corpus reads the latter as completion evidence and the owner picks one meaning before code names it (OQ6, Vocabulary)
-- [non-blocking] OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the corpus reads the latter as attempt and the owner picks one meaning before code names it (OQ6, Vocabulary)
+- [non-blocking] OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the owner answered OQ6 with receipt for the stored outcome of a command and completion evidence for the row that proves an effect happened (OQ6, Vocabulary)
+- [non-blocking] OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the owner answered OQ6 with generation for a numbered build of a read model and attempt for one try at an obligation (OQ6, Vocabulary)
 
 ## Model
 
@@ -34,8 +34,12 @@ The two clashes stay open for the owner. The corpus proceeds on the provisional 
 - **event** — A recorded fact in a stream's history, carried in the fifteen-field envelope that D2 fixes (D2).
 - **envelope** — The fifteen fields every event carries: identity, ownership scope, position in the stream, historical contract, operation, correlation, cause, actor, times and payload (D2).
 - **baseline event** — An event holding migrated state, from which rebuild starts; earlier events stay as readable history (Vocabulary, D5).
-- **command** — A request to change one context's state, evaluated by `decide` against current state; commands load current state and apply only new events (D3).
-- **decider** — The pure domain code of a context: `decide`, `evolve` and the initial state, reading no database, network, scheduler, environment or ambient auth (D3).
+- **command** — A caller's request to the parent to carry out one business operation, with one declaration and exactly one outcome; a stream command is the part addressed to one stream, which that stream's decider decides against current state, loading current state and applying only new events (D3, D10).
+- **entry** — A function the parent registers for a caller: a public command, an internal command, a parent query or an operator entry (D7, D19).
+- **parent query** — A read the parent answers to a caller, authorized in the parent, relaying a context query or reading a read model (D8, D11).
+- **context query** — A read a context answers to the parent, returning a DTO (D8).
+- **query refusal** — The refusal of a parent query, in a rejection's wire shape with the name of the entry that refused; it is not an outcome and nothing is recorded (D7, Law 5).
+- **decider** — The pure rules of one stream type: `decide`, `evolve` and the initial state, reading no database, network, scheduler, environment or ambient auth (D3).
 - **fold** — Computing the next state as `fold(evolve, state, newEvents)`; the one authority for state (D3).
 - **outcome** — One of applied, business failure, rejection or technical failure (D4).
 - **applied** — The outcome where events were recorded and state changed (D4).
@@ -58,6 +62,19 @@ The two clashes stay open for the owner. The corpus proceeds on the provisional 
 - **projection** — The named, versioned, deterministic logic that maintains a read model; live update and rebuild share it (D8).
 - **DTO** — The deliberate shape a context query returns; the context's private schema stays private (D8).
 - **generation** — A numbered build of a read model (Vocabulary, D9).
+- **installation** — Making a read model exist in a deployment: its declaration and its first rebuild (D9).
+- **backfill** — The part of a rebuild that writes a generation's rows from its sources (D9).
+- **verification** — The part of a rebuild that checks a generation's rows against its sources and corrects them (D9).
+- **pass** — One traversal of a rebuild over its sources or its rows: a backfill, a verification, a purge or a fill (D9).
+- **switch** — Making a verified generation the one readers see (D9).
+- **rollback** — Making a retired generation the one readers see again (D9).
+- **retired generation** — A generation readers no longer see, kept until it is purged (D9).
+- **purge** — Deleting a retired generation's rows (D9).
+- **fence** — The number a generation's batches carry so that a stale batch writes nothing (D9).
+- **progress row** — The row that holds where a rebuild stands, read by its batches and by no command (D9).
+- **tenant list** — The parent's list of tenants, which a rebuild and a sweep walk (D11, D19).
+- **backup archive** — The exported file of a deployment's table data at one moment, which a restore imports; a snapshot is a transaction's view of the database, never the archive (D19).
+- **stated operator** — The name an administrator states at an operator entry; it records who said they acted and establishes no actor (D19, D11).
 - **write pause** — The maintenance gate under which a read model that depends on history across several streams rebuilds; every writer in scope reads it (D9).
 - **obligation** — The durable record of promised deferred work; one promise, committed with the business change (Vocabulary, D13).
 - **effect** — The change a piece of deferred work makes, as distinct from the obligation that records the promise (Vocabulary, D13).

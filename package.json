@@ -2,6 +2,7 @@
   "name": "libar-platform",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "description": "The Convex transactional domain platform: its design as a Software Delivery Protocol corpus, and the code built from it.",
   "engines": {

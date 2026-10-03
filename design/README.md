@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-232 specs · 5 packs · 131 anchors → 368 nodes · 1223 edges (0 errors, 0 warnings)
+232 specs · 5 packs · 131 anchors → 368 nodes · 1225 edges (0 errors, 0 warnings)
 validate: 0 errors · 0 warnings (conformance + honesty over the one graph)
 ```
 
@@ -220,7 +220,7 @@ An extension is a design claim the doc does not make. Each one is three things t
 | E-39 | [`command.idempotency-and-receipts`](specs/command/idempotency-and-receipts.sdp.md) | The second UI submit of a create is answered with the rejection `entityExists`, not an idempotent success, because the UI path writes no receipt to replay from and the client holds the entity ID |
 | E-40 | [`application.rebuild`](specs/application/rebuild.sdp.md), [`application.generation-registry`](specs/application/generation-registry.sdp.md) | A batch is one mutation with one cursor on the progress row, at most 100 entities capped by the row budget and by the context's byte-derived page bound, a design number not attributed to the component; a self-scheduled internal mutation drives every batch, the backfill, the verify pass and the purge, and the rebuild uses `@convex-dev/migrations` for nothing; one batch names one tenant, taken from the tenant list; a fence that every interrupt, resume, rollback, abort and purge start raises |
 | E-41 | [`application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | The caller-driven import command with an `imports` progress row; the input bound itself is the declaration's `bounds.maxItems` under E-38 |
-| E-42 | [`application.restore`](specs/application/restore.sdp.md), [`application.generation-registry`](specs/application/generation-registry.sdp.md) | Four checks (journal, domain, read model, receipt) as checkpointed batches, the stream check bounded through the `rebuild` query's `maxEvents` so its worst case is one fold, and a refused fold counted as a journal finding; a fifth step that inventories the closed gate entries, the generations in flight and the running imports the snapshot restored; the `restoreRuns` record; an accepted branch that resumes every stranded generation, proven by the generation row's fence; `MAINTENANCE_MODE=restore` as the writer door, read by the write pause's check before the gate document and cleared before the durable profile's schedule rebuild runs |
+| E-42 | [`application.restore`](specs/application/restore.sdp.md), [`application.generation-registry`](specs/application/generation-registry.sdp.md) | Four checks (journal, domain, read model, receipt) as checkpointed batches, the stream check bounded through the `rebuild` query's `maxEvents` so its worst case is one fold, and a refused fold counted as a journal finding; a fifth step that inventories the closed gate entries, the generations in flight and the running imports the snapshot restored; the `restoreRuns` record; an accepted branch that resumes every stranded generation, proven by the generation row's fence; `MAINTENANCE_MODE=restore` as the writer door, read by the write pause's check before the gate document and cleared before the durable profile's schedule rebuild runs; a failed check keeps the whole deployment closed with no override; the drill before every release, its cadence reconsidered on the first drill's measured check times |
 | E-43 | [`operations.baseline-operations`](specs/operations/baseline-operations.sdp.md) | The `auditRecords` table that fails closed, with `AuditRecordInput` and the source of each field in the command; the `operatorAudit` table for the gate changes an operator entry makes; Convex's own audit logging recorded as the do-nothing option; a 4 KiB diagnostic record through a sink that never throws; the `personalData` reference table |
 | E-44 | [`application.parent-use-cases`](specs/application/parent-use-cases.sdp.md) | `BusinessFailurePolicy` (`carry` or `reject`) per context call, applied in the executor body through the pinned helper `carryOrReject` |
 | E-45 | [`application.read-models`](specs/application/read-models.sdp.md) | At most 8 component reads per parent query and 4 read-model rows written per command, counted as the rows step 9 inserts, replaces or deletes and checked after each `streams` entry is applied, above which step 9 throws a plain error |
@@ -255,11 +255,11 @@ The doc's own open questions:
 
 The plan's section 11, the ambiguities neither the doc nor SDP rules on, carried on the provisional reading shown:
 
-1. Vocabulary clashes (OQ6), as above.
-2. Facts as constraints (OQ5). Confirm, or choose `rule` Specs; the change is mechanical.
+1. Vocabulary clashes (OQ6), as above. Ruled: receipt is the stored command outcome, generation a read-model build.
+2. Facts as constraints (OQ5). Ruled: confirmed as mapped.
 3. Plan-imposed numbering. F1 to F17, Sc L0-1 to ALL-1, OQ1 to OQ6 and the E-numbers exist only in the plan and this corpus; the doc should adopt them or the citations stay plan-relative.
 4. Refused-command records (OQ2), as above.
-5. Trivial contexts as plain tables (OQ1), as above.
+5. Trivial contexts as plain tables (OQ1), as above. Ruled: a component per context.
 6. One document per stream and the maximum order size (OQ3), as above.
 7. Where the experiment lives (OQ4), as above.
 8. Readiness. No agent states `ready`. After review the owner may state it on Layer 0 to 2 Specs whose floor clears; the Design Review index shows the floor each Spec reaches, and most Layer 0 to 2 Specs already reach `ready` structurally.

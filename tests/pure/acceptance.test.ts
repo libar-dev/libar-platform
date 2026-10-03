@@ -810,7 +810,8 @@ test("pure: acceptanceRows names the rows the doc's table gives Layer 0, 1 or 2,
   }
   const graph = loadGraph(join(root, "generated/graph.json"));
   const rows = requiredRows(graph, firstExperimentSpec);
-  expect(rows).toHaveLength(23);
+  tableRows.push("Sc ALL-1");
+  expect(rows).toHaveLength(24);
   expect(rows).toEqual(tableRows);
   const scenarios = deriveRequiredScenarios(graph, firstExperimentSpec);
   expect(

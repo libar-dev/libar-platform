@@ -216,7 +216,7 @@
       "provisionalReading": "Taken: no, the 23 rows of Layers 0 to 2.",
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: settling it reads the doc's scenario table, whether Sc ALL-1's 'every installed layer' counts as a Layer 0 to 2 row [design/specs/application/first-experiment.sdp.md:65]; a reading of the doc is the owner's.",
@@ -225,9 +225,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The experiment's pass includes Sc ALL-1: acceptanceRows lists it after Sc L2-9, and its two examples count as missing until the command audit and the diagnostic bind them. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-007",
@@ -296,7 +296,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, settling it edits the doc: the doc's sentence 'passes when every Layer 0, 1 and 2 scenario passes on a native backend' (docs/convex-transactional-domain-platform-decisions.md:479) against the contract's tiers for Sc L0-1, L0-2 and L2-4 (design/specs/platform/acceptance-contract.sdp.md:58,62).",
@@ -305,9 +305,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The experiment passes when every Layer 0, 1 and 2 scenario and Sc ALL-1 passes, each at the tier the acceptance contract names for it; the doc's pass sentence changes by the owner's hand (patch-doc-sitting-two.diff). Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-009",
@@ -327,7 +327,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: acceptance check, verifier and build tier are missing, scenario and run record each carry two meanings, and the tiers have three sets of names (design/STATE.md:220); the one code name in the bullet, otherPrincipalId, is a name inside the language and goes with the ruling.",
@@ -336,9 +336,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "Tiers are compiled, pure test, convex-test and native backend, with composition and target recorded apart; acceptance check, verifier, test result and run record are defined; scenario is a row of the doc's table and a case is one example of it; CONTEXT.md carries them. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-010",
@@ -681,7 +681,7 @@
       "provisionalReading": "Extension E-5: the doc says a query authorizes before it discloses and does not say how a refused query is answered; here a parent query's refusal is the same `RejectionData` a command's is, with the query's name in the field `commandType` and only the codes `unauthenticated` and `forbidden`, and a use case's own rejection is thrown as the kernel's bare `Rejection`, the way a context throws one; that a field named for a command carries a query's name is a gap in the language, and the owner has not ruled on either reading (E-5, D7, Law 5)",
       "blocks": null,
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, a term of `CONTEXT.md`: `CONTEXT.md:55` defines rejection as a command's outcome and the query Specs use it for a query, and a field named for a command carries a query's name; the owner queue lists both as a gap in the language [design/STATE.md:236], a pointer. The shape and the two codes are mechanism, so the fork gives them as the lean.",
@@ -690,9 +690,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The shared RejectionData with the codes unauthenticated and forbidden for a query stays, a use case's own rejection stays bare, and the field is renamed entry, the name of the entry that refused; the code follows in the language lane. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-018",
@@ -887,7 +887,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: no word for a parent's read, a context's read, the first activation or a refused function's name, rejection used for a query, projection without its per-entity name, three fixture names unlisted (design/STATE.md:236); the mechanism behind the query's name in commandType is OD-017 (domain) and OD-110 (convex), and only the word is here.",
@@ -896,9 +896,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "Parent query, context query and query refusal are the words; the field that names the function that refused is entry, the name of the entry (public command, internal command, parent query or operator entry) that refused; installation includes the first rebuild; the fixture's names stay the fixture's. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-023",
@@ -1184,7 +1184,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: operation, command, subject, actor and duplicate each against another word, and whether CONTEXT.md or spec:platform.vocabulary leads (design/STATE.md:243); receipt and generation are OD-139 and OD-140 and are not decided twice here.",
@@ -1193,9 +1193,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "CONTEXT.md leads and spec:platform.vocabulary follows it; a command addresses the parent, a stream command a decider, an operation is one accepted execution; subject, actor and duplicate keep their meanings; the operator term splits into the operator actor, which nothing establishes, and the stated operator. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-030",
@@ -1653,7 +1653,7 @@
       "provisionalReading": null,
       "blocks": "S5",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, goes against a decision of the doc: [design/specs/decisions/d03-events-only-source-of-next-state.sdp.md:35] says commands load current state and never replay history, and [design/specs/context/journal.sdp.md:45] lets `migrate` read the events since the last baseline when the adapter runs it on load.",
@@ -1662,9 +1662,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "D3 holds on the command path: a migration runs on load only when every step derives the new state from the saved state alone; a history-reading step is written by the sweep alone, and a command or a read on a stream the sweep has not reached is refused as transient (writePaused), so no stream type is paused and no command reads a tail; the restore's journal check inventories awaitingBaseline as pending work, not a finding, and the accepted branch restarts the sweep. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-042",
@@ -1684,7 +1684,7 @@
       "provisionalReading": null,
       "blocks": "S5",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 5: whether a failed check keeps every tenant's writers out with no override, and how often the drill runs, trade availability against safety and a standing operator duty against assurance, with no evidence on which weighs more, and the doc says none of them [design/reviews/consensus-ledger.json:2301]; it stands apart from OD-082, which is the mechanism and names these policies as outside it.",
@@ -1695,9 +1695,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "A failed check keeps the whole deployment closed with no override in the first implementation; the drill runs before every release, its cadence reconsidered on the first drill's measured check times; both are E-42's, marked. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-043",
@@ -1755,7 +1755,7 @@
       "provisionalReading": null,
       "blocks": "L3",
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: the doc says no deployment-wide order token exists [docs/convex-transactional-domain-platform-decisions.md:108] and the commit-timestamp page says one does; the doc against a Convex source resolves nothing without the owner, and D2's reason is the doc's text. Blocks stays L3, where D18's ordered consumer and the history view weigh it.",
@@ -1769,9 +1769,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "D2's premise corrected: Convex documents a commit timestamp that orders committed transactions deployment-wide, which orders transactions and not the events of one and is no consumer protocol by itself; context-owned journals and stream-local order stay; the ordered consumer weighs the token with D18's consumer; F18 says the documented upper bound getSnapshotTs() is absent from the pinned package's public declarations; the doc's line 108 changes by the owner's hand. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-045",
@@ -1890,16 +1890,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, a licence; docs/modern-ts.md:215 lists LICENSE under files and the root holds no such file, and package.json has no files field, so a publish today ships none; the lens records what a licence text says and leans on none.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-048.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "Apache-2.0, for its explicit contributor patent grant: LICENSE at the root and license in package.json; publication stays a separate decision. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-049",
@@ -2473,7 +2473,7 @@
       "provisionalReading": "OQ1: whether a trivial context with no invariants of its own may be plain tables in the parent behind lint rules instead of a component is decided after the experiment measures component call cost; the design assumes a component per context everywhere (OQ1, D2)",
       "blocks": null,
       "advisor": "convex",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: OQ1 is the doc's open question and D2 assumes a component per context [design/specs/context/context-component.sdp.md:49; design/PLAN.md:689]; answering it edits the doc.",
@@ -2484,9 +2484,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ1 answered: one component per context; reopened only for a measured workload that misses an agreed target or a hosted usage reading above an agreed share; Probe 3's quota half stays a separate measurement (OD-036). Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-064",
@@ -4491,7 +4491,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: it rules on a term, whether the language gains a word for the function that refused or the field is renamed [design/specs/context/queries.sdp.md:37].",
@@ -4500,9 +4500,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The field is entry on the wire, one validator and one word; the rename of the code follows in the language lane. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-111",
@@ -4685,7 +4685,7 @@
       "provisionalReading": null,
       "blocks": "S5",
       "advisor": "operator",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 1: if Probe 7 lets the do-nothing option stand for the durable profile, D13's chosen option changes, which edits the doc, and [design/specs/obligations/do-nothing-check.sdp.md:45] has the owner restate readiness after the probe.",
@@ -4696,9 +4696,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "D13 stands: obligations stay the durable profile's choice, built at Layer 3's trigger; Probe 7's facts are recorded, and the do-nothing option fails Sc L3-4, L3-7 and L3-8. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-115",
@@ -5743,7 +5743,7 @@
       "provisionalReading": "OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability; the owner confirms the mapping or chooses rule Specs for facts, which is a mechanical change (OQ5)",
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ5, which only the owner closes in the doc (design/specs/platform/transactional-domain-platform.sdp.md:44); doubt: the carrier choice itself is mechanical and would be tactical on its own.",
@@ -5752,9 +5752,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ5 confirmed: facts are constraint Specs, decisions are decision Specs, scenarios are example Specs under the component that provides the capability. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-139",
@@ -5776,7 +5776,7 @@
       "provisionalReading": "OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the corpus reads the latter as completion evidence and the owner picks one meaning before code names it (OQ6, Vocabulary)",
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ6 and a term of CONTEXT.md; the code already names receipt for the stored idempotency outcome (design/STATE.md:243, src/command/receipts.ts).",
@@ -5785,9 +5785,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ6, receipt: the stored outcome of a command; completion evidence proves an effect happened. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-140",
@@ -5809,7 +5809,7 @@
       "provisionalReading": "OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the corpus reads the latter as attempt and the owner picks one meaning before code names it (OQ6, Vocabulary)",
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ6 and a term of CONTEXT.md; the code already names generation for a numbered read-model build (design/STATE.md:243).",
@@ -5818,9 +5818,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ6, generation: a numbered build of a read model; attempt is one try at an obligation. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-141",
