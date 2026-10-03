@@ -348,7 +348,8 @@ async function assertLog(w: World) {
     [],
   );
   // rebuild.online-rebuild-interrupt-resume.sdp.md:33: the batches that wrote, by pass, are the progress
-  // row's batchesDone; a batch under a replaced fence completes without writing and is not counted.
+  // row's batchesDone and the one backfill batch that recorded the interruption; any other batch under a
+  // replaced fence completes without writing.
   const wrote = (identifier: string) =>
     during.filter(
       (record) =>
@@ -357,7 +358,7 @@ async function assertLog(w: World) {
         record.error === null &&
         (record.usageStats["databaseWriteDocuments"] ?? 0) > 0,
     ).length;
-  const backfills = wrote("rebuild:backfillBatch");
+  const backfills = wrote("rebuild:backfillBatch") - 1;
   const verifies = wrote("rebuild:verifyBatch");
   expect(backfills + verifies).toBe(
     required(w.verified, "verified generation").progress.batchesDone,
@@ -388,6 +389,15 @@ async function assertLog(w: World) {
       (record) =>
         record.occInfo?.tableName === "generationProgress" &&
         (live.has(record.identifier) || record.udfType === "Query"),
+    ),
+  ).toEqual([]);
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:36: the interrupt conflicts with a batch only through the
+  // generation row, so no completion of it names the progress row.
+  expect(
+    log.filter(
+      (record) =>
+        record.identifier === "rebuild:interruptGeneration" &&
+        record.occInfo?.tableName === "generationProgress",
     ),
   ).toEqual([]);
   const commands = new Set([
@@ -537,7 +547,7 @@ bindExample(
               registryReruns: records(w).filter(
                 (record) => record.occInfo?.tableName === "generations",
               ),
-              // rebuild.online-rebuild-interrupt-resume.sdp.md:36: operator entries and batches that reran on the progress row.
+              // rebuild.online-rebuild-interrupt-resume.sdp.md:36: batches and the other operator entries that reran on the progress row.
               progressReruns: records(w).filter(
                 (record) =>
                   record.occInfo?.tableName === "generationProgress" &&
@@ -647,7 +657,16 @@ bindExample(
           { generationId: id2(w), operator: "interrupt operator" },
         );
         await stopLive(w);
-        w.interrupted = await entry(w);
+        // rebuild.online-rebuild-interrupt-resume.sdp.md:33; rebuild.sdp.md step1:125: the batch the interrupt
+        // replaced records the interruption, with the operator from the generation row, and schedules nothing.
+        w.interrupted = await waitForGeneration(
+          backendOf(w),
+          readModel,
+          id2(w),
+          ({ progress }) =>
+            progress.lastError === "interrupted by interrupt operator",
+          (entry) => observe(w, entry),
+        );
         // rebuild.online-rebuild-interrupt-resume.sdp.md:33: the interrupt lands after at least three and below 350 batches, with a tenant cursor.
         expect(w.interrupted.progress.batchesDone).toBeGreaterThanOrEqual(
           batches,
@@ -656,10 +675,6 @@ bindExample(
         expect(w.interrupted.progress.batchesDone).toBeLessThan(350);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:33: the cursor names a tenant.
         expect(tenants).toContain(w.interrupted.progress.cursor?.tenantId);
-        // rebuild.sdp.md:130: the exact interrupt reason is retained at the checkpoint.
-        expect(w.interrupted.progress.lastError).toBe(
-          "interrupted by interrupt operator",
-        );
         await sleep(150);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:33: the interrupted checkpoint stops advancing.
         expect((await entry(w)).progress).toEqual(w.interrupted.progress);
@@ -712,7 +727,8 @@ bindExample(
             fence: required(w.oldFence, "the replaced fence"),
           },
         );
-        // rebuild.online-rebuild-interrupt-resume.sdp.md:35: a queued batch under the replaced fence cannot checkpoint.
+        // rebuild.online-rebuild-interrupt-resume.sdp.md:35: a queued batch under the replaced fence cannot checkpoint,
+        // and the interruption it would record is already there.
         expect((await entry(w)).progress).toEqual(checkpoint);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:36: interrupt changes only fence and operator change fields.
         expect(
@@ -728,7 +744,7 @@ bindExample(
             "changedBy",
           ]),
         );
-        // rebuild.sdp.md:130: the interrupt replaces the fence and records the operator.
+        // rebuild.sdp.md:134: the interrupt replaces the fence and records the operator.
         expect(w.interrupted.generation).toMatchObject({
           fence: required(w.oldFence, "the original fence") + 1,
           changedBy: "interrupt operator",

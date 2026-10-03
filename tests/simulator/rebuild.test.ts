@@ -309,8 +309,8 @@ test("convex-test: every generation entry refuses an unknown ID and every batch 
   expect(await snapshot(t)).toStrictEqual(before);
 });
 
-// rebuild.sdp.md Design:107, the generation with no progress row.
-test("convex-test: every entry that reads the progress row and every batch over a generation with none throws", async () => {
+// rebuild.sdp.md Design:107, the generation with no progress row; fnInterruptGeneration:134.
+test("convex-test: every entry that reads the progress row and every batch over a generation with none throws, and the interrupt reads none", async () => {
   const t = rebuildApp();
   const id = await start(t);
   const { generation, progress } = await read(t, id);
@@ -319,7 +319,6 @@ test("convex-test: every entry that reads the progress row and every batch over 
   });
   const message = `No progress for generation ${id}`;
   for (const ref of [
-    internal.rebuild.interruptGeneration,
     internal.rebuild.resumeGeneration,
     internal.rebuild.rollbackGeneration,
     internal.rebuild.purgeGeneration,
@@ -349,6 +348,16 @@ test("convex-test: every entry that reads the progress row and every batch over 
       () => t.mutation(ref, { generationId: id, fence: generation.fence }),
       message,
     );
+  expect(
+    await t.mutation(internal.rebuild.interruptGeneration, {
+      generationId: id,
+      operator,
+    }),
+  ).toBeNull();
+  expect(await t.run((ctx) => ctx.db.get(id))).toStrictEqual({
+    ...generation,
+    fence: generation.fence + 1,
+  });
 });
 
 // actor-and-scope.sdp.md fnAssertOperator:91; rebuild.sdp.md fnStartGeneration:115 through fnFillTenants:139.
@@ -570,9 +579,9 @@ test("convex-test: a tenant inserted between crossed tenants is skipped by backf
   );
 });
 
-// rebuild.sdp.md step1:121, verifySteps:127, purgeSteps:128, limitOutstandingBatches:148.
+// rebuild.sdp.md step1:125, verifySteps:131, purgeSteps:132, limitOutstandingBatches:152.
 test.each(["backfill", "verify", "purge"] as const)(
-  "convex-test: a stale fence leaves every row and schedule unchanged in %s",
+  "convex-test: in %s the batch the interrupt replaced records it once and a batch of an older chain writes nothing",
   async (pass) => {
     const t = rebuildApp();
     await create(t, "a");
@@ -593,7 +602,7 @@ test.each(["backfill", "verify", "purge"] as const)(
     const fence = (await read(t, id)).generation.fence;
     await t.mutation(internal.rebuild.interruptGeneration, {
       generationId: id,
-      operator,
+      operator: "interrupter",
     });
     const before = await snapshot(t);
     const ref =
@@ -602,12 +611,34 @@ test.each(["backfill", "verify", "purge"] as const)(
         : pass === "verify"
           ? internal.rebuild.verifyBatch
           : internal.rebuild.purgeBatch;
+    later();
     await t.mutation(ref, { generationId: id, fence });
-    expect(await snapshot(t)).toStrictEqual(before);
+    const recorded = await snapshot(t);
+    expect(recorded).toStrictEqual({
+      ...before,
+      progress: [
+        {
+          ...before.progress[0],
+          lastError: "interrupted by interrupter",
+          updatedAt: Date.now(),
+        },
+      ],
+    });
+    later();
+    await t.mutation(ref, { generationId: id, fence });
+    expect(await snapshot(t)).toStrictEqual(recorded);
+    await t.mutation(internal.rebuild.resumeGeneration, {
+      generationId: id,
+      operator,
+    });
+    const resumed = await snapshot(t);
+    later();
+    await t.mutation(ref, { generationId: id, fence });
+    expect(await snapshot(t)).toStrictEqual(resumed);
   },
 );
 
-// rebuild.sdp.md fnInterruptGeneration:130, fnResumeChain:131, fnResumeGeneration:132; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
+// rebuild.sdp.md fnInterruptGeneration:134, fnResumeChain:135, fnResumeGeneration:136; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
 test("convex-test: interrupt after exactly three batches and resume at the stored size with a new fence", async () => {
   const t = rebuildApp();
   for (let i = 0; i < 6; i++) await create(t, `d${i}`);
@@ -633,11 +664,7 @@ test("convex-test: interrupt after exactly three batches and resume at the store
       changedAt: 1040,
       changedBy: "interrupted",
     },
-    progress: {
-      ...before.progress,
-      lastError: "interrupted by interrupted",
-      updatedAt: 1040,
-    },
+    progress: before.progress,
   });
   expect(await scheduled(t)).toStrictEqual(queued);
   later();
@@ -668,21 +695,87 @@ test("convex-test: interrupt after exactly three batches and resume at the store
   expect(next.progress.cursor).not.toEqual(resumed.progress.cursor);
 });
 
-// rebuild.sdp.md fnInterruptGeneration:130, fnResumeChain:131.
+// rebuild.sdp.md fnInterruptGeneration:134, step1:125; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
+test("convex-test: an interrupt while a batch is scheduled leaves the progress row untouched, and that batch records the interruption and schedules nothing", async () => {
+  const t = rebuildApp();
+  for (let i = 0; i < 3; i++) await create(t, `d${i}`);
+  const id = await start(t, { batchSize: 1 });
+  later();
+  await batch(t, id);
+  const before = await read(t, id);
+  const args = { generationId: id, fence: before.generation.fence };
+  await lastSchedule(t, "backfillBatch", args);
+  const queued = await scheduled(t);
+  const titles = await rows(t);
+  later();
+  await t.mutation(internal.rebuild.interruptGeneration, {
+    generationId: id,
+    operator: " interrupter ",
+  });
+  const interrupted = await read(t, id);
+  expect(interrupted).toStrictEqual({
+    generation: {
+      ...before.generation,
+      fence: before.generation.fence + 1,
+      changedAt: Date.now(),
+      changedBy: "interrupter",
+    },
+    progress: before.progress,
+  });
+  later();
+  await t.mutation(internal.rebuild.backfillBatch, args);
+  expect(await read(t, id)).toStrictEqual({
+    generation: interrupted.generation,
+    progress: {
+      ...before.progress,
+      lastError: "interrupted by interrupter",
+      updatedAt: Date.now(),
+    },
+  });
+  expect(await rows(t)).toStrictEqual(titles);
+  expect(await scheduled(t)).toStrictEqual(queued);
+});
+
+// rebuild.sdp.md fnInterruptGeneration:134, fnResumeChain:135.
 test.each(states)(
-  "convex-test: an idle pass in %s cannot be interrupted or resumed",
+  "convex-test: an idle pass in %s cannot be resumed, and the interrupt decides from the state alone",
   async (state) => {
     const t = rebuildApp();
     const id = await inState(t, state);
-    for (const [ref, word] of [
-      [internal.rebuild.interruptGeneration, "interrupt"],
-      [internal.rebuild.resumeGeneration, "resume"],
-    ] as const)
+    await refused(
+      t,
+      () =>
+        t.mutation(internal.rebuild.resumeGeneration, {
+          generationId: id,
+          operator,
+        }),
+      "Generation 1 of documentTitle has no batch to resume",
+    );
+    const interrupt = () =>
+      t.mutation(internal.rebuild.interruptGeneration, {
+        generationId: id,
+        operator: "interrupter",
+      });
+    if (state === "verified" || state === "active" || state === "purged") {
       await refused(
         t,
-        () => t.mutation(ref, { generationId: id, operator }),
-        `Generation 1 of documentTitle has no batch to ${word}`,
+        interrupt,
+        "Generation 1 of documentTitle has no batch to interrupt",
       );
+      return;
+    }
+    const before = await read(t, id);
+    later();
+    await interrupt();
+    expect(await read(t, id)).toStrictEqual({
+      generation: {
+        ...before.generation,
+        fence: before.generation.fence + 1,
+        changedAt: Date.now(),
+        changedBy: "interrupter",
+      },
+      progress: before.progress,
+    });
   },
 );
 
