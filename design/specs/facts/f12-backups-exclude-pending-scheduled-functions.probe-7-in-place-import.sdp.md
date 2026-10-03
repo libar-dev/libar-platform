@@ -17,7 +17,7 @@ Probe 7 · native backend tier · temporary copy of the production composition.
 
 ```gwt
 Given a production composition has temporary functions for scheduler references and reactions
-When it exports business documents and five scheduler states, adds orders and schedules, then imports the backup archive in place before pending reactions are due
+When it plants business documents and five scheduler states, exports a backup archive that holds no scheduler table, adds orders and schedules, then imports the backup archive in place before pending reactions are due
 Then documents including ids and creation times in {scopes: "parent,orders,inventory"} equal the exported documents {equal: true}
 And every scheduler row in each scope is unchanged {unchanged: true}
 And later business changes are gone {removed: true} and the destination environment is unchanged {environmentUnchanged: true}

@@ -27,7 +27,7 @@ bindExample(contract, (): World => ({}), {
     async (world) => {
       Object.assign(world, await schedulingBackend());
     },
-  "it exports business documents and five scheduler states, adds orders and schedules, then imports the backup archive in place before pending reactions are due":
+  "it plants business documents and five scheduler states, exports a backup archive that holds no scheduler table, adds orders and schedules, then imports the backup archive in place before pending reactions are due":
     async (world) => {
       world.observation = await inPlaceImport(world.backend!, world.directory!);
     },
