@@ -86,7 +86,7 @@ export async function plainNativeMessage(call: Promise<unknown>) {
 }
 async function rebuild(world: World) {
   const backend = required(world.backend, "the backend");
-  // rebuild.sdp.md:123: park the batch so the building row can be observed without a scheduler race.
+  // generation-registry.first-rebuild-installs-read-model.sdp.md:30; rebuild.sdp.md:123: the closed tenant gate parks the first batch.
   await backend.admin.run(getFunctionName(internal.gate.closeGate), {
     scopeKey: `tenant:${tenantId}`,
     reason: "observe the first generation",
@@ -129,7 +129,7 @@ async function rebuild(world: World) {
   expect(await backend.admin.readTable("generations")).toEqual(
     entries.map(({ generation }) => generation),
   );
-  // Let the scheduled batch park before reopening the gate.
+  // generation-registry.first-rebuild-installs-read-model.sdp.md:30: the first batch parks before the gate reopens and the chain resumes.
   await waitForGeneration(
     backend,
     "documentSummary",
