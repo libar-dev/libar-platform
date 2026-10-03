@@ -32,6 +32,10 @@ const orderSummaryView = v.object({
   sourceVersions: v.array(streamVersionValidator),
   ...orderSummaryFields,
 });
+// The fields of the list's index, which tell a cursor that carries a document's system fields.
+const byStatusFields = schema.tables.orderSummaries[" indexes"]().find(
+  (index) => index.indexDescriptor === "by_status",
+)!.fields.length;
 // A tenant's order summaries of one status, in the order they were placed.
 export const listOrderSummaries = query({
   args: {
@@ -61,7 +65,7 @@ export const listOrderSummaries = query({
       )
       .paginate(
         boundedPage(
-          pageInGeneration(paginationOpts, generation),
+          pageInGeneration(paginationOpts, generation, byStatusFields),
           limitReadModelList(orderSummary),
         ),
       );

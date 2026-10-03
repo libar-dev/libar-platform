@@ -16,6 +16,8 @@ const orders = [
   ["d", 3],
   ["e", 4],
 ] as const;
+// tenantId, generation, status, placedAt and key: by_status of orderSummaries.
+const byStatusFields = 5;
 type Page = { rows: string[]; isDone: boolean; continueCursor: string };
 
 async function seeded() {
@@ -53,7 +55,7 @@ function page(
           .eq("generation", generation)
           .eq("status", "placed"),
       )
-      .paginate(pageInGeneration(opts, generation));
+      .paginate(pageInGeneration(opts, generation, byStatusFields));
     return {
       rows: result.page.map((row) => `${row.key}@${row.generation}`),
       isDone: result.isDone,
@@ -84,6 +86,20 @@ test("convex-test: a pinned page shows the switched-to generation's rows up to i
   expect(pinned.isDone).toBe(false);
 });
 
+test("convex-test: a pinned page's continueCursor, already moved, pages on across a switch", async () => {
+  const t = await seeded();
+  const first = await page(t, 1, { cursor: null, numItems: 2 });
+  const pinned = await page(t, 2, {
+    cursor: null,
+    endCursor: first.continueCursor,
+    numItems: 2,
+  });
+  expect(pinned.rows).toEqual(["a@2", "b@2"]);
+  expect(
+    (await page(t, 1, { cursor: pinned.continueCursor, numItems: 2 })).rows,
+  ).toEqual(["c@1", "d@1"]);
+});
+
 test("convex-test: after a switch back a cursor of generation 2 continues from the same position in generation 1", async () => {
   const t = await seeded();
   const first = await page(t, 2, { cursor: null, numItems: 2 });
@@ -106,11 +122,17 @@ test("convex-test: a page edge on an order-field tie neither repeats nor skips a
 
 test("convex-test: pageInGeneration returns a cursor that is not an index key as it is", () => {
   for (const cursor of [null, "[]", "not json", '{"a":1}', '["a","b","c","d"]'])
-    expect(pageInGeneration({ cursor, numItems: 1 }, 2)).toStrictEqual({
+    expect(
+      pageInGeneration({ cursor, numItems: 1 }, 2, byStatusFields),
+    ).toStrictEqual({
       cursor,
       numItems: 1,
     });
   expect(
-    pageInGeneration({ cursor: null, endCursor: null, numItems: 1 }, 2),
+    pageInGeneration(
+      { cursor: null, endCursor: null, numItems: 1 },
+      2,
+      byStatusFields,
+    ),
   ).toStrictEqual({ cursor: null, endCursor: null, numItems: 1 });
 });

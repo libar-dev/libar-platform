@@ -30,6 +30,10 @@ const documentSummaryView = v.object({
   sourceVersions: v.array(streamVersionValidator),
   ...documentSummaryFields,
 });
+// The fields of the list's index, which tell a cursor that carries a document's system fields.
+const byStatusFields = schema.tables.documentSummaries[" indexes"]().find(
+  (index) => index.indexDescriptor === "by_status",
+)!.fields.length;
 // A tenant's document summaries of one status, in document ID order.
 export const listDocumentSummaries = query({
   args: {
@@ -59,7 +63,7 @@ export const listDocumentSummaries = query({
       )
       .paginate(
         boundedPage(
-          pageInGeneration(paginationOpts, generation),
+          pageInGeneration(paginationOpts, generation, byStatusFields),
           limitReadModelList(documentSummary),
         ),
       );

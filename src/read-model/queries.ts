@@ -23,18 +23,26 @@ export const limitReadModelList = (readModel: AnyReadModel): PageLimit => ({
 });
 // A client's page options with each cursor moved into the generation now active. A cursor of
 // paginator is the JSON of a row's index key, whose second element is the generation that wrote the
-// row and whose last two are that document's _creationTime and _id; the moved cursor names the same
-// position by the order field and key alone.
+// row; a key of the index's fields plus two also carries that document's _creationTime and _id, which
+// are dropped. A cursor already moved keeps its length, so moving it again replaces the generation alone.
 export function pageInGeneration(
   opts: PaginationOptions,
   generation: number,
+  indexFields: number,
 ): PaginationOptions {
-  const moved = { ...opts, cursor: moveCursor(opts.cursor, generation) };
+  const moved = {
+    ...opts,
+    cursor: moveCursor(opts.cursor, generation, indexFields),
+  };
   if (opts.endCursor !== undefined && opts.endCursor !== null)
-    moved.endCursor = moveCursor(opts.endCursor, generation);
+    moved.endCursor = moveCursor(opts.endCursor, generation, indexFields);
   return moved;
 }
-function moveCursor(cursor: string | null, generation: number) {
+function moveCursor(
+  cursor: string | null,
+  generation: number,
+  indexFields: number,
+) {
   if (cursor === null) return cursor;
   let key: unknown;
   try {
@@ -42,7 +50,11 @@ function moveCursor(cursor: string | null, generation: number) {
   } catch {
     return cursor;
   }
-  if (!Array.isArray(key) || key.length < 4 || typeof key[1] !== "number")
+  if (
+    !Array.isArray(key) ||
+    (key.length !== indexFields && key.length !== indexFields + 2) ||
+    typeof key[1] !== "number"
+  )
     return cursor;
-  return JSON.stringify([key[0], generation, ...key.slice(2, -2)]);
+  return JSON.stringify([key[0], generation, ...key.slice(2, indexFields)]);
 }

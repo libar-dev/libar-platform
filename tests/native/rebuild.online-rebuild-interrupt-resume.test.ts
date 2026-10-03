@@ -490,6 +490,15 @@ async function switchAndObserve(w: World, generationId: string) {
     // rebuild.online-rebuild-interrupt-resume.sdp.md:37: each subscription retains its rows across the switch.
     expect(value.page).toEqual(before[i]);
   }
+  // read-models.sdp.md fnPageInGeneration: the first page's cursor pages on in the generation now active.
+  const first = w.watches[0]!.values.at(-1)!;
+  const next = await w.clients[0]!.query(api.readModels.listOrderSummaries, {
+    tenantId: tenants[0],
+    status: "placed",
+    paginationOpts: { cursor: first.continueCursor, numItems: 100 },
+  });
+  expect(next.page.map(({ key }) => key)).not.toContain(first.page.at(-1)?.key);
+  expect(next.page.length).toBeGreaterThan(0);
   await drain(w);
 }
 
