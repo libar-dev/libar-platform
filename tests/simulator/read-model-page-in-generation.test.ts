@@ -2,7 +2,14 @@
 // rules on a client's page across a switch; projection-contract.sdp.md tableOrderSummaries. Every case
 // runs through a composition's list entry.
 import type { PaginationOptions } from "convex/server";
+import { ConvexError } from "convex/values";
+import { paginator } from "convex-helpers/server/pagination";
 import { expect, test } from "vitest";
+import schema from "../../example/convex/schema.js";
+import {
+  decodeCursorKey,
+  encodeCursorKey,
+} from "../../src/read-model/queries.js";
 import {
   api as productionApi,
   internal as productionInternal,
@@ -44,9 +51,9 @@ const generationRow = (readModel: string, generation: number) => ({
 
 // Generations 1 and 2 of the order summary hold the same orders in two tenants; a row's total is the
 // generation that wrote it, so a page shows which generation it read. Generation 1 is active.
-async function seeded() {
+async function seeded(tenants: readonly string[] = [tenantId, "tenant-b"]) {
   const t = productionTest();
-  for (const tenant of [tenantId, "tenant-b"])
+  for (const tenant of tenants)
     await t.mutation(productionInternal.grants.grant, {
       tenantId: tenant,
       principalKind: "human",
@@ -60,7 +67,7 @@ async function seeded() {
         "generations",
         generationRow("orderSummary", generation),
       );
-      for (const tenant of [tenantId, "tenant-b"])
+      for (const tenant of tenants)
         for (const [key, placedAt] of orders)
           await ctx.db.insert("orderSummaries", {
             tenantId: tenant,
@@ -245,4 +252,84 @@ test("convex-test: the fixture's document list moves a cursor across a switch an
   await expect(
     list("tenant-b", { cursor: first.continueCursor, numItems: 2 }),
   ).rejects.toThrow(refused);
+});
+
+test("convex-test: the cursor codec reads and writes a key as paginator does", async () => {
+  for (const value of ["undefined", "_undefined", "t-undefined", "plain", 3])
+    expect(decodeCursorKey(encodeCursorKey([value, 1]))).toStrictEqual([
+      value,
+      1,
+    ]);
+  expect(encodeCursorKey(["t-undefined", undefined as never])).toBe(
+    '["_t-undefined","undefined"]',
+  );
+  // A cursor paginator itself issues for a row whose tenant ends in "undefined".
+  const t = await seeded(["t-undefined"]);
+  const issued = await t.run(async (ctx) => {
+    const result = await paginator(ctx.db, schema)
+      .query("orderSummaries")
+      .withIndex("by_status", (q) =>
+        q
+          .eq("tenantId", "t-undefined")
+          .eq("generation", 1)
+          .eq("status", "placed"),
+      )
+      .paginate({ cursor: null, numItems: 1 });
+    return result.continueCursor;
+  });
+  const key = decodeCursorKey(issued);
+  expect(key.slice(0, 5)).toStrictEqual(["t-undefined", 1, "placed", 1, "a"]);
+  expect(encodeCursorKey(key)).toBe(issued);
+});
+
+test("convex-test: a tenant whose ID ends in undefined pages on from its own cursor and no other tenant reads it", async () => {
+  const t = await seeded(["t-undefined", "_t-undefined"]);
+  const first = await page(
+    t,
+    { cursor: null, numItems: 2 },
+    { tenantId: "t-undefined" },
+  );
+  expect(first.rows).toEqual(["a@1", "b@1"]);
+  await activate(t, 2);
+  expect(
+    (
+      await page(
+        t,
+        { cursor: first.continueCursor, numItems: 2 },
+        { tenantId: "t-undefined" },
+      )
+    ).rows,
+  ).toEqual(["c@2", "d@2"]);
+  await expect(
+    page(
+      t,
+      { cursor: first.continueCursor, numItems: 2 },
+      { tenantId: "_t-undefined" },
+    ),
+  ).rejects.toThrow(refused);
+});
+
+test('convex-test: the last pinned page\'s end cursor "[]" is accepted and a refusal is a plain Error', async () => {
+  const t = await seeded();
+  const all = await page(t, { cursor: null, numItems: 10 });
+  expect(all.isDone).toBe(true);
+  expect(all.continueCursor).toBe("[]");
+  await activate(t, 2);
+  const pinned = await page(t, {
+    cursor: null,
+    endCursor: all.continueCursor,
+    numItems: 10,
+  });
+  expect(pinned.rows).toEqual(["a@2", "b@2", "c@2", "d@2", "e@2"]);
+  expect(pinned.isDone).toBe(true);
+  const error: unknown = await page(t, {
+    cursor: "not json",
+    numItems: 2,
+  }).then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error).toBeInstanceOf(Error);
+  expect(error).not.toBeInstanceOf(ConvexError);
+  expect((error as { data?: unknown }).data).toBeUndefined();
 });
