@@ -12,6 +12,8 @@ relations:
     - spec:command.outcome-boundary
     - spec:command.actor-and-scope
     - spec:application.projection-contract
+    - spec:application.aggregate-projection
+    - spec:application.history-projection
     - spec:application.write-pause
     - spec:command.receipt-table
     - spec:context.persistence-adapter

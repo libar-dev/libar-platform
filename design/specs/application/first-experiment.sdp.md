@@ -20,6 +20,7 @@ relations:
     - spec:application.rebuild
     - spec:application.restore
     - spec:application.generation-registry
+    - spec:application.history-projection
     - spec:command.actor-and-scope
     - spec:platform.native-harness
   constrainedBy:

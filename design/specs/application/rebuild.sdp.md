@@ -8,6 +8,7 @@ relations:
   dependsOn:
     - spec:context.event-envelope
     - spec:application.projection-contract
+    - spec:application.history-projection
     - spec:application.generation-registry
     - spec:application.write-pause
     - spec:context.queries
