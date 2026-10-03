@@ -38,6 +38,9 @@ export async function contentionCell(lines: 1 | 10 | 100, callers: 2 | 8 | 32) {
   expect(result.value.rowsBefore).toEqual({
     grants: 4,
     generations: 1,
+    progress: 1,
+    tenantFill: 0,
+    markers: 0,
     receipts: 0,
     summaries: 0,
     orderStreams: 0,
@@ -51,6 +54,9 @@ export async function contentionCell(lines: 1 | 10 | 100, callers: 2 | 8 | 32) {
   expect(result.value.rowsAfter).toEqual({
     grants: 4,
     generations: 1,
+    progress: 1,
+    tenantFill: 0,
+    markers: 0,
     receipts: 1,
     summaries: 1,
     orderStreams: 1,

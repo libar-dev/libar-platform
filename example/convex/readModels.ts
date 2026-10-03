@@ -5,6 +5,7 @@ import {
   paginationResultValidator,
 } from "convex/server";
 import { v } from "convex/values";
+import { paginator } from "convex-helpers/server/pagination";
 import { authorizeQuery } from "../../src/command/index.js";
 import {
   boundedPage,
@@ -13,9 +14,11 @@ import {
 import {
   activeGeneration,
   limitReadModelList,
+  pageInGeneration,
   readModelView,
 } from "../../src/read-model/index.js";
 import { query } from "./_generated/server.js";
+import schema from "./schema.js";
 import {
   orderSummary,
   orderSummaryFields,
@@ -29,6 +32,10 @@ const orderSummaryView = v.object({
   sourceVersions: v.array(streamVersionValidator),
   ...orderSummaryFields,
 });
+// The fields of the list's index, which tell a cursor that carries a document's system fields.
+const byStatusFields = schema.tables.orderSummaries[" indexes"]().find(
+  (index) => index.indexDescriptor === "by_status",
+)!.fields.length;
 // A tenant's order summaries of one status, in the order they were placed.
 export const listOrderSummaries = query({
   args: {
@@ -48,7 +55,7 @@ export const listOrderSummaries = query({
       throw new Error(
         `The read model ${orderSummary.name} has no active generation`,
       );
-    const result = await ctx.db
+    const result = await paginator(ctx.db, schema)
       .query("orderSummaries")
       .withIndex("by_status", (q) =>
         q
@@ -56,7 +63,12 @@ export const listOrderSummaries = query({
           .eq("generation", generation)
           .eq("status", status),
       )
-      .paginate(boundedPage(paginationOpts, limitReadModelList(orderSummary)));
+      .paginate(
+        boundedPage(
+          pageInGeneration(paginationOpts, generation, byStatusFields),
+          limitReadModelList(orderSummary),
+        ),
+      );
     return { ...result, page: result.page.map(readModelView) };
   },
 });

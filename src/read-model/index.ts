@@ -15,7 +15,11 @@ export type {
   ReadModel,
   WritableGeneration,
 } from "./projection.js";
-export { limitReadModelList, readModelView } from "./queries.js";
+export {
+  limitReadModelList,
+  pageInGeneration,
+  readModelView,
+} from "./queries.js";
 export {
   batchCursorValidator,
   generationStateValidator,

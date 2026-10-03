@@ -136,15 +136,15 @@ export function memoryWriter(initial: ReturnType<typeof priorRow>) {
             },
           };
           select(q);
-          return {
-            unique: async () =>
-              row &&
-              equalities.every(
-                ([key, value]) => row![key as keyof Stored] === value,
-              )
-                ? structuredClone(row)
-                : null,
-          };
+          // The Spec pins no read method, so .first() and .unique() answer alike.
+          const one = async () =>
+            row &&
+            equalities.every(
+              ([key, value]) => row![key as keyof Stored] === value,
+            )
+              ? structuredClone(row)
+              : null;
+          return { first: one, unique: one };
         },
       };
     },

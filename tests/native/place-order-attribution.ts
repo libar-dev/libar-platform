@@ -26,6 +26,9 @@ export type OrderArgs = FunctionArgs<typeof api.ordering.placeOrder>;
 export const tables = {
   grants: ["grants", undefined],
   generations: ["generations", undefined],
+  progress: ["generationProgress", undefined],
+  tenantFill: ["tenantFill", undefined],
+  markers: ["projectionMarkers", undefined],
   receipts: ["receipts", undefined],
   summaries: ["orderSummaries", undefined],
   gates: ["maintenanceGates", undefined],

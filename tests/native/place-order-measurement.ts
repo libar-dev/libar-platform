@@ -184,41 +184,66 @@ export function pins(backend: Backend) {
     operatingSystem: `${platform()} ${release()} ${arch()}`,
   };
 }
-export async function schedules(backend: Backend) {
+// The scheduled rows of each mount, the parent's included. Given an earlier read, only the rows
+// added since it: a setup that installs the read model leaves its batches' rows behind.
+export async function scheduledByMount(backend: Backend) {
   const entries = await Promise.all(
     [undefined, "orders", "inventory"].map(
       async (component) =>
         [
           component ?? "parent",
-          (
-            await backend.admin.readTable(
-              "_scheduled_functions",
-              component === undefined ? {} : { component },
-            )
-          ).length,
+          await backend.admin.readTable(
+            "_scheduled_functions",
+            component === undefined ? {} : { component },
+          ),
         ] as const,
     ),
   );
   return Object.fromEntries(entries);
 }
+export async function schedules(
+  backend: Backend,
+  before?: Awaited<ReturnType<typeof scheduledByMount>>,
+) {
+  const now = await scheduledByMount(backend);
+  return Object.fromEntries(
+    Object.entries(now).map(([mount, rows]) => [
+      mount,
+      rows.filter(
+        (row) =>
+          !(before?.[mount] ?? []).some((prior) => prior._id === row._id),
+      ).length,
+    ]),
+  );
+}
 // Rows left behind are counted over every table the production composition deploys that holds
-// neither state, events, receipts nor read-model rows: the registry, the gate and both audit tables.
-// Grants and the tenant list are setup. Markers are reported as not deployed while neither schema
-// declares a table for them; a table either schema adds fails this check until it is counted.
+// neither state, events, receipts nor read-model rows: the markers, the registry's generations,
+// progress and tenant-fill rows, the gate and both audit tables (first-experiment.sdp.md:113).
+// Grants and the tenant list are setup. A table either schema adds fails this check until it is counted.
 export function leftBehind(before: Stored, after: Stored) {
   expect(Object.keys(schema.tables).sort()).toEqual([
     "auditRecords",
+    "generationProgress",
     "generations",
     "grants",
     "maintenanceGates",
     "operatorAudit",
     "orderSummaries",
+    "projectionMarkers",
     "receipts",
+    "tenantFill",
     "tenants",
   ]);
   expect(Object.keys(contextTables).sort()).toEqual(["events", "streams"]);
   const counted = (
-    name: "generations" | "gates" | "auditRecords" | "operatorAudit",
+    name:
+      | "markers"
+      | "generations"
+      | "progress"
+      | "tenantFill"
+      | "gates"
+      | "auditRecords"
+      | "operatorAudit",
   ) => ({
     before: before[name].length,
     after: after[name].length,
@@ -227,8 +252,10 @@ export function leftBehind(before: Stored, after: Stored) {
     ).length,
   });
   return {
+    markers: counted("markers"),
     generations: counted("generations"),
-    markers: "not deployed",
+    progress: counted("progress"),
+    tenantFill: counted("tenantFill"),
     gate: counted("gates"),
     audit: counted("auditRecords"),
     operatorAudit: counted("operatorAudit"),
@@ -403,6 +430,7 @@ export async function measured(
 ) {
   const backend = required(world.backend, "backend");
   const before = await stored(backend);
+  const scheduledBefore = await scheduledByMount(backend);
   const mark = await backend.admin.logMark();
   const answers = await Promise.all(args.map((arg) => send(world, arg)));
   // Close the interval with ordinary essential reads, one per tenant, before inspecting tables.
@@ -436,7 +464,7 @@ export async function measured(
     30000,
   );
   const after = await stored(backend);
-  const scheduled = await schedules(backend);
+  const scheduled = await schedules(backend, scheduledBefore);
   const others = records.filter(
     (record) =>
       !isOwn(record) && record.identifier !== "readModels:listOrderSummaries",
@@ -496,9 +524,9 @@ export function expectUsage(
   });
 }
 export const healthyUsage = {
-  1: [8, 6, 2943, 4271],
-  10: [35, 24, 14454, 18410],
-  100: [305, 204, 129564, 159800],
+  1: [8, 6, 2848, 4280],
+  10: [35, 24, 14359, 18419],
+  100: [305, 204, 129469, 159809],
 } as const;
 
 export type PlaceOrderMeasurement = ReturnType<typeof recordMeasurement>;

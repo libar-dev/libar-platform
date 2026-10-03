@@ -355,6 +355,10 @@ export async function rollbackGeneration<D extends RebuildDataModel>(
     throw new Error(
       `${description(generation)} needs a write pause and cannot be rolled back`,
     );
+  if ((await ctx.db.query("tenantFill").first())?.pass === "fill")
+    throw new Error(
+      "The tenant list is being filled; rollbackGeneration waits until fillTenants has ended",
+    );
   const flight = await inFlight(ctx, generation.readModel);
   if (flight !== undefined) throw flightError(flight);
   projectionOf(
@@ -466,6 +470,8 @@ async function generationBatch(
     .query("generationProgress")
     .withIndex("by_generation", (q) => q.eq("generationId", args.generationId))
     .unique();
+  if (progress === null)
+    throw new Error(`No progress for generation ${args.generationId}`);
   const stateMatches =
     pass === "backfill"
       ? generation.state === "building"
@@ -474,7 +480,6 @@ async function generationBatch(
         : generation.state === "retired" || generation.state === "aborted";
   if (
     !stateMatches ||
-    progress === null ||
     progress.pass !== pass ||
     generation.fence !== args.fence
   )

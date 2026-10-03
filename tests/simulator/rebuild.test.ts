@@ -3,6 +3,7 @@ import { components, internal } from "../../fixture/convex/_generated/api.js";
 import { internal as exampleInternal } from "../../example/convex/_generated/api.js";
 import { deletedTitle } from "../../fixture/convex/depot/streams.js";
 import { documentTitle } from "../../fixture/convex/documentTitles.js";
+import { documentSource } from "../../fixture/convex/summarizedTwice.js";
 import { applyProjection } from "../../src/read-model/projection.js";
 import {
   candidateRow,
@@ -308,6 +309,48 @@ test("convex-test: every generation entry refuses an unknown ID and every batch 
   expect(await snapshot(t)).toStrictEqual(before);
 });
 
+// rebuild.sdp.md Design:107, the generation with no progress row.
+test("convex-test: every entry that reads the progress row and every batch over a generation with none throws", async () => {
+  const t = rebuildApp();
+  const id = await start(t);
+  const { generation, progress } = await read(t, id);
+  await t.run(async (ctx) => {
+    await ctx.db.delete(progress._id);
+  });
+  const message = `No progress for generation ${id}`;
+  for (const ref of [
+    internal.rebuild.interruptGeneration,
+    internal.rebuild.resumeGeneration,
+    internal.rebuild.rollbackGeneration,
+    internal.rebuild.purgeGeneration,
+  ])
+    await refused(
+      t,
+      () => t.mutation(ref, { generationId: id, operator }),
+      message,
+    );
+  await refused(
+    t,
+    () =>
+      t.mutation(internal.rebuild.abortGeneration, {
+        generationId: id,
+        operator,
+        reason: "repair",
+      }),
+    message,
+  );
+  for (const ref of [
+    internal.rebuild.backfillBatch,
+    internal.rebuild.verifyBatch,
+    internal.rebuild.purgeBatch,
+  ])
+    await refused(
+      t,
+      () => t.mutation(ref, { generationId: id, fence: generation.fence }),
+      message,
+    );
+});
+
 // actor-and-scope.sdp.md fnAssertOperator:91; rebuild.sdp.md fnStartGeneration:115 through fnFillTenants:139.
 test.each(["", " \n\t ", " ".repeat(513), "x".repeat(513), "é".repeat(257)])(
   "convex-test: every operator entry refuses invalid operator %j before a lookup",
@@ -353,7 +396,7 @@ test.each(["", " \n\t ", " ".repeat(513), "x".repeat(513), "é".repeat(257)])(
 );
 
 // actor-and-scope.sdp.md fnAssertOperator:91; rebuild.sdp.md convexSurface:112.
-test("convex-test: every plain entry checks the operator before touching ctx or config", async () => {
+test("convex-test: every plain entry checks the operator before touching ctx", async () => {
   const t = rebuildApp();
   const id = await start(t);
   const helpers = await import("../../src/read-model/rebuild.js");
@@ -362,10 +405,22 @@ test("convex-test: every plain entry checks the operator before touching ctx or 
       throw new Error("Read before assertOperator");
     });
     const guarded = new Proxy(ctx, { get: touched });
-    const config = new Proxy(
-      {} as import("../../src/read-model/rebuild.js").RebuildConfig,
-      { get: touched },
-    );
+    // Reading config, a plain object, before assertOperator is lawful; only ctx is guarded.
+    const config: import("../../src/read-model/rebuild.js").RebuildConfig = {
+      targets: [
+        {
+          readModel: documentTitle,
+          source: documentSource,
+          list: components.depot.queries.document.list,
+        },
+      ],
+      refs: {
+        backfillBatch: internal.rebuild.backfillBatch,
+        verifyBatch: internal.rebuild.verifyBatch,
+        purgeBatch: internal.rebuild.purgeBatch,
+        fillTenantsBatch: internal.rebuild.fillTenantsBatch,
+      },
+    };
     const args = { generationId: id, operator: " " };
     const calls = [
       () =>
@@ -1219,6 +1274,35 @@ test("convex-test: rollback checks period, purge, pause, in-flight generation an
   );
   await patchGeneration(t, old, { pauseRequired: false });
   const other = await start(t);
+  // rebuild.sdp.md:84: a fill and a reopened generation exclude each other; the fill refusal
+  // precedes the in-flight refusal.
+  const fillRow = {
+    fence: 1,
+    cursor: null,
+    batchesDone: 0,
+    tenantsRead: 0,
+    tenantsInserted: 0,
+    startedAt: Date.now(),
+    startedBy: operator,
+    changedAt: Date.now(),
+    changedBy: operator,
+    updatedAt: Date.now(),
+  };
+  const fillId = await t.run(async (ctx) => {
+    const prior = await ctx.db.query("tenantFill").first();
+    if (prior !== null) await ctx.db.delete(prior._id);
+    return ctx.db.insert("tenantFill", { ...fillRow, pass: "fill" });
+  });
+  await refused(
+    t,
+    () =>
+      t.mutation(internal.rebuild.rollbackGeneration, {
+        generationId: old,
+        operator,
+      }),
+    "The tenant list is being filled; rollbackGeneration waits until fillTenants has ended",
+  );
+  await t.run((ctx) => ctx.db.patch(fillId, { pass: "idle" }));
   for (const state of ["building", "verifying", "verified"] as const) {
     await patchGeneration(t, other, { state });
     await refused(
@@ -2232,4 +2316,34 @@ test("convex-test: a failed activation commits neither half of the switch", asyn
   expect(await snapshot(t)).toStrictEqual(before);
   expect((await read(t, old)).generation.state).toBe("active");
   expect((await read(t, id)).generation.state).toBe("verified");
+});
+
+// rebuild.sdp.md fnStartGeneration:115, Design:107; projection-contract.sdp.md readModelRowShape.
+test("convex-test: startGeneration schedules exactly one batch and an install leaves one row per subject and no marker", async () => {
+  const t = rebuildApp();
+  for (const documentId of ["a1", "a2", "a3"]) await create(t, documentId);
+  const before = await scheduled(t);
+  const id = await start(t);
+  const added = (await scheduled(t)).filter(
+    (row) => !before.some((prior) => prior._id === row._id),
+  );
+  expect(added.map(({ name, args }) => ({ name, args }))).toStrictEqual([
+    { name: "rebuild:backfillBatch", args: [{ generationId: id, fence: 1 }] },
+  ]);
+  await finish(t, id);
+  await t.mutation(internal.rebuild.switchGeneration, {
+    generationId: id,
+    operator,
+  });
+  const generation = (await read(t, id)).generation.generation;
+  expect(
+    (await rows(t))
+      .filter((row) => row.generation === generation)
+      .map(({ key }) => key)
+      .sort(),
+  ).toStrictEqual(["a1", "a2", "a3"]);
+  // documentTitle is a per-entity read model: markers belong to aggregate rows, so none is written.
+  expect(
+    await t.run((ctx) => ctx.db.query("projectionMarkers").collect()),
+  ).toStrictEqual([]);
 });

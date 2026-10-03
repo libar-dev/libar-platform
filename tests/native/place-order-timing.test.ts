@@ -199,15 +199,15 @@ timing(
     )) {
       expect(usageOf(record).databaseReadDocuments).toBe(35);
       expect(usageOf(record).databaseWriteDocuments).toBe(24);
-      expect(usageOf(record).databaseWriteBytes).toBe(18410);
+      expect(usageOf(record).databaseWriteBytes).toBe(18419);
       expect(usageOf(record).databaseWriteIndexRows).toBe(97);
       // The first order reads StockReceived; later orders read the larger StockAllocated tail.
-      expect([14454, 14614]).toContain(usageOf(record).databaseReadBytes);
+      expect([14359, 14519]).toContain(usageOf(record).databaseReadBytes);
     }
     expect(
       finals(collected.records).filter(
         (record) =>
-          record.error === null && usageOf(record).databaseReadBytes === 14454,
+          record.error === null && usageOf(record).databaseReadBytes === 14359,
       ),
     ).toHaveLength(8);
     expect(value.rowsLeftBehind.generations.created).toBe(0);

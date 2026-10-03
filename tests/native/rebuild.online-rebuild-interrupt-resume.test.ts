@@ -77,6 +77,7 @@ interface World {
   mark?: LogMark;
   batchStart?: number;
   batchEnd?: number;
+  subjectsAtVerified?: number;
   cursors: string[];
   live: boolean;
   workers: Promise<void>[];
@@ -207,6 +208,28 @@ async function verifyBatchCount(w: World, batchSize: number) {
   }
   return count;
 }
+// The orders the Orders context's list enumerates in both tenants, deleted ones included.
+async function subjects(w: World) {
+  let count = 0;
+  for (const tenantId of tenants) {
+    let cursor: string | null = null;
+    for (;;) {
+      const page = (await backendOf(w).admin.run(
+        "queries/order:list",
+        {
+          tenantId,
+          includeDeleted: true,
+          paginationOpts: { cursor, numItems: 100 },
+        },
+        { component: "orders" },
+      )) as unknown as PaginationResult<OrderDto>;
+      count += page.page.length;
+      if (page.isDone) break;
+      cursor = page.continueCursor;
+    }
+  }
+  return count;
+}
 async function assertCoverage(w: World, generation: number) {
   const target = await rows(w, generation);
   const expected: { tenantId: string; key: string }[] = [];
@@ -324,6 +347,29 @@ async function assertLog(w: World) {
   expect(during.filter((record) => !allowed.has(record.identifier))).toEqual(
     [],
   );
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:33: the batches that wrote, by pass, are the progress
+  // row's batchesDone; a batch under a replaced fence completes without writing and is not counted.
+  const wrote = (identifier: string) =>
+    during.filter(
+      (record) =>
+        record.identifier === identifier &&
+        !record.willRetry &&
+        record.error === null &&
+        (record.usageStats["databaseWriteDocuments"] ?? 0) > 0,
+    ).length;
+  const backfills = wrote("rebuild:backfillBatch");
+  const verifies = wrote("rebuild:verifyBatch");
+  expect(backfills + verifies).toBe(
+    required(w.verified, "verified generation").progress.batchesDone,
+  );
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:33: at a batch size of 1 each pass takes one batch per
+  // subject it visits and at most one more per tenant.
+  for (const count of [backfills, verifies]) {
+    expect(count).toBeGreaterThanOrEqual(350);
+    expect(count).toBeLessThanOrEqual(
+      required(w.subjectsAtVerified, "subjects at verified") + tenants.length,
+    );
+  }
   // rebuild.online-rebuild-interrupt-resume.sdp.md:35: the batch log assertion is not vacuous.
   expect(
     during.filter(
@@ -331,9 +377,18 @@ async function assertLog(w: World) {
         record.identifier === "rebuild:backfillBatch" && !record.willRetry,
     ).length,
   ).toBeGreaterThanOrEqual(350);
-  // rebuild.online-rebuild-interrupt-resume.sdp.md:36: no completion names progress as its conflict table.
+  // rebuild.online-rebuild-interrupt-resume.sdp.md:36: no PlaceOrder, CancelOrder or parent query names progress
+  // as its conflict table; an operator entry and a batch may, and the run record counts them.
+  const live = new Set([
+    getFunctionName(api.ordering.placeOrder),
+    getFunctionName(api.ordering.cancelOrder),
+  ]);
   expect(
-    log.filter((record) => record.occInfo?.tableName === "generationProgress"),
+    log.filter(
+      (record) =>
+        record.occInfo?.tableName === "generationProgress" &&
+        (live.has(record.identifier) || record.udfType === "Query"),
+    ),
   ).toEqual([]);
   const commands = new Set([
     getFunctionName(api.ordering.placeOrder),
@@ -435,6 +490,15 @@ async function switchAndObserve(w: World, generationId: string) {
     // rebuild.online-rebuild-interrupt-resume.sdp.md:37: each subscription retains its rows across the switch.
     expect(value.page).toEqual(before[i]);
   }
+  // read-models.sdp.md fnPageInGeneration: the first page's cursor pages on in the generation now active.
+  const first = w.watches[0]!.values.at(-1)!;
+  const next = await w.clients[0]!.query(api.readModels.listOrderSummaries, {
+    tenantId: tenants[0],
+    status: "placed",
+    paginationOpts: { cursor: first.continueCursor, numItems: 100 },
+  });
+  expect(next.page.map(({ key }) => key)).not.toContain(first.page.at(-1)?.key);
+  expect(next.page.length).toBeGreaterThan(0);
   await drain(w);
 }
 
@@ -472,6 +536,12 @@ bindExample(
               completions: records(w),
               registryReruns: records(w).filter(
                 (record) => record.occInfo?.tableName === "generations",
+              ),
+              // rebuild.online-rebuild-interrupt-resume.sdp.md:36: operator entries and batches that reran on the progress row.
+              progressReruns: records(w).filter(
+                (record) =>
+                  record.occInfo?.tableName === "generationProgress" &&
+                  record.identifier.startsWith("rebuild:"),
               ),
             },
             null,
@@ -707,6 +777,7 @@ bindExample(
         );
         await stopLive(w);
         w.batchEnd = (await backendOf(w).admin.logMark()).cursorMs;
+        w.subjectsAtVerified = await subjects(w);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:35: the backfill cursor visits the first tenant before the second.
         expect(w.cursors.indexOf(tenants[0])).toBeGreaterThanOrEqual(0);
         // rebuild.online-rebuild-interrupt-resume.sdp.md:35: the cursor crosses to the second tenant after resume.

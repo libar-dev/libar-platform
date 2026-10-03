@@ -127,15 +127,21 @@ export async function installFixtureReadModel(
   if (ownedTimers) vi.useFakeTimers();
   try {
     // native-harness.sdp.md:90: documentTitle setups select version 1.
+    const projectionVersion = 1;
     const generationId = await t.mutation(internal.rebuild.startGeneration, {
       readModel,
-      projectionVersion: 1,
+      projectionVersion,
       operator,
     });
     await t.finishAllScheduledFunctions(() => vi.runOnlyPendingTimers(), 1000);
     await t.mutation(internal.rebuild.switchGeneration, {
       generationId,
       operator,
+    });
+    // rebuild.sdp.md:115: the active generation is at the version the setup stated.
+    expect(await t.run((ctx) => ctx.db.get(generationId))).toMatchObject({
+      state: "active",
+      projectionVersion,
     });
     return generationId;
   } finally {
@@ -149,15 +155,21 @@ export async function installOrderSummary(
   const ownedTimers = !vi.isFakeTimers();
   if (ownedTimers) vi.useFakeTimers();
   try {
+    const projectionVersion = 1;
     const generationId = await t.mutation(production.rebuild.startGeneration, {
       readModel: "orderSummary",
-      projectionVersion: 1,
+      projectionVersion,
       operator,
     });
     await t.finishAllScheduledFunctions(() => vi.runOnlyPendingTimers(), 1000);
     await t.mutation(production.rebuild.switchGeneration, {
       generationId,
       operator,
+    });
+    // rebuild.sdp.md:115: the active generation is at the version the setup stated.
+    expect(await t.run((ctx) => ctx.db.get(generationId))).toMatchObject({
+      state: "active",
+      projectionVersion,
     });
     return generationId;
   } finally {

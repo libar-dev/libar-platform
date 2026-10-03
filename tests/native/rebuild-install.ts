@@ -1,6 +1,7 @@
 import { getFunctionName } from "convex/server";
 import type { Value } from "convex/values";
 import { setTimeout as sleep } from "node:timers/promises";
+import { expect } from "vitest";
 import { internal as production } from "../../example/convex/_generated/api.js";
 import { internal as fixture } from "../../fixture/convex/_generated/api.js";
 import type { Backend } from "../../harness/backend.js";
@@ -71,14 +72,17 @@ async function install(
   refs: { start: string; switch: string },
   operator: string,
 ) {
+  const projectionVersion = 1;
   const id = await backend.admin.run(refs.start, {
     readModel,
-    projectionVersion: 1,
+    projectionVersion,
     operator,
   });
   if (typeof id !== "string")
     throw new Error("startGeneration did not return an ID");
-  await waitForGeneration(backend, readModel, id);
+  const verified = await waitForGeneration(backend, readModel, id);
+  // rebuild.sdp.md:115: the installed generation is at the version the setup stated.
+  expect(verified.generation.projectionVersion).toBe(projectionVersion);
   await backend.admin.run(refs.switch, { generationId: id, operator });
   return id;
 }

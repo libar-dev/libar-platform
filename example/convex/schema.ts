@@ -14,5 +14,11 @@ export default defineSchema({
   ...readModelTables,
   orderSummaries: defineTable({ ...rowConventions, ...orderSummaryFields })
     .index("by_key", ["tenantId", "generation", "key"])
-    .index("by_status", ["tenantId", "generation", "status", "placedAt"]),
+    .index("by_status", [
+      "tenantId",
+      "generation",
+      "status",
+      "placedAt",
+      "key",
+    ]),
 });
