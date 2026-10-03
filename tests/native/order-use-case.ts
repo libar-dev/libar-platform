@@ -81,6 +81,9 @@ export const line = (
 const tables = [
   { table: "receipts" },
   { table: "generations" },
+  { table: "generationProgress" },
+  { table: "tenantFill" },
+  { table: "projectionMarkers" },
   { table: "orderSummaries" },
   { table: "streams", component: "orders" },
   { table: "events", component: "orders" },

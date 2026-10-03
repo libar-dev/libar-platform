@@ -103,6 +103,7 @@ export async function snapshot(t: App) {
     summaries: await ctx.db.query("documentSummaries").collect(),
     tenants: await ctx.db.query("tenants").collect(),
     fills: await ctx.db.query("tenantFill").collect(),
+    markers: await ctx.db.query("projectionMarkers").collect(),
     scheduled: await ctx.db.system.query("_scheduled_functions").collect(),
   }));
 }
