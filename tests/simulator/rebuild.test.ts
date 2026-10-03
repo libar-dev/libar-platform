@@ -357,6 +357,7 @@ test("convex-test: every entry that reads the progress row and every batch over 
   expect(await t.run((ctx) => ctx.db.get(id))).toStrictEqual({
     ...generation,
     fence: generation.fence + 1,
+    interruptedFence: generation.fence + 1,
   });
 });
 
@@ -581,7 +582,7 @@ test("convex-test: a tenant inserted between crossed tenants is skipped by backf
 
 // rebuild.sdp.md step1:125, verifySteps:131, purgeSteps:132, limitOutstandingBatches:152.
 test.each(["backfill", "verify", "purge"] as const)(
-  "convex-test: in %s the batch the interrupt replaced records it once and a batch of an older chain writes nothing",
+  "convex-test: in %s the batch the interrupt replaced records it once, and after a resume writes nothing",
   async (pass) => {
     const t = rebuildApp();
     await create(t, "a");
@@ -661,6 +662,7 @@ test("convex-test: interrupt after exactly three batches and resume at the store
     generation: {
       ...before.generation,
       fence: 2,
+      interruptedFence: 2,
       changedAt: 1040,
       changedBy: "interrupted",
     },
@@ -677,6 +679,7 @@ test("convex-test: interrupt after exactly three batches and resume at the store
     generation: {
       ...before.generation,
       fence: 3,
+      interruptedFence: 2,
       changedAt: 1050,
       changedBy: "resumed",
     },
@@ -717,6 +720,7 @@ test("convex-test: an interrupt while a batch is scheduled leaves the progress r
     generation: {
       ...before.generation,
       fence: before.generation.fence + 1,
+      interruptedFence: before.generation.fence + 1,
       changedAt: Date.now(),
       changedBy: "interrupter",
     },
@@ -734,6 +738,62 @@ test("convex-test: an interrupt while a batch is scheduled leaves the progress r
   });
   expect(await rows(t)).toStrictEqual(titles);
   expect(await scheduled(t)).toStrictEqual(queued);
+});
+
+// rebuild.sdp.md step1:125, fnInterruptGeneration:134, fnResumeChain:135; generation-registry.sdp.md tableGenerations.
+test("convex-test: a batch pending across an interrupt and a resume, or across a resume alone, writes nothing", async () => {
+  const t = rebuildApp();
+  for (let i = 0; i < 3; i++) await create(t, `d${i}`);
+  const id = await start(t, { batchSize: 1 });
+  await batch(t, id);
+  for (const entries of [
+    [internal.rebuild.interruptGeneration, internal.rebuild.resumeGeneration],
+    [internal.rebuild.resumeGeneration],
+  ]) {
+    const pending = {
+      generationId: id,
+      fence: (await read(t, id)).generation.fence,
+    };
+    for (const entry of entries)
+      await t.mutation(entry, { generationId: id, operator });
+    const before = await snapshot(t);
+    later();
+    await t.mutation(internal.rebuild.backfillBatch, pending);
+    expect(await snapshot(t)).toStrictEqual(before);
+  }
+});
+
+// rebuild.sdp.md step1:125, fnInterruptGeneration:134; generation-registry.sdp.md tableGenerations.
+test("convex-test: a batch pending across two interrupts writes the note of the second once", async () => {
+  const t = rebuildApp();
+  for (let i = 0; i < 3; i++) await create(t, `d${i}`);
+  const id = await start(t, { batchSize: 1 });
+  await batch(t, id);
+  const before = await read(t, id);
+  const pending = { generationId: id, fence: before.generation.fence };
+  const queued = await scheduled(t);
+  for (const stated of ["first", "second"])
+    await t.mutation(internal.rebuild.interruptGeneration, {
+      generationId: id,
+      operator: stated,
+    });
+  expect((await read(t, id)).generation).toMatchObject({
+    fence: pending.fence + 2,
+    interruptedFence: pending.fence + 2,
+    changedBy: "second",
+  });
+  later();
+  await t.mutation(internal.rebuild.backfillBatch, pending);
+  const recorded = await snapshot(t);
+  expect((await read(t, id)).progress).toStrictEqual({
+    ...before.progress,
+    lastError: "interrupted by second",
+    updatedAt: Date.now(),
+  });
+  expect(recorded.scheduled).toStrictEqual(queued);
+  later();
+  await t.mutation(internal.rebuild.backfillBatch, pending);
+  expect(await snapshot(t)).toStrictEqual(recorded);
 });
 
 // rebuild.sdp.md fnInterruptGeneration:134, fnResumeChain:135.
@@ -771,6 +831,7 @@ test.each(states)(
       generation: {
         ...before.generation,
         fence: before.generation.fence + 1,
+        interruptedFence: before.generation.fence + 1,
         changedAt: Date.now(),
         changedBy: "interrupter",
       },
@@ -2332,6 +2393,7 @@ test("convex-test: resuming verify preserves its counts and cursor and schedules
     generation: {
       ...before.generation,
       fence: 3,
+      interruptedFence: 2,
       changedAt: 1010,
       changedBy: "resume verify",
     },

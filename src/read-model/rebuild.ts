@@ -229,8 +229,8 @@ export async function startGeneration<D extends RebuildDataModel>(
   });
   return generationId;
 }
-// Reads and writes the generation row alone, so a batch's checkpoint never conflicts with it; the batch
-// the new fence replaces records the interruption on the progress row.
+// Reads and writes the generation row alone, so a batch's checkpoint never conflicts with it; it marks
+// the new fence as its own, and the batch that fence replaces records the interruption on the progress row.
 export async function interruptGeneration<D extends RebuildDataModel>(
   parentCtx: GenericMutationCtx<D>,
   _config: RebuildConfig,
@@ -247,6 +247,7 @@ export async function interruptGeneration<D extends RebuildDataModel>(
     throw new Error(`${description(generation)} has no batch to interrupt`);
   await ctx.db.patch(generation._id, {
     fence: generation.fence + 1,
+    interruptedFence: generation.fence + 1,
     changedAt: Date.now(),
     changedBy: operator,
   });
@@ -481,10 +482,13 @@ async function generationBatch(
         : generation.state === "retired" || generation.state === "aborted";
   if (!stateMatches || progress.pass !== pass) return null;
   if (generation.fence !== args.fence) {
-    // The batch one fence below is the pending batch of the chain the interrupt replaced: it records
-    // the interruption once; a batch of an older chain writes nothing.
+    // While the interrupt made the last fence bump, a stale batch records it once; after any other bump
+    // a stale batch writes nothing.
     const lastError = `interrupted by ${generation.changedBy}`;
-    if (args.fence === generation.fence - 1 && progress.lastError !== lastError)
+    if (
+      generation.interruptedFence === generation.fence &&
+      progress.lastError !== lastError
+    )
       await ctx.db.patch(progress._id, { lastError, updatedAt: Date.now() });
     return null;
   }

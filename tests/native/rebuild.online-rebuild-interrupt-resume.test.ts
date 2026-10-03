@@ -730,23 +730,26 @@ bindExample(
         // rebuild.online-rebuild-interrupt-resume.sdp.md:35: a queued batch under the replaced fence cannot checkpoint,
         // and the interruption it would record is already there.
         expect((await entry(w)).progress).toEqual(checkpoint);
-        // rebuild.online-rebuild-interrupt-resume.sdp.md:36: interrupt changes only fence and operator change fields.
+        // rebuild.online-rebuild-interrupt-resume.sdp.md:36: interrupt changes only the fence, its mark and operator change fields.
         expect(
           without(w.interrupted.generation, [
             "fence",
+            "interruptedFence",
             "changedAt",
             "changedBy",
           ]),
         ).toEqual(
           without(required(w.initial, "the start row").generation, [
             "fence",
+            "interruptedFence",
             "changedAt",
             "changedBy",
           ]),
         );
-        // rebuild.sdp.md:134: the interrupt replaces the fence and records the operator.
+        // rebuild.sdp.md:134: the interrupt replaces the fence, marks it as its own and records the operator.
         expect(w.interrupted.generation).toMatchObject({
           fence: required(w.oldFence, "the original fence") + 1,
+          interruptedFence: required(w.oldFence, "the original fence") + 1,
           changedBy: "interrupt operator",
         });
         await backendOf(w).admin.run(

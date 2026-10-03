@@ -45,6 +45,7 @@ type Generation = {
   switchedAt?: number;
   retiredAt?: number;
   retireAfter?: number;
+  interruptedFence?: number;
 };
 type Progress = {
   _id: Id<"generationProgress">;

@@ -50,6 +50,7 @@ export const readModelTables = {
     switchedAt: v.optional(v.number()),
     retiredAt: v.optional(v.number()),
     retireAfter: v.optional(v.number()),
+    interruptedFence: v.optional(v.number()),
   })
     .index("by_read_model", ["readModel", "generation"])
     .index("by_read_model_state", ["readModel", "state"]),
