@@ -2,6 +2,8 @@
 
 Written on 2026-10-04 at the close of the unit `pack-page`, which extends the pull request of the unit `design-in-the-graph` (#12), stacked on `feature/round-2`, which followed the close of round 3, sitting two (round 3's unit 3d), unit 3b, the tooling unit, round 2, round 1, the roadmap unit, the decision register unit, the platform review unit and slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it. `ROADMAP.md` orders the next units and is kept current at each close.
 
+**In progress: the unit `sdp-round-2`**, paused on 2026-10-04 for a restart of the owner's machine, at a seam after `0c7b7aa`. It extends pull request #12 with the domain and operator passes over `pack:history-view` and the adoption of the Protocol's round 2 (branch `feature/adopter-round-2`, built in the same unit). The handover note is `handover.md` in the unit folder `~/dev-libar-supporting-context/calibration/application-platform-sdp-round-2/`; the rest of this file waits for the close.
+
 ## Measured at close
 
 ```
