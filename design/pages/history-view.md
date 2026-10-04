@@ -1037,13 +1037,13 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [History p
 
 | Design entry | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L58) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L59) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L60) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L61) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L62) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L63) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
 
 <details><summary>The 3 declarations as the Spec pins them</summary>
 
-[`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L58)
+[`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L61)
 
 ```ts
 type HistorySource = {
@@ -1068,7 +1068,7 @@ type HistorySource = {
 }
 ```
 
-[`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L59)
+[`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L62)
 
 ```ts
 type HistoryRebuildTarget = {
@@ -1077,7 +1077,7 @@ type HistoryRebuildTarget = {
 }
 ```
 
-[`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L60)
+[`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L63)
 
 ```ts
 ctx.runQuery(source.history, {
@@ -1089,7 +1089,7 @@ ctx.runQuery(source.history, {
 
 </details>
 
-**Other Design entries.** 5 entries pin no declaration: [`historyCursor`](../specs/application/history-rebuild.sdp.md?plain=1#L61), [`historyStart`](../specs/application/history-rebuild.sdp.md?plain=1#L62), [`historySteps`](../specs/application/history-rebuild.sdp.md?plain=1#L63), [`historyVerify`](../specs/application/history-rebuild.sdp.md?plain=1#L64), [`limitHistoryBatch`](../specs/application/history-rebuild.sdp.md?plain=1#L65).
+**Other Design entries.** 5 entries pin no declaration: [`historyCursor`](../specs/application/history-rebuild.sdp.md?plain=1#L64), [`historyStart`](../specs/application/history-rebuild.sdp.md?plain=1#L65), [`historySteps`](../specs/application/history-rebuild.sdp.md?plain=1#L66), [`historyVerify`](../specs/application/history-rebuild.sdp.md?plain=1#L67), [`limitHistoryBatch`](../specs/application/history-rebuild.sdp.md?plain=1#L68).
 
 ### 6. Rebuild a cross-stream history view under a write pause; interrupt, then resume
 
@@ -1127,24 +1127,24 @@ Inside the Pack it rests on [Rebuild: generations, backfill and the write pause]
 
 | Design entry | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L67) | bound | the type | `closedEntryValidator` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L68) | bound | the table's document and indexes | `gateTables` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L70) | bound | the type | `ScopeKey` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L71) | bound | the type | `gateAllows` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L72) | bound | the type | `assertWritable` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L73) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L74) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L75) | bound | the type | `scopesOfUseCase` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L76) | not compared | nothing | none | differs only in ctx |
-| [`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L77) | not compared | nothing | none | differs only in ctx |
-| [`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L78) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L79) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L80) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L81) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L64) | bound | the type | `closedEntryValidator` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L65) | bound | the table's document and indexes | `gateTables` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L67) | bound | the type | `ScopeKey` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L68) | bound | the type | `gateAllows` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L69) | bound | the type | `assertWritable` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L70) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L71) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L72) | bound | the type | `scopesOfUseCase` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L73) | not compared | nothing | none | differs only in ctx |
+| [`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L74) | not compared | nothing | none | differs only in ctx |
+| [`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L75) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L76) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L77) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L78) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
 
 <details><summary>The 14 declarations as the Spec pins them</summary>
 
-[`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L67)
+[`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L64)
 
 ```ts
 const closedEntryValidator = v.object({
@@ -1156,7 +1156,7 @@ const closedEntryValidator = v.object({
 })
 ```
 
-[`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L68)
+[`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L65)
 
 ```ts
 maintenanceGates: defineTable({
@@ -1166,13 +1166,13 @@ maintenanceGates: defineTable({
 }).index("by_key", ["key"])
 ```
 
-[`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L70)
+[`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L67)
 
 ```ts
 type ScopeKey = "all" | (string & {})
 ```
 
-[`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L71)
+[`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L68)
 
 ```ts
 gateAllows(
@@ -1184,7 +1184,7 @@ gateAllows(
 >
 ```
 
-[`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L72)
+[`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L69)
 
 ```ts
 assertWritable(
@@ -1193,19 +1193,19 @@ assertWritable(
 ): Promise<void>
 ```
 
-[`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L73)
+[`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L70)
 
 ```ts
 writePaused
 ```
 
-[`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L74)
+[`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L71)
 
 ```ts
 gateAllows
 ```
 
-[`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L75)
+[`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L72)
 
 ```ts
 scopesOfUseCase(
@@ -1214,7 +1214,7 @@ scopesOfUseCase(
 ): ScopeKey[]
 ```
 
-[`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L76)
+[`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L73)
 
 ```ts
 closeScope(
@@ -1226,7 +1226,7 @@ closeScope(
 ): Promise<void>
 ```
 
-[`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L77)
+[`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L74)
 
 ```ts
 resumeScope(
@@ -1236,7 +1236,7 @@ resumeScope(
 ): Promise<void>
 ```
 
-[`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L78)
+[`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L75)
 
 ```ts
 export const closeGate = internalMutation({
@@ -1246,7 +1246,7 @@ export const closeGate = internalMutation({
 })
 ```
 
-[`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L79)
+[`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L76)
 
 ```ts
 export const resumeGate = internalMutation({
@@ -1256,7 +1256,7 @@ export const resumeGate = internalMutation({
 })
 ```
 
-[`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L80)
+[`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L77)
 
 ```ts
 export const getGate = internalQuery({
@@ -1269,7 +1269,7 @@ export const getGate = internalQuery({
 })
 ```
 
-[`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L81)
+[`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L78)
 
 ```ts
 export const getGateAudit = internalQuery({
@@ -1281,7 +1281,7 @@ export const getGateAudit = internalQuery({
 
 </details>
 
-**Other Design entries.** 6 entries pin no declaration: [`indexGatesByKeyUse`](../specs/application/write-pause.sdp.md?plain=1#L69), [`occSerialization`](../specs/application/write-pause.sdp.md?plain=1#L82), [`observedRestoreDoorWithoutDeploy`](../specs/application/write-pause.sdp.md?plain=1#L83), [`limitClosedScopes`](../specs/application/write-pause.sdp.md?plain=1#L84), [`limitGateReason`](../specs/application/write-pause.sdp.md?plain=1#L85), [`limitGateReadsPerCommand`](../specs/application/write-pause.sdp.md?plain=1#L86).
+**Other Design entries.** 6 entries pin no declaration: [`indexGatesByKeyUse`](../specs/application/write-pause.sdp.md?plain=1#L66), [`occSerialization`](../specs/application/write-pause.sdp.md?plain=1#L79), [`observedRestoreDoorWithoutDeploy`](../specs/application/write-pause.sdp.md?plain=1#L80), [`limitClosedScopes`](../specs/application/write-pause.sdp.md?plain=1#L81), [`limitGateReason`](../specs/application/write-pause.sdp.md?plain=1#L82), [`limitGateReadsPerCommand`](../specs/application/write-pause.sdp.md?plain=1#L83).
 
 ### 9. Generation registry
 
