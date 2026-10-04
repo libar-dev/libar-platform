@@ -67,3 +67,4 @@ The shapes are TypeScript in the parent. `StreamVersion` is the kernel's shape; 
 
 - A reviewer confirms that `applyAggregate` compares the marker's `sourceVersions` before it touches `value`, that it reads no mode, that it derives `entityKey` from the input's stream version, that a key change moves the contribution and the count from the marker's key's row to the new key's row, and that a `null` contribution removes the marker and its recorded contribution and creates no row.
 - A reviewer confirms that the marker table's index leads with the tenant, that `applyAggregate` reads it before every aggregate write, and that it compares the marker's `sourceVersions` before adjusting the sum.
+- A reviewer confirms that the pipeline's step 9 and the rebuild's batches are the only callers of `applyAggregate`.

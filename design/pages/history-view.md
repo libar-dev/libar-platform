@@ -23,14 +23,14 @@ Start with the members and with what holds a member below its next rung: togethe
 
 | # | Spec | Kind | Stated | Floor | Next rung | Code | Examples and verifiers | Pairs | Open questions |
 |---|---|---|---|---|---|---|---|---|---|
-| [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | none | none | 5 bound, 3 without a pair | 3, none blocking |
+| [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | none | none | 5 bound, 3 without a pair | 5, none blocking |
 | [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | none | 11 bound | 5, none blocking |
 | [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | 1 anchor | 5 of 5 examples with a verifier | 2 bound, 9 without a pair | 6, none blocking |
 | [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | 1 anchor | 1 of 1 example with a verifier | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
-| [5](#5-rebuild-of-a-history-view-under-a-write-pause) | [`spec:application.history-rebuild`](../specs/application/history-rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | none | 0 of 2 examples with a verifier | 3 without a pair | 3, none blocking |
+| [5](#5-rebuild-of-a-history-view-under-a-write-pause) | [`spec:application.history-rebuild`](../specs/application/history-rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | none | 0 of 2 examples with a verifier | 3 without a pair | 6, none blocking |
 | [6](#6-rebuild-a-cross-stream-history-view-under-a-write-pause-interrupt-then-resume) | [`spec:application.history-rebuild.write-pause-rebuild-interrupt`](../specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [7](#7-rebuild-a-cross-stream-history-view-under-a-write-pause-interrupt-then-abort) | [`spec:application.history-rebuild.write-pause-rebuild-abort`](../specs/application/history-rebuild.write-pause-rebuild-abort.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
-| [8](#8-write-pause) | [`spec:application.write-pause`](../specs/application/write-pause.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | 1 of 1 example with a verifier | 6 bound, 2 not compared, 6 without a pair | 2, none blocking |
+| [8](#8-write-pause) | [`spec:application.write-pause`](../specs/application/write-pause.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | 1 of 1 example with a verifier | 6 bound, 2 not compared, 6 without a pair | 3, none blocking |
 | [9](#9-generation-registry) | [`spec:application.generation-registry`](../specs/application/generation-registry.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | 2 of 2 examples with a verifier | 8 bound, 3 ahead, 2 without a pair | 6, none blocking |
 | [10](#10-orders-and-inventory-the-example-domain) | [`spec:application.orders-inventory-example`](../specs/application/orders-inventory-example.sdp.md) | model | defined | ready | ready, which its floor holds | 1 anchor | 6 of 6 examples with a verifier | no pinned declaration | 1, none blocking |
 | [11](#11-command-declaration-and-bindings) | [`spec:command.command-declaration`](../specs/command/command-declaration.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | 2 of 2 examples with a verifier | 4 bound, 2 ahead, 5 not compared, 7 without a pair | 3, none blocking |
@@ -154,13 +154,15 @@ No target outside the Pack holds a member below its next rung.
 
 ## Open questions
 
-48 open questions on 14 members, none blocking. 41 join a register row by their opening text; 7 join none. A row gives its OD id, its class, its status, the advisor whose lens it falls under and what it blocks. Each question shows its opening, at most its first sentence, and links to its line in the Spec for the rest.
+54 open questions on 14 members, none blocking. 47 join a register row by their opening text; 7 join none. A row gives its OD id, its class, its status, the advisor whose lens it falls under and what it blocks. Each question shows its opening, at most its first sentence, and links to its line in the Spec for the rest.
 
 **[History projection](#1-history-projection)**, `spec:application.history-projection`
 
 - No register row. [question 1](../specs/application/history-projection.sdp.md?plain=1#L34), [non-blocking]: Extension E-9, the history fold: D2 orders events only within a stream, and the two paths feed one history row in different orders, the live path command by command and the backfill stream by stream; the option taken …
 - No register row. [question 2](../specs/application/history-projection.sdp.md?plain=1#L35), [non-blocking]: Extension E-9, the history form's one version: a `HistoryProjection` declares one version, so a deploy that changes it leaves the active generation, which records the earlier version, unwritable, and every command whose …
 - **OD-160** class none, status unsorted, advisor convex, blocks the unit S5. [question 3](../specs/application/history-projection.sdp.md?plain=1#L36), [non-blocking]: The cost of the binding on the live path, one row read and one write of up to `rowBudgetBytes` per command and the measure of the row, is taken by the first experiment's latency cell with the order allocation history …
+- **OD-164** class none, status unsorted, advisor domain, blocks the unit S5. [question 4](../specs/application/history-projection.sdp.md?plain=1#L37), [non-blocking]: Extension E-9, the check of the history fold: the order independence the Contract requires is checked for the order allocation history alone; the option taken here is that every history projection of an application …
+- **OD-165** class none, status unsorted, advisor domain, blocks the unit S5. [question 5](../specs/application/history-projection.sdp.md?plain=1#L38), [non-blocking]: A history row keeps a deleted subject's history and every rebuild writes it again from the journal; whether a history view falls under the retention and deletion policy of D19, and what its rebuild does after an erasure, …
 
 **[Projection contract](#2-projection-contract)**, `spec:application.projection-contract`
 
@@ -192,11 +194,15 @@ No target outside the Pack holds a member below its next rung.
 - **OD-156** class none, status unsorted, advisor convex, blocks the unit S5. [question 1](../specs/application/history-rebuild.sdp.md?plain=1#L40), [non-blocking]: Extension E-40, the shape of a history batch: a batch takes one stream, so a pass costs at least one scheduled mutation per source stream and the pause lasts about twice the stream count times one batch; the alternative …
 - **OD-157** class owner, status sorted, advisor convex, blocks the unit S5. [question 2](../specs/application/history-rebuild.sdp.md?plain=1#L41), [non-blocking]: The verify pass under the write pause: a history view's generation is built while no source changes, so its verify pass repeats the backfill's batches and, by `spec:application.history-rebuild#design.historyVerify`, …
 - **OD-158** class none, status unsorted, advisor convex, blocks the unit S5. [question 3](../specs/application/history-rebuild.sdp.md?plain=1#L42), [non-blocking]: Whether a history view's batch chain, at up to 2 MiB of rows per batch scheduled with `runAfter(0)`, is held by the deployment class's write throughput limit, …
+- **OD-167** class none, status unsorted, advisor operator, blocks the unit S5. [question 4](../specs/application/history-rebuild.sdp.md?plain=1#L43), [non-blocking]: Must every source's migration that reads history finish before `startGeneration` closes its source scopes, with abort, migration completion and a fresh generation as the recovery if it did not? If enumeration must …
+- **OD-168** class none, status unsorted, advisor operator, blocks the unit S5. [question 5](../specs/application/history-rebuild.sdp.md?plain=1#L44), [non-blocking]: Should the native-backend abort example inject failure in the second source's audit insert, assert unchanged generation, progress, gate entries and audit records, then retry after removing the fault and assert one …
+- **OD-169** class none, status unsorted, advisor operator, blocks the unit S5. [question 6](../specs/application/history-rebuild.sdp.md?plain=1#L45), [non-blocking]: Should the native-backend example use two tenants with equal local order and stock item IDs, check their folds separately, and refuse a command that writes a paused source without a history binding in both tenants, while …
 
 **[Write pause](#8-write-pause)**, `spec:application.write-pause`
 
 - **OD-084** class delegated, status sorted, advisor operator, blocks the unit S4. [question 1](../specs/application/write-pause.sdp.md?plain=1#L39), [non-blocking]: Extension E-8: the doc names a maintenance gate every writer reads, fencing or draining of background writers, and operator resume and abort; the option taken here is one gate document per deployment holding the closed …
 - **OD-161** class none, status unsorted, advisor convex, blocks the unit S5. [question 2](../specs/application/write-pause.sdp.md?plain=1#L40), [non-blocking]: Extension E-8, the generation exemption: a batch reads the gate with the scopes `all` and its tenant, and no entry of either scope ever names a generation, so the exemption `gateAllows` makes for a given generation is …
+- **OD-170** class none, status unsorted, advisor operator, blocks the unit S5. [question 3](../specs/application/write-pause.sdp.md?plain=1#L41), [non-blocking]: Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using those existing reads, and measure the closed interval through the successful switch or abort? Keep any …
 
 **[Generation registry](#9-generation-registry)**, `spec:application.generation-registry`
 
@@ -262,18 +268,18 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [Projectio
 
 | Design entry | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L51) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L52) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L53) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L54) | bound | the type | `HistoryEvent` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L55) | bound | the type | `OrderAllocation` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L56) | bound | the type | `OrderAllocationHistoryFields` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L57) | bound | the type | `orderAllocationHistoryKeyOf` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L58) | bound | the type | `projectOrderAllocationHistory` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L53) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L54) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L55) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L56) | bound | the type | `HistoryEvent` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L57) | bound | the type | `OrderAllocation` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L58) | bound | the type | `OrderAllocationHistoryFields` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L59) | bound | the type | `orderAllocationHistoryKeyOf` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L60) | bound | the type | `projectOrderAllocationHistory` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
 
 <details><summary>The 8 declarations as the Spec pins them</summary>
 
-[`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L51)
+[`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L53)
 
 ```ts
 interface HistoryProjection<Row> {
@@ -286,7 +292,7 @@ interface HistoryProjection<Row> {
 }
 ```
 
-[`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L52)
+[`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L54)
 
 ```ts
 applyHistoryProjection<Row>(
@@ -301,7 +307,7 @@ applyHistoryProjection<Row>(
 ): Promise<{ key: string; results: ApplyResult[] }[]>
 ```
 
-[`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L53)
+[`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L55)
 
 ```ts
 orderAllocationHistory: defineTable({
@@ -320,7 +326,7 @@ orderAllocationHistory: defineTable({
 }).index("by_key", ["tenantId", "generation", "key"])
 ```
 
-[`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L54)
+[`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L56)
 
 ```ts
 type HistoryEvent = {
@@ -332,7 +338,7 @@ type HistoryEvent = {
 }
 ```
 
-[`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L55)
+[`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L57)
 
 ```ts
 type OrderAllocation = {
@@ -343,7 +349,7 @@ type OrderAllocation = {
 }
 ```
 
-[`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L56)
+[`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L58)
 
 ```ts
 type OrderAllocationHistoryFields = {
@@ -354,7 +360,7 @@ type OrderAllocationHistoryFields = {
 }
 ```
 
-[`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L57)
+[`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L59)
 
 ```ts
 orderAllocationHistoryKeyOf(
@@ -363,7 +369,7 @@ orderAllocationHistoryKeyOf(
 ): string | null
 ```
 
-[`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L58)
+[`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L60)
 
 ```ts
 projectOrderAllocationHistory(
@@ -375,7 +381,7 @@ projectOrderAllocationHistory(
 
 </details>
 
-**Other Design entries.** 2 entries pin no declaration: [`orderAllocationHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L59), [`limitHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L60).
+**Other Design entries.** 2 entries pin no declaration: [`orderAllocationHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L61), [`limitHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L62).
 
 ### 2. Projection contract
 
@@ -1038,13 +1044,13 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [History p
 
 | Design entry | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L61) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L62) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L63) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L64) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L65) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L66) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
 
 <details><summary>The 3 declarations as the Spec pins them</summary>
 
-[`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L61)
+[`spec:application.history-rebuild#design.typeHistorySource`](../specs/application/history-rebuild.sdp.md?plain=1#L64)
 
 ```ts
 type HistorySource = {
@@ -1069,7 +1075,7 @@ type HistorySource = {
 }
 ```
 
-[`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L62)
+[`spec:application.history-rebuild#design.typeHistoryRebuildTarget`](../specs/application/history-rebuild.sdp.md?plain=1#L65)
 
 ```ts
 type HistoryRebuildTarget = {
@@ -1078,7 +1084,7 @@ type HistoryRebuildTarget = {
 }
 ```
 
-[`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L63)
+[`spec:application.history-rebuild#design.fnHistoryPageCall`](../specs/application/history-rebuild.sdp.md?plain=1#L66)
 
 ```ts
 ctx.runQuery(source.history, {
@@ -1090,7 +1096,7 @@ ctx.runQuery(source.history, {
 
 </details>
 
-**Other Design entries.** 5 entries pin no declaration: [`historyCursor`](../specs/application/history-rebuild.sdp.md?plain=1#L64), [`historyStart`](../specs/application/history-rebuild.sdp.md?plain=1#L65), [`historySteps`](../specs/application/history-rebuild.sdp.md?plain=1#L66), [`historyVerify`](../specs/application/history-rebuild.sdp.md?plain=1#L67), [`limitHistoryBatch`](../specs/application/history-rebuild.sdp.md?plain=1#L68).
+**Other Design entries.** 5 entries pin no declaration: [`historyCursor`](../specs/application/history-rebuild.sdp.md?plain=1#L67), [`historyStart`](../specs/application/history-rebuild.sdp.md?plain=1#L68), [`historySteps`](../specs/application/history-rebuild.sdp.md?plain=1#L69), [`historyVerify`](../specs/application/history-rebuild.sdp.md?plain=1#L70), [`limitHistoryBatch`](../specs/application/history-rebuild.sdp.md?plain=1#L71).
 
 ### 6. Rebuild a cross-stream history view under a write pause; interrupt, then resume
 
@@ -1128,24 +1134,24 @@ Inside the Pack it rests on [Rebuild: generations, backfill and the write pause]
 
 | Design entry | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L64) | bound | the type | `closedEntryValidator` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L65) | bound | the table's document and indexes | `gateTables` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L67) | bound | the type | `ScopeKey` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L68) | bound | the type | `gateAllows` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L69) | bound | the type | `assertWritable` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L70) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L71) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L72) | bound | the type | `scopesOfUseCase` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
-| [`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L73) | not compared | nothing | none | differs only in ctx |
-| [`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L74) | not compared | nothing | none | differs only in ctx |
-| [`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L75) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L76) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L77) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L78) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L65) | bound | the type | `closedEntryValidator` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L66) | bound | the table's document and indexes | `gateTables` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L68) | bound | the type | `ScopeKey` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L69) | bound | the type | `gateAllows` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L70) | bound | the type | `assertWritable` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L71) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L72) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L73) | bound | the type | `scopesOfUseCase` in [`src/gate/index.ts`](../../src/gate/index.ts) |  |
+| [`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L74) | not compared | nothing | none | differs only in ctx |
+| [`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L75) | not compared | nothing | none | differs only in ctx |
+| [`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L76) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L77) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L78) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L79) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
 
 <details><summary>The 14 declarations as the Spec pins them</summary>
 
-[`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L64)
+[`spec:application.write-pause#design.validatorClosedEntry`](../specs/application/write-pause.sdp.md?plain=1#L65)
 
 ```ts
 const closedEntryValidator = v.object({
@@ -1157,7 +1163,7 @@ const closedEntryValidator = v.object({
 })
 ```
 
-[`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L65)
+[`spec:application.write-pause#design.tableMaintenanceGates`](../specs/application/write-pause.sdp.md?plain=1#L66)
 
 ```ts
 maintenanceGates: defineTable({
@@ -1167,13 +1173,13 @@ maintenanceGates: defineTable({
 }).index("by_key", ["key"])
 ```
 
-[`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L67)
+[`spec:application.write-pause#design.typeScopeKey`](../specs/application/write-pause.sdp.md?plain=1#L68)
 
 ```ts
 type ScopeKey = "all" | (string & {})
 ```
 
-[`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L68)
+[`spec:application.write-pause#design.fnGateAllows`](../specs/application/write-pause.sdp.md?plain=1#L69)
 
 ```ts
 gateAllows(
@@ -1185,7 +1191,7 @@ gateAllows(
 >
 ```
 
-[`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L69)
+[`spec:application.write-pause#design.fnAssertWritable`](../specs/application/write-pause.sdp.md?plain=1#L70)
 
 ```ts
 assertWritable(
@@ -1194,19 +1200,19 @@ assertWritable(
 ): Promise<void>
 ```
 
-[`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L70)
+[`spec:application.write-pause#design.errorCodeWritePaused`](../specs/application/write-pause.sdp.md?plain=1#L71)
 
 ```ts
 writePaused
 ```
 
-[`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L71)
+[`spec:application.write-pause#design.restoreDoor`](../specs/application/write-pause.sdp.md?plain=1#L72)
 
 ```ts
 gateAllows
 ```
 
-[`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L72)
+[`spec:application.write-pause#design.fnScopesOfUseCase`](../specs/application/write-pause.sdp.md?plain=1#L73)
 
 ```ts
 scopesOfUseCase(
@@ -1215,7 +1221,7 @@ scopesOfUseCase(
 ): ScopeKey[]
 ```
 
-[`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L73)
+[`spec:application.write-pause#design.fnCloseScope`](../specs/application/write-pause.sdp.md?plain=1#L74)
 
 ```ts
 closeScope(
@@ -1227,7 +1233,7 @@ closeScope(
 ): Promise<void>
 ```
 
-[`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L74)
+[`spec:application.write-pause#design.fnResumeScope`](../specs/application/write-pause.sdp.md?plain=1#L75)
 
 ```ts
 resumeScope(
@@ -1237,7 +1243,7 @@ resumeScope(
 ): Promise<void>
 ```
 
-[`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L75)
+[`spec:application.write-pause#design.fnCloseGate`](../specs/application/write-pause.sdp.md?plain=1#L76)
 
 ```ts
 export const closeGate = internalMutation({
@@ -1247,7 +1253,7 @@ export const closeGate = internalMutation({
 })
 ```
 
-[`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L76)
+[`spec:application.write-pause#design.fnResumeGate`](../specs/application/write-pause.sdp.md?plain=1#L77)
 
 ```ts
 export const resumeGate = internalMutation({
@@ -1257,7 +1263,7 @@ export const resumeGate = internalMutation({
 })
 ```
 
-[`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L77)
+[`spec:application.write-pause#design.fnGetGate`](../specs/application/write-pause.sdp.md?plain=1#L78)
 
 ```ts
 export const getGate = internalQuery({
@@ -1270,7 +1276,7 @@ export const getGate = internalQuery({
 })
 ```
 
-[`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L78)
+[`spec:application.write-pause#design.fnGetGateAudit`](../specs/application/write-pause.sdp.md?plain=1#L79)
 
 ```ts
 export const getGateAudit = internalQuery({
@@ -1282,7 +1288,7 @@ export const getGateAudit = internalQuery({
 
 </details>
 
-**Other Design entries.** 6 entries pin no declaration: [`indexGatesByKeyUse`](../specs/application/write-pause.sdp.md?plain=1#L66), [`occSerialization`](../specs/application/write-pause.sdp.md?plain=1#L79), [`observedRestoreDoorWithoutDeploy`](../specs/application/write-pause.sdp.md?plain=1#L80), [`limitClosedScopes`](../specs/application/write-pause.sdp.md?plain=1#L81), [`limitGateReason`](../specs/application/write-pause.sdp.md?plain=1#L82), [`limitGateReadsPerCommand`](../specs/application/write-pause.sdp.md?plain=1#L83).
+**Other Design entries.** 6 entries pin no declaration: [`indexGatesByKeyUse`](../specs/application/write-pause.sdp.md?plain=1#L67), [`occSerialization`](../specs/application/write-pause.sdp.md?plain=1#L80), [`observedRestoreDoorWithoutDeploy`](../specs/application/write-pause.sdp.md?plain=1#L81), [`limitClosedScopes`](../specs/application/write-pause.sdp.md?plain=1#L82), [`limitGateReason`](../specs/application/write-pause.sdp.md?plain=1#L83), [`limitGateReadsPerCommand`](../specs/application/write-pause.sdp.md?plain=1#L84).
 
 ### 9. Generation registry
 
