@@ -40,6 +40,9 @@ type PackPage = {
   readPinnedPairs(base: string, pack: string): unknown;
   readAnchorSites(base: string): unknown;
   readQuestionSources(base: string): unknown;
+  indexTables(
+    rows: { spec: string; key: string; declaration: string }[],
+  ): Map<string, string>;
   specLines(text: string): { design: Map<string, number>; questions: number[] };
   opening(text: string, limit?: number): string;
   tierOf(openingLine: string): string | null;
@@ -251,7 +254,7 @@ test("an input off its ruled shape is refused", async () => {
     await mkdir(join(base, "tests/types"), { recursive: true });
     await mkdir(join(base, "design/decisions"), { recursive: true });
     const pair = {
-      address: "spec:sample.one#design.typeOne",
+      address: "spec:application.generation-registry#design.typeRegistryReader",
       state: "bound",
       comparison: "type",
       code: "src/sample/index.ts#One",
@@ -276,7 +279,7 @@ test("an input off its ruled shape is refused", async () => {
     );
     await pairs([pair, pair]);
     expect(() => page.readPinnedPairs(base, "pack:sample")).toThrow(
-      "pairs[1] repeats spec:sample.one#design.typeOne",
+      "pairs[1] repeats spec:application.generation-registry#design.typeRegistryReader",
     );
     // A question source that cites the question by its position, the form the rulings retire.
     await writeFile(
@@ -368,4 +371,56 @@ test("the check names the first line where the committed page differs", () => {
     committed: "",
     generated: "b",
   });
+});
+
+test("an index belongs to the table its Spec wrote last before it, as the pinned module chains it", () => {
+  const rows = [
+    {
+      spec: "spec:sample.one",
+      key: "tableItems",
+      declaration: "items: defineTable({ name: v.string() })",
+    },
+    {
+      spec: "spec:sample.one",
+      key: "validatorItem",
+      declaration: "const itemValidator = v.object({})",
+    },
+    {
+      spec: "spec:sample.one",
+      key: "indexItemsByName",
+      declaration: '.index("by_name", ["name"])',
+    },
+    {
+      spec: "spec:sample.one",
+      key: "indexItemsByNameUse",
+      declaration: "by_name serves the list",
+    },
+    {
+      spec: "spec:sample.one",
+      key: "tableMarks",
+      declaration: "marks: defineTable({ at: v.number() })",
+    },
+    {
+      spec: "spec:sample.one",
+      key: "indexMarksByAt",
+      declaration: '.index("by_at", ["at"])',
+    },
+    {
+      spec: "spec:sample.two",
+      key: "indexOrphan",
+      declaration: '.index("by_key", ["key"])',
+    },
+  ];
+  // Addresses are built, so that the check of entry addresses outside the Specs reads no sample one.
+  const at = (spec: string, key: string) => `${spec}#design.${key}`;
+  expect([...page.indexTables(rows)]).toEqual([
+    [
+      at("spec:sample.one", "indexItemsByName"),
+      at("spec:sample.one", "tableItems"),
+    ],
+    [
+      at("spec:sample.one", "indexMarksByAt"),
+      at("spec:sample.one", "tableMarks"),
+    ],
+  ]);
 });

@@ -237,6 +237,30 @@ export async function formatDeclaration(text, options = {}) {
   return { text, formatted: false };
 }
 
+// The table entry each index entry is chained on, by entry address, as the pinned module chains it:
+// an `index*` entry of the form `.index(...)` belongs to the `table*` entry of the form
+// `name: defineTable(...)` that its Spec wrote last before it. `rows` are recipe 24's rows in order.
+export function indexTables(rows) {
+  const tables = new Map();
+  let table = null;
+  for (const row of rows) {
+    const prefix = /^[a-z]+/.exec(row.key)?.[0];
+    const declaration = row.declaration.trim();
+    if (prefix === "table" && /^[\w$]+:\s*defineTable\(/.test(declaration))
+      table = row;
+    else if (
+      prefix === "index" &&
+      declaration.startsWith(".index(") &&
+      table?.spec === row.spec
+    )
+      tables.set(
+        `${row.spec}#design.${row.key}`,
+        `${table.spec}#design.${table.key}`,
+      );
+  }
+  return tables;
+}
+
 // The line of each Design entry and of each open question in a Spec's Markdown carrier.
 export function specLines(text) {
   const design = new Map();
@@ -421,6 +445,7 @@ export async function generate(pack, out) {
     cannot(`package.json does not depend on ${engine}`);
   const { reader, index, summary, members, questions, declarations } =
     await readGraph(pack);
+  const chained = indexTables(declarations.rows);
   const pairs = readPinnedPairs(root, pack);
   const sites = readAnchorSites(root);
   const sources = readQuestionSources(root);
@@ -472,16 +497,26 @@ export async function generate(pack, out) {
       const entries = await Promise.all(
         declarations.rows
           .filter((row) => row.spec === id)
-          .map(async (row) => ({
-            key: row.key,
-            address: `${id}#design.${row.key}`,
-            line: lines.design.get(row.key) ?? null,
-            pair: pairs.pairs.get(`${id}#design.${row.key}`) ?? null,
-            declaration: await formatDeclaration(
-              row.declaration,
-              prettierOptions,
-            ),
-          })),
+          .map(async (row) => {
+            const address = `${id}#design.${row.key}`;
+            const own = pairs.pairs.get(address) ?? null;
+            // An index has no pair of its own: its table's pair compares the table's indexes.
+            const table = own === null ? (chained.get(address) ?? null) : null;
+            return {
+              key: row.key,
+              address,
+              line: lines.design.get(row.key) ?? null,
+              pair: own ?? pairs.pairs.get(table) ?? null,
+              table:
+                table !== null && pairs.pairs.has(table)
+                  ? table.slice(table.indexOf("#design.") + "#design.".length)
+                  : null,
+              declaration: await formatDeclaration(
+                row.declaration,
+                prettierOptions,
+              ),
+            };
+          }),
       );
       const declared = new Set(entries.map((entry) => entry.key));
       return {
@@ -752,8 +787,10 @@ export async function generate(pack, out) {
       const source = restingOn.get(relation.otherId) ?? {
         id: relation.otherId,
         to: [],
+        members: [],
       };
       source.to.push(`${relation.type} ${span(member.id)}`);
+      source.members.push(member.id);
       restingOn.set(relation.otherId, source);
     }
   const dependents = [...restingOn.values()].sort((left, right) =>
@@ -765,6 +802,21 @@ export async function generate(pack, out) {
     `${plural(dependents.length, "Spec")} outside the Pack ${dependents.length === 1 ? "rests" : "rest"} on a member. An example that verifies a member is listed with that member instead.`,
     "",
   );
+  const designedOnly = dependents.filter(
+    (source) => rank(specs.get(source.id)?.statedReadiness) < rank("defined"),
+  );
+  if (designedOnly.length > 0)
+    write(
+      `${designedOnly.length === 1 ? "One of them states" : `${designedOnly.length} of them state`} less than defined:`,
+      "",
+      ...designedOnly.map(
+        (source) =>
+          `- ${specLink(source.id)} states ${rungOf(source.id)} and rests on ${list(
+            [...new Set(source.members)].map((id) => memberLink(id)),
+          )}.`,
+      ),
+      "",
+    );
   if (dependents.length > 0)
     write(
       `<details><summary>The ${plural(dependents.length, "Spec")} that rest on a member</summary>`,
@@ -902,6 +954,12 @@ export async function generate(pack, out) {
       entry.line === null
         ? span(entry.address)
         : `[${span(entry.address)}](${link(context.file, entry.line)})`;
+    const tableLink = (key) => {
+      const line = member.entries.find((entry) => entry.key === key)?.line;
+      return line === null || line === undefined
+        ? span(key)
+        : `[${span(key)}](${link(context.file, line)})`;
+    };
     if (member.entries.length > 0) {
       write(
         `**Pinned declarations.** ${plural(member.entries.length, "Design entry", "Design entries")} open with a code span. Each pair comes from [${span(inputs.pairs)}](${link(inputs.pairs)}) and is the test named by its address in [${span(pairs.test)}](${link(pairs.test)}).`,
@@ -918,10 +976,16 @@ export async function generate(pack, out) {
                 `${span(inputs.pairs)} lists no pair for it`,
               ];
             const [file, name] = entry.pair.code?.split("#") ?? [];
+            const comparedText =
+              entry.table === null
+                ? compared[entry.pair.comparison]
+                : entry.pair.comparison === "table"
+                  ? `the indexes, through its table ${tableLink(entry.table)}`
+                  : `${compared[entry.pair.comparison]}, through its table ${tableLink(entry.table)}`;
             return [
               entryLink(entry),
               states[entry.pair.state],
-              compared[entry.pair.comparison],
+              comparedText,
               file === undefined
                 ? "none"
                 : `${span(name)} in [${span(file)}](${link(file)})`,
@@ -960,6 +1024,17 @@ export async function generate(pack, out) {
   const strays = [...pairs.pairs.values()].filter(
     (pair) => !shown.has(pair.address),
   );
+  const addressLink = (address) => {
+    const [id, key] = address.split("#design.");
+    const spec = specs.get(id);
+    if (spec === undefined) return span(address);
+    const line = specLines(
+      readFileSync(join(root, spec.file), "utf8"),
+    ).design.get(key);
+    return line === undefined
+      ? `[${span(address)}](${link(spec.file)})`
+      : `[${span(address)}](${link(spec.file, line)})`;
+  };
   if (strays.length > 0)
     write(
       "## Pairs without a member's declaration",
@@ -967,12 +1042,13 @@ export async function generate(pack, out) {
       `${plural(strays.length, "pair")} in ${span(inputs.pairs)} ${strays.length === 1 ? "names" : "name"} no pinned declaration of a member.`,
       "",
       ...table(
-        ["Address", "Pair", "Compared", "Code"],
+        ["Address", "Pair", "Compared", "Code", "Why"],
         strays.map((pair) => [
-          span(pair.address),
+          addressLink(pair.address),
           states[pair.state],
           compared[pair.comparison],
           pair.code === null ? "none" : span(pair.code),
+          pair.reason ?? "",
         ]),
       ),
       "",
