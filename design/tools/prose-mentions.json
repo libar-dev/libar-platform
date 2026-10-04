@@ -1,12 +1,12 @@
 {
   "pairs": [
     {
-      "from": "spec:application.rebuild.write-pause-rebuild-abort",
+      "from": "spec:application.history-rebuild.write-pause-rebuild-abort",
       "to": "spec:application.orders-inventory-example",
       "reason": "An example keeps only its refines and verifies edges; the Verification bullet names the fixture view it runs on."
     },
     {
-      "from": "spec:application.rebuild.write-pause-rebuild-interrupt",
+      "from": "spec:application.history-rebuild.write-pause-rebuild-interrupt",
       "to": "spec:application.orders-inventory-example",
       "reason": "An example keeps only its refines and verifies edges; the Verification bullet names the fixture view it runs on."
     },
