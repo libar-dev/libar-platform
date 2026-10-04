@@ -45,6 +45,48 @@ def date(value):
         raise argparse.ArgumentTypeError("expected a date in YYYY-MM-DD form")
 
 
+def question_opening(text):
+    """Keep the authored text through its first sentence."""
+    match = re.search(r"[.?!](?=\s|$)", text)
+    return text[:match.end()] if match else text
+
+
+def normalize_question(text):
+    return " ".join(text.split())
+
+
+def question_source_errors(row, questions, files):
+    """Check I3 sources against authored open questions, by text only."""
+    errors = []
+    required = {"kind", "spec", "question", "file"}
+    for source in row["sources"]:
+        if source.get("kind") != "specQuestion":
+            continue
+        closed = source.get("open") is False
+        if set(source) != required | ({"open"} if closed else set()):
+            errors.append("specQuestion requires kind, spec, question and file, with only open: false optional")
+        spec = source.get("spec")
+        question = source.get("question")
+        if not present(spec) or spec not in files:
+            errors.append("specQuestion names no Spec: " + repr(spec))
+            continue
+        if source.get("file") != files[spec]:
+            errors.append("specQuestion file does not name its Spec: " + spec)
+        if not present(question):
+            errors.append("specQuestion requires non-empty question text")
+            continue
+        matches = sum(normalize_question(question_opening(text)) == normalize_question(question)
+                      for text in questions.get(spec, []))
+        if closed:
+            if row["status"] not in ("decided", "folded"):
+                errors.append("open: false requires a decided or folded row")
+            if matches:
+                errors.append("open: false question resolves again: " + spec)
+        elif matches != 1:
+            errors.append(f"specQuestion resolves to {matches} open questions: {spec}: {question}")
+    return errors
+
+
 def row_errors(row, units, root, row_ids):
     """Validate the merged row and every patch refusal."""
     errors = []
@@ -258,7 +300,8 @@ def select(register, args):
         if args.cites and args.cites not in row["cites"]:
             return False
         if args.spec:
-            refs = [source["ref"] for source in row["sources"] if source["kind"] in ("specQuestion", "specLine")]
+            refs = [source["spec"] if source["kind"] == "specQuestion" else source["ref"]
+                    for source in row["sources"] if source["kind"] in ("specQuestion", "specLine")]
             if not any(ref == args.spec or ref.split("#")[0] == args.spec for ref in refs):
                 return False
         if (args.spec or args.family or args.cites) and row["status"] == "decided":
