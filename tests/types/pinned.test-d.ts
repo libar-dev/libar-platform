@@ -276,6 +276,8 @@ describe("ahead: the design leads the code", () => {
   });
   test("spec:application.history-projection#design.typeHistoryEvent: the design adds `eventSchemaVersion`; the code carries it in 5d", () => {
     expectTypeOf<allocationHistory.HistoryEvent>().not.toEqualTypeOf<pinned.HistoryEvent>();
+    // The pin says every envelope is a HistoryEvent, so the code's envelope carries each field the pin declares.
+    expectTypeOf<context.EventEnvelope>().toExtend<pinned.HistoryEvent>();
   });
   test("spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf: the design adds `eventSchemaVersion`; the code carries it in 5d", () => {
     expectTypeOf<

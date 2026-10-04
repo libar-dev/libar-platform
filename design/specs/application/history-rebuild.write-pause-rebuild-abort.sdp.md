@@ -31,6 +31,6 @@ And writes {writes: "reopen after the abort"}
 
 - Runs in the native backend tier; every test owns its disposable backend.
 - The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type.
-- The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, interrupts after the second history batch and calls `abortGeneration`.
-- The test asserts that the generation is `aborted`, that the active generation is unchanged, that both source entries are gone from the gate, that `PlaceOrder` succeeds again, and that no query returns a row of the aborted generation.
+- The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, and interrupts after the second history batch; then, as `spec:application.history-rebuild#design.historyAbortHandoff` requires, it closes `all` through `closeGate`, confirms it with `getGate` and calls `abortGeneration`.
+- The test asserts that the generation is `aborted`, that the active generation is unchanged and that `all` is still closed; since the deployed projection's version is the active generation's, it then reopens the `all` entry it closed through `resumeGate`, and asserts that `PlaceOrder` succeeds again, that both source entries are gone from the gate, and that no query returns a row of the aborted generation.
 - The test runs `purgeGeneration` and asserts that its batches run until the generation is `purged` and that every batch deleted at most `limitPurgeBatch` rows.

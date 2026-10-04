@@ -6710,7 +6710,7 @@
       "sources": [
         {
           "kind": "specLine",
-          "ref": "application.projection-contract#source-versions",
+          "ref": "spec:application.projection-contract#source-versions",
           "file": "design/specs/application/projection-contract.sdp.md",
           "line": 47
         }
@@ -6739,9 +6739,9 @@
       "sources": [
         {
           "kind": "specLine",
-          "ref": "application.history-projection#declarations-bind",
+          "ref": "spec:application.history-projection#declarations-bind",
           "file": "design/specs/application/history-projection.sdp.md",
-          "line": 49
+          "line": 51
         }
       ],
       "families": [
@@ -6779,9 +6779,9 @@
       "sources": [
         {
           "kind": "specLine",
-          "ref": "application.history-projection#event-schema-versions",
+          "ref": "spec:application.history-projection#event-schema-versions",
           "file": "design/specs/application/history-projection.sdp.md",
-          "line": 46
+          "line": 48
         }
       ],
       "families": [
@@ -6862,9 +6862,9 @@
       "sources": [
         {
           "kind": "specLine",
-          "ref": "application.history-rebuild#historyCompatibility",
+          "ref": "spec:application.history-rebuild#historyCompatibility",
           "file": "design/specs/application/history-rebuild.sdp.md",
-          "line": 73
+          "line": 74
         }
       ],
       "families": [

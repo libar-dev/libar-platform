@@ -1,5 +1,7 @@
-"""Decision queries, patch refusals, the real register's question sources, and the two checks
-check.py runs through the Protocol's recipes: entry addresses outside the Specs and dependsOn cycles.
+"""Decision queries, patch refusals, the real register's question sources and its rows found by Spec,
+the two checks check.py runs through the Protocol's recipes, entry addresses outside the Specs and
+dependsOn cycles, and check.py run whole over a sample tree, so that each of its checks reaches the
+failures it prints and its exit status.
 
 Run: python3 -m unittest design/tools/test_decisions.py
 Fixtures and mutation copies live in operating-system temporary directories.
@@ -463,9 +465,24 @@ class RealRegisterTests(unittest.TestCase):
                 self.assertEqual(tool.row_errors(decision, register["units"], ROOT, set(ids)), [])
                 self.assertEqual(tool.question_source_errors(decision, questions, files, resolutions), [])
 
+    def test_real_rows_are_found_by_the_spec_their_sources_name(self):
+        def ids(*args):
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                code = tool.main([*args, "--json"], register_path=ROOT / "design/decisions/register.json", root=ROOT)
+            self.assertEqual(code, 0)
+            return {row["id"] for row in json.loads(stdout.getvalue())}
+        for spec, expected in [
+            ("spec:application.projection-contract", {"OD-171"}),
+            ("spec:application.history-projection", {"OD-172", "OD-173", "OD-174"}),
+            ("spec:application.history-rebuild", {"OD-175"}),
+        ]:
+            with self.subTest(spec=spec):
+                self.assertLessEqual(expected, ids("--spec", spec) | ids("--spec", spec, "--decided"))
 
-def sample_spec(name, relations="{}"):
-    """A rule Spec of a sample corpus, with one Design entry and one keyed open question."""
+
+def sample_spec(name, relations="{}", key=" #keepIt"):
+    """A rule Spec of a sample corpus, with one Design entry and one open question, keyed unless key is empty."""
     return f"""---
 id: spec:sample.{name}
 kind: rule
@@ -479,7 +496,7 @@ relations: {relations}
 - outcome: Keep {name}.
 
 ### Open questions
-- [non-blocking #keepIt] Keep {name} as it is. Another sentence.
+- [non-blocking{key}] Keep {name} as it is. Another sentence.
 
 ## Rule
 - Keep {name}.
@@ -542,6 +559,56 @@ class CheckTests(unittest.TestCase):
             "dependsOn cycle among spec:sample.one, spec:sample.three, spec:sample.two: "
             "spec:sample.one -> spec:sample.two -> spec:sample.three -> spec:sample.one",
         ])
+
+
+
+class CheckCommandTests(unittest.TestCase):
+    """check.py run whole, as the command it is, over a sample tree in a temporary directory.
+
+    The tree holds a copy of check.py and decisions.py under test, the pinned Protocol through a link to
+    this repository's node_modules, and a stand-in for the page generator. Four defects are planted at
+    once: an address that names no entry, a dependsOn cycle, an open question without a key, and a page
+    generator that exits 1. The run must print each one's failure, no other, and exit 1, so a check that
+    stops reaching its failures or the exit status fails here.
+    """
+
+    def put(self, path, text):
+        (self.root / path).parent.mkdir(parents=True, exist_ok=True)
+        (self.root / path).write_text(text)
+
+    def test_each_check_reaches_its_failure_and_the_exit_status(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.root = Path(temporary)
+            pin = json.loads((ROOT / "package.json").read_text())["devDependencies"]["@libar-dev/software-delivery-protocol"]
+            self.put("package.json", json.dumps({"devDependencies": {"@libar-dev/software-delivery-protocol": pin}}))
+            os.symlink(ROOT / "node_modules", self.root / "node_modules")
+            self.put("design/tools/check.py", CHECK_PATH.read_text())
+            self.put("design/tools/decisions.py", TOOL_PATH.read_text())
+            self.put("design/tools/prose-mentions.json", json.dumps({"pairs": []}))
+            self.put("design/decisions/register.json", json.dumps({"schema": 1, "units": [], "decisions": [], "possiblySame": []}))
+            self.put("design/reviews/consensus-ledger.json", json.dumps({"ledger": []}))
+            for name in ("STATE.md", "ROADMAP.md", "PLAN.md", "SESSIONS.md"):
+                self.put("design/" + name, "# Sample\n")
+            self.put("design/specs/sample/one.sdp.md", sample_spec("one", "\n  dependsOn: spec:sample.two"))
+            self.put("design/specs/sample/two.sdp.md", sample_spec("two", "\n  dependsOn: spec:sample.one", key=""))
+            self.put("src/cites.ts", "// spec:sample.one#design.typeOne resolves.\n// spec:sample.one#design.typeTwo names no entry.\n")
+            self.put("scripts/pack-page.mjs", 'console.error("pack-page: design/pages/history-view.md is behind the tree from line 1");\nprocess.exit(1);\n')
+            validate = subprocess.run(["node", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/cli/sdp.js"), "validate", "."],
+                                      cwd=self.root, capture_output=True, text=True)
+            summary = re.search(r"\d+ specs · \d+ packs · \d+ anchors → \d+ nodes · \d+ edges", validate.stdout + validate.stderr)
+            self.assertIsNotNone(summary, validate.stdout + validate.stderr)
+            self.put("design/README.md", f"{summary.group(0)} (0 errors, 0 warnings)\n\nvalidate: 0 errors · 0 warnings\n")
+            run = subprocess.run([sys.executable, str(self.root / "design/tools/check.py")], cwd=self.root, capture_output=True, text=True,
+                                 env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+            printed = [line[3:] for line in run.stdout.splitlines() if line.startswith(" - ")]
+            self.assertEqual(printed, [
+                "entry address spec:sample.one#design.typeTwo at src/cites.ts:2 names no entry of its Spec",
+                "dependsOn cycle among spec:sample.one, spec:sample.two: spec:sample.one -> spec:sample.two -> spec:sample.one",
+                "spec:sample.two carries an open question without a key",
+                "pack-page: design/pages/history-view.md is behind the tree from line 1",
+            ], run.stdout + run.stderr)
+            self.assertEqual(run.returncode, 1)
+            self.assertNotIn("\nOK", run.stdout)
 
 
 if __name__ == "__main__":

@@ -2,10 +2,10 @@
 // a sample corpus in a temporary directory, whose graph the Protocol's extractor derives. The sample
 // shows the members in the Pack's order, the clause that holds a member below its next rung with
 // the targets that break it, each open question's address, and the register rows on the members.
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 
 type Failure = {
   clauseId: string;
@@ -71,6 +71,7 @@ type PackPage = {
     generated: string | null;
   } | null;
   generate(pack: string, out: string, base?: string): Promise<string>;
+  main(args: string[], base?: string): Promise<number>;
 };
 // The generator is a script with no declaration file, so it is loaded by URL and typed here.
 const page = (await import(
@@ -708,6 +709,86 @@ test("the page of a sample Pack reads its order, its blockers and its register r
       "[`generated/pinned/sample.ts`](../../generated/pinned/sample.ts)",
     );
   } finally {
+    await rm(base, { recursive: true, force: true });
+  }
+});
+
+test("the command's --check exits 1 for a page that is missing or behind the tree, and 0 for a current one", async () => {
+  const base = await mkdtemp(join(tmpdir(), "pack-page-"));
+  const put = async (path: string, text: string) => {
+    await mkdir(dirname(join(base, path)), { recursive: true });
+    await writeFile(join(base, path), text);
+  };
+  const said: string[] = [];
+  const error = vi
+    .spyOn(console, "error")
+    .mockImplementation((message: string) => void said.push(message));
+  try {
+    await put(
+      "package.json",
+      JSON.stringify({
+        devDependencies: {
+          "@libar-dev/software-delivery-protocol": "file:sample.tgz",
+        },
+      }),
+    );
+    await put(
+      "tests/types/pinned-pairs.json",
+      JSON.stringify({
+        pack: "pack:sample",
+        test: "tests/types/sample.test-d.ts",
+        pairs: [],
+      }),
+    );
+    await put(
+      "design/tools/anchor-sites.json",
+      JSON.stringify({ anchors: [] }),
+    );
+    await put(
+      "design/decisions/register.json",
+      JSON.stringify({ decisions: [] }),
+    );
+    await put(
+      "design/specs/sample.pack.sdp.md",
+      [
+        "---",
+        "id: pack:sample",
+        "specs:",
+        "  - spec:sample.alpha",
+        "  - spec:sample.beta",
+        "---",
+        "# Sample",
+        "",
+      ].join("\n"),
+    );
+    await put(
+      "design/specs/sample/alpha.sdp.md",
+      decision("alpha", "scoped", ["refines: spec:sample.beta"]),
+    );
+    await put(
+      "design/specs/sample/beta.sdp.md",
+      decision("beta", "scoped", []).replace("relations:\n", "relations: {}\n"),
+    );
+    const out = join(base, "design/pages/sample.md");
+    const command = ["--pack", "pack:sample", "--out", out];
+    const check = () => page.main([...command, "--check"], base);
+
+    expect(await check()).toBe(1);
+    expect(said.at(-1)).toBe(
+      "pack-page: design/pages/sample.md is missing; run npm run pages",
+    );
+    expect(await page.main(command, base)).toBe(0);
+    expect(await check()).toBe(0);
+    const written = await readFile(out, "utf8");
+    await writeFile(out, `${written}A line the tree does not generate.\n`);
+    expect(await check()).toBe(1);
+    expect(said.at(-1)).toContain(
+      "pack-page: design/pages/sample.md is behind the tree from line",
+    );
+    await writeFile(out, written);
+    expect(await check()).toBe(0);
+  } finally {
+    error.mockRestore();
     await rm(base, { recursive: true, force: true });
   }
 });

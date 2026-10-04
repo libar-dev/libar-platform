@@ -45,7 +45,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-240 specs · 6 packs · 144 anchors → 390 nodes · 1365 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 144 anchors → 393 nodes · 1381 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings (conformance + honesty over the one graph)
 ```
 
@@ -314,7 +314,7 @@ Slice S1 added three more for the same reason, when its scenario tests bound the
 
 Package B therefore has 7 examples, Package C has 15, and the corpus has 57.
 
-The Layer 2 design added two more for the same reason, and ten examples that verify no doc row:
+The Layer 2 design added two more for the same reason, and thirteen examples that verify no doc row:
 
 | Sc | Added example | Reason |
 |---|---|---|
@@ -326,6 +326,9 @@ The Layer 2 design added two more for the same reason, and ten examples that ver
 | none | `spec:application.read-models.query-refused-without-grant` | verifies Law 5 for a parent query called with no grant in the tenant |
 | none | `spec:application.read-models.list-pages-by-cursor` | verifies a parent list paged by a cursor pair, under E-24 |
 | none | `spec:application.write-pause.restore-door-without-deploy` | shows on the pinned release that the restore door's environment switch needs no deploy, under E-42 |
+| none | `spec:application.history-rebuild.write-pause-rebuild-version-change` | verifies the history rebuild's handoff for a deploy that changes a history projection's version, under E-8 |
+| none | `spec:application.history-rebuild.write-pause-rebuild-installation` | verifies the history rebuild's handoff for a deploy that adds a history view's first binding, under E-8 |
+| none | `spec:application.history-rebuild.write-pause-rebuild-source-order-mismatch` | verifies the history rebuild's compatibility check and its recovery for sources a deploy reordered, under E-8 |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-built-in-paginate-throws-in-component` | Probe 5: the built-in `paginate` throws inside a component |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-not-split` | Probe 5: a full first page under a row cap of twice the page size is not split |
 | none | `spec:facts.f15-parent-query-over-component-query-stays-reactive.probe-5-full-first-page-split-at-equal-cap` | Probe 5: the same page under a row cap equal to the page size is split |

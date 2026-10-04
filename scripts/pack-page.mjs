@@ -1131,10 +1131,12 @@ export async function generate(pack, out, base = root) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The command.
+// The command. It takes the arguments after the script's path and the repository it reads, so a
+// test runs it over a sample tree; it answers the exit status.
 
-async function main() {
+export async function main(args = process.argv.slice(2), base = root) {
   const { values } = parseArgs({
+    args,
     options: {
       pack: { type: "string" },
       out: { type: "string" },
@@ -1144,12 +1146,12 @@ async function main() {
   if (values.pack === undefined || values.out === undefined)
     cannot("name the Pack and the page: --pack <packId> --out <page>");
   const out = resolve(values.out);
-  const path = relative(root, out).split(sep).join("/");
+  const path = relative(base, out).split(sep).join("/");
   if (path.startsWith("..") || !path.endsWith(".md"))
     cannot(
       `the page must be a .md file inside the repository, not ${values.out}`,
     );
-  const generated = await generate(values.pack, out);
+  const generated = await generate(values.pack, out, base);
   if (!values.check) {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, generated);
