@@ -72,24 +72,11 @@ describe("bound: the code equals the pin", () => {
       TableShape<(typeof readModel.readModelTables)["generations"]>
     >().toEqualTypeOf<TableShape<(typeof pinned.tables)["generations"]>>();
   });
-  test("spec:application.history-projection#design.typeHistoryEvent", () => {
-    expectTypeOf<allocationHistory.HistoryEvent>().toEqualTypeOf<pinned.HistoryEvent>();
-  });
   test("spec:application.history-projection#design.typeOrderAllocation", () => {
     expectTypeOf<allocationHistory.OrderAllocation>().toEqualTypeOf<pinned.OrderAllocation>();
   });
   test("spec:application.history-projection#design.typeOrderAllocationHistoryFields", () => {
     expectTypeOf<allocationHistory.OrderAllocationHistoryFields>().toEqualTypeOf<pinned.OrderAllocationHistoryFields>();
-  });
-  test("spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf", () => {
-    expectTypeOf<
-      typeof allocationHistory.orderAllocationHistoryKeyOf
-    >().toEqualTypeOf<typeof pinned.orderAllocationHistoryKeyOf>();
-  });
-  test("spec:application.history-projection#design.fnProjectOrderAllocationHistory", () => {
-    expectTypeOf<
-      typeof allocationHistory.projectOrderAllocationHistory
-    >().toEqualTypeOf<typeof pinned.projectOrderAllocationHistory>();
   });
   test("spec:application.projection-contract#design.typeProjection", () => {
     expectTypeOf<readModel.Projection<Dto, Row>>().toEqualTypeOf<
@@ -286,6 +273,19 @@ describe("ahead: the design leads the code", () => {
     >().not.toEqualTypeOf<
       TableShape<(typeof pinned.tables)["generationProgress"]>
     >();
+  });
+  test("spec:application.history-projection#design.typeHistoryEvent: the design adds `eventSchemaVersion`; the code carries it in 5d", () => {
+    expectTypeOf<allocationHistory.HistoryEvent>().not.toEqualTypeOf<pinned.HistoryEvent>();
+  });
+  test("spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf: the design adds `eventSchemaVersion`; the code carries it in 5d", () => {
+    expectTypeOf<
+      typeof allocationHistory.orderAllocationHistoryKeyOf
+    >().not.toEqualTypeOf<typeof pinned.orderAllocationHistoryKeyOf>();
+  });
+  test("spec:application.history-projection#design.fnProjectOrderAllocationHistory: the design adds `eventSchemaVersion`; the code carries it in 5d", () => {
+    expectTypeOf<
+      typeof allocationHistory.projectOrderAllocationHistory
+    >().not.toEqualTypeOf<typeof pinned.projectOrderAllocationHistory>();
   });
   test("spec:application.rebuild#design.typeRebuildConfig: the history view's build adds history targets", () => {
     expectTypeOf<readModel.RebuildConfig>().not.toEqualTypeOf<pinned.RebuildConfig>();

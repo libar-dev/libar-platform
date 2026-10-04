@@ -23,7 +23,7 @@ Start with the members and with what holds a member below its next rung: togethe
 
 | # | Spec | Kind | Stated | Floor | Next rung | Code | Examples and verifiers | Pairs | Open questions |
 |---|---|---|---|---|---|---|---|---|---|
-| [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | none | none | 5 bound, 3 without a pair | 5, none blocking |
+| [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | none | none | 2 bound, 3 ahead, 3 without a pair | 5, none blocking |
 | [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | none | 11 bound | 5, none blocking |
 | [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | 1 anchor | 5 of 5 examples with a verifier | 2 bound, 9 without a pair | 6, none blocking |
 | [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | 1 anchor | 1 of 1 example with a verifier | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
@@ -202,7 +202,7 @@ No target outside the Pack holds a member below its next rung.
 
 - **OD-084** class delegated, status sorted, advisor operator, blocks the unit S4. [question 1](../specs/application/write-pause.sdp.md?plain=1#L39), [non-blocking]: Extension E-8: the doc names a maintenance gate every writer reads, fencing or draining of background writers, and operator resume and abort; the option taken here is one gate document per deployment holding the closed …
 - **OD-161** class none, status unsorted, advisor convex, blocks the unit S5. [question 2](../specs/application/write-pause.sdp.md?plain=1#L40), [non-blocking]: Extension E-8, the generation exemption: a batch reads the gate with the scopes `all` and its tenant, and no entry of either scope ever names a generation, so the exemption `gateAllows` makes for a given generation is …
-- **OD-170** class none, status unsorted, advisor operator, blocks the unit S5. [question 3](../specs/application/write-pause.sdp.md?plain=1#L41), [non-blocking]: Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using those existing reads, and measure the closed interval through the successful switch or abort? Keep any …
+- **OD-170** class none, status unsorted, advisor operator, blocks the unit S5. [question 3](../specs/application/write-pause.sdp.md?plain=1#L41), [non-blocking]: Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using `getGenerations` and `getGate`, and measure the closed interval through the successful switch or abort? Keep …
 
 **[Generation registry](#9-generation-registry)**, `spec:application.generation-registry`
 
@@ -268,18 +268,18 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [Projectio
 
 | Design entry | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L53) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L54) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L55) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
-| [`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L56) | bound | the type | `HistoryEvent` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L57) | bound | the type | `OrderAllocation` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L58) | bound | the type | `OrderAllocationHistoryFields` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L59) | bound | the type | `orderAllocationHistoryKeyOf` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
-| [`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L60) | bound | the type | `projectOrderAllocationHistory` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L55) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L56) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L57) | no pair |  |  | `tests/types/pinned-pairs.json` lists no pair for it |
+| [`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L58) | ahead | the type | `HistoryEvent` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) | the design adds `eventSchemaVersion`; the code carries it in 5d |
+| [`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L59) | bound | the type | `OrderAllocation` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L60) | bound | the type | `OrderAllocationHistoryFields` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) |  |
+| [`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L61) | ahead | the type | `orderAllocationHistoryKeyOf` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) | the design adds `eventSchemaVersion`; the code carries it in 5d |
+| [`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L62) | ahead | the type | `projectOrderAllocationHistory` in [`example/domain/orderAllocationHistory.ts`](../../example/domain/orderAllocationHistory.ts) | the design adds `eventSchemaVersion`; the code carries it in 5d |
 
 <details><summary>The 8 declarations as the Spec pins them</summary>
 
-[`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L53)
+[`spec:application.history-projection#design.typeHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L55)
 
 ```ts
 interface HistoryProjection<Row> {
@@ -292,7 +292,7 @@ interface HistoryProjection<Row> {
 }
 ```
 
-[`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L54)
+[`spec:application.history-projection#design.fnApplyHistoryProjection`](../specs/application/history-projection.sdp.md?plain=1#L56)
 
 ```ts
 applyHistoryProjection<Row>(
@@ -307,7 +307,7 @@ applyHistoryProjection<Row>(
 ): Promise<{ key: string; results: ApplyResult[] }[]>
 ```
 
-[`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L55)
+[`spec:application.history-projection#design.tableOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L57)
 
 ```ts
 orderAllocationHistory: defineTable({
@@ -326,19 +326,20 @@ orderAllocationHistory: defineTable({
 }).index("by_key", ["tenantId", "generation", "key"])
 ```
 
-[`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L56)
+[`spec:application.history-projection#design.typeHistoryEvent`](../specs/application/history-projection.sdp.md?plain=1#L58)
 
 ```ts
 type HistoryEvent = {
   streamId: string;
   eventType: string;
+  eventSchemaVersion: number;
   recordedAt: number;
   occurredAt?: number;
   payload: unknown;
 }
 ```
 
-[`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L57)
+[`spec:application.history-projection#design.typeOrderAllocation`](../specs/application/history-projection.sdp.md?plain=1#L59)
 
 ```ts
 type OrderAllocation = {
@@ -349,7 +350,7 @@ type OrderAllocation = {
 }
 ```
 
-[`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L58)
+[`spec:application.history-projection#design.typeOrderAllocationHistoryFields`](../specs/application/history-projection.sdp.md?plain=1#L60)
 
 ```ts
 type OrderAllocationHistoryFields = {
@@ -360,7 +361,7 @@ type OrderAllocationHistoryFields = {
 }
 ```
 
-[`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L59)
+[`spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf`](../specs/application/history-projection.sdp.md?plain=1#L61)
 
 ```ts
 orderAllocationHistoryKeyOf(
@@ -369,7 +370,7 @@ orderAllocationHistoryKeyOf(
 ): string | null
 ```
 
-[`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L60)
+[`spec:application.history-projection#design.fnProjectOrderAllocationHistory`](../specs/application/history-projection.sdp.md?plain=1#L62)
 
 ```ts
 projectOrderAllocationHistory(
@@ -381,7 +382,7 @@ projectOrderAllocationHistory(
 
 </details>
 
-**Other Design entries.** 2 entries pin no declaration: [`orderAllocationHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L61), [`limitHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L62).
+**Other Design entries.** 2 entries pin no declaration: [`orderAllocationHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L63), [`limitHistoryFold`](../specs/application/history-projection.sdp.md?plain=1#L64).
 
 ### 2. Projection contract
 
@@ -2621,4 +2622,4 @@ limitListPage(budgetBytes) = max(1, min(100, floor(4 MiB / budgetBytes)))
 
 | Address | Pair | Compared | Code | Why |
 |---|---|---|---|---|
-| [`spec:application.aggregate-projection#design.tableProjectionMarkers`](../specs/application/aggregate-projection.sdp.md?plain=1#L55) | not compared | nothing | none | The pin is outside pack:history-view and is not emitted; the aggregate form's table, outside the Pack, while readModelTables still holds it |
+| [`spec:application.aggregate-projection#design.tableProjectionMarkers`](../specs/application/aggregate-projection.sdp.md?plain=1#L56) | not compared | nothing | none | The pin is outside pack:history-view and is not emitted; the aggregate form's table, outside the Pack, while readModelTables still holds it |

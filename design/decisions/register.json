@@ -6634,7 +6634,7 @@
         {
           "kind": "specQuestion",
           "spec": "spec:application.history-projection",
-          "question": "Extension E-9, the check of the history fold: the order independence the Contract requires is checked for the order allocation history alone; the option taken here is that every history projection of an application carries a pure test that folds a sample of one key's events in every interleaving of its streams and every split into calls, and a library helper that runs that test waits for a second history view (E-9, D2, D18)",
+          "question": "Extension E-9, the check of the history fold: the order independence the Contract requires is checked for the order allocation history alone; the option taken here is that every history projection of an application carries a pure test that folds a sample of one key's events in every interleaving of its streams and every split into calls, and a library helper that runs that test is added with a second history view (E-9, D2, D18)",
           "file": "design/specs/application/history-projection.sdp.md"
         }
       ],
@@ -6646,7 +6646,7 @@
         "D2",
         "D18"
       ],
-      "provisionalReading": "the option taken here is that every history projection of an application carries a pure test that folds a sample of one key's events in every interleaving of its streams and every split into calls, and a library helper that runs that test waits for a second history view",
+      "provisionalReading": "the option taken here is that every history projection of an application carries a pure test that folds a sample of one key's events in every interleaving of its streams and every split into calls, and a library helper that runs that test is added with a second history view",
       "blocks": "S5",
       "advisor": "domain",
       "status": "unsorted",
@@ -6667,7 +6667,7 @@
         {
           "kind": "specQuestion",
           "spec": "spec:application.history-projection",
-          "question": "A history row keeps a deleted subject's history and every rebuild writes it again from the journal; whether a history view falls under the retention and deletion policy of D19, and what its rebuild does after an erasure, waits for that policy (D19, D9, E-9)",
+          "question": "A history row keeps a deleted subject's history and every rebuild writes it again from the journal; whether a history view falls under the retention and deletion policy of D19, and what its rebuild does after an erasure, is answered by that policy (D19, D9, E-9)",
           "file": "design/specs/application/history-projection.sdp.md"
         }
       ],
@@ -6811,12 +6811,12 @@
     },
     {
       "id": "OD-170",
-      "title": "Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using those exi",
+      "title": "Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using `getGener",
       "sources": [
         {
           "kind": "specQuestion",
           "spec": "spec:application.write-pause",
-          "question": "Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using those existing reads, and measure the closed interval through the successful switch or abort?",
+          "question": "Should its operating instructions distinguish a stopped pass from a verified generation awaiting switch, using `getGenerations` and `getGate`, and measure the closed interval through the successful switch or abort?",
           "file": "design/specs/application/write-pause.sdp.md"
         }
       ],
@@ -6866,6 +6866,87 @@
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
+    },
+    {
+      "id": "OD-172",
+      "title": "Which declarations bind a history view",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "application.history-projection#declarations-bind",
+          "file": "design/specs/application/history-projection.sdp.md",
+          "line": 49
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "E-7",
+        "D8"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "domain",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "delegated",
+      "reason": "Rule 3, a rule of the history form that an edit inside this repository takes back; raised by the domain pass over pack:history-view.",
+      "lean": {
+        "do": "Add to `spec:application.history-projection` a Contract rule that every command declaration whose `writes` names a source of a history projection binds the projection for each such source, whether or not its events carry a key the view folds. Check the rule in 5d with a pure test over the example's three declarations, and list the order allocation history in the `readModels` of `PlaceOrder`, `CancelOrder` and `ReceiveStock`.",
+        "restsOn": "A history projection is bound per declaration, once per source stream type [design/specs/application/history-projection.sdp.md:45] [spec:command.command-declaration#design.typeReadModelBinding]. The write pause holds every writer of a source \"whether or not it maintains the view\" [design/specs/application/history-rebuild.sdp.md:49]. The meaning of a row's recorded version, that every event of the stream with the row's key up to that version is folded, is stated under the pause only [design/specs/application/history-rebuild.sdp.md:48]. `applyHistoryProjection` drops every event whose version is not above the row's recorded version [spec:application.history-projection#design.fnApplyHistoryProjection]. A per-entity row repairs itself, because `project` sees the whole DTO and the next live write replaces the row [design/specs/application/projection-contract.sdp.md:45] [design/specs/application/projection-contract.sdp.md:50]. The CancelOrder declaration lists only the order summary [design/specs/application/orders-inventory-example.sdp.md:57], and `ReceiveStock` writes the stock item source [design/specs/application/orders-inventory-example.sdp.md:55]. A search of `design/specs` found no rule that a writer of a source binds the view. **Judgment.** On the specified paths, an event with a row's key that an unbound declaration writes is never folded into the live generation. Once a later bound event on the same stream raises the recorded version past it, no specified path folds it into that generation; of those paths, only a new generation does. The rule is kept by the set of all declarations, so only a check over that set keeps it. The wide rule can be checked from the declarations alone, by comparing each `writes` with its bindings. A pure test over the example's three declarations proves the rule for that set only. Each application that declares a history projection needs its own test over its own declarations.",
+        "against": "The do-nothing option states no rule and leaves each binding to the author of each declaration. In 5d the builder binds `PlaceOrder` and `CancelOrder`, and the L2-6 resume example compares each rebuilt row with the fold of the journal's events [design/specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md:37] and with the row live commands wrote [design/specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md:38], which would show a binding missing from that sample. **Judgment.** That catches a gap in the example's tested sample and nothing in an adopter's application, and nothing tells the 5d builder which declarations to bind. The narrower rule binds only the declarations that write a source stream with events the view folds, such as `CancelOrder`'s release of an order's stock. It is what must be true. It spares `ReceiveStock`, whose `StockReceived` has no key [spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf], up to two indexed registry reads per command [spec:application.generation-registry#design.limitRegistryReadsPerCommand]. It also keeps `ReceiveStock` working wherever the wide rule makes it a technical failure. Those cases are while the view has no generation, before the first `startGeneration` and after the only generation was aborted [spec:application.generation-registry#design.errorNoGenerationToWrite], and after a deploy that changes the projection's version, until a generation of that version is switched [design/specs/application/history-projection.sdp.md:35] [spec:application.history-projection#design.fnApplyHistoryProjection]. **Judgment.** I still drop the narrow rule, with moderate confidence. Whether a declaration's events are folded depends on `keyOf` at run time, not on the declaration, so no test can read it from the declarations. A change to `keyOf` that folds one more event type would then silently require bindings on declarations nobody looks at. Under the pause `ReceiveStock` is refused either way, because it writes a closed source [design/specs/application/history-rebuild.sdp.md:53]. In each case where the wide rule makes it fail, `PlaceOrder` and `CancelOrder` fail as well. The cost is real: receiving stock then depends on a view it does not feed.",
+        "settles": "The build of 5d. The pure test of the rule passes over the example's three declarations (pure test). The L2-6 resume example, at the native backend tier, compares rebuilt rows with the journal's events and with the live rows [design/specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md:37] [design/specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md:38]. Neither has run.",
+        "changes": "For the lean: `design/specs/application/history-projection.sdp.md` gains a Contract bullet after line 45. `design/specs/application/orders-inventory-example.sdp.md` names the binding in the CancelOrder declaration at line 57 and states it for `PlaceOrder` and `ReceiveStock`. In 5d, the code's `readModels` at `example/convex/ordering.ts:48` and `:112` and the declaration of `ReceiveStock` change, and one pure test is added. The `PlaceOrder` counts of `design/specs/application/first-experiment.sdp.md:124` already add the history row and its registry read when the view is bound. `ReceiveStock` adds up to two indexed registry reads per command, and no row, because a `null` key reads none [spec:application.history-projection#design.fnApplyHistoryProjection]. For the narrow rule, the same Spec bullet names folded events instead of `writes`, `ReceiveStock` stays unbound, and nothing beyond the example is tested. For the do-nothing option, only the example's declarations change.",
+        "ifWrong": "If the wide rule's cost matters, removing `ReceiveStock`'s binding and narrowing the test is one edit. If no rule is stated and a binding is missing, the active generation loses events with no error. The loss shows only when its rows are compared with the journal's events or with a rebuilt generation [design/specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md:37]. The specified repair is a new generation under a write pause. The Spec edit itself is easy to take back."
+      },
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-04: plant caught; seven corrections to the reasons, applied by the advisor before the ruling; neither do changed (job-mut64uxp-2eb47318)",
+      "fork": null,
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-04",
+      "ruling": "Add to `spec:application.history-projection` a Contract rule that every command declaration whose `writes` names a source of a history projection binds the projection for each such source, whether or not its events carry a key the view folds. Check the rule in 5d with a pure test over the example's three declarations, and list the order allocation history in the `readModels` of `PlaceOrder`, `CancelOrder` and `ReceiveStock`."
+    },
+    {
+      "id": "OD-173",
+      "title": "A history projection reads every event schema version",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "application.history-projection#event-schema-versions",
+          "file": "design/specs/application/history-projection.sdp.md",
+          "line": 46
+        }
+      ],
+      "families": [
+        "application"
+      ],
+      "cites": [
+        "E-9",
+        "E-25",
+        "D2",
+        "D5"
+      ],
+      "provisionalReading": null,
+      "blocks": "S5",
+      "advisor": "domain",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "delegated",
+      "reason": "Rule 3, a rule of the history form and the shape of a type, which an edit inside this repository takes back; raised by the domain pass over pack:history-view.",
+      "lean": {
+        "do": "Add to `spec:application.history-projection` a Contract rule: `project` reads every `eventSchemaVersion` that its sources' journals hold of the event types it folds, so no baseline retires an older shape for it. Add `eventSchemaVersion: number` to `HistoryEvent`.",
+        "restsOn": "An older `eventSchemaVersion` is upcast in `evolve` \"until a baseline retires it\" [design/specs/context/journal.sdp.md:71], and a migration retires once every stream has its baseline [design/specs/context/journal.sdp.md:33]. `applyHistoryProjection` drops baselines and leaves out events whose key is `null` [design/specs/application/history-projection.sdp.md:52], and the backfill reads each stream with no `fromVersion` [spec:application.history-rebuild#design.fnHistoryPageCall]. A history query returns the events before a baseline [design/specs/context/queries.sdp.md:54] [design/specs/context/queries.sdp.md:81]. `eventType` and `eventSchemaVersion` are an event's historical contract [design/specs/context/event-envelope.sdp.md:39]. `HistoryEvent` carries no `eventSchemaVersion` [spec:application.history-projection#design.typeHistoryEvent] [example/domain/orderAllocationHistory.ts:11], and the fold chooses its case by `eventType` alone [example/domain/orderAllocationHistory.ts:66] and casts the payload [example/domain/orderAllocationHistory.ts:72]. **Judgment.** A history projection folds every event of its types from a stream's first version, so for those types it meets every shape ever stored, and it reads the raw payload, not an upcast one. The pinned input type gives its rules no way to tell those shapes apart.",
+        "against": "Do nothing yet. Each event type of the example has one schema version: the Orders and Inventory deciders write `eventSchemaVersion` 1 [example/domain/order.ts:50] [example/domain/stockItem.ts:37]. **Judgment.** The rule could wait for the first schema change of a folded type. D18's triggers do not name a schema change, so the waiting rests on the same reading of need and not on a trigger the doc lists. Meanwhile, adding the field moves a bound pair to `ahead` and adds a field no rule reads today. The field supplies a discriminator only; a projection still has to handle each old shape itself. A second option hands the projection the stream type's upcasters. Each context owns its current state, its journal and its stream metadata [D2]. **Judgment.** Sharing a context's upcasters with a view in the parent would reach into what the context owns; D2 says nothing about upcasters. I keep the lean, because the rule is one sentence and the field one line, while the case it guards comes late.",
+        "settles": "The build of 5d at the compiled tier: the type test of `typeHistoryEvent` is bound again once the code carries the field. The first schema change of a folded event type shows the rule in use. It has not been run.",
+        "changes": "For the lean: `design/specs/application/history-projection.sdp.md` gains a Contract bullet after line 43, and its `typeHistoryEvent` and `fnOrderAllocationHistoryKeyOf` entries, lines 54 and 57, add `eventSchemaVersion: number`. In the pinned module, `generated/pinned/history-view.ts`, the `HistoryEvent` declaration under `typeHistoryEvent` gains the field when the main thread regenerates it. The pair of `spec:application.history-projection#design.typeHistoryEvent` in `tests/types/pinned-pairs.json`, now `bound`, becomes `ahead` until 5d's `example/domain/orderAllocationHistory.ts` carries the field, and the page is regenerated. The journal's rules are unchanged. For the do-nothing option, nothing changes now, and the rule and the field arrive with the first schema change of a folded type.",
+        "ifWrong": "If the rule is unneeded, the cost is one sentence and one field, and an edit takes both back. **Judgment.** If it is needed and left out, the strongest case is a future schema change of a folded event type that leaves the stored older payloads unreadable by the projection, so it throws on them or misreads them, with no field to tell the shapes apart. The repair is explicit handling of the old shape in `project`, and a new projection version and so a new generation under a write pause when the projection's output changes [design/specs/application/history-projection.sdp.md:43]."
+      },
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-04: plant caught; seven corrections to the reasons, applied by the advisor before the ruling; neither do changed (job-mut64uxp-2eb47318)",
+      "fork": null,
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-04",
+      "ruling": "Add to `spec:application.history-projection` a Contract rule: `project` reads every `eventSchemaVersion` that its sources' journals hold of the event types it folds, so no baseline retires an older shape for it. Add `eventSchemaVersion: number` to `HistoryEvent`."
     }
   ],
   "possiblySame": [

@@ -45,13 +45,6 @@
       "reason": null
     },
     {
-      "address": "spec:application.history-projection#design.typeHistoryEvent",
-      "state": "bound",
-      "comparison": "type",
-      "code": "example/domain/orderAllocationHistory.ts#HistoryEvent",
-      "reason": null
-    },
-    {
       "address": "spec:application.history-projection#design.typeOrderAllocation",
       "state": "bound",
       "comparison": "type",
@@ -63,20 +56,6 @@
       "state": "bound",
       "comparison": "type",
       "code": "example/domain/orderAllocationHistory.ts#OrderAllocationHistoryFields",
-      "reason": null
-    },
-    {
-      "address": "spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf",
-      "state": "bound",
-      "comparison": "type",
-      "code": "example/domain/orderAllocationHistory.ts#orderAllocationHistoryKeyOf",
-      "reason": null
-    },
-    {
-      "address": "spec:application.history-projection#design.fnProjectOrderAllocationHistory",
-      "state": "bound",
-      "comparison": "type",
-      "code": "example/domain/orderAllocationHistory.ts#projectOrderAllocationHistory",
       "reason": null
     },
     {
@@ -379,6 +358,27 @@
       "comparison": "table",
       "code": "src/read-model/index.ts#readModelTables",
       "reason": "its cursor, through validatorBatchCursor"
+    },
+    {
+      "address": "spec:application.history-projection#design.typeHistoryEvent",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#HistoryEvent",
+      "reason": "the design adds `eventSchemaVersion`; the code carries it in 5d"
+    },
+    {
+      "address": "spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#orderAllocationHistoryKeyOf",
+      "reason": "the design adds `eventSchemaVersion`; the code carries it in 5d"
+    },
+    {
+      "address": "spec:application.history-projection#design.fnProjectOrderAllocationHistory",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#projectOrderAllocationHistory",
+      "reason": "the design adds `eventSchemaVersion`; the code carries it in 5d"
     },
     {
       "address": "spec:application.rebuild#design.typeRebuildConfig",
