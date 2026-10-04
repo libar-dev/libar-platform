@@ -58,7 +58,7 @@ An advisor that finds a row plainly another's leaves it unsorted and says so in 
       "id": "OD-014",
       "title": "Admission is an optional per-command policy in the declaration, absent by default",
       "sources": [
-        { "kind": "specQuestion", "ref": "spec:command.command-pipeline#3", "file": "design/specs/command/command-pipeline.sdp.md", "line": 61 },
+        {"kind": "specQuestion", "spec": "spec:command.command-pipeline", "question": "Extension E-32: the doc places rate admission for new intent after the duplicate check and makes a rate or capacity refusal a retryable error, but names no admission mechanism; here admission is an optional per-command policy in the declaration, absent by default, evaluated inside the mutation so that a refusal that throws leaves no consumption behind; the flip side is that a consumption the policy writes commits only with the command, so the policy counts committed intent and cannot bound refused or unauthorized traffic, and a product that must bound refused traffic needs the dispatcher form of D7, where the parent survives the body's rejection (E-32, D4, D6, D7)", "file": "design/specs/command/command-pipeline.sdp.md"},
         { "kind": "extension", "ref": "E-32", "file": "design/README.md", "line": 211 }
       ],
       "families": ["command"],
@@ -81,13 +81,15 @@ An advisor that finds a row plainly another's leaves it unsorted and says so in 
 }
 ```
 
+`check.py` verifies each question source against exactly one open question of its Spec by its first sentence, normalizing whitespace only, and refuses a removed question that resolves again.
+
 `units` is the order of the units a decision can block. The tool reads "before S4" from it, and a close keeps it current.
 
 | Field | What it holds | Filled by |
 |---|---|---|
 | `id` | `OD-` and three digits, given in source order and never reused | the load |
 | `title` | The first sentence of the first source, cut at 120 characters | the load |
-| `sources` | Where the decision came from, every place once. `kind` is `ownerQueue`, `specQuestion`, `extension`, `planAmbiguity`, `productDecision` or `specLine`. `ref` is the lasting name: `000/3` for the third bullet of owner queue item 000, `<spec id>#<n>` for a Spec's n-th open question in authored order, `E-32`, `11.3` for an ambiguity of `PLAN.md`, `product/1`, `product/2` or `product/3` for a product decision, and `<spec id>#<bullet key>` for a named Spec bullet that is not an open question. `file` and `line` say where it stood at the load. | the load |
+| `sources` | Where the decision came from, every place once. `kind` is `ownerQueue`, `specQuestion`, `extension`, `planAmbiguity`, `productDecision` or `specLine`. `specQuestion` uses `spec`, the question's opening text in `question`, and `file`, with `open: false` only for a removed question on a decided or folded row. Other source kinds use `ref` as the lasting name: `000/3` for the third bullet of owner queue item 000, `E-32`, `11.3` for an ambiguity of `PLAN.md`, `product/1`, `product/2` or `product/3` for a product decision, and `<spec id>#<bullet key>` for a named Spec bullet that is not an open question. `file` and `line` on those other kinds say where it stood at the load. | the load |
 | `families` | The Spec families it touches | the load |
 | `cites` | The tokens its sources cite: E, D, F, OQ, Sc, Probe, Law | the load |
 | `provisionalReading` | What the code or the Specs rest on today, word for word from the source, or `null` | the load |

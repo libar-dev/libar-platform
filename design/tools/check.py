@@ -23,6 +23,8 @@ import re
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True
+
 from decisions import question_source_errors
 
 DESIGN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -212,7 +214,6 @@ if cited_extensions - registered:
 if registered - cited_extensions:
     fail(f"extensions registered in README but cited by no Spec: E-{sorted(registered - cited_extensions, key=int)}")
 n_questions = sum(len(v) for v in questions.values())
-
 for link in re.findall(r"\]\(([^)#]+)\)", readme):
     if not link.startswith("http") and not os.path.exists(os.path.join(DESIGN, link)):
         fail(f"README link does not resolve: {link}")
