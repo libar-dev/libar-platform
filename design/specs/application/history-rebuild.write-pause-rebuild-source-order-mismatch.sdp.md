@@ -17,6 +17,8 @@ E-8 · native backend tier · no acceptance row; the example verifies the check 
 
 ```gwt
 Given a {viewKind: "cross-stream history"} read model with an active generation
+And an order summary installed before the first order is placed, with {orderSummary: "an active generation"}
+And a sample of {orders: 40} orders on {stockItems: 20} stock items, read in batches of {batchSize: 32} events, which the backfill takes at least {backfillBatches: 60} batches to read
 And a new generation building under a write pause over sources in the order {startedOrder: "stock item, then order"}
 And its backfill interrupted after {batches: 2} batches
 And a deploy, at the same projection version, that lists the sources in the order {deployedOrder: "order, then stock item"}
@@ -31,8 +33,9 @@ And a fresh generation {fresh: "is verified and switched"}
 ## Verification — executable
 
 - Runs in the native backend tier; every test owns its disposable backend.
-- The view is the order allocation history, a `HistoryProjection` bound to the order stream type and the stock item stream type, at one projection version in both compositions; the composition the generation starts under lists the stock item source first in its rebuild target, and the copy the test deploys through `deployTemporary` lists the order source first.
-- The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, the stock item entry first, interrupts after the second history batch with `interruptGeneration`, and deploys the copy.
+- Before it places the first order, the test installs the order summary, which `PlaceOrder` and `CancelOrder` bind, through `startGeneration`, its batches and `switchGeneration`, so that its commands have a generation to write.
+- The view is the order allocation history, a `HistoryProjection` bound to the order stream type and the stock item stream type, at one projection version in both compositions; the composition the generation starts under lists the stock item source first in its rebuild target, and the copy the test deploys through `deployTemporary` lists the order source first. The sample holds 40 orders on 20 stock items, one stream each, and the view's batch size is 32 events, so the backfill takes at least one batch per stream, 60 in all, before it can end.
+- The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, the stock item entry first, waits until the progress row's `batchesDone` is at least 2, interrupts with `interruptGeneration`, and asserts that the pass is still `backfill` with fewer than 60 batches done, and deploys the copy.
 - The test runs `backfillBatch` through its admin access with the generation's ID and its fence, standing for a batch scheduled before the deploy, since no batch carries the live fence after `interruptGeneration`, and asserts that the progress row's `lastError` names the generation and the two source orders, that the batch scheduled nothing, and that the cursor, the counts, the rows, the generation's state and the gate are as they were before it.
 - The test asserts that `resumeGeneration` is refused with a plain `Error` naming the difference and that the fence, the progress row and the gate are unchanged.
 - In this order the test closes `all` through `closeGate` and confirms it with `getGate`, runs `abortGeneration`, asserts that the generation is `aborted`, that the active generation is unchanged and that both source entries are gone while `all` stays closed, and, since the deployed projection's version is the active generation's, reopens the `all` entry it closed through `resumeGate` and asserts that `PlaceOrder` succeeds.

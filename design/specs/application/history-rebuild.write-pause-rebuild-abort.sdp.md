@@ -17,6 +17,8 @@ Sc L2-6 · native backend tier · the abort case, the doc's second enumerated ca
 
 ```gwt
 Given a {viewKind: "cross-stream history"} read model with an active generation
+And an order summary installed before the first order is placed, with {orderSummary: "an active generation"}
+And a sample of {orders: 40} orders on {stockItems: 20} stock items, read in batches of {batchSize: 32} events, which the backfill takes at least {backfillBatches: 60} batches to read
 And a new generation registered as {mode: "building under a write pause"}
 And live commands {liveCommands: "are refused while paused"}
 When the backfill is interrupted after {batches: 2} batches and then {resumption: "aborted"}
@@ -30,7 +32,8 @@ And writes {writes: "reopen after the abort"}
 ## Verification — executable
 
 - Runs in the native backend tier; every test owns its disposable backend.
-- The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type.
-- The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, and interrupts after the second history batch; then, as `spec:application.history-rebuild#design.historyAbortHandoff` requires, it closes `all` through `closeGate`, confirms it with `getGate` and calls `abortGeneration`.
+- Before it places the first order, the test installs the order summary, which `PlaceOrder` and `CancelOrder` bind, through `startGeneration`, its batches and `switchGeneration`, so that its commands have a generation to write.
+- The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type. The sample holds 40 orders on 20 stock items, one stream each, and the view's batch size is 32 events, so the backfill takes at least one batch per stream, 60 in all, before it can end.
+- The test starts a generation with `pauseRequired`, asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation, waits until the progress row's `batchesDone` is at least 2, interrupts with `interruptGeneration`, and asserts that the pass is still `backfill` with fewer than 60 batches done; then, as `spec:application.history-rebuild#design.historyAbortHandoff` requires, it closes `all` through `closeGate`, confirms it with `getGate` and calls `abortGeneration`.
 - The test asserts that the generation is `aborted`, that the active generation is unchanged and that `all` is still closed; since the deployed projection's version is the active generation's, it then reopens the `all` entry it closed through `resumeGate`, and asserts that `PlaceOrder` succeeds again, that both source entries are gone from the gate, and that no query returns a row of the aborted generation.
 - The test runs `purgeGeneration` and asserts that its batches run until the generation is `purged` and that every batch deleted at most `limitPurgeBatch` rows.

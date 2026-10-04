@@ -17,6 +17,8 @@ Sc L2-6 · native backend tier · the resume case.
 
 ```gwt
 Given a {viewKind: "cross-stream history"} read model with an active generation
+And an order summary installed before the first order is placed, with {orderSummary: "an active generation"}
+And a sample of {orders: 40} orders on {stockItems: 20} stock items, read in batches of {batchSize: 32} events, which the backfill takes at least {backfillBatches: 60} batches to read
 And a new generation registered as {mode: "building under a write pause"}
 And live commands {liveCommands: "are refused while paused"}
 When the backfill is interrupted after {batches: 2} batches and then {resumption: "resumed"}
@@ -30,10 +32,11 @@ And writes {writes: "reopen only after verification"}
 ## Verification — executable
 
 - Runs in the native backend tier; every test owns its disposable backend.
-- The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type, whose rebuild target lists the stock item source first, so the backfill folds every stock event of an order before its `OrderPlaced`.
+- Before it places the first order, the test installs the order summary, which `PlaceOrder` and `CancelOrder` bind, through `startGeneration`, its batches and `switchGeneration`, so that its commands have a generation to write.
+- The view is the order allocation history of `spec:application.orders-inventory-example`, a `HistoryProjection` bound to the order stream type and the stock item stream type, whose rebuild target lists the stock item source first, so the backfill folds every stock event of an order before its `OrderPlaced`. The sample holds 40 orders on 20 stock items, one stream each, and the view's batch size is 32 events, so the backfill takes at least one batch per stream, 60 in all, before it can end.
 - The test starts a generation with `pauseRequired` and asserts that the gate holds one closed `source:` entry for each of the two stream types, each naming this generation.
 - The test asserts that `PlaceOrder` and `CancelOrder` are refused with `writePaused` because their declarations' `writes` name a closed source, that the error's `data.kind` is `"transient"`, and that nothing is stored.
-- The test interrupts after the second history batch, asserts the gate is still closed, resumes with `resumeGeneration`, and asserts the generation reaches `verified` with zero misses.
+- The test waits until the progress row's `batchesDone` is at least 2, interrupts with `interruptGeneration`, and asserts that the pass is still `backfill` with fewer than 60 batches done and the gate still closed, resumes with `resumeGeneration`, and asserts the generation reaches `verified` with zero misses.
 - The test asserts that every row of the new generation equals the fold of its order's events and its stock items' allocation events read from the two journals through `history`, and that its `sourceVersions` hold, per stream, the version of that stream's last event with the order's key; the sample holds a cancelled order whose stock items were released after the cancel, a stock item received and never allocated, and a stock item that allocated to a second order after the first.
 - The test asserts that each row of the new generation equals, beside `generation`, the row the old generation holds for the same order, which live commands wrote.
 - The test asserts that a `PlaceOrder` sent once the generation is `verified` and before the switch is still refused, then switches, which resumes both source scopes, and asserts that the same command now succeeds and that the active generation is the new one.
