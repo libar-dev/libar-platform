@@ -1,28 +1,29 @@
 # State of the design corpus
 
-Written on 2026-10-03 at the close of the unit `design-in-the-graph`, a pull request stacked on `feature/round-2`, which followed the close of round 3, sitting two (round 3's unit 3d), unit 3b, the tooling unit, round 2, round 1, the roadmap unit, the decision register unit, the platform review unit and slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it. `ROADMAP.md` orders the next units and is kept current at each close.
+Written on 2026-10-04 at the close of the unit `pack-page`, which extends the pull request of the unit `design-in-the-graph` (#12), stacked on `feature/round-2`, which followed the close of round 3, sitting two (round 3's unit 3d), unit 3b, the tooling unit, round 2, round 1, the roadmap unit, the decision register unit, the platform review unit and slice S2. `SESSIONS.md` says how to use this file. Every close rewrites it. `ROADMAP.md` orders the next units and is kept current at each close.
 
 ## Measured at close
 
 ```
-239 specs · 6 packs · 142 anchors → 387 nodes · 1348 edges (0 errors, 0 warnings)
+240 specs · 6 packs · 144 anchors → 390 nodes · 1365 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings, 12 prose mentions listed; readiness divergence: []
-entry addresses outside the Specs: 84
-open questions: 71 Specs, 160 questions, 10 blocking; extensions registered: 54
-stated readiness: {'defined': 228, 'idea': 1, 'scoped': 10}
+entry addresses outside the Specs: 297
+open questions: 72 Specs, 160 questions, 10 blocking; extensions registered: 54
+stated readiness: {'defined': 229, 'idea': 1, 'scoped': 10}
 ledger: 278 findings, {'fixed': 159, 'open': 80, 'owner': 1, 'partially-fixed': 38}
 open findings by slice: {'L3': 30, 'P': 29, 'S3': 1, 'S4': 4, 'S5': 16}
-corpus digest: 7e0bc2107a16b129
+corpus digest: 73543acdec58767f
+Pack pages current: 1 of 1
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-5e29c03.tgz
 ```
 
-`python3 design/tools/decisions.py`, after this unit's register commit, which adds OD-156 to OD-161 from the Convex pass:
+`python3 design/tools/decisions.py`, after this unit, which adds OD-162 and OD-163, the owner's rulings of 2026-10-04:
 
 ```
-total: 161
-status: unsorted=5, sorted=81, waiting=21, decided=39, folded=15
-class: tactical=3, delegated=86, owner=52, null=20
-advisor: convex=43, domain=45, operator=34, product=39
+total: 163
+status: unsorted=5, sorted=81, waiting=21, decided=41, folded=15
+class: tactical=3, delegated=86, owner=54, null=20
+advisor: convex=43, domain=46, operator=34, product=40
 ```
 
 **Round 2, the tooling unit, round 3's unit 3b, sitting two and the close of round 3 are on `feature/round-2`, not on `main`.** `main` is still at `592f1dc`, the close of round 1. The close of round 3 did the rest of the mini roadmap (4f, the hosted tier, 4c, 4a and 4d) and ends the branch: `feature/round-2` goes to `main` as one pull request, which the main thread opens at this close for the owner's review and merge. The owner's words at the opening of the close: "forks have been resolved and mini roadmap unlocked. please complete the work to wrap up the feature branch and PR. use Opus, GPT 6 Astra and 6.1 Sol and orchestrate from the main thread". The main thread was Opus 5.5; no Fable agent and no advisor ran. Its head is this close's commit, on top of the fold-in's follow-up `651fcc3`. Tactical decision 42 holds the branch and its one pull request.
@@ -34,6 +35,14 @@ A review of the pull request at `9e58019` found three things, and the commit aft
 The default branch is `main`, published at `github.com/libar-dev/libar-platform`. Slice S0 reached it through a pull request; from S1 on the session fast-forwarded it once CI was green, on the owner's mandate of 2026-10-01, until the merge of slice S2 and the platform review unit on 2026-10-02, when the owner said: "Please merge to main and push. This is the last change we will do without formal PRs since things are starting to shape up." Round 1's four lanes then reached it through pull requests #6 to #9 (decision 32). The platform review as it was received is in commit `70c15bc`, with paths of the owner's machine in its links; its files left the tree at that unit's close, and the owner said the deleted review may stay in the history.
 
 ## Where the work stands
+
+**The unit `pack-page`**, on 2026-10-04, on `unit/design-in-the-graph` from `746782c`, extending pull request #12. Main thread Opus 5.5. The owner: "Please help me plan and execute a logical but sizeable part of this scope: docs/feedback/sdp-feedback-03-selection.md", and chose its scope from the main thread's options: round 1 of the selection, steps 1, 3 and 4 with the review's conditions, the passes (step 5) next. The rulings, briefs and job reports are in the unit folder the project notes name, `application-platform-pack-page`.
+
+- The owner's rulings of 2026-10-04, chosen from the main thread's options. OD-162: the generation registry, the command declaration and the command pipeline pin the per-entity and history forms only, and the aggregate projection states how it extends them when OD-075 triggers ("Drop the aggregate form"). OD-163: a stated `ready` means approved to build, the Protocol's reading ("Approved to build"); no Spec states it in this unit. And the move of the feedback file into `docs/feedback/`.
+- The page. `scripts/pack-page.mjs` writes `design/pages/history-view.md` from the graph in memory (`npm run pages`). It puts the members in the Pack file's order with their rung, floor, next rung and what blocks it, anchors and their sources, verifiers and tiers, pinned pairs, the outside dependencies, and the open questions joined to register rows. The page is committed and deterministic, and `check.py` fails when it is behind the tree, missing or unlisted (`PACK_PAGES`). The next-rung blocker walks the Protocol's own `readinessFloors`, because the Protocol's evaluator takes no target rung.
+- The data the page reads. `tests/types/pinned-pairs.json` holds the type test's pairs: 52 bound, 14 ahead and 10 not compared. A pure test keeps it in step with the test. `scripts/pinned.mjs` formats its module with Prettier. `design/tools/anchor-sites.json` names the source files of the 22 anchors that live in tests, kept by a pure test. The register cites each open question by its Spec and opening text (151 sources), `check.py` verifies it, and `test_decisions.py` passes and runs in CI.
+- One maturity per Spec, applied. `spec:application.history-rebuild` takes the rebuild's history path, its two paused examples and the write pause's statements of it, verbatim. The rebuild and the write pause now carry implementation anchors. The aggregate form left the three built Specs for `spec:application.aggregate-projection`, and their floors reach `ready`. `design/PLAN.md` 6.7 states the principle: a type the design widens stays as an ahead pair, and a behavior the code lacks gets its own Spec. Line pointers into the rebuild Spec became entry addresses, in tests and in the register.
+- The review. `gpt-6-astra` at high ran the behavior lane on a frozen copy with one plant (`job-mut4hpxq-53aad487`, 10.0 min). It caught the plant, `check.py` ignoring a generator that cannot read an input. It found one more blocker: a deleted page left nothing to check. And it confirmed all 16 members against the Protocol's floor evaluation. An astra reader (`job-mut4hpww-482df8d2`, 2.9 min) did A1, A3, A4 and A5 from the page alone, and A2 in part: "blocks S5" was unexplained. The fold-in (`0f6e91b`) closes both. Two sol lanes and an Opus taste lane were stopped by the owner as excessive (decision 63).
 
 **The unit `design-in-the-graph`**, on 2026-10-03, on `unit/design-in-the-graph` from `77acdf2`, a pull request stacked on `feature/round-2`. The owner, after the Protocol's pull request 27 merged: "My primary motivation was to unlock management of specs at different levels of maturity and ability to capture and present designs for upcoming implementations as SDP first-class citizens and enable iterative design with iterations focusing on different perspectives of the system, before committing to implementation.", then "please investigate opportunities to better use SDP sepecs and designs (stubs) and propose a stacked PR for platform to showcase that." The main thread was Opus 5.5 at xhigh effort. It showed, on the history view as the subject:
 
@@ -230,7 +239,7 @@ Thirty-eight more findings are `partially-fixed`, each waiting for its slice. Re
 
 - The hosted tier's first runs, the owner's steps 10 and 11 of `design-hosted-tier.md`: first from the owner's machine with `npm run test:hosted`, then the workflow on `main`, which the `hosted` environment admits, since GitHub runs a schedule only from the default branch. They settle the design's eight "built when" items, OD-036's count, and Leads 39 and 43's assumptions about a hosted deployment.
 - The dashboard check of `clean-capybara-16`: a production deployment, reference `production`, never deployed, with no tables and no keys, made by the project's default. The design wants `dev/hosted` only, so the owner deletes it if nothing uses it. Deletion is permanent and an agent does not do it.
-- Then the roadmap's remaining units, 4e (`ready` by family, the owner's), 5a, 5b, 5c and 5d, discussed with the owner before they are prepared (decision 42). 5d's design is `pack:history-view`; its domain and operator passes, one advisor launch each with `design/advisors/task-pass.md`, come before its build.
+- Then the roadmap's remaining units, 4e (`ready` by family, the owner's), 5a, 5b, 5c and 5d, discussed with the owner before they are prepared (decision 42). 5d's design is `pack:history-view`; its domain and operator passes, one advisor launch each with `design/advisors/task-pass.md`, come before its build. Each reads `design/pages/history-view.md` first and ends with what the page did not give; that is step 5 of `docs/feedback/sdp-feedback-03-selection.md`, and with OD-163 the history projection may state `ready` after them. Under OD-163, 4e is the owner stating `ready` on a family approved for its build.
 
 The setup is done: the project `libar-platform-hosted` and its development deployment `dev/hosted` (`wandering-mule-403`, `HOSTED_DEPLOYMENT_URL` in the regional form the CLI printed), the GitHub environment `hosted` with its `main` branch policy and its three variables (`HOSTED_PLAN` is `Professional`, `HOSTED_DEPLOY_KEY_NAME` is `hosted-ci-scoped`), and the key `hosted-ci-scoped` with exactly the fourteen actions as the secret `HOSTED_DEPLOY_KEY`, which passed the key-only check (Owner queue); the first key, with 25 actions, is revoked. The local backend stays primary, by the owner's words of 2026-10-03: "Local backend should be primary, IMO. But happy to take the hosted as default if easier for start."
 
@@ -326,6 +335,12 @@ The owner accepted the first nine on the session's recommendation. The session t
 54. One maturity per Spec (`PLAN.md` 6.7). The projection contract is split into the per-entity, history and aggregate projections, the moved text verbatim. The new IDs follow the code's names, `HistoryProjection` and `AggregateProjection`, while the language rows "history view" and "history projection" wait for the owner; a ruling of other words renames them.
 55. The pinned module is this corpus's recipe for the Protocol's declarations module: `scripts/pinned.mjs` over one Pack, run by `sdp:build`, and `tests/types/pinned.test-d.ts` with three lists named by entry address, bound, ahead and not compared. A pin that leads its code is listed ahead with what closes it, and a duplicate pin fails the compile. The scope grows a Pack at a time.
 56. A Design entry is cited by its entry address, `spec:<id>#design.<key>`, in code comments, test names, the register, the ledger and the advisors' memos; `check.py` resolves each one outside the Specs. A line pointer into a Spec is replaced when its file is next touched.
+58. A capability Pack has a committed page, `design/pages/<name>.md`, written by `scripts/pack-page.mjs` from the graph in memory, with no commit, timestamp or absolute path; `check.py` keeps the list of pages (`PACK_PAGES`) and fails on one that is behind, missing or unlisted. An edit to a member Spec is followed by `npm run pages`. A pass reads the page first.
+59. The pinned pairs are data, `tests/types/pinned-pairs.json`, beside the type test, which a pure test keeps in step; the page reads them and parses no test. The pinned module is formatted by Prettier.
+60. An anchor that lives in a test names the source files it stands for in `design/tools/anchor-sites.json`, kept by a pure test; the graph does not hold the link.
+61. The register cites an open question by its Spec and the opening of its text, never by position; `check.py` verifies it, and a source whose question left its Spec keeps its last text with `open: false`, only on a decided or folded row. Elsewhere a question is cited by its OD number.
+62. A built Spec may pin a type that a designed form widens, listed ahead; a behavior the code lacks lives in a Spec of its own (`PLAN.md` 6.7). The rebuild is split by it.
+63. The owner, 2026-10-04, on this unit's four worktree lanes and five review lanes: "This approach is appropriate if for implementation of a large full-week epic. ... it is excessive, very."; on worktrees: "I would say no benefit at all."; and "situation dictates actions. And intelligence of the orchestrator decides. Guides are recommendations to consider (unless project has hard rules)." Until the owner rules on the proposal (Owner queue), the main thread sizes review and isolation to the work, and one review that runs things is the usual start.
 57. A pass reads one capability's Pack from one lens before its build, with `design/advisors/task-pass.md`; its memo is checked like a roadmap memo, on a copy with a plant, before the main thread rules. The implementation pass is the main thread's, read through the pinned module.
 
 ## Owner queue
@@ -344,9 +359,9 @@ The key check is done ("Next unit"). For the record, the procedure that worked w
 What waits for the owner at the close of round 3:
 
 - The pull request of `feature/round-2` into `main`, which the main thread opens at this close: the owner reviews and merges it. And the pull request of `unit/design-in-the-graph`, stacked on it.
-- What `ready` states. The Protocol reads `ready` as approved for building: its build backlog (recipe 1) is `ready` and not implemented, and its drift alarm (recipe 2) is implemented and not `ready`. This corpus states `ready` after a Spec's slice passes (4e). With designs ahead of their code first-class, the owner chooses: keep the convention, and read "designed, not built" as `defined` with no implementation binding, as the history view's Pack page shows; or state `ready` on a design the owner approves for its build, such as the history projection, whose floor reaches `ready`. No Spec states `ready` until the owner rules.
-- The aggregate's reach into built Specs. `spec:application.generation-registry`, `spec:command.command-declaration` and `spec:command.command-pipeline` pin `ReadModelBinding`, the markers and step 9 over all three projection forms, so they depend on the deferred aggregate Spec and their `ready` floor waits on it, which 4e meets for the command family. Either narrow those pins to the forms the code admits and keep the aggregate's in its own Spec until it is built (the platform review's "narrow an unsupported generic promise"), or keep the promise and let the floor wait.
-- Words for the design language that this unit used and `CONTEXT.md` lacks: pinned declaration (the Protocol's "declaration", which meets this corpus's "command declaration"), entry address, mention, pass, capability Pack; and from the Convex pass, batch, source, consistent cut, history view.
+- Decided on 2026-10-04: OD-163, a stated `ready` means approved to build, and OD-162, the aggregate form leaves the three built Specs ("Where the work stands"). No Spec states `ready` yet.
+- The proposal on sizing review and isolation to the work, from the owner's words of 2026-10-04, is `proposal-review-sizing.md` in the unit folder of `pack-page`. It would change step 6 of `slice` in `SESSIONS.md`, the guide's run pattern and decision 39's default, once the owner rules.
+- Words for the design language that this unit used and `CONTEXT.md` lacks: pinned declaration (the Protocol's "declaration", which meets this corpus's "command declaration"), entry address, mention, pass, capability Pack; from `pack-page`, history rebuild (the new Spec's ID), Pack page, stated rung, floor, next rung, pair with bound, ahead and not compared, an anchor's site, register row; and from the Convex pass, batch, source, consistent cut, history view.
 - The doc's two hunks, from OD-008 and OD-044, in `patch-doc-sitting-two.diff` of sitting two's folder: `git apply ~/dev-libar-supporting-context/calibration/application-platform-sitting-two/patch-doc-sitting-two.diff` from the repository root, then a commit. Only the owner edits the doc.
 - The hosted tier's first run, from the owner's machine and then by the workflow on `main`, and the dashboard check of `clean-capybara-16` ("Next unit"). OD-036, Probe 3's quota half, is `waiting` for that run.
 - The untracked `tmp-convex-findings.txt` at the repository root, the owner's notes of the hosted key rotation, makes every local run record "not clean" until the owner moves it.
@@ -488,12 +503,17 @@ Leads 30 to 38 are lane data's of the tooling unit, as `leads-data.md` in its fo
     - The interrupt accepts a `retired` or `aborted` generation, because its row does not show whether a purge's batches run; a fence bump with nothing running is harmless, and a purge marker on the row would tell the two apart if an interrupt of a purge must ever be refused.
 
 44. From the unit `design-in-the-graph`. Each is a gap a later unit takes when it touches its subject.
-    - `spec:application.rebuild` and `spec:application.write-pause` carry no implementation binding, though `src/read-model/rebuild.ts` and `src/gate/` realize them: no `codeAnchor` satisfies either, so the Pack's page and the drift alarm do not see them.
     - Nine pairs of `tests/types/pinned.test-d.ts` are not compared because they differ in the ctx they take: the pinned `MutationCtx` is the emitter's generic stand-in, so it never equals a composition's ctx. Five of them (`typeCommandDeclaration`, `fnPublicCommand`, `fnInternalCommand`, `fnRunPipeline`, `fnRelayFailure`) also lead the code and carry the ctx inside the executor type, so nothing flips when their build lands. Either the notation pins a ctx generic over the data model, or the emitter compares with the ctx erased throughout.
     - Thirteen names the design uses and no Spec pins stand in the emitter's preamble, each pointing at the code's type: `ReadModelDataModel`, `RowDataModel`, `GateDataModel`, `ListArgs`, `BatchRef`, `FillBatchRef`, `AppendResult`, `SubjectRef`, `DiagnosticSink`, `FailedCall`, `outcomeKindValidator`, `WriteBaselineArgs`, `WriteBaselineResult`. The Spec that uses one may pin it when next touched.
     - The emitter takes no Convex registration (`export const name = mutation({ ... })`, 51 `fn*` entries in the corpus), no `index*` fragment and no `limit*` formula; the module covers shapes, not the registered surface.
     - The Convex pass left questions to two lenses: the operator's, whether an entry computes the pause length from the tenant list and the stream counts before `startGeneration` and who takes the batch time; the domain's, what `verified` asserts for a history view nothing could change, if OD-157 keeps the pass.
-    - `python3 -m unittest design/tools/test_decisions.py` errors in its test of the real register, already at `77acdf2`: OD-006's source `spec:application.first-experiment#7` no longer exists, and the test expects 144 open questions. CI does not run it.
+
+45. From the unit `pack-page`.
+    - `readModelTables` in `src/read-model/tables.ts` still installs `projectionMarkers`, which only the aggregate form uses and no Pack Spec pins after OD-162; its pair is not compared. The build that next touches the read-model tables drops it, or OD-075's build keeps it.
+    - The rebuild keeps the whole example space, because a one-value slot is refused; `spec:application.history-rebuild` has none, and its two examples' steps are free-form.
+    - The anchor sites live beside the graph: `byFile` on `src/read-model/rebuild.ts` and `src/gate/` still returns nothing, and only the page joins the map. A companion binding is a question for the Protocol (`docs/feedback/sdp-feedback-01.md`).
+    - The page is about 160 KB, most of it the pinned-declaration tables. The reader's remaining obstacles: the test link has no line anchor, and the aggregate answer is spread over three sections.
+    - Every edit to a member Spec moves line links, so `check.py` fails until `npm run pages` runs.
 
 The reports behind leads 1 to 3 and 6 are outside the repository, because they quote a private repository. The project notes file named in `AGENTS.md` lists them, with the reports, briefs and rulings of S0.
 

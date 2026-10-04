@@ -4,6 +4,18 @@ A running file, addressed to the Protocol's maintainers. Each `adopt` unit and e
 
 Every number here was measured on this corpus on the date of its section. Re-run before relying on one.
 
+## 2026-10-04, a page per capability Pack, built by the adopter
+
+The unit `pack-page` built round 1 of `sdp-feedback-03-selection.md` beside this file. `scripts/pack-page.mjs` reads the graph in memory, through the package's exported `extract` and `createReader`. It writes `design/pages/history-view.md`, one committed page for `pack:history-view`: the members in authored order, each with its rung, floor, next rung and the clause that blocks it, its anchors and verifiers, its pinned pairs, the dependencies outside the Pack, and the open questions joined to the register. `check.py` fails when the page is behind the tree. Five things the page needed are not in the Protocol, and the page works around each:
+
+- **A floor at a rung above the stated one.** `evaluateReadinessFloor(node, index)` takes no target rung, and `floorFailures` covers only the stated rung. So recipe 9 answers `firstUnmetClause: null` for a Spec that stated `defined` and could not state `ready`. The page walks the exported `readinessFloors` with `buildGraphIndex` one rung up, using the Protocol's own predicates. A target rung on the evaluator would retire that walk, and recipe 9 could report the next rung's blocker.
+- **Which targets fail the typed-dependency clause.** Its failure names the clause, not the dependencies that break it, so the page recomputes "a target stating below `defined`".
+- **Pack order.** The reader's `packContext` and `graph.json` still sort the members, so the page reads the list in the `.pack.sdp.md` file.
+- **An anchor that lives in a test.** The read-model library and the gate cannot import the Protocol, so their anchors sit in tests. `design/tools/anchor-sites.json` names the source files each such anchor stands for, and a pure test keeps it true. The graph does not hold that link: `byFile("src/read-model/rebuild.ts")` still returns no Spec, and recipe 4 does not see it. A companion binding on the anchor would let the graph see it.
+- **A question's identity.** The register now cites an open question by its Spec and the opening of its text, verified by `check.py`, in place of a position that collided with the entry-address grammar and had drifted in 47 of 151 sources. An optional question key in the Protocol would make that an address.
+
+The page was tested against the reader this file's section of the same day describes. A `gpt-6-astra` job read only the page and the files it links to, and was given five tasks: find the history contract, locate OD-157, explain the aggregate dependency, find one declaration's type comparison, and say whether a paused-rebuild example has native-backend evidence. It did four in full. It found OD-157 but could not tell what "blocks S5" meant, and the page now says. That reader is the one plan 35 asks to be named before Spec Studio resumes.
+
 ## 2026-10-04, the design as a person working in the repository reads it
 
 The unit `design-in-the-graph` gave this corpus the content a design ahead of its code needs. It has one maturity per Spec, `pack:history-view` in reading order, pinned declarations compiled and compared with the code, entry addresses in code, tests and the register, and two passes. Read through `npx sdp view` at `d39c89e` on the pin `5e29c03`, little of it reaches a person who navigates the repository and works on it. This section describes that reader and what the reader meets. It asks for no particular feature.
