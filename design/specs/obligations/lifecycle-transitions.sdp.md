@@ -22,8 +22,8 @@ D13 gives six states and their meaning. It does not list which transitions exist
 
 ### Open questions
 
-- [non-blocking] Extension E-10: the doc names the six states but not the allowed transitions or their causes; this Spec lists them and refuses every other transition (D13, E-10)
-- [non-blocking] Extension E-51: the doc says a known business rejection settles the business result but not which state it settles to; this design reads a body's business failure, which commits like a success, as succeeded with evidence naming its event, and a thrown rejection, which commits nothing, as cancelled with the settled result as `businessRejection` evidence, because cancelled means the effect will not happen and no call is in flight; the owner may prefer a seventh state (D13, D4, E-51)
+- [non-blocking #obligationStateTransitions] Extension E-10: the doc names the six states but not the allowed transitions or their causes; this Spec lists them and refuses every other transition (D13, E-10)
+- [non-blocking #obligationBusinessRejection] Extension E-51: the doc says a known business rejection settles the business result but not which state it settles to; this design reads a body's business failure, which commits like a success, as succeeded with evidence naming its event, and a thrown rejection, which commits nothing, as cancelled with the settled result as `businessRejection` evidence, because cancelled means the effect will not happen and no call is in flight; the owner may prefer a seventh state (D13, D4, E-51)
 
 ## Rule
 

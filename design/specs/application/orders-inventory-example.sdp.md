@@ -33,7 +33,7 @@ The second lifecycle command is `CancelOrder`. The stock item keeps two totals a
 
 ### Open questions
 
-- [non-blocking] Extension E-46: the second lifecycle command, the essential summary, the command that creates stock, the unit price an order line carries, the bound on an order line's stock item ID, the rejection reasons, the stream budgets of the two stream types, the order of the two context calls and the history-dependent view Sc L2-6 builds are choices the doc leaves open; two of them are decided, that the stock item keeps totals only and `release` takes its quantities from the cancelled order's own lines, and that the order allocation history view stays in the experiment; the owner may substitute the others, and the experiment's terms move with them (E-46, E-2, E-9, First experiment)
+- [non-blocking #orderInventoryCommandChoices] Extension E-46: the second lifecycle command, the essential summary, the command that creates stock, the unit price an order line carries, the bound on an order line's stock item ID, the rejection reasons, the stream budgets of the two stream types, the order of the two context calls and the history-dependent view Sc L2-6 builds are choices the doc leaves open; two of them are decided, that the stock item keeps totals only and `release` takes its quantities from the cancelled order's own lines, and that the order allocation history view stays in the experiment; the owner may substitute the others, and the experiment's terms move with them (E-46, E-2, E-9, First experiment)
 
 ## Model
 

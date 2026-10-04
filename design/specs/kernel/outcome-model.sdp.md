@@ -32,7 +32,7 @@ The kernel defines the shapes and does not define wire codes. The closed error-c
 
 ### Open questions
 
-- [non-blocking] Extension E-21: the doc names the four outcomes and their commit behavior but not their TypeScript shape; this Spec fixes `Outcome<R>`, `Rejection`, `CommittedOutcome<R>`, `AffectedRef`, the rule that a committed outcome carries at least one event, and the three rejection codes the adapter reserves, `staleVersion`, `operationTooLarge` and `entityExists`, the last being the adapter's answer to a create planned at expected version 0 whose stream already exists, which is the uniqueness check D6 names for a client-generated entity ID; the owner confirms the shapes or renames the reserved codes before code names them (D4, D6, E-21)
+- [non-blocking #outcomeRejectionContract] Extension E-21: the doc names the four outcomes and their commit behavior but not their TypeScript shape; this Spec fixes `Outcome<R>`, `Rejection`, `CommittedOutcome<R>`, `AffectedRef`, the rule that a committed outcome carries at least one event, and the three rejection codes the adapter reserves, `staleVersion`, `operationTooLarge` and `entityExists`, the last being the adapter's answer to a create planned at expected version 0 whose stream already exists, which is the uniqueness check D6 names for a client-generated entity ID; the owner confirms the shapes or renames the reserved codes before code names them (D4, D6, E-21)
 
 ## Rule
 

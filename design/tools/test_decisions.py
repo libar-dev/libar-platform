@@ -39,7 +39,7 @@ def lean():
 def row(identifier, **changes):
     result = {
         "id": identifier, "title": "Keep a bounded context call",
-        "sources": [{"kind": "specQuestion", "spec": "spec:context.tables", "question": "Keep a bounded context call.", "file": "design/specs/context/tables.sdp.md"}],
+        "sources": [{"kind": "specQuestion", "address": "spec:context.tables#question.boundedCall", "file": "design/specs/context/tables.sdp.md"}],
         "families": ["context"], "cites": ["E-32", "F13"],
         "provisionalReading": "One bounded call", "blocks": None, "advisor": "convex",
         "status": "unsorted", "foldedInto": [], "class": None, "reason": None, "lean": None,
@@ -343,41 +343,54 @@ class QuestionSourceTests(unittest.TestCase):
     def setUp(self):
         self.row = row("OD-001")
         self.spec = "spec:context.tables"
+        self.address = self.row["sources"][0]["address"]
         self.files = {self.spec: "design/specs/context/tables.sdp.md"}
         self.questions = {self.spec: ["Keep a bounded context call. Another sentence."]}
+        self.resolutions = {self.address: {"address": self.address, "resolves": True,
+                            "id": self.spec, "section": "question", "key": "boundedCall", "reason": None}}
 
     def errors(self):
-        return tool.question_source_errors(self.row, self.questions, self.files)
+        return tool.question_source_errors(self.row, self.questions, self.files, self.resolutions)
 
-    def test_opening_is_verbatim_and_matching_normalizes_only_whitespace(self):
+    def close_source(self):
+        self.row["sources"] = [{"kind": "specQuestion", "spec": self.spec,
+                                "question": "Keep a bounded context call.",
+                                "file": self.files[self.spec], "open": False}]
+
+    def test_address_survives_question_text_changes(self):
+        self.questions[self.spec] = ["A different sentence."]
+        self.assertEqual(self.errors(), [])
+
+    def test_missing_wrong_section_wrong_file_and_old_shape_are_refused(self):
+        for mutation in ("missing", "section", "file", "old", "line", "openTrue", "notString"):
+            with self.subTest(mutation=mutation):
+                saved_row = copy.deepcopy(self.row)
+                saved_resolutions = copy.deepcopy(self.resolutions)
+                source = self.row["sources"][0]
+                if mutation == "missing": self.resolutions[self.address].update(resolves=False, reason="entry")
+                elif mutation == "section": self.resolutions[self.address]["section"] = "design"
+                elif mutation == "file": source["file"] = "another.sdp.md"
+                elif mutation == "old":
+                    source.pop("address")
+                    source.update(spec=self.spec, question="Keep a bounded context call.")
+                elif mutation == "line": source["line"] = 1
+                elif mutation == "openTrue": source["open"] = True
+                elif mutation == "notString": source["address"] = []
+                self.assertTrue(self.errors())
+                self.row, self.resolutions = saved_row, saved_resolutions
+
+    def test_closed_opening_matching_normalizes_only_whitespace(self):
+        self.close_source()
+        self.row["status"] = "decided"
         self.assertEqual(tool.question_opening("Keep `spec:context.tables` at 1.5 bytes. Why?"),
                          "Keep `spec:context.tables` at 1.5 bytes.")
         self.row["sources"][0]["question"] = "Keep a bounded\n context call."
-        self.assertEqual(self.errors(), [])
+        self.assertIn("open: false question resolves again", " ".join(self.errors()))
         self.row["sources"][0]["question"] = "keep a bounded context call."
-        self.assertTrue(self.errors())
-
-    def test_missing_ambiguous_wrong_file_and_old_shape_are_refused(self):
-        for mutation in ("missing", "ambiguous", "file", "spec", "old", "line", "openTrue"):
-            with self.subTest(mutation=mutation):
-                saved_row = copy.deepcopy(self.row)
-                saved_questions = copy.deepcopy(self.questions)
-                source = self.row["sources"][0]
-                if mutation == "missing": self.questions[self.spec] = []
-                elif mutation == "ambiguous": self.questions[self.spec] *= 2
-                elif mutation == "file": source["file"] = "another.sdp.md"
-                elif mutation == "spec": source["spec"] = "spec:missing"
-                elif mutation == "old":
-                    source.pop("spec")
-                    source.pop("question")
-                    source.update(ref="spec:context.tables#1", line=1)
-                elif mutation == "line": source["line"] = 1
-                elif mutation == "openTrue": source["open"] = True
-                self.assertTrue(self.errors())
-                self.row, self.questions = saved_row, saved_questions
+        self.assertEqual(self.errors(), [])
 
     def test_removed_question_requires_closed_status_and_refuses_return(self):
-        self.row["sources"][0]["open"] = False
+        self.close_source()
         self.questions[self.spec] = []
         for status in tool.STATUSES:
             self.row["status"] = status
@@ -386,6 +399,47 @@ class QuestionSourceTests(unittest.TestCase):
         self.questions[self.spec] = ["Keep a bounded context call. Returned text."]
         self.assertIn("open: false question resolves again", " ".join(self.errors()))
 
+    def test_protocol_removed_key_fails_and_closed_source_keeps_passing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / self.files[self.spec]
+            path.parent.mkdir(parents=True)
+            carrier = """---
+id: spec:context.tables
+kind: rule
+altitude: story
+readiness: scoped
+relations: {}
+---
+# Bounded call
+
+## Intent
+- outcome: Keep a bounded call.
+
+### Open questions
+- [non-blocking #boundedCall] Keep a bounded context call. Another sentence.
+
+## Rule
+- Keep the call bounded.
+
+## Verification — reviewed
+- Review the bound.
+"""
+            path.write_text(carrier)
+            self.resolutions = tool.question_resolutions([self.row], root)
+            self.assertEqual(self.errors(), [])
+            path.write_text(carrier.replace(" #boundedCall", ""))
+            self.resolutions = tool.question_resolutions([self.row], root)
+            self.assertIn("does not resolve", " ".join(self.errors()))
+            path.write_text(carrier.replace("- [non-blocking #boundedCall] Keep a bounded context call. Another sentence.\n", ""))
+            graph = tool.graph_recipe(20, root)
+            self.questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in graph["specs"]}
+            self.close_source()
+            self.row["status"] = "decided"
+            before = copy.deepcopy(self.row["sources"])
+            self.assertEqual(self.errors(), [])
+            self.assertEqual(self.row["sources"], before)
+
 
 class RealRegisterTests(unittest.TestCase):
     def test_real_register_has_unique_ids_and_resolving_question_sources(self):
@@ -393,12 +447,8 @@ class RealRegisterTests(unittest.TestCase):
         rows = register["decisions"]
         ids = [r["id"] for r in rows]
         self.assertEqual(len(set(ids)), len(ids))
-        recipes = (ROOT / "node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md").read_text()
-        body = re.search(r"## 20\..*?```js\n(.*?)```", recipes, re.S).group(1)
-        result = subprocess.run(["npx", "sdp", "q", body, "--root", ".", "--json"],
-                                cwd=ROOT, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        graph = json.loads(result.stdout)
+        graph = tool.graph_recipe(20)
+        resolutions = tool.question_resolutions(rows)
         self.assertEqual(graph["malformed"], [])
         questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in graph["specs"]}
         files = {}
@@ -408,7 +458,7 @@ class RealRegisterTests(unittest.TestCase):
         for decision in rows:
             with self.subTest(row=decision["id"]):
                 self.assertEqual(tool.row_errors(decision, register["units"], ROOT, set(ids)), [])
-                self.assertEqual(tool.question_source_errors(decision, questions, files), [])
+                self.assertEqual(tool.question_source_errors(decision, questions, files, resolutions), [])
 
 
 if __name__ == "__main__":

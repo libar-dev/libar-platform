@@ -18,7 +18,7 @@ F20 · Status: probed · Doc status: not in the doc's ledger · Decisions: D8, D
 
 ### Open questions
 
-- [non-blocking] The bound applies to a plain index stream. Filtered, joined or mapped streams may charge reads whose rows are not retained, and the examples do not establish an overshoot bound for those compositions. A hosted deployment is not measured (F20, Probe 10)
+- [non-blocking #paginationReadOvershoot] The bound applies to a plain index stream. Filtered, joined or mapped streams may charge reads whose rows are not retained, and the examples do not establish an overshoot bound for those compositions. A hosted deployment is not measured (F20, Probe 10)
 
 ## Constraints
 

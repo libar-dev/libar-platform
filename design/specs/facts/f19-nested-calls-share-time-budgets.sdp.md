@@ -18,7 +18,7 @@ A nested or component call runs through an asynchronous system call of the pinne
 
 ### Open questions
 
-- [non-blocking] The public package declares no duration for the system-operation budget. The local refusal near fifteen seconds is a local backend's observation, not a hosted limit. The examples exercise mutations; query-only call trees and how execution time is counted across child functions that compute are not measured (F19, Probe 9, Probe 11)
+- [non-blocking #nestedCallTimeBudget] The public package declares no duration for the system-operation budget. The local refusal near fifteen seconds is a local backend's observation, not a hosted limit. The examples exercise mutations; query-only call trees and how execution time is counted across child functions that compute are not measured (F19, Probe 9, Probe 11)
 
 ## Constraints
 

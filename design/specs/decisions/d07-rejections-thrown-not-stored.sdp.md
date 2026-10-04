@@ -28,7 +28,7 @@ A rejected command throws a structured `ConvexError`. The whole mutation rolls b
 
 ### Open questions
 
-- [non-blocking] OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides where the nested mutation is required and whether the generic internal dispatcher exists (OQ2, D7)
+- [non-blocking #refusedCommandHistory] OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides where the nested mutation is required and whether the generic internal dispatcher exists (OQ2, D7)
 
 ## Decision
 

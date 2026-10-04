@@ -33,8 +33,8 @@ Agent reasoning produces a structured proposal. A deterministic policy checks it
 
 ### Open questions
 
-- [blocking] The trigger has not fired; the run, proposal and attempt tables, the proposal schema, the policy engine's inputs and the provider adapters are deferred to the build (D17, Decision method rule 4)
-- [non-blocking] OQ2 dependency: whether a rejected agent proposal must be recorded as a fact decides whether the generic internal dispatcher of D7 is needed at the agent boundary; the design carries it as a conditional (OQ2, D7)
+- [blocking #agentProposalAttempts] The trigger has not fired; the run, proposal and attempt tables, the proposal schema, the policy engine's inputs and the provider adapters are deferred to the build (D17, Decision method rule 4)
+- [non-blocking #agentProposalRejectionRecord] OQ2 dependency: whether a rejected agent proposal must be recorded as a fact decides whether the generic internal dispatcher of D7 is needed at the agent boundary; the design carries it as a conditional (OQ2, D7)
 
 ## Behavior
 

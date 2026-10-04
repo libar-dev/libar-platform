@@ -28,7 +28,7 @@ Each context component owns a `streams` table and an `events` table, and a conte
 
 ### Open questions
 
-- [non-blocking] Extension E-3: the doc names three indexes and the fields of the envelope; this Spec fixes the concrete tables, the operation index, the `streamParts` table for the derived mapping, the deleted-subject marker as `deletedAt` on the stream row and the size budgets; the owner confirms (D2, E-3)
+- [non-blocking #contextJournalTables] Extension E-3: the doc names three indexes and the fields of the envelope; this Spec fixes the concrete tables, the operation index, the `streamParts` table for the derived mapping, the deleted-subject marker as `deletedAt` on the stream row and the size budgets; the owner confirms (D2, E-3)
 
 ## Contract
 

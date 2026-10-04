@@ -28,7 +28,7 @@ So the component does not fit a generation backfill as the platform needs one: i
 
 ### Open questions
 
-- [non-blocking] Hosted quotas, sustained contention, automatic stall detection, backup replacement, old encrypted cursors, fence advancement, parallel callbacks and a rebuild across changing tenants are not run by these examples; the native backend evidence proves only the named boundaries and does not settle those behaviors. (F17, Probe 6)
+- [non-blocking #rebuildBackendCoverage] Hosted quotas, sustained contention, automatic stall detection, backup replacement, old encrypted cursors, fence advancement, parallel callbacks and a rebuild across changing tenants are not run by these examples; the native backend evidence proves only the named boundaries and does not settle those behaviors. (F17, Probe 6)
 
 ## Constraints
 

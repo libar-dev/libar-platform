@@ -27,7 +27,7 @@ Because read models update inside commands, rebuilding a per-entity or current-s
 
 ### Open questions
 
-- [non-blocking] Probe 6 ran a backfill batch racing a live command and the migrations component on the native backend, with its results on F17; a hosted deployment and sustained contention are not run (Probe 6, F1, F17, D9)
+- [non-blocking #rebuildContentionCoverage] Probe 6 ran a backfill batch racing a live command and the migrations component on the native backend, with its results on F17; a hosted deployment and sustained contention are not run (Probe 6, F1, F17, D9)
 
 ## Decision
 

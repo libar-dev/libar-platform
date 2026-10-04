@@ -39,9 +39,9 @@ An external effect is an obligation whose attempt must leave the transaction to 
 
 ### Open questions
 
-- [non-blocking] Extension E-58: the doc does not give the lease duration, the provider key derivation, the late evidence bound, the shape of a reconcile, or what the action does when its settle call throws; `spec:effects.claim-call-settle` pins them (D14, E-58)
-- [non-blocking] Extension E-51: a declined provider report settles the obligation as cancelled with `businessRejection` evidence, by the same reading as the local wrapper (D14, D4, E-51)
-- [non-blocking] Decision method rule 4: the doc writes Layer 3 from what the first experiment shows, and this Spec and `spec:effects.claim-call-settle` are written before it runs; the lease durations, the settle repeats and the late-evidence bound of E-58 and the backoff shared under E-51 are provisional defaults until the experiment's measurements and Probe 7 confirm or replace them, and the owner confirms that writing the structure now does not pre-empt the experiment (Decision method rule 4, D14, D15, E-51, E-58)
+- [non-blocking #effectAttemptRecoveryContract] Extension E-58: the doc does not give the lease duration, the provider key derivation, the late evidence bound, the shape of a reconcile, or what the action does when its settle call throws; `spec:effects.claim-call-settle` pins them (D14, E-58)
+- [non-blocking #providerBusinessRejection] Extension E-51: a declined provider report settles the obligation as cancelled with `businessRejection` evidence, by the same reading as the local wrapper (D14, D4, E-51)
+- [non-blocking #effectAttemptDefaultBounds] Decision method rule 4: the doc writes Layer 3 from what the first experiment shows, and this Spec and `spec:effects.claim-call-settle` are written before it runs; the lease durations, the settle repeats and the late-evidence bound of E-58 and the backoff shared under E-51 are provisional defaults until the experiment's measurements and Probe 7 confirm or replace them, and the owner confirms that writing the structure now does not pre-empt the experiment (Decision method rule 4, D14, D15, E-51, E-58)
 
 ## Behavior
 

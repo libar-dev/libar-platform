@@ -27,8 +27,8 @@ Each context is a component that owns its current state, its event journal and i
 
 ### Open questions
 
-- [non-blocking] Probe 3: the latency of one component call is measured and keeps every context a component; its function-call quota is a hosted usage reading, and isolation itself stays (Probe 3, D2, OQ1)
-- [non-blocking] OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on the first experiment's local measurement, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, D2)
+- [non-blocking #contextCallLatencyQuota] Probe 3: the latency of one component call is measured and keeps every context a component; its function-call quota is a hosted usage reading, and isolation itself stays (Probe 3, D2, OQ1)
+- [non-blocking #contextIsolationChoice] OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on the first experiment's local measurement, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, D2)
 
 ## Decision
 

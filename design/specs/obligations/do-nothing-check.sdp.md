@@ -30,7 +30,7 @@ Before the obligation module is built, the do-nothing option is checked against 
 
 ### Open questions
 
-- [non-blocking] Probe 7 observes a plain scheduled local reaction and all five states on the pinned native backend; a failed-function scan counts zero documents and bytes but exhausts the 4096-read allowance at 4092 total rows; fresh CLI replacement leaves no scheduler intent, while replacement in place preserves later intent outside restored data; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain open, and the owner confirmed D13 on these observations (Probe 7, F12, F16, F13)
+- [non-blocking #schedulerObligationEvidence] Probe 7 observes a plain scheduled local reaction and all five states on the pinned native backend; a failed-function scan counts zero documents and bytes but exhausts the 4096-read allowance at 4092 total rows; fresh CLI replacement leaves no scheduler intent, while replacement in place preserves later intent outside restored data; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain open, and the owner confirmed D13 on these observations (Probe 7, F12, F16, F13)
 
 ## Decision
 

@@ -30,7 +30,7 @@ An aggregate projection is the form of a read model whose row sums a number over
 
 ### Open questions
 
-- [blocking] Deferred until a read model needs an aggregate row: OD-075 keeps this form a signature to which no read model of the example domain is bound, `orderTotals` is the shape of an aggregate table and not a read model, and the rebuild has no path for an aggregate; the first read model that needs a count or a sum over its entities is the trigger, and with it this contract takes its rebuild path, its tests and the owner's confirmation of the form under E-9 (OD-075, E-9)
+- [blocking #aggregateReadModelRebuild] Deferred until a read model needs an aggregate row: OD-075 keeps this form a signature to which no read model of the example domain is bound, `orderTotals` is the shape of an aggregate table and not a read model, and the rebuild has no path for an aggregate; the first read model that needs a count or a sum over its entities is the trigger, and with it this contract takes its rebuild path, its tests and the owner's confirmation of the form under E-9 (OD-075, E-9)
 
 ## Contract
 

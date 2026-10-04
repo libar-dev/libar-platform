@@ -28,7 +28,7 @@ The generic parameters are the state `S`, the command `C`, the domain event `E` 
 
 ### Open questions
 
-- [non-blocking] Extension E-20: the concrete generic parameters, the fields of `DecisionContext`, the `DomainEvent` shape, the at-least-one-event rule and the helper shapes are this design's; the owner confirms them before code names them (D3, E-20)
+- [non-blocking #deciderEventContract] Extension E-20: the concrete generic parameters, the fields of `DecisionContext`, the `DomainEvent` shape, the at-least-one-event rule and the helper shapes are this design's; the owner confirms them before code names them (D3, E-20)
 
 ## Contract
 

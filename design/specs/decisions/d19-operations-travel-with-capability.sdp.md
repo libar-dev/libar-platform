@@ -28,7 +28,7 @@ Each installed capability carries its own operations: logging that never cancels
 
 ### Open questions
 
-- [non-blocking] Probe 7 pending: what a restore leaves of Workpool and Workflow state decides how much of the restore procedure the obligation module must rebuild (Probe 7, F12, D19)
+- [non-blocking #restoreObligationCoverage] Probe 7 pending: what a restore leaves of Workpool and Workflow state decides how much of the restore procedure the obligation module must rebuild (Probe 7, F12, D19)
 
 ## Decision
 

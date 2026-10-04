@@ -28,8 +28,8 @@ Every event carries the fifteen fields the doc fixes: a stable application ident
 
 ### Open questions
 
-- [non-blocking] Extension E-26: the doc lists the fifteen fields and their meaning; this Spec fixes the validator shapes, the `CausedBy` union with a migration variant for baseline events, the `OperationRef` the parent passes, and the event ID as a version 4 UUID from the runtime's `crypto`; the owner confirms (D2, E-26)
-- [non-blocking] Extension E-12: the doc says events stay small and gives no number for the envelope; this Spec bounds the envelope beside the payload at `limitEnvelopeBytes`, 4,096 bytes, and each text field of it that a caller can set at 256 bytes of UTF-8, 512 for an actor's ID, so the largest stored event, `limitEventBytes`, is derived and enforced and never assumed; the owner may set other numbers, and the fold bound of `spec:context.journal` moves with them (E-12, D19, F13)
+- [non-blocking #eventEnvelopeFields] Extension E-26: the doc lists the fifteen fields and their meaning; this Spec fixes the validator shapes, the `CausedBy` union with a migration variant for baseline events, the `OperationRef` the parent passes, and the event ID as a version 4 UUID from the runtime's `crypto`; the owner confirms (D2, E-26)
+- [non-blocking #envelopeTextBounds] Extension E-12: the doc says events stay small and gives no number for the envelope; this Spec bounds the envelope beside the payload at `limitEnvelopeBytes`, 4,096 bytes, and each text field of it that a caller can set at 256 bytes of UTF-8, 512 for an actor's ID, so the largest stored event, `limitEventBytes`, is derived and enforced and never assumed; the owner may set other numbers, and the fold bound of `spec:context.journal` moves with them (E-12, D19, F13)
 
 ## Contract
 

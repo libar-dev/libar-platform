@@ -25,7 +25,7 @@ import sys
 
 sys.dont_write_bytecode = True
 
-from decisions import question_source_errors
+from decisions import graph_recipe, question_resolutions, question_source_errors
 
 DESIGN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(DESIGN)
@@ -47,7 +47,7 @@ PROSE_MENTIONS = os.path.join(DESIGN, "tools", "prose-mentions.json")
 # An entry address, spec:<id>#design.<key> or #ui.<key>, as the Protocol's checked-mentions record rules it.
 # A token runs from `spec:` to a separator, loses trailing punctuation, and is checked whole, so a malformed
 # key is refused rather than read as its valid prefix. Historical positional citations in prose
-# are kept as written; question sources are checked separately by text.
+# are kept as written; question sources are checked separately through the Protocol.
 MENTION_TOKEN = re.compile(r"spec:[^\s`'\"()\[\]{}<>|,;]+")
 ADDRESS = re.compile(r"^(spec:[a-z][a-z0-9-]*(?:\.[A-Za-z0-9][A-Za-z0-9-]*)*)#(design|ui)\.([a-z][A-Za-z0-9]*)$")
 # Where an address outside the Specs lives: the code, the tests, the register, the ledger and the work documents.
@@ -150,9 +150,19 @@ elif diverging:
 # 2. Read the Specs.
 kinds = collections.Counter()
 readiness = collections.Counter()
-questions = {}
+question_graph = graph_recipe(20)
+questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in question_graph["specs"]}
+if question_graph["malformed"]:
+    fail("open-question recipe reports malformed questions")
+for spec in question_graph["specs"]:
+    for question in spec["questions"]:
+        if not question.get("key"):
+            fail(f"{spec['id']} carries an open question without a key")
+for spec in question_graph["specs"]:
+    if spec["totals"]["blocking"] and spec["statedReadiness"] != "scoped":
+        fail(f"{spec['id']} carries a blocking question and states {spec['statedReadiness']}")
 spec_files = {}
-n_blocking = 0
+n_blocking = question_graph["totals"]["blocking"]
 cited_extensions = set()
 edge_gaps = []
 for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), recursive=True)):
@@ -182,11 +192,6 @@ for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), re
         if section in TYPED_SECTIONS and line.startswith("- "):
             cited_laws |= {int(x) for x in re.findall(r"\bLaw (\d+)", line)}
             cited_facts |= {int(x) for x in re.findall(r"\bF(\d+)\b", line)}
-        if section == "Open" and line.startswith("- ["):
-            questions.setdefault(sid, []).append(re.sub(r"^- \[[^]]+\] ", "", line))
-            n_blocking += int(line.startswith("- [blocking]"))
-            if line.startswith("- [blocking]") and stated != "scoped":
-                fail(f"{sid} carries a blocking question and states {stated}")
     family = sid.split(":")[1].split(".")[0]
     exempt = kind in ("decision", "example") or family in ("laws", "facts") or sid == "spec:platform.vocabulary"
     missing_laws, missing_facts = cited_laws - linked_laws, cited_facts - linked_facts
@@ -195,10 +200,11 @@ for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), re
 for gap in edge_gaps:
     fail("cited without a constrainedBy edge (rubric 16): " + gap)
 
-# 2a. The decision register's question sources resolve by authored text.
+# 2a. Open question sources resolve by address through the Protocol; closed ones keep their text.
 register = json.load(open(os.path.join(DESIGN, "decisions/register.json"), encoding="utf-8"))
+resolutions = question_resolutions(register["decisions"])
 for row in register["decisions"]:
-    for error in question_source_errors(row, questions, spec_files):
+    for error in question_source_errors(row, questions, spec_files, resolutions):
         fail(row["id"] + ": " + error)
 
 # 3. README.md against the Specs.
