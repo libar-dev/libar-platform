@@ -228,6 +228,21 @@ for item in ledger:
 
 by_slice = collections.Counter(item.get("slice", "none") for item in ledger if item["status"] == "open")
 
+# 5. Each Pack page is what the tree generates. The page design/pages/<name>.md is the page of pack:<name>,
+# and the generator's --check names the first line that differs.
+pages = sorted(glob.glob(os.path.join(DESIGN, "pages", "*.md")))
+stale_pages = 0
+for path in pages:
+    name = os.path.splitext(os.path.basename(path))[0]
+    out = subprocess.run(
+        ["node", os.path.join(ROOT, "scripts", "pack-page.mjs"), "--pack", f"pack:{name}", "--out", os.path.relpath(path, ROOT), "--check"],
+        capture_output=True, text=True, cwd=ROOT,
+    )
+    if out.returncode != 0:
+        stale_pages += 1
+        message = (out.stderr + out.stdout).strip().splitlines()
+        fail(message[0] if message else f"scripts/pack-page.mjs exited {out.returncode} on {os.path.relpath(path, ROOT)}")
+
 digest = hashlib.sha256()
 tracked = sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), recursive=True))
 tracked += [os.path.join(DESIGN, name) for name in ("README.md", "PLAN.md", "SESSIONS.md", "reviews/consensus-ledger.json", "tools/prose-mentions.json")]
@@ -243,6 +258,7 @@ print(f"stated readiness: {dict(sorted(readiness.items()))}")
 print(f"ledger: {len(ledger)} findings, {dict(sorted(by_status.items()))}")
 print(f"open findings by slice: {dict(sorted(by_slice.items()))}")
 print(f"corpus digest: {digest.hexdigest()[:16]}")
+print(f"Pack pages current: {len(pages) - stale_pages} of {len(pages)}")
 print(f"protocol: {PINNED}")
 if failures:
     print(f"\nFAIL ({len(failures)}):")
