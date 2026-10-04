@@ -3,7 +3,7 @@
 // default the Pack's id without `pack:`. It runs the body of recipe 24, "Pinned declarations", read
 // from the pinned Protocol's recipes.md, with the pinned CLI. spec:extraction.contract-declarations
 // rules the module: a projection, regenerated and never edited, which earns its place when a
-// changed pin fails the typecheck against the code.
+// changed pin fails the compiled tier's typecheck against the code.
 //
 // This project's policy, by the prefix of the entry's key: `type*` opening with `type ` or
 // `interface ` and `validator*` opening with `const ` are exported as written; `fn*` that is a call
@@ -18,6 +18,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import * as prettier from "prettier";
 import ts from "typescript";
 
 const root = join(import.meta.dirname, "..");
@@ -274,11 +275,21 @@ const lines = [
   ...emitted.filter((row) => row.kind === "table").flatMap(member),
   "};",
 ];
+const outputPath = join(root, "generated/pinned", `${name}.ts`);
+let formatted;
+try {
+  const config = JSON.parse(
+    readFileSync(join(root, ".prettierrc.json"), "utf8"),
+  );
+  formatted = await prettier.format(`${lines.join("\n")}\n`, {
+    ...config,
+    filepath: outputPath,
+  });
+} catch (error) {
+  cannot(`${outputPath}: Prettier failed: ${error.message}`);
+}
 mkdirSync(join(root, "generated/pinned"), { recursive: true });
-writeFileSync(
-  join(root, "generated/pinned", `${name}.ts`),
-  `${lines.join("\n")}\n`,
-);
+writeFileSync(outputPath, formatted);
 
 const counted = (rows) =>
   [...Map.groupBy(rows, (row) => row.prefix)]
