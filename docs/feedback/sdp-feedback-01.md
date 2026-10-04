@@ -4,6 +4,47 @@ A running file, addressed to the Protocol's maintainers. Each `adopt` unit and e
 
 Every number here was measured on this corpus on the date of its section. Re-run before relying on one.
 
+## 2026-10-04, adopting round 2 at `27b896a`
+
+The pin moved from `5e29c03` to `27b896a`, a build of the Protocol's branch `feature/adopter-round-2`, packed from a clean clone as before. The graph schema is `0.7.0`. The corpus derives 240 Specs, 6 Packs and 144 anchors into 390 nodes and 1,365 edges, validate reports 0 errors and 12 warnings, each a listed prose mention, and `npm test` passed 1,137 tests in 74 files, with 10 skipped. Of the five workarounds the first Pack page listed in the section below, four are gone. What the round changed here:
+
+- **Pack order.** `packContext` gives the members in the order the Pack file writes them. The page reads its order there and no longer parses the Pack file's front matter.
+- **Question keys.** All 166 open questions in 72 Specs carry a key, and `check.py` fails on one without. The register cites 152 open questions by address. Seven sources keep their Spec and opening text, each on a row whose question was removed. The page joins a register row to a question by address: 47 of the 53 questions on the members of `pack:history-view` join a row, the same 47 the text join found.
+- **The next rung.** `SpecContext.nextRungFailures` and recipe 9 name the unmet clauses of the rung above the floor, and a typed-dependency failure lists its targets. Here 22 of 240 Specs cannot reach the rung above the one they state: 10 hold a blocking question, and 12 are examples that state `defined` under a parent that states `scoped`. The other 218 have a floor above their stated rung. The page means the rung above the stated one, so when the floor sits higher it says nothing blocks that rung, and otherwise it prints the Protocol's first unmet clause with the targets and their rungs. Every member of the history view states `defined` with its floor at `ready`, so nothing on its page is held.
+- **Recipes 25 and 26.** `check.py` sends the 489 entry addresses written outside the Specs to recipe 25 in one call, 337 Design addresses and 152 question addresses, and all of them resolve. Recipe 26 finds no `dependsOn` cycle, and `check.py` fails on any set it returns. That closes the gap of 2026-10-03, when a script outside the gates found nine Specs in loops.
+
+### The passes as readers of the page
+
+The domain pass (Opus 5.5) and the operator pass (`gpt-6-astra`) read `design/pages/history-view.md` first, with five tasks each: find the history contract and where each part is pinned; locate OD-157 and its question; say which members depended on the aggregate form and what still does after OD-162; find one declaration's type comparison; say whether a paused-rebuild example has native-backend evidence.
+
+The domain pass did the second, fourth and fifth in full and the other two in part. The page gave the history contract's declarations with their lines, and the Contract bullets on order independence and the version rule were only in the linked Spec. OD-162 and its ruling were not on the page. It also asked which command declarations bind the history view.
+
+The operator pass did all five in full, the third through the linked register, because the page gave no OD-162. It also needed the pinned module the type test imports, `generated/pinned/history-view.ts`, which the page did not link, and the restore's comparison contract behind a link outside the Pack.
+
+The page now links the pinned module, shows each open question's address, and has a section of the 22 register rows whose sources lie in the members, each with its status: 20 decided, each with the first sentence of its ruling, and 2 not decided, OD-147 and OD-171, whose sources cite no question. OD-162 is among the decided rows: its only source was an owner-queue item in `design/STATE.md`, and the register now also cites the three member lines its ruling changed. Member Contract text stays in the Spec files the page links. What the passes asked for and the page still lacks:
+
+- OD-163, whose one source is an owner-queue item and no Spec line.
+- OD-166, whose question is on `spec:application.restore`, a Spec outside the Pack.
+- The command declarations that bind a history view. `spec:application.orders-inventory-example` states them in the prose of three model terms, `PlaceOrder`, `ReceiveStock` and the `CancelOrder` declaration, and no declaration in the code binds the view yet. The page reads no prose, so it shows nothing for them. The gap is this corpus's: a keyed Design entry pinning each binding would reach the page through recipe 24.
+
+### What the adoption deleted
+
+From `scripts/pack-page.mjs`: `authoredMembers` (15 lines, the Pack file's front matter read by hand), `floorTable` (11 lines, the walk of the exported `readinessFloors` over `buildGraphIndex`), the `nextRung` that walked that table (10 lines), the `belowDefined` recomputation of the typed-dependency targets (5 lines), the 11 lines of `readGraph` that compared the Pack file with the graph, and the join of a question to a register row by its folded opening text. The imports of `buildGraphIndex` and `readinessFloors` went with them. In their place are `packMembers` (9 lines, which refuses a repeated or unresolved member) and a `nextRung` of 15 lines that reads `nextRungFailures` and compares the floor with the stated rung. The script still grew, from 1,114 to 1,185 lines, with the register section and the checks of the register's new source shapes.
+
+From `design/tools/check.py`: the address grammar, the two lines of its graph query that listed every Spec's Design and UI keys, and the 9-line lookup against them. `address_failures` reads recipe 25's rows in their place, and `cycle_failures` reads recipe 26's sets. Finding the addresses in files and naming each one's file and line stay this corpus's. Two tests in `design/tools/test_decisions.py` derive a sample corpus and show a broken address and a planted cycle failing.
+
+### What still needs the Protocol
+
+- **An entry's line.** The page still reads each member's carrier to find the line of every Design entry and open question, because the graph records the line of a binding and not of an entry. Any page that links an address to its line needs it.
+- **A recipe's parameter as data.** Recipe 25 takes its addresses on its opening `const` line. `design/tools/decisions.py` rewrites that line with a regular expression and passes 489 addresses, 28,788 characters of JSON, on the command line. Recipe 4 takes its files as JSON in `SDP_CHANGED_FILES_JSON`. The same for recipe 25 would let an adopter run the body as shipped.
+- **An anchor that lives in a test.** Unchanged since the first page: `design/tools/anchor-sites.json` is still the adopter's join, and `byFile` on `src/read-model/rebuild.ts` still returns no Spec.
+
+### Annotating every design pattern in code, an open question
+
+The owner on the first generation of this tooling: "I loved how annotations for architecturally significant patterns and relationships worked in gen 1." And: "AI agents were constantly against my approach. But that is the strongest value. It was misunderstood that the issue was typescript + gherking -> dual extraction. That was not the issue." And on the claim map of the Studio slice: "You would not be looking for shapes in the codebase that resemble the original desing. All of those from the docs would be annottated, all are significant."
+
+Two of the Protocol's decision records rule on this. `spec:decisions.architectural-significance-rides-primitives` rules that architectural significance is authored on the existing Spec kinds, relations and anchors, with no pattern kind or vocabulary, so an anchor satisfies only a realized Spec. `spec:decisions.jsdoc-graph-extraction-refused` rules that source commentary never authors graph content and that the anchor constant is the only path from code into the graph. The owner contests both records' account of gen 1. The rulings stand for this round. The Studio slice's claim map, 81 rows that an Opus agent found by reading the code for shapes that resemble each claim of the original design, is the manual work that annotating every design pattern in the code would turn into a projection, and it is the evidence for the later decision. This corpus shows the same question at a smaller scale: the declarations that bind a history view are a relationship the design states in prose and the code will realize, and a page can show a relationship only when the graph holds it.
+
 ## 2026-10-04, a page per capability Pack, built by the adopter
 
 The unit `pack-page` built round 1 of `sdp-feedback-03-selection.md` beside this file. `scripts/pack-page.mjs` reads the graph in memory, through the package's exported `extract` and `createReader`. It writes `design/pages/history-view.md`, one committed page for `pack:history-view`: the members in authored order, each with its rung, floor, next rung and the clause that blocks it, its anchors and verifiers, its pinned pairs, the dependencies outside the Pack, and the open questions joined to the register. `check.py` fails when the page is behind the tree. Five things the page needed are not in the Protocol, and the page works around each:

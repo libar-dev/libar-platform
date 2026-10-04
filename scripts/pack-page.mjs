@@ -4,12 +4,13 @@
 // that differs. It reads the graph in memory through the Protocol package's exported extractor and
 // reader, never through validate, view, census or build, and runs recipes 20 and 24 as the pinned
 // Protocol ships them in recipes.md. Three inputs join it: the pinned pairs
-// (tests/types/pinned-pairs.json), the anchor sites (design/tools/anchor-sites.json) and the question
-// sources of the decision register (design/decisions/register.json); a missing input is an error
-// that names its path. The members come in the order the Pack file writes them: the reader sorts
-// them, so the order is read from the file. The next rung's blocker is the first clause of the Protocol's floor table, cumulative
-// up to the rung above the stated one, that fails: the Protocol's evaluator answers only for the
-// stated rung, so the page walks the exported table with the same predicates.
+// (tests/types/pinned-pairs.json), the anchor sites (design/tools/anchor-sites.json) and the rows of
+// the decision register (design/decisions/register.json); a missing input is an error that names
+// its path. The members come in the order the reader's Pack context gives them, which is the order
+// the Pack file writes them. The next rung is the rung above the stated one: the reader's
+// `nextRungFailures` are the unmet clauses of the rung above the floor, so when the floor sits above
+// the stated rung nothing blocks the next rung, and otherwise its first unmet clause is the first of
+// them, with the targets that break a typed-dependency clause.
 // Exit 0: written, or the page is current. 1: --check found the page behind the tree. 2: it cannot
 // generate.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -19,10 +20,8 @@ import { parseArgs } from "node:util";
 import {
   SPEC_KINDS,
   SPEC_READINESS,
-  buildGraphIndex,
   createReader,
   extract,
-  readinessFloors,
 } from "@libar-dev/software-delivery-protocol";
 import { format, resolveConfig } from "prettier";
 
@@ -36,6 +35,10 @@ const inputs = {
 // The relations a Spec rests on, as recipe 21 and the floor's typed-dependency clause read them.
 const typedRelations = ["refines", "dependsOn", "constrainedBy", "decidedBy"];
 const typedClause = "typed-dependency-targets-are-defined";
+const blockingClause = "no-blocking-open-questions";
+// The module scripts/pinned.mjs emits for a Pack, by default named after the Pack's id.
+const pinnedModule = (pack) =>
+  `generated/pinned/${pack.replace(/^pack:/, "")}.ts`;
 
 export class PageError extends Error {}
 function cannot(reason) {
@@ -103,86 +106,130 @@ export function readAnchorSites(base) {
   return sites;
 }
 
-// The question sources: every register row that names a Spec question, with the fields the page shows.
-export function readQuestionSources(base) {
+// The register: every row with the fields the page shows and its sources as the register writes
+// them. An open question source cites its question by address; a closed one keeps its Spec and the
+// question's opening text, as design/advisors/register.md rules.
+export function readRegister(base) {
   const path = inputs.register;
   const data = readJson(base, path);
   if (!Array.isArray(data?.decisions))
     cannot(`${path} has no list of decisions`);
-  const rows = [];
-  for (const decision of data.decisions)
-    for (const source of decision.sources ?? []) {
-      if (source?.kind !== "specQuestion") continue;
-      if (![source.spec, source.question, source.file].every(isText))
-        cannot(
-          `${path} ${decision.id}: a specQuestion source needs spec, question and file`,
-        );
-      rows.push({
-        id: decision.id,
-        class: decision.class ?? null,
-        status: decision.status ?? null,
-        advisor: decision.advisor ?? null,
-        blocks: decision.blocks ?? null,
-        spec: source.spec,
-        question: source.question,
-      });
+  return data.decisions.map((decision, at) => {
+    if (!isText(decision?.id)) cannot(`${path} decisions[${at}] has no id`);
+    const where = `${path} ${decision.id}`;
+    if (!Array.isArray(decision.sources))
+      cannot(`${where} has no list of sources`);
+    for (const source of decision.sources) {
+      if (!isText(source?.kind) || !isText(source.file))
+        cannot(`${where}: a source needs a kind and a file`);
+      if (source.kind !== "specQuestion") continue;
+      if (source.open === false) {
+        if (![source.spec, source.question].every(isText))
+          cannot(
+            `${where}: a closed specQuestion source needs spec, question and file`,
+          );
+      } else if (!isText(source.address))
+        cannot(`${where}: an open specQuestion source needs address and file`);
     }
-  return rows;
+    return {
+      id: decision.id,
+      title: decision.title ?? null,
+      class: decision.class ?? null,
+      status: decision.status ?? null,
+      advisor: decision.advisor ?? null,
+      blocks: decision.blocks ?? null,
+      decidedBy: decision.decidedBy ?? null,
+      decidedOn: decision.decidedOn ?? null,
+      ruling: decision.ruling ?? null,
+      sources: decision.sources,
+    };
+  });
+}
+
+// One entry for each open question source: the row it belongs to and the address it cites.
+export function questionSources(rows) {
+  return rows.flatMap((row) =>
+    row.sources
+      .filter(
+        (source) => source.kind === "specQuestion" && source.open !== false,
+      )
+      .map((source) => ({ ...row, address: source.address })),
+  );
 }
 
 // ---------------------------------------------------------------------------------------------
 // The pure parts.
 
-// The members of a Pack in the order its file writes them: the `specs` list of its front matter.
-export function authoredMembers(packText) {
-  const front = /^---\n([\s\S]*?)\n---\n/.exec(packText);
-  if (front === null) cannot("the Pack file has no front matter");
-  const members = [];
-  let inSpecs = false;
-  for (const line of front[1].split("\n")) {
-    if (/^\S/.test(line)) inSpecs = /^specs:\s*$/.test(line);
-    else if (inSpecs) {
-      const item = /^\s+-\s+(\S+)\s*$/.exec(line);
-      if (item !== null) members.push(item[1]);
-    }
-  }
-  if (members.length === 0) cannot("the Pack file lists no specs");
+// The members of a Pack in the order the reader's Pack context gives them, each once.
+export function packMembers(context) {
+  const members = context.members.map((member) => member.id);
+  if (members.length === 0) cannot(`${context.id} lists no specs`);
+  const repeated = members.find((id, at) => members.indexOf(id) !== at);
+  if (repeated !== undefined) cannot(`${context.id} lists ${repeated} twice`);
+  const unresolved = context.members.find((member) => !member.resolved);
+  if (unresolved !== undefined) cannot(`${unresolved.id} is not in the graph`);
   return members;
 }
 
-// The rung above the stated one and the clauses that fail at it, the floors being cumulative: every
-// clause of that rung and of each rung below it, in table order. `floors` is the floor table with
-// each clause's verdict, lowest rung first.
-export function nextRung(stated, floors) {
-  const at = floors.findIndex((floor) => floor.rung === stated);
-  if (at === -1) cannot(`the floor table has no rung ${stated}`);
-  const next = floors[at + 1];
-  if (next === undefined) return { rung: null, failing: [] };
-  const failing = floors
-    .slice(0, at + 2)
-    .flatMap((floor) => floor.clauses.filter((clause) => !clause.holds));
-  return { rung: next.rung, failing };
+// The rung above the stated one and the clauses that fail at it, from a Spec context of the reader.
+// `nextRungFailures` are the unmet clauses of the rung above the floor, cumulative in table order.
+// When the floor sits above the stated rung, the next rung holds; otherwise the rung above the floor
+// is at or below the next rung, so its first unmet clause is the first that fails at the next rung.
+// A kind the Protocol does not ratify has no floor, and null says the next rung is not evaluated.
+export function nextRung(context) {
+  if (!SPEC_KINDS.includes(context.specKind)) return null;
+  const stated = SPEC_READINESS.indexOf(context.statedReadiness);
+  const rung = SPEC_READINESS[stated + 1] ?? null;
+  if (rung === null) return { rung, below: false, failing: [] };
+  const floor =
+    context.derivedReadiness === undefined
+      ? -1
+      : SPEC_READINESS.indexOf(context.derivedReadiness);
+  return {
+    rung,
+    below: floor < stated,
+    failing: floor > stated ? [] : context.nextRungFailures,
+  };
 }
 
-// A question's text without its flag and with its spaces folded, so that a source's opening text
-// joins it however the two were wrapped.
-const flagged = /^\[(?:non-)?blocking\]\s*/;
-const folded = (text) => text.replace(flagged, "").replace(/\s+/g, " ").trim();
+// The address of an open question, or null when its marker carries no key.
+export const questionAddress = (spec, question) =>
+  question.key === null || question.key === undefined
+    ? null
+    : `${spec}#question.${question.key}`;
 
-// The register rows of one Spec joined to its open questions by text: a row joins each question its
-// `question` opens. `left` holds the rows of the Spec that join none.
+// The register rows of one Spec joined to its open questions by address: a row joins the question
+// its source cites. `left` holds the rows whose address names the Spec and none of its questions.
 export function joinQuestions(spec, questions, rows) {
-  const own = rows.filter((row) => row.spec === spec);
-  const joined = questions.map((question) => ({
-    ...question,
-    rows: own.filter((row) =>
-      folded(question.question).startsWith(folded(row.question)),
-    ),
-  }));
+  const own = rows.filter((row) => row.address.startsWith(`${spec}#`));
+  const joined = questions.map((question) => {
+    const address = questionAddress(spec, question);
+    return {
+      ...question,
+      address,
+      rows:
+        address === null ? [] : own.filter((row) => row.address === address),
+    };
+  });
   const left = own.filter(
     (row) => !joined.some((question) => question.rows.includes(row)),
   );
   return { questions: joined, left };
+}
+
+// The register rows whose sources lie in a member's file, beside what the open questions show: every
+// decided row, and every other row none of whose sources is an open question. `files` is keyed by
+// the members' files; each row keeps only its sources in a member, in the register's order.
+export function memberRows(rows, files) {
+  return rows.flatMap((row) => {
+    const inside = row.sources.filter((source) => files.has(source.file));
+    if (inside.length === 0) return [];
+    const asks = row.sources.some(
+      (source) => source.kind === "specQuestion" && source.open !== false,
+    );
+    if (row.status !== "decided" && asks) return [];
+    return [{ ...row, sources: inside }];
+  });
 }
 
 // Prettier formats a declaration where it parses as TypeScript, as written or as the form its key
@@ -274,7 +321,7 @@ export function specLines(text) {
       if (key !== null) design.set(key[1], at + 1);
     } else if (
       section === "Open questions" &&
-      /^- \[(?:non-)?blocking\] /.test(line)
+      /^- \[(?:non-)?blocking(?: #[a-z][A-Za-z0-9]*)?\] /.test(line)
     )
       questions.push(at + 1);
   });
@@ -382,20 +429,8 @@ function recipe(number) {
   return fence[1];
 }
 
-function floorTable(node, index) {
-  if (!SPEC_KINDS.includes(node.specKind)) return null;
-  return SPEC_READINESS.map((rung) => ({
-    rung,
-    clauses: readinessFloors[rung].clauses.map((clause) => ({
-      id: clause.id,
-      description: clause.description,
-      holds: clause.predicate(node, index),
-    })),
-  }));
-}
-
-async function readGraph(pack) {
-  const extracted = extract({ root });
+async function readGraph(pack, base) {
+  const extracted = extract({ root: base });
   const error = extracted.report.findings.find(
     (finding) => finding.severity === "error",
   );
@@ -406,24 +441,11 @@ async function readGraph(pack) {
   const summary =
     reader.packs().find((candidate) => candidate.id === pack) ??
     cannot(`the graph has no ${pack}`);
-  const context = reader.packContext(pack);
-  const members = authoredMembers(
-    readFileSync(join(root, summary.file), "utf8"),
-  );
-  const listed = context.members.map((member) => member.id);
-  if (
-    members.length !== listed.length ||
-    !members.every((id) => listed.includes(id))
-  )
-    cannot(`${summary.file} and the graph list different members`);
-  const unresolved = context.members.find((member) => !member.resolved);
-  if (unresolved !== undefined) cannot(`${unresolved.id} is not in the graph`);
   return {
     graph,
     reader,
-    index: buildGraphIndex(graph),
     summary,
-    members,
+    members: packMembers(reader.packContext(pack)),
     questions: await new AsyncFunction("g", "graph", "report", recipe(20))(
       reader,
       graph,
@@ -437,24 +459,29 @@ async function readGraph(pack) {
   };
 }
 
-export async function generate(pack, out) {
-  const pin = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+// `base` is the repository the page describes: its graph, its inputs and its links. The recipes
+// come from the Protocol this script's repository pins.
+export async function generate(pack, out, base = root) {
+  const pin = JSON.parse(readFileSync(join(base, "package.json"), "utf8"));
   const enginePin =
     pin.devDependencies?.[engine] ??
     pin.dependencies?.[engine] ??
     cannot(`package.json does not depend on ${engine}`);
-  const { reader, index, summary, members, questions, declarations } =
-    await readGraph(pack);
+  const { reader, summary, members, questions, declarations } = await readGraph(
+    pack,
+    base,
+  );
   const chained = indexTables(declarations.rows);
-  const pairs = readPinnedPairs(root, pack);
-  const sites = readAnchorSites(root);
-  const sources = readQuestionSources(root);
+  const pairs = readPinnedPairs(base, pack);
+  const sites = readAnchorSites(base);
+  const register = readRegister(base);
+  const sources = questionSources(register);
   const prettierOptions =
-    (await resolveConfig(join(root, "package.json"))) ?? {};
+    (await resolveConfig(join(base, "package.json"))) ?? {};
 
   const pageDirectory = dirname(out);
   const link = (path, line) => {
-    const target = relative(pageDirectory, join(root, path))
+    const target = relative(pageDirectory, join(base, path))
       .split(sep)
       .join("/");
     if (line === undefined || line === null) return target;
@@ -473,18 +500,10 @@ export async function generate(pack, out) {
   const model = await Promise.all(
     members.map(async (id, at) => {
       const context = reader.specContext(id);
-      const node = index.primitivesById.get(id);
-      const floors = floorTable(node, index);
-      const next =
-        floors === null ? null : nextRung(context.statedReadiness, floors);
-      const lines = specLines(readFileSync(join(root, context.file), "utf8"));
+      const next = nextRung(context);
+      const lines = specLines(readFileSync(join(base, context.file), "utf8"));
       const typed = context.relationsOut.filter((relation) =>
         typedRelations.includes(relation.type),
-      );
-      const belowDefined = typed.filter(
-        (relation) =>
-          !relation.resolved ||
-          rank(specs.get(relation.otherId)?.statedReadiness) < rank("defined"),
       );
       const own = (
         questions.specs.find((row) => row.id === id)?.questions ?? []
@@ -527,10 +546,8 @@ export async function generate(pack, out) {
         next,
         typed,
         blockers:
-          next !== null &&
-          next.failing.some((clause) => clause.id === typedClause)
-            ? belowDefined
-            : [],
+          next?.failing.find((clause) => clause.clauseId === typedClause)
+            ?.targets ?? [],
         entries,
         otherEntries: [...lines.design]
           .filter(([key]) => !declared.has(key))
@@ -550,7 +567,7 @@ export async function generate(pack, out) {
     if (member.next.rung === null) return "none above ready";
     if (member.next.failing.length === 0)
       return `${member.next.rung}, which its floor holds`;
-    return `${member.next.rung}, held by ${span(member.next.failing[0].id)}`;
+    return `${member.next.rung}, held by ${span(member.next.failing[0].clauseId)}`;
   };
   const pairCounts = (member) => {
     const count = (state) =>
@@ -610,19 +627,21 @@ export async function generate(pack, out) {
     "",
   );
   if (summary.framing !== undefined) write(summary.framing, "", "");
+  const pinned = pinnedModule(pack);
   write(
     `This page is generated from the Specs of ${span(pack)} by ${span("scripts/pack-page.mjs")}, with three inputs: the pinned pairs in [${span(inputs.pairs)}](${link(inputs.pairs)}), the anchor sites in [${span(inputs.sites)}](${link(inputs.sites)}) and the register rows in [${span(inputs.register)}](${link(inputs.register)}). Do not edit it by hand. Change a Spec or an input, then run ${span("npm run pages")}; ${span("npm run pages -- --check")} fails while the page is behind the tree. The Protocol is pinned at ${span(`${engine}@${enginePin}`)}.${summary.modelRefs.length > 0 ? ` The members speak the vocabulary of ${list(summary.modelRefs.map(specLink))}.` : ""}`,
     "",
     "## How to read it",
     "",
-    "Start with the members and with what holds a member below its next rung: together they say where the design stands and what keeps it there. Then come the Specs outside the Pack that the members rest on, the open questions with their register rows, and each member in full with its code, its examples and verifiers, and its pinned declarations. Long lists are folded; open them where you need them.",
+    "Start with the members and with what holds a member below its next rung: together they say where the design stands and what keeps it there. Then come the Specs outside the Pack that the members rest on, the open questions with their register rows, the register rows whose sources lie in the members with their status and rulings, and each member in full with its code, its examples and verifiers, and its pinned declarations. Long lists are folded; open them where you need them.",
     "",
     "- The stated rung is the readiness a Spec's author states: idea, scoped, defined or ready.",
     "- A register row blocks the first unit of work that needs its decision, a build slice such as S5 named in `design/STATE.md`. That is apart from a question marked blocking, which holds its Spec at scoped, and apart from the floor.",
     "- The floor is the highest rung whose clauses all hold in the graph. It can sit above the stated rung.",
     "- The next rung is the one above the stated rung, with the first floor clause that fails at it. A rung whose clauses all hold still waits for its author to state it.",
+    "- An open question is cited by its address, the Spec's id, `#question.` and the key its marker carries.",
     "- An implementation anchor binds code to a Spec. Its site is the file it is written in; a site under `tests/` stands for the source files listed with it.",
-    "- A pair is a pinned declaration and the code a type test compares it with: bound when the two are equal, ahead when the design leads the code, not compared when the test compares nothing.",
+    `- A pair is a pinned declaration and the code a type test compares it with: bound when the two are equal, ahead when the design leads the code, not compared when the test compares nothing. The test imports every pinned declaration of the Pack from [${span(pinned)}](${link(pinned)}), which ${span("npm run sdp:build")} emits and git does not keep.`,
     "",
   );
 
@@ -674,22 +693,23 @@ export async function generate(pack, out) {
   if (held.length === 0) write("No member is held below its next rung.", "");
   for (const member of held) {
     const [first, ...rest] = member.next.failing;
+    const floor = member.context.derivedReadiness;
     write(
-      `- ${memberLink(member.id)} states ${member.context.statedReadiness} and cannot reach ${member.next.rung}. The first clause that fails is ${span(first.id)}, which the Protocol states as "${first.description}"${rest.length > 0 ? ` After it, ${list(rest.map((clause) => span(clause.id)))} fail too.` : ""}`,
+      `- ${memberLink(member.id)} states ${member.context.statedReadiness} and cannot reach ${member.next.rung}.${member.next.below ? ` Its floor, ${floor ?? "none"}, is below its stated rung.` : ""} The first clause that fails is ${span(first.clauseId)}, which the Protocol states as "${first.description}"${rest.length > 0 ? ` After it, ${list(rest.map((clause) => span(clause.clauseId)))} ${rest.length === 1 ? "fails" : "fail"} too.` : ""}`,
     );
     if (member.blockers.length > 0)
       write(
-        `  It rests on ${list(member.blockers.map((relation) => `${specLink(relation.otherId)} by ${relation.type}, which ${relation.resolved ? `states ${specs.get(relation.otherId)?.statedReadiness}` : "is not in the graph"}`))}.`,
+        `  It rests on ${list(member.blockers.map((target) => `${specLink(target.id)} by ${target.type}, which ${target.statedReadiness === undefined ? "is not a Spec" : `states ${target.statedReadiness}`}`))}.`,
       );
     const blocking = member.questions.filter((question) => question.blocking);
     if (
       member.next.failing.some(
-        (clause) => clause.id === "no-blocking-open-questions",
+        (clause) => clause.clauseId === blockingClause,
       ) &&
       blocking.length > 0
     )
       write(
-        `  Its blocking ${blocking.length === 1 ? "question is" : "questions are"} ${list(blocking.map((question) => `question ${question.position}`))}, under its open questions below.`,
+        `  Its blocking ${blocking.length === 1 ? "question is" : "questions are"} ${list(blocking.map((question) => (question.address === null ? `question ${question.position}` : span(question.address))))}, under its open questions below.`,
       );
   }
   if (held.length > 0) write("");
@@ -717,7 +737,8 @@ export async function generate(pack, out) {
       };
       target.from.push(`${span(member.id)} ${relation.type}`);
       if (
-        member.blockers.some((blocker) => blocker.otherId === relation.otherId)
+        member.blockers.some((blocker) => blocker.id === relation.otherId) &&
+        !target.blocks.includes(member)
       )
         target.blocks.push(member);
       outside.set(relation.otherId, target);
@@ -844,7 +865,7 @@ export async function generate(pack, out) {
   write(
     "## Open questions",
     "",
-    `${plural(allQuestions.length, "open question")} on ${plural(model.filter((member) => member.questions.length > 0).length, "member")}, ${blockingCount(allQuestions)}. ${allQuestions.length - unjoined.length} join a register row by their opening text; ${unjoined.length} join none. A row gives its OD id, its class, its status, the advisor whose lens it falls under and what it blocks. Each question shows its opening, at most its first sentence, and links to its line in the Spec for the rest.`,
+    `${plural(allQuestions.length, "open question")} on ${plural(model.filter((member) => member.questions.length > 0).length, "member")}, ${blockingCount(allQuestions)}. ${allQuestions.length - unjoined.length} join a register row by their address; ${unjoined.length} join none. A row gives its OD id, its class, its status, the advisor whose lens it falls under and what it blocks. Each question shows its address, which ends in its key, and its opening, at most its first sentence, and links to its line in the Spec for the rest.`,
     "",
   );
   const rowText = (row) =>
@@ -853,10 +874,14 @@ export async function generate(pack, out) {
     if (member.questions.length === 0 && member.leftRows.length === 0) continue;
     write(`**${memberLink(member.id)}**, ${span(member.id)}`, "");
     for (const question of member.questions) {
+      const name =
+        question.address === null
+          ? `question ${question.position}, which carries no key`
+          : span(question.address);
       const where =
         question.line === null
-          ? `question ${question.position}`
-          : `[question ${question.position}](${link(member.context.file, question.line)})`;
+          ? name
+          : `[${name}](${link(member.context.file, question.line)})`;
       const rows =
         question.rows.length === 0
           ? "No register row"
@@ -867,10 +892,54 @@ export async function generate(pack, out) {
     }
     for (const row of member.leftRows)
       write(
-        `- ${rowText(row)}. Its source names a question this Spec no longer holds: ${opening(row.question)}`,
+        `- ${rowText(row)}. Its source cites ${span(row.address)}, which names none of this Spec's open questions.`,
       );
     write("");
   }
+
+  // The register rows whose sources lie in the members, beside those the open questions show.
+  const memberFiles = new Map(
+    model.map((member) => [member.context.file, member]),
+  );
+  const onMembers = memberRows(register, memberFiles);
+  const decided = onMembers.filter((row) => row.status === "decided");
+  const questionLines = new Map(
+    model.flatMap((member) =>
+      member.questions
+        .filter((question) => question.address !== null)
+        .map((question) => [
+          question.address,
+          { file: member.context.file, line: question.line },
+        ]),
+    ),
+  );
+  const sourceText = (source) => {
+    const member = memberFiles.get(source.file);
+    const on = `on ${memberLink(member.id)}`;
+    if (source.kind === "specQuestion" && source.open === false)
+      return `a question ${on} that the Spec no longer holds`;
+    if (source.kind === "specQuestion") {
+      const at = questionLines.get(source.address);
+      return `${at === undefined || at.line === null ? span(source.address) : `[${span(source.address)}](${link(at.file, at.line)})`} ${on}`;
+    }
+    const name = span(source.ref ?? source.kind);
+    return `${source.line === undefined ? `[${name}](${link(source.file)})` : `[${name}](${link(source.file, source.line)})`} ${on}`;
+  };
+  write(
+    "## Register rows whose sources lie in the members",
+    "",
+    `${plural(onMembers.length, "register row")} ${onMembers.length === 1 ? "has" : "have"} a source in a member's file: every decided row, and every row not decided whose sources cite no open question; a row not decided that cites one is under the open questions above. ${decided.length} ${decided.length === 1 ? "is" : "are"} decided and ${onMembers.length - decided.length} ${onMembers.length - decided.length === 1 ? "is" : "are"} not. Each row gives its status and its sources in the members; a decided row gives the first sentence of its ruling, and a row not decided gives its title. A source other than a question links to the line where it stood when the row was loaded. ${span("python3 design/tools/decisions.py --id <id>")} prints a row in full.`,
+    "",
+  );
+  for (const row of onMembers)
+    write(
+      `- ${rowText(row)}, from ${list(row.sources.map(sourceText))}. ${
+        row.status === "decided"
+          ? `Decided by ${row.decidedBy ?? "no one named"} on ${row.decidedOn ?? "no date"}. Ruling: ${opening(row.ruling ?? "none recorded.")}`
+          : `No ruling. Its title: ${opening(row.title ?? "none.")}`
+      }`,
+    );
+  if (onMembers.length > 0) write("");
 
   // Each member.
   write("## Each member", "");
@@ -1030,7 +1099,7 @@ export async function generate(pack, out) {
     const spec = specs.get(id);
     if (spec === undefined) return span(address);
     const line = specLines(
-      readFileSync(join(root, spec.file), "utf8"),
+      readFileSync(join(base, spec.file), "utf8"),
     ).design.get(key);
     return line === undefined
       ? `[${span(address)}](${link(spec.file)})`

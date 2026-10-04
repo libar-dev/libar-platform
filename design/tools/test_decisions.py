@@ -1,4 +1,5 @@
-"""Decision queries, patch refusals and the real register's question sources.
+"""Decision queries, patch refusals, the real register's question sources, and the two checks
+check.py runs through the Protocol's recipes: entry addresses outside the Specs and dependsOn cycles.
 
 Run: python3 -m unittest design/tools/test_decisions.py
 Fixtures and mutation copies live in operating-system temporary directories.
@@ -14,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -23,6 +25,7 @@ TOOL_PATH = Path(os.environ.get("DECISIONS_TOOL_UNDER_TEST", ROOT / "design/tool
 SPEC = importlib.util.spec_from_file_location("decisions_under_test", TOOL_PATH)
 tool = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tool)
+CHECK_PATH = Path(os.environ.get("CHECK_TOOL_UNDER_TEST", ROOT / "design/tools/check.py"))
 
 
 def lean():
@@ -459,6 +462,86 @@ class RealRegisterTests(unittest.TestCase):
             with self.subTest(row=decision["id"]):
                 self.assertEqual(tool.row_errors(decision, register["units"], ROOT, set(ids)), [])
                 self.assertEqual(tool.question_source_errors(decision, questions, files, resolutions), [])
+
+
+def sample_spec(name, relations="{}"):
+    """A rule Spec of a sample corpus, with one Design entry and one keyed open question."""
+    return f"""---
+id: spec:sample.{name}
+kind: rule
+altitude: story
+readiness: scoped
+relations: {relations}
+---
+# Sample {name}
+
+## Intent
+- outcome: Keep {name}.
+
+### Open questions
+- [non-blocking #keepIt] Keep {name} as it is. Another sentence.
+
+## Rule
+- Keep {name}.
+
+## Design
+- typeOne: `type One = string`
+
+## Verification — reviewed
+- Review {name}.
+"""
+
+
+class CheckTests(unittest.TestCase):
+    """check.py's address and cycle checks over a sample corpus, through the shipped recipes 25 and 26."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, str(ROOT / "design/tools"))
+        spec = importlib.util.spec_from_file_location("check_under_test", CHECK_PATH)
+        cls.check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.check)
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def put(self, path, text):
+        (self.root / path).parent.mkdir(parents=True, exist_ok=True)
+        (self.root / path).write_text(text)
+
+    def test_a_broken_address_fails_where_it_is_written(self):
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
+        self.put("src/cites.ts", "\n".join([
+            "// spec:sample.one#design.typeOne resolves.",
+            "// spec:sample.one#question.keepIt resolves.",
+            "// spec:sample.one#design.typeTwo names no entry.",
+            "// spec:sample.none#design.typeOne names no Spec.",
+            "// spec:sample.one#design.Type-one is malformed.",
+            "// spec:sample.one#3 is a positional citation, kept as written.",
+        ]) + "\n")
+        found = self.check.address_tokens([self.root / "src/cites.ts"], self.root)
+        self.assertEqual([where for _, where in found], [f"src/cites.ts:{n}" for n in range(1, 6)])
+        rows = tool.graph_recipe(25, self.root, [token for token, _ in found])["rows"]
+        self.assertEqual(self.check.address_failures(found, rows), [
+            "entry address spec:sample.one#design.typeTwo at src/cites.ts:3 names no entry of its Spec",
+            "entry address spec:sample.none#design.typeOne at src/cites.ts:4 names no Spec",
+            "entry address spec:sample.one#design.Type-one at src/cites.ts:5 is outside the address grammar",
+        ])
+        self.assertEqual(self.check.address_failures(found, rows[:-1]),
+                         ["the address recipe answered 4 rows for 5 entry addresses"])
+
+    def test_a_planted_cycle_fails_and_a_chain_passes(self):
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one", "\n  dependsOn: spec:sample.two"))
+        self.put("design/specs/sample/two.sdp.md", sample_spec("two", "\n  dependsOn: spec:sample.three"))
+        self.put("design/specs/sample/three.sdp.md", sample_spec("three"))
+        self.assertEqual(self.check.cycle_failures(tool.graph_recipe(26, self.root)), [])
+        self.put("design/specs/sample/three.sdp.md", sample_spec("three", "\n  dependsOn: spec:sample.one"))
+        self.assertEqual(self.check.cycle_failures(tool.graph_recipe(26, self.root)), [
+            "dependsOn cycle among spec:sample.one, spec:sample.three, spec:sample.two: "
+            "spec:sample.one -> spec:sample.two -> spec:sample.three -> spec:sample.one",
+        ])
 
 
 if __name__ == "__main__":

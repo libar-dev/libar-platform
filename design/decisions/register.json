@@ -6432,6 +6432,24 @@
           "ref": "O1",
           "file": "design/STATE.md",
           "line": 331
+        },
+        {
+          "kind": "specLine",
+          "ref": "application.generation-registry#outcome",
+          "file": "design/specs/application/generation-registry.sdp.md",
+          "line": 29
+        },
+        {
+          "kind": "specLine",
+          "ref": "command.command-declaration#typeReadModelBinding",
+          "file": "design/specs/command/command-declaration.sdp.md",
+          "line": 70
+        },
+        {
+          "kind": "specLine",
+          "ref": "command.command-pipeline#readModelWrites",
+          "file": "design/specs/command/command-pipeline.sdp.md",
+          "line": 126
         }
       ],
       "families": [
