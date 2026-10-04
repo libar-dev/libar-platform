@@ -68,7 +68,8 @@ type Progress = {
   updatedAt: number;
 };
 
-// rebuild.sdp.md fnStartGeneration:115; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnStartGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example startGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.startGeneration>
@@ -114,7 +115,8 @@ test("compiled: example startGeneration arguments, visibility and return", () =>
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnInterruptGeneration:130; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnInterruptGeneration; generation-registry.sdp.md
+// tableGenerations, tableGenerationProgress.
 test("compiled: example interruptGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.interruptGeneration>
@@ -144,7 +146,8 @@ test("compiled: example interruptGeneration arguments, visibility and return", (
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnResumeGeneration:132; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnResumeGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example resumeGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.resumeGeneration>
@@ -178,7 +181,8 @@ test("compiled: example resumeGeneration arguments, visibility and return", () =
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnSwitchGeneration:133; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnSwitchGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example switchGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.switchGeneration>
@@ -221,7 +225,8 @@ test("compiled: example switchGeneration arguments, visibility and return", () =
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnRollbackGeneration:134; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnRollbackGeneration; generation-registry.sdp.md
+// tableGenerations, tableGenerationProgress.
 test("compiled: example rollbackGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.rollbackGeneration>
@@ -254,7 +259,8 @@ test("compiled: example rollbackGeneration arguments, visibility and return", ()
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnAbortGeneration:135; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnAbortGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example abortGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.abortGeneration>
@@ -292,7 +298,8 @@ test("compiled: example abortGeneration arguments, visibility and return", () =>
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnPurgeGeneration:136; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnPurgeGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example purgeGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.purgeGeneration>
@@ -326,7 +333,8 @@ test("compiled: example purgeGeneration arguments, visibility and return", () =>
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnBackfillBatch:117; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnBackfillBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example backfillBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.backfillBatch>
@@ -358,7 +366,8 @@ test("compiled: example backfillBatch arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnVerifyBatch:118; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnVerifyBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example verifyBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.verifyBatch>
@@ -384,7 +393,8 @@ test("compiled: example verifyBatch arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnPurgeBatch:119; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnPurgeBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example purgeBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.purgeBatch>
@@ -414,7 +424,8 @@ test("compiled: example purgeBatch arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnFillTenants:139; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnFillTenants; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example fillTenants arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.fillTenants>
@@ -435,7 +446,8 @@ test("compiled: example fillTenants arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnFillTenantsBatch:140; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnFillTenantsBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example fillTenantsBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.fillTenantsBatch>
@@ -460,7 +472,8 @@ test("compiled: example fillTenantsBatch arguments, visibility and return", () =
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnGetGenerations:137; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnGetGenerations; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: example getGenerations arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof example.rebuild.getGenerations>
@@ -491,7 +504,8 @@ test("compiled: example getGenerations arguments, visibility and return", () => 
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnStartGeneration:115; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnStartGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture startGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.startGeneration>
@@ -537,7 +551,8 @@ test("compiled: fixture startGeneration arguments, visibility and return", () =>
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnInterruptGeneration:130; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnInterruptGeneration; generation-registry.sdp.md
+// tableGenerations, tableGenerationProgress.
 test("compiled: fixture interruptGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.interruptGeneration>
@@ -567,7 +582,8 @@ test("compiled: fixture interruptGeneration arguments, visibility and return", (
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnResumeGeneration:132; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnResumeGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture resumeGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.resumeGeneration>
@@ -601,7 +617,8 @@ test("compiled: fixture resumeGeneration arguments, visibility and return", () =
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnSwitchGeneration:133; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnSwitchGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture switchGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.switchGeneration>
@@ -644,7 +661,8 @@ test("compiled: fixture switchGeneration arguments, visibility and return", () =
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnRollbackGeneration:134; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnRollbackGeneration; generation-registry.sdp.md
+// tableGenerations, tableGenerationProgress.
 test("compiled: fixture rollbackGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.rollbackGeneration>
@@ -677,7 +695,8 @@ test("compiled: fixture rollbackGeneration arguments, visibility and return", ()
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnAbortGeneration:135; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnAbortGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture abortGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.abortGeneration>
@@ -715,7 +734,8 @@ test("compiled: fixture abortGeneration arguments, visibility and return", () =>
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnPurgeGeneration:136; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnPurgeGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture purgeGeneration arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.purgeGeneration>
@@ -749,7 +769,8 @@ test("compiled: fixture purgeGeneration arguments, visibility and return", () =>
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnBackfillBatch:117; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnBackfillBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture backfillBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.backfillBatch>
@@ -781,7 +802,8 @@ test("compiled: fixture backfillBatch arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnVerifyBatch:118; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnVerifyBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture verifyBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.verifyBatch>
@@ -807,7 +829,8 @@ test("compiled: fixture verifyBatch arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnPurgeBatch:119; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnPurgeBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture purgeBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.purgeBatch>
@@ -837,7 +860,8 @@ test("compiled: fixture purgeBatch arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnFillTenants:139; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnFillTenants; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture fillTenants arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.fillTenants>
@@ -858,7 +882,8 @@ test("compiled: fixture fillTenants arguments, visibility and return", () => {
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnFillTenantsBatch:140; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnFillTenantsBatch; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture fillTenantsBatch arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.fillTenantsBatch>
@@ -883,7 +908,8 @@ test("compiled: fixture fillTenantsBatch arguments, visibility and return", () =
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md fnGetGenerations:137; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnGetGenerations; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test("compiled: fixture getGenerations arguments, visibility and return", () => {
   expectTypeOf<
     FunctionArgs<typeof fixture.rebuild.getGenerations>
@@ -914,7 +940,10 @@ test("compiled: fixture getGenerations arguments, visibility and return", () => 
   void [generationId, wrong];
 });
 
-// rebuild.sdp.md typeRebuildTarget:113, typeRebuildConfig:114, fnBatchSizeFor:116, fnResumeChain:131, limitPurgeBatch:147.
+// spec:application.rebuild#design.typeRebuildTarget,
+// spec:application.rebuild#design.typeRebuildConfig,
+// spec:application.rebuild#design.fnBatchSizeFor, spec:application.rebuild#design.fnResumeChain,
+// spec:application.rebuild#design.limitPurgeBatch.
 test("compiled: rebuild configuration and helpers have the pinned signatures", () => {
   type Dto = { documentId: string };
   type Row = { documentId: string };

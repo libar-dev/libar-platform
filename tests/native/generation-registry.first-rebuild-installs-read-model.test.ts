@@ -86,7 +86,8 @@ export async function plainNativeMessage(call: Promise<unknown>) {
 }
 async function rebuild(world: World) {
   const backend = required(world.backend, "the backend");
-  // generation-registry.first-rebuild-installs-read-model.sdp.md:30; rebuild.sdp.md:123: the closed tenant gate parks the first batch.
+  // generation-registry.first-rebuild-installs-read-model.sdp.md:30;
+  // spec:application.rebuild#design.step3: the closed tenant gate parks the first batch.
   await backend.admin.run(getFunctionName(internal.gate.closeGate), {
     scopeKey: `tenant:${tenantId}`,
     reason: "observe the first generation",
@@ -121,7 +122,8 @@ async function rebuild(world: World) {
       operator,
     }),
   );
-  // generation-registry.first-rebuild-installs-read-model.sdp.md:30; rebuild.sdp.md:115: exact in-flight refusal.
+  // generation-registry.first-rebuild-installs-read-model.sdp.md:30;
+  // spec:application.rebuild#design.fnStartGeneration: exact in-flight refusal.
   expect(world.second).toBe(
     "Read model documentSummary already has generation 1 in building",
   );

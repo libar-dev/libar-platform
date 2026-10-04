@@ -657,8 +657,9 @@ bindExample(
           { generationId: id2(w), operator: "interrupt operator" },
         );
         await stopLive(w);
-        // rebuild.online-rebuild-interrupt-resume.sdp.md:33; rebuild.sdp.md step1:125: the batch the interrupt
-        // replaced records the interruption, with the operator from the generation row, and schedules nothing.
+        // rebuild.online-rebuild-interrupt-resume.sdp.md:33; spec:application.rebuild#design.step1:
+        // the batch the interrupt replaced records the interruption, with the operator from the
+        // generation row, and schedules nothing.
         w.interrupted = await waitForGeneration(
           backendOf(w),
           readModel,
@@ -713,7 +714,8 @@ bindExample(
             (row) => row.tenantId === tenants[0] && row.key === w.existingOrder,
           )?.status,
         ).toBe("cancelled");
-        // rebuild.sdp.md:69: an existing subject without a building row remains absent until a batch writes it.
+        // spec:application.rebuild, its rule that live commands also write the generation being
+        // built: an existing subject without a building row remains absent until a batch writes it.
         expect(
           (await rows(w, 2)).find(
             (row) => row.tenantId === tenants[1] && row.key === w.missingOrder,
@@ -746,7 +748,8 @@ bindExample(
             "changedBy",
           ]),
         );
-        // rebuild.sdp.md:134: the interrupt replaces the fence, marks it as its own and records the operator.
+        // spec:application.rebuild#design.fnInterruptGeneration: the interrupt replaces the fence,
+        // marks it as its own and records the operator.
         expect(w.interrupted.generation).toMatchObject({
           fence: required(w.oldFence, "the original fence") + 1,
           interruptedFence: required(w.oldFence, "the original fence") + 1,
@@ -767,7 +770,8 @@ bindExample(
             "changedBy",
           ]),
         );
-        // rebuild.sdp.md:131: resume replaces the fence and keeps the batch size.
+        // spec:application.rebuild#design.fnResumeChain: resume replaces the fence and keeps the
+        // batch size.
         expect(w.resumed).toMatchObject({
           generation: {
             fence: w.interrupted.generation.fence + 1,
@@ -775,7 +779,7 @@ bindExample(
           },
           progress: { batchSize: 1 },
         });
-        // rebuild.sdp.md:131: resume clears the interrupt error.
+        // spec:application.rebuild#design.fnResumeChain: resume clears the interrupt error.
         expect(w.resumed.progress.lastError).toBeUndefined();
         // rebuild.online-rebuild-interrupt-resume.sdp.md:36: each operator change records a new time.
         expect(Number(w.interrupted.generation.changedAt)).toBeGreaterThan(
@@ -858,13 +862,16 @@ bindExample(
         "the live writes before rollback",
       );
       const retiredRows = await rows(w, 1);
-      // rebuild.online-rebuild-interrupt-resume.sdp.md:37; rebuild.sdp.md:74: the retired generation was not written by the new order.
+      // rebuild.online-rebuild-interrupt-resume.sdp.md:37; spec:application.rebuild, its rule that
+      // a retired generation is not written: the retired generation was not written by the new
+      // order.
       expect(
         retiredRows.find(
           (row) => row.tenantId === tenants[0] && row.key === "after-switch",
         ),
       ).toBeUndefined();
-      // rebuild.online-rebuild-interrupt-resume.sdp.md:37; rebuild.sdp.md:74: the retired row still needs its cancellation repaired.
+      // rebuild.online-rebuild-interrupt-resume.sdp.md:37; spec:application.rebuild, its rule that
+      // a retired generation is not written: the retired row still needs its cancellation repaired.
       expect(
         retiredRows.find(
           (row) => row.tenantId === tenants[0] && row.key === cancelled,
@@ -901,7 +908,8 @@ bindExample(
           (record) => record.identifier === "rebuild:backfillBatch",
         ),
       ).toEqual([]);
-      // rebuild.sdp.md:134: rollback retains generation 1's batch size and cumulative counts.
+      // spec:application.rebuild#design.fnRollbackGeneration: rollback retains generation 1's batch
+      // size and cumulative counts.
       expect(verified.progress.batchSize).toBe(before.progress.batchSize);
       // rebuild.online-rebuild-interrupt-resume.sdp.md:37: every checkpoint in rollback is one committed verify batch.
       expect(verified.progress.batchesDone - before.progress.batchesDone).toBe(
@@ -912,7 +920,9 @@ bindExample(
             record.error === null,
         ).length,
       );
-      // rebuild.online-rebuild-interrupt-resume.sdp.md:37; rebuild.sdp.md:127: exactly one verify pass, at generation 1's retained size.
+      // rebuild.online-rebuild-interrupt-resume.sdp.md:37;
+      // spec:application.rebuild#design.verifySteps: exactly one verify pass, at generation 1's
+      // retained size.
       expect(verified.progress.batchesDone - before.progress.batchesDone).toBe(
         expectedBatches,
       );

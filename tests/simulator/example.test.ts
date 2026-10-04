@@ -283,7 +283,9 @@ test(
       entry: "PlaceOrder",
       message: "An order needs at least one line",
     });
-    // rebuild.sdp.md:115,133: installing returns a generation ID; its number is on the row.
+    // spec:application.rebuild#design.fnStartGeneration and
+    // spec:application.rebuild#design.fnSwitchGeneration: installing returns a generation ID; its
+    // number is on the row.
     await install(t);
     expect(
       await t.run((ctx) => ctx.db.query("generations").collect()),
@@ -374,7 +376,8 @@ test(
       message: "A quantity must be a positive whole number, not 0",
       details: { quantity: 0 },
     });
-    // rebuild.sdp.md:115: an unknown read model is refused with the exact message.
+    // spec:application.rebuild#design.fnStartGeneration: an unknown read model is refused with the
+    // exact message.
     expect(
       String(
         await failure(

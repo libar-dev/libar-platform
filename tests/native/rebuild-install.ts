@@ -20,7 +20,8 @@ export type Progress = Record<string, Value> & {
 };
 export type GenerationEntry = { generation: Generation; progress: Progress };
 
-// rebuild.sdp.md:137: the operator query returns each generation with its progress row.
+// spec:application.rebuild#design.fnGetGenerations: the operator query returns each generation with
+// its progress row.
 export async function generations(backend: Backend, readModel: string) {
   return (await backend.admin.run("rebuild:getGenerations", {
     readModel,
@@ -65,7 +66,9 @@ export async function waitForGeneration(
   }
 }
 
-// generation-registry.sdp.md:37; rebuild.sdp.md:115,127,133: install by the first rebuild.
+// generation-registry.sdp.md:37; spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.verifySteps and
+// spec:application.rebuild#design.fnSwitchGeneration: install by the first rebuild.
 async function install(
   backend: Backend,
   readModel: string,
@@ -81,7 +84,8 @@ async function install(
   if (typeof id !== "string")
     throw new Error("startGeneration did not return an ID");
   const verified = await waitForGeneration(backend, readModel, id);
-  // rebuild.sdp.md:115: the installed generation is at the version the setup stated.
+  // spec:application.rebuild#design.fnStartGeneration: the installed generation is at the version
+  // the setup stated.
   expect(verified.generation.projectionVersion).toBe(projectionVersion);
   await backend.admin.run(refs.switch, { generationId: id, operator });
   return id;
