@@ -1,3 +1,8 @@
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { expect, test } from "vitest";
 import { deletedTitle } from "../../fixture/convex/depot/streams.js";
 import {
@@ -17,6 +22,16 @@ import {
   readModel,
   version,
 } from "./rebuild-support.js";
+// Binds the online rebuild in src/read-model/rebuild.ts to its Spec. The library is bundled into the
+// parent deployment, so it carries no Protocol import itself; this test carries its anchor. The paused
+// path of a history view is spec:application.history-rebuild, which no code realizes.
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:application.rebuild"),
+  label:
+    "the online rebuild's operator entries, batch chains, tenant fill and batch bounds",
+  satisfies: ref("spec:application.rebuild"),
+});
+void anchor;
 
 // projection-contract.sdp.md fnProjectionOf:68, typeReadModel:67; native-harness.sdp.md fixtureReadModel:90.
 test("pure: projectionOf selects the declared version and the latest projection is first", () => {
@@ -49,7 +64,8 @@ test("pure: the fixture's documentTitle versions differ only on the deleted docu
     ).toThrow();
 });
 
-// rebuild.sdp.md fnBatchSizeFor:116, limitBatchSize:146, limitPurgeBatch:147.
+// spec:application.rebuild#design.fnBatchSizeFor, spec:application.rebuild#design.limitBatchSize and
+// spec:application.rebuild#design.limitPurgeBatch.
 test.each([
   [16384, 100, 256],
   [65536, 32, 64],
@@ -105,10 +121,10 @@ test.each(projectionCases)(
     }
   },
 );
-// rebuild.sdp.md step6:126 and verifySteps:127 expose no pure cursor function.
+// spec:application.rebuild#design.step6 and spec:application.rebuild#design.verifySteps expose no pure cursor function.
 // The direct batch tests in tests/simulator/rebuild.test.ts prove those cursor steps.
 
-// rebuild.sdp.md limitTenantFillBatch:142, limitGenerationsListed:151.
+// spec:application.rebuild#design.limitTenantFillBatch and spec:application.rebuild#design.limitGenerationsListed.
 test("pure: tenant fill and generation listing have their pinned bounds", async () => {
   const { limitTenantFillBatch, limitGenerationsListed } =
     await import("../../src/read-model/rebuild.js");

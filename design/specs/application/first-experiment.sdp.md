@@ -18,6 +18,7 @@ relations:
     - spec:application.parent-use-cases
     - spec:application.read-models
     - spec:application.rebuild
+    - spec:application.history-rebuild
     - spec:application.restore
     - spec:application.generation-registry
     - spec:application.history-projection
