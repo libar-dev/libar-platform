@@ -7,17 +7,14 @@ const root = resolve(import.meta.dirname, "../..");
 const testFile = "tests/types/pinned.test-d.ts";
 const source = ts.createSourceFile(
   testFile,
-  readFileSync(resolve(root, testFile), "utf8"),
+  readFileSync(process.env.PINNED_TEST_FILE ?? resolve(root, testFile), "utf8"),
   ts.ScriptTarget.Latest,
   true,
 );
 const titles = new Map([
-  ["bound: the code equals the pin", "bound"],
-  ["ahead: the design leads the code", "ahead"],
-  [
-    "not compared: the pin takes Convex's generic MutationCtx, the code a composition's own ctx",
-    "notCompared",
-  ],
+  ["bound:", "bound"],
+  ["ahead:", "ahead"],
+  ["not compared:", "notCompared"],
 ]);
 
 type Pair = {
@@ -63,9 +60,12 @@ function readTests(): Pair[] {
       continue;
     const [title, callback] = statement.expression.arguments;
     if (!title || !ts.isStringLiteral(title)) continue;
-    const state = titles.get(title.text);
-    if (!state) throw new Error(`Unknown pinned pair block: ${title.text}`);
-    found.add(title.text);
+    const match = [...titles].find(([prefix]) => title.text.startsWith(prefix));
+    if (!match) throw new Error(`Unknown pinned pair block: ${title.text}`);
+    const [prefix, state] = match;
+    if (found.has(prefix))
+      throw new Error(`Duplicate pinned pair block: ${prefix}`);
+    found.add(prefix);
     if (
       !callback ||
       !ts.isArrowFunction(callback) ||
@@ -85,6 +85,7 @@ function readTests(): Pair[] {
       if (!name || !ts.isStringLiteral(name))
         throw new Error(`No test name in ${title.text}`);
       const address = name.text.split(": ")[0]!;
+      const reason = name.text.split(": ").slice(1).join(": ");
       const text = body?.getText(source) ?? "";
       let code: string | null = null;
       for (const [alias, file] of imports) {
@@ -113,13 +114,17 @@ function readTests(): Pair[] {
                 : "type",
         code,
         reason:
-          state === "bound" ? null : name.text.split(": ").slice(1).join(": "),
+          state === "bound"
+            ? null
+            : reason.includes("outside the Pack")
+              ? `The pin is outside pack:history-view and is not emitted; ${reason}`
+              : reason,
       });
     }
   }
-  expect([...found], "The compiled tier's three pair blocks").toEqual([
-    ...titles.keys(),
-  ]);
+  for (const prefix of titles.keys())
+    if (!found.has(prefix))
+      throw new Error(`Missing pinned pair block: ${prefix}`);
   return pairs;
 }
 

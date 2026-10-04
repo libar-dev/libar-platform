@@ -45,13 +45,6 @@
       "reason": null
     },
     {
-      "address": "spec:application.generation-registry#design.tableProjectionMarkers",
-      "state": "bound",
-      "comparison": "table",
-      "code": "src/read-model/index.ts#readModelTables",
-      "reason": null
-    },
-    {
       "address": "spec:application.history-projection#design.typeHistoryEvent",
       "state": "bound",
       "comparison": "type",
@@ -413,7 +406,7 @@
       "state": "ahead",
       "comparison": "type",
       "code": "src/read-model/index.ts#ReadModelBinding",
-      "reason": "the history view's build binds history and aggregate projections"
+      "reason": "the history view's build binds history projections"
     },
     {
       "address": "spec:command.command-pipeline#design.fnWriteReadModels",
@@ -533,6 +526,13 @@
       "comparison": "none",
       "code": null,
       "reason": "leads the code and differs in ctx, through typeCommandDeclaration"
+    },
+    {
+      "address": "spec:application.aggregate-projection#design.tableProjectionMarkers",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "The pin is outside pack:history-view and is not emitted; the aggregate form's table, outside the Pack, while readModelTables still holds it"
     }
   ]
 }
