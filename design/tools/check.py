@@ -229,11 +229,15 @@ for item in ledger:
 by_slice = collections.Counter(item.get("slice", "none") for item in ledger if item["status"] == "open")
 
 # 5. Each Pack page is what the tree generates. The page design/pages/<name>.md is the page of pack:<name>,
-# and the generator's --check names the first line that differs.
-pages = sorted(glob.glob(os.path.join(DESIGN, "pages", "*.md")))
+# and the generator's --check names the first line that differs. PACK_PAGES is the list of pages the corpus
+# keeps, so a page deleted by mistake fails here instead of leaving nothing to check.
+PACK_PAGES = ("history-view",)
+for path in sorted(glob.glob(os.path.join(DESIGN, "pages", "*.md"))):
+    if os.path.splitext(os.path.basename(path))[0] not in PACK_PAGES:
+        fail(f"{os.path.relpath(path, ROOT)} is not in PACK_PAGES")
 stale_pages = 0
-for path in pages:
-    name = os.path.splitext(os.path.basename(path))[0]
+for name in PACK_PAGES:
+    path = os.path.join(DESIGN, "pages", name + ".md")
     out = subprocess.run(
         ["node", os.path.join(ROOT, "scripts", "pack-page.mjs"), "--pack", f"pack:{name}", "--out", os.path.relpath(path, ROOT), "--check"],
         capture_output=True, text=True, cwd=ROOT,
@@ -258,7 +262,7 @@ print(f"stated readiness: {dict(sorted(readiness.items()))}")
 print(f"ledger: {len(ledger)} findings, {dict(sorted(by_status.items()))}")
 print(f"open findings by slice: {dict(sorted(by_slice.items()))}")
 print(f"corpus digest: {digest.hexdigest()[:16]}")
-print(f"Pack pages current: {len(pages) - stale_pages} of {len(pages)}")
+print(f"Pack pages current: {len(PACK_PAGES) - stale_pages} of {len(PACK_PAGES)}")
 print(f"protocol: {PINNED}")
 if failures:
     print(f"\nFAIL ({len(failures)}):")

@@ -618,6 +618,7 @@ export async function generate(pack, out) {
     "Start with the members and with what holds a member below its next rung: together they say where the design stands and what keeps it there. Then come the Specs outside the Pack that the members rest on, the open questions with their register rows, and each member in full with its code, its examples and verifiers, and its pinned declarations. Long lists are folded; open them where you need them.",
     "",
     "- The stated rung is the readiness a Spec's author states: idea, scoped, defined or ready.",
+    "- A register row blocks the first unit of work that needs its decision, a build slice such as S5 named in `design/STATE.md`. That is apart from a question marked blocking, which holds its Spec at scoped, and apart from the floor.",
     "- The floor is the highest rung whose clauses all hold in the graph. It can sit above the stated rung.",
     "- The next rung is the one above the stated rung, with the first floor clause that fails at it. A rung whose clauses all hold still waits for its author to state it.",
     "- An implementation anchor binds code to a Spec. Its site is the file it is written in; a site under `tests/` stands for the source files listed with it.",
@@ -847,7 +848,7 @@ export async function generate(pack, out) {
     "",
   );
   const rowText = (row) =>
-    `**${row.id}** class ${row.class ?? "none"}, status ${row.status ?? "none"}, advisor ${row.advisor ?? "none"}, blocks ${row.blocks ?? "nothing"}`;
+    `**${row.id}** class ${row.class ?? "none"}, status ${row.status ?? "none"}, advisor ${row.advisor ?? "none"}, ${row.blocks ? `blocks the unit ${row.blocks}` : "blocks no unit"}`;
   for (const member of model) {
     if (member.questions.length === 0 && member.leftRows.length === 0) continue;
     write(`**${memberLink(member.id)}**, ${span(member.id)}`, "");
