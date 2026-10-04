@@ -1,5 +1,10 @@
 // The operator check, the scopes of a use case and the shapes of the gate and audit tables
 // (spec:command.actor-and-scope, spec:application.write-pause, spec:operations.baseline-operations).
+import {
+  codeAnchor,
+  codeAnchorId,
+  ref,
+} from "@libar-dev/software-delivery-protocol";
 import { expect, test } from "vitest";
 import { auditTables } from "../../src/audit/index.js";
 import { assertOperator, limitOperatorBytes } from "../../src/command/index.js";
@@ -9,6 +14,16 @@ import {
   limitGateReasonBytes,
   scopesOfUseCase,
 } from "../../src/gate/index.js";
+
+// Binds the gate library under src/gate/ to its Spec. The library is bundled into the parent
+// deployment, so it carries no Protocol import itself; this test carries its anchor.
+const anchor = codeAnchor({
+  id: codeAnchorId("impl:application.write-pause"),
+  label:
+    "the gate document, gateAllows, assertWritable, the scope writers and the four gate entries",
+  satisfies: ref("spec:application.write-pause"),
+});
+void anchor;
 
 test("pure: assertOperator refuses an empty or whitespace-only operator and one above 512 bytes, and returns any other trimmed", () => {
   for (const operator of ["", " ", "\t\n "])

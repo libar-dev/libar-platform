@@ -1,11 +1,11 @@
 ---
-id: spec:application.rebuild.write-pause-rebuild-abort
+id: spec:application.history-rebuild.write-pause-rebuild-abort
 kind: example
 altitude: story
 readiness: defined
 relations:
-  refines: spec:application.rebuild
-  verifies: spec:application.rebuild
+  refines: spec:application.history-rebuild
+  verifies: spec:application.history-rebuild
 ---
 # Rebuild a cross-stream history view under a write pause; interrupt, then abort
 

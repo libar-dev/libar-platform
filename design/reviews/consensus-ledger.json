@@ -504,7 +504,8 @@
    "severity": "major",
    "files": [
     "specs/application/rebuild.sdp.md",
-    "specs/application/write-pause.sdp.md"
+    "specs/application/write-pause.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "rebuild's write-pause flow says \"the operator closes the maintenance gate for the read model's scope before `startGeneration`\", but the gate can only let a background writer through by its generation: write-pause `closeGate` takes an optional `generationId`, `assertWritable(ctx, scopes, allowGeneration)` throws unless \"the closed entry's `generationId` equals `allowGeneration`\", and rebuild step2 returns without writing \"when a closed scope covers this read model and the gate was not closed for this generation\". A gate closed before the generation row exists cannot name it, so the paused backfill's own batches refuse themselves and the L2-6 examples cannot reach `verified`.",
    "fix": "Reverse or fuse the order: `startGeneration` with `pauseRequired: true` inserts the generation row and calls the close in the same mutation (or patches the already-closed scope's `generationId` to the new row), and the rebuild flow reads \"startGeneration closes the gate for the read model's scope and records its own generation on the closed entry\". Update the write-pause Contract bullet and the L2-6 examples' first verification bullet to match.",
@@ -1616,9 +1617,10 @@
     "specs/command/command-pipeline.sdp.md",
     "specs/context/persistence-adapter.sdp.md",
     "specs/application/orders-inventory-example.sdp.md",
-    "specs/application/rebuild.write-pause-rebuild-interrupt.sdp.md",
-    "specs/application/rebuild.write-pause-rebuild-abort.sdp.md",
-    "specs/application/history-projection.sdp.md"
+    "specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md",
+    "specs/application/history-rebuild.write-pause-rebuild-abort.sdp.md",
+    "specs/application/history-projection.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "The only projection forms are `Projection⟨D, Row⟩.project(tenantId, dto, versions)` from one current DTO and `AggregateProjection.contribute(dto)`. The write pause exists for 'read models that depend on history across several streams', and the contract says a cross-context row 'holds one StreamVersion per context', yet no form takes history, a prior row, or two DTOs. On the live path step 9 calls `applyProjection` once per `streams` entry with that entry's DTO only, and the parent never receives the appended events (`StreamDto` is dto, version, appended, created). On the backfill the pause path reuses the online batch steps, one `list` page of current DTOs. So a history-dependent view cannot be written on either path, the cross-context read model the D8 table allows cannot be produced, and the L2-6 examples exercise a per-entity projection under a gate (they assert only that `PlaceOrder` is refused), which passes trivially; the example domain defines no history-dependent view at all, so the first experiment cannot run L2-6 as the doc's row reads.",
    "fix": "Either add the missing forms under E-9: `HistoryProjection⟨Row⟩ { project(tenantId, prior: Row | null, events: EventEnvelope[], versions) }` fed on the live path by the events the operation appended (add `events: EventEnvelope[]` to `StreamDto`, bounded by the 16 KiB payload bound times `appended`) and on the backfill, under the pause, by `history` pages per enumerated stream; and `CompositeProjection` taking the DTOs of every `streams` entry of one command for a cross-context row, with the backfill composing from one `list` DTO plus bounded `get` reads of the other context. Then name one history-dependent view in orders-inventory-example (for example a per-stock-item allocation history across orders) and make both L2-6 examples build it. Or, narrow the claim explicitly: state in rebuild and projection-contract that Layer 2 pins only per-entity and aggregate projections, that the write-pause path is designed for cross-context current-state rows needing a consistent cut, record the history-projection input shape as a [non-blocking] E-9 open question deferred to Layer 6's trigger, and retitle the L2-6 examples to the view they actually build.",
@@ -1634,7 +1636,8 @@
     "specs/application/write-pause.sdp.md",
     "specs/application/rebuild.sdp.md",
     "specs/command/command-pipeline.sdp.md",
-    "specs/command/command-declaration.sdp.md"
+    "specs/command/command-declaration.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "The pause's scope for a rebuild is `read-model:<name>`, and a use case is in scope only when 'a read model it maintains is closed'. A consistent cut needs every writer of the view's source streams held, but a command that writes a source stream without maintaining the paused view (for example a `ReceiveStock` command that touches Inventory and maintains only the stock summary, while the paused history view depends on Inventory events) passes `assertWritable`, changes the source, and the flow's claim that 'Backfill under the pause enumerates a consistent cut because no source changes' is false. The declaration carries no `contexts`/`sources` field, so a source-based scope cannot even be derived from it as pinned.",
    "fix": "Key the closed entry by the paused view's sources: `closed[].sources: { contextId; streamType }[]` taken from each `ReadModelBinding.source` of the read model, and have `scopesOfUseCase` also emit `source:<contextId>:<streamType>` for every stream type the command writes. That requires the declaration to name what it writes: add `writes: { contextId: string; streamType: string }[]` to `CommandDeclaration` under E-38 (the registration check can assert it against the executor's `streams` entries at test time). Until then the cheap safe default is for `startGeneration` with `pauseRequired` to close the tenant scope (or `all` for an all-tenants generation) rather than the read-model scope, and say so in rebuild's flow and write-pause's Contract.",
@@ -1932,8 +1935,9 @@
     "specs/application/projection-contract.sdp.md",
     "specs/application/rebuild.sdp.md",
     "specs/application/orders-inventory-example.sdp.md",
-    "specs/application/rebuild.write-pause-rebuild-interrupt.sdp.md",
-    "specs/application/history-projection.sdp.md"
+    "specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md",
+    "specs/application/history-projection.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "A `HistoryProjection` folds events of several streams into one row, and the two paths feed it in different orders. On the live path step 9 calls `applyHistoryProjection` per `streams` entry in the executor's order, command after command, so an order's row sees `OrderPlaced`, its `StockAllocated` events, later `OrderCancelled`, then `AllocationReleased`. On the backfill the rebuild pages one stream's whole history at a time (rebuild flow 'each history batch takes one stream from the enumeration'), so the same row sees every Orders event first and the stock events after, or the reverse. The contract asks only that `project` be 'deterministic in the prior row and the events' with 'version order within each stream'. It never says the fold must give the same row whatever the interleaving across streams, and D2 gives no order across streams to appeal to. A natural projection, where `OrderPlaced` creates the row and a stock event updates an existing one, backfills to a different row than it wrote live, against the contract's own value line that 'a rebuild cannot disagree with a live update'. The doc sends a consumer whose result depends on order to Layer 6's ordered consumer; Layer 2 does not say its history view must not be one. Deletion makes it worse: `null` from `project` deletes the row, and with it the `sourceVersions` that are the fold's only memory. A later event of the same key from another stream, such as `AllocationReleased` after `OrderCancelled` returned `null`, meets no prior row and recreates one, on either path.",
    "fix": "Add to projection-contract under E-9: a history projection's fold is independent of the order in which different streams' events arrive; only the order within one stream is given (D2), and a view whose meaning depends on cross-stream order waits for the ordered consumer of D18. Add to `determinismCheck` a test that folds one key's events in two interleavings and compares the rows, and have the L2-6 example compare a backfilled row with the live-written one. Rule on deletion: either a history row is never deleted once written and carries its own ended state, or the highest folded version per stream moves off the row into a marker, like `projectionMarkers`, that outlives it. State in orders-inventory-example that the order allocation history fold is written to hold under any interleaving, including a stock event arriving before `OrderPlaced`.",
@@ -1950,7 +1954,8 @@
    "files": [
     "specs/application/rebuild.sdp.md",
     "specs/application/generation-registry.sdp.md",
-    "specs/application/orders-inventory-example.sdp.md"
+    "specs/application/orders-inventory-example.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "Two parts of the paused rebuild cannot be built as pinned. First, a history view has several sources, the order stream type and the stock item stream type in the example, but `batchCursorValidator` is `{ tenantId, pageCursor, streamId?, eventCursor? }` with no field for the source being enumerated, and `fnHistoryPageCall` names one component query. `historyStep3` says 'it calls `list` with `numItems` 1 from the page cursor to take the next stream' without saying of which context and stream type, so the batch cannot tell where it is among the bindings. Second, `historyVerify` checks one thing per stream: it reads the stream's last event, 'finds that event's row by `keyOf`', and counts a miss when the row is absent or records a lower version. `keyOf` may return `null`, and for many streams the last event's key is `null`: a stock item that was received and never allocated, and every stream whose last event is a `baseline` after a meaning migration. The Spec does not say what verify does then. Read as a miss, the repair refolds the stream, changes nothing, and the next pass counts the same miss, so the generation never reaches `verified` and, since 'writes reopen only after verification', the sources stay closed until an operator aborts. Read as a skip, the stream is unverified. Either way the check proves only that the last event of a stream was folded, not the earlier ones that belong to other keys.",
    "fix": "Add the source to the cursor, an index into the read model's source list, and iterate tenant, then source, then stream, then event page; say so in `tenantIteration` and `historyStep3`. Replace `historyVerify` with a second pass of the same history batches that counts the events `applyHistoryProjection` did not drop: under the pause nothing changes, so a covered generation folds zero events and a miss is repaired by the pass that found it. The state moves to `verified` when a full pass folds none. That needs no row lookup by key and handles a `null` key by construction. State the cost, one more read of every source's history under the pause.",
@@ -2129,7 +2134,8 @@
    "lens": "architecture",
    "severity": "minor",
    "files": [
-    "specs/application/rebuild.sdp.md"
+    "specs/application/rebuild.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "Under the pause 'each history batch takes one stream from the enumeration' and reads one `history` page of it, so a stream with two events costs a whole scheduled mutation, a `list` call of one item and a `history` call. The pause closes the view's sources for every tenant of the deployment, because a generation spans all tenants, so the outage of those writers lasts as long as the number of source streams times one batch. `limitHistoryBatch` bounds events per batch at 128 by default and the batch uses a fraction of it for short streams. The duration is an unrecorded cost of the mechanism, and a cheaper batch passes the same scenario.",
    "fix": "Let a history batch take streams from the enumeration until its event bound is spent, with the stream and event cursor saved as now, and state the pause's expected duration as a risk on rebuild: source streams and events divided by the batch bound, times one mutation. Point at the registry's per-tenant alternative as the way to shorten the outage per tenant.",
@@ -2401,7 +2407,8 @@
     "specs/command/command-declaration.sdp.md",
     "specs/effects/retry-ownership.sdp.md",
     "specs/effects/external-effects.sdp.md",
-    "specs/obligations/obligation-module.sdp.md"
+    "specs/obligations/obligation-module.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "Rubric item 2 fails in six places where a bullet's citation names only doc tokens and the doc does not say what the bullet says. The content is a registered extension elsewhere in five of them. (a) projection-contract: 'a new version is a new generation, never an in-place rewrite (D8, D9)'; rebuild marks the same sentence '[extension] ... (E-8, D8)'. D8 says only 'named, versioned and deterministic'. (b) rebuild: 'A refused write under the pause is a transient refusal, retryable and never a stored rejection (D4, D9)'; D4 covers 'rate or capacity', and outcome-boundary's E-35 question says 'the doc does not say how a refused writer is answered'. (c) parent-use-cases: 'the use case either carries it as the use case's business failure ... or throws a rejection so nothing commits; the choice is declared per use case (D4)'; that is E-44, whose own question says it overrides D4's 'belongs in history'. (d) command-declaration: 'A command is bound by two export lines ... and no other binding exists (D12, D6)'; that is E-7. (e) external-effects: 'Every reconcile is a claimed attempt ... (D14, Sc L3-6)'; that is E-53. (f) retry-ownership has no open question and no E-number, yet rules that Workpool 'is constructed with `retryActionsByDefault: false` and each enqueue passes `retry: false`', that passed ownership records '`retryOwner: \"workpool\"`' and that Workpool attempts are 'read from the pool's `onComplete` result and `status`', all cited '(D15, S12)'. D15 says only that Workpool 'runs with its own retries off, or ownership passes to it deliberately and its attempts show the same way'. obligation-module's `deferred` bullet says 'the Workpool binding' is 'written by the build that first needs them', so retry-ownership also pre-writes what its parent defers, against decision method rule 4.",
    "fix": "Add the E-number to (a) to (e) and start each bullet with [extension], matching the Spec that owns the extension: E-8, E-35, E-44, E-7, E-53. For (f), on `spec:effects.retry-ownership`: either reduce the two Workpool rules to D15's sentence and move the option names to a `deferred:` bullet, or mark them [extension] under a new E-number of Package E's range with an open question and a README row, and make obligation-module's `deferred` bullet say what is and is not deferred.",
@@ -3148,7 +3155,8 @@
    "lens": "sdp",
    "severity": "minor",
    "files": [
-    "specs/application/rebuild.sdp.md"
+    "specs/application/rebuild.sdp.md",
+    "specs/application/history-rebuild.sdp.md"
    ],
    "issue": "The batch size of a history view is computed two ways in one Spec. `fnStartGeneration` computes the row's `batchSize` as `min(args.batchSize ?? 100, floor(4 MiB / (2 * rowBudgetBytes)))` for every read model, which is 100 at the default 16 KiB row budget. `limitHistoryBatch` says `min(500, floor(4 MiB / (2 * rowBudgetBytes)))` events per history batch, '128 at the default 16 KiB row budget', and that 'the count is stored on the generation row as its `batchSize`'. The stored number for a history view at defaults is 100 by the first bullet and 128 by the second, and the cap is 100 or 500.",
    "fix": "In `spec:application.rebuild` make `fnStartGeneration` state both defaults: `args.batchSize ?? 100` entities for a `Projection` or `AggregateProjection`, `args.batchSize ?? 500` events for a `HistoryProjection`, each capped by `floor(4 MiB / (2 * rowBudgetBytes))`; or lower `limitHistoryBatch` to the same 100.",
