@@ -1,8 +1,20 @@
 # Feedback to the Software Delivery Protocol from this corpus
 
-A running file, addressed to the Protocol's maintainers. Each `adopt` unit and each slice that learns something about the Protocol adds a dated section at the top. The first report, with its eight proposals, is [`sdp-development-from-application-platform.md`](sdp-development-from-application-platform.md).
+A running file, addressed to the Protocol's maintainers. Each `adopt` unit and each slice that learns something about the Protocol adds a dated section at the top. The first report, with its eight proposals, is [`sdp-development-from-application-platform.md`](../sdp-development-from-application-platform.md).
 
 Every number here was measured on this corpus on the date of its section. Re-run before relying on one.
+
+## 2026-10-04, the design as a person working in the repository reads it
+
+The unit `design-in-the-graph` gave this corpus the content a design ahead of its code needs. It has one maturity per Spec, `pack:history-view` in reading order, pinned declarations compiled and compared with the code, entry addresses in code, tests and the register, and two passes. Read through `npx sdp view` at `d39c89e` on the pin `5e29c03`, little of it reaches a person who navigates the repository and works on it. This section describes that reader and what the reader meets. It asks for no particular feature.
+
+- **A design reads as escaped JSON.** A Spec page prints `## Design` as one fenced JSON object. The history projection's ten entries, `HistoryProjection` and `applyHistoryProjection` among them, are escaped strings, each on one line. The corpus has 977 Design entries in 59 Specs, and its reviewers read the `.sdp.md` files instead. `spec:decisions.authored-entry-order` drafts a list rendering, and its blocking question waits for the owner to read ordered output. This corpus is that output.
+- **A reader has no way in.** The index is one table with a row for each of the 239 Specs. Where to start comes from `design/STATE.md`, `design/ROADMAP.md` and memory, and no page answers it.
+- **A Pack page shows no shape.** `pack:history-view` is authored in reading order with the history projection first, and its page lists the 15 members by id, every row alike. A reader cannot tell which members the design adds, which it rests on, or which built members its pins will change. The page also shows `spec:application.rebuild` with no implementation binding although `src/read-model/rebuild.ts` realizes its online path. That one is this corpus's missing anchor, lead 44 of `design/STATE.md`, and it misleads the reader all the same.
+- **What the corpus knows about its own design is on no page.** In `tests/types/pinned.test-d.ts`, 53 pins equal their code, 14 lead it and 9 are not compared. `check.py` resolves 84 entry addresses outside the Specs, `design/decisions/register.json` joins open questions to decisions, and git holds the passes. A person learns any of it only by reading those files. The pinned module is the adopter's recipe under the Protocol's ruling, so presenting it is this corpus's work, but no shipped view has a place for the status of one entry.
+- **Spec, code and test connect one way, and only for a whole Spec.** A Spec page lists each implementation anchor's file and line. The read-model library cannot import the Protocol, so its anchors sit in `tests/pure/read-model.test.ts`, and the link leads to a test and not to `src/read-model/`. From a file, the reader's `byFile` and recipe 4 name the Specs it touches, and no page does. Below the Spec, an entry address is a citation with no edge, as pull request 27 ruled.
+
+The data each of these needs is already in the graph or beside it: the authored member order, the delivery facts, the open questions, the examples with their tier in the opening line, the pinned module's three lists and the entry addresses. The Protocol's plan 35 defers Spec Studio until a recorded ruling names "the reader Markdown Design Review does not serve". The reader here is that one: a person inside the repository, working on it.
 
 ## 2026-10-03, adopting the merge of pull request 27 at `5e29c03`
 

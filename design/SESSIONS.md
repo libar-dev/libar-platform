@@ -101,7 +101,7 @@ Paper only, for findings no slice will build soon: Layer 3 and later, and polish
 
 ### adopt
 
-For a new Protocol version. Change the pin in `package.json`, run the check, apply what the version changes to the corpus, and write what the adoption found into `docs/sdp-feedback.md` for the Protocol's maintainers.
+For a new Protocol version. Change the pin in `package.json`, run the check, apply what the version changes to the corpus, and write what the adoption found into `docs/feedback/sdp-feedback-01.md`, the running file for the Protocol's maintainers.
 
 ### recover
 
