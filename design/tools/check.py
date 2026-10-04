@@ -23,6 +23,10 @@ import re
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True
+
+from decisions import question_source_errors
+
 DESIGN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(DESIGN)
 PACKAGE = os.path.join(ROOT, "node_modules", "@libar-dev", "software-delivery-protocol")
@@ -42,8 +46,8 @@ GRAPH_FACTS = (
 PROSE_MENTIONS = os.path.join(DESIGN, "tools", "prose-mentions.json")
 # An entry address, spec:<id>#design.<key> or #ui.<key>, as the Protocol's checked-mentions record rules it.
 # A token runs from `spec:` to a separator, loses trailing punctuation, and is checked whole, so a malformed
-# key is refused rather than read as its valid prefix. A `#` that opens neither section is the register's
-# own reference to an open question by number, which is not an address.
+# key is refused rather than read as its valid prefix. Historical positional citations in prose
+# are kept as written; question sources are checked separately by text.
 MENTION_TOKEN = re.compile(r"spec:[^\s`'\"()\[\]{}<>|,;]+")
 ADDRESS = re.compile(r"^(spec:[a-z][a-z0-9-]*(?:\.[A-Za-z0-9][A-Za-z0-9-]*)*)#(design|ui)\.([a-z][A-Za-z0-9]*)$")
 # Where an address outside the Specs lives: the code, the tests, the register, the ledger and the work documents.
@@ -147,6 +151,8 @@ elif diverging:
 kinds = collections.Counter()
 readiness = collections.Counter()
 questions = {}
+spec_files = {}
+n_blocking = 0
 cited_extensions = set()
 edge_gaps = []
 for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), recursive=True)):
@@ -155,6 +161,7 @@ for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), re
     raw = open(path, encoding="utf-8").read()
     front, body = raw.split("\n---\n", 1)
     sid = re.search(r"^id: (\S+)", front, re.M).group(1)
+    spec_files[sid] = os.path.relpath(path, ROOT)
     kind = re.search(r"^kind: (\w+)", front, re.M).group(1)
     kinds[kind] += 1
     stated = re.search(r"^readiness: (\w+)", front, re.M).group(1)
@@ -176,7 +183,8 @@ for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), re
             cited_laws |= {int(x) for x in re.findall(r"\bLaw (\d+)", line)}
             cited_facts |= {int(x) for x in re.findall(r"\bF(\d+)\b", line)}
         if section == "Open" and line.startswith("- ["):
-            questions.setdefault(sid, []).append(line)
+            questions.setdefault(sid, []).append(re.sub(r"^- \[[^]]+\] ", "", line))
+            n_blocking += int(line.startswith("- [blocking]"))
             if line.startswith("- [blocking]") and stated != "scoped":
                 fail(f"{sid} carries a blocking question and states {stated}")
     family = sid.split(":")[1].split(".")[0]
@@ -186,6 +194,12 @@ for path in sorted(glob.glob(os.path.join(DESIGN, "specs", "**", "*.sdp.md"), re
         edge_gaps.append(f"{sid}: laws {sorted(missing_laws)} facts {sorted(missing_facts)}")
 for gap in edge_gaps:
     fail("cited without a constrainedBy edge (rubric 16): " + gap)
+
+# 2a. The decision register's question sources resolve by authored text.
+register = json.load(open(os.path.join(DESIGN, "decisions/register.json"), encoding="utf-8"))
+for row in register["decisions"]:
+    for error in question_source_errors(row, questions, spec_files):
+        fail(row["id"] + ": " + error)
 
 # 3. README.md against the Specs.
 readme = open(os.path.join(DESIGN, "README.md"), encoding="utf-8").read()
@@ -200,7 +214,6 @@ if cited_extensions - registered:
 if registered - cited_extensions:
     fail(f"extensions registered in README but cited by no Spec: E-{sorted(registered - cited_extensions, key=int)}")
 n_questions = sum(len(v) for v in questions.values())
-n_blocking = sum(1 for v in questions.values() for line in v if line.startswith("- [blocking]"))
 for link in re.findall(r"\]\(([^)#]+)\)", readme):
     if not link.startswith("http") and not os.path.exists(os.path.join(DESIGN, link)):
         fail(f"README link does not resolve: {link}")

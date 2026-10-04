@@ -3,7 +3,8 @@
 // pin, so a changed pin fails the typecheck; a table's pair holds its indexes too. Ahead: the design
 // leads the code, so the day the code catches up the assertion fails and the pair moves to bound; a
 // function's ctx is erased first where the pin's and the code's differ. Not compared: the pair
-// differs only in the ctx, or carries a ctx inside a type no erasing reaches; nothing is asserted.
+// differs only in the ctx, or carries a ctx inside a type no erasing reaches, or its pin belongs to a
+// Spec outside the Pack, so the module does not emit it; nothing is asserted.
 import type { TableDefinition } from "convex/server";
 import { describe, expectTypeOf, test } from "vitest";
 import type * as pinned from "../../generated/pinned/history-view.js";
@@ -70,13 +71,6 @@ describe("bound: the code equals the pin", () => {
     expectTypeOf<
       TableShape<(typeof readModel.readModelTables)["generations"]>
     >().toEqualTypeOf<TableShape<(typeof pinned.tables)["generations"]>>();
-  });
-  test("spec:application.generation-registry#design.tableProjectionMarkers", () => {
-    expectTypeOf<
-      TableShape<(typeof readModel.readModelTables)["projectionMarkers"]>
-    >().toEqualTypeOf<
-      TableShape<(typeof pinned.tables)["projectionMarkers"]>
-    >();
   });
   test("spec:application.history-projection#design.typeHistoryEvent", () => {
     expectTypeOf<allocationHistory.HistoryEvent>().toEqualTypeOf<pinned.HistoryEvent>();
@@ -306,7 +300,7 @@ describe("ahead: the design leads the code", () => {
       WithoutCtx<typeof pinned.resumeChain>
     >();
   });
-  test("spec:command.command-declaration#design.typeReadModelBinding: the history view's build binds history and aggregate projections", () => {
+  test("spec:command.command-declaration#design.typeReadModelBinding: the history view's build binds history projections", () => {
     expectTypeOf<readModel.ReadModelBinding>().not.toEqualTypeOf<pinned.ReadModelBinding>();
   });
   test("spec:command.command-pipeline#design.fnWriteReadModels: through typeReadModelBinding", () => {
@@ -353,7 +347,7 @@ describe("ahead: the design leads the code", () => {
   });
 });
 
-describe("not compared: the pin takes Convex's generic MutationCtx, the code a composition's own ctx", () => {
+describe("not compared: the pin takes Convex's generic MutationCtx and the code a composition's own ctx, or the pin is outside the Pack", () => {
   test.skip(
     "spec:command.command-declaration#design.typeExecutor: differs only in ctx",
   );
@@ -380,5 +374,8 @@ describe("not compared: the pin takes Convex's generic MutationCtx, the code a c
   );
   test.skip(
     "spec:command.command-pipeline#design.fnRelayFailure: leads the code and differs in ctx, through typeCommandDeclaration",
+  );
+  test.skip(
+    "spec:application.aggregate-projection#design.tableProjectionMarkers: the aggregate form's table, outside the Pack, while readModelTables still holds it",
   );
 });

@@ -1,0 +1,538 @@
+{
+  "pack": "pack:history-view",
+  "test": "tests/types/pinned.test-d.ts",
+  "pairs": [
+    {
+      "address": "spec:application.generation-registry#design.typeRegistryReader",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#RegistryReader",
+      "reason": null
+    },
+    {
+      "address": "spec:application.generation-registry#design.fnGenerationsToWrite",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#generationsToWrite",
+      "reason": null
+    },
+    {
+      "address": "spec:application.generation-registry#design.fnActiveGeneration",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#activeGeneration",
+      "reason": null
+    },
+    {
+      "address": "spec:application.generation-registry#design.validatorGenerationState",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#generationStateValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:application.generation-registry#design.validatorProgressPass",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#progressPassValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:application.generation-registry#design.tableGenerations",
+      "state": "bound",
+      "comparison": "table",
+      "code": "src/read-model/index.ts#readModelTables",
+      "reason": null
+    },
+    {
+      "address": "spec:application.history-projection#design.typeHistoryEvent",
+      "state": "bound",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#HistoryEvent",
+      "reason": null
+    },
+    {
+      "address": "spec:application.history-projection#design.typeOrderAllocation",
+      "state": "bound",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#OrderAllocation",
+      "reason": null
+    },
+    {
+      "address": "spec:application.history-projection#design.typeOrderAllocationHistoryFields",
+      "state": "bound",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#OrderAllocationHistoryFields",
+      "reason": null
+    },
+    {
+      "address": "spec:application.history-projection#design.fnOrderAllocationHistoryKeyOf",
+      "state": "bound",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#orderAllocationHistoryKeyOf",
+      "reason": null
+    },
+    {
+      "address": "spec:application.history-projection#design.fnProjectOrderAllocationHistory",
+      "state": "bound",
+      "comparison": "type",
+      "code": "example/domain/orderAllocationHistory.ts#projectOrderAllocationHistory",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.typeProjection",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#Projection",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.typeReadModel",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#ReadModel",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.fnProjectionOf",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#projectionOf",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.typeWritableGeneration",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#WritableGeneration",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.typeRowWriter",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#RowWriter",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.typeApplyMode",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#ApplyMode",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.typeApplyResult",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#ApplyResult",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.fnApplyProjection",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#applyProjection",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.validatorRowConventions",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#rowConventions",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.validatorOrderSummaryFields",
+      "state": "bound",
+      "comparison": "type",
+      "code": "example/convex/orderSummary.ts#orderSummaryFields",
+      "reason": null
+    },
+    {
+      "address": "spec:application.projection-contract#design.tableOrderSummaries",
+      "state": "bound",
+      "comparison": "table",
+      "code": "example/convex/schema.ts#default",
+      "reason": null
+    },
+    {
+      "address": "spec:application.read-models#design.fnPageInGeneration",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#pageInGeneration",
+      "reason": null
+    },
+    {
+      "address": "spec:application.read-models#design.fnReadModelView",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#readModelView",
+      "reason": null
+    },
+    {
+      "address": "spec:application.rebuild#design.typeRebuildTarget",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#RebuildTarget",
+      "reason": null
+    },
+    {
+      "address": "spec:application.rebuild#design.tableTenantFill",
+      "state": "bound",
+      "comparison": "table",
+      "code": "src/read-model/index.ts#readModelTables",
+      "reason": null
+    },
+    {
+      "address": "spec:application.write-pause#design.typeScopeKey",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/gate/index.ts#ScopeKey",
+      "reason": null
+    },
+    {
+      "address": "spec:application.write-pause#design.fnGateAllows",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/gate/index.ts#gateAllows",
+      "reason": null
+    },
+    {
+      "address": "spec:application.write-pause#design.fnAssertWritable",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/gate/index.ts#assertWritable",
+      "reason": null
+    },
+    {
+      "address": "spec:application.write-pause#design.fnScopesOfUseCase",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/gate/index.ts#scopesOfUseCase",
+      "reason": null
+    },
+    {
+      "address": "spec:application.write-pause#design.validatorClosedEntry",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/gate/index.ts#closedEntryValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:application.write-pause#design.tableMaintenanceGates",
+      "state": "bound",
+      "comparison": "table",
+      "code": "src/gate/index.ts#gateTables",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeSourceRef",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#SourceRef",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-declaration#design.typePermissionPolicy",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/command/index.ts#PermissionPolicy",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeExecutorResult",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/command/index.ts#ExecutorResult",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeBounds",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/command/index.ts#Bounds",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-pipeline#design.typePipelineCall",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/command/index.ts#PipelineCall",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-pipeline#design.typeCommandResponse",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/command/index.ts#CommandResponse",
+      "reason": null
+    },
+    {
+      "address": "spec:command.command-pipeline#design.validatorCommandResponse",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/command/index.ts#commandResponseValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.typeCausedBy",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#CausedBy",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.validatorCausedBy",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#causedByValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.typeOperationRef",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#OperationRef",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.validatorOperationRef",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#operationRefValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.typeEventEnvelope",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#EventEnvelope",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.validatorEventEnvelope",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#eventEnvelopeValidator",
+      "reason": null
+    },
+    {
+      "address": "spec:context.event-envelope#design.typeEnvelopeInput",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#EnvelopeInput",
+      "reason": null
+    },
+    {
+      "address": "spec:context.journal#design.fnCreateJournal",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#createJournal",
+      "reason": null
+    },
+    {
+      "address": "spec:context.journal#design.typeJournal",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#Journal",
+      "reason": null
+    },
+    {
+      "address": "spec:context.journal#design.typeStreamMeta",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#StreamMeta",
+      "reason": null
+    },
+    {
+      "address": "spec:context.queries#design.typeQueryArgs",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#GetArgs",
+      "reason": null
+    },
+    {
+      "address": "spec:context.queries#design.typePageLimit",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#PageLimit",
+      "reason": null
+    },
+    {
+      "address": "spec:context.queries#design.fnBoundedPage",
+      "state": "bound",
+      "comparison": "type",
+      "code": "src/context/index.ts#boundedPage",
+      "reason": null
+    },
+    {
+      "address": "spec:application.generation-registry#design.validatorBatchCursor",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#batchCursorValidator",
+      "reason": "the history view's build adds sourceIndex"
+    },
+    {
+      "address": "spec:application.generation-registry#design.tableGenerationProgress",
+      "state": "ahead",
+      "comparison": "table",
+      "code": "src/read-model/index.ts#readModelTables",
+      "reason": "its cursor, through validatorBatchCursor"
+    },
+    {
+      "address": "spec:application.rebuild#design.typeRebuildConfig",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#RebuildConfig",
+      "reason": "the history view's build adds history targets"
+    },
+    {
+      "address": "spec:application.rebuild#design.fnBatchSizeFor",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#batchSizeFor",
+      "reason": "the history view's build takes a history projection"
+    },
+    {
+      "address": "spec:application.rebuild#design.fnResumeChain",
+      "state": "ahead",
+      "comparison": "typeWithoutCtx",
+      "code": "src/read-model/index.ts#resumeChain",
+      "reason": "through typeRebuildConfig, its ctx erased"
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeReadModelBinding",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#ReadModelBinding",
+      "reason": "the history view's build binds history projections"
+    },
+    {
+      "address": "spec:command.command-pipeline#design.fnWriteReadModels",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/read-model/index.ts#writeReadModels",
+      "reason": "through typeReadModelBinding"
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeRetention",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/command/index.ts#Retention",
+      "reason": "a receipt's tombstone expiry"
+    },
+    {
+      "address": "spec:context.journal#design.typeStreamRegistration",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/context/index.ts#StreamRegistration",
+      "reason": "baselines and migration, and the deferred streamParts for the derived mapping"
+    },
+    {
+      "address": "spec:context.journal#design.typeLoadedStream",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/context/index.ts#LoadedStream",
+      "reason": "the deferred streamParts"
+    },
+    {
+      "address": "spec:context.journal#design.fnLoad",
+      "state": "ahead",
+      "comparison": "typeWithoutCtx",
+      "code": "src/context/index.ts#load",
+      "reason": "through typeStreamRegistration and typeLoadedStream, its ctx erased"
+    },
+    {
+      "address": "spec:context.journal#design.fnAppend",
+      "state": "ahead",
+      "comparison": "typeWithoutCtx",
+      "code": "src/context/index.ts#append",
+      "reason": "through typeLoadedStream, its ctx erased"
+    },
+    {
+      "address": "spec:context.queries#design.fnDefineGet",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/context/index.ts#defineGet",
+      "reason": "through typeStreamRegistration"
+    },
+    {
+      "address": "spec:context.queries#design.fnDefineList",
+      "state": "ahead",
+      "comparison": "type",
+      "code": "src/context/index.ts#defineList",
+      "reason": "through typeStreamRegistration"
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeExecutor",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "differs only in ctx"
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeAdmissionPolicy",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "differs only in ctx"
+    },
+    {
+      "address": "spec:application.write-pause#design.fnCloseScope",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "differs only in ctx"
+    },
+    {
+      "address": "spec:application.write-pause#design.fnResumeScope",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "differs only in ctx"
+    },
+    {
+      "address": "spec:command.command-declaration#design.typeCommandDeclaration",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "leads the code and differs in ctx, in its executor and admission"
+    },
+    {
+      "address": "spec:command.command-declaration#design.fnPublicCommand",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "leads the code and differs in ctx, through typeCommandDeclaration"
+    },
+    {
+      "address": "spec:command.command-declaration#design.fnInternalCommand",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "leads the code and differs in ctx, through typeCommandDeclaration"
+    },
+    {
+      "address": "spec:command.command-pipeline#design.fnRunPipeline",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "leads the code and differs in ctx, through typeCommandDeclaration"
+    },
+    {
+      "address": "spec:command.command-pipeline#design.fnRelayFailure",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "leads the code and differs in ctx, through typeCommandDeclaration"
+    },
+    {
+      "address": "spec:application.aggregate-projection#design.tableProjectionMarkers",
+      "state": "notCompared",
+      "comparison": "none",
+      "code": null,
+      "reason": "The pin is outside pack:history-view and is not emitted; the aggregate form's table, outside the Pack, while readModelTables still holds it"
+    }
+  ]
+}

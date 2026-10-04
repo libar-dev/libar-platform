@@ -16,7 +16,8 @@ jobs:
         with:
           python-version: "3.x"
       - run: npm ci
-      - run: python3 design/tools/check.py
+      - run: PYTHONDONTWRITEBYTECODE=1 python3 design/tools/check.py
+      - run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest design/tools/test_decisions.py
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check

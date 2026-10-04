@@ -149,9 +149,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.acceptance-contract#2",
-          "file": "design/specs/platform/acceptance-contract.sdp.md",
-          "line": 25
+          "spec": "spec:platform.acceptance-contract",
+          "question": "Extension E-17: the doc says that a link between source and test is not a passing run and that the first experiment passes when every Layer 0, 1 and 2 scenario passes, and it does not say how a pass of the whole is established from runs; the option taken here is the acceptance check: the required scenarios are generated from the graph, one per example of a required row with its tier, composition and verifiers, and read against one run's record, so that a scenario with no verifier, with no result or with a result other than passed keeps the whole from passing; the alternative, a list of scenarios and verifiers kept by hand beside the tests, was not taken because the graph already holds each example's row, tier, composition and verifiers; the owner confirms (E-17, Acceptance scenarios, First experiment)",
+          "file": "design/specs/platform/acceptance-contract.sdp.md"
         },
         {
           "kind": "extension",
@@ -200,9 +200,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#7",
-          "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 65
+          "spec": "spec:application.first-experiment",
+          "question": "Extension E-17, the rows the experiment requires: the doc says the experiment passes when every Layer 0, 1 and 2 scenario passes, and its one all-layer row, Sc ALL-1, applies to every installed layer; the option taken here requires the twenty-three rows the doc's table gives Layer 0, 1 or 2 and Sc ALL-1, each at the tier the acceptance contract names for it, so that the native proof of the audit and the diagnostic is part of the experiment; the owner confirmed both (E-17, First experiment, Sc ALL-1)",
+          "file": "design/specs/application/first-experiment.sdp.md"
         }
       ],
       "families": [
@@ -241,9 +241,10 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment.native-acceptance-production-configuration#1",
+          "spec": "spec:application.first-experiment.native-acceptance-production-configuration",
+          "question": "The row's pass condition names concurrency and this example binds no concurrency claim: no native observation shows that the disposable backend's concurrency matches a release's, and the test shows only that the deployment's environment holds the three variables its `auth.config.ts` reads and no other; the owner rules whether that reading is enough for the row or the row needs an example that runs commands at once on the production composition (Sc L2-9, E-15)",
           "file": "design/specs/application/first-experiment.native-acceptance-production-configuration.sdp.md",
-          "line": 21
+          "open": false
         }
       ],
       "families": [
@@ -358,9 +359,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.generation-registry#4",
-          "file": "design/specs/application/generation-registry.sdp.md",
-          "line": 36
+          "spec": "spec:application.generation-registry",
+          "question": "Extension E-8, the first generation: the doc says how a generation is rebuilt and not how a read model's first generation comes to exist; the option taken here is that a read model is installed through its first rebuild, generation 1 starting as `building` like any other, so a read model added to a deployment that has history serves that history from its first switch and no transition claims coverage it did not build; a command that finds no generation to write fails as a technical failure and a query that finds no active generation fails the same way (E-8, D9, D19)",
+          "file": "design/specs/application/generation-registry.sdp.md"
         }
       ],
       "families": [
@@ -486,9 +487,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.native-harness#2",
-          "file": "design/specs/platform/native-harness.sdp.md",
-          "line": 25
+          "spec": "spec:platform.native-harness",
+          "question": "Extension E-15: the doc does not say what the fixture app contains, how a fault enters a run, what a test may observe, or what a test controls on a backend that offers no clock and no scheduler switch; the option taken here is the rules below; two of them read the doc for the owner: the production-configuration run of Sc L2-9 is taken as the scenarios routed to the production composition, where the corpus earlier asked for the full Layer 0 to 2 suite on a release build, and evidence records that back a pass claim are kept in the repository; whether the durations Layer 3 pins become configuration, so that a test can outwait them, is left to Layer 3; and because the Convex CLI reads `convex.json` and `package.json` from its working directory, a composition is a name, a project directory and a functions directory, the production composition's project directory is `example/` with a `package.json` that links to the repository's one, and both compositions' generated files are committed; the owner has not ruled on the layout (E-15, Acceptance scenarios, Sc L2-9)",
+          "file": "design/specs/platform/native-harness.sdp.md"
         },
         {
           "kind": "extension",
@@ -532,9 +533,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.projection-contract#2",
-          "file": "design/specs/application/projection-contract.sdp.md",
-          "line": 34
+          "spec": "spec:application.projection-contract",
+          "question": "Extension E-9, two projection versions: the doc says live update and rebuild share one projection and does not say how a command writes two generations built by two versions; the option taken here is that a read model declares its projection versions as a list, the latest first, and `applyProjection` writes each generation with the projection whose version the generation row records, failing as a technical failure when the read model declares none of that version, so the rows of one generation are one truth of one version; the cost is that an earlier version stays in the code while a generation that records it is written or can be rolled back to, and a projection changed without a version change is still undetected (E-9, D8, D9)",
+          "file": "design/specs/application/projection-contract.sdp.md"
         }
       ],
       "families": [
@@ -578,9 +579,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-declaration#2",
-          "file": "design/specs/command/command-declaration.sdp.md",
-          "line": 35
+          "spec": "spec:command.command-declaration",
+          "question": "Extension E-7: the pipeline receives the declaration and takes the fingerprint's contract version from it, and the type check at a typed caller is the check of Sc L2-4, so no standing map from command type to declaration exists; the conditional dispatcher of `spec:command.outcome-boundary` is the one thing that would need such a map and brings it with it; this is a provisional reading the owner rules (E-7, D12, D18, OQ2)",
+          "file": "design/specs/command/command-declaration.sdp.md"
         }
       ],
       "families": [
@@ -656,15 +657,15 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.read-models#3",
-          "file": "design/specs/application/read-models.sdp.md",
-          "line": 51
+          "spec": "spec:application.read-models",
+          "question": "Extension E-6, as it reaches queries: a parent query establishes and authorizes its actor through `authorizeQuery`, and its refusal is the command's rejection shape, `RejectionData` with the query's name in the field `entry` and the codes `unauthenticated` or `forbidden`; the owner confirmed the word, and nothing else of the shape is new (E-6, D7, D11, Law 5)",
+          "file": "design/specs/application/read-models.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.outcome-boundary#2",
-          "file": "design/specs/command/outcome-boundary.sdp.md",
-          "line": 39
+          "spec": "spec:command.outcome-boundary",
+          "question": "Extension E-5: the doc says a query authorizes before it discloses and does not say how a refused query is answered; here a parent query's refusal is the same `RejectionData` a command's is, with the name of the entry that refused in the field `entry` and only the codes `unauthenticated` and `forbidden`, and a use case's own rejection is thrown as the kernel's bare `Rejection`, the way a context throws one, while a context query's transient refusal `writePaused` reaches the caller unchanged, in the transient shape with no `entry`, because it is not a refusal of the caller; the owner confirmed the shared shape, the two codes, the bare use-case rejection and the word entry for the field (E-5, D7, Law 5)",
+          "file": "design/specs/command/outcome-boundary.sdp.md"
         }
       ],
       "families": [
@@ -745,15 +746,15 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#3",
-          "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 61
+          "spec": "spec:application.first-experiment",
+          "question": "Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model (E-46, First experiment)",
+          "file": "design/specs/application/first-experiment.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.orders-inventory-example#1",
-          "file": "design/specs/application/orders-inventory-example.sdp.md",
-          "line": 27
+          "spec": "spec:application.orders-inventory-example",
+          "question": "Extension E-46: the second lifecycle command, the essential summary, the command that creates stock, the unit price an order line carries, the bound on an order line's stock item ID, the rejection reasons, the stream budgets of the two stream types, the order of the two context calls and the history-dependent view Sc L2-6 builds are choices the doc leaves open; two of them are decided, that the stock item keeps totals only and `release` takes its quantities from the cancelled order's own lines, and that the order allocation history view stays in the experiment; the owner may substitute the others, and the experiment's terms move with them (E-46, E-2, E-9, First experiment)",
+          "file": "design/specs/application/orders-inventory-example.sdp.md"
         },
         {
           "kind": "extension",
@@ -800,9 +801,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.projection-contract#3",
-          "file": "design/specs/application/projection-contract.sdp.md",
-          "line": 35
+          "spec": "spec:application.projection-contract",
+          "question": "The rule that a row with a newer version is never overwritten is read as the backfill path's rule only, so a live write to the active generation always lands, as `step3` has it; the owner has not confirmed that reading (D9, E-9)",
+          "file": "design/specs/application/projection-contract.sdp.md"
         }
       ],
       "families": [
@@ -976,9 +977,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.tenancy-and-authority#3",
-          "file": "design/specs/command/tenancy-and-authority.sdp.md",
-          "line": 39
+          "spec": "spec:command.tenancy-and-authority",
+          "question": "Extension E-37: the design takes grants as written by plain library helpers, `insertGrant` and `revokeGrant`, over which the application registers its own internal mutations, with a tenant's first grant created with admin access through the composition's own internal grant mutation, and later grants the same way or by whatever command the composition registers; the library registers no grant function and promises no recorded bootstrap, first-admin flow or invitation, which are an adopter's to build on the helpers (E-37, D11, Law 5)",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md"
         }
       ],
       "families": [
@@ -1018,9 +1019,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.actor-and-scope#2",
-          "file": "design/specs/command/actor-and-scope.sdp.md",
-          "line": 32
+          "spec": "spec:command.actor-and-scope",
+          "question": "Extension E-6: the tenant scope of an operation, of a command and of a query is the `tenantId` argument alone, so none takes a separate scope argument; this is a provisional reading the owner rules (E-6, Law 11, D11)",
+          "file": "design/specs/command/actor-and-scope.sdp.md"
         }
       ],
       "families": [
@@ -1064,9 +1065,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.f11-components-have-no-ctx-auth#1",
-          "file": "design/specs/facts/f11-components-have-no-ctx-auth.sdp.md",
-          "line": 21
+          "spec": "spec:facts.f11-components-have-no-ctx-auth",
+          "question": "Observed against the documentation on 2026-10-01: the components page says `ctx.auth` is not available within a component; on the pinned native backend, release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `ctx.auth.getUserIdentity()` inside a component query returned the caller's identity, and `convex-test` 0.0.60 returns null for the same call; the design does not depend on which holds, because D11 passes the actor explicitly and no component function reads `ctx.auth`; whether this fact's wording and status follow the documentation or the backend is the owner's ruling; the design takes the provisional reading that the documentation's sentence stays the fact and that the Specs of the kernel, context and command families state no component function reads `ctx.auth` or `process.env` as the design's rule, which a lint check over `src/context` and every component directory of the fixture composition enforces (F11, D11)",
+          "file": "design/specs/facts/f11-components-have-no-ctx-auth.sdp.md"
         }
       ],
       "families": [
@@ -1105,33 +1106,33 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#4",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 62
+          "spec": "spec:command.command-pipeline",
+          "question": "Extension E-33: the doc lists the callers that need receipts and leaves UI commands to the client guarantee; here a public caller may still supply a request key to opt into a receipt, which Probe 1 showed a caller of `ConvexHttpClient` needs when it retries, and the internal entry always requires one (E-33, D6, Probe 1)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.idempotency-and-receipts#1",
-          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
-          "line": 42
+          "spec": "spec:command.idempotency-and-receipts",
+          "question": "Probe 1 showed on the pinned backend that a closed client leaves its mutation executed once or not at all, that a backend restart leaves it executed once, and that `ConvexHttpClient` does not retry, so a caller's retry is a second execution; whether the public entry requires a request key from callers of the HTTP client, or leaves it optional, is the owner's ruling; the design takes it optional on the public entry and required on the internal entry, a provisional reading the owner rules (Probe 1, D6, E-33)",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.idempotency-and-receipts#2",
-          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
-          "line": 43
+          "spec": "spec:command.idempotency-and-receipts",
+          "question": "Extension E-33: a public caller may supply a request key to opt into a receipt, and the internal entry always requires one; the doc lists the callers that need receipts and does not say whether a UI caller may opt in (E-33, D6)",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d06-idempotency-client-and-receipts#1",
-          "file": "design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md",
-          "line": 33
+          "spec": "spec:decisions.d06-idempotency-client-and-receipts",
+          "question": "Probe 1 ran on 2026-10-01: the guarantee holds across a backend restart, a closed client leaves its mutation executed once or not at all, and the HTTP client does not retry; `ConvexHttpClient` is a Convex client the guarantee does not reach, so whether its callers join the callers that need receipts is the owner's ruling (Probe 1, D6)",
+          "file": "design/specs/decisions/d06-idempotency-client-and-receipts.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.probe-plan#1",
-          "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 38
+          "spec": "spec:facts.probe-plan",
+          "question": "Probe 1 ran on 2026-10-01: a closed client leaves its mutation executed once or not at all, a backend restart leaves it executed once, and the HTTP client does not retry; whether callers of `ConvexHttpClient` must supply a request key is D6's question for the owner (Probe 1, D6)",
+          "file": "design/specs/facts/probe-plan.sdp.md"
         },
         {
           "kind": "extension",
@@ -1209,9 +1210,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.native-harness#3",
-          "file": "design/specs/platform/native-harness.sdp.md",
-          "line": 26
+          "spec": "spec:platform.native-harness",
+          "question": "Extension E-15: the design takes the fixture action `nonUiCaller:send`, which any authenticated client of the fixture composition may call to run any fixture command's internal entry under any namespace and actor kind, as the fixture's stand-in for trusted server code, kept out of the production composition; it is a provisional reading the owner rules, because within the fixture composition it lets a client do what `spec:command.tenancy-and-authority` refuses a client (E-15, D11, Sc L1-7)",
+          "file": "design/specs/platform/native-harness.sdp.md"
         }
       ],
       "families": [
@@ -1282,9 +1283,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.native-harness#1",
-          "file": "design/specs/platform/native-harness.sdp.md",
-          "line": 24
+          "spec": "spec:platform.native-harness",
+          "question": "Extension E-13: the doc says native acceptance runs with production authority and a disposable backend per test and does not say how a test obtains a signed identity, which a production issuer cannot mint for a throwaway backend; the option taken here is a fixture issuer: a composition that runs natively reads its issuer, application ID and key set from the deployment's environment variables, the harness sets the key set to a data URI whose private key it holds, and each caller under test is an ordinary client carrying a token the harness signs; the option first taken, the backend's admin key acting as an identity, was dropped because such a caller passes Convex's visibility check for internal functions, which `spec:platform.native-harness.admin-key-acting-as-identity-reaches-internal-function` shows; this reading reaches into production, because running the production composition natively with no changed file means the example application's `auth.config.ts` is a `customJwt` provider whose trust root is whatever the deployment's environment names, and a provider that fetches its keys from an issuer's own endpoint cannot be run on a disposable backend this way; the owner rules on both halves, the test identity and the production provider (E-13, S13, Sc L2-9, D11)",
+          "file": "design/specs/platform/native-harness.sdp.md"
         },
         {
           "kind": "extension",
@@ -1329,9 +1330,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.probe-plan#6",
-          "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 43
+          "spec": "spec:facts.probe-plan",
+          "question": "Extension E-16: the doc says each probe is one small test on a native backend and that a probed fact is one a native backend test showed, and does not say how a test that settles an unknown states what it expects or what follows when the backend answers otherwise; the option taken here: a probe is written as example Specs that verify its fact, each bound to its native test; an example's bound values are the expectation written before the first run; a first run that shows another value is a finding recorded on the fact, and the example is then bound to what that release does and says so; an example fails when its run did not reach the boundary it is about; a later run on a new release that shows another value is again a finding, and the test is not repaired to keep the old value; a size is recorded and not asserted, while a limit the backend enforces is bound as observed; and what a local backend cannot answer is named on the example and stays open on the fact; the owner confirms (E-16, Probes, Acceptance scenarios)",
+          "file": "design/specs/facts/probe-plan.sdp.md"
         },
         {
           "kind": "extension",
@@ -1449,9 +1450,9 @@
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.probe-plan#2",
-          "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 44
+          "spec": "spec:facts.probe-plan",
+          "question": "Probe 3 ran on 2026-10-01 for latency on a local backend; a local backend has no function-call quota, so that half is the hosted example `spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-hosted-function-calls`, which only a hosted deployment can run (Probe 3, F4, D2, D8, E-59)",
+          "file": "design/specs/facts/probe-plan.sdp.md"
         }
       ],
       "families": [
@@ -1691,7 +1692,7 @@
       "reason": "Owner test 5: whether a failed check keeps every tenant's writers out with no override, and how often the drill runs, trade availability against safety and a standing operator duty against assurance, with no evidence on which weighs more, and the doc says none of them [design/reviews/consensus-ledger.json:2301]; it stands apart from OD-082, which is the mechanism and names these policies as outside it.",
       "lean": {
         "do": "Keep fail-closed with no override and the deployment-wide door as the provisional reading, mark the three policies as extensions on `spec:application.restore`, and let the owner set the override, the failure scope and the drill cadence.",
-        "restsOn": "[design/specs/application/restore.sdp.md:68] and [design/specs/application/restore.sdp.md:85] keep a failed run closed with no reopening; [design/specs/application/restore.sdp.md:62] and [design/specs/application/restore.sdp.md:112] set the drill at once per release; [design/specs/application/write-pause.sdp.md:61] refuses every write with scope `all` while the door is set; [design/specs/application/restore.sdp.md:96] already lets a check run for one tenant, so a per-tenant failure scope is half a mechanism and the door is what makes it deployment-wide. **Judgment.** For the person restoring at night, no override means a finding in one tenant's stream keeps every tenant down until a repair or another backup; what each level would mean is: no override, safest and longest; a tenant-scoped door, one tenant down; an override recorded on the run, shortest and a decision a person makes under pressure.",
+        "restsOn": "[design/specs/application/restore.sdp.md:68] and [design/specs/application/restore.sdp.md:85] keep a failed run closed with no reopening; [design/specs/application/restore.sdp.md:62] and [design/specs/application/restore.sdp.md:112] set the drill at once per release; [spec:application.write-pause#design.fnGateAllows] refuses every write with scope `all` while the door is set; [design/specs/application/restore.sdp.md:96] already lets a check run for one tenant, so a per-tenant failure scope is half a mechanism and the door is what makes it deployment-wide. **Judgment.** For the person restoring at night, no override means a finding in one tenant's stream keeps every tenant down until a repair or another backup; what each level would mean is: no override, safest and longest; a tenant-scoped door, one tenant down; an override recorded on the run, shortest and a decision a person makes under pressure.",
         "settles": "The owner's word on the three policies."
       },
       "checkedBy": null,
@@ -1935,9 +1936,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:advanced.coalesced-recomputation#1",
-          "file": "design/specs/advanced/coalesced-recomputation.sdp.md",
-          "line": 29
+          "spec": "spec:advanced.coalesced-recomputation",
+          "question": "The dirty-mark table, the recompute scheduling and the staleness field are deferred to the build on this trigger (D18, Decision method rule 4)",
+          "file": "design/specs/advanced/coalesced-recomputation.sdp.md"
         }
       ],
       "families": [
@@ -1969,9 +1970,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:advanced.cross-stream-online-rebuild#1",
-          "file": "design/specs/advanced/cross-stream-online-rebuild.sdp.md",
-          "line": 29
+          "spec": "spec:advanced.cross-stream-online-rebuild",
+          "question": "The dependency protocol or the consistent source cut, and the online cutover for this class, are deferred to the build on this trigger (D18, Decision method rule 4)",
+          "file": "design/specs/advanced/cross-stream-online-rebuild.sdp.md"
         }
       ],
       "families": [
@@ -2003,9 +2004,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:advanced.ordered-consumer#1",
-          "file": "design/specs/advanced/ordered-consumer.sdp.md",
-          "line": 28
+          "spec": "spec:advanced.ordered-consumer",
+          "question": "The sequence allocation, the consumer position record, the worker's batch bound and the skip authorization are deferred to the build on this trigger (D18, Decision method rule 4)",
+          "file": "design/specs/advanced/ordered-consumer.sdp.md"
         }
       ],
       "families": [
@@ -2037,9 +2038,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:advanced.trigger-table#1",
-          "file": "design/specs/advanced/trigger-table.sdp.md",
-          "line": 22
+          "spec": "spec:advanced.trigger-table",
+          "question": "No trigger has fired; each capability's design is deferred until its activation record exists (D18, Decision method rule 4)",
+          "file": "design/specs/advanced/trigger-table.sdp.md"
         }
       ],
       "families": [
@@ -2071,9 +2072,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:agents.agent-runs#1",
-          "file": "design/specs/agents/agent-runs.sdp.md",
-          "line": 36
+          "spec": "spec:agents.agent-runs",
+          "question": "The trigger has not fired; the run, proposal and attempt tables, the proposal schema, the policy engine's inputs and the provider adapters are deferred to the build (D17, Decision method rule 4)",
+          "file": "design/specs/agents/agent-runs.sdp.md"
         }
       ],
       "families": [
@@ -2105,21 +2106,21 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:agents.agent-runs#2",
-          "file": "design/specs/agents/agent-runs.sdp.md",
-          "line": 37
+          "spec": "spec:agents.agent-runs",
+          "question": "OQ2 dependency: whether a rejected agent proposal must be recorded as a fact decides whether the generic internal dispatcher of D7 is needed at the agent boundary; the design carries it as a conditional (OQ2, D7)",
+          "file": "design/specs/agents/agent-runs.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.outcome-boundary#4",
-          "file": "design/specs/command/outcome-boundary.sdp.md",
-          "line": 41
+          "spec": "spec:command.outcome-boundary",
+          "question": "OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides whether the generic internal dispatcher below exists; until then it is a conditional design and no command uses it (OQ2, D7)",
+          "file": "design/specs/command/outcome-boundary.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d07-rejections-thrown-not-stored#1",
-          "file": "design/specs/decisions/d07-rejections-thrown-not-stored.sdp.md",
-          "line": 31
+          "spec": "spec:decisions.d07-rejections-thrown-not-stored",
+          "question": "OQ2: whether the product needs a record of refused commands anywhere, for security audit or agent proposals, decides where the nested mutation is required and whether the generic internal dispatcher exists (OQ2, D7)",
+          "file": "design/specs/decisions/d07-rejections-thrown-not-stored.sdp.md"
         },
         {
           "kind": "planAmbiguity",
@@ -2159,9 +2160,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:agents.budget-accounting#1",
-          "file": "design/specs/agents/budget-accounting.sdp.md",
-          "line": 23
+          "spec": "spec:agents.budget-accounting",
+          "question": "The reservation and usage records, the slot allocator and the reconciliation operation are deferred to the build on the agent trigger (D17, Decision method rule 4)",
+          "file": "design/specs/agents/budget-accounting.sdp.md"
         }
       ],
       "families": [
@@ -2193,27 +2194,27 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.f17-migrations-fits-generation-backfill#1",
-          "file": "design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md",
-          "line": 22
+          "spec": "spec:facts.f17-migrations-fits-generation-backfill",
+          "question": "Hosted quotas, sustained contention, automatic stall detection, backup replacement, old encrypted cursors, fence advancement, parallel callbacks and a rebuild across changing tenants are not run by these examples; the native backend evidence proves only the named boundaries and does not settle those behaviors.",
+          "file": "design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.rebuild#1",
-          "file": "design/specs/application/rebuild.sdp.md",
-          "line": 57
+          "spec": "spec:application.rebuild",
+          "question": "`@convex-dev/migrations` walks only the tables of the component it is defined in, reaches a context's rows only through a parent internal mutation written by hand against a contract its README does not document and the compiled tier needs a cast for, keeps a status apart from the generation's state, and leaves no error on its row when a batch fails past the read limit, so every batch is driven by the rebuild's own self-scheduled internal mutation and the progress row is the one checkpoint; a hosted deployment and sustained contention are not observed (Probe 6, F1, F17, D9)",
+          "file": "design/specs/application/rebuild.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d09-rebuild-online-by-default#1",
-          "file": "design/specs/decisions/d09-rebuild-online-by-default.sdp.md",
-          "line": 30
+          "spec": "spec:decisions.d09-rebuild-online-by-default",
+          "question": "Probe 6 ran a backfill batch racing a live command and the migrations component on the native backend, with its results on F17; a hosted deployment and sustained contention are not run (Probe 6, F1, F17, D9)",
+          "file": "design/specs/decisions/d09-rebuild-online-by-default.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.probe-plan#4",
-          "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 41
+          "spec": "spec:facts.probe-plan",
+          "question": "Probe 6 records native backend evidence on the pins named by F17: a row race, cancel and resume, thrown-batch rollback, restart, table scope and a parent batch returning a context cursor to the migrations driver; hosted quotas and sustained contention are not run.",
+          "file": "design/specs/facts/probe-plan.sdp.md"
         }
       ],
       "families": [
@@ -2237,10 +2238,10 @@
       "lean": {
         "do": "Close on Probe 6's result: the rebuild drives every batch, backfill, verify and purge, with its own self-scheduled internal mutation, uses `@convex-dev/migrations` for nothing, keeps the progress row as the one checkpoint, and keeps the component pinned as a dev dependency for the fixture's probe only.",
         "restsOn": "Lean of the domain lens, under the owner's one-advisor word of 2026-10-03, on a row whose advisor is `convex`. Probe 6 ran at the native backend tier on `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `convex-helpers` 0.1.124 and `@convex-dev/migrations` 0.3.6 [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:13], and F17 is probed [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:11]. On those pins the component reaches a context's rows only through a parent mutation written by hand against a contract its README does not document and the compiled tier needs a cast for, its status and the generation's state are two vocabularies, and a failure past the read limit leaves no error on its row [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:21,44,45,49]. The Specs already take the consequence: every batch is driven by a self-scheduled internal mutation under one batch contract and the rebuild uses the component for nothing [design/specs/application/rebuild.sdp.md:58,59,86; design/specs/decisions/d09-rebuild-online-by-default.sdp.md:42]. The round 2 close records the pin as a dev dependency for the fixture's probe only [design/STATE.md:38, a pointer]. **Judgment.** The earlier lean kept a split of two drivers \"until it passes\"; the probe did not pass the component, so that condition was not met but replaced: the split is gone and one driver remains, the do-nothing option the earlier `against` named. Nothing in this row changes a Spec: the ruling records what the Specs say.",
-        "against": "**Judgment.** The component gives checkpointing, resume and a status for free where it fits, and a later release might fit; the probe shows 0.3.6 on the pinned backend and nothing about a later one. The cost of the Spec's choice is that the platform owns its batch driver and its stall answer, which is `abortGeneration` and a new `startGeneration` [design/specs/application/rebuild.sdp.md:144].",
+        "against": "**Judgment.** The component gives checkpointing, resume and a status for free where it fits, and a later release might fit; the probe shows 0.3.6 on the pinned backend and nothing about a later one. The cost of the Spec's choice is that the platform owns its batch driver and its stall answer, which is `abortGeneration` and a new `startGeneration` [spec:application.rebuild#design.stallSignal].",
         "settles": "Settled by Probe 6 at the native backend tier on the pins named; what the six examples do not run, hosted quotas, sustained contention, automatic stall detection, timeout and retry exhaustion [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:31,49], stays open on F17 and is not this row's.",
         "changes": "No Spec: `spec:application.rebuild`, `spec:decisions.d09-rebuild-online-by-default` and `spec:facts.f17-migrations-fits-generation-backfill` already carry the ruling. The register row alone. The alternative, a driver on a later release of the component, would edit `spec:application.rebuild` at its E-40 question and `fnBackfillBatch` and add a dependency.",
-        "ifWrong": "A later release that fits is a new fact with its own probe; the batch contract is one internal mutation per batch [design/specs/application/rebuild.sdp.md:111,114], so a driver swap is an edit to the rebuild Spec and the batch functions, and the cursor and the bound are the design's numbers either way [design/specs/application/rebuild.sdp.md:88,146]."
+        "ifWrong": "A later release that fits is a new fact with its own probe; the batch contract is one internal mutation per batch [spec:application.rebuild#design.transactionBoundary,114], so a driver swap is an edit to the rebuild Spec and the batch functions, and the cursor and the bound are the design's numbers either way [design/specs/application/rebuild.sdp.md:88,146]."
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
@@ -2254,9 +2255,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:processes.approvals#1",
-          "file": "design/specs/processes/approvals.sdp.md",
-          "line": 22
+          "spec": "spec:processes.approvals",
+          "question": "The approvals table, its indexes and the approval command's declaration are deferred to the build on the process trigger; the rules here are the promise the build must keep (D16, Decision method rule 4)",
+          "file": "design/specs/processes/approvals.sdp.md"
         }
       ],
       "families": [
@@ -2287,9 +2288,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:processes.start-checkout-example#1",
-          "file": "design/specs/processes/start-checkout-example.sdp.md",
-          "line": 26
+          "spec": "spec:processes.start-checkout-example",
+          "question": "The trigger has not fired; the workflow definition, the process record, the reservation's business expiry and the payment obligation's handler are deferred to the build until the operation spans time, external systems or human decisions (D16, Decision method rule 4)",
+          "file": "design/specs/processes/start-checkout-example.sdp.md"
         }
       ],
       "families": [
@@ -2320,9 +2321,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:processes.start-checkout-example#2",
-          "file": "design/specs/processes/start-checkout-example.sdp.md",
-          "line": 27
+          "spec": "spec:processes.start-checkout-example",
+          "question": "Which of the three late-payment policies applies is a product decision the build records per deployment: reallocate, ask a person, or refund as a separately tracked operation (D16)",
+          "file": "design/specs/processes/start-checkout-example.sdp.md"
         },
         {
           "kind": "productDecision",
@@ -2359,9 +2360,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:processes.workflow-processes#1",
-          "file": "design/specs/processes/workflow-processes.sdp.md",
-          "line": 37
+          "spec": "spec:processes.workflow-processes",
+          "question": "The trigger has not fired; the process record's table, the step signatures, the wait mechanism for an obligation's result and the deploy procedure are deferred to the build (D16, Decision method rule 4)",
+          "file": "design/specs/processes/workflow-processes.sdp.md"
         }
       ],
       "families": [
@@ -2392,9 +2393,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:processes.workflow-processes#2",
-          "file": "design/specs/processes/workflow-processes.sdp.md",
-          "line": 38
+          "spec": "spec:processes.workflow-processes",
+          "question": "Whether an old run is kept, migrated or blocked on a given deploy is a per-release choice the build records; the README's determinism rule means keeping requires the old definition to stay registered under its version (D16, S11)",
+          "file": "design/specs/processes/workflow-processes.sdp.md"
         },
         {
           "kind": "productDecision",
@@ -2431,27 +2432,27 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#1",
-          "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 59
+          "spec": "spec:application.first-experiment",
+          "question": "OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on this experiment's local measurement of component call cost, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, Probe 3)",
+          "file": "design/specs/application/first-experiment.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:context.context-component#1",
-          "file": "design/specs/context/context-component.sdp.md",
-          "line": 49
+          "spec": "spec:context.context-component",
+          "question": "OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on the first experiment's local measurement, with the hosted usage reading as the one measurement still to take, and a measured workload that misses an agreed target or a usage reading above an agreed share reopens it (OQ1, D2)",
+          "file": "design/specs/context/context-component.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d02-context-owns-state-and-journal#2",
-          "file": "design/specs/decisions/d02-context-owns-state-and-journal.sdp.md",
-          "line": 31
+          "spec": "spec:decisions.d02-context-owns-state-and-journal",
+          "question": "OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on the first experiment's local measurement, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, D2)",
+          "file": "design/specs/decisions/d02-context-owns-state-and-journal.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.obligation-module#3",
-          "file": "design/specs/obligations/obligation-module.sdp.md",
-          "line": 55
+          "spec": "spec:obligations.obligation-module",
+          "question": "OQ1 dependency: OQ1 is answered with a component for every context, so a local reaction's body runs as a nested mutation; if a measured workload reopens it, only the bodies change shape (OQ1, Probe 3)",
+          "file": "design/specs/obligations/obligation-module.sdp.md"
         },
         {
           "kind": "planAmbiguity",
@@ -2495,27 +2496,31 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#2",
+          "spec": "spec:application.first-experiment",
+          "question": "OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum of 100 lines and reports the numbers per line so the owner can choose (OQ3)",
           "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 60
+          "open": false
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.parent-use-cases#1",
+          "spec": "spec:application.parent-use-cases",
+          "question": "OQ3: the largest order `PlaceOrder` supports is a product decision; the limit bullet below carries a placeholder and the first experiment measures with a provisional maximum (OQ3, D10)",
           "file": "design/specs/application/parent-use-cases.sdp.md",
-          "line": 54
+          "open": false
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:context.batch-shaped-api#1",
+          "spec": "spec:context.batch-shaped-api",
+          "question": "OQ3: the largest order the placement command supports is a product decision; each operation's `maxStreams` is set from it and the default ceiling of 256 stands until then (OQ3, D10)",
           "file": "design/specs/context/batch-shaped-api.sdp.md",
-          "line": 26
+          "open": false
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d10-contexts-meet-in-parent-use-cases#1",
+          "spec": "spec:decisions.d10-contexts-meet-in-parent-use-cases",
+          "question": "OQ3: the largest order the placement command supports is a product decision; until it is made the limit is a placeholder in the first experiment (OQ3, D10)",
           "file": "design/specs/decisions/d10-contexts-meet-in-parent-use-cases.sdp.md",
-          "line": 31
+          "open": false
         }
       ],
       "families": [
@@ -2551,9 +2556,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#4",
-          "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 62
+          "spec": "spec:application.first-experiment",
+          "question": "Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)",
+          "file": "design/specs/application/first-experiment.sdp.md"
         },
         {
           "kind": "extension",
@@ -2595,9 +2600,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#5",
-          "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 63
+          "spec": "spec:application.first-experiment",
+          "question": "Extension E-47, the documents a command reads: the design expected one `PlaceOrder` of N lines to read about N + 6 documents, and the pinned backend counted 3N + 5; the measurement run decides where the other 2N reads come from (E-47, F13)",
+          "file": "design/specs/application/first-experiment.sdp.md"
         }
       ],
       "families": [
@@ -2634,9 +2639,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.first-experiment#6",
-          "file": "design/specs/application/first-experiment.sdp.md",
-          "line": 64
+          "spec": "spec:application.first-experiment",
+          "question": "Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a run seeds its grants and makes the order summary writable with admin access before its first command, the production composition names no service issuer, its `auth.config.ts` reads its issuer from environment variables, and it is the Convex app whose project directory is `example/`; these are options taken here and the owner has not ruled (E-8, E-13, E-15, E-37, E-46)",
+          "file": "design/specs/application/first-experiment.sdp.md"
         }
       ],
       "families": [
@@ -2677,15 +2682,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.generation-registry#1",
-          "file": "design/specs/application/generation-registry.sdp.md",
-          "line": 33
+          "spec": "spec:application.generation-registry",
+          "question": "Extension E-8: the doc names a generation registry, a marker and a gate without their shapes, and says to keep the old generation for a rollback period without saying whether live commands keep writing it; the option taken here is the `generations` table below with seven states, a rollback period of 7 days, one generation being built per read model at a time, and a retired generation that is kept and not written, so that a rollback reopens it as `verifying`, one verify pass repairs what the writes since its retirement changed, and the ordinary switch makes it active again; a rollback is therefore a verify pass and then a switch of one write, never one write by itself (E-8, D9, Sc L2-5)",
+          "file": "design/specs/application/generation-registry.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:application.rebuild#3",
-          "file": "design/specs/application/rebuild.sdp.md",
-          "line": 59
+          "spec": "spec:application.rebuild",
+          "question": "Extension E-8: the registry states, the rollback period, what a rollback does, the gate document, the scope a paused rebuild closes and the reach of a generation are design choices the doc does not make; they are pinned in the two contracts under this workflow (E-8, E-9, E-38, D9)",
+          "file": "design/specs/application/rebuild.sdp.md"
         },
         {
           "kind": "extension",
@@ -2728,9 +2733,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.generation-registry#2",
-          "file": "design/specs/application/generation-registry.sdp.md",
-          "line": 34
+          "spec": "spec:application.generation-registry",
+          "question": "Extension E-8, reach of a generation: the doc says nothing about tenants and rebuild; one generation per read model spans every tenant, the registry has no tenant dimension, one row is active for all tenants and the batches iterate the tenant list of `spec:command.actor-and-scope`; the registry is operational data of the deployment, so its indexes lead with the read model name and not with `tenantId`, a confirmed deviation from Law 11's index rule of the same kind the obligation module records under E-57, while every table that holds tenant data, the read-model rows among them, leads with the tenant; a rebuild for one tenant is not offered (E-8, D9, D11, Law 11, E-57)",
+          "file": "design/specs/application/generation-registry.sdp.md"
         }
       ],
       "families": [
@@ -2766,9 +2771,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.generation-registry#3",
-          "file": "design/specs/application/generation-registry.sdp.md",
-          "line": 35
+          "spec": "spec:application.generation-registry",
+          "question": "Extension E-42, as it touches the registry: a restore brings back a generation row and its progress row at their checkpoint and drops the scheduled batch that was driving them, so the row's fence at inventory time is the restore's proof that the generation is still stranded, and `resumeChain` bumping it is the proof that it is not (E-42, F12)",
+          "file": "design/specs/application/generation-registry.sdp.md"
         }
       ],
       "families": [
@@ -2787,7 +2792,7 @@
       "reason": "Delegated test: a mechanism, the meaning of a field, inside what D19 and F12 rule; it is the registry half of OD-082's accepted branch and is decided with it.",
       "lean": {
         "do": "Keep the generation row's fence at inventory time as the restore's proof that a generation is stranded, and `resumeChain`'s bump as the proof that it is not.",
-        "restsOn": "[design/specs/application/generation-registry.sdp.md:47] makes the row the checkpoint and [design/specs/application/generation-registry.sdp.md:50] gives a building or verifying generation exactly one batch identified by the fence, dropped by a restore with every pending scheduled function, which [design/specs/facts/f12-backups-exclude-pending-scheduled-functions.sdp.md:11] carries as documented; [design/specs/application/restore.sdp.md:104] resumes only a row still in `building` or `verifying` at the inventoried fence; [design/specs/application/write-pause.sdp.md:43] makes a batch whose fence differs return without writing. **Judgment.** A proof that lives on the row is one the operator reads in `getGenerations` [design/specs/application/generation-registry.sdp.md:77], and a bump that fences every older batch means a resume can be repeated safely.",
+        "restsOn": "[design/specs/application/generation-registry.sdp.md:47] makes the row the checkpoint and [design/specs/application/generation-registry.sdp.md:50] gives a building or verifying generation exactly one batch identified by the fence, dropped by a restore with every pending scheduled function, which [design/specs/facts/f12-backups-exclude-pending-scheduled-functions.sdp.md:11] carries as documented; [design/specs/application/restore.sdp.md:104] resumes only a row still in `building` or `verifying` at the inventoried fence; [design/specs/application/write-pause.sdp.md:43] makes a batch whose fence differs return without writing. **Judgment.** A proof that lives on the row is one the operator reads in `getGenerations` [spec:application.rebuild#design.fnGetGenerations], and a bump that fences every older batch means a resume can be repeated safely.",
         "against": "The fence proves that no older batch will write; it does not prove that none is running, and a `verified` row needs no batch [design/specs/application/restore.sdp.md:83], so there the fence proves nothing; an operator resume between the inventory and `finishRestoreRun` changes the fence and the finish then skips that row, which is right but silent. Nothing is built: no file under `src`, `harness`, `fixture`, `example` or `tests` contains `restoreRuns`, so the proof is intent at no tier.",
         "settles": "The S5 build at the `convex-test` tier with a generation restored mid-build, then the drill on the native tier [design/specs/application/restore.sdp.md:86].",
         "changes": "For the lean: nothing; [design/specs/application/generation-registry.sdp.md:50] and [design/specs/application/restore.sdp.md:104] as they stand. For the alternative, a `stranded` state or flag on the row: the states at [design/specs/application/generation-registry.sdp.md:42] and the transitions at [design/specs/application/generation-registry.sdp.md:44] gain one, and the restore's inventory writes it.",
@@ -2805,9 +2810,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.generation-registry#5",
-          "file": "design/specs/application/generation-registry.sdp.md",
-          "line": 37
+          "spec": "spec:application.generation-registry",
+          "question": "Extension E-40, the checkpoint: the cursor, the batch size and the counts live on the progress row and not on the generation row, because a batch that wrote its checkpoint on the row every command reads would re-run every command in flight on the read model once per batch; the progress row is the one checkpoint of every batch whatever drives it (E-40, F1)",
+          "file": "design/specs/application/generation-registry.sdp.md"
         }
       ],
       "families": [
@@ -2826,11 +2831,11 @@
       "reason": "Rule 3, the shape of a table and which row holds a cursor; the doc binds batching to the component and fixes no checkpoint [design/specs/application/generation-registry.sdp.md:37]; an edit to one Spec and one file takes it back. Doubt: the lean goes against the built reading of [design/specs/application/generation-registry.sdp.md:47] on a contention judgment that only the native tier shows, and S4's guidance [design/STATE.md:160], a pointer, asks for progress away from rows every command reads.",
       "lean": {
         "do": "Keep the two rows as the Specs pin them: the generation row carries state, projection version, fence and who started and last changed it, and a batch patches it only in the mutation that ends its pass; the progress row carries the cursor, the batch size and the counts and is the one checkpoint of every batch; no state of the migrations component exists beside them.",
-        "restsOn": "The E-40 question takes the progress row because a batch that wrote its checkpoint on the row every command reads would re-run every command in flight once per batch [design/specs/application/generation-registry.sdp.md:38]; the generation row carries nothing a batch writes on its healthy path except the state the batch ending a pass sets, and the progress row is written in the same mutation as the rows [design/specs/application/generation-registry.sdp.md:53,74]; `generationsToWrite` and `activeGeneration` read the generation row through `by_read_model_state` and never the progress row [design/specs/application/generation-registry.sdp.md:82,83,94]; a build costs the commands one re-run at the end of the backfill, one at the end of the verify pass and one per operator entry [design/specs/application/generation-registry.sdp.md:86]; the rebuild uses `@convex-dev/migrations` for nothing [design/specs/application/rebuild.sdp.md:86], so the earlier lean's clause that derived the component's state from the progress row names nothing. **Judgment.** One checkpoint with one owner is the rule of my lens: the progress row is the source of where a pass is, the generation row the source of what a generation is, and neither is computed a second way.",
+        "restsOn": "The E-40 question takes the progress row because a batch that wrote its checkpoint on the row every command reads would re-run every command in flight once per batch [design/specs/application/generation-registry.sdp.md:38]; the generation row carries nothing a batch writes on its healthy path except the state the batch ending a pass sets, and the progress row is written in the same mutation as the rows [design/specs/application/generation-registry.sdp.md:53,74]; `generationsToWrite` and `activeGeneration` read the generation row through `by_read_model_state` and never the progress row [spec:application.generation-registry#design.fnGenerationsToWrite,83,94]; a build costs the commands one re-run at the end of the backfill, one at the end of the verify pass and one per operator entry [spec:application.generation-registry#design.transitionCost]; the rebuild uses `@convex-dev/migrations` for nothing [design/specs/application/rebuild.sdp.md:86], so the earlier lean's clause that derived the component's state from the progress row names nothing. **Judgment.** One checkpoint with one owner is the rule of my lens: the progress row is the source of where a pass is, the generation row the source of what a generation is, and neither is computed a second way.",
         "against": "**Judgment.** Two rows cost a second table, a second read per batch and a second write at the end of a pass; and whether a batch's checkpoint re-runs no command is shown only at the native tier, since `convex-test` orders nothing concurrently. The ledger still asks for a contention run against a run with no rebuild [design/reviews/consensus-ledger.json:3946].",
         "settles": "The `convex-test` obligation that the generation row is untouched by a batch except at the end of a pass (`design-s4-paper.md:104` in the round 2 folder) and the native L2-5 example's required assertions that no command failed for reading the registry while batches checkpointed and that the generation rows changed only at the start, the end of each pass and each operator entry [design/specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md:36]; neither has run. The comparison run is a later measurement.",
         "changes": "No Spec: `spec:application.generation-registry` `tableGenerations`, `tableGenerationProgress` and `transitionCost` and `spec:application.rebuild` `step1`, `step6` and `occRace` carry it. The register row alone. The alternative, one row, would edit the same entries and the ledger's checkpoint finding.",
-        "ifWrong": "If the registry read set of a command still meets a batch's write, each pass end re-runs commands once, which `transitionCost` already states [design/specs/application/generation-registry.sdp.md:86]; a meeting beyond that would be found by a contention run that records each refused execution's `occInfo` tables as the measurement does [design/specs/application/first-experiment.sdp.md:114], and an edit to the index use or the row split takes it back."
+        "ifWrong": "If the registry read set of a command still meets a batch's write, each pass end re-runs commands once, which `transitionCost` already states [spec:application.generation-registry#design.transitionCost]; a meeting beyond that would be found by a contention run that records each refused execution's `occInfo` tables as the measurement does [design/specs/application/first-experiment.sdp.md:114], and an edit to the index use or the row split takes it back."
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
@@ -2844,9 +2849,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.parent-use-cases#2",
-          "file": "design/specs/application/parent-use-cases.sdp.md",
-          "line": 55
+          "spec": "spec:application.parent-use-cases",
+          "question": "Extension E-41: the doc says a too-large operation is rejected or becomes a separate import command with honest partial progress; it does not say what the import command records.",
+          "file": "design/specs/application/parent-use-cases.sdp.md"
         },
         {
           "kind": "extension",
@@ -2886,9 +2891,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.parent-use-cases#3",
-          "file": "design/specs/application/parent-use-cases.sdp.md",
-          "line": 56
+          "spec": "spec:application.parent-use-cases",
+          "question": "Extension E-44: the doc says keeping a refused request as a fact is a business policy chosen per command, and the executor signature is pinned by `spec:command.command-declaration`; what neither says is how a use case declares what a context's business failure means to it.",
+          "file": "design/specs/application/parent-use-cases.sdp.md"
         },
         {
           "kind": "extension",
@@ -2930,9 +2935,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.parent-use-cases#4",
-          "file": "design/specs/application/parent-use-cases.sdp.md",
-          "line": 57
+          "spec": "spec:application.parent-use-cases",
+          "question": "Extension E-39: the doc fixes no order for a use case's context calls; the option taken here is one fixed order the executor states, the creating context first, with no failure handling of a later call, because the calls before it roll back with the mutation; the owner has not ruled (E-39, D1, D10)",
+          "file": "design/specs/application/parent-use-cases.sdp.md"
         }
       ],
       "families": [
@@ -2966,9 +2971,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.projection-contract#1",
-          "file": "design/specs/application/projection-contract.sdp.md",
-          "line": 33
+          "spec": "spec:application.projection-contract",
+          "question": "Extension E-9: the doc says a projection is named, versioned and deterministic and that live update and rebuild share its logic; it does not give the signature or the row shape, for counts and sums it names the marker but not the aggregate row, and for the read models that depend on history across several streams, the ones the write pause exists for, it names no input.",
+          "file": "design/specs/application/projection-contract.sdp.md"
         },
         {
           "kind": "extension",
@@ -2997,7 +3002,7 @@
       "reason": "Rule 3, signatures and the shape of a row: the doc gives no signature, row shape or input for the three forms [design/specs/application/projection-contract.sdp.md:33]; an edit to one Spec and the read-model files takes it back. The order in which the forms are bound is the main thread's [design/STATE.md:160], a pointer.",
       "lean": {
         "do": "Keep the per-entity form as the Specs pin it: a `ReadModel` with its `projections`, the latest first, and a `Projection` of `version`, `keyOf` and `project` alone; `applyProjection` writing each generation by its role, `active`, `building` or `verifying`, with the projection whose version the generation records; and every row measured against `rowBudgetBytes` at every write. The history form stays as declared and bound for the order allocation history, whose build is not 3b's, and the aggregate form stays a signature with no read model of the example bound to it.",
-        "restsOn": "The E-9 question names the three forms and the three points the owner has not ruled, the split, the write by role and the measured row [design/specs/application/projection-contract.sdp.md:33]; the declaration and the helper are pinned [design/specs/application/projection-contract.sdp.md:47,66,67,68]; the write rule by mode and role is pinned, live-updated in the role `building` skipping a missing row because the backfill has not reached it, and a missing row in `verifying` meaning a subject that projected to none [design/specs/application/projection-contract.sdp.md:50,69,92; design/specs/application/rebuild.sdp.md:69,70]; the row is measured with `getConvexSize` at every write [design/specs/application/projection-contract.sdp.md:51]. The history form is declared as `orderAllocationHistory` [design/specs/application/projection-contract.sdp.md:78] and bound once per source stream type in the example [design/specs/application/orders-inventory-example.sdp.md:69], and 3b does not build the paused path (`design-s4-paper.md:107` in the round 2 folder); the aggregate form's table is given as a shape and not as a read model the first experiment builds [design/specs/application/projection-contract.sdp.md:85], and the online rebuild is pinned for a per-entity read model with one source stream type while an aggregate gets a rebuild when a view needs it [design/specs/application/rebuild.sdp.md:61]. **Judgment.** The roles exist because the building generation has rows the backfill has not reached and the verifying one does not; one rule for both would read a missing row two ways.",
+        "restsOn": "The E-9 question names the three forms and the three points the owner has not ruled, the split, the write by role and the measured row [design/specs/application/projection-contract.sdp.md:33]; the declaration and the helper are pinned [design/specs/application/projection-contract.sdp.md:47,66,67,68]; the write rule by mode and role is pinned, live-updated in the role `building` skipping a missing row because the backfill has not reached it, and a missing row in `verifying` meaning a subject that projected to none [design/specs/application/projection-contract.sdp.md:50,69,92; design/specs/application/rebuild.sdp.md:69,70]; the row is measured with `getConvexSize` at every write [design/specs/application/projection-contract.sdp.md:51]. The history form is declared as `orderAllocationHistory` [spec:application.history-projection#design.tableOrderAllocationHistory] and bound once per source stream type in the example [design/specs/application/orders-inventory-example.sdp.md:69], and 3b does not build the paused path (`design-s4-paper.md:107` in the round 2 folder); the aggregate form's table is given as a shape and not as a read model the first experiment builds [spec:application.aggregate-projection#design.tableOrderTotals], and the online rebuild is pinned for a per-entity read model with one source stream type while an aggregate gets a rebuild when a view needs it [design/specs/application/rebuild.sdp.md:61]. **Judgment.** The roles exist because the building generation has rows the backfill has not reached and the verifying one does not; one rule for both would read a missing row two ways.",
         "against": "**Judgment.** The write rule varies by mode, by role and by the row's state, with the `null` candidate beside them, so its pure table is wide (`design-s4-paper.md:103,144` in the round 2 folder), where a rule without roles would be narrower; it is not taken because it cannot tell a row the backfill has not written from a subject that projects to none [design/specs/application/rebuild.sdp.md:70]. Measuring every row at every write costs a `getConvexSize` per write.",
         "settles": "The pure write-rule table of mode by role by row state, with the `null` row (`design-s4-paper.md:103,144`), and the `convex-test` obligations of a live create and a live update against `building` and against `verifying` and of two projection versions at once (`design-s4-paper.md:104`), none yet run; the owner's confirmation of the three forms, which the E-9 question asks for, stays the owner's and this ruling does not take it.",
         "changes": "No Spec: `spec:application.projection-contract` `typeReadModel`, `typeProjection`, `typeWritableGeneration`, `step1` to `step4` and `limitRowSize` carry the per-entity rules, and `tableOrderAllocationHistory` and the example's binding carry the history form. The register row alone. The alternative, one write rule without roles, would edit `step3` and the rebuild's rule on a missing row in `building`.",
@@ -3015,9 +3020,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.read-models#1",
-          "file": "design/specs/application/read-models.sdp.md",
-          "line": 49
+          "spec": "spec:application.read-models",
+          "question": "Probe 5 showed that the built-in `.paginate` treats `maximumRowsRead` as advice once a page has an end cursor and that a cursor it issued is refused by any other query, so a subscription over the active generation threw `InvalidCursor` at a switch; a parent list therefore pages with `paginator` of `convex-helpers`, as a context list does, and a pinned page is bounded on every run by the row cap and by the byte cap as `spec:context.queries` states it, the helper stopping at the row that reaches it and admitting that row whole, and answers `SplitRequired` beyond them (Probe 5, F13, D8, D9)",
+          "file": "design/specs/application/read-models.sdp.md"
         }
       ],
       "families": [
@@ -3055,9 +3060,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.read-models#2",
-          "file": "design/specs/application/read-models.sdp.md",
-          "line": 50
+          "spec": "spec:application.read-models",
+          "question": "Extension E-24, as it reaches read models: a list over a parent read-model table calls `paginator` of `convex-helpers` with the options of `boundedPage`, a row cap of twice the item cap, with each cursor of the client's pair moved into the active generation by `pageInGeneration`, and returns through `paginationResultValidator` with its rows mapped by `readModelView`, and a client pages every list by an explicit cursor pair with no hook; these are options taken here and the owner has not ruled (E-24, S4, Probe 5, D8)",
+          "file": "design/specs/application/read-models.sdp.md"
         }
       ],
       "families": [
@@ -3096,21 +3101,21 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.read-models#4",
-          "file": "design/specs/application/read-models.sdp.md",
-          "line": 52
+          "spec": "spec:application.read-models",
+          "question": "Probe 3 pending: the cost of one component call in latency and function-call quota decides whether one entity's detail stays a component query or hot reads move, which is OQ1 (Probe 3, F4, OQ1)",
+          "file": "design/specs/application/read-models.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:context.context-component#2",
-          "file": "design/specs/context/context-component.sdp.md",
-          "line": 50
+          "spec": "spec:context.context-component",
+          "question": "Probe 3: the cost of one component call in latency and function-call quota decides where hot reads land; the latency is an order of magnitude read on a local backend, the quota needs a hosted deployment to read, and isolation itself stays (Probe 3, F4, D2, D8)",
+          "file": "design/specs/context/context-component.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d02-context-owns-state-and-journal#1",
-          "file": "design/specs/decisions/d02-context-owns-state-and-journal.sdp.md",
-          "line": 30
+          "spec": "spec:decisions.d02-context-owns-state-and-journal",
+          "question": "Probe 3: the latency of one component call is measured and keeps every context a component; its function-call quota is a hosted usage reading, and isolation itself stays (Probe 3, D2, OQ1)",
+          "file": "design/specs/decisions/d02-context-owns-state-and-journal.sdp.md"
         },
         {
           "kind": "planAmbiguity",
@@ -3153,9 +3158,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.read-models#5",
-          "file": "design/specs/application/read-models.sdp.md",
-          "line": 53
+          "spec": "spec:application.read-models",
+          "question": "Extension E-45: the doc says a small cross-context view is a parent query over bounded component reads and does not give the bound; the option taken here is at most 8 component reads per parent query and at most 4 read-model rows written per command, both measured by the first experiment (E-45, D8)",
+          "file": "design/specs/application/read-models.sdp.md"
         },
         {
           "kind": "extension",
@@ -3194,9 +3199,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.rebuild#2",
-          "file": "design/specs/application/rebuild.sdp.md",
-          "line": 58
+          "spec": "spec:application.rebuild",
+          "question": "Extension E-40: the doc binds resumable batching to `@convex-dev/migrations` and gives no batch size; the component iterates a parent table while the sources of a read model live in a context component.",
+          "file": "design/specs/application/rebuild.sdp.md"
         },
         {
           "kind": "extension",
@@ -3227,11 +3232,11 @@
       "reason": "Rule 3, a bound and its number and which mechanism drives a batch: the doc gives no batch size [design/specs/application/rebuild.sdp.md:58], and the Spec itself leaves the component's reach to Probe 6, so a probe comes first.",
       "lean": {
         "do": "Keep the batch bound as the Specs pin it: at most `rebuildBatchCeiling`, 100 entities capped by the row budget, and never more than the context's `list` page admits, a field of the progress row that `startGeneration` sets and nothing changes after, so every pass and every resumed pass runs at it; every batch, over a context's enumeration or a parent table, driven by the platform's own self-scheduled internal mutation; a stalled pass answered by `abortGeneration` and a new `startGeneration` with a smaller size, and no automatic stall check.",
-        "restsOn": "The bound and its two caps [design/specs/application/rebuild.sdp.md:88,116,146], the purge cap [design/specs/application/rebuild.sdp.md:147], the one driver for every batch [design/specs/application/rebuild.sdp.md:59,86], `resumeGeneration` taking no batch size [design/specs/application/rebuild.sdp.md:132; design/specs/application/generation-registry.sdp.md:46] and the stall answer [design/specs/application/rebuild.sdp.md:144]; the main thread's ruling 9 after the paper's check fixed the resumed size (`design-s4-paper.md:150` in the round 2 folder), and the paper excludes an automatic stall check from 3b (`design-s4-paper.md:107`). Probe 6 settled the driver: the component walks only the tables of the component it is defined in [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:21], so the row's provisional reading, which had the component drive parent-table batches and `resumeGeneration` lower the size, is superseded on both points. **Judgment.** A size that never changes makes the progress row the one source of a pass's shape and the batch count a function of the data, and a stall that needs a smaller size is a new generation, not a mutated one.",
+        "restsOn": "The bound and its two caps [design/specs/application/rebuild.sdp.md:88,116,146], the purge cap [spec:application.rebuild#design.limitPurgeBatch], the one driver for every batch [design/specs/application/rebuild.sdp.md:59,86], `resumeGeneration` taking no batch size [spec:application.rebuild#design.fnResumeGeneration; design/specs/application/generation-registry.sdp.md:46] and the stall answer [spec:application.rebuild#design.stallSignal]; the main thread's ruling 9 after the paper's check fixed the resumed size (`design-s4-paper.md:150` in the round 2 folder), and the paper excludes an automatic stall check from 3b (`design-s4-paper.md:107`). Probe 6 settled the driver: the component walks only the tables of the component it is defined in [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:21], so the row's provisional reading, which had the component drive parent-table batches and `resumeGeneration` lower the size, is superseded on both points. **Judgment.** A size that never changes makes the progress row the one source of a pass's shape and the batch count a function of the data, and a stall that needs a smaller size is a new generation, not a mutated one.",
         "against": "**Judgment.** A fixed size means a hot key range forces an abort and a whole new backfill rather than a slower continuation of the same generation, and the numbers 100, 16 and `limitPurgeBatch` are design choices under F13 that no run has pressed. Sustained contention over a hot range is not run [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:31].",
         "settles": "Probe 6 settled the driver at the native backend tier; the pure test of `batchSizeFor` at 0, -1, 1.5, above the ceiling and at both row budgets (`design-s4-paper.md:103`) settles the bound's arithmetic once run; the native L2-5 example specifies generation 2 at batch size 1 [design/specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md:33] and has not run; contention over a hot range is a later measurement on the quiet machine.",
         "changes": "No Spec: `spec:application.rebuild` `fnBatchSizeFor`, `limitBatchSize`, `limitPurgeBatch`, `stallSignal` and the E-40 question carry it. The register row alone; its `provisionalReading` text is stale and the ruling supersedes it. The alternative, a size an operator lowers on resume, would edit `fnResumeChain`, `fnResumeGeneration` and the transition Contract bullet of the registry.",
-        "ifWrong": "The ceiling and the caps are constants an edit changes [design/specs/application/rebuild.sdp.md:146,147]; a resumed size would be one optional argument on `resumeGeneration` and one patch of the progress row, and no stored row changes meaning."
+        "ifWrong": "The ceiling and the caps are constants an edit changes [spec:application.rebuild#design.limitBatchSize,147]; a resumed size would be one optional argument on `resumeGeneration` and one patch of the progress row, and no stored row changes meaning."
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
@@ -3245,9 +3250,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.restore#1",
-          "file": "design/specs/application/restore.sdp.md",
-          "line": 55
+          "spec": "spec:application.restore",
+          "question": "Probe 7 observes local CLI replacement restoring the parent, Orders and Inventory documents with IDs and creation times; fresh replacement leaves scheduler tables empty and replacement in place keeps existing schedules; the complete Layer 2 restore drill, hosted dashboard restore, Workpool and Workflow remain open (Probe 7, F12, D19)",
+          "file": "design/specs/application/restore.sdp.md"
         }
       ],
       "families": [
@@ -3282,9 +3287,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.restore#2",
-          "file": "design/specs/application/restore.sdp.md",
-          "line": 56
+          "spec": "spec:application.restore",
+          "question": "Extension E-42: the doc says restore runs with matching code and configuration, that domain, journal and read-model invariants hold, and that restore is tested; it does not list the checks or the record, and it does not say what a restore does to a rebuild that was in flight at the backup.",
+          "file": "design/specs/application/restore.sdp.md"
         },
         {
           "kind": "extension",
@@ -3313,7 +3318,7 @@
         "restsOn": "[design/specs/application/restore.sdp.md:63] and [design/specs/facts/f12-backups-exclude-pending-scheduled-functions.sdp.md:11] carry as documented that a backup excludes pending scheduled functions and environment variables, which is why the door is a variable [design/specs/application/write-pause.sdp.md:48] and why a generation in flight is stranded [design/specs/application/restore.sdp.md:70]; [design/specs/application/restore.sdp.md:68] and [design/specs/application/restore.sdp.md:85] keep a failed run closed with the check and the subject named; [design/specs/application/restore.sdp.md:81] makes every check resumable from its cursor; [design/specs/application/restore.sdp.md:99] and [design/specs/application/restore.sdp.md:104] refuse `startRestoreRun` outside the door and `finishRestoreRun` while the door is still set or the inventory unfinished; [design/specs/application/restore.sdp.md:106] orders the checks so a broken journal stops the fold check. **Judgment.** In the practice of restoring a deployment, a record of what was checked and found, a run that can be interrupted and resumed, and a door a second operator cannot open by accident are what make a restore safe to run at night, and this design has each.",
         "against": "The operator clears `MAINTENANCE_MODE` before calling `finishRestoreRun` [design/specs/application/restore.sdp.md:84], so between the two steps writers run while the restored closed entries still hold their scopes [design/specs/application/write-pause.sdp.md:49]; if `finishRestoreRun` is never called those scopes stay closed, against what [design/specs/application/restore.sdp.md:70] promises, and only `getGate` shows why. The door is a variable that no table records: who set it and when is outside the deployment's data. Nothing is built: no file under `src`, `harness`, `fixture`, `example` or `tests` contains `restoreRuns` or `MAINTENANCE_MODE`, so every step is intent at no tier; and whether the snapshot replaces the components' tables is OD-081.",
         "settles": "The S5 build, then the drill on a disposable deployment on the native tier [design/specs/application/restore.sdp.md:86], with Probe 7's transactional half for what the snapshot leaves [design/specs/application/restore.sdp.md:55]; whether a failed check admits an override and how often the drill runs are policies the owner rules, outside this row.",
-        "changes": "For the lean: nothing in `spec:application.restore`; `spec:application.write-pause` at [design/specs/application/write-pause.sdp.md:48] and [design/specs/application/write-pause.sdp.md:61], and `spec:application.generation-registry` for `resumeChain` [design/specs/application/restore.sdp.md:104], as they stand, built in S5. For the alternative, a restore with no record and no inventory that reopens by hand: [design/specs/application/restore.sdp.md:76], [design/specs/application/restore.sdp.md:82] to [design/specs/application/restore.sdp.md:84] and [design/specs/application/restore.sdp.md:93] to [design/specs/application/restore.sdp.md:95], and a stranded rebuild's gate entries would stay closed until an operator reads the gate.",
+        "changes": "For the lean: nothing in `spec:application.restore`; `spec:application.write-pause` at [design/specs/application/write-pause.sdp.md:48] and [spec:application.write-pause#design.fnGateAllows], and `spec:application.generation-registry` for `resumeChain` [design/specs/application/restore.sdp.md:104], as they stand, built in S5. For the alternative, a restore with no record and no inventory that reopens by hand: [design/specs/application/restore.sdp.md:76], [design/specs/application/restore.sdp.md:82] to [design/specs/application/restore.sdp.md:84] and [design/specs/application/restore.sdp.md:93] to [design/specs/application/restore.sdp.md:95], and a stranded rebuild's gate entries would stay closed until an operator reads the gate.",
         "ifWrong": "A missing check is found by the drill before a production restore, and an added check is an edit plus one internal mutation; a wrong order of the two steps loses nothing, because the door refuses writes and `finishRestoreRun` refuses until the door is clear [design/specs/application/restore.sdp.md:104]; **Judgment.** the one cost an edit does not take back is a restore accepted on a dataset the drill did not represent, which is why [design/specs/application/restore.sdp.md:86] records the dataset."
       },
       "checkedBy": null,
@@ -3328,9 +3333,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.restore#3",
-          "file": "design/specs/application/restore.sdp.md",
-          "line": 57
+          "spec": "spec:application.restore",
+          "question": "Extension E-42, the stream check's batch size: `limitCheckBatch` states the read of a batch that folds one stream, and each further stream the same batch folds reads its own stored baseline event of at most `budgetBytes + 4,096 + 61` bytes; the batch size that keeps a batch of several folded streams under the 16 MiB read ceiling is not pinned (E-42, F13)",
+          "file": "design/specs/application/restore.sdp.md"
         }
       ],
       "families": [
@@ -3364,9 +3369,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.write-pause#1",
-          "file": "design/specs/application/write-pause.sdp.md",
-          "line": 34
+          "spec": "spec:application.write-pause",
+          "question": "Extension E-8: the doc names a maintenance gate every writer reads, fencing or draining of background writers, and operator resume and abort; the option taken here is one gate document per deployment holding the closed scopes, each in one `closed` state, with no fence of its own and no drain interval, because optimistic concurrency serializes every writer's gate read against the close and the generation row's fence already fences a rebuild's batches, and a refusal answered with `writePaused`, the transient code the outcome boundary reserves for this contract under its E-35, which this contract confirms; the scope a paused rebuild closes is the paused view's sources, one `source:` entry per context and stream type its bindings name, because a consistent cut must hold every writer of those streams and a use case that writes a source stream without maintaining the view would otherwise pass the gate, which is why the command declaration names what it writes under E-38 and the pipeline proves the list at its step 9; an operator entry closes only a tenant or `all`, the coarser and always safe scopes, and no scope names a read model, because nothing would close it (E-8, E-38, D9, D4, F1)",
+          "file": "design/specs/application/write-pause.sdp.md"
         }
       ],
       "families": [
@@ -3390,10 +3395,10 @@
       "reason": "Delegated test: a Convex mechanism, a table shape and a refusal code inside what D9 and D4 rule; the one trade-off, sources against the read model as the closed scope, has a documented reason on its side; the acceptable length of a pause is the owner's policy and not this row.",
       "lean": {
         "do": "Keep one gate document per deployment with closed scopes in one `closed` state, no drain, the `writePaused` transient refusal, and a rebuild closing the paused view's sources.",
-        "restsOn": "[design/specs/application/write-pause.sdp.md:38] pins the one document and its two readers, `assertWritable` at pipeline step 7 and `gateAllows` for every background batch; [design/specs/application/write-pause.sdp.md:43] and [design/specs/application/write-pause.sdp.md:71] rest the consistent cut on optimistic concurrency, which [design/specs/facts/f01-serializable-mutations-under-occ.sdp.md:11] carries as documented; [design/specs/application/write-pause.sdp.md:42] closes the sources because a use case that writes a source stream without maintaining the view would otherwise pass the gate; [design/specs/application/write-pause.sdp.md:40] and [src/command/outcome-boundary.ts:31] make `writePaused` a transient code the boundary already reserves; [design/specs/application/write-pause.sdp.md:50] writes every close, resume and abort as audit that fails closed. **Judgment.** In the practice of running a deployment, one state in one document is what a person at night can read and reason about: `getGate` [design/specs/application/write-pause.sdp.md:70] shows every closed scope with its reason and who changed it, and nothing reopens by itself [design/specs/application/write-pause.sdp.md:23].",
-        "against": "Every command pays one point read on one hot document and a close re-runs every concurrent command once [design/specs/application/write-pause.sdp.md:29]; `gateAllows` reads `process.env.MAINTENANCE_MODE` on every command [design/specs/application/write-pause.sdp.md:61], so a variable set by mistake refuses every write with no row to find it in. The gate is not built: no file under `src`, `harness`, `fixture`, `example` or `tests` contains `assertWritable` or `gateAllows`, so the cut and the one-read cost are intent at no tier.",
-        "settles": "The S4 build at the `convex-test` tier for the refusal and the fence, and a native backend run of two writers racing a close, which [design/specs/application/write-pause.sdp.md:71] describes and nobody has run.",
-        "changes": "For the lean: nothing in `spec:application.write-pause`; `spec:command.command-pipeline` step 7 and `spec:application.rebuild` as they stand, built in S4. For the alternative, closing the tenant or `all` for every paused rebuild [design/specs/application/write-pause.sdp.md:34]: [design/specs/application/write-pause.sdp.md:41], [design/specs/application/write-pause.sdp.md:42] and `scopesOfUseCase` [design/specs/application/write-pause.sdp.md:64], and every writer of an unrelated stream in the tenant is held for the length of the rebuild.",
+        "restsOn": "[design/specs/application/write-pause.sdp.md:38] pins the one document and its two readers, `assertWritable` at pipeline step 7 and `gateAllows` for every background batch; [design/specs/application/write-pause.sdp.md:43] and [spec:application.write-pause#design.occSerialization] rest the consistent cut on optimistic concurrency, which [design/specs/facts/f01-serializable-mutations-under-occ.sdp.md:11] carries as documented; [design/specs/application/write-pause.sdp.md:42] closes the sources because a use case that writes a source stream without maintaining the view would otherwise pass the gate; [design/specs/application/write-pause.sdp.md:40] and [src/command/outcome-boundary.ts:31] make `writePaused` a transient code the boundary already reserves; [design/specs/application/write-pause.sdp.md:50] writes every close, resume and abort as audit that fails closed. **Judgment.** In the practice of running a deployment, one state in one document is what a person at night can read and reason about: `getGate` [spec:application.write-pause#design.fnGetGate] shows every closed scope with its reason and who changed it, and nothing reopens by itself [design/specs/application/write-pause.sdp.md:23].",
+        "against": "Every command pays one point read on one hot document and a close re-runs every concurrent command once [design/specs/application/write-pause.sdp.md:29]; `gateAllows` reads `process.env.MAINTENANCE_MODE` on every command [spec:application.write-pause#design.fnGateAllows], so a variable set by mistake refuses every write with no row to find it in. The gate is not built: no file under `src`, `harness`, `fixture`, `example` or `tests` contains `assertWritable` or `gateAllows`, so the cut and the one-read cost are intent at no tier.",
+        "settles": "The S4 build at the `convex-test` tier for the refusal and the fence, and a native backend run of two writers racing a close, which [spec:application.write-pause#design.occSerialization] describes and nobody has run.",
+        "changes": "For the lean: nothing in `spec:application.write-pause`; `spec:command.command-pipeline` step 7 and `spec:application.rebuild` as they stand, built in S4. For the alternative, closing the tenant or `all` for every paused rebuild [design/specs/application/write-pause.sdp.md:34]: [design/specs/application/write-pause.sdp.md:41], [design/specs/application/write-pause.sdp.md:42] and `scopesOfUseCase` [spec:application.write-pause#design.fnScopesOfUseCase], and every writer of an unrelated stream in the tenant is held for the length of the rebuild.",
         "ifWrong": "If a writer slips the cut, the read-model check compares each row's source versions with the current versions and finds it [design/specs/application/restore.sdp.md:79], so the cost is a rebuild rerun and not lost events, and an edit to `scopesOfUseCase` takes the scope back; if the hot document costs more than one read's worth under contention, the S3 measurement repeated after S4 shows it."
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
@@ -3408,15 +3413,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.actor-and-scope#1",
-          "file": "design/specs/command/actor-and-scope.sdp.md",
-          "line": 31
+          "spec": "spec:command.actor-and-scope",
+          "question": "Extension E-6: the doc names the actor kinds, the envelope's actor field and the worker's two modes; the field names, the namespace union, the grant fields and the `authorize` signature are the design's, and the grant's `permission` string vocabulary is per product; the worker's two modes are one `Authority` shape, `{ actor, scope, mode }` with the literals `recheckDelegator` and `serviceAuthority`, stored on the obligation record and never restated, where the delegation travels on the actor's own `onBehalfOf` and `delegationRef`; and the doc says a derived command carries a server namespace without naming it, so this design assigns `worker` to every command a reaction issues, which is the namespace Sc L1-7 refuses to a client and the one D6 lists among the receipted callers, and reserves `system` for the platform's own maintenance chains and operator operations that run a receipted command, such as a restore or a migration driver, so a `system` receipt is never a reaction's; the owner confirms both (E-6, E-54, D6, D11, D13, Sc L1-7)",
+          "file": "design/specs/command/actor-and-scope.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:command.tenancy-and-authority#2",
-          "file": "design/specs/command/tenancy-and-authority.sdp.md",
-          "line": 38
+          "spec": "spec:command.tenancy-and-authority",
+          "question": "Extension E-6: the doc names the actor kinds and the worker's two modes but not the types; the actor, scope, namespace, grant and `Authority` shapes are the design's and are pinned once in `spec:command.actor-and-scope`, which also rules that a derived command's namespace is `worker` (E-6, D11)",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md"
         },
         {
           "kind": "extension",
@@ -3460,9 +3465,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.actor-and-scope#3",
-          "file": "design/specs/command/actor-and-scope.sdp.md",
-          "line": 33
+          "spec": "spec:command.actor-and-scope",
+          "question": "Extension E-6: the doc says a query authorizes before it discloses and does not say how; here a parent query calls `authorizeQuery`, which establishes and authorizes its actor through the same two helpers a command's entry uses and is generic over the parent's data model; the owner has not ruled (E-6, D11, Law 5)",
+          "file": "design/specs/command/actor-and-scope.sdp.md"
         }
       ],
       "families": [
@@ -3496,9 +3501,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-declaration#1",
-          "file": "design/specs/command/command-declaration.sdp.md",
-          "line": 34
+          "spec": "spec:command.command-declaration",
+          "question": "Extension E-7: the doc says a small composition helper and shared schema values; the helper signatures, the executor signature and the read-model binding below are the design's; the cost is two registered mutations per command instead of one, and the cheaper alternative the design refuted is one public export per command plus one generic internal dispatcher mutation keyed by command type, as D7's conditional dispatcher already does; it lost because trusted server callers would then reach every command through one untyped `internalMutation`, so a renamed handler or a broken argument contract would pass `tsc` at the caller and fail only at runtime, which is the check Sc L2-4 exists to keep before traffic, and because the receipt fingerprint's contract version would be looked up by string rather than typed; the owner may still prefer the dispatcher form once code generation makes the per-command internal entry free (E-7, D12, D7, Sc L2-4, Decision method rule 5)",
+          "file": "design/specs/command/command-declaration.sdp.md"
         },
         {
           "kind": "extension",
@@ -3538,9 +3543,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-declaration#3",
-          "file": "design/specs/command/command-declaration.sdp.md",
-          "line": 36
+          "spec": "spec:command.command-declaration",
+          "question": "Extension E-38: the doc names five declaration fields; this design adds `contractVersion` for the fingerprint, `retention` and `irreversible` for receipts, `admission`, `bounds`, `rejections`, `audit`, `diagnosticSink` and `writes`, each serving a cited rule of another Spec, and asks whether the owner accepts them as part of the one declaration; `bounds` is the one input bound in the corpus, `maxItems` and `maxBytes`, checked by the pipeline's step 1 and by no executor body, so `spec:application.parent-use-cases` reads it rather than declaring a bound of its own; `writes` is required on every declaration, because an absent list would be an unchecked one, and `readModels` is optional, absent meaning none, which the owner has not ruled; `writes` names the context and stream type pairs the executor may write, from which the pipeline's step 7 derives the source scopes the write pause closes for a consistent cut and which step 9 proves against the `streams` entries the executor returns, because a use case that writes a source stream without maintaining the paused view would otherwise pass the gate; the declaration still imports nothing from the obligation family, so a command's static reactions are not a field here but the `createObligation` calls of its executor, as `spec:obligations.fan-out-and-chains` rules under E-54 (E-38, E-8, E-54, D6, D9, D10, D19, Thesis)",
+          "file": "design/specs/command/command-declaration.sdp.md"
         },
         {
           "kind": "extension",
@@ -3585,9 +3590,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#1",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 59
+          "spec": "spec:command.command-pipeline",
+          "question": "Extension E-30: the doc names the outcome, the operation ID and the affected stream versions as what a command returns, but not a wire shape; the shape here is a union discriminated by `replayed`, whose executed member carries the declaration's result and whose replayed member carries `result` null because a receipt stores no result, so the entry's returns validator admits a replay as a value; affected IDs are application IDs, never private document IDs (E-30, D2, D6, D8)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         },
         {
           "kind": "extension",
@@ -3627,9 +3632,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#2",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 60
+          "spec": "spec:command.command-pipeline",
+          "question": "Extension E-31: the doc says an operation's ID ties together everything one request caused but not how it is minted, and it says a derived command carries causation and an event's `causedBy` may be a triggering event without saying how that cause reaches the pipeline; here the pipeline mints the operation ID once per top-level mutation with `crypto.randomUUID()` before the first context call, a duplicate returns the operation ID stored on the receipt, and the internal entry takes an optional `causedBy` argument that step 7 copies onto the `OperationRef` when present, so a reaction that issues a derived command passes `causedBy` of kind `event` naming its publication event and the envelope's `event` variant has exactly one producer, while an entry called without it mints `causedBy` of kind `command` from the declaration's name; the obligation and attempt behind a derived command are found through its receipt, whose request key is the obligation's effect key, and never through the envelope (E-31, E-54, D2, D13, Vocab: operation)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         },
         {
           "kind": "extension",
@@ -3670,9 +3675,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#3",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 61
+          "spec": "spec:command.command-pipeline",
+          "question": "Extension E-32: the doc places rate admission for new intent after the duplicate check and makes a rate or capacity refusal a retryable error, but names no admission mechanism; here admission is an optional per-command policy in the declaration, absent by default, evaluated inside the mutation so that a refusal that throws leaves no consumption behind; the flip side is that a consumption the policy writes commits only with the command, so the policy counts committed intent and cannot bound refused or unauthorized traffic, and a product that must bound refused traffic needs the dispatcher form of D7, where the parent survives the body's rejection (E-32, D4, D6, D7)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         },
         {
           "kind": "extension",
@@ -3712,9 +3717,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#5",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 63
+          "spec": "spec:command.command-pipeline",
+          "question": "Probe 4 showed on the pinned backend that the transaction limits are one budget across the parent and its component sub-transactions, so the per-command bounds are checked against one budget; `ctx.runMutation` accepts a `transactionLimits` option, the design passes none on a context call, and whether a call should reserve room with it for the work after it stays open (Probe 4, F13, S3)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         }
       ],
       "families": [
@@ -3751,9 +3756,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#6",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 64
+          "spec": "spec:command.command-pipeline",
+          "question": "Extension E-9: the doc says essential read models are updated inside the command and does not say from what or in what order; here step 9 writes a per-entity read model from the DTO of each matching `streams` entry, never from its events, and a history read model from the events of every matching entry in one call per command, checks `writes` first, then that each bound read model has a generation to write, then the count of the rows it writes against `limitReadModelWritesPerCommand`, each failure a plain error, and the library helpers that step 9 calls are generic over the application's data model; the owner has not ruled on any of it (E-9, E-7, E-8, E-45, D8, D9)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         }
       ],
       "families": [
@@ -3790,9 +3795,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.command-pipeline#7",
-          "file": "design/specs/command/command-pipeline.sdp.md",
-          "line": 65
+          "spec": "spec:command.command-pipeline",
+          "question": "Extension E-34: step 1 bounds every text field a caller sets beside the input, the tenant ID, the request key, the correlation ID, the actor's fields and the fields of `causedBy`, in UTF-8 bytes as `limitCallText` lists them, as rejection `invalidInput`, and treats a declaration name above `limitIdLength` as a defect, a plain error, because these fields become fields of the receipt row or of every event's envelope; the doc says events stay small and names no number; the owner has not ruled (E-34, D6, D12, D19)",
+          "file": "design/specs/command/command-pipeline.sdp.md"
         }
       ],
       "families": [
@@ -3826,9 +3831,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.idempotency-and-receipts#3",
-          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
-          "line": 44
+          "spec": "spec:command.idempotency-and-receipts",
+          "question": "Extension E-34: the doc says expiry is explicit and names no number; here the default retry window is 7 days per command, expiry is checked lazily at lookup so the core path needs no job, and a bounded per-tenant sweep deletes expired receipts in batches of at most 1,000; the tenant ID and the request key are bounded to 256 bytes of UTF-8, a declaration name above that bound is a defect and a plain error, and a receipt is bounded to 1,000 affected refs; the owner has not ruled (E-34, D6, D19, F13)",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md"
         },
         {
           "kind": "extension",
@@ -3868,9 +3873,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.idempotency-and-receipts#4",
-          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
-          "line": 45
+          "spec": "spec:command.idempotency-and-receipts",
+          "question": "Extension E-36: the doc says the fingerprint covers business input and its contract version; here it is the SHA-256 digest, computed with the Convex runtime's `crypto.subtle.digest`, over the canonical JSON of the business input with object keys sorted, followed by the contract version; the outside facts the executor captures travel beside the input and are excluded, so a retry that captures a fresher fact is not a conflict, which the decider contract cites; a change to the canonical form is a contract version bump (E-36, D6, D3)",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md"
         },
         {
           "kind": "extension",
@@ -3909,9 +3914,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.idempotency-and-receipts#5",
-          "file": "design/specs/command/idempotency-and-receipts.sdp.md",
-          "line": 46
+          "spec": "spec:command.idempotency-and-receipts",
+          "question": "Extension E-39: the doc says a client-generated entity ID plus a uniqueness check gives one entity on a UI double submit and does not say what the second submit is told; here the second submit is answered with the rejection `entityExists` naming the existing entity, not with an idempotent success, because no receipt exists on the UI path to replay an outcome from and the client already holds the entity ID it needs to read the result; the owner may prefer an idempotent success, which would need a receipt on every create (E-39, D6, Sc L1-4)",
+          "file": "design/specs/command/idempotency-and-receipts.sdp.md"
         },
         {
           "kind": "extension",
@@ -3950,9 +3955,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.outcome-boundary#1",
-          "file": "design/specs/command/outcome-boundary.sdp.md",
-          "line": 38
+          "spec": "spec:command.outcome-boundary",
+          "question": "Extension E-5: the doc fixes the four outcomes and that a rejection is a structured `ConvexError`, but not the data shape or the code list; the shape and the platform codes below are the design's, and the domain codes are closed per declaration (E-5, D4, D7)",
+          "file": "design/specs/command/outcome-boundary.sdp.md"
         },
         {
           "kind": "extension",
@@ -3991,9 +3996,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.outcome-boundary#3",
-          "file": "design/specs/command/outcome-boundary.sdp.md",
-          "line": 40
+          "spec": "spec:command.outcome-boundary",
+          "question": "Extension E-35: the write pause of D9 refuses writers in its scope while a cross-stream history view rebuilds; the doc does not say how a refused writer is answered; this contract reserves the transient code `writePaused` for Package D so the refusal is retryable and stores nothing, which Package D confirms or replaces (E-35, D9, D4)",
+          "file": "design/specs/command/outcome-boundary.sdp.md"
         },
         {
           "kind": "extension",
@@ -4032,9 +4037,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.receipt-table#1",
-          "file": "design/specs/command/receipt-table.sdp.md",
-          "line": 28
+          "spec": "spec:command.receipt-table",
+          "question": "Extension E-4: the doc fixes what a receipt holds and that expiry is explicit; the concrete fields, the three indexes, the tombstone shape and the defaults are the design's, and the expiry number is a product decision the declaration overrides (E-4, D6)",
+          "file": "design/specs/command/receipt-table.sdp.md"
         },
         {
           "kind": "extension",
@@ -4072,9 +4077,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:command.tenancy-and-authority#1",
-          "file": "design/specs/command/tenancy-and-authority.sdp.md",
-          "line": 37
+          "spec": "spec:command.tenancy-and-authority",
+          "question": "Extension E-37: the doc says the parent authenticates and that grants are authoritative data, but not how an identity becomes an actor or how revocation takes effect; here the public entry and a parent query's `authorizeQuery` map `ctx.auth.getUserIdentity()` to a human actor, or a service actor when the issuer is a configured service issuer, grants live in a parent table by default and are revoked by deleting the row, with no cache, so a revoked grant fails the next command (E-37, D11)",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md"
         },
         {
           "kind": "extension",
@@ -4117,9 +4122,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:constraints.events-stay-small#1",
-          "file": "design/specs/constraints/events-stay-small.sdp.md",
-          "line": 26
+          "spec": "spec:constraints.events-stay-small",
+          "question": "Extension E-12: the payload byte bound is the design's number, 16 KiB, chosen with the envelope bound of 4 KiB so that a fold of 500 events of at most 20 KiB each stays under 9.8 MiB, under the 16 MiB read ceiling with headroom; the owner may set another, and the journal's 500-event fold bound moves with it; the reserved `baseline` event of E-25 is exempt from the 16 KiB bound and bounded by its stream type's `budgetBytes` instead, at most 512 KiB, because its payload is the migrated state of its stream, which the fold reads once as its start and never folds, and the owner confirms the exemption with E-25 (E-12, E-2, E-25, D19, F13)",
+          "file": "design/specs/constraints/events-stay-small.sdp.md"
         },
         {
           "kind": "extension",
@@ -4167,9 +4172,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.context-component#3",
-          "file": "design/specs/context/context-component.sdp.md",
-          "line": 51
+          "spec": "spec:context.context-component",
+          "question": "Extension E-22: the doc says the parent calls the context's sanctioned operations and does not say how they are registered; this Spec registers one Convex mutation per sanctioned operation built by `defineOperation` with args `{ tenantId, actor, operation, input, facts }`, fixes the context ID as a code constant equal to the mount name, sets the per-call bounds in documents and in bytes derived from each stream type's budget, names the query and maintenance surface, and adds `convex-helpers` as the component's one dependency because the built-in `.paginate()` does not work in a component; the alternative of one generic `execute` mutation per context with an untyped command was not taken because D12 wants static exports with one canonical schema; the owner confirms (D10, D12, S4, E-22)",
+          "file": "design/specs/context/context-component.sdp.md"
         },
         {
           "kind": "extension",
@@ -4213,9 +4218,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.event-envelope#1",
-          "file": "design/specs/context/event-envelope.sdp.md",
-          "line": 32
+          "spec": "spec:context.event-envelope",
+          "question": "Extension E-26: the doc lists the fifteen fields and their meaning; this Spec fixes the validator shapes, the `CausedBy` union with a migration variant for baseline events, the `OperationRef` the parent passes, and the event ID as a version 4 UUID from the runtime's `crypto`; the owner confirms (D2, E-26)",
+          "file": "design/specs/context/event-envelope.sdp.md"
         },
         {
           "kind": "extension",
@@ -4253,9 +4258,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.event-envelope#2",
-          "file": "design/specs/context/event-envelope.sdp.md",
-          "line": 33
+          "spec": "spec:context.event-envelope",
+          "question": "Extension E-12: the doc says events stay small and gives no number for the envelope; this Spec bounds the envelope beside the payload at `limitEnvelopeBytes`, 4,096 bytes, and each text field of it that a caller can set at 256 bytes of UTF-8, 512 for an actor's ID, so the largest stored event, `limitEventBytes`, is derived and enforced and never assumed; the owner may set other numbers, and the fold bound of `spec:context.journal` moves with them (E-12, D19, F13)",
+          "file": "design/specs/context/event-envelope.sdp.md"
         }
       ],
       "families": [
@@ -4289,9 +4294,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.journal#1",
-          "file": "design/specs/context/journal.sdp.md",
-          "line": 45
+          "spec": "spec:context.journal",
+          "question": "Extension E-25: the doc says a migration writes a baseline event holding the migrated state and that rebuild starts from the latest baseline, and it does not say who computes that state, who drives the migration, or what a live command does on a stream the migration has not reached; this Spec fixes the representation, an event of the reserved type `baseline` whose payload holds the state and its schema version and is bounded by the stream's `budgetBytes` instead of the payload bound, a `baselineVersion` on the stream row, a `BaselineMigration` registered on the stream type whose `migrate` function computes the migrated state from the saved state, or, for a step that declares `readsHistory`, from the saved state and the events since the last baseline in the sweep only, the rule that `stateSchemaVersion` counts meaning only and lives on the registration, one helper `migrateToSchemaVersion` that writes the baseline chain, called by the adapter on load for a chain that reads no history and by the `writeBaseline` maintenance mutation for every chain, the code-older-than-data error, the `writeBaseline` mutation built by `defineMaintenance` and declared with the component's public `mutation` builder, the parent-side scheduled chain that drives it by cursor, the batch bound derived from `budgetBytes`, the upcasting rule for old event schema versions, the fold bound of 500 events with the refusals `rebuildStream` returns above it and for a stream awaiting its baseline, the retirement rule for a migration, and the payload byte check in `append`; the option of refusing commands on unmigrated streams with a transient code until the sweep arrives was not taken for a state-only migration, because it turns a deploy into a partial write pause the doc reserves for history-dependent views, and is taken for a history-reading migration, the exception, where it holds only the streams the sweep has not reached and keeps D3 whole on the command path, which the owner confirmed; a consequence the owner should weigh is that every baseline bumps its stream's version, so a reviewed version held across the sweep is answered `staleVersion` and re-reviewed rather than silently accepted, because Sc L1-10 forbids reinterpreting a reviewed version against fresh state and the baseline is a real event of the stream, while a live stream migrated on load never trips it because its expected-version check runs before the chain; and the driver reads the write pause's gate before every batch and reschedules itself when refused, so a sweep never changes a source under a paused rebuild's cut; the owner confirms (D5, D9, S4, Sc L1-10, E-2, E-8, E-12, E-25)",
+          "file": "design/specs/context/journal.sdp.md"
         },
         {
           "kind": "extension",
@@ -4337,9 +4342,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.persistence-adapter#1",
-          "file": "design/specs/context/persistence-adapter.sdp.md",
-          "line": 43
+          "spec": "spec:context.persistence-adapter",
+          "question": "Extension E-23: the doc gives the sequence and the one-authority rule; this Spec fixes the request and result types, the operation runner with `plan` and `combine`, the aggregation of per-stream outcomes, the per-stream `dto` and `created` flag that the operation returns beside the kernel's outcome so the parent's projections and the backfill take one DTO shape, the semantics of a caller-named expected version including expected version 0 as the create's uniqueness check, the byte-derived bounds on streams and writes per call and the bound on the value a call returns, the on-load baseline migration of step 3a whose rules `spec:context.journal` carries under E-25, and the internal guards that turn a defect into a technical failure; this is a provisional reading the owner has not ruled (D3, D6, E-23, E-25)",
+          "file": "design/specs/context/persistence-adapter.sdp.md"
         },
         {
           "kind": "extension",
@@ -4379,21 +4384,21 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.queries#1",
-          "file": "design/specs/context/queries.sdp.md",
-          "line": 35
+          "spec": "spec:context.queries",
+          "question": "Probe 5 showed on the pinned backend with `convex-helpers` 0.1.124 that the parent query stays reactive, that pages pinned by their end cursors stay contiguous, that a capped page crosses the boundary as `SplitRequired` with its `splitCursor`, and that the `usePaginatedQuery` hook of `convex-helpers/react` then shows 40 of 45 rows; this design uses no hook across the boundary, and the examples are rerun when either pin moves (Probe 5, F15, S4, D8, E-24)",
+          "file": "design/specs/context/queries.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d08-read-models-in-command#1",
-          "file": "design/specs/decisions/d08-read-models-in-command.sdp.md",
-          "line": 30
+          "spec": "spec:decisions.d08-read-models-in-command",
+          "question": "Probe 5 ran on 2026-10-01: a parent query over component queries stays reactive, and pagination crosses the boundary with pages pinned by their end cursors; the client hook lost rows after a capped page split, which slice S2 settles before it builds a list (Probe 5, F15, D8)",
+          "file": "design/specs/decisions/d08-read-models-in-command.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.probe-plan#3",
-          "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 40
+          "spec": "spec:facts.probe-plan",
+          "question": "Probe 5 ran on 2026-10-01: a parent query over a component query stays reactive, pages pinned by their end cursors stay contiguous, and a capped page crosses the boundary as `SplitRequired`; the `convex-helpers/react` hook then lost rows, and slice S2 decides how a context list is capped before it builds one (Probe 5, F15, S4, D8)",
+          "file": "design/specs/facts/probe-plan.sdp.md"
         }
       ],
       "families": [
@@ -4429,9 +4434,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.queries#2",
-          "file": "design/specs/context/queries.sdp.md",
-          "line": 36
+          "spec": "spec:context.queries",
+          "question": "Extension E-24: the doc says component queries are authorized and return DTOs; this Spec fixes one definer per query, the one `tenantId` argument with no separate scope, the `toDto` mapping with the stream version on every DTO, pagination through `paginator`, the item cap with a row cap of twice the item cap and a byte cap passed on every run, the relay of `pageStatus` and `splitCursor` unchanged, paging by an explicit cursor pair with no client hook, the parent query's one `authorizeQuery` call and its refusal as a rejection, the `maxEvents` argument of the `rebuild` query and its `budgetExhausted` refusal for a batching caller, and the fold refusal of the `rebuild` query; this is a provisional reading the owner has not ruled (D8, S4, E-24, E-42)",
+          "file": "design/specs/context/queries.sdp.md"
         },
         {
           "kind": "extension",
@@ -4476,9 +4481,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.queries#3",
-          "file": "design/specs/context/queries.sdp.md",
-          "line": 37
+          "spec": "spec:context.queries",
+          "question": "A parent query's refusal carries the name of the entry that refused in the field `entry` of the rejection data; the wire shape stays `RejectionData` of `spec:command.outcome-boundary` unchanged, and the owner confirmed the word (D7, E-24)",
+          "file": "design/specs/context/queries.sdp.md"
         }
       ],
       "families": [
@@ -4511,9 +4516,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:context.tables#1",
-          "file": "design/specs/context/tables.sdp.md",
-          "line": 29
+          "spec": "spec:context.tables",
+          "question": "Extension E-3: the doc names three indexes and the fields of the envelope; this Spec fixes the concrete tables, the operation index, the `streamParts` table for the derived mapping, the deleted-subject marker as `deletedAt` on the stream row and the size budgets; the owner confirms (D2, E-3)",
+          "file": "design/specs/context/tables.sdp.md"
         },
         {
           "kind": "extension",
@@ -4556,21 +4561,21 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d03-events-only-source-of-next-state#1",
-          "file": "design/specs/decisions/d03-events-only-source-of-next-state.sdp.md",
-          "line": 26
+          "spec": "spec:decisions.d03-events-only-source-of-next-state",
+          "question": "Gap, initial state: the v0.1 interface has none; add `initial()` or let `evolve` accept an empty state so a rebuild from the creation event has a defined start; ruled provisionally as E-1 in the kernel's initial-state decision (D3, E-1)",
+          "file": "design/specs/decisions/d03-events-only-source-of-next-state.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.domain-kernel#2",
-          "file": "design/specs/kernel/domain-kernel.sdp.md",
-          "line": 38
+          "spec": "spec:kernel.domain-kernel",
+          "question": "Extension E-1: the doc leaves open whether the interface gains `initial()` or `evolve` accepts an empty state; the initial-state decision rules for `initial()` provisionally (D3, E-1)",
+          "file": "design/specs/kernel/domain-kernel.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.initial-state#1",
-          "file": "design/specs/kernel/initial-state.sdp.md",
-          "line": 24
+          "spec": "spec:kernel.initial-state",
+          "question": "Extension E-1: the doc offers `initial()` or an `evolve` that accepts an empty state and rules on neither; this Spec takes `initial()` provisionally and the owner confirms or reverses it (D3, E-1)",
+          "file": "design/specs/kernel/initial-state.sdp.md"
         },
         {
           "kind": "extension",
@@ -4609,15 +4614,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d03-events-only-source-of-next-state#2",
-          "file": "design/specs/decisions/d03-events-only-source-of-next-state.sdp.md",
-          "line": 27
+          "spec": "spec:decisions.d03-events-only-source-of-next-state",
+          "question": "Gap, state across several documents, its size budget: one document per stream stays the default while it fits the size budget, and where it cannot, the document writes are derived from the folded state in one place per context, as the kernel's state-document mapping decision states; the size budget there is a provisional number of E-2 (D3, E-2, OQ3)",
+          "file": "design/specs/decisions/d03-events-only-source-of-next-state.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.state-document-mapping#1",
-          "file": "design/specs/kernel/state-document-mapping.sdp.md",
-          "line": 27
+          "spec": "spec:kernel.state-document-mapping",
+          "question": "Extension E-2: the doc prefers one document per stream within a size budget and names no budget; this Spec sets `budgetBytes` as one number per stream type meaning the whole stream, the single document or the head and every part together, at most 256 KiB for the single mapping and at most 512 KiB over at most 32 parts for the derived mapping, provisionally, lets a stream type declare a smaller `budgetBytes` on its mapping, caps the derived budget at half the document ceiling because a baseline event holds the whole migrated state in one document, and derives every bound on streams per call, list page, backfill batch and baseline batch from that budget so that the 16 MiB read ceiling binds in bytes and not only in documents; the owner confirms the numbers (D3, D5, OQ3, F13, E-2, E-25)",
+          "file": "design/specs/kernel/state-document-mapping.sdp.md"
         },
         {
           "kind": "extension",
@@ -4661,15 +4666,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d13-deferred-work-is-an-obligation#1",
-          "file": "design/specs/decisions/d13-deferred-work-is-an-obligation.sdp.md",
-          "line": 35
+          "spec": "spec:decisions.d13-deferred-work-is-an-obligation",
+          "question": "Probe 7 observes the local scheduled reaction, states, scan boundary and both CLI replacement modes; the owner confirmed D13 on these observations; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain unprobed (Probe 7, D13, F12, F16)",
+          "file": "design/specs/decisions/d13-deferred-work-is-an-obligation.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.do-nothing-check#1",
-          "file": "design/specs/obligations/do-nothing-check.sdp.md",
-          "line": 33
+          "spec": "spec:obligations.do-nothing-check",
+          "question": "Probe 7 observes a plain scheduled local reaction and all five states on the pinned native backend; a failed-function scan counts zero documents and bytes but exhausts the 4096-read allowance at 4092 total rows; fresh CLI replacement leaves no scheduler intent, while replacement in place preserves later intent outside restored data; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain open, and the owner confirmed D13 on these observations (Probe 7, F12, F16, F13)",
+          "file": "design/specs/obligations/do-nothing-check.sdp.md"
         }
       ],
       "families": [
@@ -4707,15 +4712,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:decisions.d19-operations-travel-with-capability#1",
-          "file": "design/specs/decisions/d19-operations-travel-with-capability.sdp.md",
-          "line": 31
+          "spec": "spec:decisions.d19-operations-travel-with-capability",
+          "question": "Probe 7 pending: what a restore leaves of Workpool and Workflow state decides how much of the restore procedure the obligation module must rebuild (Probe 7, F12, D19)",
+          "file": "design/specs/decisions/d19-operations-travel-with-capability.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.retention-and-restore#3",
-          "file": "design/specs/obligations/retention-and-restore.sdp.md",
-          "line": 35
+          "spec": "spec:obligations.retention-and-restore",
+          "question": "Probe 7 pending: what a restore leaves of Workpool and Workflow state decides whether the rebuild covers only the module's own dispatches or also passed-ownership work (Probe 7, F12, D19)",
+          "file": "design/specs/obligations/retention-and-restore.sdp.md"
         }
       ],
       "families": [
@@ -4750,9 +4755,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:effects.claim-call-settle#1",
-          "file": "design/specs/effects/claim-call-settle.sdp.md",
-          "line": 41
+          "spec": "spec:effects.claim-call-settle",
+          "question": "Extension E-11: the doc gives the three steps and the three policies but no signatures; this Spec pins them and adds a fourth policy value `none`, which is the declared absence of a safe policy the doc describes (D14, E-11)",
+          "file": "design/specs/effects/claim-call-settle.sdp.md"
         },
         {
           "kind": "extension",
@@ -4791,15 +4796,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:effects.claim-call-settle#2",
-          "file": "design/specs/effects/claim-call-settle.sdp.md",
-          "line": 42
+          "spec": "spec:effects.claim-call-settle",
+          "question": "Extension E-58: the doc gives no lease duration, key derivation, late evidence bound, reconcile shape or handling of a settle call that throws; this design sets the lease to the handler runtime's action timeout plus 5 minutes, derives the key from tenant and effect key, keeps ten late reports, defines a reconcile as a provider query that returns the same report union, and lets the action repeat a thrown settle call three times, with a duplicate rule in the settle, before leaving the attempt to lease expiry (D14, D15, F13, E-58)",
+          "file": "design/specs/effects/claim-call-settle.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:effects.external-effects#1",
-          "file": "design/specs/effects/external-effects.sdp.md",
-          "line": 42
+          "spec": "spec:effects.external-effects",
+          "question": "Extension E-58: the doc does not give the lease duration, the provider key derivation, the late evidence bound, the shape of a reconcile, or what the action does when its settle call throws; `spec:effects.claim-call-settle` pins them (D14, E-58)",
+          "file": "design/specs/effects/external-effects.sdp.md"
         },
         {
           "kind": "extension",
@@ -4841,15 +4846,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:effects.external-effects#2",
-          "file": "design/specs/effects/external-effects.sdp.md",
-          "line": 43
+          "spec": "spec:effects.external-effects",
+          "question": "Extension E-51: a declined provider report settles the obligation as cancelled with `businessRejection` evidence, by the same reading as the local wrapper (D14, D4, E-51)",
+          "file": "design/specs/effects/external-effects.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.lifecycle-transitions#2",
-          "file": "design/specs/obligations/lifecycle-transitions.sdp.md",
-          "line": 26
+          "spec": "spec:obligations.lifecycle-transitions",
+          "question": "Extension E-51: the doc says a known business rejection settles the business result but not which state it settles to; this design reads a body's business failure, which commits like a success, as succeeded with evidence naming its event, and a thrown rejection, which commits nothing, as cancelled with the settled result as `businessRejection` evidence, because cancelled means the effect will not happen and no call is in flight; the owner may prefer a seventh state (D13, D4, E-51)",
+          "file": "design/specs/obligations/lifecycle-transitions.sdp.md"
         },
         {
           "kind": "extension",
@@ -4891,15 +4896,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:effects.external-effects#3",
-          "file": "design/specs/effects/external-effects.sdp.md",
-          "line": 44
+          "spec": "spec:effects.external-effects",
+          "question": "Decision method rule 4: the doc writes Layer 3 from what the first experiment shows, and this Spec and `spec:effects.claim-call-settle` are written before it runs; the lease durations, the settle repeats and the late-evidence bound of E-58 and the backoff shared under E-51 are provisional defaults until the experiment's measurements and Probe 7 confirm or replace them, and the owner confirms that writing the structure now does not pre-empt the experiment (Decision method rule 4, D14, D15, E-51, E-58)",
+          "file": "design/specs/effects/external-effects.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.obligation-module#4",
-          "file": "design/specs/obligations/obligation-module.sdp.md",
-          "line": 56
+          "spec": "spec:obligations.obligation-module",
+          "question": "Decision method rule 4: the doc says Layers 0 to 2 get full detail, the first experiment runs, and Layer 3 is written from what it showed; this module and its children are written now, at the depth D13 to D15 give, with numeric defaults the doc does not give, the backoff and attempt budget of E-51, the sweeper's cadence and bounds of E-52, the fan-out bounds of E-54, the retention horizons of E-55, the lease and settle repeats of E-58 and the index set of E-57; every such number is a provisional default until the experiment's measurements and Probe 7 confirm or replace it, and the owner confirms that writing the structure now does not pre-empt the experiment (Decision method rule 4, D13, Probe 7, E-51, E-52, E-54, E-55, E-57, E-58)",
+          "file": "design/specs/obligations/obligation-module.sdp.md"
         },
         {
           "kind": "planAmbiguity",
@@ -4947,21 +4952,21 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.f16-scheduled-functions-table-shows-failed-runs#1",
-          "file": "design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md",
-          "line": 21
+          "spec": "spec:facts.f16-scheduled-functions-table-shows-failed-runs",
+          "question": "Seven-day retention and expiry, hosted dashboard restore, Workpool and Workflow are not run; the short native retention observation does not establish the documented window.",
+          "file": "design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:facts.probe-plan#5",
-          "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 42
+          "spec": "spec:facts.probe-plan",
+          "question": "Probe 7 observes all five scheduler states, local CLI replacement into a fresh backend and in place, stored scheduler IDs, kept reactions, scheduled-argument limits and failed-function scan cost; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain open before the decisions resting on those observations.",
+          "file": "design/specs/facts/probe-plan.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.obligation-module#1",
-          "file": "design/specs/obligations/obligation-module.sdp.md",
-          "line": 53
+          "spec": "spec:obligations.obligation-module",
+          "question": "Probe 7 observes local scheduler states, short retention, both CLI replacement modes, scheduler-ID validation and the failed-function scan boundary; a stored `v.id(\"_scheduled_functions\")` can validate after fresh replacement while resolving to no row, so it is a typed reference and not proof of a live dispatch; seven-day expiry, hosted restore, Workpool and Workflow remain open, and the owner confirmed the do-nothing check's rejection on these observations (Probe 7, D13, F12, F16)",
+          "file": "design/specs/obligations/obligation-module.sdp.md"
         }
       ],
       "families": [
@@ -5002,15 +5007,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.decider-contract#1",
-          "file": "design/specs/kernel/decider-contract.sdp.md",
-          "line": 29
+          "spec": "spec:kernel.decider-contract",
+          "question": "Extension E-20: the concrete generic parameters, the fields of `DecisionContext`, the `DomainEvent` shape, the at-least-one-event rule and the helper shapes are this design's; the owner confirms them before code names them (D3, E-20)",
+          "file": "design/specs/kernel/decider-contract.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.domain-kernel#1",
-          "file": "design/specs/kernel/domain-kernel.sdp.md",
-          "line": 37
+          "spec": "spec:kernel.domain-kernel",
+          "question": "Extension E-20: the doc gives `decide(state, command, context)`, `fold(evolve, state, newEvents)` and the purity rule, and nothing about the concrete generic parameters, the fields of the decision context, the shape of a domain event, or the state-machine and invariant helpers; the decider contract fixes them and the owner confirms them before code names them (D3, E-20)",
+          "file": "design/specs/kernel/domain-kernel.sdp.md"
         },
         {
           "kind": "extension",
@@ -5048,9 +5053,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.outcome-model#1",
-          "file": "design/specs/kernel/outcome-model.sdp.md",
-          "line": 35
+          "spec": "spec:kernel.outcome-model",
+          "question": "Extension E-21: the doc names the four outcomes and their commit behavior but not their TypeScript shape; this Spec fixes `Outcome<R>`, `Rejection`, `CommittedOutcome<R>`, `AffectedRef`, the rule that a committed outcome carries at least one event, and the three rejection codes the adapter reserves, `staleVersion`, `operationTooLarge` and `entityExists`, the last being the adapter's answer to a create planned at expected version 0 whose stream already exists, which is the uniqueness check D6 names for a client-generated entity ID; the owner confirms the shapes or renames the reserved codes before code names them (D4, D6, E-21)",
+          "file": "design/specs/kernel/outcome-model.sdp.md"
         },
         {
           "kind": "extension",
@@ -5089,9 +5094,10 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:kernel.state-document-mapping#2",
+          "spec": "spec:kernel.state-document-mapping",
+          "question": "OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions; the design assumes one document and leaves the maximum lines as a placeholder in the first experiment (OQ3, D10)",
           "file": "design/specs/kernel/state-document-mapping.sdp.md",
-          "line": 28
+          "open": false
         },
         {
           "kind": "planAmbiguity",
@@ -5129,9 +5135,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.fan-out-and-chains#1",
-          "file": "design/specs/obligations/fan-out-and-chains.sdp.md",
-          "line": 30
+          "spec": "spec:obligations.fan-out-and-chains",
+          "question": "Extension E-54: the doc bounds neither static fan-out, nor the dynamic fan-out batch, nor the chain depth, and it says where a static subscription's obligations are created without saying where the subscription is declared; this design allows 16 obligations per publishing transaction, 500 derived obligations per fan-out attempt with one child fan-out obligation per further page, and a causation depth of 8, and it reads the static subscription as the `createObligation` calls in the command's executor body, reviewed at build time and counted at creation, rather than a reactions field on the command declaration, because D12 lists no such field and the declaration is Layer 1 machinery that imports nothing from this family; the namespace a derived command carries, `worker`, is E-6's ruling on `spec:command.actor-and-scope`, and the path by which its causation reaches the pipeline, the internal entry's `causedBy` argument, is E-31's on `spec:command.command-pipeline`; the owner confirms the numbers and the reading (D12, D13, F13, Thesis, E-6, E-31, E-54)",
+          "file": "design/specs/obligations/fan-out-and-chains.sdp.md"
         },
         {
           "kind": "extension",
@@ -5175,9 +5181,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.lifecycle-transitions#1",
-          "file": "design/specs/obligations/lifecycle-transitions.sdp.md",
-          "line": 25
+          "spec": "spec:obligations.lifecycle-transitions",
+          "question": "Extension E-10: the doc names the six states but not the allowed transitions or their causes; this Spec lists them and refuses every other transition (D13, E-10)",
+          "file": "design/specs/obligations/lifecycle-transitions.sdp.md"
         }
       ],
       "families": [
@@ -5210,9 +5216,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.local-reaction-wrapper#1",
-          "file": "design/specs/obligations/local-reaction-wrapper.sdp.md",
-          "line": 34
+          "spec": "spec:obligations.local-reaction-wrapper",
+          "question": "Extension E-51: the doc does not give the backoff schedule, the default attempt budget, the default deadline or what a maintenance refusal does to the attempt count; this design uses exponential backoff from 1 second with base 2 capped at 1 hour, 8 attempts by default and no deadline by default, all per handler in the registry, and treats a transient `writePaused` or `capacity` refusal as a delay of the same attempt after `retryAfterMs` or 60 seconds; every number is a provisional default until the first experiment (D13, E-51, Decision method rule 4)",
+          "file": "design/specs/obligations/local-reaction-wrapper.sdp.md"
         }
       ],
       "families": [
@@ -5246,9 +5252,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.obligation-module#2",
-          "file": "design/specs/obligations/obligation-module.sdp.md",
-          "line": 54
+          "spec": "spec:obligations.obligation-module",
+          "question": "Extension E-50: the doc does not say where the module lives; this design places it in the parent as a library plus the `obligations` and `obligationRepairs` tables with a static handler registry keyed by handler key and version, because the wrapper runs parent-side bodies as nested mutations and the record reuses the parent's actor and scope types; the alternative, a Convex component driven by function handles like Workpool, is not pre-empted (D13, D11, E-50)",
+          "file": "design/specs/obligations/obligation-module.sdp.md"
         },
         {
           "kind": "extension",
@@ -5288,9 +5294,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.operator-operations#1",
-          "file": "design/specs/obligations/operator-operations.sdp.md",
-          "line": 32
+          "spec": "spec:obligations.operator-operations",
+          "question": "Extension E-53: the doc names the five operations and the repair record's fields but not their signatures or their transaction shape; this design makes them authorized parent mutations and queries that write the repair in the same transaction, refuses cancel and reconcile while a lease is live, and lets reconcile either mint a reconcile attempt that the claim mutation of `spec:effects.claim-call-settle` dispatches, or accept supplied provider evidence from needs attention (D13, D14, E-53)",
+          "file": "design/specs/obligations/operator-operations.sdp.md"
         },
         {
           "kind": "extension",
@@ -5335,9 +5341,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.record-contract#1",
-          "file": "design/specs/obligations/record-contract.sdp.md",
-          "line": 28
+          "spec": "spec:obligations.record-contract",
+          "question": "Extension E-10: the doc lists the fields and the six states but not the concrete table, the index set, the payload bound or the evidence shapes; this Spec pins them, with the inline payload bounded at 64 KiB and completion evidence as a closed union; the doc names four meanings of needs attention, exhausted, uncertain, authority revoked and unsupported version, and this design adds two reasons the doc describes without naming, `recoveryFailing` for the sweeper's escalation when recovery itself keeps failing and `chainBound` for a reaction refused at the chain's depth bound, which the owner confirms (D13, E-10, E-52, E-54)",
+          "file": "design/specs/obligations/record-contract.sdp.md"
         },
         {
           "kind": "extension",
@@ -5378,15 +5384,15 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.record-contract#2",
-          "file": "design/specs/obligations/record-contract.sdp.md",
-          "line": 29
+          "spec": "spec:obligations.record-contract",
+          "question": "Extension E-57: the sweeper and the retention batch are deployment-wide, so `by_status_next_attempt`, `by_status_lease_expiry` and `by_status_settled_at` lead with `status` rather than `tenantId`; every index a tenant-scoped query reads still leads with `tenantId`, and tenant fairness in the sweeper's scan order stays a policy to add when one tenant can starve another (D13, Law 11, E-57)",
+          "file": "design/specs/obligations/record-contract.sdp.md"
         },
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.sweeper#3",
-          "file": "design/specs/obligations/sweeper.sdp.md",
-          "line": 38
+          "spec": "spec:obligations.sweeper",
+          "question": "Extension E-57: the sweeper scans deployment-wide by status; tenant fairness in its order is a policy to add when one tenant can starve another (D13, E-57)",
+          "file": "design/specs/obligations/sweeper.sdp.md"
         },
         {
           "kind": "extension",
@@ -5426,9 +5432,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.retention-and-restore#1",
-          "file": "design/specs/obligations/retention-and-restore.sdp.md",
-          "line": 33
+          "spec": "spec:obligations.retention-and-restore",
+          "question": "Extension E-55: the doc gives no retention horizon, compaction rule or batch bound; this design keeps a completed obligation for the longest repetition policy validity in the module and never less than 30 days, compacts `lastError.message` and `lateEvidence` after 7 days into a count, and deletes at most 500 rows per retention run (D19, F13, E-55)",
+          "file": "design/specs/obligations/retention-and-restore.sdp.md"
         },
         {
           "kind": "extension",
@@ -5468,9 +5474,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.retention-and-restore#2",
-          "file": "design/specs/obligations/retention-and-restore.sdp.md",
-          "line": 34
+          "spec": "spec:obligations.retention-and-restore",
+          "question": "Extension E-56: the doc says restore starts with dispatch off but not how the switch works; this design reads a deployment environment variable in the parent's claim mutation only, where a call-mode claim defers its attempt without counting it and a reconcile-mode claim proceeds, sets it before the restore, adds a cursor-driven `rebuildSchedules` operation for a backlog larger than the sweeper's batch, and orders the two switches: `OBLIGATIONS_DISPATCH` goes off before the backup archive is restored and on last, and `rebuildSchedules` refuses to run while `MAINTENANCE_MODE` is `restore`, so it runs only after `spec:application.restore` has accepted the run and reopened writers (D19, F12, E-42, E-56)",
+          "file": "design/specs/obligations/retention-and-restore.sdp.md"
         },
         {
           "kind": "extension",
@@ -5516,9 +5522,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.sweeper#1",
-          "file": "design/specs/obligations/sweeper.sdp.md",
-          "line": 36
+          "spec": "spec:obligations.sweeper",
+          "question": "Extension E-52: the doc says the sweeper is batched and bounded but gives no cadence, batch bound, grace period, rearm bound or time guard; this design runs every 60 seconds, examines at most 100 candidates and 100 expired leases per scan, stops a run after 500 ms of elapsed time by `performance.now()`, waits a grace of 120 seconds past the next attempt time, allows 5 rearms, and isolates each candidate in a nested mutation; the numbers are tested against the pinned Convex version (D13, D19, E-52)",
+          "file": "design/specs/obligations/sweeper.sdp.md"
         },
         {
           "kind": "extension",
@@ -5559,9 +5565,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:obligations.sweeper#2",
-          "file": "design/specs/obligations/sweeper.sdp.md",
-          "line": 37
+          "spec": "spec:obligations.sweeper",
+          "question": "Probe 3 pending: the candidate bound of 100 is provisional; it assumes a nested `ctx.runMutation` costs a few milliseconds, which F4 records as unknown, so the bound is reset from the probe's measured cost so that a full scan of 200 nested calls fits inside the elapsed guard, and until then the guard rather than the count is what keeps a run under the mutation timeout (Probe 3, F4, F13, E-52)",
+          "file": "design/specs/obligations/sweeper.sdp.md"
         }
       ],
       "families": [
@@ -5595,9 +5601,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:operations.baseline-operations#1",
-          "file": "design/specs/operations/baseline-operations.sdp.md",
-          "line": 42
+          "spec": "spec:operations.baseline-operations",
+          "question": "Extension E-43: the doc says audit is written inside the transaction and fails closed, that diagnostics hold no raw prompts, credentials or unbounded payloads, and that personal data sits behind references; it does not give the audit record, the diagnostic record or the reference.",
+          "file": "design/specs/operations/baseline-operations.sdp.md"
         },
         {
           "kind": "extension",
@@ -5640,9 +5646,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:operations.baseline-operations#2",
-          "file": "design/specs/operations/baseline-operations.sdp.md",
-          "line": 43
+          "spec": "spec:operations.baseline-operations",
+          "question": "The retention and deletion policy's content is the owner's: which historical claims survive deletion and how long receipts, audit records and diagnostics are kept; the design gives the hooks and states no periods (D19)",
+          "file": "design/specs/operations/baseline-operations.sdp.md"
         },
         {
           "kind": "productDecision",
@@ -5679,9 +5685,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.acceptance-contract#1",
-          "file": "design/specs/platform/acceptance-contract.sdp.md",
-          "line": 24
+          "spec": "spec:platform.acceptance-contract",
+          "question": "Extension E-14: the doc's four tiers, domain, simulator, native and end to end, name no compile-time check, while Sc L2-4's pass condition is a build, type or registration check that fails before any traffic; the option taken here is the compiled tier, a compile with no backend of a typed caller that states the change, which asserts that `tsc` refuses it, run with every type check and recorded like any run, and this corpus reads the doc's end to end tier as the native backend tier on the production composition; the alternative, folding it into the native backend tier as a compile step that precedes the native run, was not taken because a native run needs a backend and the check needs none; the owner confirms (E-14, Sc L2-4, Acceptance scenarios)",
+          "file": "design/specs/platform/acceptance-contract.sdp.md"
         },
         {
           "kind": "extension",
@@ -5724,9 +5730,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.transactional-domain-platform#1",
-          "file": "design/specs/platform/transactional-domain-platform.sdp.md",
-          "line": 44
+          "spec": "spec:platform.transactional-domain-platform",
+          "question": "OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability, which is the form the doc's behavior rules with examples take here; the owner confirmed the mapping (OQ5)",
+          "file": "design/specs/platform/transactional-domain-platform.sdp.md"
         },
         {
           "kind": "planAmbiguity",
@@ -5763,9 +5769,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.vocabulary#1",
-          "file": "design/specs/platform/vocabulary.sdp.md",
-          "line": 25
+          "spec": "spec:platform.vocabulary",
+          "question": "OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the owner answered OQ6 with receipt for the stored outcome of a command and completion evidence for the row that proves an effect happened (OQ6, Vocabulary)",
+          "file": "design/specs/platform/vocabulary.sdp.md"
         }
       ],
       "families": [
@@ -5796,9 +5802,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.vocabulary#2",
-          "file": "design/specs/platform/vocabulary.sdp.md",
-          "line": 26
+          "spec": "spec:platform.vocabulary",
+          "question": "OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the owner answered OQ6 with generation for a numbered build of a read model and attempt for one try at an obligation (OQ6, Vocabulary)",
+          "file": "design/specs/platform/vocabulary.sdp.md"
         }
       ],
       "families": [
@@ -6067,10 +6073,10 @@
       "status": "sorted",
       "foldedInto": [],
       "class": "delegated",
-      "reason": "Rule 3, a bound and its number: the doc says events stay small and names no number, both numbers are extensions [design/specs/command/command-pipeline.sdp.md:131] and [design/specs/command/outcome-boundary.sdp.md:98], a refused caller is a rejection that stores nothing, and an edit to two Spec lines and two constants takes either back.",
+      "reason": "Rule 3, a bound and its number: the doc says events stay small and names no number, both numbers are extensions [spec:command.command-pipeline#design.limitCallText] and [design/specs/command/outcome-boundary.sdp.md:98], a refused caller is a rejection that stores nothing, and an edit to two Spec lines and two constants takes either back.",
       "lean": {
         "do": "Keep `limitActorIdLength` at 512 bytes and the rejection `details` bound at 16,384 bytes.",
-        "restsOn": "[design/specs/command/command-pipeline.sdp.md:131] lists `actor.id` and `actor.onBehalfOf.id` at 512 among the caller-set text fields step 1 checks, with a field one byte over answered as rejection `invalidInput` with `{ field, length, limit }`, and says `limitEnvelopeBytes` is derived from these bounds; [design/specs/command/outcome-boundary.sdp.md:98] bounds a rejection's `details` to 16,384 bytes measured with `getConvexSize`, checked by `reject` and by `normalizeThrown`. [src/context/text.ts:3] exports 512 and [src/command/outcome-boundary.ts:100] holds 16384. The pure and `convex-test` tiers pass as a whole at 5bb227e, 438 tests, run by me; the test that binds these two lines I did not open. **Judgment.** The two numbers are inputs of a derived set, the envelope bound and the fold bound rest on them, and what a wrong number costs is a refused caller or a refused rejection, each a rejection that stores nothing (`CONTEXT.md:55`), so no stored event or receipt carries the mistake.",
+        "restsOn": "[spec:command.command-pipeline#design.limitCallText] lists `actor.id` and `actor.onBehalfOf.id` at 512 among the caller-set text fields step 1 checks, with a field one byte over answered as rejection `invalidInput` with `{ field, length, limit }`, and says `limitEnvelopeBytes` is derived from these bounds; [design/specs/command/outcome-boundary.sdp.md:98] bounds a rejection's `details` to 16,384 bytes measured with `getConvexSize`, checked by `reject` and by `normalizeThrown`. [src/context/text.ts:3] exports 512 and [src/command/outcome-boundary.ts:100] holds 16384. The pure and `convex-test` tiers pass as a whole at 5bb227e, 438 tests, run by me; the test that binds these two lines I did not open. **Judgment.** The two numbers are inputs of a derived set, the envelope bound and the fold bound rest on them, and what a wrong number costs is a refused caller or a refused rejection, each a rejection that stores nothing (`CONTEXT.md:55`), so no stored event or receipt carries the mistake.",
         "against": "**Judgment.** 512 for `actor.id` has to hold whatever `tokenIdentifier` an issuer mints, and no cited source gives the longest one the pinned Convex auth produces; that is a lead for the convex advisor. 16,384 for `details` equals the event payload bound at [src/context/journal.ts:68], so a rejection's details may be as large as an event, and the rule that error data carries no payload rests on the one-sentence message rule of the same line, not on the number.",
         "settles": "For the lead: the longest `tokenIdentifier` a Convex auth provider produces, from the docs page with the day it was read, which the convex advisor's lane cites. Otherwise nothing: either number changes by an edit, and a native run with a caller at the bound is the only tier that shows the refusal on the production composition.",
         "changes": "For the lean: nothing. For the alternative, other numbers: `design/specs/command/command-pipeline.sdp.md` (`limitCallText`), `design/specs/context/event-envelope.sdp.md` (`limitEnvelopeBytes`, which [design/specs/context/event-envelope.sdp.md:33] says the journal's fold bound moves with), `design/specs/command/outcome-boundary.sdp.md` (`limitErrorData`), `src/context/text.ts` and `src/command/outcome-boundary.ts`.",
@@ -6113,7 +6119,7 @@
       "reason": "Owner tests 5 and 6: who may run a rebuild or a restore across every tenant trades safety against ease with no evidence on which weighs more, and any grant for it needs a scope beyond the tenant, which rules on the term grant, a permission in a tenant [CONTEXT.md:128]; doubt stated, because admin access alone is a mechanism and D11's trust boundary already admits it.",
       "lean": {
         "do": "Keep admin access as the authority for a deployment-wide operation, with the operator actor stated as the argument and written on the generation row, the run record and the gate's audit, and read no grant for it until a scope beyond the tenant exists.",
-        "restsOn": "[design/specs/application/rebuild.sdp.md:94] makes every rebuild function internal and reached through operator functions that authorize an operator actor; [design/specs/application/rebuild.sdp.md:73] runs the rebuild across every tenant under one operator actor; [design/specs/command/actor-and-scope.sdp.md:43] and [design/specs/command/actor-and-scope.sdp.md:71] make every grant name one tenant and [docs/convex-transactional-domain-platform-decisions.md:251] make an absent tenant never a wildcard, so no grant the table can hold covers a pass over every tenant; what is recorded is the stated actor, `startedBy` on the row [design/specs/application/generation-registry.sdp.md:63], `operator` on the restore run [design/specs/application/restore.sdp.md:94] and `changedBy` on every gate change [design/specs/application/write-pause.sdp.md:50]; [design/specs/decisions/d11-tenant-scope-and-authority.sdp.md:32] rules the trust boundary as one trusted deployment with no claim against a malicious administrator. **Judgment.** In the practice of answering for who ran a restore, a stated actor is recorded and not checked: a person with admin access can state any actor, and the record then says what they chose to say.",
+        "restsOn": "[design/specs/application/rebuild.sdp.md:94] makes every rebuild function internal and reached through operator functions that authorize an operator actor; [design/specs/application/rebuild.sdp.md:73] runs the rebuild across every tenant under one operator actor; [design/specs/command/actor-and-scope.sdp.md:43] and [design/specs/command/actor-and-scope.sdp.md:71] make every grant name one tenant and [docs/convex-transactional-domain-platform-decisions.md:251] make an absent tenant never a wildcard, so no grant the table can hold covers a pass over every tenant; what is recorded is the stated actor, `startedBy` on the row [spec:application.generation-registry#design.tableGenerations], `operator` on the restore run [design/specs/application/restore.sdp.md:94] and `changedBy` on every gate change [design/specs/application/write-pause.sdp.md:50]; [design/specs/decisions/d11-tenant-scope-and-authority.sdp.md:32] rules the trust boundary as one trusted deployment with no claim against a malicious administrator. **Judgment.** In the practice of answering for who ran a restore, a stated actor is recorded and not checked: a person with admin access can state any actor, and the record then says what they chose to say.",
         "against": "[design/specs/application/rebuild.sdp.md:94] promises operator functions that authorize an operator actor, and with no grant to read that sentence is a promise nothing can keep as written; the alternatives are a grant in every tenant, which a pass of a hundred tenants reads a hundred times, or a deployment scope that is not a tenant, which only the owner can name.",
         "settles": "The owner's word on whether a deployment-wide operator holds a grant, in which scope, or admin access alone; until then the S4 build takes the stated actor and records it."
       },
@@ -6183,7 +6189,7 @@
       "reason": "Owner test 5, and the doc makes acceptability itself a trigger: [docs/convex-transactional-domain-platform-decisions.md:354] activates online rebuild of cross-stream views when the write pause is unacceptable for them, so naming the acceptable length settles a trigger of the doc, which only the owner does; a policy by the operator lens's own rule.",
       "lean": {
         "do": "Keep the Spec silent on a bound, and give the owner the length as a sum: the backfill plus the verify pass of the view's sources, batch count times batch time, with the levels each would mean.",
-        "restsOn": "[design/specs/application/write-pause.sdp.md:23] reopens nothing by itself and [design/specs/application/write-pause.sdp.md:46] resumes a scope only after the rebuild it served is verified and switched or aborted, so the pause lasts the whole rebuild; [design/specs/application/rebuild.sdp.md:121] bounds a history batch at 128 events at the default row budget and [design/specs/application/rebuild.sdp.md:124] a backfill batch at 100 entities, so the batch count follows from the view's size; [docs/convex-transactional-domain-platform-decisions.md:229] says the pause costs more than the online path and is the exception. **Judgment.** Minutes admit only small views; an hour is a maintenance window the operator announces; a pause longer than the business tolerates is the trigger at [docs/convex-transactional-domain-platform-decisions.md:354] firing, and no batch time is known at any tier until S4 measures one.",
+        "restsOn": "[design/specs/application/write-pause.sdp.md:23] reopens nothing by itself and [design/specs/application/write-pause.sdp.md:46] resumes a scope only after the rebuild it served is verified and switched or aborted, so the pause lasts the whole rebuild; [spec:application.history-rebuild#design.limitHistoryBatch] bounds a history batch at 128 events at the default row budget and [spec:application.rebuild#design.limitBatchSize] a backfill batch at 100 entities, so the batch count follows from the view's size; [docs/convex-transactional-domain-platform-decisions.md:229] says the pause costs more than the online path and is the exception. **Judgment.** Minutes admit only small views; an hour is a maintenance window the operator announces; a pause longer than the business tolerates is the trigger at [docs/convex-transactional-domain-platform-decisions.md:354] firing, and no batch time is known at any tier until S4 measures one.",
         "settles": "S4's measurement of a history-view rebuild under a pause on the native tier, for the batch time, then the owner's word on the acceptable length."
       },
       "checkedBy": null,
@@ -6330,9 +6336,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:platform.native-harness#4",
-          "file": "design/specs/platform/native-harness.sdp.md",
-          "line": 27
+          "spec": "spec:platform.native-harness",
+          "question": "Extension E-59: the doc's native tier is a test on a real backend, S13 names a local one, and Sc L2-9 is read as the local observation; the doc does not say whether a native test runs on a hosted deployment, where alone Probe 3 can read function-call quota and where F12 and F16 keep parts that only documentation states; the option taken here: the same harness, run record and compositions run natively on one hosted development deployment in a Convex team and project of their own, selected by process variables under a test configuration of its own, one run at a time, from a workflow whose failure fails no other check, with one development deploy key limited to the actions `deployKeyActions` lists; the alternatives were each developer's own deployment, which still needs one more key for the continuous integration, a preview deployment per run, which on the Free and Starter plans expires by default five days after it is created, before F16's seven-day window, and a fresh development deployment per run, which needs a project key, a credential the docs give total control over a project; the team, the project, the plan and the key are the owner's to provide (E-59, Sc L2-9, F4, F12, F16, Probe 3, Probe 7)",
+          "file": "design/specs/platform/native-harness.sdp.md"
         }
       ],
       "families": [
@@ -6370,9 +6376,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.rebuild#6",
-          "file": "design/specs/application/rebuild.sdp.md",
-          "line": 66
+          "spec": "spec:application.history-rebuild",
+          "question": "Extension E-40, the shape of a history batch: a batch takes one stream, so a pass costs at least one scheduled mutation per source stream and the pause lasts about twice the stream count times one batch; the alternative is a batch that takes streams from one `list` page until its event budget is spent, one `history` call per stream, with the byte bound counting one baseline per stream; the first paused rebuild on the native backend measures one batch, and the shape is chosen with that number (E-40, E-9, F13, F19, D9)",
+          "file": "design/specs/application/history-rebuild.sdp.md"
         }
       ],
       "families": [
@@ -6405,9 +6411,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.rebuild#7",
-          "file": "design/specs/application/rebuild.sdp.md",
-          "line": 67
+          "spec": "spec:application.history-rebuild",
+          "question": "The verify pass under the write pause: a history view's generation is built while no source changes, so its verify pass repeats the backfill's batches and, by `spec:application.history-rebuild#design.historyVerify`, finds nothing over a covered generation, which doubles the pause; the option kept here is the pass, as D9's \"Verify coverage, then switch\" and Sc L2-6's \"writes reopen only after verification\" read, and whether a paused generation is `verified` when its backfill ends is the owner's (D9, Sc L2-6)",
+          "file": "design/specs/application/history-rebuild.sdp.md"
         }
       ],
       "families": [
@@ -6437,9 +6443,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.rebuild#8",
-          "file": "design/specs/application/rebuild.sdp.md",
-          "line": 68
+          "spec": "spec:application.history-rebuild",
+          "question": "Whether a history view's batch chain, at up to 2 MiB of rows per batch scheduled with `runAfter(0)`, is held by the deployment class's write throughput limit, `spec:facts.f13-transactions-have-limits#design.limitWriteThroughput`, which the first paused rebuild on the native backend and one hosted run show (F13, E-40)",
+          "file": "design/specs/application/history-rebuild.sdp.md"
         }
       ],
       "families": [
@@ -6470,9 +6476,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.projection-contract#5",
-          "file": "design/specs/application/projection-contract.sdp.md",
-          "line": 37
+          "spec": "spec:application.projection-contract",
+          "question": "Extension E-9, the cost of `sourceVersions`: a history row's entries repeat the row's tenant ID once per source stream, about three quarters of the largest order allocation history row by `spec:application.history-projection#design.tableOrderAllocationHistory`; whether a row's `sourceVersions` may omit `tenantId`, equal to the row's on every entry, and the write rule compare three identity fields, is a choice the owner may take with the pinned conventions (E-9, Law 11, F13)",
+          "file": "design/specs/application/projection-contract.sdp.md"
         }
       ],
       "families": [
@@ -6503,9 +6509,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.history-projection#3",
-          "file": "design/specs/application/history-projection.sdp.md",
-          "line": 36
+          "spec": "spec:application.history-projection",
+          "question": "The cost of the binding on the live path, one row read and one write of up to `rowBudgetBytes` per command and the measure of the row, is taken by the first experiment's latency cell with the order allocation history bound, for `PlaceOrder` and for `CancelOrder` of an order of the maximum lines, before the view is declared essential anywhere (E-9, E-47, F13)",
+          "file": "design/specs/application/history-projection.sdp.md"
         }
       ],
       "families": [
@@ -6536,9 +6542,9 @@
       "sources": [
         {
           "kind": "specQuestion",
-          "ref": "spec:application.write-pause#2",
-          "file": "design/specs/application/write-pause.sdp.md",
-          "line": 40
+          "spec": "spec:application.write-pause",
+          "question": "Extension E-8, the generation exemption: a batch reads the gate with the scopes `all` and its tenant, and no entry of either scope ever names a generation, so the exemption `gateAllows` makes for a given generation is reached by no reader; either the exemption goes, or a history batch reads the gate with its source scopes as well and passes them by it (E-8, D9)",
+          "file": "design/specs/application/write-pause.sdp.md"
         }
       ],
       "families": [
@@ -6561,6 +6567,65 @@
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
+    },
+    {
+      "id": "OD-162",
+      "title": "Whether the generation registry, the command declaration and the command pipeline pin the aggregate form.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "O1",
+          "file": "design/STATE.md",
+          "line": 331
+        }
+      ],
+      "families": [
+        "application",
+        "command"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "domain",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Owner ruling O1 of 2026-10-04, the aggregate form's reach.",
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-04",
+      "ruling": "The three Specs pin the per-entity and history forms only, and the aggregate projection states how it extends them when OD-075 triggers, so their floor no longer waits on a scoped Spec. The owner chose, on 2026-10-04, from the main thread's options: \"Drop the aggregate form (Recommended)\": \"The three Specs pin the per-entity and history forms; the aggregate Spec states how it extends them when OD-075 triggers. Their floor stops waiting on a scoped Spec; history pairs stay 'ahead' until 5d.\""
+    },
+    {
+      "id": "OD-163",
+      "title": "What a stated ready means in this corpus.",
+      "sources": [
+        {
+          "kind": "ownerQueue",
+          "ref": "O2",
+          "file": "design/STATE.md",
+          "line": 331
+        }
+      ],
+      "families": [
+        "platform"
+      ],
+      "cites": [],
+      "provisionalReading": null,
+      "blocks": null,
+      "advisor": "product",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Owner ruling O2 of 2026-10-04, the meaning of ready.",
+      "lean": null,
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-04",
+      "ruling": "A stated ready means approved to build, the Protocol's reading: recipe 1 is the build backlog and recipe 2 the drift alarm. No Spec states ready until the owner rules on it; the history projection may after the domain and operator passes. The owner chose, on 2026-10-04, from the main thread's options: \"Approved to build (Recommended)\": \"The Protocol's reading. Recipe 1 becomes the build backlog; the history projection could state ready after the domain and operator passes; roadmap 4e ('ready by family') changes meaning. No Spec states ready in this unit.\""
     }
   ],
   "possiblySame": [

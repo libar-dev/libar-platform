@@ -1,0 +1,70 @@
+---
+id: spec:application.history-rebuild
+kind: workflow
+altitude: feature
+readiness: defined
+relations:
+  refines: spec:application.read-models
+  dependsOn:
+    - spec:application.rebuild
+    - spec:application.history-projection
+    - spec:application.write-pause
+    - spec:application.generation-registry
+    - spec:context.queries
+    - spec:context.event-envelope
+  constrainedBy:
+    - spec:laws.law11-tenant-scope-named
+    - spec:facts.f01-serializable-mutations-under-occ
+    - spec:facts.f13-transactions-have-limits
+    - spec:facts.f19-nested-calls-share-time-budgets
+  decidedBy:
+    - spec:decisions.d09-rebuild-online-by-default
+    - spec:decisions.d04-four-outcomes
+---
+# Rebuild of a history view under a write pause
+
+Layer 2 · Detail: full · Traces: D2, D4, D9, D10, D18, Law 11, F1, F13, F19, Sc L2-6, E-8, E-9, E-24, E-38, E-40, E-48, E-49.
+
+For a read model that depends on history across several streams the rebuild runs under a write pause, because it needs a consistent cut; the scope closed is the view's sources, the context and stream type pairs its bindings name, so every use case that writes one of them and the journal's baseline driver read the gate and are refused, background writers are fenced by that read and by the generation's fence, and an operator can resume or abort. Such a view is a `HistoryProjection` and its backfill pages each source stream's history under the pause.
+
+This workflow is the paused path of `spec:application.rebuild`, which holds the online path and what the two paths share: the operator entries, the batch chain with its fence and its progress row, the switch, the abort, the purge and the tenant fill. The history form and its fold are `spec:application.history-projection`, the gate and its source scopes are `spec:application.write-pause`, the cursor's fields are pinned by `spec:application.generation-registry`, and each source is read through its `list` and `history` queries of `spec:context.queries`.
+
+## Intent
+
+- problem: A cross-stream history view is rebuilt without a consistent cut (Sc L2-6)
+- outcome: A history-dependent view rebuilds under a write pause with safe resume and abort, and writes reopen only after verification (D9, Sc L2-6)
+- risk: A paused rebuild closes its view's sources in every tenant until the switch or the abort; its backfill and its verify pass each take one batch per source stream, one more for each further `history` page of a stream longer than the batch size, and one per tenant and source to end that source's enumeration, so the pause lasts about twice that count times one batch; a batch that took streams until its event bound was spent, or a generation of one tenant, which the registry does not offer, would shorten it (D9, E-8, E-40, D18)
+
+### Open questions
+
+- [non-blocking] Extension E-40, the shape of a history batch: a batch takes one stream, so a pass costs at least one scheduled mutation per source stream and the pause lasts about twice the stream count times one batch; the alternative is a batch that takes streams from one `list` page until its event budget is spent, one `history` call per stream, with the byte bound counting one baseline per stream; the first paused rebuild on the native backend measures one batch, and the shape is chosen with that number (E-40, E-9, F13, F19, D9)
+- [non-blocking] The verify pass under the write pause: a history view's generation is built while no source changes, so its verify pass repeats the backfill's batches and, by `spec:application.history-rebuild#design.historyVerify`, finds nothing over a covered generation, which doubles the pause; the option kept here is the pass, as D9's "Verify coverage, then switch" and Sc L2-6's "writes reopen only after verification" read, and whether a paused generation is `verified` when its backfill ends is the owner's (D9, Sc L2-6)
+- [non-blocking] Whether a history view's batch chain, at up to 2 MiB of rows per batch scheduled with `runAfter(0)`, is held by the deployment class's write throughput limit, `spec:facts.f13-transactions-have-limits#design.limitWriteThroughput`, which the first paused rebuild on the native backend and one hosted run show (F13, E-40)
+
+## Workflow
+
+- rule: Under the write pause every writer in the scope reads the maintenance gate, background writers are fenced or drained, and an operator can resume or abort (D9)
+- rule: A refused write under the pause is a transient refusal, retryable and never a stored rejection (D4, D9)
+- rule: [extension] Under the pause a history row's recorded version for a stream means every event of that stream with the row's key up to that version is folded: a stream's events reach the fold in version order, from its first event on the backfill and the verify pass and after its last folded version on the live path, a generation in flight is written by its own batches alone while its sources are closed, and no retired generation is reopened; so a verify pass that repeats the backfill and folds no event finds the generation covering every source (E-8, E-9, D9, F1)
+- For a history-dependent read model the generation row records `pauseRequired`, and `startGeneration` closes the maintenance gate for every source scope of the read model's bindings in the mutation that inserts the row, recording its own generation on each closed entry, so the gate is closed before the first batch is scheduled and this generation's batches are the one background writer allowed through (D9, E-8, E-38)
+- While the gate is closed for the sources, every use case whose declaration writes one of them and the journal's baseline driver refuse with `writePaused` before any write, whether or not they maintain the view; a batch scheduled before the close reads the closed gate when it starts and refuses, a batch running when the close commits loses the optimistic-concurrency race on the gate document and re-runs into the refusal, and a batch of a superseded chain refuses because its generation fence is stale; nothing needs to drain (D9, D4, E-8, E-38, F1)
+- Backfill under the pause enumerates a consistent cut because no source changes: each history batch takes the next stream of its cursor's source in its tenant, reads one `history` page of it from the saved event cursor, folds the page into the building generation through `applyHistoryProjection` in backfill mode, and saves the source, the stream and the event cursor on the progress row, moving to the next stream when the page reports `isDone`, to the next source when that source's enumeration in the tenant ends, and to the next tenant after the last source; an interrupted batch resumes from its cursor with the gate still closed, and the gate never reopens by itself (D9, E-9, Sc L2-6)
+- Verification runs under the pause: the verify pass repeats the backfill's batches from the first tenant and source and counts as a miss every row they insert or update, which over a covered generation is none, so a miss is repaired by the batch that found it and the generation is `verified` when the pass ends; `switchGeneration` resumes every closed entry that names the generation in the mutation that makes it active, so writes reopen only after verification (D9, E-9, Sc L2-6)
+
+## Design
+
+Every entry below extends `spec:application.rebuild`: a history batch keeps that workflow's `step1` to `step3` and checkpoints as its `step6` does, and `startGeneration`, `switchGeneration` and `abortGeneration` are its operator entries.
+
+- typeHistorySource: `type HistorySource = { source: SourceRef; list: FunctionReference<"query", "internal", ListArgs, PaginationResult<{ version: StreamVersion }>>; history: FunctionReference<"query", "internal", { tenantId: string; streamId: string; fromVersion?: number; paginationOpts: PaginationOptions }, PaginationResult<EventEnvelope>> }` one source stream type of a history view, with the references to its `list` and `history` queries of `spec:context.queries` in its context component, such as `components.inventory.queries.stockItem.list` and `components.inventory.queries.stockItem.history` (E-8, E-9, D10)
+- typeHistoryRebuildTarget: `type HistoryRebuildTarget = { readModel: HistoryProjection<any>; sources: readonly [HistorySource, ...HistorySource[]] }` one history view the deployment can rebuild under the write pause, with every context and stream type pair its bindings name, in the order a pass takes them; the order allocation history's lists the stock item source first and the order source second (E-8, E-9, E-38, D9)
+- fnHistoryPageCall: `ctx.runQuery(source.history, { tenantId, streamId, paginationOpts: { numItems: batchSize, cursor: eventCursor } })` with `source` the entry of the target's `sources` the cursor names and `batchSize` the progress row's, the one `history` call a history batch makes beside its one `list` call of `numItems` 1, returning a `paginator` page of envelopes in version order, capped by the query's own item and byte bounds, that the batch folds through `applyHistoryProjection` (D2, D10, E-9, E-24)
+- historyCursor: a history view's batch cursor adds `sourceIndex`, the position in the target's `sources`, so a pass goes tenant by tenant in tenant-ID order, source by source in `sources` order within a tenant, stream by stream in the source's `list` order and page by page in version order within a stream, and reads the stream a cursor names from that source's `history`, so two sources with equal local stream IDs never meet; a pass of a history view costs at least one batch per tenant and source, the batch whose `list` page holds no stream (E-8, E-40, E-49, Law 11)
+- historyStart: for a `HistoryRebuildTarget`, `startGeneration` takes the version the projection declares and refuses a given `projectionVersion` that differs with the message of `projectionOf`, sets `pauseRequired: true`, and, after inserting the generation row and the progress row and before scheduling, calls the write pause's `closeScope` once per entry of `sources`, in order, with `"source:" + contextId + ":" + streamType`, the reason `"rebuild of " + name + " generation " + n`, the operator and the new generation's ID, so a scope already closed or a full gate refuses the whole start and no batch is scheduled (D9, E-8, E-38, E-48)
+- historySteps: for a history view a backfill or verify batch keeps steps 1 to 3 and replaces steps 4 to 6: with `source` the entry of `sources` at the cursor's `sourceIndex`, 0 when the cursor is `null`, when the cursor names no stream it calls `source.list` with `numItems` 1, `includeDeleted` and the page cursor; a page with no DTO reads no history: when it is not done the batch checkpoints at its `continueCursor`, and when it is done that source ends in the tenant and the batch checkpoints at the next source of the same tenant with a `null` page cursor, or after the last source at `{ tenantId: next, pageCursor: null, sourceIndex: 0 }` for `next = nextTenant(ctx, tenantId)`, the pass being done when `next` is `null`; a page with a DTO names the stream, its `version.streamId`, with a `null` event cursor and the page's `continueCursor` as the page cursor; for the stream the cursor or the page names, the batch then calls `source.history` as `fnHistoryPageCall` states, calls `applyHistoryProjection(ctx, target.readModel, { tenantId, events: page, mode: "backfill", generations: [thisGeneration] })`, adds one to `rowsWritten`, or to `misses` in a verify batch, for each `inserted` or `updated` and one to `rowsSkipped` for each `skipped-newer`, and checkpoints with the stream and the page's `continueCursor` as the event cursor, or with neither when the page reports `isDone`; every checkpoint patches the progress row and schedules the next batch as step 6 does for a pass that is not done, and the batch whose pass is done moves the generation and the progress row as step 6 and `verifySteps` state (D9, E-9, E-24, E-40, E-49)
+- historyVerify: a verify batch of a history view runs `historySteps` from the `null` cursor the end of the backfill set, with `state` `verifying` and `pass` `verify`; under the pause no source changes, so over a generation the backfill covered every key answers `skipped-newer`, an event of type `baseline` or whose key is `null` is never a miss, and a row the pass finds missing or behind is repaired by the batch that read the events; the generation is `verified` when the pass ends, as for every read model, and the pass reads every source's history once more under the pause (D9, E-8, E-9, Sc L2-6)
+- limitHistoryBatch: [extension] a history batch reads at most the progress row's `batchSize` events, which `startGeneration` sets through `batchSizeFor` like every read model's and nothing changes after, so the one formula of `limitBatchSize` gives 100 events at the default 16 KiB row budget and 32 at the 64 KiB ceiling, the order allocation history's; one batch reads one stream row of at most the stream's `budgetBytes` through its one `list` call, those events through its one `history` call, each at most `limitEventBytes` of `spec:context.event-envelope` and the 61 bytes of a stored document's system fields, with the page's baselines held to about 9 MiB by the query's byte bound, and at most one history row per event, at most 2 MiB, and writes at most 2 MiB, under the ceilings with the 1 second timeout in mind (E-40, E-9, E-24, F13)
+
+## Verification — reviewed
+
+- A reviewer confirms that `startGeneration` closes one entry per source of a paused view and nothing else, and that the write-pause examples assert a refusal of a source writer while closed, the fold of the history view against the journal, and a reopen only after verification.
+- A reviewer confirms that a history target's `sources` name exactly the context and stream type pairs the view's bindings name, so `startGeneration` closes every writer of its sources, and that `rollbackGeneration` refuses every generation with `pauseRequired`.

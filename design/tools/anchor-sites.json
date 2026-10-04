@@ -1,0 +1,115 @@
+{
+  "anchors": [
+    {
+      "anchor": "impl:application.generation-registry",
+      "sources": ["src/read-model/generations.ts", "src/read-model/tables.ts"]
+    },
+    {
+      "anchor": "impl:application.orders-inventory-example",
+      "sources": [
+        "example/domain/order.ts",
+        "example/domain/stockItem.ts",
+        "example/convex/orders/convex.config.ts",
+        "example/convex/orders/schema.ts",
+        "example/convex/orders/streams.ts",
+        "example/convex/orders/operations.ts",
+        "example/convex/orders/queries/order.ts",
+        "example/convex/inventory/convex.config.ts",
+        "example/convex/inventory/schema.ts",
+        "example/convex/inventory/streams.ts",
+        "example/convex/inventory/operations.ts",
+        "example/convex/inventory/queries/stockItem.ts",
+        "example/convex/ordering.ts",
+        "example/convex/receiving.ts",
+        "example/convex/orderSummary.ts"
+      ]
+    },
+    {
+      "anchor": "impl:application.parent-use-cases",
+      "sources": ["example/convex/ordering.ts", "example/convex/receiving.ts"]
+    },
+    {
+      "anchor": "impl:application.projection-contract",
+      "sources": ["src/read-model/projection.ts"]
+    },
+    {
+      "anchor": "impl:application.read-models",
+      "sources": ["src/read-model/write.ts", "src/read-model/queries.ts"]
+    },
+    {
+      "anchor": "impl:application.rebuild",
+      "sources": ["src/read-model/rebuild.ts"]
+    },
+    {
+      "anchor": "impl:application.write-pause",
+      "sources": ["src/gate/gate.ts", "src/gate/entries.ts", "src/gate/tables.ts"]
+    },
+    {
+      "anchor": "impl:command.actor-and-scope",
+      "sources": ["src/command/actor-and-scope.ts", "src/command/tables.ts"]
+    },
+    {
+      "anchor": "impl:command.command-declaration",
+      "sources": ["src/command/declaration.ts", "fixture/convex/depotCommands.ts"]
+    },
+    {
+      "anchor": "impl:command.command-pipeline",
+      "sources": ["src/command/pipeline.ts"]
+    },
+    {
+      "anchor": "impl:command.idempotency-and-receipts",
+      "sources": ["src/command/receipts.ts"]
+    },
+    {
+      "anchor": "impl:command.outcome-boundary",
+      "sources": ["src/command/outcome-boundary.ts"]
+    },
+    {
+      "anchor": "impl:command.receipt-table",
+      "sources": ["src/command/tables.ts"]
+    },
+    {
+      "anchor": "impl:command.tenancy-and-authority",
+      "sources": ["src/command/authority.ts"]
+    },
+    {
+      "anchor": "impl:context.batch-shaped-api",
+      "sources": ["src/context/adapter.ts", "fixture/convex/depot/operations.ts"]
+    },
+    {
+      "anchor": "impl:context.context-component",
+      "sources": [
+        "src/context/operation.ts",
+        "fixture/convex/depot/convex.config.ts",
+        "fixture/convex/depot/schema.ts",
+        "fixture/convex/depot/streams.ts",
+        "fixture/convex/depot/operations.ts",
+        "fixture/convex/depot/queries/document.ts"
+      ]
+    },
+    {
+      "anchor": "impl:context.event-envelope",
+      "sources": ["src/context/envelope.ts"]
+    },
+    {
+      "anchor": "impl:context.journal",
+      "sources": ["src/context/journal.ts"]
+    },
+    {
+      "anchor": "impl:context.persistence-adapter",
+      "sources": ["src/context/adapter.ts"]
+    },
+    {
+      "anchor": "impl:context.queries",
+      "sources": ["src/context/queries.ts"]
+    },
+    {
+      "anchor": "impl:context.tables",
+      "sources": ["src/context/tables.ts"]
+    },
+    {
+      "anchor": "impl:kernel.decider-contract",
+      "sources": ["src/kernel/decider.ts", "src/kernel/outcome.ts"]
+    }
+  ]
+}
