@@ -1,4 +1,9 @@
 // The depot's sanctioned operations. Each takes a list, so a parent use case makes one call.
+/**
+ * @sdpAnchor impl:context.context-component.depot-operations
+ * @sdpLabel the depot fixture's list-shaped operations
+ * @sdpReferences spec:context.context-component, spec:context.batch-shaped-api
+ */
 import { ConvexError, v, type Infer, type ObjectType } from "convex/values";
 import {
   defineOperation,

@@ -1,5 +1,12 @@
 // The context queries of spec:context.queries: one definer per query a context serves, each
 // registering a public query of the component that the parent calls through the component API.
+/**
+ * @sdpAnchor impl:context.queries
+ * @sdpLabel defineGet, defineList and boundedPage
+ * @sdpSatisfies spec:context.queries
+ * @sdpComponent component:platform.context
+ * @sdpRole query
+ */
 import { paginator } from "convex-helpers/server/pagination";
 import {
   defineSchema,

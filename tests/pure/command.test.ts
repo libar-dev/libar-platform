@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { validate } from "convex-helpers/validators";
 import { ConvexError, getConvexSize, v, type Value } from "convex/values";
 import { createHash } from "node:crypto";
@@ -20,53 +15,6 @@ import {
   reject,
   type Receipt,
 } from "../../src/command/index.js";
-// Binds the command library under src/command/ to its Specs. The library is bundled into the parent
-// deployment, so it carries no Protocol import itself; these tests carry its anchors.
-const anchorPipeline = codeAnchor({
-  id: codeAnchorId("impl:command.command-pipeline"),
-  label: "runPipeline and the command response in src/command",
-  satisfies: ref("spec:command.command-pipeline"),
-});
-const anchorBoundary = codeAnchor({
-  id: codeAnchorId("impl:command.outcome-boundary"),
-  label: "reject, refuseTransient, normalizeThrown and classifyThrown",
-  satisfies: ref("spec:command.outcome-boundary"),
-});
-const anchorReceipts = codeAnchor({
-  id: codeAnchorId("impl:command.idempotency-and-receipts"),
-  label: "the receipt key, fingerprint, lookup, classification and insert",
-  satisfies: ref("spec:command.idempotency-and-receipts"),
-});
-const anchorReceiptTable = codeAnchor({
-  id: codeAnchorId("impl:command.receipt-table"),
-  label: "the receipts table in src/command",
-  satisfies: ref("spec:command.receipt-table"),
-});
-const anchorAuthority = codeAnchor({
-  id: codeAnchorId("impl:command.tenancy-and-authority"),
-  label: "establishActor, authorize and the grant helpers",
-  satisfies: ref("spec:command.tenancy-and-authority"),
-});
-const anchorActorAndScope = codeAnchor({
-  id: codeAnchorId("impl:command.actor-and-scope"),
-  label: "the actor, scope, namespace, authority and grants shapes",
-  satisfies: ref("spec:command.actor-and-scope"),
-});
-const anchorDeclaration = codeAnchor({
-  id: codeAnchorId("impl:command.command-declaration"),
-  label:
-    "CommandDeclaration, publicCommand, internalCommand and the depot commands",
-  satisfies: ref("spec:command.command-declaration"),
-});
-void [
-  anchorPipeline,
-  anchorBoundary,
-  anchorReceipts,
-  anchorReceiptTable,
-  anchorAuthority,
-  anchorActorAndScope,
-  anchorDeclaration,
-];
 
 test("pure: canonicalJson sorts object keys at every depth, keeps array order and omits undefined members", () => {
   expect(canonicalJson({ b: 1, a: { d: [3, 1], c: "x" }, e: undefined })).toBe(

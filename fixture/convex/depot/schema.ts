@@ -1,3 +1,8 @@
+/**
+ * @sdpAnchor impl:context.context-component.depot-schema
+ * @sdpLabel the depot fixture's schema
+ * @sdpReferences spec:context.context-component
+ */
 import { defineSchema, defineTable } from "convex/server";
 import { contextTables } from "../../../src/context/index.js";
 import { v } from "convex/values";

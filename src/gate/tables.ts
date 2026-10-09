@@ -1,6 +1,13 @@
 // The maintenance gate's table of spec:application.write-pause, as a fragment every composition that
 // registers a command spreads into defineSchema, because the pipeline's step 7 reads it. It holds at
 // most one document, whose closed entries are in the order they were closed.
+/**
+ * @sdpAnchor impl:application.write-pause.tables
+ * @sdpLabel the gate document's table fragment
+ * @sdpSatisfies spec:application.write-pause
+ * @sdpComponent component:platform.gate
+ * @sdpRole schema
+ */
 import {
   defineTable,
   type DataModelFromSchemaDefinition,

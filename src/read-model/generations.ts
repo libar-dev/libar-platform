@@ -1,4 +1,11 @@
 // The registry reads a command and a query make. None is registered here.
+/**
+ * @sdpAnchor impl:application.generation-registry
+ * @sdpLabel generationsToWrite and activeGeneration
+ * @sdpSatisfies spec:application.generation-registry
+ * @sdpComponent component:platform.read-model
+ * @sdpRole query
+ */
 import type { WritableGeneration } from "./projection.js";
 import {
   registryReader,

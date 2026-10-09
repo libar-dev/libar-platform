@@ -1,4 +1,12 @@
 // Layer 1's context library: what runs inside a context component.
+/**
+ * @sdpAnchor component:platform.context
+ * @sdpLabel the context library that runs inside every context component
+ * @sdpReferences spec:context.context-component
+ * @sdpUses component:platform.kernel, component:platform.command
+ * @sdpLayer adapter
+ * @sdpContext platform
+ */
 export {
   causedByValidator,
   eventEnvelopeValidator,

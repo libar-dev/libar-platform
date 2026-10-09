@@ -3,6 +3,13 @@
 // gateAllows plus the throw, called by the command pipeline's step 7 and by nothing else. closeScope and
 // resumeScope are the only writers of the gate document, and each writes its operator audit record in
 // the caller's mutation with no catch around it, so a failed insert changes nothing.
+/**
+ * @sdpAnchor impl:application.write-pause
+ * @sdpLabel gateAllows, assertWritable and the two scope writers
+ * @sdpSatisfies spec:application.write-pause
+ * @sdpComponent component:platform.gate
+ * @sdpRole service
+ */
 import type {
   GenericDatabaseReader,
   GenericDatabaseWriter,

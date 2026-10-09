@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { expect, test } from "vitest";
 import { deletedTitle } from "../../fixture/convex/depot/streams.js";
 import {
@@ -22,16 +17,6 @@ import {
   readModel,
   version,
 } from "./rebuild-support.js";
-// Binds the online rebuild in src/read-model/rebuild.ts to its Spec. The library is bundled into the
-// parent deployment, so it carries no Protocol import itself; this test carries its anchor. The paused
-// path of a history view is spec:application.history-rebuild, which no code realizes.
-const anchor = codeAnchor({
-  id: codeAnchorId("impl:application.rebuild"),
-  label:
-    "the online rebuild's operator entries, batch chains, tenant fill and batch bounds",
-  satisfies: ref("spec:application.rebuild"),
-});
-void anchor;
 
 // projection-contract.sdp.md fnProjectionOf:68, typeReadModel:67; native-harness.sdp.md fixtureReadModel:90.
 test("pure: projectionOf selects the declared version and the latest projection is first", () => {

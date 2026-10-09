@@ -4,6 +4,28 @@ A running file, addressed to the Protocol's maintainers. Each `adopt` unit and e
 
 Every number here was measured on this corpus on the date of its section. Re-run before relying on one.
 
+## 2026-10-09, anchors in the source at `da56a34`
+
+The pin moved from `dfa1bd9` to `da56a34`, a build of the Protocol's branch `feature/annotations-v0` (its plan 40), packed from a clean clone as before. The graph schema is `0.8.0`. On the new pin alone nothing this corpus reads moved: 243 Specs, 393 nodes, 1,382 edges, 12 listed warnings. Then the corpus adopted the branch's comment form, and the gap the two sections below name as "an anchor that lives in a test" is closed. An independent read (`gpt-6.1-sol`) of the tree before the adoption found none of it there; every number below was measured after it.
+
+- **Anchors at their sites.** A comment-form anchor is a `/** … */` block of reserved `@sdp` tags, so the source carries it with no Protocol import and its runtime pays nothing. The 22 implementation anchors that lived in nine test files are now 45 units in `src/`, `example/` and `fixture/`, one per realizing file or site, plus 12 component anchors. No test file keeps an implementation anchor; the 18 constant-form anchors under `harness/` stay. The graph derives 179 anchors into 428 nodes and 1,501 edges, and validate still reports 0 errors and the same 12 warnings. No delivery fact of the 243 Specs changed.
+- **The join is gone.** `design/tools/anchor-sites.json`, its pure test and the page's reading of it are deleted. `tests/pure/byfile-coverage.test.ts` asserts that `byFile` names each of the 50 file and Spec pairs the join listed. `byFile("src/read-model/rebuild.ts")` names `spec:application.rebuild` and `spec:application.history-rebuild`.
+- **Satisfies or references.** A unit that realizes a Spec satisfies it; a unit written against a design references it and confers nothing. There are 20 `references` edges from 19 units. The six depot units under `fixture/` only reference, because the fixture is test composition. `src/kernel/outcome.ts` references `spec:kernel.outcome-model` and does not satisfy it: that Spec's open question `#outcomeRejectionContract` asks the owner to confirm the shapes before code names them, and satisfying it would make it `implemented` ahead of that ruling.
+- **The history view.** Recipe 27 over `pack:history-view` gives 19 members: 7 referenced, 11 implemented, 7 with a verifier, 6 with none of the three. `spec:application.history-projection` and `spec:application.history-rebuild` each show one referencing unit and no `implemented`. The page lists each unit at its own file and line, with its role and its component's layer and context, and a "Referenced by" list per member.
+- **The architecture.** Twelve components, three in each of the `adapter`, `application`, `domain` and `infrastructure` layers; contexts `platform` 7, `orders` 2, `inventory` 2, `orders-inventory` 1. Roles, from recipe 28: service 10, schema 6, contract 5, query 5, decider 2, projection 2, use-case 2, codec 1, event-store 1, operator-entry 1, read-model 1. Component `uses` match the relative imports between the components, cycles included; the two context components reach their domain through `example/domain/index.ts`. `check.py` prints this taxonomy and judges none of it.
+- **Tests.** `npm test` passed 1,140 tests in 74 files, with 10 skipped.
+
+### What the owner rules
+
+- The layers: the context library and the two context components are `adapter`, with `infrastructure` the alternative; the gate is `infrastructure`, with `application` the alternative.
+- The contexts: every `src/` package is `platform`, and the parent composition is `orders-inventory` because it spans both bounded contexts.
+- Whether `example/` is architecture. It is the production composition, so it has five components; as a sample it would keep its units and lose them.
+- `impl:application.rebuild` references `spec:application.history-rebuild`, a design that rests on the online rebuild rather than one the rebuild was written against. That is the Protocol's open question `#referenceDirection` on `spec:decisions.anchor-binding-grain`, here in this corpus.
+
+### What still needs the Protocol
+
+- **A block binds by file and line.** Move the declaration under a block, or delete it, and the block still binds. The open question `#attachmentIdentity` on `spec:decisions.anchor-comment-form` asks whether a CodeNode records the symbol it binds.
+
 ## 2026-10-04, adopting round 2 at `27b896a`
 
 The pin moved from `5e29c03` to `27b896a`, a build of the Protocol's branch `feature/adopter-round-2`, packed from a clean clone as before. The graph schema is `0.7.0`. The corpus derives 240 Specs, 6 Packs and 144 anchors into 390 nodes and 1,365 edges, validate reports 0 errors and 12 warnings, each a listed prose mention, and `npm test` passed 1,137 tests in 74 files, with 10 skipped. Of the five workarounds the first Pack page listed in the section below, four are gone. What the round changed here:

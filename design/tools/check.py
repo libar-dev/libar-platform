@@ -14,7 +14,8 @@ What `sdp validate` checks is the Protocol's. What this script adds is this proj
 citations carry edges, extensions are registered, nobody but the owner states `ready`, a prose
 mention with no relation is listed with its reason, an entry address outside the Specs resolves
 through the Protocol's address recipe, and no Specs rest on each other through `dependsOn`, as the
-Protocol's cycle recipe reports.
+Protocol's cycle recipe reports. It prints the roles, layers and contexts the code anchors state, as
+the Protocol's roles-and-layers recipe reads them, and judges none of them.
 """
 import collections
 import glob
@@ -171,6 +172,19 @@ def main():
     except (ValueError, KeyError) as error:
         fail(f"the cycle recipe did not answer: {str(error)[:200]}")
 
+    # 1d. The architecture the code anchors state, as the Protocol's roles-and-layers recipe reads it.
+    # The values are free (a layer is one of five); this line reports them and judges none.
+    structure = None
+    try:
+        answer = graph_recipe(28, ROOT)
+        taxonomy = lambda rows: ", ".join(f"{row['value']} {len(row['units'])}" for row in rows) or "none"
+        totals = answer["totals"]
+        structure = (f"{totals['codeUnits']} code units; roles: {taxonomy(answer['roles'])}; "
+                     f"layers: {taxonomy(answer['layers'])}; contexts: {taxonomy(answer['contexts'])}; "
+                     f"{totals['references']} references edges from {totals['referencingUnits']} units")
+    except (ValueError, KeyError) as error:
+        fail(f"the roles-and-layers recipe did not answer: {str(error)[:200]}")
+
     out = run(["q", READINESS_DIVERGENCE, "--root", ".", "--json"])
     try:
         diverging = json.loads(out.stdout.strip().splitlines()[-1])
@@ -297,6 +311,7 @@ def main():
     print(expected_line)
     print(f"validate: {n_errors} errors · {n_warnings} warnings, {len(listed)} prose mentions listed; readiness divergence: {diverging}")
     print(f"entry addresses outside the Specs: {addresses}; dependsOn cycles: {cycles}")
+    print(f"architecture: {structure}")
     print(f"open questions: {len(questions)} Specs, {n_questions} questions, {n_blocking} blocking; extensions registered: {len(registered)}")
     print(f"stated readiness: {dict(sorted(readiness.items()))}")
     print(f"ledger: {len(ledger)} findings, {dict(sorted(by_status.items()))}")

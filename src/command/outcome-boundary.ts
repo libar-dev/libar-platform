@@ -1,5 +1,12 @@
 // The outcome boundary of spec:command.outcome-boundary: the wire shape of a rejection and of a
 // transient refusal, the helpers that throw them, and the one rethrow at the pipeline's outermost level.
+/**
+ * @sdpAnchor impl:command.outcome-boundary
+ * @sdpLabel reject, refuseTransient, normalizeThrown and classifyThrown
+ * @sdpSatisfies spec:command.outcome-boundary
+ * @sdpComponent component:platform.command
+ * @sdpRole codec
+ */
 import { ConvexError, getConvexSize, v } from "convex/values";
 import { validate } from "convex-helpers/validators";
 import { rejectionValidator } from "../context/outcome.js";

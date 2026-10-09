@@ -3,10 +3,11 @@
 // writes nothing and compares the page at --out with what the tree generates, naming the first line
 // that differs. It reads the graph in memory through the Protocol package's exported extractor and
 // reader, never through validate, view, census or build, and runs recipes 20 and 24 as the pinned
-// Protocol ships them in recipes.md. Three inputs join it: the pinned pairs
-// (tests/types/pinned-pairs.json), the anchor sites (design/tools/anchor-sites.json) and the rows of
-// the decision register (design/decisions/register.json); a missing input is an error that names
-// its path. The members come in the order the reader's Pack context gives them, which is the order
+// Protocol ships them in recipes.md. Two inputs join it: the pinned pairs
+// (tests/types/pinned-pairs.json) and the rows of the decision register
+// (design/decisions/register.json); a missing input is an error that names its path. The code a
+// member binds comes from the graph alone: each anchor at its own site, with its role and its
+// component. The members come in the order the reader's Pack context gives them, which is the order
 // the Pack file writes them. The next rung is the rung above the stated one: the reader's
 // `nextRungFailures` are the unmet clauses of the rung above the floor, so when the floor sits above
 // the stated rung nothing blocks the next rung, and otherwise its first unmet clause is the first of
@@ -29,7 +30,6 @@ const root = join(import.meta.dirname, "..");
 const engine = "@libar-dev/software-delivery-protocol";
 const inputs = {
   pairs: "tests/types/pinned-pairs.json",
-  sites: "design/tools/anchor-sites.json",
   register: "design/decisions/register.json",
 };
 // The relations a Spec rests on, as recipe 21 and the floor's typed-dependency clause read them.
@@ -84,26 +84,6 @@ export function readPinnedPairs(base, pack) {
     pairs.set(pair.address, pair);
   });
   return { test: data.test, pairs };
-}
-
-// The anchor sites: the source files each implementation anchor written in a test file stands for.
-export function readAnchorSites(base) {
-  const path = inputs.sites;
-  const data = readJson(base, path);
-  if (!Array.isArray(data?.anchors)) cannot(`${path} has no list of anchors`);
-  const sites = new Map();
-  data.anchors.forEach((entry, at) => {
-    const where = `${path} anchors[${at}]`;
-    if (
-      !isText(entry?.anchor) ||
-      !Array.isArray(entry.sources) ||
-      !entry.sources.every(isText)
-    )
-      cannot(`${where} needs an anchor and a list of source paths`);
-    if (sites.has(entry.anchor)) cannot(`${where} repeats ${entry.anchor}`);
-    sites.set(entry.anchor, entry.sources);
-  });
-  return sites;
 }
 
 // The register: every row with the fields the page shows and its sources as the register writes
@@ -467,13 +447,10 @@ export async function generate(pack, out, base = root) {
     pin.devDependencies?.[engine] ??
     pin.dependencies?.[engine] ??
     cannot(`package.json does not depend on ${engine}`);
-  const { reader, summary, members, questions, declarations } = await readGraph(
-    pack,
-    base,
-  );
+  const { graph, reader, summary, members, questions, declarations } =
+    await readGraph(pack, base);
   const chained = indexTables(declarations.rows);
   const pairs = readPinnedPairs(base, pack);
-  const sites = readAnchorSites(base);
   const register = readRegister(base);
   const sources = questionSources(register);
   const prettierOptions =
@@ -618,6 +595,49 @@ export async function generate(pack, out, base = root) {
     file === undefined
       ? "no site"
       : `[${span(file)}${line === undefined ? "" : ` line ${line}`}](${link(file, line)})`;
+  // The code a member binds, from the graph alone: the units that satisfy it and the units that
+  // reference it, each at its own site.
+  const codeText = (context) => {
+    const parts = [];
+    if (context.implementations.length > 0)
+      parts.push(plural(context.implementations.length, "anchor"));
+    if (context.references.length > 0)
+      parts.push(`referenced by ${plural(context.references.length, "unit")}`);
+    return parts.length === 0 ? "none" : parts.join(", ");
+  };
+  const codeNodes = new Map(
+    graph.nodes
+      .filter((node) => node.nodeType === "CodeNode")
+      .map((node) => [node.id, node]),
+  );
+  const componentOf = new Map(
+    graph.edges
+      .filter((edge) => edge.type === "memberOf")
+      .map((edge) => [edge.from, edge.to]),
+  );
+  // One code unit: its id, its site and its label, then what the anchors declare of its structure:
+  // its role, and the layer and bounded context of the component it is or belongs to.
+  const placement = (node) =>
+    list(
+      [
+        node?.layer === undefined ? null : `the ${node.layer} layer`,
+        node?.context === undefined ? null : `the ${node.context} context`,
+      ].filter((part) => part !== null),
+    );
+  const unitLine = (binding) => {
+    const facts = [];
+    if (binding.role !== undefined) facts.push(`Its role is ${binding.role}.`);
+    const own = placement(binding);
+    if (own !== "") facts.push(`It is a component in ${own}.`);
+    const component = componentOf.get(binding.codeId);
+    if (component !== undefined) {
+      const where = placement(codeNodes.get(component));
+      facts.push(
+        `It belongs to ${span(component)}${where === "" ? "" : `, in ${where}`}.`,
+      );
+    }
+    return `- ${span(binding.codeId)} at ${site(binding.file, binding.line)}${binding.label === undefined ? "" : `: ${binding.label}`}.${facts.length === 0 ? "" : ` ${facts.join(" ")}`}`;
+  };
 
   // Head.
   write(
@@ -629,7 +649,7 @@ export async function generate(pack, out, base = root) {
   if (summary.framing !== undefined) write(summary.framing, "", "");
   const pinned = pinnedModule(pack);
   write(
-    `This page is generated from the Specs of ${span(pack)} by ${span("scripts/pack-page.mjs")}, with three inputs: the pinned pairs in [${span(inputs.pairs)}](${link(inputs.pairs)}), the anchor sites in [${span(inputs.sites)}](${link(inputs.sites)}) and the register rows in [${span(inputs.register)}](${link(inputs.register)}). Do not edit it by hand. Change a Spec or an input, then run ${span("npm run pages")}; ${span("npm run pages -- --check")} fails while the page is behind the tree. The Protocol is pinned at ${span(`${engine}@${enginePin}`)}.${summary.modelRefs.length > 0 ? ` The members speak the vocabulary of ${list(summary.modelRefs.map(specLink))}.` : ""}`,
+    `This page is generated from the Specs of ${span(pack)} by ${span("scripts/pack-page.mjs")}, with two inputs: the pinned pairs in [${span(inputs.pairs)}](${link(inputs.pairs)}) and the register rows in [${span(inputs.register)}](${link(inputs.register)}). Do not edit it by hand. Change a Spec or an input, then run ${span("npm run pages")}; ${span("npm run pages -- --check")} fails while the page is behind the tree. The Protocol is pinned at ${span(`${engine}@${enginePin}`)}.${summary.modelRefs.length > 0 ? ` The members speak the vocabulary of ${list(summary.modelRefs.map(specLink))}.` : ""}`,
     "",
     "## How to read it",
     "",
@@ -640,7 +660,7 @@ export async function generate(pack, out, base = root) {
     "- The floor is the highest rung whose clauses all hold in the graph. It can sit above the stated rung.",
     "- The next rung is the one above the stated rung, with the first floor clause that fails at it. A rung whose clauses all hold still waits for its author to state it.",
     "- An open question is cited by its address, the Spec's id, `#question.` and the key its marker carries.",
-    "- An implementation anchor binds code to a Spec. Its site is the file it is written in; a site under `tests/` stands for the source files listed with it.",
+    "- An implementation anchor binds code to a Spec at its site, the file and line it is written at. Code that satisfies a Spec realizes it, and the graph derives implemented from it. Code that references a Spec is written against its design and confers nothing. Each unit gives its role and its component, with the component's layer and bounded context, where the anchor declares them.",
     `- A pair is a pinned declaration and the code a type test compares it with: bound when the two are equal, ahead when the design leads the code, not compared when the test compares nothing. The test imports every pinned declaration of the Pack from [${span(pinned)}](${link(pinned)}), which ${span("npm run sdp:build")} emits and git does not keep.`,
     "",
   );
@@ -671,9 +691,7 @@ export async function generate(pack, out, base = root) {
         member.context.statedReadiness,
         member.context.derivedReadiness ?? "none",
         nextText(member),
-        member.context.implementations.length === 0
-          ? "none"
-          : plural(member.context.implementations.length, "anchor"),
+        codeText(member.context),
         evidenceText(member),
         pairCounts(member),
         member.questions.length === 0
@@ -978,20 +996,18 @@ export async function generate(pack, out, base = root) {
 
     if (context.implementations.length > 0) {
       write("**Code.**", "");
-      for (const binding of context.implementations) {
-        let line = `- ${span(binding.codeId)} at ${site(binding.file, binding.line)}${binding.label === undefined ? "" : `: ${binding.label}`}.`;
-        if (binding.file?.startsWith("tests/")) {
-          const listed = sites.get(binding.codeId);
-          line +=
-            listed === undefined
-              ? ` Its site is a test file, and ${span(inputs.sites)} lists no source for it.`
-              : ` It stands for ${list(listed.map((path) => `[${span(path)}](${link(path)})`))}.`;
-        }
-        write(line);
-      }
+      for (const binding of context.implementations) write(unitLine(binding));
       write("");
     } else if (!isExample)
       write("**Code.** No implementation anchor binds it.", "");
+    if (context.references.length > 0) {
+      write(
+        `**Referenced by.** ${plural(context.references.length, "unit is", "units are")} written against its design. A reference confers no delivery fact and moves no floor.`,
+        "",
+      );
+      for (const binding of context.references) write(unitLine(binding));
+      write("");
+    }
 
     const examples = examplesOf(member);
     if (examples.length > 0)

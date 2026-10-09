@@ -1,6 +1,20 @@
 // The Inventory context's stock item stream: the quantity on hand and the quantity allocated to
 // orders, two totals and nothing per order. The quantity available is the first less the second, an
 // allocation never passes it, and a release never passes the quantity allocated.
+/**
+ * @sdpAnchor component:example.inventory-domain
+ * @sdpLabel the Inventory context's pure domain code
+ * @sdpUses component:platform.kernel
+ * @sdpLayer domain
+ * @sdpContext inventory
+ */
+/**
+ * @sdpAnchor impl:application.orders-inventory-example.stock-item
+ * @sdpLabel the stock item decider
+ * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpComponent component:example.inventory-domain
+ * @sdpRole decider
+ */
 import type {
   DecideResult,
   Decider,

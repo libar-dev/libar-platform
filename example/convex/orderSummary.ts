@@ -1,6 +1,13 @@
 // The order summary, the essential summary of the Orders and Inventory application: a per-entity read
 // model with the order's status, line count, total and the time it was placed, written at the
 // pipeline's step 9 from the order's DTO by every command that writes the order.
+/**
+ * @sdpAnchor impl:application.orders-inventory-example.order-summary
+ * @sdpLabel the order summary read model
+ * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpComponent component:example.parent
+ * @sdpRole read-model
+ */
 import { v, type Infer } from "convex/values";
 import {
   defaultRowBudgetBytes,

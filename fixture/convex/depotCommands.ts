@@ -1,5 +1,10 @@
 // The fixture composition's commands over the depot context. Each is one declaration and the two static
 // exports the command library builds from it; each makes one call to a depot operation.
+/**
+ * @sdpAnchor impl:command.command-declaration.depot-commands
+ * @sdpLabel the depot fixture's command declarations
+ * @sdpReferences spec:command.command-declaration
+ */
 import { v, type Infer } from "convex/values";
 import {
   internalCommand,

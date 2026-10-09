@@ -1,4 +1,12 @@
 // The outcome model of spec:kernel.outcome-model. Types only; the validators belong to the context boundary.
+/**
+ * @sdpAnchor impl:kernel.decider-contract.outcome
+ * @sdpLabel the outcome model's types, which the decider contract reuses
+ * @sdpSatisfies spec:kernel.decider-contract
+ * @sdpReferences spec:kernel.outcome-model
+ * @sdpComponent component:platform.kernel
+ * @sdpRole contract
+ */
 import type { Value } from "convex/values";
 export type StreamVersion = {
   tenantId: string;

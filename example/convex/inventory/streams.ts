@@ -1,4 +1,10 @@
 // The Inventory context's journal and the registration of its one stream type, the stock item.
+/**
+ * @sdpAnchor impl:application.orders-inventory-example.inventory-streams
+ * @sdpLabel the stock item stream registration
+ * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpComponent component:example.inventory-context
+ */
 import { v, type Infer } from "convex/values";
 import {
   createJournal,

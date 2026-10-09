@@ -4,6 +4,14 @@
 // reaches it, that reads no grant and no ctx.auth; the two that change the gate check the stated
 // operator first and record the trimmed text it returns. An operator entry closes and resumes only "all" or a tenant scope; a
 // source scope is closed and reopened by the rebuild alone. Every refusal is a plain Error.
+/**
+ * @sdpAnchor impl:application.write-pause.entries
+ * @sdpLabel the four gate operator entries
+ * @sdpSatisfies spec:application.write-pause
+ * @sdpReferences spec:command.actor-and-scope
+ * @sdpComponent component:platform.gate
+ * @sdpRole operator-entry
+ */
 import {
   internalMutationGeneric,
   internalQueryGeneric,

@@ -64,7 +64,6 @@ type PackPage = {
     text: string,
   ): Promise<{ text: string; formatted: boolean }>;
   readPinnedPairs(base: string, pack: string): unknown;
-  readAnchorSites(base: string): unknown;
   readRegister(base: string): Row[];
   indexTables(
     rows: { spec: string; key: string; declaration: string }[],
@@ -310,9 +309,6 @@ test("a missing input is an error that names its path", async () => {
   try {
     expect(() => page.readPinnedPairs(base, "pack:history-view")).toThrow(
       "tests/types/pinned-pairs.json is missing",
-    );
-    expect(() => page.readAnchorSites(base)).toThrow(
-      "design/tools/anchor-sites.json is missing",
     );
     expect(() => page.readRegister(base)).toThrow(
       "design/decisions/register.json is missing",
@@ -565,10 +561,6 @@ test("the page of a sample Pack reads its order, its blockers and its register r
         pairs: [],
       }),
     );
-    await put(
-      "design/tools/anchor-sites.json",
-      JSON.stringify({ anchors: [] }),
-    );
     // The Pack lists its members out of id order.
     await put(
       "design/specs/sample.pack.sdp.md",
@@ -745,7 +737,6 @@ async function smallSample(base: string) {
       pairs: [],
     }),
   );
-  await put("design/tools/anchor-sites.json", JSON.stringify({ anchors: [] }));
   await put(
     "design/decisions/register.json",
     JSON.stringify({ decisions: [] }),
@@ -772,6 +763,64 @@ async function smallSample(base: string) {
     decision("beta", "scoped", []).replace("relations:\n", "relations: {}\n"),
   );
 }
+
+// The code of a member comes from the graph alone: a comment-form anchor in a source file binds at its
+// own site, and the page names its role and its component's layer and context.
+test("the page names each code unit at its own site, with its role and component, and lists the units that reference a member", async () => {
+  const base = await mkdtemp(join(tmpdir(), "pack-page-"));
+  const put = async (path: string, text: string) => {
+    await mkdir(dirname(join(base, path)), { recursive: true });
+    await writeFile(join(base, path), text);
+  };
+  try {
+    await smallSample(base);
+    await put(
+      "src/sample/index.ts",
+      [
+        "/**",
+        " * @sdpAnchor component:sample.core",
+        " * @sdpLabel the sample's core",
+        " * @sdpLayer domain",
+        " * @sdpContext sample",
+        " */",
+        "export {};",
+        "",
+      ].join("\n"),
+    );
+    await put(
+      "src/sample/rules.ts",
+      [
+        "// The sample's rules.",
+        "/**",
+        " * @sdpAnchor impl:sample.rules",
+        " * @sdpLabel the sample's rules",
+        " * @sdpReferences spec:sample.alpha",
+        " * @sdpComponent component:sample.core",
+        " * @sdpRole decider",
+        " */",
+        "export const rules = 1;",
+        "",
+      ].join("\n"),
+    );
+    const text = await page.generate(
+      "pack:sample",
+      join(base, "design/pages/sample.md"),
+      base,
+    );
+    expect(text).not.toContain("anchor-sites");
+    expect(text).toMatch(
+      /^\| \[1\]\(#1-the-alpha-decision\) .*\| referenced by 1 unit \|/m,
+    );
+    expect(text).toContain(
+      "**Referenced by.** 1 unit is written against its design. A reference confers no delivery fact and moves no floor.",
+    );
+    expect(text).toContain(
+      "- `impl:sample.rules` at [`src/sample/rules.ts` line 2](../../src/sample/rules.ts#L2): the sample's rules. Its role is decider. It belongs to `component:sample.core`, in the domain layer and the sample context.",
+    );
+  } finally {
+    await rm(base, { recursive: true, force: true });
+  }
+});
 
 test("the command's --check exits 1 for a page that is missing or behind the tree, and 0 for a current one", async () => {
   const base = await mkdtemp(join(tmpdir(), "pack-page-"));

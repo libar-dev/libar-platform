@@ -1,4 +1,12 @@
 // Layer 1's command library: what runs in the parent deployment.
+/**
+ * @sdpAnchor component:platform.command
+ * @sdpLabel the command library that runs in the parent deployment
+ * @sdpReferences spec:command.command-pipeline
+ * @sdpUses component:platform.kernel, component:platform.context, component:platform.gate, component:platform.read-model, component:platform.operations, component:platform.audit
+ * @sdpLayer application
+ * @sdpContext platform
+ */
 export {
   actorKindValidator,
   actorValidator,

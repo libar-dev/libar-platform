@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import type { PaginationOptions } from "convex/server";
 import type { Validator, Value } from "convex/values";
 import { expect, test } from "vitest";
@@ -19,13 +14,6 @@ import {
   journal,
   stockStream,
 } from "../../fixture/convex/depot/streams.js";
-// Binds the context queries under src/context/ to their Spec; the library carries no Protocol import.
-const anchor = codeAnchor({
-  id: codeAnchorId("impl:context.queries"),
-  label: "defineGet, defineList and boundedPage in src/context",
-  satisfies: ref("spec:context.queries"),
-});
-void anchor;
 // What Convex reads of a registered function and of a validator, which their types keep internal.
 type Exported = { exportArgs(): string; exportReturns(): string };
 const exported = (fn: unknown) => fn as Exported;

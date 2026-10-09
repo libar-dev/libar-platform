@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { expect, test } from "vitest";
 import { documentSummary } from "../../fixture/convex/summaries.js";
 import { limitListBytes } from "../../src/context/index.js";
@@ -14,24 +9,6 @@ import {
   limitRowBudgetBytes,
   readModelView,
 } from "../../src/read-model/index.js";
-// Binds the read-model library under src/read-model/ to its Specs. The library is bundled into the
-// parent deployment, so it carries no Protocol import itself; these tests carry its anchors.
-const anchorProjection = codeAnchor({
-  id: codeAnchorId("impl:application.projection-contract"),
-  label: "ReadModel, Projection, rowConventions and applyProjection",
-  satisfies: ref("spec:application.projection-contract"),
-});
-const anchorRegistry = codeAnchor({
-  id: codeAnchorId("impl:application.generation-registry"),
-  label: "the generations table, generationsToWrite and activeGeneration",
-  satisfies: ref("spec:application.generation-registry"),
-});
-const anchorReadModels = codeAnchor({
-  id: codeAnchorId("impl:application.read-models"),
-  label: "writeReadModels, readModelView and limitReadModelList",
-  satisfies: ref("spec:application.read-models"),
-});
-void [anchorProjection, anchorRegistry, anchorReadModels];
 const version = {
   tenantId: "t-1",
   contextId: "depot",

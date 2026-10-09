@@ -92,6 +92,12 @@ export type OperationArgs<I> = {
   input: I;
   facts?: Readonly<Record<string, unknown>>;
 };
+/**
+ * @sdpAnchor impl:context.batch-shaped-api
+ * @sdpLabel the per-call operation bounds and runOperation over a plan
+ * @sdpSatisfies spec:context.batch-shaped-api
+ * @sdpComponent component:platform.context
+ */
 const mebibyte = 1024 * 1024;
 export const limitStreamsPerCall = 256;
 export const limitStreamBytesPerCall = 8 * mebibyte;
@@ -102,6 +108,13 @@ export const limitReturnBytesPerCall = 8 * mebibyte;
 function reject(rejection: Rejection): never {
   throw new ConvexError(rejection);
 }
+/**
+ * @sdpAnchor impl:context.persistence-adapter
+ * @sdpLabel execute: load, decide, fold, append and save one stream
+ * @sdpSatisfies spec:context.persistence-adapter
+ * @sdpComponent component:platform.context
+ * @sdpRole service
+ */
 // Load, decide, fold, append and save one stream, in that order, in the caller's sub-transaction.
 export async function execute<S, C, E extends DomainEvent, R>(
   ctx: MutationCtx,

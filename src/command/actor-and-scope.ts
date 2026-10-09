@@ -3,6 +3,13 @@
 // entry states. Validators, types and the operator's check only, so the context library can import the
 // actor's validator without carrying the parent's helpers; those, authorize, establishActor and the
 // grant helpers, are in authority.ts.
+/**
+ * @sdpAnchor impl:command.actor-and-scope
+ * @sdpLabel the actor, scope, namespace, authority and operator shapes
+ * @sdpSatisfies spec:command.actor-and-scope
+ * @sdpComponent component:platform.command
+ * @sdpRole contract
+ */
 import { v } from "convex/values";
 import { limitActorIdLength, utf8Length } from "../context/text.js";
 export type ActorKind = "human" | "service" | "agent" | "reviewer" | "operator";

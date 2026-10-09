@@ -1,6 +1,13 @@
 // Receipts of spec:command.idempotency-and-receipts: the key, the fingerprint, the lookup, the
 // classification and the insert, helpers inside the pipeline's mutation; and the sweep and its loop
 // over tenants, handlers that each composition registers as internal mutations for operations.
+/**
+ * @sdpAnchor impl:command.idempotency-and-receipts
+ * @sdpLabel the receipt key, fingerprint, lookup, classification, insert and sweep
+ * @sdpSatisfies spec:command.idempotency-and-receipts
+ * @sdpComponent component:platform.command
+ * @sdpRole service
+ */
 import { paginator } from "convex-helpers/server/pagination";
 import { defineSchema } from "convex/server";
 import { convexToJson, v, type JSONValue, type Value } from "convex/values";

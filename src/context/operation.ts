@@ -29,6 +29,13 @@ export const operationArgsValidators = <Input extends PropertyValidators>(
 // A component's generated mutation builder is mutationGeneric typed with the component's data model.
 // The library types it with the tables it owns, which every context component's schema holds.
 const mutation: MutationBuilder<ContextDataModel, "public"> = mutationGeneric;
+/**
+ * @sdpAnchor impl:context.context-component
+ * @sdpLabel defineOperation, one registered mutation per sanctioned operation
+ * @sdpSatisfies spec:context.context-component
+ * @sdpComponent component:platform.context
+ * @sdpRole service
+ */
 export function defineOperation<I, O>(
   journal: Journal,
   declaration: OperationDeclaration<I, O>,

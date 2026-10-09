@@ -1,6 +1,13 @@
 // ReceiveStock, the command that receives stock: one call to the Inventory context's receive operation,
 // which creates a stock item that has no stream and adds to the quantity on hand. Every stock item
 // comes to exist through it.
+/**
+ * @sdpAnchor impl:application.parent-use-cases.receiving
+ * @sdpLabel ReceiveStock
+ * @sdpSatisfies spec:application.parent-use-cases, spec:application.orders-inventory-example
+ * @sdpComponent component:example.parent
+ * @sdpRole use-case
+ */
 import { v, type Infer } from "convex/values";
 import {
   internalCommand,

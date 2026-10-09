@@ -1,5 +1,12 @@
 // The command declaration of spec:command.command-declaration and its two composition helpers, which
 // turn one declaration into the pipeline's public and internal entries.
+/**
+ * @sdpAnchor impl:command.command-declaration
+ * @sdpLabel CommandDeclaration, publicCommand and internalCommand
+ * @sdpSatisfies spec:command.command-declaration
+ * @sdpComponent component:platform.command
+ * @sdpRole contract
+ */
 import {
   internalMutationGeneric,
   mutationGeneric,

@@ -1,4 +1,12 @@
 // The operator entries and bounded batch chains of the online read-model rebuild.
+/**
+ * @sdpAnchor impl:application.rebuild
+ * @sdpLabel the online rebuild's operator entries, batch chains, tenant fill and batch bounds
+ * @sdpSatisfies spec:application.rebuild
+ * @sdpReferences spec:application.history-rebuild
+ * @sdpComponent component:platform.read-model
+ * @sdpRole service
+ */
 import type {
   FunctionReference,
   GenericMutationCtx,

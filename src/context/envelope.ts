@@ -1,4 +1,11 @@
 // The event envelope of spec:context.event-envelope: the fifteen fields every event carries.
+/**
+ * @sdpAnchor impl:context.event-envelope
+ * @sdpLabel the envelope types and validators
+ * @sdpSatisfies spec:context.event-envelope
+ * @sdpComponent component:platform.context
+ * @sdpRole contract
+ */
 import { v } from "convex/values";
 import { actorValidator, type Actor } from "../command/actor-and-scope.js";
 export type CausedBy =

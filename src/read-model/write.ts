@@ -1,5 +1,12 @@
 // The read-model half of step 9 of spec:command.command-pipeline: the read models a command declares,
 // written from the streams entries its executor returned.
+/**
+ * @sdpAnchor impl:application.read-models
+ * @sdpLabel writeReadModels, step 9's read-model half
+ * @sdpSatisfies spec:application.read-models, spec:command.command-pipeline
+ * @sdpComponent component:platform.read-model
+ * @sdpRole service
+ */
 import type { StreamDto } from "../context/adapter.js";
 import type { StreamVersion } from "../kernel/index.js";
 import { generationsToWrite } from "./generations.js";

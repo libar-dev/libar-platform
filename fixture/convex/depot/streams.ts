@@ -1,5 +1,10 @@
 // The depot's journal and the registrations of its three stream types. The fixture's faults live
 // here, in the parts the composition supplies to the library: a mapping, a toDto and a decider.
+/**
+ * @sdpAnchor impl:context.context-component.depot-streams
+ * @sdpLabel the depot fixture's stream registrations
+ * @sdpReferences spec:context.context-component
+ */
 import { v, type Value } from "convex/values";
 import {
   createJournal,

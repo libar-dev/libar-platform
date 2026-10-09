@@ -2,6 +2,14 @@
 // aggregate markers and the tenant fill's row, and the conventions every
 // per-entity read-model row follows (spec:application.projection-contract), as fragments the parent's
 // schema.ts spreads into defineSchema.
+/**
+ * @sdpAnchor impl:application.generation-registry.tables
+ * @sdpLabel the generations, progress, marker and tenant fill tables and rowConventions
+ * @sdpSatisfies spec:application.generation-registry, spec:application.projection-contract
+ * @sdpReferences spec:application.aggregate-projection
+ * @sdpComponent component:platform.read-model
+ * @sdpRole schema
+ */
 import {
   defineTable,
   type DataModelFromSchemaDefinition,

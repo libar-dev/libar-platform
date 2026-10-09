@@ -1,5 +1,12 @@
 // What a parent query over a read model returns, and the bound on a list page of one
 // (spec:application.read-models).
+/**
+ * @sdpAnchor impl:application.read-models.queries
+ * @sdpLabel readModelView, pageInGeneration and limitReadModelList
+ * @sdpSatisfies spec:application.read-models
+ * @sdpComponent component:platform.read-model
+ * @sdpRole query
+ */
 import {
   limitListBytes,
   limitListPage,

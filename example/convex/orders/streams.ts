@@ -1,5 +1,11 @@
 // The Orders context's journal and the registration of its one stream type, the order. The parent
 // reads the order's DTO validator from here: a DTO's shape belongs to the context that returns it.
+/**
+ * @sdpAnchor impl:application.orders-inventory-example.orders-streams
+ * @sdpLabel the order stream registration
+ * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpComponent component:example.orders-context
+ */
 import { v, type Infer } from "convex/values";
 import {
   createJournal,

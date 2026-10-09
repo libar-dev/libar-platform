@@ -5,6 +5,13 @@
 // allocation by its stock item's, and the allocations are kept in stock item ID order, so the row
 // is one value whatever the order in which the events of different streams arrive. The parent's
 // HistoryProjection holds these rules; no context mounts them, so index.ts does not export them.
+/**
+ * @sdpAnchor impl:application.order-allocation-history
+ * @sdpLabel the order allocation history's keyOf and project rules
+ * @sdpReferences spec:application.history-projection
+ * @sdpComponent component:example.parent
+ * @sdpRole projection
+ */
 import type { OrderEvent } from "./order.js";
 import type { StockItemEvent } from "./stockItem.js";
 // The part of an event envelope the rules read; the context library's EventEnvelope has each field.
