@@ -2,8 +2,7 @@
 /**
  * @sdpAnchor impl:kernel.decider-contract.outcome
  * @sdpLabel the outcome model's types, which the decider contract reuses
- * @sdpSatisfies spec:kernel.decider-contract
- * @sdpReferences spec:kernel.outcome-model
+ * @sdpReferences spec:kernel.outcome-model, spec:kernel.decider-contract
  * @sdpComponent component:platform.kernel
  * @sdpRole contract
  */

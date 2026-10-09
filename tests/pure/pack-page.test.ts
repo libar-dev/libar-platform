@@ -812,7 +812,7 @@ test("the page names each code unit at its own site, with its role and component
       /^\| \[1\]\(#1-the-alpha-decision\) .*\| referenced by 1 unit \|/m,
     );
     expect(text).toContain(
-      "**Referenced by.** 1 unit is written against its design. A reference confers no delivery fact and moves no floor.",
+      "**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.",
     );
     expect(text).toContain(
       "- `impl:sample.rules` at [`src/sample/rules.ts` line 2](../../src/sample/rules.ts#L2): the sample's rules. Its role is decider. It belongs to `component:sample.core`, in the domain layer and the sample context.",

@@ -21,10 +21,10 @@ Until this unit, every implementation anchor of this corpus lived in a test. The
 
 **4. Roles.** 36 units name the part they play, in a vocabulary this corpus owns: `service` 10, `schema` 6, `contract` 5, `query` 5, `decider` 2, `projection` 2, `use-case` 2, and one each of `codec`, `event-store`, `operator-entry` and `read-model`. Recipe 28 reads the taxonomy from the graph, and [`design/tools/check.py`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/tools/check.py) prints it and judges none of it. The gate's four operator entries in [`src/gate/entries.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/src/gate/entries.ts#L7) are the one `operator-entry`.
 
-**5. References into the history-view design, without claiming realization.** A unit that realizes a Spec satisfies it. A unit written against a design references it, and the reference confers no delivery fact and moves no floor. The graph holds 20 `references` edges from 19 units. Recipe 27 over `pack:history-view` puts three facts side by side for each of its 19 members: 7 are referenced, 11 implemented, 7 have a verifier, and 6 have none of the three.
+**5. References into the history-view design, without claiming realization.** A unit that realizes a Spec satisfies it. A unit that names a design without realizing it references it, in either direction: code written against a design, or code a design rests on. The reference confers no delivery fact and moves no floor. The graph holds 20 `references` edges from 18 units. Recipe 27 over `pack:history-view` puts three facts side by side for each of its 19 members: 6 are referenced, 11 implemented, 7 have a verifier, and 6 have none of the three.
 - `spec:application.history-projection` is referenced by the order allocation history's rules in `example/domain/orderAllocationHistory.ts`, and `spec:application.history-rebuild` by the online rebuild. Neither reads as `implemented`.
-- `src/kernel/outcome.ts` references `spec:kernel.outcome-model` instead of satisfying it, because that Spec's open question `#outcomeRejectionContract` asks the owner to confirm the shapes before code names them.
-- The Pack page lists each unit at its file and line, with its role and its component's layer and context, and a "Referenced by" list per member: [`design/pages/history-view.md`, member 1](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/pages/history-view.md#1-history-projection).
+- The rule is realization scope. `src/kernel/outcome.ts` holds the outcome types the decider reuses, so it references `spec:kernel.outcome-model` and `spec:kernel.decider-contract` and satisfies neither; `src/kernel/decider.ts` holds the decider and satisfies the decider contract. The gate's component exports the implementation its members satisfy, so `component:platform.gate` satisfies `spec:application.write-pause` too.
+- The Pack page lists each unit at its file and line, with its role and its component's layer and context, and a "References" list per member: [`design/pages/history-view.md`, member 1](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/pages/history-view.md#1-history-projection).
 
 **6. The sidecar is gone.** `design/tools/anchor-sites.json`, its pure test and the page's reading of it are deleted. [`scripts/pack-page.mjs`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/scripts/pack-page.mjs) reads code from the graph alone.
 
@@ -101,7 +101,7 @@ npm run check
 243 specs · 6 packs · 179 anchors → 428 nodes · 1501 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings, 12 prose mentions listed; readiness divergence: []
 entry addresses outside the Specs: 497; dependsOn cycles: 0
-architecture: 75 code units; roles: codec 1, contract 5, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 20 references edges from 19 units
+architecture: 75 code units; roles: codec 1, contract 5, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 20 references edges from 18 units
 …
 Pack pages current: 1 of 1
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-da56a34.tgz
@@ -119,7 +119,8 @@ From `docs/feedback/sdp-feedback-01.md`, section "2026-10-09, anchors in the sou
 - **The contexts.** Every `src/` package is `platform`, and the parent composition is `orders-inventory` because it spans both bounded contexts.
 - **Whether `example/` is architecture.** As the production composition it has five components; as a sample it would keep its units and lose them.
 - **The reference direction.** `impl:application.rebuild` references `spec:application.history-rebuild`, a design that rests on the online rebuild rather than one the rebuild was written against. This is the Protocol's open question `#referenceDirection` on `spec:decisions.anchor-binding-grain`, met in this corpus.
+- **Whole-Spec satisfies on Specs with designed-but-unbuilt parts.** Twelve Specs are satisfied by code that realizes only part of their Design, the same set the test-resident anchors satisfied (`design/PLAN.md` 6.7 item 7). Per Spec, the owner splits it again, moves its binding to references, or accepts the whole-Spec claim. The Protocol holds `#entryAddressTargets` on `spec:decisions.anchor-binding-grain`.
 
 And from this corpus's language: **the word layer.** `CONTEXT.md` defines a layer as one of the seven steps of capability; the Protocol's `layer` places a component among edge, application, domain, adapter and infrastructure.
 
-A `gpt-6.1-sol` check of every anchor claim against the code it sits on (`job-mv1dotsu-5f1f42fd`) is still running; its fold-in is pending.
+A `gpt-6.1-sol` check of every anchor claim against the code it sits on (`job-mv1dotsu-5f1f42fd`) is folded in: the gate component satisfies the write pause, `src/kernel/outcome.ts` satisfies nothing, the page's references wording no longer assumes a direction, and the whole-Spec satisfies above went to the owner. Its doubts on the `platform` and `orders-inventory` contexts and the `adapter` layer are the owner items above.

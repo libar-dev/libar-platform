@@ -4,17 +4,20 @@ Written on 2026-10-04 at the close of the unit `sdp-round-2`, which extends the 
 
 ## Measured at close
 
+Re-measured on 2026-10-09 with `python3 design/tools/check.py`, at the pin `da56a34`, after the fold-in of the anchor check:
+
 ```
-243 specs · 6 packs · 144 anchors → 393 nodes · 1382 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 179 anchors → 428 nodes · 1501 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings, 12 prose mentions listed; readiness divergence: []
 entry addresses outside the Specs: 497; dependsOn cycles: 0
+architecture: 75 code units; roles: codec 1, contract 5, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 20 references edges from 18 units
 open questions: 72 Specs, 166 questions, 10 blocking; extensions registered: 54
 stated readiness: {'defined': 232, 'idea': 1, 'scoped': 10}
 ledger: 278 findings, {'fixed': 159, 'open': 80, 'owner': 1, 'partially-fixed': 38}
 open findings by slice: {'L3': 30, 'P': 29, 'S3': 1, 'S4': 4, 'S5': 16}
-corpus digest: c42dee4b7dd8aa48
+corpus digest: 7002ed3ddfdc42e0
 Pack pages current: 1 of 1
-protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-dfa1bd9.tgz
+protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-da56a34.tgz
 ```
 
 `python3 design/tools/decisions.py`, after this unit, which adds OD-164 to OD-175 and decides OD-172 to OD-175:
@@ -391,6 +394,7 @@ What waits for the owner at this close:
   - The contexts. Every `src/` package is `platform`, and the parent composition is `orders-inventory` because it spans both bounded contexts.
   - Whether `example/` is architecture. As the production composition it has five components; as a sample it would keep its units and lose them.
   - The reference direction. `impl:application.rebuild` references `spec:application.history-rebuild`, a design that rests on the online rebuild rather than one the rebuild was written against. It is the Protocol's open question `#referenceDirection` on `spec:decisions.anchor-binding-grain`, met in this corpus.
+  - Whole-Spec satisfies on Specs with designed-but-unbuilt parts. The anchor check named twelve Specs satisfied by code that realizes only part of their Design, the same set the test-resident anchors satisfied (`PLAN.md` 6.7 item 7). Per Spec, the owner splits it again, moves its binding to references, or accepts the whole-Spec claim; the feedback section lists them, and the Protocol holds `#entryAddressTargets` on `spec:decisions.anchor-binding-grain`.
   - The word layer. `CONTEXT.md` defines a layer as one of the seven steps of capability; the Protocol's `layer` places a component among edge, application, domain, adapter and infrastructure. One word now names two things.
 - The 25 departures of `pack:spec-studio-v1`, each a keyed open question, five of them blocking, where a ruled record of the Protocol goes another way than the original design: among them the patch loop against `spec:consumers.edit-model`, HTML first against the Markdown Design Review, and seven rungs against four. The Protocol's pull request lists them.
 - Words this unit used that the language lacks. In this corpus's `CONTEXT.md`: handoff and protected abort (OD-174's procedure), question key, next rung, target rung, dependency cycle. In the Protocol's: the same four, and from the Studio slice Spec Studio, lens, panel, shell, custom element, gathered intent, hand-off, build stamp, hosted preview, harness. The history view's "handoff" and the Studio's "hand-off" name two different things.
