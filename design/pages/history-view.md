@@ -141,9 +141,9 @@ No target outside the Pack holds a member below its next rung.
 | [`spec:application.first-experiment`](../specs/application/first-experiment.sdp.md) | defined | ready | dependsOn `spec:application.history-projection`, dependsOn `spec:application.read-models`, dependsOn `spec:application.rebuild`, dependsOn `spec:application.history-rebuild`, dependsOn `spec:application.generation-registry`, dependsOn `spec:command.command-declaration`, dependsOn `spec:command.command-pipeline`, dependsOn `spec:context.journal`, dependsOn `spec:context.queries` |
 | [`spec:application.parent-use-cases`](../specs/application/parent-use-cases.sdp.md) | defined | ready | dependsOn `spec:command.command-declaration`, dependsOn `spec:command.command-pipeline` |
 | [`spec:application.restore`](../specs/application/restore.sdp.md) | defined | ready | dependsOn `spec:application.projection-contract`, dependsOn `spec:application.rebuild`, dependsOn `spec:application.history-rebuild`, dependsOn `spec:application.write-pause`, dependsOn `spec:application.generation-registry`, dependsOn `spec:context.event-envelope`, dependsOn `spec:context.journal`, dependsOn `spec:context.queries` |
-| [`spec:command.idempotency-and-receipts`](../specs/command/idempotency-and-receipts.sdp.md) | defined | ready | refines `spec:command.command-pipeline`, dependsOn `spec:context.queries` |
+| [`spec:command.idempotency-and-receipts`](../specs/command/idempotency-and-receipts.sdp.md) | defined | ready | dependsOn `spec:application.write-pause`, refines `spec:command.command-pipeline`, dependsOn `spec:context.queries` |
 | [`spec:command.outcome-boundary`](../specs/command/outcome-boundary.sdp.md) | defined | ready | refines `spec:command.command-pipeline` |
-| [`spec:command.receipt-table`](../specs/command/receipt-table.sdp.md) | defined | ready | dependsOn `spec:context.queries` |
+| [`spec:command.receipt-table`](../specs/command/receipt-table.sdp.md) | defined | ready | dependsOn `spec:application.write-pause`, dependsOn `spec:context.queries` |
 | [`spec:command.tenancy-and-authority`](../specs/command/tenancy-and-authority.sdp.md) | defined | ready | dependsOn `spec:application.write-pause` |
 | [`spec:context.context-component`](../specs/context/context-component.sdp.md) | defined | ready | dependsOn `spec:context.event-envelope` |
 | [`spec:context.persistence-adapter`](../specs/context/persistence-adapter.sdp.md) | defined | ready | dependsOn `spec:context.event-envelope`, dependsOn `spec:context.journal` |
@@ -1193,7 +1193,7 @@ Inside the Pack it rests on [Rebuild: generations, backfill and the write pause]
 **Code.**
 
 - `component:platform.gate` at [`src/gate/index.ts` line 3](../../src/gate/index.ts#L3): the maintenance gate: its table, the writer check, the two writers and the operator entries. It is a component in the infrastructure layer and the platform context.
-- `impl:application.write-pause` at [`src/gate/gate.ts` line 6](../../src/gate/gate.ts#L6): gateAllows, assertWritable and the two scope writers. Its role is service. It belongs to `component:platform.gate`, in the infrastructure layer and the platform context.
+- `impl:application.write-pause` at [`src/gate/gate.ts` line 8](../../src/gate/gate.ts#L8): gateAllows, assertWritable and the two scope writers. Its role is service. It belongs to `component:platform.gate`, in the infrastructure layer and the platform context.
 - `impl:application.write-pause.entries` at [`src/gate/entries.ts` line 7](../../src/gate/entries.ts#L7): the four gate operator entries. Its role is operator-entry. It belongs to `component:platform.gate`, in the infrastructure layer and the platform context.
 - `impl:application.write-pause.tables` at [`src/gate/tables.ts` line 4](../../src/gate/tables.ts#L4): the gate document's table fragment. Its role is schema. It belongs to `component:platform.gate`, in the infrastructure layer and the platform context.
 

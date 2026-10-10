@@ -4,10 +4,10 @@ Written on 2026-10-04 at the close of the unit `sdp-round-2`, which extends the 
 
 ## Measured at close
 
-Re-measured on 2026-10-10 with `python3 design/tools/check.py`, at the pin `f23e358`, after the rulings of 2026-10-10 (`ecba393`) and the fold-in of their second read:
+Re-measured on 2026-10-10 with `python3 design/tools/check.py`, at the pin `f23e358`, after the rulings of 2026-10-10 (`ecba393`), the fold-in of their second read, and the merge of `feature/round-2` with its review repair (`09224b5`):
 
 ```
-243 specs · 6 packs · 180 anchors → 429 nodes · 1497 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 180 anchors → 429 nodes · 1499 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings, 12 prose mentions listed; readiness divergence: []
 entry addresses outside the Specs: 497; dependsOn cycles: 0
 architecture: 76 code units; roles: codec 1, contract 6, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 49 references edges from 41 units; platform isolation: 7 platform components, 21 uses edges from them, 0 into another context
@@ -15,7 +15,7 @@ open questions: 72 Specs, 166 questions, 10 blocking; extensions registered: 54
 stated readiness: {'defined': 232, 'idea': 1, 'scoped': 10}
 ledger: 278 findings, {'fixed': 159, 'open': 80, 'owner': 1, 'partially-fixed': 38}
 open findings by slice: {'L3': 30, 'P': 29, 'S3': 1, 'S4': 4, 'S5': 16}
-corpus digest: 20466b9e5b2744ed
+corpus digest: b635d91862bfeeda
 Pack pages current: 1 of 1
 protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-f23e358.tgz
 ```
@@ -35,7 +35,7 @@ CI passed on the branch's pushes in round 2 (`1b92bd8`, `a5d339d`) and in 3b (`3
 
 A review of the pull request at `9e58019` found three things, and the commit after it fixes them. The timing command forced the path of the owner's Linux backend binary, so a fresh clone, another checkout or a Mac failed. It now leaves the choice to the harness, which downloads the pinned release into `.cache/`. Probe 7's hosted in-place example skipped `depot/migrations`, the migrations component the depot mounts, because the archive names its tables `_components/depot/_components/migrations/<table>` and the parser read only one level. The example now reads, compares and asserts on that scope too. A throwaway run of it on a local native backend running the hosted copy passed, with `depot/migrations/migrations` among the compared tables; the hosted deployment has not run it. And this file kept the corpus digest of `1b3ff58`, from before the two fixes and the close edited Specs.
 
-A review of 2026-10-10 across the four open pull requests found one contract break on this branch, and the commit after `77acdf2` repairs it. The receipt sweep deleted expired receipts without reading the maintenance gate, and `sweepNext` reached it, while `spec:application.write-pause` promises that every writer in a scope reads the gate inside its own mutation, names the mutations that skip the read with the sweep among none of them, and says the restore door keeps every writer out. The Spec side was right. `sweep` now reads the gate after its argument check and before its first receipt read, the restore door first, for the scopes `all` and the tenant's and no source scope, and `sweepNext` reads it through `sweep` after the tenant-list read; a closed scope refuses the run with `writePaused` and it deletes nothing. The three Specs that describe the sweep, the gate's header comment, the `convex-test` suite of the sweep on both compositions and one native test of the restore door against the sweep changed in the same commit, and the corpus digest below is re-measured. Drift repair, not a decision: no register row.
+A review of 2026-10-10 across the four open pull requests found one contract break on this branch, and the commit after `77acdf2` repairs it. The receipt sweep deleted expired receipts without reading the maintenance gate, and `sweepNext` reached it, while `spec:application.write-pause` promises that every writer in a scope reads the gate inside its own mutation, names the mutations that skip the read with the sweep among none of them, and says the restore door keeps every writer out. The Spec side was right. `sweep` now reads the gate after its argument check and before its first receipt read, the restore door first, for the scopes `all` and the tenant's and no source scope, and `sweepNext` reads it through `sweep` after the tenant-list read; a closed scope refuses the run with `writePaused` and it deletes nothing. The three Specs that describe the sweep, the gate's header comment, the `convex-test` suite of the sweep on both compositions and one native test of the restore door against the sweep changed in the same commit, and the corpus digest above is re-measured. Drift repair, not a decision: no register row. The merge of that repair into this branch (`09224b5`) met the mention policy of `PLAN.md` 6.7 at the pin `f23e358`: the sweep's gate read is a `dependsOn` on `spec:application.write-pause` in `spec:command.receipt-table` and `spec:command.idempotency-and-receipts`, and the Pack page follows the gate's header comment to its new line.
 
 The default branch is `main`, published at `github.com/libar-dev/libar-platform`. Slice S0 reached it through a pull request; from S1 on the session fast-forwarded it once CI was green, on the owner's mandate of 2026-10-01, until the merge of slice S2 and the platform review unit on 2026-10-02, when the owner said: "Please merge to main and push. This is the last change we will do without formal PRs since things are starting to shape up." Round 1's four lanes then reached it through pull requests #6 to #9 (decision 32). The platform review as it was received is in commit `70c15bc`, with paths of the owner's machine in its links; its files left the tree at that unit's close, and the owner said the deleted review may stay in the history.
 
