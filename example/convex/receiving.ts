@@ -4,8 +4,7 @@
 /**
  * @sdpAnchor impl:application.parent-use-cases.receiving
  * @sdpLabel ReceiveStock
- * @sdpSatisfies spec:application.parent-use-cases
- * @sdpReferences spec:application.orders-inventory-example
+ * @sdpReferences spec:application.parent-use-cases, spec:application.orders-inventory-example
  * @sdpComponent component:example.parent
  * @sdpRole use-case
  */

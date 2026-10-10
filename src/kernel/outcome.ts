@@ -2,7 +2,7 @@
 /**
  * @sdpAnchor impl:kernel.outcome-model
  * @sdpLabel the outcome model's types
- * @sdpSatisfies spec:kernel.outcome-model
+ * @sdpReferences spec:kernel.outcome-model
  * @sdpComponent component:platform.kernel
  * @sdpRole contract
  */

@@ -4,8 +4,7 @@
 /**
  * @sdpAnchor impl:kernel.outcome-model.validators
  * @sdpLabel the outcome model's validators at the context boundary, and the operation outcome's
- * @sdpSatisfies spec:kernel.outcome-model
- * @sdpReferences spec:context.persistence-adapter
+ * @sdpReferences spec:kernel.outcome-model, spec:context.persistence-adapter
  * @sdpComponent component:platform.context
  * @sdpRole contract
  */

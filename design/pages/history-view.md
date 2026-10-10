@@ -25,7 +25,7 @@ Start with the members and with what holds a member below its next rung: togethe
 | # | Spec | Kind | Stated | Floor | Next rung | Code | Examples and verifiers | Pairs | Open questions |
 |---|---|---|---|---|---|---|---|---|---|
 | [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | none | 2 bound, 3 ahead, 3 without a pair | 4, none blocking |
-| [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | 2 anchors | none | 11 bound | 5, none blocking |
+| [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | none | 11 bound | 5, none blocking |
 | [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 2 units | 5 of 5 examples with a verifier | 2 bound, 9 without a pair | 6, none blocking |
 | [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 1 unit | 1 of 1 example with a verifier | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
 | [5](#5-rebuild-of-a-history-view-under-a-write-pause) | [`spec:application.history-rebuild`](../specs/application/history-rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | none | 0 of 5 examples with a verifier | 3 without a pair | 6, none blocking |
@@ -424,7 +424,9 @@ projectOrderAllocationHistory(
 
 Inside the Pack it rests on [Read models](#3-read-models) by refines and [Rebuild online by default, pause writes only for history-dependent views](#19-rebuild-online-by-default-pause-writes-only-for-history-dependent-views) by decidedBy.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 2 units reference this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:application.generation-registry.tables` at [`src/read-model/tables.ts` line 5](../../src/read-model/tables.ts#L5): the generations, progress, marker and tenant fill tables and rowConventions. Its role is schema. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 - `impl:application.projection-contract` at [`src/read-model/projection.ts` line 3](../../src/read-model/projection.ts#L3): ReadModel, Projection and applyProjection. Its role is projection. It belongs to `component:platform.read-model`, in the application layer and the platform context.

@@ -8,8 +8,7 @@
 /**
  * @sdpAnchor impl:application.parent-use-cases
  * @sdpLabel PlaceOrder and CancelOrder over Orders and then Inventory
- * @sdpSatisfies spec:application.parent-use-cases
- * @sdpReferences spec:application.orders-inventory-example
+ * @sdpReferences spec:application.parent-use-cases, spec:application.orders-inventory-example
  * @sdpComponent component:example.parent
  * @sdpRole use-case
  */

@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:application.projection-contract
  * @sdpLabel ReadModel, Projection and applyProjection
- * @sdpSatisfies spec:application.projection-contract
+ * @sdpReferences spec:application.projection-contract
  * @sdpComponent component:platform.read-model
  * @sdpRole projection
  */
