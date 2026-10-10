@@ -2,7 +2,7 @@
 /**
  * @sdpAnchor impl:application.orders-inventory-example.inventory-stock-item-query
  * @sdpLabel the stock item query
- * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpReferences spec:application.orders-inventory-example
  * @sdpComponent component:example.inventory-context
  * @sdpRole query
  */

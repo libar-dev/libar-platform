@@ -272,7 +272,8 @@ _Avoid_: failed, dead letter, stuck
 
 Words for how the platform is specified and proven. They are lasting and may appear in a Spec. They do not name things inside the platform, so no type, table, event or error code is named after them.
 
-- **Layer**: one of the seven steps of capability, each usable before the next exists.
+- **Layer**: one of the seven steps of capability, each usable before the next exists. _Avoid_: architectural layer.
+- **Architectural layer**: the Protocol's `layer` on a component anchor, one of edge, application, domain, adapter or infrastructure, always written in full; a bare numbered Layer n is a step of capability.
 - **Profile**: a group of layers an application takes together: transactional, durable, workflow or agent.
 - **Trigger**: the concrete need that activates a later capability. A possible future need is not one.
 - **Law**: one of the twelve rules every decision is reviewed against.

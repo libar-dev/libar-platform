@@ -111,7 +111,7 @@ function reject(rejection: Rejection): never {
 /**
  * @sdpAnchor impl:context.persistence-adapter
  * @sdpLabel execute: load, decide, fold, append and save one stream
- * @sdpSatisfies spec:context.persistence-adapter
+ * @sdpReferences spec:context.persistence-adapter
  * @sdpComponent component:platform.context
  * @sdpRole service
  */

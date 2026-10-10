@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:command.command-pipeline
  * @sdpLabel runPipeline and the command response
- * @sdpSatisfies spec:command.command-pipeline
+ * @sdpReferences spec:command.command-pipeline
  * @sdpComponent component:platform.command
  * @sdpRole service
  */

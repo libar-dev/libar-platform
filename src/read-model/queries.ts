@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:application.read-models.queries
  * @sdpLabel readModelView, pageInGeneration and limitReadModelList
- * @sdpSatisfies spec:application.read-models
+ * @sdpReferences spec:application.read-models
  * @sdpComponent component:platform.read-model
  * @sdpRole query
  */

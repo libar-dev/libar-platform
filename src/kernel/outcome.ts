@@ -1,8 +1,8 @@
 // The outcome model of spec:kernel.outcome-model. Types only; the validators belong to the context boundary.
 /**
- * @sdpAnchor impl:kernel.decider-contract.outcome
- * @sdpLabel the outcome model's types, which the decider contract reuses
- * @sdpReferences spec:kernel.outcome-model, spec:kernel.decider-contract
+ * @sdpAnchor impl:kernel.outcome-model
+ * @sdpLabel the outcome model's types
+ * @sdpSatisfies spec:kernel.outcome-model
  * @sdpComponent component:platform.kernel
  * @sdpRole contract
  */

@@ -10,7 +10,7 @@
 /**
  * @sdpAnchor impl:application.orders-inventory-example
  * @sdpLabel the order decider
- * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpReferences spec:application.orders-inventory-example
  * @sdpComponent component:example.orders-domain
  * @sdpRole decider
  */

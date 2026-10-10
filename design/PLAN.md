@@ -92,6 +92,31 @@ Detail levels follow the doc's rule "Detail follows the build" (decision method,
 
 Merges and splits against the task's list: idempotency and receipts stay one component because D6 defines both together; the rejection boundary is folded into the outcome model's boundary contract because D4 and D7 describe one mapping; tenancy and authority stay one component (D11); operations are split between Package D (what applies from Layer 1) and Package E (what applies to obligations), following the doc's sentence that security, bounded resource use and useful errors start in Layer 1.
 
+### 2.1 The code's components
+
+The code declares its architecture where it is realized: twelve `component:` anchors, each with an architectural layer and a bounded context, and the `uses` between them. Recipe 28 reads them from the graph and `design/tools/check.py` prints them. An architectural layer is the Protocol's `layer` on a component anchor, and a numbered Layer of the table above is a step of capability; the two are different things (`CONTEXT.md`).
+
+| Component | Code | Architectural layer | Context |
+|---|---|---|---|
+| `component:platform.kernel` | `src/kernel/` | domain | platform |
+| `component:platform.context` | `src/context/` | adapter | platform |
+| `component:platform.command` | `src/command/` | application | platform |
+| `component:platform.read-model` | `src/read-model/` | application | platform |
+| `component:platform.gate` | `src/gate/` | infrastructure | platform |
+| `component:platform.audit` | `src/audit/` | infrastructure | platform |
+| `component:platform.operations` | `src/operations/` | infrastructure | platform |
+| `component:example.orders-domain` | `example/domain/order.ts` | domain | orders |
+| `component:example.inventory-domain` | `example/domain/stockItem.ts` | domain | inventory |
+| `component:example.orders-context` | `example/convex/orders/` | adapter | orders |
+| `component:example.inventory-context` | `example/convex/inventory/` | adapter | inventory |
+| `component:example.parent` | `example/convex/` | application | orders-inventory |
+
+The layer rule, from the owner's rulings of 2026-10-10: `domain` is business meaning with no runtime import; `application` coordinates a use case; `adapter` realizes a kernel or command contract against Convex; `edge` is transport in; `infrastructure` is a shared mechanism that owns no use case. The gate supplies a pause and owns no use case, so it is `infrastructure`. The context library and the two context components realize the kernel's contract against Convex, so they are `adapter`.
+
+The context rule, from the same rulings: `platform` stays on the seven platform components, because the platform is the key bounded context, with its own language (`CONTEXT.md`). The example keeps `orders` and `inventory` on its domain and context components and `orders-inventory` on the parent composition: orders-inventory is the supporting context and development tool, the composition of the two business contexts it models. Nothing in the platform's core carries orders-inventory specifics, and that is read from the graph: `design/tools/check.py` fails when a component in the context `platform` has a `uses` edge to a component in any other context, each end of the edge resolved to its component directly or through `memberOf`. The check reads the declared `uses`, not the imports.
+
+`example/` is architecture: it is the production composition and the only place a composition and contexts exist as code, so it keeps its five components. `fixture/` has none.
+
 ## 3. SDP mapping
 
 ### 3.1 IDs, files, families
@@ -582,7 +607,7 @@ A capability is designed in its Specs before anyone writes its code, at the rung
    - Convex: what one transaction reads and writes, whether the stated bounds hold on the pinned release, what changes atomically and what across transactions;
    - operator: what an interruption, a resume and an abort leave, who closes and opens a pause, what a deploy or a restore does to work in flight;
    - implementation and verification: the pinned module compiles and the code agrees with it, each dependency stands at its rung (recipe 21), and each example names its tier and has a planned verifier.
-7. **A realized Spec claims only what its code does.** A Spec whose code realizes it may pin a type that a designed form widens, and the pinned module lists that pair ahead until the code catches up (item 3): `typeReadModelBinding` takes a history projection beside a per-entity read model while the code takes the per-entity form alone. A behavior the code does not have lives in a Spec of its own (item 1), so that an implementation anchor on the realized Spec claims only what its code does. The rebuild shows it: `spec:application.rebuild` holds the online path and what both paths share, and its anchor binds them; `spec:application.history-rebuild` holds the paused path of a history view, designed and not realized. A deferred form states in its own Spec how it extends the Specs it would widen when its trigger comes, and those Specs do not depend on it: `spec:application.aggregate-projection` says what the declaration's binding, the pipeline's step 9 and the registry's tables take when OD-075's trigger comes.
+7. **A Spec is satisfied only when its code realizes all of it.** Anchor targets name whole Specs, as `spec:decisions.anchor-binding-grain` rules, so the units that satisfy a Spec together realize every entry it promises. A pinned declaration is no exception: a pin that a designed form widens, which the pinned module lists as ahead (item 3), is a promise the code has not built, and the Spec that holds it is not satisfied while the pair is ahead. `typeReadModelBinding` takes a history projection beside a per-entity read model while the code takes the per-entity form alone, so the code references `spec:command.command-declaration` and does not satisfy it. For a Spec with a part no unit builds, a coherent part with its own trigger or step moves into a child Spec that refines it, its entries moved verbatim and its readiness stated on its own, and the parent keeps `satisfies` (item 1); otherwise the code references the Spec until it realizes what the Spec promises. A reference runs one way: the code answers to the design, because it follows it or realizes part of it. A design that builds on existing code says so by its own `dependsOn` or `refines` to the Spec that code satisfies, never by a reference from the code: `spec:application.history-rebuild` holds the paused path of a history view and depends on `spec:application.rebuild`, the online path's Spec, and the online rebuild's code carries no reference to it. A deferred form states in its own Spec how it extends the Specs it would widen when its trigger comes, and those Specs do not depend on it: `spec:application.aggregate-projection` says what the declaration's binding, the pipeline's step 9 and the registry's tables take when OD-075's trigger comes.
 8. **`ready` states approved to build.** This is the Protocol's reading. The owner states `ready` on a Spec when its design is approved for its build, so recipe 1, the Specs that state `ready` and have no implementation binding, is the build backlog, and a Spec leaves it when an anchor binds its code. A designed Spec states `ready` after the passes of item 6 have read its Pack, as the history projection may once the domain and operator passes have run. No agent states `ready` (section 3.2).
 
 ## 7. Review rubric

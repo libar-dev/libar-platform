@@ -2,7 +2,7 @@
 /**
  * @sdpAnchor impl:application.generation-registry
  * @sdpLabel generationsToWrite and activeGeneration
- * @sdpSatisfies spec:application.generation-registry
+ * @sdpReferences spec:application.generation-registry
  * @sdpComponent component:platform.read-model
  * @sdpRole query
  */

@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:application.read-models
  * @sdpLabel writeReadModels, step 9's read-model half
- * @sdpSatisfies spec:application.read-models, spec:command.command-pipeline
+ * @sdpReferences spec:application.read-models, spec:command.command-pipeline
  * @sdpComponent component:platform.read-model
  * @sdpRole service
  */

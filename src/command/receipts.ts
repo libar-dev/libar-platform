@@ -4,7 +4,7 @@
 /**
  * @sdpAnchor impl:command.idempotency-and-receipts
  * @sdpLabel the receipt key, fingerprint, lookup, classification, insert and sweep
- * @sdpSatisfies spec:command.idempotency-and-receipts
+ * @sdpReferences spec:command.idempotency-and-receipts
  * @sdpComponent component:platform.command
  * @sdpRole service
  */

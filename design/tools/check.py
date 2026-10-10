@@ -15,7 +15,9 @@ citations carry edges, extensions are registered, nobody but the owner states `r
 mention with no relation is listed with its reason, an entry address outside the Specs resolves
 through the Protocol's address recipe, and no Specs rest on each other through `dependsOn`, as the
 Protocol's cycle recipe reports. It prints the roles, layers and contexts the code anchors state, as
-the Protocol's roles-and-layers recipe reads them, and judges none of them.
+the Protocol's roles-and-layers recipe reads them, and judges none of them. One rule it does judge,
+from the graph: no component in the context `platform` uses a component in another context, so the
+platform's core never depends on the orders-inventory example (design/PLAN.md section 2.1, the context rule).
 """
 import collections
 import glob
@@ -46,6 +48,22 @@ GRAPH_FACTS = (
     ".map((f) => [f.subjectId, f.relatedId, f.path]) }"
 )
 PROSE_MENTIONS = os.path.join(DESIGN, "tools", "prose-mentions.json")
+# The context rule of design/PLAN.md section 2.1: a component in the context `platform` has no `uses` edge to a
+# component in another context. Each endpoint of a `uses` edge resolves to its component, directly or through
+# its `memberOf` edge, before the two contexts are compared. The edges are the declared `uses`, not imports.
+PLATFORM_ISOLATION = (
+    "const byId = new Map(graph.nodes.map((n) => [n.id, n]));"
+    " const memberOf = new Map(graph.edges.filter((e) => e.type === \"memberOf\").map((e) => [e.from, e.to]));"
+    " const componentOf = (id) => (id.startsWith(\"component:\") ? id : memberOf.get(id));"
+    " const contextOf = (id) => (id === undefined ? undefined : byId.get(id)?.context);"
+    " const uses = graph.edges.filter((e) => e.type === \"uses\");"
+    " const crossings = uses.flatMap((e) => { const from = componentOf(e.from); const to = componentOf(e.to);"
+    " const context = contextOf(to);"
+    " return contextOf(from) === \"platform\" && context !== undefined && context !== \"platform\""
+    " ? [{ from: e.from, to: e.to, fromComponent: from, toComponent: to, toContext: context }] : []; });"
+    " return { platformComponents: graph.nodes.filter((n) => n.id.startsWith(\"component:\") && n.context === \"platform\").length,"
+    " platformUses: uses.filter((e) => contextOf(componentOf(e.from)) === \"platform\").length, crossings }"
+)
 # An entry address, spec:<id>#design.<key>, #ui.<key> or #question.<key>. A token runs from `spec:` to a
 # separator, loses trailing punctuation, and goes whole to the Protocol's address recipe (recipe 25), so a
 # malformed key is refused rather than read as its valid prefix. The recipe holds the grammar and the
@@ -185,6 +203,20 @@ def main():
     except (ValueError, KeyError) as error:
         fail(f"the roles-and-layers recipe did not answer: {str(error)[:200]}")
 
+    # 1e. The context rule, read from the graph: the platform's components use nothing in another context.
+    isolation = None
+    out = run(["q", PLATFORM_ISOLATION, "--root", ".", "--json"])
+    try:
+        answer = json.loads(out.stdout)
+        isolation = (f"platform isolation: {answer['platformComponents']} platform components, "
+                     f"{answer['platformUses']} uses edges from them, {len(answer['crossings'])} into another context")
+        for crossing in answer["crossings"]:
+            via = "" if crossing["from"] == crossing["fromComponent"] else f" (through {crossing['fromComponent']})"
+            fail(f"{crossing['from']}{via} uses {crossing['to']} in the context {crossing['toContext']}: "
+                 "a platform component uses nothing in another context (design/PLAN.md section 2.1)")
+    except (ValueError, KeyError, TypeError) as error:
+        fail(f"the platform isolation query did not answer: {str(error)[:200]}")
+
     out = run(["q", READINESS_DIVERGENCE, "--root", ".", "--json"])
     try:
         diverging = json.loads(out.stdout.strip().splitlines()[-1])
@@ -311,7 +343,7 @@ def main():
     print(expected_line)
     print(f"validate: {n_errors} errors · {n_warnings} warnings, {len(listed)} prose mentions listed; readiness divergence: {diverging}")
     print(f"entry addresses outside the Specs: {addresses}; dependsOn cycles: {cycles}")
-    print(f"architecture: {structure}")
+    print(f"architecture: {structure}; {isolation}")
     print(f"open questions: {len(questions)} Specs, {n_questions} questions, {n_blocking} blocking; extensions registered: {len(registered)}")
     print(f"stated readiness: {dict(sorted(readiness.items()))}")
     print(f"ledger: {len(ledger)} findings, {dict(sorted(by_status.items()))}")

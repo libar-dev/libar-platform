@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:command.command-declaration
  * @sdpLabel CommandDeclaration, publicCommand and internalCommand
- * @sdpSatisfies spec:command.command-declaration
+ * @sdpReferences spec:command.command-declaration
  * @sdpComponent component:platform.command
  * @sdpRole contract
  */

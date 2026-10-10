@@ -4,7 +4,7 @@
 /**
  * @sdpAnchor impl:application.orders-inventory-example.order-summary
  * @sdpLabel the order summary read model
- * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpReferences spec:application.orders-inventory-example
  * @sdpComponent component:example.parent
  * @sdpRole read-model
  */

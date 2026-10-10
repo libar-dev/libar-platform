@@ -2,7 +2,7 @@
 /**
  * @sdpAnchor impl:application.orders-inventory-example.orders-operations
  * @sdpLabel the Orders sanctioned operations
- * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpReferences spec:application.orders-inventory-example
  * @sdpComponent component:example.orders-context
  * @sdpRole service
  */

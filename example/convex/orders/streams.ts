@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:application.orders-inventory-example.orders-streams
  * @sdpLabel the order stream registration
- * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpReferences spec:application.orders-inventory-example
  * @sdpComponent component:example.orders-context
  */
 import { v, type Infer } from "convex/values";

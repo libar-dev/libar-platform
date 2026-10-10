@@ -660,7 +660,7 @@ export async function generate(pack, out, base = root) {
     "- The floor is the highest rung whose clauses all hold in the graph. It can sit above the stated rung.",
     "- The next rung is the one above the stated rung, with the first floor clause that fails at it. A rung whose clauses all hold still waits for its author to state it.",
     "- An open question is cited by its address, the Spec's id, `#question.` and the key its marker carries.",
-    "- An implementation anchor binds code to a Spec at its site, the file and line it is written at. Code that satisfies a Spec realizes it, and the graph derives implemented from it. Code that references a Spec names its design without realizing it, in either direction: code written against the design, or code the design rests on. A reference confers nothing. Each unit gives its role and its component, with the component's layer and bounded context, where the anchor declares them.",
+    "- An implementation anchor binds code to a Spec at its site, the file and line it is written at. Code that satisfies a Spec realizes it, and the graph derives implemented from it. Code that references a Spec answers to its design without claiming to realize it: the unit follows the design or realizes part of it, so a change to the design asks the code to follow. A design that builds on existing code says so by its own relation to the Spec that code satisfies. A reference confers nothing. Each unit gives its role and its component, with the component's layer and bounded context, where the anchor declares them.",
     `- A pair is a pinned declaration and the code a type test compares it with: bound when the two are equal, ahead when the design leads the code, not compared when the test compares nothing. The test imports every pinned declaration of the Pack from [${span(pinned)}](${link(pinned)}), which ${span("npm run sdp:build")} emits and git does not keep.`,
     "",
   );
@@ -1002,7 +1002,7 @@ export async function generate(pack, out, base = root) {
       write("**Code.** No implementation anchor binds it.", "");
     if (context.references.length > 0) {
       write(
-        `**References.** ${plural(context.references.length, "unit references", "units reference")} this design, in either direction. A reference confers no delivery fact and moves no floor.`,
+        `**References.** ${plural(context.references.length, "unit references", "units reference")} this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.`,
         "",
       );
       for (const binding of context.references) write(unitLine(binding));

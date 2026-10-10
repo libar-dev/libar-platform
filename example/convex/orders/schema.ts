@@ -1,7 +1,7 @@
 /**
  * @sdpAnchor impl:application.orders-inventory-example.orders-schema
  * @sdpLabel the Orders context schema
- * @sdpSatisfies spec:application.orders-inventory-example
+ * @sdpReferences spec:application.orders-inventory-example
  * @sdpComponent component:example.orders-context
  * @sdpRole schema
  */

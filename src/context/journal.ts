@@ -2,7 +2,7 @@
 /**
  * @sdpAnchor impl:context.journal
  * @sdpLabel createJournal, load and append
- * @sdpSatisfies spec:context.journal
+ * @sdpReferences spec:context.journal
  * @sdpComponent component:platform.context
  * @sdpRole event-store
  */

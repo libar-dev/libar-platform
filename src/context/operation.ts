@@ -32,7 +32,7 @@ const mutation: MutationBuilder<ContextDataModel, "public"> = mutationGeneric;
 /**
  * @sdpAnchor impl:context.context-component
  * @sdpLabel defineOperation, one registered mutation per sanctioned operation
- * @sdpSatisfies spec:context.context-component
+ * @sdpReferences spec:context.context-component
  * @sdpComponent component:platform.context
  * @sdpRole service
  */

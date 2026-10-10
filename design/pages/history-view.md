@@ -15,7 +15,7 @@ Start with the members and with what holds a member below its next rung: togethe
 - The floor is the highest rung whose clauses all hold in the graph. It can sit above the stated rung.
 - The next rung is the one above the stated rung, with the first floor clause that fails at it. A rung whose clauses all hold still waits for its author to state it.
 - An open question is cited by its address, the Spec's id, `#question.` and the key its marker carries.
-- An implementation anchor binds code to a Spec at its site, the file and line it is written at. Code that satisfies a Spec realizes it, and the graph derives implemented from it. Code that references a Spec names its design without realizing it, in either direction: code written against the design, or code the design rests on. A reference confers nothing. Each unit gives its role and its component, with the component's layer and bounded context, where the anchor declares them.
+- An implementation anchor binds code to a Spec at its site, the file and line it is written at. Code that satisfies a Spec realizes it, and the graph derives implemented from it. Code that references a Spec answers to its design without claiming to realize it: the unit follows the design or realizes part of it, so a change to the design asks the code to follow. A design that builds on existing code says so by its own relation to the Spec that code satisfies. A reference confers nothing. Each unit gives its role and its component, with the component's layer and bounded context, where the anchor declares them.
 - A pair is a pinned declaration and the code a type test compares it with: bound when the two are equal, ahead when the design leads the code, not compared when the test compares nothing. The test imports every pinned declaration of the Pack from [`generated/pinned/history-view.ts`](../../generated/pinned/history-view.ts), which `npm run sdp:build` emits and git does not keep.
 
 ## Members
@@ -26,22 +26,22 @@ Start with the members and with what holds a member below its next rung: togethe
 |---|---|---|---|---|---|---|---|---|---|
 | [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | none | 2 bound, 3 ahead, 3 without a pair | 4, none blocking |
 | [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | 2 anchors | none | 11 bound | 5, none blocking |
-| [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | 2 anchors, referenced by 1 unit | 5 of 5 examples with a verifier | 2 bound, 9 without a pair | 6, none blocking |
-| [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | 1 anchor | 1 of 1 example with a verifier | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
-| [5](#5-rebuild-of-a-history-view-under-a-write-pause) | [`spec:application.history-rebuild`](../specs/application/history-rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 1 unit | 0 of 5 examples with a verifier | 3 without a pair | 6, none blocking |
+| [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 2 units | 5 of 5 examples with a verifier | 2 bound, 9 without a pair | 6, none blocking |
+| [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 1 unit | 1 of 1 example with a verifier | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
+| [5](#5-rebuild-of-a-history-view-under-a-write-pause) | [`spec:application.history-rebuild`](../specs/application/history-rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | none | 0 of 5 examples with a verifier | 3 without a pair | 6, none blocking |
 | [6](#6-rebuild-a-cross-stream-history-view-under-a-write-pause-interrupt-then-resume) | [`spec:application.history-rebuild.write-pause-rebuild-interrupt`](../specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [7](#7-rebuild-a-cross-stream-history-view-under-a-write-pause-interrupt-then-abort) | [`spec:application.history-rebuild.write-pause-rebuild-abort`](../specs/application/history-rebuild.write-pause-rebuild-abort.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [8](#8-deploy-a-changed-history-projection-version-through-the-handoff) | [`spec:application.history-rebuild.write-pause-rebuild-version-change`](../specs/application/history-rebuild.write-pause-rebuild-version-change.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [9](#9-install-a-history-view-through-the-handoff) | [`spec:application.history-rebuild.write-pause-rebuild-installation`](../specs/application/history-rebuild.write-pause-rebuild-installation.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [10](#10-reorder-a-history-views-sources-while-its-generation-is-interrupted) | [`spec:application.history-rebuild.write-pause-rebuild-source-order-mismatch`](../specs/application/history-rebuild.write-pause-rebuild-source-order-mismatch.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [11](#11-write-pause) | [`spec:application.write-pause`](../specs/application/write-pause.sdp.md) | contract | defined | ready | ready, which its floor holds | 4 anchors | 1 of 1 example with a verifier | 6 bound, 2 not compared, 6 without a pair | 3, none blocking |
-| [12](#12-generation-registry) | [`spec:application.generation-registry`](../specs/application/generation-registry.sdp.md) | contract | defined | ready | ready, which its floor holds | 2 anchors | 2 of 2 examples with a verifier | 8 bound, 3 ahead, 2 without a pair | 6, none blocking |
-| [13](#13-orders-and-inventory-the-example-domain) | [`spec:application.orders-inventory-example`](../specs/application/orders-inventory-example.sdp.md) | model | defined | ready | ready, which its floor holds | 15 anchors, referenced by 1 unit | 6 of 6 examples with a verifier | no pinned declaration | 1, none blocking |
-| [14](#14-command-declaration-and-bindings) | [`spec:command.command-declaration`](../specs/command/command-declaration.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor, referenced by 1 unit | 2 of 2 examples with a verifier | 4 bound, 2 ahead, 5 not compared, 7 without a pair | 3, none blocking |
-| [15](#15-the-command-pipeline) | [`spec:command.command-pipeline`](../specs/command/command-pipeline.sdp.md) | workflow | defined | ready | ready, which its floor holds | 2 anchors, referenced by 1 unit | 3 of 3 examples with a verifier | 3 bound, 1 ahead, 2 not compared, 12 without a pair | 7, none blocking |
+| [12](#12-generation-registry) | [`spec:application.generation-registry`](../specs/application/generation-registry.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 2 of 2 examples with a verifier | 8 bound, 3 ahead, 2 without a pair | 6, none blocking |
+| [13](#13-orders-and-inventory-the-example-domain) | [`spec:application.orders-inventory-example`](../specs/application/orders-inventory-example.sdp.md) | model | defined | ready | ready, which its floor holds | referenced by 14 units | 6 of 6 examples with a verifier | no pinned declaration | 1, none blocking |
+| [14](#14-command-declaration-and-bindings) | [`spec:command.command-declaration`](../specs/command/command-declaration.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 2 of 2 examples with a verifier | 4 bound, 2 ahead, 5 not compared, 7 without a pair | 3, none blocking |
+| [15](#15-the-command-pipeline) | [`spec:command.command-pipeline`](../specs/command/command-pipeline.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 2 units | 3 of 3 examples with a verifier | 3 bound, 1 ahead, 2 not compared, 12 without a pair | 7, none blocking |
 | [16](#16-the-event-envelope) | [`spec:context.event-envelope`](../specs/context/event-envelope.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | none | 7 bound, 3 without a pair | 2, none blocking |
-| [17](#17-the-journal) | [`spec:context.journal`](../specs/context/journal.sdp.md) | behavior | defined | ready | ready, which its floor holds | 1 anchor | 0 of 1 example with a verifier | 3 bound, 4 ahead, 11 without a pair | 1, none blocking |
-| [18](#18-the-context-queries) | [`spec:context.queries`](../specs/context/queries.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | none | 3 bound, 2 ahead, 13 without a pair | 3, none blocking |
+| [17](#17-the-journal) | [`spec:context.journal`](../specs/context/journal.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 1 unit | 0 of 1 example with a verifier | 3 bound, 4 ahead, 11 without a pair | 1, none blocking |
+| [18](#18-the-context-queries) | [`spec:context.queries`](../specs/context/queries.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | none | 3 bound, 2 ahead, 13 without a pair | 3, none blocking |
 | [19](#19-rebuild-online-by-default-pause-writes-only-for-history-dependent-views) | [`spec:decisions.d09-rebuild-online-by-default`](../specs/decisions/d09-rebuild-online-by-default.sdp.md) | decision | defined | ready | ready, which its floor holds | none | none | no pinned declaration | 1, none blocking |
 
 ## What holds a member below its next rung
@@ -292,7 +292,7 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [Projectio
 
 **Code.** No implementation anchor binds it.
 
-**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.
+**References.** 1 unit references this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:application.order-allocation-history` at [`example/domain/orderAllocationHistory.ts` line 8](../../example/domain/orderAllocationHistory.ts#L8): the order allocation history's keyOf and project rules. Its role is projection. It belongs to `component:example.parent`, in the application layer and the orders-inventory context.
 
@@ -577,14 +577,12 @@ orderSummaries: defineTable({ ...rowConventions, ...orderSummaryFields })
 
 Inside the Pack it rests on [The context queries](#18-the-context-queries) by dependsOn.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 2 units reference this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:application.read-models` at [`src/read-model/write.ts` line 3](../../src/read-model/write.ts#L3): writeReadModels, step 9's read-model half. Its role is service. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 - `impl:application.read-models.queries` at [`src/read-model/queries.ts` line 3](../../src/read-model/queries.ts#L3): readModelView, pageInGeneration and limitReadModelList. Its role is query. It belongs to `component:platform.read-model`, in the application layer and the platform context.
-
-**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.
-
-- `component:platform.read-model` at [`src/read-model/index.ts` line 2](../../src/read-model/index.ts#L2): the read-model library: declare, rebuild, write and read a read model. It is a component in the application layer and the platform context.
 
 **Examples.**
 
@@ -747,7 +745,9 @@ limitReadModelList(readModel) = {
 
 Inside the Pack it rests on [Read models](#3-read-models) by refines, [History projection](#1-history-projection) by dependsOn, [Projection contract](#2-projection-contract) by dependsOn, [Write pause](#11-write-pause) by dependsOn, [Generation registry](#12-generation-registry) by dependsOn, [The context queries](#18-the-context-queries) by dependsOn and [Rebuild online by default, pause writes only for history-dependent views](#19-rebuild-online-by-default-pause-writes-only-for-history-dependent-views) by decidedBy.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 1 unit references this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:application.rebuild` at [`src/read-model/rebuild.ts` line 2](../../src/read-model/rebuild.ts#L2): the online rebuild's operator entries, batch chains, tenant fill and batch bounds. Its role is service. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 
@@ -1074,10 +1074,6 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [History p
 
 **Code.** No implementation anchor binds it.
 
-**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.
-
-- `impl:application.rebuild` at [`src/read-model/rebuild.ts` line 2](../../src/read-model/rebuild.ts#L2): the online rebuild's operator entries, batch chains, tenant fill and batch bounds. Its role is service. It belongs to `component:platform.read-model`, in the application layer and the platform context.
-
 **Examples.**
 
 | Example | Tier | Verifier | Title |
@@ -1371,7 +1367,9 @@ export const getGateAudit = internalQuery({
 
 Inside the Pack it rests on [Rebuild: generations, backfill and the write pause](#4-rebuild-generations-backfill-and-the-write-pause) by refines, [Projection contract](#2-projection-contract) by dependsOn and [Rebuild online by default, pause writes only for history-dependent views](#19-rebuild-online-by-default-pause-writes-only-for-history-dependent-views) by decidedBy.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 2 units reference this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:application.generation-registry` at [`src/read-model/generations.ts` line 2](../../src/read-model/generations.ts#L2): generationsToWrite and activeGeneration. Its role is query. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 - `impl:application.generation-registry.tables` at [`src/read-model/tables.ts` line 5](../../src/read-model/tables.ts#L5): the generations, progress, marker and tenant fill tables and rowConventions. Its role is schema. It belongs to `component:platform.read-model`, in the application layer and the platform context.
@@ -1544,10 +1542,11 @@ activeGeneration<DataModel extends ReadModelDataModel>(
 
 Inside the Pack it rests on [History projection](#1-history-projection) by dependsOn.
 
-**Code.**
+**Code.** No implementation anchor binds it.
 
-- `component:example.inventory-context` at [`example/convex/inventory/convex.config.ts` line 1](../../example/convex/inventory/convex.config.ts#L1): the Inventory context component. It is a component in the adapter layer and the inventory context.
-- `component:example.orders-context` at [`example/convex/orders/convex.config.ts` line 1](../../example/convex/orders/convex.config.ts#L1): the Orders context component. It is a component in the adapter layer and the orders context.
+**References.** 14 units reference this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
+
+- `impl:application.order-allocation-history` at [`example/domain/orderAllocationHistory.ts` line 8](../../example/domain/orderAllocationHistory.ts#L8): the order allocation history's keyOf and project rules. Its role is projection. It belongs to `component:example.parent`, in the application layer and the orders-inventory context.
 - `impl:application.orders-inventory-example` at [`example/domain/order.ts` line 10](../../example/domain/order.ts#L10): the order decider. Its role is decider. It belongs to `component:example.orders-domain`, in the domain layer and the orders context.
 - `impl:application.orders-inventory-example.inventory-operations` at [`example/convex/inventory/operations.ts` line 2](../../example/convex/inventory/operations.ts#L2): the Inventory sanctioned operations. Its role is service. It belongs to `component:example.inventory-context`, in the adapter layer and the inventory context.
 - `impl:application.orders-inventory-example.inventory-schema` at [`example/convex/inventory/schema.ts` line 1](../../example/convex/inventory/schema.ts#L1): the Inventory context schema. Its role is schema. It belongs to `component:example.inventory-context`, in the adapter layer and the inventory context.
@@ -1561,10 +1560,6 @@ Inside the Pack it rests on [History projection](#1-history-projection) by depen
 - `impl:application.orders-inventory-example.stock-item` at [`example/domain/stockItem.ts` line 11](../../example/domain/stockItem.ts#L11): the stock item decider. Its role is decider. It belongs to `component:example.inventory-domain`, in the domain layer and the inventory context.
 - `impl:application.parent-use-cases` at [`example/convex/ordering.ts` line 8](../../example/convex/ordering.ts#L8): PlaceOrder and CancelOrder over Orders and then Inventory. Its role is use-case. It belongs to `component:example.parent`, in the application layer and the orders-inventory context.
 - `impl:application.parent-use-cases.receiving` at [`example/convex/receiving.ts` line 4](../../example/convex/receiving.ts#L4): ReceiveStock. Its role is use-case. It belongs to `component:example.parent`, in the application layer and the orders-inventory context.
-
-**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.
-
-- `component:example.parent` at [`example/convex/convex.config.ts` line 1](../../example/convex/convex.config.ts#L1): the production composition's parent deployment over Orders and Inventory. It is a component in the application layer and the orders-inventory context.
 
 **Examples.**
 
@@ -1585,12 +1580,11 @@ Inside the Pack it rests on [History projection](#1-history-projection) by depen
 
 Inside the Pack it rests on [History projection](#1-history-projection) by dependsOn, [Projection contract](#2-projection-contract) by dependsOn and [The command pipeline](#15-the-command-pipeline) by dependsOn.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 2 units reference this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:command.command-declaration` at [`src/command/declaration.ts` line 3](../../src/command/declaration.ts#L3): CommandDeclaration, publicCommand and internalCommand. Its role is contract. It belongs to `component:platform.command`, in the application layer and the platform context.
-
-**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.
-
 - `impl:command.command-declaration.depot-commands` at [`fixture/convex/depotCommands.ts` line 3](../../fixture/convex/depotCommands.ts#L3): the depot fixture's command declarations.
 
 **Examples.**
@@ -1801,14 +1795,12 @@ refine
 
 Inside the Pack it rests on [History projection](#1-history-projection) by dependsOn, [Projection contract](#2-projection-contract) by dependsOn, [Write pause](#11-write-pause) by dependsOn and [The event envelope](#16-the-event-envelope) by dependsOn.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 2 units reference this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:application.read-models` at [`src/read-model/write.ts` line 3](../../src/read-model/write.ts#L3): writeReadModels, step 9's read-model half. Its role is service. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 - `impl:command.command-pipeline` at [`src/command/pipeline.ts` line 3](../../src/command/pipeline.ts#L3): runPipeline and the command response. Its role is service. It belongs to `component:platform.command`, in the application layer and the platform context.
-
-**References.** 1 unit references this design, in either direction. A reference confers no delivery fact and moves no floor.
-
-- `component:platform.command` at [`src/command/index.ts` line 2](../../src/command/index.ts#L2): the command library that runs in the parent deployment. It is a component in the application layer and the platform context.
 
 **Examples.**
 
@@ -2207,7 +2199,9 @@ registration.eventValidators[event.eventType]
 
 Inside the Pack it rests on [Write pause](#11-write-pause) by dependsOn.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 1 unit references this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:context.journal` at [`src/context/journal.ts` line 2](../../src/context/journal.ts#L2): createJournal, load and append. Its role is event-store. It belongs to `component:platform.context`, in the adapter layer and the platform context.
 
@@ -2466,7 +2460,9 @@ operationId
 
 Inside the Pack it rests on [The event envelope](#16-the-event-envelope) by dependsOn and [The journal](#17-the-journal) by dependsOn.
 
-**Code.**
+**Code.** No implementation anchor binds it.
+
+**References.** 1 unit references this design. A reference says the code answers to the design without claiming to realize it, and it confers no delivery fact and moves no floor.
 
 - `impl:context.queries` at [`src/context/queries.ts` line 3](../../src/context/queries.ts#L3): defineGet, defineList and boundedPage. Its role is query. It belongs to `component:platform.context`, in the adapter layer and the platform context.
 

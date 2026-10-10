@@ -5,8 +5,8 @@
 /**
  * @sdpAnchor impl:application.generation-registry.tables
  * @sdpLabel the generations, progress, marker and tenant fill tables and rowConventions
- * @sdpSatisfies spec:application.generation-registry, spec:application.projection-contract
- * @sdpReferences spec:application.aggregate-projection
+ * @sdpSatisfies spec:application.projection-contract
+ * @sdpReferences spec:application.generation-registry, spec:application.aggregate-projection
  * @sdpComponent component:platform.read-model
  * @sdpRole schema
  */

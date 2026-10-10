@@ -2,8 +2,7 @@
 /**
  * @sdpAnchor impl:application.rebuild
  * @sdpLabel the online rebuild's operator entries, batch chains, tenant fill and batch bounds
- * @sdpSatisfies spec:application.rebuild
- * @sdpReferences spec:application.history-rebuild
+ * @sdpReferences spec:application.rebuild
  * @sdpComponent component:platform.read-model
  * @sdpRole service
  */

@@ -8,7 +8,7 @@
 /**
  * @sdpAnchor impl:application.order-allocation-history
  * @sdpLabel the order allocation history's keyOf and project rules
- * @sdpReferences spec:application.history-projection
+ * @sdpReferences spec:application.history-projection, spec:application.orders-inventory-example
  * @sdpComponent component:example.parent
  * @sdpRole projection
  */

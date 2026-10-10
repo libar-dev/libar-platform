@@ -3,7 +3,7 @@
 /**
  * @sdpAnchor impl:context.tables
  * @sdpLabel the context tables fragment
- * @sdpSatisfies spec:context.tables
+ * @sdpReferences spec:context.tables
  * @sdpComponent component:platform.context
  * @sdpRole schema
  */

@@ -2,7 +2,6 @@
 /**
  * @sdpAnchor component:platform.read-model
  * @sdpLabel the read-model library: declare, rebuild, write and read a read model
- * @sdpReferences spec:application.read-models
  * @sdpUses component:platform.kernel, component:platform.context, component:platform.command, component:platform.gate
  * @sdpLayer application
  * @sdpContext platform

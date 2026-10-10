@@ -2,122 +2,120 @@ import {
   createReader,
   type GraphSchema,
 } from "@libar-dev/software-delivery-protocol";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile, readdir } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { expect, test } from "vitest";
 
-// Every source file and Spec the retired design/tools/anchor-sites.json joined by hand, when the
-// anchors stood in tests. The source files now carry comment-form anchors at their own sites, so
-// byFile on each file names each of its Specs through a satisfies or a references edge. The graph is
-// the one `npm run sdp:build` derives before the tests run.
-const associations: Record<string, string[]> = {
-  "example/convex/inventory/convex.config.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/inventory/operations.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/inventory/queries/stockItem.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/inventory/schema.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/inventory/streams.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/orderSummary.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/ordering.ts": [
-    "spec:application.orders-inventory-example",
-    "spec:application.parent-use-cases",
-  ],
-  "example/convex/orders/convex.config.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/orders/operations.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/orders/queries/order.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/orders/schema.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/orders/streams.ts": [
-    "spec:application.orders-inventory-example",
-  ],
-  "example/convex/receiving.ts": [
-    "spec:application.orders-inventory-example",
-    "spec:application.parent-use-cases",
-  ],
-  "example/domain/order.ts": ["spec:application.orders-inventory-example"],
-  "example/domain/stockItem.ts": ["spec:application.orders-inventory-example"],
-  "fixture/convex/depot/convex.config.ts": ["spec:context.context-component"],
-  "fixture/convex/depot/operations.ts": [
-    "spec:context.batch-shaped-api",
-    "spec:context.context-component",
-  ],
-  "fixture/convex/depot/queries/document.ts": [
-    "spec:context.context-component",
-  ],
-  "fixture/convex/depot/schema.ts": ["spec:context.context-component"],
-  "fixture/convex/depot/streams.ts": ["spec:context.context-component"],
-  "fixture/convex/depotCommands.ts": ["spec:command.command-declaration"],
-  "src/command/actor-and-scope.ts": ["spec:command.actor-and-scope"],
-  "src/command/authority.ts": ["spec:command.tenancy-and-authority"],
-  "src/command/declaration.ts": ["spec:command.command-declaration"],
-  "src/command/outcome-boundary.ts": ["spec:command.outcome-boundary"],
-  "src/command/pipeline.ts": ["spec:command.command-pipeline"],
-  "src/command/receipts.ts": ["spec:command.idempotency-and-receipts"],
-  "src/command/tables.ts": [
-    "spec:command.actor-and-scope",
-    "spec:command.receipt-table",
-  ],
-  "src/context/adapter.ts": [
-    "spec:context.batch-shaped-api",
-    "spec:context.persistence-adapter",
-  ],
-  "src/context/envelope.ts": ["spec:context.event-envelope"],
-  "src/context/journal.ts": ["spec:context.journal"],
-  "src/context/operation.ts": ["spec:context.context-component"],
-  "src/context/queries.ts": ["spec:context.queries"],
-  "src/context/tables.ts": ["spec:context.tables"],
-  "src/gate/entries.ts": ["spec:application.write-pause"],
-  "src/gate/gate.ts": ["spec:application.write-pause"],
-  "src/gate/tables.ts": ["spec:application.write-pause"],
-  "src/kernel/decider.ts": ["spec:kernel.decider-contract"],
-  "src/kernel/outcome.ts": ["spec:kernel.decider-contract"],
-  "src/read-model/generations.ts": ["spec:application.generation-registry"],
-  "src/read-model/projection.ts": ["spec:application.projection-contract"],
-  "src/read-model/queries.ts": ["spec:application.read-models"],
-  "src/read-model/rebuild.ts": ["spec:application.rebuild"],
-  "src/read-model/tables.ts": ["spec:application.generation-registry"],
-  "src/read-model/write.ts": ["spec:application.read-models"],
-};
-
+// The anchors as the source states them, read from the tree rather than from a list kept by hand.
+// The comment form is a top-level /** … */ block with @sdpAnchor, @sdpSatisfies and @sdpReferences;
+// the constant form, used under harness/, is a codeAnchor({ … }) call whose satisfies and references
+// hold ref("spec:…") targets. The graph is the one `npm run sdp:build` derives before the tests run.
 const root = join(import.meta.dirname, "../..");
+const sourceRoots = ["src", "example", "fixture", "harness"];
 
-test("pure: byFile names every Spec the retired anchor sites joined to each source file", async () => {
-  const graph = JSON.parse(
+type ScannedAnchor = { id: string; file: string; targets: string[] };
+
+async function sourceFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(join(root, directory), { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory())
+        return entry.name === "_generated" ? [] : sourceFiles(path);
+      return /\.tsx?$/.test(entry.name) ? [path] : [];
+    }),
+  );
+  return files.flat();
+}
+
+const list = (value: string | undefined): string[] =>
+  value === undefined ? [] : value.split(",").map((item) => item.trim());
+
+function commentAnchors(file: string, text: string): ScannedAnchor[] {
+  const anchors: ScannedAnchor[] = [];
+  for (const [block] of text.matchAll(/\/\*\*[\s\S]*?\*\//g)) {
+    const tag = (name: string) =>
+      new RegExp(`^\\s*\\*\\s*@${name}\\s+(.+?)\\s*$`, "m").exec(block)?.[1];
+    const id = tag("sdpAnchor");
+    if (id === undefined) continue;
+    anchors.push({
+      id,
+      file,
+      targets: [...list(tag("sdpSatisfies")), ...list(tag("sdpReferences"))],
+    });
+  }
+  return anchors;
+}
+
+function constantAnchors(file: string, text: string): ScannedAnchor[] {
+  const anchors: ScannedAnchor[] = [];
+  for (const [call] of text.matchAll(/codeAnchor\(\{[\s\S]*?\n\}\);/g)) {
+    const id = /codeAnchorId\("([^"]+)"\)/.exec(call)?.[1];
+    if (id === undefined) continue;
+    const field = (name: string) =>
+      new RegExp(`${name}:\\s*(\\[[^\\]]*\\]|ref\\([^)]*\\))`).exec(call)?.[1];
+    const targets = [field("satisfies"), field("references")].flatMap(
+      (value) =>
+        value === undefined
+          ? []
+          : [...value.matchAll(/ref\("([^"]+)"\)/g)].flatMap((match) =>
+              match[1] === undefined ? [] : [match[1]],
+            ),
+    );
+    anchors.push({ id, file, targets });
+  }
+  return anchors;
+}
+
+async function scanAnchors(): Promise<ScannedAnchor[]> {
+  const files = (await Promise.all(sourceRoots.map(sourceFiles))).flat();
+  const anchors = await Promise.all(
+    files.map(async (path) => {
+      const text = await readFile(join(root, path), "utf8");
+      const file = relative(root, join(root, path));
+      return [...commentAnchors(file, text), ...constantAnchors(file, text)];
+    }),
+  );
+  return anchors.flat();
+}
+
+async function loadGraph(): Promise<GraphSchema> {
+  return JSON.parse(
     await readFile(join(root, "generated/graph.json"), "utf8"),
   ) as GraphSchema;
-  const reader = createReader(graph);
-  const pairs = Object.entries(associations).flatMap(([file, specs]) =>
-    specs.map((spec) => [file, spec] as const),
-  );
-  expect(pairs).toHaveLength(50);
-  const missing = pairs.filter(
-    ([file, spec]) => !reader.byFile(file).specs.includes(spec),
-  );
+}
+
+test("pure: the scan of the source finds the code units the graph holds there", async () => {
+  const graph = await loadGraph();
+  const scanned = (await scanAnchors()).map(({ id, file }) => `${id} ${file}`);
+  const derived = graph.nodes
+    .filter(
+      (node) =>
+        node.nodeType === "CodeNode" &&
+        sourceRoots.some((top) => node.file.startsWith(`${top}/`)),
+    )
+    .map((node) => `${node.id} ${node.file}`);
+  expect(scanned.length).toBeGreaterThan(0);
+  expect([...scanned].sort()).toEqual([...derived].sort());
+});
+
+test("pure: byFile answers for every anchored source file with its units and their Specs", async () => {
+  const reader = createReader(await loadGraph());
+  const missing = (await scanAnchors()).flatMap(({ id, file, targets }) => {
+    const answer = reader.byFile(file);
+    const ids = answer.nodes.map((node) => node.id);
+    return [
+      ...(ids.includes(id) ? [] : [`${file}: ${id}`]),
+      ...targets
+        .filter((target) => !answer.specs.includes(target))
+        .map((target) => `${file}: ${id} → ${target}`),
+    ];
+  });
   expect(missing).toEqual([]);
 });
 
 test("pure: no implementation anchor sits in a test file", async () => {
-  const graph = JSON.parse(
-    await readFile(join(root, "generated/graph.json"), "utf8"),
-  ) as GraphSchema;
+  const graph = await loadGraph();
   expect(
     graph.nodes
       .filter(

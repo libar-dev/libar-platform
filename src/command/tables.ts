@@ -4,7 +4,8 @@
 /**
  * @sdpAnchor impl:command.receipt-table
  * @sdpLabel the receipts, grants and tenant tables fragment
- * @sdpSatisfies spec:command.receipt-table, spec:command.actor-and-scope
+ * @sdpSatisfies spec:command.actor-and-scope
+ * @sdpReferences spec:command.receipt-table
  * @sdpComponent component:platform.command
  * @sdpRole schema
  */
