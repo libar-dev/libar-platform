@@ -1,48 +1,60 @@
-## Now: anchors in the code they bind (2026-10-09)
+## Now: anchors in the code they bind, under the rulings of 2026-10-10
 
-Until this unit, every implementation anchor of this corpus lived in a test. The platform's runtime code may not import the Protocol package, so `byFile` on a source file returned nothing, a hand-kept join (`design/tools/anchor-sites.json`) stood in for the binding, and code could name a design only by claiming to realize it. The Protocol's annotations arc, its plan 40 on the branch `feature/annotations-v0`, moves closer to the Protocol's original design. An anchor can be written as a doc comment. Code can name a design it is written against without claiming to build it. An anchor can say what architectural part its code plays. This branch pins the Protocol at `da56a34` (`fd5b257`) and adopts the arc (`57ed4f8`).
+Until this arc, every implementation anchor of this corpus lived in a test. The platform's runtime code may not import the Protocol package, so `byFile` on a source file returned nothing, a hand-kept join (`design/tools/anchor-sites.json`) stood in for the binding, and code could name a design only by claiming to realize it. The Protocol's annotations arc, its plan 40 on the branch `feature/annotations-v0`, moves closer to the Protocol's original design: an anchor can be written as a doc comment, code can name a design it answers to without claiming to build it, and an anchor can say what architectural part its code plays. The owner ruled on the arc on 2026-10-10, and all three of its decisions now state `ready`. This branch pins the Protocol at `f23e358` (`04a6aff`), the head that carries the rulings, and applies them (`ecba393`).
 
-**1. Anchors in the code they bind.** A comment-form anchor is a top-level `/** … */` block of reserved `@sdp` tags. The source carries it with no Protocol import, so the runtime pays nothing. The 22 implementation anchors that lived in nine test files are now 45 units in `src/`, `example/` and `fixture/`, one per realizing file or site, plus 12 component anchors. No test file keeps an implementation anchor; the harness keeps its 18 constant-form anchors. The online rebuild, at the top of [`src/read-model/rebuild.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/src/read-model/rebuild.ts#L2):
+**1. Anchors in the code they bind.** A comment-form anchor is a top-level `/** … */` block of reserved `@sdp` tags. The source carries it with no Protocol import, so the runtime pays nothing. The 22 implementation anchors that lived in nine test files are 46 units in `src/`, `example/` and `fixture/`, one per realizing file or site, beside 12 component anchors; the harness keeps its 18 constant-form anchors. No test file keeps an implementation anchor. The file is the binding grain of both forms: a block's line locates the anchor and names no declaration. The online rebuild, at the top of [`src/read-model/rebuild.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/src/read-model/rebuild.ts#L2):
 
 ```ts
 /**
  * @sdpAnchor impl:application.rebuild
  * @sdpLabel the online rebuild's operator entries, batch chains, tenant fill and batch bounds
- * @sdpSatisfies spec:application.rebuild
- * @sdpReferences spec:application.history-rebuild
+ * @sdpReferences spec:application.rebuild
  * @sdpComponent component:platform.read-model
  * @sdpRole service
  */
 ```
 
-**2. `byFile` answers for `src/`.** `byFile("src/read-model/rebuild.ts")` names `spec:application.rebuild` and `spec:application.history-rebuild`, and the files under `src/gate/` and `src/kernel/` name theirs. [`tests/pure/byfile-coverage.test.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/tests/pure/byfile-coverage.test.ts) asserts that `byFile` names each of the 50 file and Spec pairs the old join listed, across 45 files.
+**2. A reference runs one way.** A unit satisfies a Spec when it and the other units that satisfy it realize the whole Spec. A unit references a Spec when it answers to that design without claiming to realize it: it follows the design or realizes part of it, so a change to the design asks the code to follow. A reference confers no delivery fact and moves no floor. A design that builds on existing code says so by its own `dependsOn` or `refines` to the Spec the code satisfies, never by a reference from the code. So the online rebuild no longer references `spec:application.history-rebuild`, a design that builds on it; the history rebuild already depends on `spec:application.rebuild`. A reference kept only to give `byFile` an answer is gone too. The graph holds 43 `references` edges from 39 units, to 19 Specs.
 
-**3. Components with a layer and a context.** Twelve `component:` anchors declare the architecture where it is realized: three in each of the `adapter`, `application`, `domain` and `infrastructure` layers, with the contexts `platform` (7), `orders` (2), `inventory` (2) and `orders-inventory` (1), and `uses` between them. The read-model library in [`src/read-model/index.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/src/read-model/index.ts#L2) is `application` in `platform` and uses the kernel, the context, the command and the gate. The mapping is provisional until the owner rules on it (below).
+**3. Whole Specs, honestly.** Anchor targets name whole Specs, so no unit satisfies a Spec while the Spec promises a part no unit builds, and a pinned declaration ahead of its code is such a part ([`design/PLAN.md`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/PLAN.md) 6.7 item 7). The rule, per Spec: list the entries no satisfying unit realizes; none, keep `satisfies`; a coherent part with its own trigger or step, split it into a child Spec and keep `satisfies` on the parent; otherwise write `references` until the code realizes what the Spec promises. The pass checked the twelve Specs the anchor check named against the code, and found a thirteenth, `spec:command.receipt-table`. Each holds a part no unit builds, running through entries the code realizes, so none splits by moving entries, and its units now reference it:
 
-**4. Roles.** 36 units name the part they play, in a vocabulary this corpus owns: `service` 10, `schema` 6, `contract` 5, `query` 5, `decider` 2, `projection` 2, `use-case` 2, and one each of `codec`, `event-store`, `operator-entry` and `read-model`. Recipe 28 reads the taxonomy from the graph, and [`design/tools/check.py`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/tools/check.py) prints it and judges none of it. The gate's four operator entries in [`src/gate/entries.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/src/gate/entries.ts#L7) are the one `operator-entry`.
+| Spec | What no unit builds |
+|---|---|
+| `spec:context.journal` | the baseline migration, the stream rebuild, the derived mapping's parts |
+| `spec:context.tables` | the derived mapping's `streamParts` table |
+| `spec:context.persistence-adapter` | migrate on load (step 3a), the derived state |
+| `spec:context.queries` | the `history`, `rebuild` and `byOperation` queries |
+| `spec:context.context-component` | those queries and the baseline writer in its surface |
+| `spec:command.command-declaration` | the history projection binding, the tombstone retention |
+| `spec:command.idempotency-and-receipts` | tombstones |
+| `spec:command.receipt-table` | the tombstone row and its horizon |
+| `spec:command.command-pipeline` | the history projection's write at step 9 |
+| `spec:application.read-models` | the history read model's write path |
+| `spec:application.generation-registry` | `sourceIndex` in the batch cursor |
+| `spec:application.rebuild` | history targets in the shared rebuild config |
+| `spec:application.orders-inventory-example` | the order allocation history bound to its commands, journal inspection |
 
-**5. References into the history-view design, without claiming realization.** A unit that realizes a Spec satisfies it. A unit that names a design without realizing it references it, in either direction: code written against a design, or code a design rests on. The reference confers no delivery fact and moves no floor. The graph holds 20 `references` edges from 18 units. Recipe 27 over `pack:history-view` puts three facts side by side for each of its 19 members: 6 are referenced, 11 implemented, 7 have a verifier, and 6 have none of the three.
-- `spec:application.history-projection` is referenced by the order allocation history's rules in `example/domain/orderAllocationHistory.ts`, and `spec:application.history-rebuild` by the online rebuild. Neither reads as `implemented`.
-- The rule is realization scope. `src/kernel/outcome.ts` holds the outcome types the decider reuses, so it references `spec:kernel.outcome-model` and `spec:kernel.decider-contract` and satisfies neither; `src/kernel/decider.ts` holds the decider and satisfies the decider contract. The gate's component exports the implementation its members satisfy, so `component:platform.gate` satisfies `spec:application.write-pause` too.
-- The Pack page lists each unit at its file and line, with its role and its component's layer and context, and a "References" list per member: [`design/pages/history-view.md`, member 1](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/pages/history-view.md#1-history-projection).
+`spec:kernel.outcome-model` went the other way: its types in `src/kernel/outcome.ts` and its validators in `src/context/outcome.ts`, which gained an anchor, realize it whole, so both satisfy it. 12 Specs carry `implemented`, down from 24, and each of them is whole. [`docs/feedback/sdp-feedback-01.md`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/docs/feedback/sdp-feedback-01.md) holds the table with the entries, the code and the reason for each Spec.
 
-**6. The sidecar is gone.** `design/tools/anchor-sites.json`, its pure test and the page's reading of it are deleted. [`scripts/pack-page.mjs`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/scripts/pack-page.mjs) reads code from the graph alone.
+**4. Components with an architectural layer and a context.** Twelve `component:` anchors declare the architecture where it is realized: three in each of the `adapter`, `application`, `domain` and `infrastructure` layers, with the contexts `platform` (7), `orders` (2), `inventory` (2) and `orders-inventory` (1), and `uses` between them. [`design/PLAN.md`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/PLAN.md) section 2.1 lists them with the owner's two rules. The layer rule: `domain` is business meaning with no runtime import; `application` coordinates a use case; `adapter` realizes a kernel or command contract against Convex; `edge` is transport in; `infrastructure` is a shared mechanism that owns no use case. The context rule: the platform is the key bounded context, with its own language; orders-inventory is the supporting context and development tool, the composition of the two business contexts it models; nothing in the platform's core carries orders-inventory specifics. A component satisfies its seam's design Spec or binds nothing its members bind: `component:platform.gate` satisfies the write pause it and its members realize whole, and the components whose seam is only partly built bind nothing.
 
-**What still binds loosely.** A block binds by file and line. Move the declaration from under it, or delete it, and the block still binds. The Protocol's open question `#attachmentIdentity` on `spec:decisions.anchor-comment-form` asks whether a CodeNode should record the symbol it binds.
+**5. The isolation, read from the graph.** [`design/tools/check.py`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/tools/check.py) fails when a component in the context `platform` has a `uses` edge to a component in another context, each end resolved to its component directly or through `memberOf`. Today none of the 21 `uses` edges from the platform's seven components leaves it.
+
+**6. Roles, and the sidecar gone.** 37 units name the part they play, in a vocabulary this corpus owns; recipe 28 reads the taxonomy and `check.py` prints it and judges none of it. `design/tools/anchor-sites.json` and its test are deleted. [`tests/pure/byfile-coverage.test.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/tests/pure/byfile-coverage.test.ts) reads the anchors in the tree, checks they are the code units the graph holds, and asserts that `byFile` names every anchored file's units and their Specs. [`scripts/pack-page.mjs`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/scripts/pack-page.mjs) reads code from the graph alone, and the [Pack page](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/design/pages/history-view.md#1-history-projection) lists each unit at its file and line with its role, its component's architectural layer and context, and a "References" list per member.
 
 ### The rulings
 
-The Protocol's branch rules the arc through three decision Specs. The comment form and architectural annotation state `ready` (the owner, 2026-10-10); the binding grain states `defined`, held for the owner's `ready` on its two open questions. The paths are in the Protocol's repository on `feature/annotations-v0`; the pinned package ships the same files under `node_modules/@libar-dev/software-delivery-protocol/`.
+The Protocol's branch rules the arc through three decision Specs, and the owner states `ready` on all three. The paths are in the Protocol's repository on `feature/annotations-v0`; the pinned package ships the same files under `node_modules/@libar-dev/software-delivery-protocol/`.
 
 | Ratified name | Ruling | Spec |
 |---|---|---|
-| the comment form (MD-36) | A top-level `/** … */` block of reserved `@sdp*` tags is a second form of an anchor, read into the same closed envelope as the constant form. No import is needed, comment prose authors nothing, and a zero-dependency `/anchors` subpath ships the builders. Supersedes MD-35. | `specs/decisions/anchor-comment-form.sdp.md` |
-| bindings are optional, plural, and may reference a design (MD-37) | `satisfies` is optional and plural, an identity-only anchor is lawful, and the `references` edge says code is written against a design while conferring no delivery fact. | `specs/decisions/anchor-binding-grain.sdp.md` |
-| architectural significance is annotated where it is realized (MD-38) | A code anchor may carry a `role`, and a `component:` anchor a `layer` from a closed set of five and a `context`; the component anchor is the declared component. Supersedes MD-30 and MD-34. | `specs/decisions/architectural-annotation.sdp.md` |
+| the comment form (MD-36) | A top-level `/** … */` block of reserved `@sdp*` tags is a second form of an anchor, read into the same closed envelope as the constant form. No import is needed, comment prose authors nothing, and the file is the binding grain of both forms. Supersedes MD-35. | `specs/decisions/anchor-comment-form.sdp.md` |
+| bindings are optional, plural, and may reference a design (MD-37) | `satisfies` is optional and plural and targets name whole Specs. The `references` edge says the code answers to a design without claiming to realize it, runs from code to design only, and confers no delivery fact. | `specs/decisions/anchor-binding-grain.sdp.md` |
+| architectural significance is annotated where it is realized (MD-38) | A code anchor may carry a `role`, and a `component:` anchor a `layer` from a closed set of five and a `context`; the component anchor is the declared component. Roles stay a free vocabulary each corpus owns. Supersedes MD-30 and MD-34. | `specs/decisions/architectural-annotation.sdp.md` |
 
 ### Try it
 
-From the repository root, after `npm ci`. Measured on 2026-10-09 at `57ed4f8` and re-measured at `5355ed3`; re-run the commands rather than inherit these numbers.
+From the repository root, after `npm ci`. Measured on 2026-10-10 at `ecba393`; the commit after it changes only the feedback and state files. Re-run the commands rather than inherit these numbers.
 
 ```sh
 npx sdp q 'return g.byFile("src/read-model/rebuild.ts")' --json
@@ -52,11 +64,11 @@ npx sdp q 'return g.byFile("src/read-model/rebuild.ts")' --json
 {
   "path": "src/read-model/rebuild.ts",
   "nodes": [{ "id": "impl:application.rebuild", "nodeType": "CodeNode", "line": 2 }],
-  "specs": ["spec:application.history-rebuild", "spec:application.rebuild"]
+  "specs": ["spec:application.rebuild"]
 }
 ```
 
-Recipe 27 over `pack:history-view`, taken from the pinned package's catalog with only the Pack swapped in:
+Recipe 27 over `pack:history-view`, taken from the pinned package's catalog with only the Pack swapped in. Beside the three facts it now derives what each member builds on: the implemented Specs it depends on or refines, with their units.
 
 ````sh
 R=node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md
@@ -67,14 +79,18 @@ npx sdp q "$(awk '/^## 27\./{f=1} /^## 28\./{f=0} f' "$R" | awk '/^```js/{c=1; n
 {
   "found": true,
   "id": "pack:history-view",
-  "totals": { "members": 19, "withReferences": 6, "withImplementations": 11, "withVerifier": 7, "unbound": 6 },
+  "totals": { "members": 19, "withReferences": 9, "withImplementations": 3, "withVerifier": 7, "withBuildsOn": 11, "unbound": 7 },
   "rows": [
     {
       "id": "spec:application.history-projection",
       "resolved": true,
       "referencedBy": [{ "id": "impl:application.order-allocation-history", "file": "example/domain/orderAllocationHistory.ts" }],
       "implementedBy": [],
-      "hasVerifier": false
+      "hasVerifier": false,
+      "buildsOn": [
+        { "id": "spec:application.projection-contract", "via": "dependsOn", "implementedBy": [{ "id": "impl:application.generation-registry.tables", "file": "src/read-model/tables.ts" }, { "id": "impl:application.projection-contract", "file": "src/read-model/projection.ts" }] },
+        { "id": "spec:context.event-envelope", "via": "dependsOn", "implementedBy": [{ "id": "impl:context.event-envelope", "file": "src/context/envelope.ts" }] }
+      ]
     },
     …
   ]
@@ -86,7 +102,7 @@ npx sdp validate .
 ```
 
 ```
-243 specs · 6 packs · 179 anchors → 428 nodes · 1501 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 180 anchors → 429 nodes · 1497 edges (0 errors, 0 warnings)
 …
 validate: 0 errors · 12 warnings (conformance + honesty over the one graph)
 ```
@@ -98,29 +114,23 @@ npm run check
 ```
 
 ```
-243 specs · 6 packs · 179 anchors → 428 nodes · 1501 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 180 anchors → 429 nodes · 1497 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings, 12 prose mentions listed; readiness divergence: []
 entry addresses outside the Specs: 497; dependsOn cycles: 0
-architecture: 75 code units; roles: codec 1, contract 5, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 20 references edges from 18 units
+architecture: 76 code units; roles: codec 1, contract 6, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 43 references edges from 39 units; platform isolation: 7 platform components, 21 uses edges from them, 0 into another context
 …
 Pack pages current: 1 of 1
-protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-da56a34.tgz
+protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-f23e358.tgz
 
 OK
 ```
 
-`npm test` passed 1,140 tests in 74 files, with 10 skipped, the not-compared pairs.
+`npm test` passed 1,141 tests in 74 files, with 10 skipped, the not-compared pairs.
 
 ### For the owner
 
-From `docs/feedback/sdp-feedback-01.md`, section "2026-10-09, anchors in the source at `da56a34`":
+The rulings of 2026-10-10 closed the layers, the contexts, `example/` as architecture, the reference direction and the whole-Spec satisfies. One item remains, from `docs/feedback/sdp-feedback-01.md`, section "2026-10-10, the rulings at `f23e358`":
 
-- **The layers.** The context library and the two context components are `adapter`, with `infrastructure` the alternative; the gate is `infrastructure`, with `application` the alternative.
-- **The contexts.** Every `src/` package is `platform`, and the parent composition is `orders-inventory` because it spans both bounded contexts.
-- **Whether `example/` is architecture.** As the production composition it has five components; as a sample it would keep its units and lose them.
-- **The reference direction.** `impl:application.rebuild` references `spec:application.history-rebuild`, a design that rests on the online rebuild rather than one the rebuild was written against. This is the Protocol's open question `#referenceDirection` on `spec:decisions.anchor-binding-grain`, met in this corpus.
-- **Whole-Spec satisfies on Specs with designed-but-unbuilt parts.** Twelve Specs are satisfied by code that realizes only part of their Design, the same set the test-resident anchors satisfied (`design/PLAN.md` 6.7 item 7). Per Spec, the owner splits it again, moves its binding to references, or accepts the whole-Spec claim. The Protocol holds `#entryAddressTargets` on `spec:decisions.anchor-binding-grain`.
+- **The capability steps' name.** "Layer" names one of the seven steps of capability in this corpus and, as the Protocol's `layer`, a component's architectural layer; `CONTEXT.md` now writes the second in full. Renaming the steps, with "stage" as the candidate, is the one-word-one-meaning answer. It touches a Spec identity (`spec:platform.layers-and-profiles`), 143 numbered uses across 65 carriers and the decisions document this corpus follows, so the owner makes it deliberately.
 
-And from this corpus's language: **the word layer.** `CONTEXT.md` defines a layer as one of the seven steps of capability; the Protocol's `layer` places a component among edge, application, domain, adapter and infrastructure.
-
-A `gpt-6.1-sol` check of every anchor claim against the code it sits on (`job-mv1dotsu-5f1f42fd`) is folded in: the gate component satisfies the write pause, `src/kernel/outcome.ts` satisfies nothing, the page's references wording no longer assumes a direction, and the whole-Spec satisfies above went to the owner. Its doubts on the `platform` and `orders-inventory` contexts and the `adapter` layer are the owner items above.
+Two leads go to a later pass (`design/STATE.md`, lead 47): six of the thirteen referenced Specs hold a part with its own trigger or step that could split once its pinned declarations are narrowed to the code, and the platform's own Specs still carry orders-inventory worked examples in their Design entries, though its code uses nothing of the example.
