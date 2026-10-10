@@ -1,9 +1,10 @@
 // scripts/pinned.mjs, the emitter of a Pack's pinned module: its pure parts. A call signature with
 // a default before a required parameter emits a required parameter whose type admits undefined,
 // since TypeScript refuses a required parameter after an optional one (TS1016). A parameter or
-// type parameter is in scope inside the node that declares it and nowhere else, so a name a
-// declaration uses outside that node is used, and the pin of another Spec is pulled in. Each
-// emitted text is compiled with the TypeScript API.
+// type parameter is in scope inside the node that declares it and nowhere else, a name resolves
+// in its own space, so a value parameter hides no type, and a name a conditional type infers is
+// in scope in its true branch only; so a name a declaration uses outside that scope is used, and
+// the pin of another Spec is pulled in. Each emitted text is compiled with the TypeScript API.
 import ts from "typescript";
 import { expect, test } from "vitest";
 
@@ -132,6 +133,29 @@ test("a parameter or type parameter is in scope inside the node that declares it
       "type Unwrap<T> = T extends Promise<infer U> ? U : Outcome",
     ),
   ).toEqual(["Promise", "Outcome"]);
+  // A name a conditional type infers is in scope in its true branch and nowhere else.
+  expect(
+    usedBy(
+      "typeUnwrapOutcome",
+      "type Unwrap<T> = T extends Promise<infer Outcome> ? Outcome : Outcome",
+    ),
+  ).toEqual(["Promise", "Outcome"]);
+  // A value parameter hides no type of its name, and a type parameter hides no value.
+  expect(usedBy("fnRun", "run(Outcome: Outcome): Outcome")).toEqual([
+    "Outcome",
+  ]);
+  expect(
+    usedBy(
+      "typeChecked",
+      "type Checked = { check(outcomeValidator: unknown): typeof outcomeValidator }",
+    ),
+  ).toEqual([]);
+  expect(
+    usedBy(
+      "typeOf",
+      "type Of<outcomeValidator> = outcomeValidator | typeof outcomeValidator",
+    ),
+  ).toEqual(["outcomeValidator"]);
   expect(
     usedBy(
       "validatorOutcome",
@@ -181,4 +205,51 @@ test("an outer dependency pinned by another Spec is pulled in, and the module co
   // A nested type parameter that covers every use pulls nothing in.
   expect(pinned.pulledIn([local], pinnedBy).emitted).toEqual([local]);
   expect(diagnostics(local.text)).toEqual([]);
+});
+
+test("an inferred name and a value parameter hide no outer type, and the module compiles", () => {
+  const outcome = () =>
+    pinned.declarationOf(
+      row(
+        "typeOutcome",
+        'type Outcome = { kind: "committed" | "rejected" }',
+        "spec:sample.outcome",
+      ),
+    );
+  const valueAsType =
+    "TS2749: 'Outcome' refers to a value, but is being used as a type here. Did you mean 'typeof Outcome'?";
+  const cases: [Row, string[]][] = [
+    [
+      row(
+        "typeUnwrap",
+        "type Unwrap<T> = T extends Promise<infer Outcome> ? Outcome : Outcome",
+      ),
+      ["TS2304: Cannot find name 'Outcome'."],
+    ],
+    [
+      row("fnRun", "run(Outcome: Outcome): Outcome"),
+      [valueAsType, valueAsType],
+    ],
+  ];
+  for (const [sample, alone] of cases) {
+    const own = pinned.declarationOf(sample);
+    const pin = outcome();
+    const { emitted } = pinned.pulledIn(
+      [own],
+      new Map([
+        [own.name, [own]],
+        [pin.name, [pin]],
+      ]),
+    );
+    expect(emitted.map(({ address, why }) => ({ address, why }))).toEqual([
+      { address: own.address, why: undefined },
+      {
+        address: at("spec:sample.outcome", "typeOutcome"),
+        why: `${own.address} uses Outcome`,
+      },
+    ]);
+    expect(diagnostics(emitted.map((pin) => pin.text).join("\n"))).toEqual([]);
+    // Alone, the module names a type it never declares, or uses a value where a type is needed.
+    expect(diagnostics(own.text)).toEqual(alone);
+  }
 });

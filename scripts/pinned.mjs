@@ -186,40 +186,55 @@ export function declarationOf(row) {
   return { ...base, kind: null };
 }
 
-// The names a node declares for what is inside it: its parameters and type parameters, a mapped
-// type's key, and the type parameters a conditional type infers in its extends clause (a nested
-// conditional type's are its own).
+// The names a node declares for what is inside it, by space: its type parameters and a mapped
+// type's key are types, and its parameters are values. The type parameters a conditional type
+// infers in its extends clause are types inside its true branch and nowhere else, which is where
+// TypeScript sees them; a nested conditional type's are its own.
+const named = (declaration) =>
+  ts.isIdentifier(declaration.name) ? [declaration.name.text] : [];
 function declaredBy(node) {
-  const named = (declaration) =>
-    ts.isIdentifier(declaration.name) ? [declaration.name.text] : [];
-  const inferred = (type) =>
-    ts.isConditionalTypeNode(type)
-      ? []
-      : [
-          ...(ts.isInferTypeNode(type) ? named(type.typeParameter) : []),
-          ...children(type).flatMap(inferred),
-        ];
-  return [
-    ...(ts.isMappedTypeNode(node) ? named(node.typeParameter) : []),
-    ...(node.typeParameters ?? []).flatMap(named),
-    ...(node.parameters ?? []).flatMap(named),
-    ...(ts.isConditionalTypeNode(node) ? inferred(node.extendsType) : []),
-  ];
+  return {
+    types: [
+      ...(ts.isMappedTypeNode(node) ? named(node.typeParameter) : []),
+      ...(node.typeParameters ?? []).flatMap(named),
+    ],
+    values: (node.parameters ?? []).flatMap(named),
+  };
+}
+const inferredBy = (type) =>
+  ts.isConditionalTypeNode(type)
+    ? []
+    : [
+        ...(ts.isInferTypeNode(type) ? named(type.typeParameter) : []),
+        ...children(type).flatMap(inferredBy),
+      ];
+
+// Whether an identifier names a type: the name of a type reference, of a heritage clause or of an
+// import type, or the head of a qualified name under one. `typeof x` and every expression name a
+// value.
+function namesType(node) {
+  let at = node;
+  while (ts.isQualifiedName(at.parent)) at = at.parent;
+  return (
+    ts.isTypeReferenceNode(at.parent) ||
+    ts.isExpressionWithTypeArguments(at.parent) ||
+    ts.isImportTypeNode(at.parent)
+  );
 }
 
 // The names a declaration uses: identifiers that are not a property, a member, what is declared, or
-// a name in scope. A parameter or type parameter is in scope inside the node that declares it and
-// nowhere else, so a nested `<Outcome>` hides no outer `Outcome`.
+// a name in scope. A name is resolved in its own space, so a value parameter hides no type of its
+// name and a type parameter hides no value; and a parameter or type parameter is in scope inside
+// the node that declares it and nowhere else, so a nested `<Outcome>` hides no outer `Outcome`.
 export function namesUsedBy(declaration) {
   const used = new Set();
-  const visit = (node, scope) => {
-    const declared = declaredBy(node);
-    const inner =
-      declared.length === 0 ? scope : new Set([...scope, ...declared]);
+  const extended = (scope, names) =>
+    names.length === 0 ? scope : new Set([...scope, ...names]);
+  const visit = (node, types, values) => {
     const parent = node.parent;
     if (
       ts.isIdentifier(node) &&
-      !inner.has(node.text) &&
+      !(namesType(node) ? types : values).has(node.text) &&
       (ts.isShorthandPropertyAssignment(parent) ||
         (ts.isPropertyAccessExpression(parent)
           ? parent.expression === node
@@ -228,15 +243,28 @@ export function namesUsedBy(declaration) {
             : parent.name !== node))
     )
       used.add(node.text);
-    for (const child of children(node)) visit(child, inner);
+    const declared = declaredBy(node);
+    const innerTypes = extended(types, declared.types);
+    const innerValues = extended(values, declared.values);
+    const inTrueBranch = ts.isConditionalTypeNode(node)
+      ? extended(innerTypes, inferredBy(node.extendsType))
+      : innerTypes;
+    for (const child of children(node))
+      visit(
+        child,
+        child === node.trueType ? inTrueBranch : innerTypes,
+        innerValues,
+      );
   };
+  const own = new Set([declaration.name]);
   visit(
     parse(
       declaration.kind === "table"
         ? `const tables = { ${declaration.text} };`
         : declaration.text,
     ),
-    new Set([declaration.name]),
+    own,
+    own,
   );
   return [...used];
 }
