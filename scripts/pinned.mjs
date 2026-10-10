@@ -8,15 +8,17 @@
 // This project's policy, by the prefix of the entry's key: `type*` opening with `type ` or
 // `interface ` and `validator*` opening with `const ` are exported as written; `fn*` that is a call
 // signature `name<...>(...): R` becomes `export declare function`, where a default value makes its
-// parameter optional; `table*` of the form `name: defineTable(...)` is a member of
+// parameter optional, or, when a required parameter follows, keeps it required with a type that
+// admits `undefined`; `table*` of the form `name: defineTable(...)` is a member of
 // `export const tables`, and each `index*` of the form `.index(...)` is chained onto the table
 // entry its Spec wrote last before it. Every other entry is skipped and counted by its prefix on
 // stderr. Each pin of another Spec that a declaration uses is pulled in, marked. A name pinned in two
 // entries, in any form, is refused, as is a preamble name a Spec pins.
-// Exit 0: written. 2: it cannot emit.
+// Exit 0: written. 2: it cannot emit. The pure parts are exported for tests/pure/pinned.test.ts.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import * as prettier from "prettier";
 import ts from "typescript";
@@ -106,9 +108,25 @@ function recipe24() {
 
 const parse = (text) =>
   ts.createSourceFile("pin.ts", text, ts.ScriptTarget.Latest, true);
+const children = (node) => {
+  const list = [];
+  ts.forEachChild(node, (child) => {
+    list.push(child);
+  });
+  return list;
+};
 
-// A call signature parses alone as one bodiless function declaration with a return type.
-function callSignature(span) {
+// A type that `| undefined` would otherwise bind inside.
+const grouped = (type) =>
+  ts.isFunctionTypeNode(type) ||
+  ts.isConstructorTypeNode(type) ||
+  ts.isConditionalTypeNode(type);
+
+// A call signature parses alone as one bodiless function declaration with a return type. A default
+// value becomes a comment on its parameter: a trailing default makes the parameter optional, and a
+// default before a required parameter, which no optional parameter may precede, keeps it required
+// with a type that admits `undefined`.
+export function callSignature(span) {
   if (!/^[\w$]+\s*[<(]/.test(span)) return null;
   const file = parse(`export declare function ${span}`);
   const [statement] = file.statements;
@@ -120,10 +138,25 @@ function callSignature(span) {
     statement.type === undefined
   )
     return null;
+  const required = (parameter) =>
+    parameter.initializer === undefined &&
+    parameter.questionToken === undefined &&
+    parameter.dotDotDotToken === undefined;
+  const parameters = [...statement.parameters];
   let text = file.text;
-  for (const { name, type, initializer } of [...statement.parameters].reverse())
-    if (initializer !== undefined)
-      text = `${text.slice(0, name.end)}?${text.slice(name.end, (type ?? name).end)} /* = ${initializer.getText(file)} */${text.slice(initializer.end)}`;
+  for (const [at, { name, type, initializer }] of [
+    ...parameters.entries(),
+  ].reverse()) {
+    if (initializer === undefined) continue;
+    const beforeRequired = parameters.slice(at + 1).some(required);
+    const annotation =
+      type === undefined
+        ? ""
+        : beforeRequired
+          ? `: ${grouped(type) ? `(${type.getText(file)})` : type.getText(file)} | undefined`
+          : text.slice(name.end, type.end);
+    text = `${text.slice(0, name.end)}${beforeRequired ? "" : "?"}${annotation} /* = ${initializer.getText(file)} */${text.slice(initializer.end)}`;
+  }
   return { name: statement.name.text, text };
 }
 
@@ -132,7 +165,7 @@ const exported = {
   type: [/^(?:type|interface)\s+([\w$]+)/, "type"],
   validator: [/^const\s+([\w$]+)/, "value"],
 };
-function declarationOf(row) {
+export function declarationOf(row) {
   const prefix = /^[a-z]+/.exec(row.key)[0];
   const span = row.declaration.trim();
   const base = { ...row, prefix, address: `${row.spec}#design.${row.key}` };
@@ -153,20 +186,40 @@ function declarationOf(row) {
   return { ...base, kind: null };
 }
 
+// The names a node declares for what is inside it: its parameters and type parameters, a mapped
+// type's key, and the type parameters a conditional type infers in its extends clause (a nested
+// conditional type's are its own).
+function declaredBy(node) {
+  const named = (declaration) =>
+    ts.isIdentifier(declaration.name) ? [declaration.name.text] : [];
+  const inferred = (type) =>
+    ts.isConditionalTypeNode(type)
+      ? []
+      : [
+          ...(ts.isInferTypeNode(type) ? named(type.typeParameter) : []),
+          ...children(type).flatMap(inferred),
+        ];
+  return [
+    ...(ts.isMappedTypeNode(node) ? named(node.typeParameter) : []),
+    ...(node.typeParameters ?? []).flatMap(named),
+    ...(node.parameters ?? []).flatMap(named),
+    ...(ts.isConditionalTypeNode(node) ? inferred(node.extendsType) : []),
+  ];
+}
+
 // The names a declaration uses: identifiers that are not a property, a member, what is declared, or
-// one of its parameters or type parameters.
-function namesUsedBy(declaration) {
-  const own = new Set([declaration.name]);
+// a name in scope. A parameter or type parameter is in scope inside the node that declares it and
+// nowhere else, so a nested `<Outcome>` hides no outer `Outcome`.
+export function namesUsedBy(declaration) {
   const used = new Set();
-  const visit = (node) => {
+  const visit = (node, scope) => {
+    const declared = declaredBy(node);
+    const inner =
+      declared.length === 0 ? scope : new Set([...scope, ...declared]);
     const parent = node.parent;
     if (
-      (ts.isTypeParameterDeclaration(node) || ts.isParameter(node)) &&
-      ts.isIdentifier(node.name)
-    )
-      own.add(node.name.text);
-    else if (
       ts.isIdentifier(node) &&
+      !inner.has(node.text) &&
       (ts.isShorthandPropertyAssignment(parent) ||
         (ts.isPropertyAccessExpression(parent)
           ? parent.expression === node
@@ -175,7 +228,7 @@ function namesUsedBy(declaration) {
             : parent.name !== node))
     )
       used.add(node.text);
-    ts.forEachChild(node, visit);
+    for (const child of children(node)) visit(child, inner);
   };
   visit(
     parse(
@@ -183,121 +236,145 @@ function namesUsedBy(declaration) {
         ? `const tables = { ${declaration.text} };`
         : declaration.text,
     ),
+    new Set([declaration.name]),
   );
-  return [...used].filter((name) => !own.has(name));
+  return [...used];
 }
 
-const { values: options } = parseArgs({
-  options: { pack: { type: "string" }, name: { type: "string" } },
-});
-if (options.pack === undefined) cannot("name the Pack: --pack <packId>");
-const name = options.name ?? options.pack.replace(/^pack:/, "");
-const scope = query(
-  `return g.packContext(${JSON.stringify(options.pack)})?.members.map((member) => member.id) ?? null;`,
-);
-if (scope === null) cannot(`the graph has no ${options.pack}`);
-
-const all = query(recipe24()).rows.map(declarationOf);
-let table;
-for (const row of all)
-  if (row.kind === "table") table = row;
-  else if (row.kind === "index" && table?.spec === row.spec)
-    table.indexes.push(row);
-  else if (row.kind === "index") row.kind = null;
-const pinnedBy = Map.groupBy(
-  all.filter((row) => row.kind === "type" || row.kind === "value"),
-  (row) => row.name,
-);
-const addresses = (pins) => pins.map((pin) => pin.address).join(" and ");
-for (const [twice, pins] of pinnedBy)
-  if (pins.length > 1)
-    cannot(`${twice} is pinned in two entries, ${addresses(pins)}`);
-for (const provided of ["MutationCtx", "QueryCtx", "Id", ...Object.keys(gaps)])
-  if (pinnedBy.has(provided))
-    cannot(
-      `the preamble declares ${provided}, which ${addresses(pinnedBy.get(provided))} pins: take it out of the preamble`,
-    );
-
-// The scope's own entries, then the pin of each name they use that another Spec pins.
-const own = all.filter((row) => scope.includes(row.spec));
-const emitted = own.filter((row) => row.kind !== null && row.kind !== "index");
-const gapUses = new Map();
-for (let at = 0; at < emitted.length; at++) {
-  const { address } = emitted[at];
-  for (const used of namesUsedBy(emitted[at])) {
-    if (used in gaps)
-      gapUses.set(used, [...(gapUses.get(used) ?? []), address]);
-    const [pin] = pinnedBy.get(used) ?? [];
-    if (pin !== undefined && !emitted.includes(pin))
-      emitted.push(Object.assign(pin, { why: `${address} uses ${used}` }));
+// The scope's own entries, then the pin of each name they use that another Spec pins, marked with
+// the first address that uses it; and each name used that no Spec pins, with the addresses that use
+// it.
+export function pulledIn(own, pinnedBy) {
+  const emitted = own.filter(
+    (row) => row.kind !== null && row.kind !== "index",
+  );
+  const gapUses = new Map();
+  for (let at = 0; at < emitted.length; at++) {
+    const { address } = emitted[at];
+    for (const used of namesUsedBy(emitted[at])) {
+      if (used in gaps)
+        gapUses.set(used, [...(gapUses.get(used) ?? []), address]);
+      const [pin] = pinnedBy.get(used) ?? [];
+      if (pin !== undefined && !emitted.includes(pin))
+        emitted.push(Object.assign(pin, { why: `${address} uses ${used}` }));
+    }
   }
+  return { emitted, gapUses };
 }
 
-// A value is declared after the values it uses.
-const values = [];
-const place = (declaration, path = new Set()) => {
-  if (values.includes(declaration) || path.has(declaration)) return;
-  path.add(declaration);
-  for (const used of namesUsedBy(declaration))
-    for (const pin of pinnedBy.get(used) ?? [])
-      if (pin.kind === "value") place(pin, path);
-  values.push(declaration);
-};
-emitted.filter((row) => row.kind === "value").forEach((row) => place(row));
-
-const comment = (row) =>
-  `// ${row.address}${row.why === undefined ? "" : ` (pulled in: ${row.why})`}`;
-const block = (rows) => rows.flatMap((row) => [comment(row), row.text]);
-const member = (table) =>
-  [...block([table]), ...block(table.indexes).map((line) => `  ${line}`)].map(
-    (line, at, lines) => `  ${line}${at === lines.length - 1 ? "," : ""}`,
-  );
-const lines = [
-  `// The pinned declarations of ${options.pack}, emitted by scripts/pinned.mjs from recipe 24 of the`,
-  "// pinned Protocol. Never edit it: change the Spec, then run `npm run sdp:build`. Each declaration",
-  "// follows the address of its Design entry.",
-  preamble,
-  "",
-  "// Used by the design and pinned by no Spec. Where the code declares one, its declaration stands in.",
-  ...[...gapUses.keys()].sort().flatMap((gap) => {
-    const skippedPin = all.find(
-      (row) => row.kind === null && row.declaration.startsWith(`${gap} =`),
-    );
-    return [
-      `// ${gap}: used by ${[...new Set(gapUses.get(gap))].join(", ")}.${skippedPin === undefined ? "" : ` ${skippedPin.address} opens with it, without const.`}`,
-      gapDeclaration(gap),
-    ];
-  }),
-  "",
-  ...block(emitted.filter((row) => row.kind === "type")),
-  ...block(values),
-  "export const tables = {",
-  ...emitted.filter((row) => row.kind === "table").flatMap(member),
-  "};",
-];
-const outputPath = join(root, "generated/pinned", `${name}.ts`);
-let formatted;
-try {
-  const config = JSON.parse(
-    readFileSync(join(root, ".prettierrc.json"), "utf8"),
-  );
-  formatted = await prettier.format(`${lines.join("\n")}\n`, {
-    ...config,
-    filepath: outputPath,
+async function main(args = process.argv.slice(2)) {
+  const { values: options } = parseArgs({
+    args,
+    options: { pack: { type: "string" }, name: { type: "string" } },
   });
-} catch (error) {
-  cannot(`${outputPath}: Prettier failed: ${error.message}`);
-}
-mkdirSync(join(root, "generated/pinned"), { recursive: true });
-writeFileSync(outputPath, formatted);
+  if (options.pack === undefined) cannot("name the Pack: --pack <packId>");
+  const name = options.name ?? options.pack.replace(/^pack:/, "");
+  const scope = query(
+    `return g.packContext(${JSON.stringify(options.pack)})?.members.map((member) => member.id) ?? null;`,
+  );
+  if (scope === null) cannot(`the graph has no ${options.pack}`);
 
-const counted = (rows) =>
-  [...Map.groupBy(rows, (row) => row.prefix)]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([prefix, group]) => `${prefix} ${group.length}`)
-    .join(", ");
-const ownEmitted = own.filter((row) => row.kind !== null);
-const skipped = own.filter((row) => row.kind === null);
-console.error(
-  `pinned: generated/pinned/${name}.ts · ${scope.length} Specs · emitted ${ownEmitted.length} (${counted(ownEmitted)}) and ${emitted.length - emitted.filter((row) => row.why === undefined).length} pulled in · skipped ${skipped.length} (${counted(skipped)}) · ${gapUses.size} names pinned by no Spec`,
-);
+  const all = query(recipe24()).rows.map(declarationOf);
+  let table;
+  for (const row of all)
+    if (row.kind === "table") table = row;
+    else if (row.kind === "index" && table?.spec === row.spec)
+      table.indexes.push(row);
+    else if (row.kind === "index") row.kind = null;
+  const pinnedBy = Map.groupBy(
+    all.filter((row) => row.kind === "type" || row.kind === "value"),
+    (row) => row.name,
+  );
+  const addresses = (pins) => pins.map((pin) => pin.address).join(" and ");
+  for (const [twice, pins] of pinnedBy)
+    if (pins.length > 1)
+      cannot(`${twice} is pinned in two entries, ${addresses(pins)}`);
+  for (const provided of [
+    "MutationCtx",
+    "QueryCtx",
+    "Id",
+    ...Object.keys(gaps),
+  ])
+    if (pinnedBy.has(provided))
+      cannot(
+        `the preamble declares ${provided}, which ${addresses(pinnedBy.get(provided))} pins: take it out of the preamble`,
+      );
+
+  const own = all.filter((row) => scope.includes(row.spec));
+  const { emitted, gapUses } = pulledIn(own, pinnedBy);
+
+  // A value is declared after the values it uses.
+  const values = [];
+  const place = (declaration, path = new Set()) => {
+    if (values.includes(declaration) || path.has(declaration)) return;
+    path.add(declaration);
+    for (const used of namesUsedBy(declaration))
+      for (const pin of pinnedBy.get(used) ?? [])
+        if (pin.kind === "value") place(pin, path);
+    values.push(declaration);
+  };
+  emitted.filter((row) => row.kind === "value").forEach((row) => place(row));
+
+  const comment = (row) =>
+    `// ${row.address}${row.why === undefined ? "" : ` (pulled in: ${row.why})`}`;
+  const block = (rows) => rows.flatMap((row) => [comment(row), row.text]);
+  const member = (table) =>
+    [...block([table]), ...block(table.indexes).map((line) => `  ${line}`)].map(
+      (line, at, lines) => `  ${line}${at === lines.length - 1 ? "," : ""}`,
+    );
+  const lines = [
+    `// The pinned declarations of ${options.pack}, emitted by scripts/pinned.mjs from recipe 24 of the`,
+    "// pinned Protocol. Never edit it: change the Spec, then run `npm run sdp:build`. Each declaration",
+    "// follows the address of its Design entry.",
+    preamble,
+    "",
+    "// Used by the design and pinned by no Spec. Where the code declares one, its declaration stands in.",
+    ...[...gapUses.keys()].sort().flatMap((gap) => {
+      const skippedPin = all.find(
+        (row) => row.kind === null && row.declaration.startsWith(`${gap} =`),
+      );
+      return [
+        `// ${gap}: used by ${[...new Set(gapUses.get(gap))].join(", ")}.${skippedPin === undefined ? "" : ` ${skippedPin.address} opens with it, without const.`}`,
+        gapDeclaration(gap),
+      ];
+    }),
+    "",
+    ...block(emitted.filter((row) => row.kind === "type")),
+    ...block(values),
+    "export const tables = {",
+    ...emitted.filter((row) => row.kind === "table").flatMap(member),
+    "};",
+  ];
+  const outputPath = join(root, "generated/pinned", `${name}.ts`);
+  let formatted;
+  try {
+    const config = JSON.parse(
+      readFileSync(join(root, ".prettierrc.json"), "utf8"),
+    );
+    formatted = await prettier.format(`${lines.join("\n")}\n`, {
+      ...config,
+      filepath: outputPath,
+    });
+  } catch (error) {
+    cannot(`${outputPath}: Prettier failed: ${error.message}`);
+  }
+  mkdirSync(join(root, "generated/pinned"), { recursive: true });
+  writeFileSync(outputPath, formatted);
+
+  const counted = (rows) =>
+    [...Map.groupBy(rows, (row) => row.prefix)]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([prefix, group]) => `${prefix} ${group.length}`)
+      .join(", ");
+  const ownEmitted = own.filter((row) => row.kind !== null);
+  const skipped = own.filter((row) => row.kind === null);
+  console.error(
+    `pinned: generated/pinned/${name}.ts · ${scope.length} Specs · emitted ${ownEmitted.length} (${counted(ownEmitted)}) and ${emitted.length - emitted.filter((row) => row.why === undefined).length} pulled in · skipped ${skipped.length} (${counted(skipped)}) · ${gapUses.size} names pinned by no Spec`,
+  );
+}
+
+if (
+  process.argv[1] !== undefined &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+)
+  await main();
