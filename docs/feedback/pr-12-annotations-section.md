@@ -56,7 +56,7 @@ The Protocol's branch rules the arc through three decision Specs, and the owner 
 
 ### Try it
 
-From the repository root, after `npm ci`. Measured on 2026-10-10 at the fold-in of the second read, the commit after `ed4f97f`. Re-run the commands rather than inherit these numbers.
+From the repository root, after `npm ci`. Measured on 2026-10-10 at `2347cbc`, after the merge of `feature/round-2` with its review repair (`09224b5`). Re-run the commands rather than inherit these numbers.
 
 ```sh
 npx sdp q 'return g.byFile("src/read-model/rebuild.ts")' --json
@@ -103,7 +103,7 @@ npx sdp validate .
 ```
 
 ```
-243 specs · 6 packs · 180 anchors → 429 nodes · 1497 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 180 anchors → 429 nodes · 1499 edges (0 errors, 0 warnings)
 …
 validate: 0 errors · 12 warnings (conformance + honesty over the one graph)
 ```
@@ -115,7 +115,7 @@ npm run check
 ```
 
 ```
-243 specs · 6 packs · 180 anchors → 429 nodes · 1497 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 180 anchors → 429 nodes · 1499 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings, 12 prose mentions listed; readiness divergence: []
 entry addresses outside the Specs: 497; dependsOn cycles: 0
 architecture: 76 code units; roles: codec 1, contract 6, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 49 references edges from 41 units; platform isolation: 7 platform components, 21 uses edges from them, 0 into another context
@@ -126,7 +126,7 @@ protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-f23e358.tgz
 OK
 ```
 
-`npm test` passed 1,141 tests in 74 files, with 10 skipped, the not-compared pairs.
+`npm test` passed 1,150 tests in 75 files, with 10 skipped, the not-compared pairs.
 
 ### For the owner
 
