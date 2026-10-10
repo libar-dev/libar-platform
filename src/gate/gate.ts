@@ -1,8 +1,10 @@
 // The writer check and the two gate writers of spec:application.write-pause. gateAllows is the one gate
 // read: the restore door through the environment first, then the gate document. assertWritable is
-// gateAllows plus the throw, called by the command pipeline's step 7 and by nothing else. closeScope and
-// resumeScope are the only writers of the gate document, and each writes its operator audit record in
-// the caller's mutation with no catch around it, so a failed insert changes nothing.
+// gateAllows plus the throw, called by the command pipeline's step 7, by the grant helpers insertGrant
+// and revokeGrant before their first read, by the receipt sweep before its first receipt read, and by
+// nothing else. closeScope and resumeScope are the only writers of the gate document, and each writes
+// its operator audit record in the caller's mutation with no catch around it, so a failed insert
+// changes nothing.
 import type {
   GenericDatabaseReader,
   GenericDatabaseWriter,

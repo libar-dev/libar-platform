@@ -2,9 +2,11 @@
 // classification and the insert, helpers inside the pipeline's mutation; and the sweep and its loop
 // over tenants, handlers that each composition registers as internal mutations for operations.
 import { paginator } from "convex-helpers/server/pagination";
-import { defineSchema } from "convex/server";
+import { defineSchema, type GenericDatabaseReader } from "convex/server";
 import { convexToJson, v, type JSONValue, type Value } from "convex/values";
 import { boundedPage, limitListBytes } from "../context/queries.js";
+import { assertWritable, tenantScope } from "../gate/gate.js";
+import type { GateDataModel } from "../gate/tables.js";
 import type { AffectedRef, StreamVersion } from "../kernel/index.js";
 import type { CallerNamespace } from "./actor-and-scope.js";
 import { nextTenant } from "./authority.js";
@@ -149,14 +151,23 @@ function checkSweepArgs(now: number, limit: number) {
   if (!Number.isSafeInteger(limit) || limit < 1)
     throw new Error("Receipt sweep limit must be a positive safe integer");
 }
-// One run reads expired rows until it holds min(limit, 1000) or has read limitSweepBytes, whichever
-// comes first, and deletes each row it read, an expired tombstone included. Compaction waits for
-// tombstones, so compacted is 0.
+// The sweep is a writer of spec:application.write-pause: after the argument check and before any
+// receipt read it reads the gate, the restore door first, for "all" and the tenant's scope and no
+// source scope, because it writes no source stream; a closed scope refuses the run with writePaused
+// and it deletes nothing. One run then reads expired rows until it holds min(limit, 1000) or has
+// read limitSweepBytes, whichever comes first, and deletes each row it read, an expired tombstone
+// included. Compaction waits for tombstones, so compacted is 0.
 export async function sweep(
   ctx: MutationCtx,
   { tenantId, now, limit }: { tenantId: string; now: number; limit: number },
 ): Promise<SweepResult> {
   checkSweepArgs(now, limit);
+  // The library types ctx with the command tables; every composition that registers the sweep holds
+  // the gate's table too, and at run time ctx is that composition's own.
+  await assertWritable(
+    ctx as unknown as { db: GenericDatabaseReader<GateDataModel> },
+    ["all", tenantScope(tenantId)],
+  );
   const expired = () =>
     paginator(ctx.db, commandSchema)
       .query("receipts")
@@ -177,7 +188,8 @@ export async function sweep(
   };
 }
 // The operations caller carries after between runs. A tenant with more stays on the same cursor;
-// a null tenant ends the pass. Nothing schedules another run.
+// a null tenant ends the pass. Nothing schedules another run. The gate is read through sweep, after
+// the tenant-list read, which is a read.
 export const sweepNextArgs = {
   after: v.union(v.string(), v.null()),
   now: v.number(),
