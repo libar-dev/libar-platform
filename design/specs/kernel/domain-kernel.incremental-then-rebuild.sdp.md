@@ -9,7 +9,7 @@ relations:
 ---
 # Run commands incrementally, then rebuild the stream from its events
 
-Sc L0-2 · domain tier.
+Sc L0-2 · pure test tier.
 
 ## Intent
 
@@ -27,5 +27,5 @@ And the number of I/O calls observed is {io: 0}
 
 ## Verification — executable
 
-- Runs in the domain tier; no backend is involved and the test imports the kernel package only.
+- Runs in the pure test tier; no backend is involved and the test imports the kernel package only.
 - Each command is decided against the state folded from the previous commands' events, never against a replay of history; the rebuild folds `evolve` from `initial()` over the collected events, and the version is the count of events.

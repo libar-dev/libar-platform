@@ -9,7 +9,7 @@ relations:
 ---
 # An ordinary client cannot call an internal function
 
-E-13, E-15 · native tier · fixture composition.
+E-13, E-15 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -26,7 +26,7 @@ And the same mutation called with the harness's admin access writes {rowsAfterAd
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The refusal is identified by the text of Convex's own error, so a call that fails for another reason does not pass.
 - The test repeats the refused call from a client with no token and asserts the same error, and reads the table with the harness's admin access.
 - The admin call comes last and on the same deployment, so the refused function is shown to exist and to write its row.

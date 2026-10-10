@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 5: a pinned page of a parent table outgrows its row cap and comes back whole
 
-Probe 5 · native tier · fixture composition.
+Probe 5 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,6 +24,6 @@ And the page from the start to the split cursor and the page from the split curs
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The table is a table of the fixture composition's parent, read by a parent query with no component call, so the subject is the built-in call that a read-model list makes.
 - The test subscribes to the first page with the `endCursor` its first read returned, which is how a client pins a page.

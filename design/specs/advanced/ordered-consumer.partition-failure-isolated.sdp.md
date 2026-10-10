@@ -9,7 +9,7 @@ relations:
 ---
 # One ordered partition fails
 
-Sc L6-3 · native tier.
+Sc L6-3 · native backend tier.
 
 ## Intent
 
@@ -25,5 +25,5 @@ And partition {failing: 2} stays blocked at its head with the failure inspectabl
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test asserts the failed partition's position did not advance, that an unauthorized skip is refused, and that an authorized skip writes a recorded data-loss decision before the position advances (D18).

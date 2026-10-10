@@ -19,13 +19,15 @@ import {
   type SubjectRef,
 } from "./actor-and-scope.js";
 import { establishActor } from "./authority.js";
-import { normalizeThrown, reject } from "./outcome-boundary.js";
+import { reject } from "./outcome-boundary.js";
 import {
   commandResponseValidator,
+  relayFailure,
   runPipeline,
   type CommandResponse,
   type PipelineCall,
 } from "./pipeline.js";
+import type { DiagnosticSink } from "../operations/index.js";
 import type { ReadModelBinding, SourceRef } from "../read-model/write.js";
 import type { Retention } from "./receipts.js";
 import type { CommandDataModel, MutationCtx } from "./tables.js";
@@ -46,6 +48,10 @@ export type CommandDeclaration<I, R> = {
   admission?: AdmissionPolicy<I>;
   bounds?: Bounds;
   retention?: Retention;
+  // Asks step 10 for one audit record, which fails closed. Absent means none.
+  audit?: { kind: "security" | "business" };
+  // Where the pipeline writes the command's diagnostic lines. Absent means consoleSink.
+  diagnosticSink?: DiagnosticSink;
 };
 export type PermissionPolicy<I> = {
   permission: string;
@@ -107,15 +113,17 @@ export function publicCommand<I, R>(
     handler: async (ctx, args) => {
       const { tenantId, requestKey, correlationId, input } =
         args as PublicCommandArgs<I>;
+      let established: Actor | undefined;
       try {
         // Step 2, authenticate.
         const actor = await establishActor(ctx, serviceIssuers);
         if (actor === null)
           reject({
             code: "unauthenticated",
-            commandType: decl.name,
+            entry: decl.name,
             message: `${decl.name} needs an authenticated caller`,
           });
+        established = actor;
         return await runPipeline(ctx, decl, {
           tenantId,
           namespace: "public",
@@ -125,7 +133,17 @@ export function publicCommand<I, R>(
           ...(correlationId === undefined ? {} : { correlationId }),
         });
       } catch (error) {
-        normalizeThrown(error, decl.name, decl.rejections);
+        relayFailure(
+          decl,
+          {
+            tenantId,
+            namespace: "public",
+            ...(established === undefined ? {} : { actor: established }),
+            ...(requestKey === undefined ? {} : { requestKey }),
+            ...(correlationId === undefined ? {} : { correlationId }),
+          },
+          error,
+        );
       }
     },
   }) as RegisteredMutation<"public", PublicCommandArgs<I>, CommandResponse<R>>;
@@ -150,7 +168,7 @@ export function internalCommand<I, R>(
       try {
         return await runPipeline(ctx, decl, call);
       } catch (error) {
-        normalizeThrown(error, decl.name, decl.rejections);
+        relayFailure(decl, call, error);
       }
     },
   }) as RegisteredMutation<

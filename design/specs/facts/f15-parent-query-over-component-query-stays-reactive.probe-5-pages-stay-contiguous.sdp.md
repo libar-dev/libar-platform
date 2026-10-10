@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 5: pages of a component list stay contiguous under live writes
 
-Probe 5 · native tier · fixture composition.
+Probe 5 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And the first page now holds {firstPageRows: 15} rows
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test also deletes a row inside the second page's range and asserts the same contiguity.
 - On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

@@ -1,5 +1,6 @@
-// The parent's tables of spec:command.receipt-table and spec:command.actor-and-scope, as a fragment the
-// app's schema.ts spreads into defineSchema. Every index leads with tenantId.
+// The parent's tables of spec:command.receipt-table and spec:command.actor-and-scope, receipts, grants
+// and the tenant list, as a fragment the app's schema.ts spreads into defineSchema. Every index leads
+// with tenantId.
 import {
   defineTable,
   type DataModelFromSchemaDefinition,
@@ -50,6 +51,12 @@ export const commandTables = {
   })
     .index("by_principal", ["tenantId", "principalKind", "principalId"])
     .index("by_permission", ["tenantId", "permission"]),
+  // The tenant list: one row per tenant, inserted by insertGrant with the tenant's first grant and
+  // never deleted.
+  tenants: defineTable({
+    tenantId: v.string(),
+    createdAt: v.number(),
+  }).index("by_tenant", ["tenantId"]),
 };
 // The data model the library reads and writes. The app's own data model holds these tables.
 export type CommandDataModel = DataModelFromSchemaDefinition<
@@ -60,3 +67,4 @@ export type QueryCtx = GenericQueryCtx<CommandDataModel>;
 export type Receipt = DocumentByName<CommandDataModel, "receipts">;
 export type Grant = DocumentByName<CommandDataModel, "grants">;
 export type GrantId = GenericId<"grants">;
+export type Tenant = DocumentByName<CommandDataModel, "tenants">;

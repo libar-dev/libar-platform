@@ -6,6 +6,9 @@ readiness: defined
 relations:
   refines: spec:facts.fact-ledger
   dependsOn:
+    - spec:facts.f18-commit-timestamps
+    - spec:facts.f19-nested-calls-share-time-budgets
+    - spec:facts.f20-pagination-checks-bytes-after-reading
     - spec:facts.f14-convex-error-survives-nested-and-component-boundary
     - spec:facts.f15-parent-query-over-component-query-stays-reactive
     - spec:facts.f16-scheduled-functions-table-shows-failed-runs
@@ -20,7 +23,9 @@ relations:
 
 Feature · Detail: full transcription · Traces: Probe 1 to Probe 7, F4, F5, F12, F13, F14, F15, F16, F17, S13, E-16.
 
-Seven probes, in the order the decisions need them, each one small test on a native backend. A probe turns an assumed fact into a probed one, or measures a size the docs leave open. The recheck of 2026-09-30 narrowed two of them and left the rest standing: the limits page states no limit on nested calls, so Probe 4 stands; the application-errors page does not state that `ConvexError` data survives a component boundary, so Probe 2 stands; the scheduling page documents the states and the 7-day retention of `_scheduled_functions`, so Probe 7 need only confirm them and answer what a restore leaves; the backup page says nothing about component data or the scheduler, so that half of Probe 7 stands. Slice S0 ran probes 1 to 5 on a native backend on 2026-10-01, and each result is recorded on its fact; probes 6 and 7 have not run.
+Seven probes, in the order the decisions need them, each one small test on a native backend. A probe turns an assumed fact into a probed one, or measures a size the docs leave open. The recheck of 2026-09-30 narrowed two of them and left the rest standing: the limits page states no limit on nested calls, so Probe 4 stands; the application-errors page does not state that `ConvexError` data survives a component boundary, so Probe 2 stands; the scheduling page documents the states and the 7-day retention of `_scheduled_functions`; Probe 7 confirms the states over a short interval and answers what a local CLI replacement leaves, while seven-day expiry and hosted dashboard restore remain open. Slice S0 ran probes 1 to 5 on a native backend on 2026-10-01, and each result is recorded on its fact; Probe 6 runs on native backend `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `convex-helpers` 0.1.124 and `@convex-dev/migrations` 0.3.6, with its six examples and results on F17; Probe 7 runs on the same backend and pins, with its five examples and results on F12, F13 and F16.
+
+Probes 8 to 11 settle three facts the doc's ledger does not list, F18 to F20, each written from the pinned package source: the commit timestamp, the time budget nested calls draw on with the count of component calls one mutation may make, and the byte check of `convex-helpers`.
 
 The probes are not the first experiment. The experiment builds Layers 0 to 2 and measures cost; the probes settle single facts and can run before it, in a fixture app that is separate from the example app.
 
@@ -36,10 +41,10 @@ The probes are not the first experiment. The experiment builds Layers 0 to 2 and
 ### Open questions
 
 - [non-blocking] Probe 1 ran on 2026-10-01: a closed client leaves its mutation executed once or not at all, a backend restart leaves it executed once, and the HTTP client does not retry; whether callers of `ConvexHttpClient` must supply a request key is D6's question for the owner (Probe 1, D6)
-- [non-blocking] Probe 3 ran on 2026-10-01 for latency on a local backend; a local backend has no function-call quota, so that half waits for a hosted deployment (Probe 3, F4, D2, D8)
+- [non-blocking] Probe 3 ran on 2026-10-01 for latency on a local backend; a local backend has no function-call quota, so that half is the hosted example `spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-hosted-function-calls`, which only a hosted deployment can run (Probe 3, F4, D2, D8, E-59)
 - [non-blocking] Probe 5 ran on 2026-10-01: a parent query over a component query stays reactive, pages pinned by their end cursors stay contiguous, and a capped page crosses the boundary as `SplitRequired`; the `convex-helpers/react` hook then lost rows, and slice S2 decides how a context list is capped before it builds one (Probe 5, F15, S4, D8)
-- [non-blocking] Probe 6 pending: it must show a backfill batch racing a live command under optimistic concurrency, and that the migrations component fits a generation backfill (Probe 6, F17, D9)
-- [non-blocking] Probe 7 pending: before Layer 3, it must show what a restore leaves of Workpool and Workflow state and confirm the states and retention of `_scheduled_functions` on a native backend (Probe 7, F12, F16, D13, D19)
+- [non-blocking] Probe 6 records native backend evidence on the pins named by F17: a row race, cancel and resume, thrown-batch rollback, restart, table scope and a parent batch returning a context cursor to the migrations driver; hosted quotas and sustained contention are not run. (Probe 6, F17, D9)
+- [non-blocking] Probe 7 observes all five scheduler states, local CLI replacement into a fresh backend and in place, stored scheduler IDs, kept reactions, scheduled-argument limits and failed-function scan cost; seven-day expiry, hosted dashboard restore, Workpool and Workflow remain open before the decisions resting on those observations. (Probe 7, F12, F13, F16, D13, D19)
 - [non-blocking] Extension E-16: the doc says each probe is one small test on a native backend and that a probed fact is one a native backend test showed, and does not say how a test that settles an unknown states what it expects or what follows when the backend answers otherwise; the option taken here: a probe is written as example Specs that verify its fact, each bound to its native test; an example's bound values are the expectation written before the first run; a first run that shows another value is a finding recorded on the fact, and the example is then bound to what that release does and says so; an example fails when its run did not reach the boundary it is about; a later run on a new release that shows another value is again a finding, and the test is not repaired to keep the old value; a size is recorded and not asserted, while a limit the backend enforces is bound as observed; and what a local backend cannot answer is named on the example and stays open on the fact; the owner confirms (E-16, Probes, Acceptance scenarios)
 
 ## Workflow
@@ -60,8 +65,12 @@ The probes are not the first experiment. The experiment builds Layers 0 to 2 and
 - Probe 3 measures one component call from a parent mutation and from a parent query in latency and in function-call quota, and reports the difference from a plain helper; it serves D2 and D8 (Probe 3, F4)
 - Probe 4 reads and writes near the per-transaction limits from a parent, from a nested mutation and from a component, and records whether the limits add up across the boundaries or apply per call; it serves D10 (Probe 4, F13)
 - Probe 5 subscribes to a parent query that calls a component query, changes the component's data, and checks that the subscription updates; it then pages a component list built with `paginator` through the parent while live writes land inside the paged range, with the client passing the end cursor as `convex-helpers` describes, records whether the pages stay contiguous, and fills one page's range past the component's `maximumRowsRead` so that a re-run comes back `SplitRequired`, recording whether the `convex-helpers/react` hook splits it across the boundary without a gap; it serves D8 (Probe 5, F15, S4)
-- Probe 6 runs a backfill batch through the migrations component while a live command writes the same read-model row, and checks that neither overwrites newer data and that the batch resumes after interruption; it serves D9 (Probe 6, F1, F17)
-- Probe 7, before Layer 3, takes a backup with pending scheduled functions, Workpool jobs and a Workflow run in flight, restores it, and records what survives; it reads `_scheduled_functions` for a failed run and confirms the states and the retention window; it serves D13 and D19 (Probe 7, F12, F16)
+- Probe 6 runs a backfill batch through the migrations component while a live command writes the same read-model row and checks that neither overwrites newer data; it interrupts the batches by a cancel, a thrown batch, a transaction that fails as a whole and a backend restart, and checks that they resume from the saved cursor; and it checks which tables a migration defined in the parent or in a context can walk and write, and whether the component can drive a batch over a context's enumeration; it serves D9, and what it showed, a component that walks only its own tables and reaches a context only through a parent mutation written by hand, is why the rebuild drives every batch with its own self-scheduled internal mutation (Probe 6, F1, F17, D9)
+- Probe 7 exports the parent, Orders and Inventory with all five scheduler states, replaces data into a fresh backend and in place, tests stored scheduler IDs and execution of kept pending mutations, measures scheduled-argument accounting and filtered scan cost, and records the short retention interval it actually observes; hosted dashboard restore, seven-day expiry, Workpool and Workflow are separate cases that remain open; it serves D13 and D19 (Probe 7, F12, F13, F16)
+- Probe 8 writes commit timestamp placeholders in the parent and two components, compares committed rows and the runtime upper bound, and checks readback, return and scheduling behavior (Probe 8, F18)
+- Probe 9 repeats empty nested calls in one mutation until the backend refuses it, and compares that error with the one a loop of computation gets (Probe 9, F19)
+- Probe 10 reads component pages below and at a row's byte size and records the bytes kept beyond the requested bound (Probe 10, F20)
+- Probe 11 increases component calls per mutation to the backend's refusal, records counts and time, and measures documents read and written (Probe 11, F19)
 
 ## Design
 
@@ -70,8 +79,9 @@ Each probe is a fixture-app test on a disposable backend. The probe app is separ
 - backend: one disposable native backend per probe run, from the same local backend S13 describes (Acceptance scenarios, S13)
 - fixtureApp: the probe app is the kernel's fixture app, separate from the example app, and test-only functions never ship (Acceptance scenarios)
 - evidence: each run records commit, backend and dependency versions, configuration, command and result, and states any difference from production configuration (Acceptance scenarios)
-- probe7Narrowed: the states and the 7-day retention of `_scheduled_functions` were found documented on 2026-09-30, so the probe confirms them and spends its effort on what a restore leaves (F16, S6, S8)
+- probe7Narrowed: native scheduler and CLI import cases deploy temporary copies of the production composition from modules under `tests/native/`, with added functions and schema hashes recorded; no probe function ships in the example or fixture; local observations do not establish hosted restore or seven-day expiry (F12, F13, F16, S6, S8)
 - location: the probe app lives in this repository, beside the design, as the owner ruled under OQ4 on 2026-10-01 (OQ4)
+- hostedHalves: [extension] Probe 3's function-call quota, Probe 7's retention window and Probe 7's replacement in place each have an example that runs as a native test on the one hosted deployment of `spec:platform.native-harness`, on F4, F16 and F12, the retention window recorded as ages and never bound at seven days; they are the exception to `backend`, because they run on that hosted deployment and not on a disposable local backend, and their probe functions ship in no composition, deployed only in a temporary copy of the fixture composition; hosted dashboard restore has none, because the harness reaches a hosted deployment only through the CLI and the deployment's own routes (E-59, F4, F12, F16)
 
 ## Verification — reviewed
 

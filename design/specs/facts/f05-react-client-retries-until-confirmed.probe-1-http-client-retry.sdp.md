@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 1: the HTTP client and a caller's retry
 
-Probe 1 · native tier · fixture composition.
+Probe 1 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,7 +24,7 @@ And the backend holds {markerRows: 2} marker rows
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The transport is the `fetch` the test passes to `ConvexHttpClient`: it performs the request, drops the response and throws, as a connection lost after the commit would.
 - The test also asserts that one call on an unfaulted transport sends one request and leaves one row.
 - On the first run of this example, on 2026-10-01 on release `precompiled-2026-09-28-5c7cb5b`, the bound values held.

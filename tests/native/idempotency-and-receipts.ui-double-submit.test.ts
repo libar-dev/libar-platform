@@ -159,7 +159,7 @@ bindExample(
       expect(rejectionData(answers[1])).toMatchObject({
         kind: "rejection",
         code: "entityExists",
-        commandType: "PlaceOrder",
+        entry: "PlaceOrder",
         details: { existing: entityId, current: 1 },
       });
       // FailIfDecided's decide fails the call if it is reached. At expected version 0 for the same
@@ -174,7 +174,7 @@ bindExample(
       expect(rejectionData(atZero)).toMatchObject({
         kind: "rejection",
         code: "entityExists",
-        commandType: "FailIfDecided",
+        entry: "FailIfDecided",
         details: { existing: entityId, current: 1 },
       });
       const atCurrent = await answerOf(
@@ -256,7 +256,7 @@ bindExample(
       expect(rejectionData(another)).toMatchObject({
         kind: "rejection",
         code: "insufficientStock",
-        commandType: "PlaceOrder",
+        entry: "PlaceOrder",
       });
       const after = await storedNow(backend);
       expect(streamRow(after, "stock", "p-2")?.state).toEqual({ onHand: 0 });

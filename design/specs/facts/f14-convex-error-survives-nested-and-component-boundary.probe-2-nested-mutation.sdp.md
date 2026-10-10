@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 2: ConvexError data through a nested mutation
 
-Probe 2 · native tier · fixture composition.
+Probe 2 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -26,7 +26,7 @@ And after the catching parent committed, the throwing mutation's table holds {ch
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The thrown data holds a string, a number, a boolean, a null, an array, a nested object and a 64-bit integer, and the test compares decoded values, not messages.
 - The test shows that the thrower had written its row before it threw, so a thrower that never wrote does not pass.
 - The test also throws an ordinary `Error` with an added property through the same path, checks that the error it sees is the thrower's, and records whether the property arrives.

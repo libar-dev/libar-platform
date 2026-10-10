@@ -64,7 +64,10 @@ bindExample(contract, (): { client?: ConvexHttpClient } => ({}), {
       }>();
   },
   "the change {change} is made": () => {
-    expectTypeOf<keyof RenamedApi["ordering"]>().toEqualTypeOf<"submitOrder">();
+    // The module's other public command, cancelOrder, keeps its name.
+    expectTypeOf<keyof RenamedApi["ordering"]>().toEqualTypeOf<
+      "submitOrder" | "cancelOrder"
+    >();
   },
   "the check that fails first is {failsAt}": async ({ client }) => {
     // @ts-expect-error The caller's reference names an export the module no longer has.

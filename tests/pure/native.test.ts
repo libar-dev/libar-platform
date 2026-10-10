@@ -6,11 +6,15 @@ const context = vi.hoisted(() => ({
     context: { signal: new AbortController().signal },
   },
   finished: [] as (() => Promise<void>)[],
+  hostedRun: undefined as unknown,
 }));
 vi.mock("vitest", async (original) => ({
   ...(await original<typeof import("vitest")>()),
   TestRunner: { getCurrentTest: () => context.current },
-  inject: () => ({ directory: "unused", executable: {} }),
+  inject: (key: string) =>
+    key === "hostedRun"
+      ? context.hostedRun
+      : { directory: "unused", executable: {} },
   onTestFinished: (finish: () => Promise<void>) =>
     context.finished.push(finish),
 }));
@@ -19,7 +23,7 @@ vi.mock("../../harness/identity.js", () => ({
 }));
 vi.mock("../../harness/backend.js", () => ({ startBackend: vi.fn() }));
 import { startBackend } from "../../harness/backend.js";
-import { fixtureBackend } from "../../harness/native.js";
+import { fixtureBackend, productionBackend } from "../../harness/native.js";
 
 test("pure: a backend whose deploy fails is disposed and still contributes its facts to its test", async () => {
   context.current.meta = {};
@@ -91,4 +95,24 @@ test("pure: fixtureBackend owns an overridden executable and can skip deploy", a
   expect(context.current.meta.native?.backends).toEqual([
     { composition: null },
   ]);
+});
+
+test("pure: fixtureBackend and productionBackend refuse a local backend under a native run on a hosted deployment", async () => {
+  context.current.meta = {};
+  context.finished = [];
+  vi.mocked(startBackend).mockClear();
+  context.hostedRun = {
+    target: { url: "https://happy-animal-123.convex.cloud" },
+    startedAt: "2026-01-01T00:00:00.000Z",
+  };
+  try {
+    for (const start of [fixtureBackend, productionBackend])
+      await expect(start()).rejects.toThrow(
+        "fixtureBackend() and productionBackend() start a local backend, which a native run on a hosted deployment refuses",
+      );
+    expect(startBackend).not.toHaveBeenCalled();
+    expect(context.finished).toEqual([]);
+  } finally {
+    context.hostedRun = undefined;
+  }
 });

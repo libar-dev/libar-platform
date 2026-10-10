@@ -9,7 +9,7 @@ relations:
 ---
 # The run exceeds its budget
 
-Sc L5-2 · native tier · second of two cases: a run bound is exhausted.
+Sc L5-2 · native backend tier · second of two cases: a run bound is exhausted.
 
 ## Intent
 
@@ -25,5 +25,5 @@ And the run is marked exhausted with an operator exit
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test repeats the case for the attempts, elapsed time and call-count bounds and asserts each blocks execution and that no partial command commits (D17, Sc L5-2).

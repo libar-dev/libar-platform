@@ -9,7 +9,7 @@ relations:
 ---
 # Rate refusal, then a retry of the same intent
 
-Sc L1-9 · native tier · fixture composition · first of two cases.
+Sc L1-9 · native backend tier · fixture composition · first of two cases.
 
 A worker sends the depot's `AddStock` command through the fixture action `nonUiCaller:send` that an ordinary client calls; the input f-1 adds 5 units of product p-1. The command's admission policy, the fixture's `switchedAdmission`, refuses the first call as a transient `rateLimited` while the command's `rateLimited` switch is on. The refusal throws, so nothing is stored and no receipt exists. The switch is turned off with admin access, the caller retries with the same key and input, admission now admits, and the command executes as new intent.
 
@@ -32,7 +32,7 @@ And the original outcome and state are unchanged {unchanged: true}
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The test asserts that the first error has `data.kind` equal to `"transient"`, `data.code` equal to `"rateLimited"` and `data.retryAfterMs` equal to 1000, and that the receipts table and the depot's tables are empty after it.
 - The test asserts that the retry's response has `replayed` false, which proves the refusal left no receipt to replay.
 - The test also asserts the ordering rule: with a receipt already present for the key, a refusing admission policy is never consulted and the duplicate is replayed; the switch is turned on again, the same call is replayed and stores nothing, and a call under a new request key is refused, which shows on the same deployment that the policy refuses whenever it is consulted.

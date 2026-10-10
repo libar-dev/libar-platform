@@ -8,7 +8,7 @@ export const insertBlobs = mutation({
     for (let i = 0; i < count; i++) {
       await ctx.db.insert("blobs", {
         group,
-        bytes: new ArrayBuffer(size),
+        payload: "x".repeat(size),
       });
     }
     return null;
@@ -34,7 +34,7 @@ export const readBlobs = query({
     const after = await ctx.meta.getTransactionMetrics();
     return {
       documents: documents.length,
-      payloadBytes: documents.reduce((sum, d) => sum + d.bytes.byteLength, 0),
+      payloadBytes: documents.reduce((sum, d) => sum + d.payload.length, 0),
       before,
       after,
     };

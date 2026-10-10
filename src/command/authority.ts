@@ -1,8 +1,13 @@
 // The parent's authority helpers of spec:command.actor-and-scope and spec:command.tenancy-and-authority:
 // establishActor, the one reader of ctx.auth, authorize, the one reader of grants on a command path,
-// authorizeQuery, which a parent query calls before it discloses anything, and the plain helpers an
-// operator's function uses to write and delete a grant. None is registered here.
-import type { GenericQueryCtx } from "convex/server";
+// authorizeQuery, which a parent query calls before it discloses anything, the plain helpers an
+// operator's function uses to write and delete a grant, and nextTenant, which reads the tenant list.
+// None is registered here.
+import type { GenericDatabaseReader, GenericQueryCtx } from "convex/server";
+import { ConvexError } from "convex/values";
+import { limitIdLength, utf8Length } from "../context/text.js";
+import { assertWritable, scopesOfUseCase } from "../gate/gate.js";
+import type { GateDataModel } from "../gate/tables.js";
 import type { Actor, AuthorizeInput, SubjectRef } from "./actor-and-scope.js";
 import { reject } from "./outcome-boundary.js";
 import type {
@@ -84,19 +89,68 @@ export type GrantInput = {
   subject?: SubjectRef;
   grantedBy: string;
 };
+// A grant is written like any other write: a closed "all" or tenant scope, or the restore door,
+// refuses it with writePaused before anything is read. The library types db with the command tables;
+// every composition that writes grants holds the gate's table too.
+async function assertGrantWritable(
+  ctx: { db: MutationCtx["db"] },
+  tenantId: string,
+): Promise<void> {
+  await assertWritable(
+    ctx as unknown as { db: GenericDatabaseReader<GateDataModel> },
+    scopesOfUseCase(tenantId, []),
+  );
+}
+// Inserts the tenant's row in the tenant list when it has none, then the grant, in one mutation, so no
+// tenant holds a grant without a row.
 export async function insertGrant(
   ctx: { db: MutationCtx["db"] },
   grant: GrantInput,
 ): Promise<GrantId> {
-  return ctx.db.insert("grants", { ...grant, grantedAt: Date.now() });
+  // The tenant ID is stored in the tenant list, which holds at most limitIdLength bytes of it.
+  const length = utf8Length(grant.tenantId);
+  if (length > limitIdLength)
+    throw new ConvexError({
+      code: "invalidInput",
+      message: `tenantId has at most ${limitIdLength} bytes of UTF-8`,
+      details: { field: "tenantId", length, limit: limitIdLength },
+    });
+  await assertGrantWritable(ctx, grant.tenantId);
+  const now = Date.now();
+  const tenant = await ctx.db
+    .query("tenants")
+    .withIndex("by_tenant", (q) => q.eq("tenantId", grant.tenantId))
+    .first();
+  if (tenant === null)
+    await ctx.db.insert("tenants", {
+      tenantId: grant.tenantId,
+      createdAt: now,
+    });
+  return ctx.db.insert("grants", { ...grant, grantedAt: now });
+}
+// The tenant after `after` in ascending tenant-ID order, or the first when `after` is null; null when
+// none follows. One indexed read, so a pass over the whole deployment takes one tenant at a time.
+export async function nextTenant(
+  ctx: { db: QueryCtx["db"] },
+  after: string | null,
+): Promise<string | null> {
+  const row = await ctx.db
+    .query("tenants")
+    .withIndex("by_tenant", (q) =>
+      after === null ? q : q.gt("tenantId", after),
+    )
+    .first();
+  return row === null ? null : row.tenantId;
 }
 // Revocation deletes the rows that grant this permission to this principal, on this subject when one
-// is named and otherwise on any; the next command's read finds none. Returns the number deleted. It
-// reads past the command path's bound of limitGrantsRead, so it can reduce a principal that holds more.
+// is named and otherwise on any, after the same gate read as insertGrant; the next command's read
+// finds none. Returns the number deleted. It reads past the command path's bound of limitGrantsRead,
+// so it can reduce a principal that holds more.
 export async function revokeGrant(
   ctx: { db: MutationCtx["db"] },
   grant: Omit<GrantInput, "grantedBy">,
 ): Promise<number> {
+  await assertGrantWritable(ctx, grant.tenantId);
   const rows = (
     await ctx.db
       .query("grants")
@@ -127,7 +181,7 @@ export type QueryPolicy = {
 const noServiceIssuers: ReadonlySet<string> = new Set();
 // Establishes the actor and authorizes it for the tenant, as the pipeline's steps 2 and 4 do, and
 // returns the actor. A refusal is the rejection a command throws for the same refusal, with the
-// query's name where a command's type goes. It writes nothing.
+// query's name as the entry that refused. It writes nothing.
 export async function authorizeQuery<DataModel extends CommandDataModel>(
   parentCtx: GenericQueryCtx<DataModel>,
   policy: QueryPolicy,
@@ -139,7 +193,7 @@ export async function authorizeQuery<DataModel extends CommandDataModel>(
   if (actor === null)
     reject({
       code: "unauthenticated",
-      commandType: policy.name,
+      entry: policy.name,
       message: `${policy.name} needs an authenticated caller`,
     });
   const decision = await authorize(ctx, {
@@ -151,7 +205,7 @@ export async function authorizeQuery<DataModel extends CommandDataModel>(
   if (!decision.allowed)
     reject({
       code: "forbidden",
-      commandType: policy.name,
+      entry: policy.name,
       message: `The caller may not read ${policy.name} in this tenant`,
       details: { reason: decision.reason },
     });

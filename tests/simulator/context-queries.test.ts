@@ -427,7 +427,7 @@ describe("the parent relays a context query across the component boundary", () =
       expect(refused).toBeInstanceOf(ConvexError);
       expect((refused as ConvexError<Value>).data).toMatchObject({
         code: "forbidden",
-        commandType: "getDocument",
+        entry: "getDocument",
         details: { reason: "subject_mismatch" },
       });
       expect(await get("tenant-wide", "doc-2")).toMatchObject({
@@ -470,7 +470,7 @@ describe("the parent relays a context query across the component boundary", () =
           expect((error as ConvexError<Value>).data).toMatchObject({
             kind: "rejection",
             code,
-            commandType: relay,
+            entry: relay,
           });
         }
       }

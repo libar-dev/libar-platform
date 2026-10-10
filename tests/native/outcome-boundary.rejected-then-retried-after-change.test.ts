@@ -208,7 +208,7 @@ bindExample(
     expect((world.firstError as ConvexError<Value>).data).toMatchObject({
       kind: "rejection",
       code: "insufficientStock",
-      commandType: "ClaimStock",
+      entry: "ClaimStock",
     });
     expect(world.receiptsAfterFirstRun).toEqual([]);
     const response = retried(world);

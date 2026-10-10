@@ -325,7 +325,7 @@ export function thenFirst(world: ReceiptWorld, { first }: { first: string }) {
     expect(data).toMatchObject({
       kind: "rejection",
       code: "idempotencyConflict",
-      commandType: world.commandType,
+      entry: world.commandType,
     });
     expect(data).not.toHaveProperty("details");
     expect(JSON.stringify(data)).not.toContain(

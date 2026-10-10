@@ -9,7 +9,7 @@ relations:
 ---
 # Evaluate a decision twice with identical inputs
 
-Sc L0-1 · domain tier.
+Sc L0-1 · pure test tier.
 
 ## Intent
 
@@ -27,5 +27,5 @@ And the number of I/O calls observed is {io: 0}
 
 ## Verification — executable
 
-- Runs in the domain tier; no backend is involved and the test imports the kernel package only.
+- Runs in the pure test tier; no backend is involved and the test imports the kernel package only.
 - The inputs are deep-frozen before the first evaluation and compared by deep equality after the second; the outputs are compared by deep equality; a spy on the database, network, scheduler, environment and auth surfaces records zero calls.

@@ -184,7 +184,7 @@ test("pure: reject and refuseTransient throw ConvexErrors whose data fits errorD
   const rejection = thrown(() =>
     reject({
       code: "forbidden",
-      commandType: "CreateDocument",
+      entry: "CreateDocument",
       message: "No",
       details: { reason: "no_grant" },
     }),
@@ -193,7 +193,7 @@ test("pure: reject and refuseTransient throw ConvexErrors whose data fits errorD
   expect((rejection as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "forbidden",
-    commandType: "CreateDocument",
+    entry: "CreateDocument",
     message: "No",
     details: { reason: "no_grant" },
   });
@@ -218,7 +218,7 @@ test("pure: reject throws a plain Error when its details measure above 16,384 by
   expect(getConvexSize(atBound)).toBe(16384);
   const data = {
     code: "forbidden" as const,
-    commandType: "CreateDocument",
+    entry: "CreateDocument",
     message: "No",
   };
   expect(thrown(() => reject({ ...data, details: atBound }))).toBeInstanceOf(
@@ -232,7 +232,7 @@ test("pure: reject throws a plain Error when its details measure above 16,384 by
   expect(String(above)).toContain("16385 bytes of details");
 });
 
-test("pure: normalizeThrown wraps a bare kernel rejection with the discriminator and the command type", () => {
+test("pure: normalizeThrown wraps a bare kernel rejection with the discriminator and the entry", () => {
   const bare = new ConvexError({
     code: "invalidTransition",
     message: "A document cannot ship from draft",
@@ -244,14 +244,14 @@ test("pure: normalizeThrown wraps a bare kernel rejection with the discriminator
   expect(rethrown).toBeInstanceOf(ConvexError);
   expect((rethrown as ConvexError<Value>).data).toEqual({
     kind: "rejection",
-    commandType: "ShipDocument",
+    entry: "ShipDocument",
     code: "invalidTransition",
     message: "A document cannot ship from draft",
     details: { from: "draft", trigger: "ship" },
   });
 });
 
-test("pure: normalizeThrown rejects another command name and rethrows a plain error, a transient refusal, a ConvexError carrying other data and a thrown string unchanged", () => {
+test("pure: normalizeThrown rejects another entry's name and rethrows a plain error, a transient refusal, a ConvexError carrying other data and a thrown string unchanged", () => {
   const passed = [
     new Error("Fault injected"),
     new ConvexError({ kind: "transient", code: "capacity", message: "Full" }),
@@ -262,7 +262,7 @@ test("pure: normalizeThrown rejects another command name and rethrows a plain er
   const mismatched = new ConvexError({
     kind: "rejection",
     code: "forbidden",
-    commandType: "Other",
+    entry: "Other",
     message: "No",
   });
   const normalized = thrown(() =>
@@ -287,14 +287,14 @@ test("pure: normalizeThrown wraps a kernel rejection with a platform code that t
   const rethrown = thrown(() => normalizeThrown(bare, "ShipDocument", []));
   expect((rethrown as ConvexError<Value>).data).toEqual({
     kind: "rejection",
-    commandType: "ShipDocument",
+    entry: "ShipDocument",
     code: "staleVersion",
     message: "Stream document/doc-1 is at version 2, not 1",
     details: { expected: 1, current: 2 },
   });
 });
 
-test("pure: normalizeThrown rethrows a kernel rejection whose code is neither a platform code nor in rejections as a plain Error naming the code and the command type", () => {
+test("pure: normalizeThrown rethrows a kernel rejection whose code is neither a platform code nor in rejections as a plain Error naming the code and the entry", () => {
   const bare = new ConvexError({
     code: "insufficientStock",
     message: "Cannot claim 2 when 1 are on hand",
@@ -311,7 +311,7 @@ test("pure: normalizeThrown rethrows a kernel rejection whose code is neither a 
   }
 });
 
-test("pure: normalizeThrown rethrows a kernel rejection whose details measure above 16,384 bytes as a plain Error naming the code and the command type", () => {
+test("pure: normalizeThrown rethrows a kernel rejection whose details measure above 16,384 bytes as a plain Error naming the code and the entry", () => {
   const bare = (documentId: string) =>
     new ConvexError({
       code: "invalidInput",
@@ -337,14 +337,14 @@ test("pure: normalizeThrown rethrows a kernel rejection whose details measure ab
 
 test("pure: classifyThrown tells a rejection from a transient refusal from a technical failure", () => {
   const rejection = thrown(() =>
-    reject({ code: "forbidden", commandType: "C", message: "No" }),
+    reject({ code: "forbidden", entry: "C", message: "No" }),
   );
   expect(classifyThrown(rejection)).toEqual({
     kind: "rejection",
     data: {
       kind: "rejection",
       code: "forbidden",
-      commandType: "C",
+      entry: "C",
       message: "No",
     },
   });
@@ -363,7 +363,7 @@ test("pure: classifyThrown tells a rejection from a transient refusal from a tec
     new ConvexError({
       kind: "rejection",
       code: "forbidden",
-      commandType: "C",
+      entry: "C",
       message: "No",
       details: ["listed"],
     }),
@@ -372,7 +372,7 @@ test("pure: classifyThrown tells a rejection from a transient refusal from a tec
     expect(classifyThrown(error)).toEqual({ kind: "technical", error });
 });
 
-test("pure: the receipts and grants indexes lead with tenantId, and a receipt has no field for input or result", () => {
+test("pure: the receipts, grants and tenants indexes lead with tenantId, and a receipt has no field for input or result", () => {
   const indexes = Object.values(commandTables).flatMap((table) =>
     table[" indexes"](),
   );
@@ -384,6 +384,7 @@ test("pure: the receipts and grants indexes lead with tenantId, and a receipt ha
     ["by_tenant_expiry", ["tenantId", "expiresAt"]],
     ["by_principal", ["tenantId", "principalKind", "principalId"]],
     ["by_permission", ["tenantId", "permission"]],
+    ["by_tenant", ["tenantId"]],
   ]);
   expect(Object.keys(commandTables.receipts.validator.fields).sort()).toEqual([
     "actorId",

@@ -312,10 +312,10 @@ test("native: each relay refuses a caller with no identity and one with no grant
           documentId: "doc-1",
         }),
       ),
-    ).toMatchObject({ kind: "rejection", code, commandType: "getDocument" });
+    ).toMatchObject({ kind: "rejection", code, entry: "getDocument" });
     expect(
       await refusal(read(caller, { cursor: null, numItems: 10 })),
-    ).toMatchObject({ kind: "rejection", code, commandType: "listDocuments" });
+    ).toMatchObject({ kind: "rejection", code, entry: "listDocuments" });
   }
   // A grant for doc-1 reads doc-1 and is refused doc-2; a tenant-wide grant reads doc-2.
   await grant("one-document", "doc-1");
@@ -336,7 +336,7 @@ test("native: each relay refuses a caller with no identity and one with no grant
     ),
   ).toMatchObject({
     code: "forbidden",
-    commandType: "getDocument",
+    entry: "getDocument",
     details: { reason: "subject_mismatch" },
   });
   expect(

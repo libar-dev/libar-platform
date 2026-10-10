@@ -1,0 +1,32 @@
+---
+id: spec:application.generation-registry.first-rebuild-installs-read-model
+kind: example
+altitude: story
+readiness: defined
+relations:
+  refines: spec:application.generation-registry
+  verifies: spec:application.generation-registry
+---
+# A read model is installed through its first rebuild
+
+E-8 · native backend tier · fixture composition · no acceptance row; the example verifies that a read model's first generation is built like any other and serves the subjects that already exist, an extension under E-8.
+
+## Intent
+
+- outcome: Generation 1 starts as building, covers the subjects that existed before it, and is active only after it is verified and switched. (E-8, D9)
+
+```gwt
+Given a read model with {generationRows: 0} generation rows and {orders: 3} subjects that already have history
+When an operator starts a generation, its batches finish and the operator switches it
+Then generation {generation: 1} of the read model is {state: "active"}
+And the read model holds {rows: 3} rows for the subjects that existed before it
+And a second start while generation 1 is being built is {second: "refused"}
+```
+
+## Verification — executable
+
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
+- The test creates three documents through `CreateDocument`, which declares no read model, then runs `internal.rebuild.startGeneration` for `documentSummary` with admin access and a stated operator, and asserts one row in `generations`, generation 1, `building`, with `documentSummary`'s latest projection version and the operator as `startedBy`.
+- In this order the test closes the tenant's gate, runs the first start, reads the generation row `building`, runs `startGeneration` again and asserts that its error names the read model, generation 1 and its state and that the table still holds one row, waits until the first batch has parked under the gate, reopens the gate and runs `resumeGeneration`.
+- The test waits until the row is `verified`, asserts that `listDocumentSummaries` still fails for want of an active generation, runs `switchGeneration`, and asserts that the row is `active`, that no row is `retired`, and that `listDocumentSummaries` returns the three documents under their status.
+- The test runs the same sequence on a backend with one tenant and no subject and asserts that the progress row's `batchesDone` is 2, one backfill batch and one verify batch, before `verified`.

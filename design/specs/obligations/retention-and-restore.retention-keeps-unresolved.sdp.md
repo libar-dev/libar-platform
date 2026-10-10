@@ -9,7 +9,7 @@ relations:
 ---
 # Retention runs while retries or redelivery are still possible
 
-Sc L3-8 · native tier.
+Sc L3-8 · native backend tier.
 
 ## Intent
 
@@ -28,7 +28,7 @@ And unresolved work {unresolved: "is untouched"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test seeds a succeeded obligation settled 3 days ago, a pending one, a running one and one in needs attention, sets the registry's longest validity to 30 days, and runs `retain` to completion (D13, D19).
 - The test asserts the succeeded row and its `completionEvidence` still exist, that the three unresolved rows are byte-identical to their seeds, and that a retried attempt with the same effect key still finds the existing row (D13, Sc L3-8).
 - The test advances 31 days, runs `retain` again, and asserts only the succeeded row is deleted (D13, E-55).

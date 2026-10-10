@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 5: a full first page with a row cap of twice its size is not split
 
-Probe 5 · native tier · fixture composition.
+Probe 5 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -23,6 +23,6 @@ Then the page holds {rowsHeld: 10} rows and carries pageStatus {pageStatus: "non
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - A `pageStatus` of none means the relayed page has no `pageStatus` or has it `null`; the test asserts `isDone` false and a `continueCursor` that starts the next page at the eleventh row.
 - The sibling example with the row cap equal to the page size shows the reading this one rules out.

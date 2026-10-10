@@ -216,7 +216,7 @@
       "provisionalReading": "Taken: no, the 23 rows of Layers 0 to 2.",
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: settling it reads the doc's scenario table, whether Sc ALL-1's 'every installed layer' counts as a Layer 0 to 2 row [design/specs/application/first-experiment.sdp.md:65]; a reading of the doc is the owner's.",
@@ -225,9 +225,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The experiment's pass includes Sc ALL-1: acceptanceRows lists it after Sc L2-9, and its two examples count as missing until the command audit and the diagnostic bind them. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-007",
@@ -257,7 +257,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which example proves a row; the strict reading, an example that sends commands at once on the production composition, goes against no scenario of the doc and an edit takes it back. Doubt: the acceptance contract is the product advisor's Spec, the example is this family's.",
@@ -271,9 +271,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:convex",
+      "decidedOn": "2026-10-02",
+      "ruling": "Bind Sc L2-9 to the experiment's contention run on the production composition, 2, 8 and 32 PlaceOrder commands at once, and keep the present example as the row's code-path half."
     },
     {
       "id": "OD-008",
@@ -296,7 +296,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, settling it edits the doc: the doc's sentence 'passes when every Layer 0, 1 and 2 scenario passes on a native backend' (docs/convex-transactional-domain-platform-decisions.md:479) against the contract's tiers for Sc L0-1, L0-2 and L2-4 (design/specs/platform/acceptance-contract.sdp.md:58,62).",
@@ -305,9 +305,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The experiment passes when every Layer 0, 1 and 2 scenario and Sc ALL-1 passes, each at the tier the acceptance contract names for it; the doc's pass sentence changes by the owner's hand (patch-doc-sitting-two.diff). Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-009",
@@ -327,7 +327,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: acceptance check, verifier and build tier are missing, scenario and run record each carry two meanings, and the tiers have three sets of names (design/STATE.md:220); the one code name in the bullet, otherPrincipalId, is a name inside the language and goes with the ruling.",
@@ -336,9 +336,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "Tiers are compiled, pure test, convex-test and native backend, with composition and target recorded apart; acceptance check, verifier, test result and run record are defined; scenario is a row of the doc's table and a case is one example of it; CONTEXT.md carries them. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-010",
@@ -374,7 +374,7 @@
       "provisionalReading": "Extension E-8, the first generation: the doc says how a generation is rebuilt and not how a read model's first generation comes to exist; the option taken here is one explicit transition, the first activation, run with admin access before the first command that writes the read model, legal only when the read model has no generation row, with a command that finds no generation to write failing as a technical failure and a query that finds no active generation failing the same way; the owner has not ruled (E-8, D9, D19)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, which mechanism: the doc names no path for a first generation [design/specs/application/generation-registry.sdp.md:36], and an edit to one Spec and one file takes the path back; nothing here edits the doc or trades values without evidence.",
@@ -388,9 +388,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "Install every read model through its first rebuild: generation 1 starts as `building` through `startGeneration`, its backfill covers whatever subjects exist, and the switch makes it active; no transition leads from nothing to active. The checked lean of 2026-10-02 is the ruling, and the Specs carry it [design/specs/application/generation-registry.sdp.md:46,49]."
     },
     {
       "id": "OD-011",
@@ -548,7 +548,7 @@
       "provisionalReading": "Extension E-9, two projection versions: a read model holds one projection, so `applyProjection` writes every generation it is given with that projection, whatever `projectionVersion` the generation records; after a projection version change the active generation was built by the earlier version, and the owner has not ruled how a command writes two projection versions at once, the active generation's and a building generation's (E-9, D8, D9)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a signature and the order of steps: the doc says live update and rebuild share one projection and fixes no shape [design/specs/application/projection-contract.sdp.md:33]; an edit to one Spec and two files takes it back.",
@@ -562,9 +562,9 @@
       },
       "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "A read model declares its projection versions as a list, the latest first, and `applyProjection` writes each generation with the projection whose version the generation row records, failing as a technical failure when no declared projection carries that version. The checked lean of 2026-10-02 is the ruling, and the Specs carry it [design/specs/application/projection-contract.sdp.md:47,67,68,90]."
     },
     {
       "id": "OD-015",
@@ -681,7 +681,7 @@
       "provisionalReading": "Extension E-5: the doc says a query authorizes before it discloses and does not say how a refused query is answered; here a parent query's refusal is the same `RejectionData` a command's is, with the query's name in the field `commandType` and only the codes `unauthenticated` and `forbidden`, and a use case's own rejection is thrown as the kernel's bare `Rejection`, the way a context throws one; that a field named for a command carries a query's name is a gap in the language, and the owner has not ruled on either reading (E-5, D7, Law 5)",
       "blocks": null,
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, a term of `CONTEXT.md`: `CONTEXT.md:55` defines rejection as a command's outcome and the query Specs use it for a query, and a field named for a command carries a query's name; the owner queue lists both as a gap in the language [design/STATE.md:236], a pointer. The shape and the two codes are mechanism, so the fork gives them as the lean.",
@@ -690,9 +690,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The shared RejectionData with the codes unauthenticated and forbidden for a query stays, a use case's own rejection stays bare, and the field is renamed entry, the name of the entry that refused; the code follows in the language lane. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-018",
@@ -887,7 +887,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: no word for a parent's read, a context's read, the first activation or a refused function's name, rejection used for a query, projection without its per-entity name, three fixture names unlisted (design/STATE.md:236); the mechanism behind the query's name in commandType is OD-017 (domain) and OD-110 (convex), and only the word is here.",
@@ -896,9 +896,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "Parent query, context query and query refusal are the words; the field that names the function that refused is entry, the name of the entry (public command, internal command, parent query or operator entry) that refused; installation includes the first rebuild; the fixture's names stay the fixture's. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-023",
@@ -992,7 +992,7 @@
       "provisionalReading": "Taken: the library registers no grant function; an operator runs an internal mutation with admin access.",
       "blocks": "S4",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner tests 2 and 5: who holds the root of authority in a tenant is a promise to an adopter and trades safety against ease of adoption, and the corpus holds no evidence on which weighs more; doubt stated, because the mechanism beneath it, plain helpers and a composition's internal mutations, is delegated-shaped.",
@@ -1002,9 +1002,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-025.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The first grant of a tenant is created with admin access through the composition's own internal grant mutation, and later grants the same way or by whatever command the composition registers. The library registers no grant function and promises no recorded bootstrap, first-admin flow or invitation: those are an adopter's to build on the helpers. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-026",
@@ -1184,7 +1184,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, it rules on terms of CONTEXT.md: operation, command, subject, actor and duplicate each against another word, and whether CONTEXT.md or spec:platform.vocabulary leads (design/STATE.md:243); receipt and generation are OD-139 and OD-140 and are not decided twice here.",
@@ -1193,9 +1193,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "CONTEXT.md leads and spec:platform.vocabulary follows it; a command addresses the parent, a stream command a decider, an operation is one accepted execution; subject, actor and duplicate keep their meanings; the operator term splits into the operator actor, which nothing establishes, and the stated operator. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-030",
@@ -1451,7 +1451,7 @@
           "kind": "specQuestion",
           "ref": "spec:facts.probe-plan#2",
           "file": "design/specs/facts/probe-plan.sdp.md",
-          "line": 39
+          "line": 44
         }
       ],
       "families": [
@@ -1469,12 +1469,13 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "waiting",
       "foldedInto": [],
       "class": "owner",
-      "reason": "Rule 1, money: a hosted deployment is the owner's account, and the quota half cannot run on a local backend [design/specs/facts/probe-plan.sdp.md:39]. Doubt: it is a need more than a decision; the decision it serves is OD-063.",
+      "reason": "Rule 1, money: a hosted deployment is the owner's account, and the quota half cannot run on a local backend [design/specs/facts/probe-plan.sdp.md:44]. Doubt: it is a need more than a decision; the decision it serves is OD-063. The account it needs is OD-155's.",
       "lean": {
-        "do": "Run Probe 3's quota half once on a hosted deployment after S3's local numbers, so that OQ1 (OD-063) has both halves."
+        "do": "Run Probe 3's quota half as the hosted example spec:facts.f04-nested-calls-cost-more-than-helpers.probe-3-hosted-function-calls on the one hosted deployment of E-59, once the owner provides what OD-155 names, so that OQ1 (OD-063) has both halves.",
+        "settles": "A run on the hosted deployment in which the helper set of calls adds exactly one function call per parent call between two component sets that add the same number, every seedStatus is complete and no UTC day boundary falls between the first and last reading; otherwise its record says the count is not settled and this row stays open."
       },
       "checkedBy": null,
       "fork": null,
@@ -1653,7 +1654,7 @@
       "provisionalReading": null,
       "blocks": "S5",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, goes against a decision of the doc: [design/specs/decisions/d03-events-only-source-of-next-state.sdp.md:35] says commands load current state and never replay history, and [design/specs/context/journal.sdp.md:45] lets `migrate` read the events since the last baseline when the adapter runs it on load.",
@@ -1662,9 +1663,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "D3 holds on the command path: a migration runs on load only when every step derives the new state from the saved state alone; a history-reading step is written by the sweep alone, and a command or a read on a stream the sweep has not reached is refused as transient (writePaused), so no stream type is paused and no command reads a tail; the restore's journal check inventories awaitingBaseline as pending work, not a finding, and the accepted branch restarts the sweep. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-042",
@@ -1684,7 +1685,7 @@
       "provisionalReading": null,
       "blocks": "S5",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 5: whether a failed check keeps every tenant's writers out with no override, and how often the drill runs, trade availability against safety and a standing operator duty against assurance, with no evidence on which weighs more, and the doc says none of them [design/reviews/consensus-ledger.json:2301]; it stands apart from OD-082, which is the mechanism and names these policies as outside it.",
@@ -1695,9 +1696,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "A failed check keeps the whole deployment closed with no override in the first implementation; the drill runs before every release, its cadence reconsidered on the first drill's measured check times; both are E-42's, marked. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-043",
@@ -1755,13 +1756,13 @@
       "provisionalReading": null,
       "blocks": "L3",
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: the doc says no deployment-wide order token exists [docs/convex-transactional-domain-platform-decisions.md:108] and the commit-timestamp page says one does; the doc against a Convex source resolves nothing without the owner, and D2's reason is the doc's text. Blocks stays L3, where D18's ordered consumer and the history view weigh it.",
       "lean": {
         "do": "Keep D2 and the stream-local order; add the commit timestamp to the fact ledger as a documented fact with a probe on the pinned backend before L3 weighs it for D18 and the history view, and let the owner rule whether D2's reason and the doc's line change.",
-        "restsOn": "The doc: order exists only within a stream, no deployment-wide order token exists, and timestamps, _creationTime and UUID order never prove that a consumer has seen every committed event [docs/convex-transactional-domain-platform-decisions.md:108], carried by D2 and the journal [design/specs/decisions/d02-context-owns-state-and-journal.sdp.md:45; design/specs/context/journal.sdp.md:51]. The Convex page docs.convex.dev/database/advanced/commit-timestamp, read 2026-10-02: 'A commit timestamp represents the time (in nanoseconds) when a mutation commits', 'With an index on db.vars.commitTs ... the timestamp is strictly increasing', 'Mutations execute concurrently before committing, so _creationTime does not necessarily reflect the order in which the mutations committed', and 'it is not possible to schedule a function with the commit timestamp as an argument ... you cannot return the commit timestamp placeholder from a query'. The pinned package, convex 1.46.0, declares db.vars.commitTs as a placeholder that 'resolves at commit to an int64 (bigint) ordered by commit order' and that reading the field back within the writing mutation yields the placeholder [node_modules/convex/dist/esm-types/server/database.d.ts:308-318]. No file under node_modules/convex/dist/esm-types/server/*.d.ts declares getSnapshotTs, which the ledger's finding names, a pointer [design/reviews/consensus-ledger.json:3762]. The doc's rule stays right for _creationTime and recordedAt: recordedAt is Date.now() frozen for the call [design/specs/context/event-envelope.sdp.md:67]. **Judgment.** The engine now documents an order token that costs no counter document and no contended row, which is the cost D2 and Law 11's counter rule were written against; whether a reader can take an upper bound to prove it has seen every committed row is the half the pinned package does not show, so the ledger's claim about a snapshot timestamp is a lead until a page or the package carries it on the pin.",
+        "restsOn": "The doc: order exists only within a stream, no deployment-wide order token exists, and timestamps, _creationTime and UUID order never prove that a consumer has seen every committed event [docs/convex-transactional-domain-platform-decisions.md:108], carried by D2 and the journal [design/specs/decisions/d02-context-owns-state-and-journal.sdp.md:45; design/specs/context/journal.sdp.md:51]. The Convex page docs.convex.dev/database/advanced/commit-timestamp, read 2026-10-02: 'A commit timestamp represents the time (in nanoseconds) when a mutation commits', 'With an index on db.vars.commitTs ... the timestamp is strictly increasing', 'Mutations execute concurrently before committing, so _creationTime does not necessarily reflect the order in which the mutations committed', and 'it is not possible to schedule a function with the commit timestamp as an argument ... you cannot return the commit timestamp placeholder from a query'. The pinned package, convex 1.46.0, declares db.vars.commitTs as a placeholder that 'resolves at commit to an int64 (bigint) ordered by commit order' and that reading the field back within the writing mutation yields the placeholder [node_modules/convex/dist/esm-types/server/database.d.ts:308-318]. No file under node_modules/convex/dist/esm-types/server/*.d.ts declares getSnapshotTs, which the ledger's finding names, a pointer [design/reviews/consensus-ledger.json:3762]. The doc's rule stays right for _creationTime and recordedAt: recordedAt is Date.now() frozen for the call [design/specs/context/event-envelope.sdp.md:67]. **Judgment.** The engine now documents an order token that costs no counter document and no contended row, which is the cost D2 and Law 11's counter rule were written against; whether a reader can take an upper bound to prove it has seen every committed row is the half the pinned package does not show, so the ledger's claim about a snapshot timestamp is a lead until a page or the package carries it on the pin. Probe 8, at the native backend tier on the pinned release precompiled-2026-09-28-5c7cb5b with convex 1.46.0: one transaction's rows share one commit timestamp in the parent and in two components, and later transactions get larger ones [design/specs/facts/f18-commit-timestamps.sdp.md:13,25]; D2 and the journal still say no order token for the whole deployment exists [design/specs/decisions/d02-context-owns-state-and-journal.sdp.md:45; design/specs/context/journal.sdp.md:51], and the reader's upper bound getSnapshotTs() is internal and absent from the public declarations, so nothing uses it [design/specs/facts/f18-commit-timestamps.sdp.md:13].",
         "against": "The do-nothing option holds: nothing built orders across streams, the journal forbids it [design/specs/context/journal.sdp.md:139], and no unit before L3 needs a global order. A commit timestamp inside a component's own tables says nothing about the parent's or another context's commits unless one page says the clock is deployment-wide, which the page read does not say in the sentences quoted; and a value that is a placeholder inside the writing mutation cannot be put in an event's envelope and returned in the same call.",
         "settles": "A fact Spec with the page and the day; a probe on the pinned backend, precompiled-2026-09-28-5c7cb5b with convex 1.46.0: a commitTs field on the events table in a component, ordered across two components and the parent, read back from a query, with what the pinned package offers as the upper bound; then the owner's ruling on D2's text, since the doc wins.",
         "changes": "The owner's: docs line 108 and spec:decisions.d02 (the reason, not the decision), spec:context.journal:51 and :139, spec:decisions.d18 and the history view when L3 weighs it. For the lean alone: one new fact Spec under design/specs/facts/ and the probe plan. Blocks L3.",
@@ -1769,9 +1770,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "D2's premise corrected: Convex documents a commit timestamp that orders committed transactions deployment-wide, which orders transactions and not the events of one and is no consumer protocol by itself; context-owned journals and stream-local order stay; the ordered consumer weighs the token with D18's consumer; F18 says the documented upper bound getSnapshotTs() is absent from the pinned package's public declarations; the doc's line 108 changes by the owner's hand. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-045",
@@ -1833,7 +1834,7 @@
       "provisionalReading": null,
       "blocks": "S3",
       "advisor": "product",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction: the largest order the platform promises an adopter and the targets it holds itself to, and OQ3 is the doc's own question (design/README.md:247); the maximum is also half of OD-123 (domain), which the number ruled here settles for both; the targets have no other row.",
@@ -1843,9 +1844,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-046.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One answer for the largest order: 100 lines is the largest order `PlaceOrder` of the example supports, and the bound its declaration carries. It is the example's promise and no platform limit: a command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings. One document per stream stays the default mapping, with the derived mapping for state that outgrows its budget. The Specs stop calling 100 provisional. The speed targets are set here, before the benchmark, as the doc requires. They are targets for the pinned local backend on the machine of the run; a hosted deployment is another question. When it set them the main thread had seen three single local runs, 51.6, 39.1 and 184.4 ms at 1, 10 and 100 lines, and the record says so. Latency without contention, the execution time of the top-level mutation as the backend's log reports it, over at least 30 accepted commands per size after 5 discarded: median at most 100 ms at 1 line, 100 ms at 10 lines and 400 ms at 100 lines, and 95th percentile at most 200, 200 and 800 ms. Throughput without contention: 8 callers at once, each placing ten-line orders on stock no other caller touches, complete at least 20 orders a second over at least 10 seconds, with the local backend's write cap of 4 MiB a second stated beside the number. Contention, N commands at once on one stock item with stock for one: at N of 2 and 8 every command reaches a business outcome, one applied and the rest rejected for short stock, and the engine fails none after its bounded retries; at N of 32 the same count is reported, and a command the engine failed is a recorded cost and no failure of the experiment, because the caller repeats it under the same request key. A target that is missed is reported as not held with its number. No target is changed after the run. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-047",
@@ -1863,16 +1864,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, said in public: the paths are in a public repository's history, which an edit does not take back, and STATE.md:263 says the section is the owner's; nearer the owner when unsure, since the edit itself is layout.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-047.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The two references in `AGENTS.md` under \"On the owner's machine\" stay. They are paths and hold no content of the files. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-048",
@@ -1890,16 +1891,16 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, a licence; docs/modern-ts.md:215 lists LICENSE under files and the root holds no such file, and package.json has no files field, so a publish today ships none; the lens records what a licence text says and leans on none.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-048.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "Apache-2.0, for its explicit contributor patent grant: LICENSE at the root and license in package.json; publication stays a separate decision. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-049",
@@ -2229,23 +2230,23 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "convex",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3: which Convex mechanism drives a backfill batch, settled by a probe and taken back by an edit [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:22; design/README.md:219].",
       "lean": {
-        "do": "Run Probe 6 in S4 before the rebuild is built on the component, and until it passes keep E-40's split: @convex-dev/migrations for parent-table batches and a self-scheduled internal mutation for context-enumerated ones.",
-        "restsOn": "F17 is assumed: the component's page states batches with saved progress and resume, and not batch size or a race with a live command [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:13,29]. Probe 6 must show a backfill batch racing a live command under optimistic concurrency, resume after interruption, and the component driving a batch whose source is a context's enumeration [design/specs/facts/probe-plan.sdp.md:63; design/specs/application/rebuild.sdp.md:57]. E-40 already carries the split until Probe 6 shows the component can [design/README.md:219]. Mutations are serializable under optimistic concurrency, the assumption the race rests on [design/specs/context/persistence-adapter.sdp.md:38]. **Judgment.** The component buys checkpointing and resume that a generation row and a self-scheduled mutation can also keep; a mechanism that restates what a scheduled mutation gives needs the probe to earn its dependency.",
-        "against": "The do-nothing option is no component at all: one self-scheduled internal mutation for every batch, no new dependency and one driver instead of two; the leads name two checkpoint owners for migrations-driven batches as a hazard [design/STATE.md:276, a pointer]. If Probe 6 passes, the split costs a second driver for nothing.",
-        "settles": "Probe 6 on the native backend at the pinned release, precompiled-2026-09-28-5c7cb5b with convex 1.46.0, in S4: a batch racing a live command on one read-model row, interruption and resume, and a batch over a context's enumeration, recorded as a run record and on F17.",
-        "changes": "spec:facts.f17-migrations-fits-generation-backfill (status), spec:facts.probe-plan, spec:application.rebuild, spec:decisions.d09-rebuild-online-by-default; S4. The alternative, no component, edits spec:application.rebuild and the E-40 row and removes a dependency.",
-        "ifWrong": "If the component is kept and does not fit, the parent-table driver is swapped for the self-scheduled one, an edit to one Spec and one driver; the cursor and the batch bound are the design's numbers, not the component's [design/README.md:219]."
+        "do": "Close on Probe 6's result: the rebuild drives every batch, backfill, verify and purge, with its own self-scheduled internal mutation, uses `@convex-dev/migrations` for nothing, keeps the progress row as the one checkpoint, and keeps the component pinned as a dev dependency for the fixture's probe only.",
+        "restsOn": "Lean of the domain lens, under the owner's one-advisor word of 2026-10-03, on a row whose advisor is `convex`. Probe 6 ran at the native backend tier on `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0, `convex-helpers` 0.1.124 and `@convex-dev/migrations` 0.3.6 [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:13], and F17 is probed [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:11]. On those pins the component reaches a context's rows only through a parent mutation written by hand against a contract its README does not document and the compiled tier needs a cast for, its status and the generation's state are two vocabularies, and a failure past the read limit leaves no error on its row [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:21,44,45,49]. The Specs already take the consequence: every batch is driven by a self-scheduled internal mutation under one batch contract and the rebuild uses the component for nothing [design/specs/application/rebuild.sdp.md:58,59,86; design/specs/decisions/d09-rebuild-online-by-default.sdp.md:42]. The round 2 close records the pin as a dev dependency for the fixture's probe only [design/STATE.md:38, a pointer]. **Judgment.** The earlier lean kept a split of two drivers \"until it passes\"; the probe did not pass the component, so that condition was not met but replaced: the split is gone and one driver remains, the do-nothing option the earlier `against` named. Nothing in this row changes a Spec: the ruling records what the Specs say.",
+        "against": "**Judgment.** The component gives checkpointing, resume and a status for free where it fits, and a later release might fit; the probe shows 0.3.6 on the pinned backend and nothing about a later one. The cost of the Spec's choice is that the platform owns its batch driver and its stall answer, which is `abortGeneration` and a new `startGeneration` [design/specs/application/rebuild.sdp.md:144].",
+        "settles": "Settled by Probe 6 at the native backend tier on the pins named; what the six examples do not run, hosted quotas, sustained contention, automatic stall detection, timeout and retry exhaustion [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:31,49], stays open on F17 and is not this row's.",
+        "changes": "No Spec: `spec:application.rebuild`, `spec:decisions.d09-rebuild-online-by-default` and `spec:facts.f17-migrations-fits-generation-backfill` already carry the ruling. The register row alone. The alternative, a driver on a later release of the component, would edit `spec:application.rebuild` at its E-40 question and `fnBackfillBatch` and add a dependency.",
+        "ifWrong": "A later release that fits is a new fact with its own probe; the batch contract is one internal mutation per batch [design/specs/application/rebuild.sdp.md:111,114], so a driver swap is an edit to the rebuild Spec and the batch functions, and the cursor and the bound are the design's numbers either way [design/specs/application/rebuild.sdp.md:88,146]."
       },
-      "checkedBy": "gpt-6.1-sol, medium, 2026-10-02: every checked claim held",
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:convex",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as the rebuild Specs build it, every batch its own self-scheduled internal mutation, @convex-dev/migrations used for nothing, the progress row the one checkpoint"
     },
     {
       "id": "OD-058",
@@ -2473,19 +2474,20 @@
       "provisionalReading": "OQ1: whether a trivial context with no invariants of its own may be plain tables in the parent behind lint rules instead of a component is decided after the experiment measures component call cost; the design assumes a component per context everywhere (OQ1, D2)",
       "blocks": null,
       "advisor": "convex",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: OQ1 is the doc's open question and D2 assumes a component per context [design/specs/context/context-component.sdp.md:49; design/PLAN.md:689]; answering it edits the doc.",
       "lean": {
         "do": "Keep a component per context: Probe 3 read a component call at about 2 ms over a helper call on a local backend and no read budget is shown broken [design/specs/context/context-component.sdp.md:41].",
-        "settles": "S3's measurement of one component call on the native backend, with Probe 3's quota half on a hosted deployment (OD-036), then the owner's choice."
+        "settles": "S3's measurement of one component call on the native backend, with Probe 3's quota half on a hosted deployment (OD-036), then the owner's choice.",
+        "restsOn": "Measured at the native backend tier on the pinned local backend, with other runs on the machine: a fixture component call cost 5.76 ms and 3.56 ms over a helper call in two readings of `npm run measure:place-order`, and F19's Probe 11 read 7.6 to 15.5 ms per empty component call; the backend's function log does not expose a component call inside a mutation. The quiet-machine reading is taken with `npm run measure:place-order -- --quiet`."
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ1 answered: one component per context; reopened only for a measured workload that misses an agreed target or a hosted usage reading above an agreed share; Probe 3's quota half stays a separate measurement (OD-036). Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-064",
@@ -2528,19 +2530,20 @@
       "provisionalReading": "OQ3: the largest order `PlaceOrder` supports is a product decision; the experiment measures with a provisional maximum of 100 lines and reports the numbers per line so the owner can choose (OQ3)",
       "blocks": "S3",
       "advisor": "convex",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction: the doc calls the largest order a product decision [design/specs/application/first-experiment.sdp.md:60,109].",
       "lean": {
         "do": "Measure at the provisional 100 and hand the owner the per-line counts, with the design's own bound of 256 streams per call at the 16 KiB stock budget as the ceiling the owner chooses under [design/specs/application/first-experiment.sdp.md:112; design/README.md:204].",
-        "settles": "S3's measurement at 1, 10 and 100 lines on the native backend, reported per line, then the owner's choice; the owner may set it before the run, which STATE.md asks for, a pointer [design/STATE.md:139]."
+        "settles": "S3's measurement at 1, 10 and 100 lines on the native backend, reported per line, then the owner's choice; the owner may set it before the run, which STATE.md asks for, a pointer [design/STATE.md:139].",
+        "restsOn": "Measured at the native backend tier on the pinned local backend: a PlaceOrder of 1, 10 and 100 lines read 8, 35 and 305 documents and wrote 6, 24 and 204, reading 2,943, 14,454 and 129,564 bytes and writing 4,271, 18,410 and 159,800; the worst contention cell, 100 lines at 32 callers on one stock item, read 9,915 documents and 4,195,493 bytes for one applied order."
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-064.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One answer for the largest order: 100 lines is the largest order `PlaceOrder` of the example supports, and the bound its declaration carries. It is the example's promise and no platform limit: a command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings. One document per stream stays the default mapping, with the derived mapping for state that outgrows its budget. The Specs stop calling 100 provisional. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-065",
@@ -2613,7 +2616,7 @@
       "reason": "Rule 3: what a command reads and whether the command path changes for it, settled by a measurement on the native backend [design/specs/application/first-experiment.sdp.md:63].",
       "lean": {
         "do": "Attribute the 2N reads on the native backend before any change to the command path, starting with the journal's reads per stream.",
-        "restsOn": "The design expected N + 6 reads and the pinned backend counted 3N + 5 at N of 1, 10 and 100 [design/specs/application/first-experiment.sdp.md:110-111]. As written, load reads the stream row through by_identity [src/context/journal.ts:82-88] and append reads up to two events of the stream's range from the expected version [src/context/journal.ts:159-168], so the code reads up to three documents per stream before it writes. **Judgment.** Those three per stream match the 3N, if the engine counts two events at a stream with one; which it counts is what the run attributes. The range read is also what serializes concurrent appends [src/context/journal.ts:157-158], so a change there changes contention, which is why attribution comes first.",
+        "restsOn": "The design expected N + 6 reads and the pinned backend counted 3N + 5 at N of 1, 10 and 100 [design/specs/application/first-experiment.sdp.md:110-111]. As written, load reads the stream row through by_identity [src/context/journal.ts:82-88] and append reads up to two events of the stream's range from the expected version [src/context/journal.ts:159-168], so the code reads up to three documents per stream before it writes. **Judgment.** Those three per stream match the 3N, if the engine counts two events at a stream with one; which it counts is what the run attributes. The range read is also what serializes concurrent appends [src/context/journal.ts:157-158], so a change there changes contention, which is why attribution comes first. Measured at the native backend tier on the pinned local backend: on the ten-line order the journal tail reads are 10 documents and 6,010 bytes, 29 percent of the 35 documents read.",
         "against": "A per-stream read set is the price of serializing appends and of the row-and-journal agreement check; removing a read to meet an expected count trades a check for a number nobody set as a target. The expected N + 6 is a design guess with no cited source.",
         "settles": "S3's attribution run on the native backend, the same PlaceOrder under controlled changes as the review asked, a pointer [design/STATE.md:157], with usageStats recorded per run.",
         "changes": "The limitExpectedDocuments and observedPlaceOrderDocuments entries of spec:application.first-experiment; if a read goes, spec:context.journal and src/context/journal.ts. S3.",
@@ -2706,7 +2709,7 @@
       "provisionalReading": "Extension E-8: the doc names a generation registry, a marker and a gate without their shapes, and says to keep the old generation for a rollback period without saying whether live commands keep writing it; the option taken here is the `generations` and `projectionMarkers` tables below with seven states, a rollback period of 7 days, one building generation per read model at a time, and a retired generation that is kept but not written, so that a rollback reopens it as `verifying` and one verify pass repairs the rows changed since the switch before it is active again; the other reading is write-through, where live commands keep writing the retired generation for the whole period so that rollback is one write, at the cost of a third point read and write per read model per command for 7 days after every cutover; the cheaper steady path is taken and the owner rules whether the product needs instant rollback (E-8, D9, Sc L2-5)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, trades one value for another with no evidence which weighs more: a third point read and write per read model per command for 7 days against an instant rollback, and whether the product needs instant rollback is product direction [design/specs/application/generation-registry.sdp.md:33]. The tables, the seven states and the period are mechanism and go in the fork as the lean.",
@@ -2715,9 +2718,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-068.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "A retired generation is not written. Rollback reopens it as `verifying`, runs one verify pass that repairs what the intervening writes changed, and then switches. The switch is one write in both directions; the Specs stop promising a rollback of one write, and say rollback is a verify pass and then a switch of one write. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-069",
@@ -2744,7 +2747,7 @@
       "provisionalReading": "Extension E-8, reach of a generation: the doc says nothing about tenants and rebuild; the option taken here is one generation per read model spanning every tenant, so the registry has no tenant dimension, one row is active for all tenants and the batches iterate the tenant list; the other reading is one registry per read model and tenant, keyed by `readModel`, `tenantId` and `generation`, which lets one tenant rebuild while another keeps reading and lets a write pause close one tenant at a time, at the cost of one generation row, switch, rollback and purge per tenant, a projection-version rollout that is one generation per tenant, and a third index field on every registry read; the deployment-wide reading is taken because a generation is a build of the projection's code and the owner rules whether per-tenant rebuilds are a product need; a consequence the owner confirms with it is that the `generations` table is operational data whose scope is the whole deployment, not tenant data, so its two indexes `by_read_model` and `by_read_model_state` lead with the read model name rather than `tenantId`, a recorded deviation from Law 11's index rule and the review rubric's item 25, of the same kind the obligation module records under E-57, while the marker table, which is tenant data, leads with the tenant (E-8, D9, D11, Law 11, E-57)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, goes against a law of the doc and is product direction: the registry's two indexes lead with the read model and not the tenant, a recorded deviation from Law 11's index rule, and whether a per-tenant rebuild is a product need is the owner's [design/specs/application/generation-registry.sdp.md:34]. The fork gives the deployment-wide generation as the lean.",
@@ -2753,9 +2756,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-069.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One generation per read model spans every tenant. The generation registry is operational data of the deployment and its indexes lead with the read model. Every table that holds tenant data, the read-model rows and the markers among them, still leads with the tenant. The deviation from Law 11's index rule is recorded where it is today, as confirmed. A rebuild for one tenant is not offered. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-070",
@@ -2817,18 +2820,23 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, the shape of a table and which row holds a cursor; the doc binds batching to the component and fixes no checkpoint [design/specs/application/generation-registry.sdp.md:37]; an edit to one Spec and one file takes it back. Doubt: the lean goes against the built reading of [design/specs/application/generation-registry.sdp.md:47] on a contention judgment that only the native tier shows, and S4's guidance [design/STATE.md:160], a pointer, asks for progress away from rows every command reads.",
       "lean": {
-        "do": "Move the backfill and verify cursors and the counts to a progress row of their own that only the batch reads, keep state, projection version and fence on the generation row every command reads through `by_read_model_state` [design/specs/application/generation-registry.sdp.md:67], and treat the migrations component's own state as derived from the progress row."
+        "do": "Keep the two rows as the Specs pin them: the generation row carries state, projection version, fence and who started and last changed it, and a batch patches it only in the mutation that ends its pass; the progress row carries the cursor, the batch size and the counts and is the one checkpoint of every batch; no state of the migrations component exists beside them.",
+        "restsOn": "The E-40 question takes the progress row because a batch that wrote its checkpoint on the row every command reads would re-run every command in flight once per batch [design/specs/application/generation-registry.sdp.md:38]; the generation row carries nothing a batch writes on its healthy path except the state the batch ending a pass sets, and the progress row is written in the same mutation as the rows [design/specs/application/generation-registry.sdp.md:53,74]; `generationsToWrite` and `activeGeneration` read the generation row through `by_read_model_state` and never the progress row [design/specs/application/generation-registry.sdp.md:82,83,94]; a build costs the commands one re-run at the end of the backfill, one at the end of the verify pass and one per operator entry [design/specs/application/generation-registry.sdp.md:86]; the rebuild uses `@convex-dev/migrations` for nothing [design/specs/application/rebuild.sdp.md:86], so the earlier lean's clause that derived the component's state from the progress row names nothing. **Judgment.** One checkpoint with one owner is the rule of my lens: the progress row is the source of where a pass is, the generation row the source of what a generation is, and neither is computed a second way.",
+        "against": "**Judgment.** Two rows cost a second table, a second read per batch and a second write at the end of a pass; and whether a batch's checkpoint re-runs no command is shown only at the native tier, since `convex-test` orders nothing concurrently. The ledger still asks for a contention run against a run with no rebuild [design/reviews/consensus-ledger.json:3946].",
+        "settles": "The `convex-test` obligation that the generation row is untouched by a batch except at the end of a pass (`design-s4-paper.md:104` in the round 2 folder) and the native L2-5 example's required assertions that no command failed for reading the registry while batches checkpointed and that the generation rows changed only at the start, the end of each pass and each operator entry [design/specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md:36]; neither has run. The comparison run is a later measurement.",
+        "changes": "No Spec: `spec:application.generation-registry` `tableGenerations`, `tableGenerationProgress` and `transitionCost` and `spec:application.rebuild` `step1`, `step6` and `occRace` carry it. The register row alone. The alternative, one row, would edit the same entries and the ledger's checkpoint finding.",
+        "ifWrong": "If the registry read set of a command still meets a batch's write, each pass end re-runs commands once, which `transitionCost` already states [design/specs/application/generation-registry.sdp.md:86]; a meeting beyond that would be found by a contention run that records each refused execution's `occInfo` tables as the measurement does [design/specs/application/first-experiment.sdp.md:114], and an edit to the index use or the row split takes it back."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as built, the generation row patched by a batch only at a pass end and the progress row the checkpoint; an interrupt that meets a batch may rerun on the progress row, counted beside the generations reruns"
     },
     {
       "id": "OD-072",
@@ -2983,18 +2991,23 @@
       "provisionalReading": "The option taken here: a per-entity read model declared as a `ReadModel<D, Row>` with `name`, `table`, `rowBudgetBytes` and its `Projection<D, Row>`, which holds `version`, `keyOf` and `project` alone, rows with `tenantId`, `generation`, `key`, `projectionVersion` and `sourceVersions`, one `applyProjection` helper with a mode per caller that writes each generation by its role, active or building, for an `AggregateProjection<D>` an aggregate row with `value` and `entityCount` and no `sourceVersions`, because the markers carry them, written by `applyAggregate` under the marker's version compare with the mode ignored, and for a history-dependent view a `HistoryProjection<Row>` that folds events into the prior row, fed on the live path by the events the operation appended, which the adapter's `streams` entry now carries, and on the backfill by the context's `history` pages under the write pause, with `sourceVersions` recording the highest version folded per stream so that an event is never folded twice; a cross-context or cross-stream row is built by one projection bound once per source stream type; the owner confirms the three forms and has not ruled on the split of a per-entity read model into `ReadModel` and `Projection`, on the write by generation role or on the row measured against its budget at every write; no check ties a generation to the projection version it records, and how a command writes two projection versions at once is the next question (E-9, E-23, E-24, D8, D9)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, signatures and the shape of a row: the doc gives no signature, row shape or input for the three forms [design/specs/application/projection-contract.sdp.md:33]; an edit to one Spec and the read-model files takes it back. The order in which the forms are bound is the main thread's [design/STATE.md:160], a pointer.",
       "lean": {
-        "do": "Keep the `ReadModel` and `Projection` split, the write by generation role and the row measured against its budget at every write, and bind the aggregate and history forms only at a view that needs them."
+        "do": "Keep the per-entity form as the Specs pin it: a `ReadModel` with its `projections`, the latest first, and a `Projection` of `version`, `keyOf` and `project` alone; `applyProjection` writing each generation by its role, `active`, `building` or `verifying`, with the projection whose version the generation records; and every row measured against `rowBudgetBytes` at every write. The history form stays as declared and bound for the order allocation history, whose build is not 3b's, and the aggregate form stays a signature with no read model of the example bound to it.",
+        "restsOn": "The E-9 question names the three forms and the three points the owner has not ruled, the split, the write by role and the measured row [design/specs/application/projection-contract.sdp.md:33]; the declaration and the helper are pinned [design/specs/application/projection-contract.sdp.md:47,66,67,68]; the write rule by mode and role is pinned, live-updated in the role `building` skipping a missing row because the backfill has not reached it, and a missing row in `verifying` meaning a subject that projected to none [design/specs/application/projection-contract.sdp.md:50,69,92; design/specs/application/rebuild.sdp.md:69,70]; the row is measured with `getConvexSize` at every write [design/specs/application/projection-contract.sdp.md:51]. The history form is declared as `orderAllocationHistory` [design/specs/application/projection-contract.sdp.md:78] and bound once per source stream type in the example [design/specs/application/orders-inventory-example.sdp.md:69], and 3b does not build the paused path (`design-s4-paper.md:107` in the round 2 folder); the aggregate form's table is given as a shape and not as a read model the first experiment builds [design/specs/application/projection-contract.sdp.md:85], and the online rebuild is pinned for a per-entity read model with one source stream type while an aggregate gets a rebuild when a view needs it [design/specs/application/rebuild.sdp.md:61]. **Judgment.** The roles exist because the building generation has rows the backfill has not reached and the verifying one does not; one rule for both would read a missing row two ways.",
+        "against": "**Judgment.** The write rule varies by mode, by role and by the row's state, with the `null` candidate beside them, so its pure table is wide (`design-s4-paper.md:103,144` in the round 2 folder), where a rule without roles would be narrower; it is not taken because it cannot tell a row the backfill has not written from a subject that projects to none [design/specs/application/rebuild.sdp.md:70]. Measuring every row at every write costs a `getConvexSize` per write.",
+        "settles": "The pure write-rule table of mode by role by row state, with the `null` row (`design-s4-paper.md:103,144`), and the `convex-test` obligations of a live create and a live update against `building` and against `verifying` and of two projection versions at once (`design-s4-paper.md:104`), none yet run; the owner's confirmation of the three forms, which the E-9 question asks for, stays the owner's and this ruling does not take it.",
+        "changes": "No Spec: `spec:application.projection-contract` `typeReadModel`, `typeProjection`, `typeWritableGeneration`, `step1` to `step4` and `limitRowSize` carry the per-entity rules, and `tableOrderAllocationHistory` and the example's binding carry the history form. The register row alone. The alternative, one write rule without roles, would edit `step3` and the rebuild's rule on a missing row in `building`.",
+        "ifWrong": "A signature change to `Projection` or `ReadModel` is an edit to the projection contract and the compositions' read-model files; every row carries its `projectionVersion` [design/specs/application/projection-contract.sdp.md:44] and every version writes rows the one table's validator accepts [design/specs/application/projection-contract.sdp.md:47], so stored rows keep their meaning across it; a role added or removed changes `step3` and the pure table."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as built, a ReadModel with its projections, the latest first, and applyProjection writing each generation by its role and its own projection version"
     },
     {
       "id": "OD-076",
@@ -3208,19 +3221,23 @@
       "provisionalReading": "The option taken here: a batch is one mutation with one cursor and a bound of at most 100 entities, capped twice, by the read model's declared `rowBudgetBytes` so that the parent's point reads and writes stay under 4 MiB, and by the context's byte-derived `list` page bound, which is 16 items at the default 256 KiB stream budget, a design choice under F13 that is a field of the generation row and that `resumeGeneration` lowers down to 1 when a generation stalls on optimistic-concurrency conflicts over a hot key range, because a mutation that loses the race never commits and cannot count its own losses; the migrations component drives batches whose source is a parent table, and a self-scheduled internal mutation with the same batch contract drives batches whose source is a context's enumeration until Probe 6 shows the component can; Probe 6 also measures the contention and decides whether an automatic stall check earns its function (E-40, E-24, E-9, F17, F13, F1)",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Rule 3, a bound and its number and which mechanism drives a batch: the doc gives no batch size [design/specs/application/rebuild.sdp.md:58], and the Spec itself leaves the component's reach to Probe 6, so a probe comes first.",
       "lean": {
-        "do": "Keep the batch of at most 100 entities capped by the row budget and the context's page bound, and the self-scheduled mutation for context-sourced batches until Probe 6 shows the component can drive them.",
-        "settles": "Probe 6 at the native tier: whether `@convex-dev/migrations` can drive a batch whose source is a context's enumeration, and the contention measured over a hot key range."
+        "do": "Keep the batch bound as the Specs pin it: at most `rebuildBatchCeiling`, 100 entities capped by the row budget, and never more than the context's `list` page admits, a field of the progress row that `startGeneration` sets and nothing changes after, so every pass and every resumed pass runs at it; every batch, over a context's enumeration or a parent table, driven by the platform's own self-scheduled internal mutation; a stalled pass answered by `abortGeneration` and a new `startGeneration` with a smaller size, and no automatic stall check.",
+        "restsOn": "The bound and its two caps [design/specs/application/rebuild.sdp.md:88,116,146], the purge cap [design/specs/application/rebuild.sdp.md:147], the one driver for every batch [design/specs/application/rebuild.sdp.md:59,86], `resumeGeneration` taking no batch size [design/specs/application/rebuild.sdp.md:132; design/specs/application/generation-registry.sdp.md:46] and the stall answer [design/specs/application/rebuild.sdp.md:144]; the main thread's ruling 9 after the paper's check fixed the resumed size (`design-s4-paper.md:150` in the round 2 folder), and the paper excludes an automatic stall check from 3b (`design-s4-paper.md:107`). Probe 6 settled the driver: the component walks only the tables of the component it is defined in [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:21], so the row's provisional reading, which had the component drive parent-table batches and `resumeGeneration` lower the size, is superseded on both points. **Judgment.** A size that never changes makes the progress row the one source of a pass's shape and the batch count a function of the data, and a stall that needs a smaller size is a new generation, not a mutated one.",
+        "against": "**Judgment.** A fixed size means a hot key range forces an abort and a whole new backfill rather than a slower continuation of the same generation, and the numbers 100, 16 and `limitPurgeBatch` are design choices under F13 that no run has pressed. Sustained contention over a hot range is not run [design/specs/facts/f17-migrations-fits-generation-backfill.sdp.md:31].",
+        "settles": "Probe 6 settled the driver at the native backend tier; the pure test of `batchSizeFor` at 0, -1, 1.5, above the ceiling and at both row budgets (`design-s4-paper.md:103`) settles the bound's arithmetic once run; the native L2-5 example specifies generation 2 at batch size 1 [design/specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md:33] and has not run; contention over a hot range is a later measurement on the quiet machine.",
+        "changes": "No Spec: `spec:application.rebuild` `fnBatchSizeFor`, `limitBatchSize`, `limitPurgeBatch`, `stallSignal` and the E-40 question carry it. The register row alone; its `provisionalReading` text is stale and the ruling supersedes it. The alternative, a size an operator lowers on resume, would edit `fnResumeChain`, `fnResumeGeneration` and the transition Contract bullet of the registry.",
+        "ifWrong": "The ceiling and the caps are constants an edit changes [design/specs/application/rebuild.sdp.md:146,147]; a resumed size would be one optional argument on `resumeGeneration` and one patch of the progress row, and no stored row changes meaning."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:domain",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the advisor's checked lean, which the owner agreed to (\"I agree with all recommendations\", rulings 1 of round 3, Q8): the lean as built, the batch size the read model's by batchSizeFor and a field of the progress row, the context's list page bounding a batch's bytes and not its size"
     },
     {
       "id": "OD-081",
@@ -3250,7 +3267,8 @@
       "reason": "Delegated test: which mechanism the restore needs for the contexts' tables turns on a probed fact; owner test 1 would hold only if the probe showed a snapshot that leaves component tables behind, which would set F12 against the doc; the probe's own design is the convex advisor's.",
       "lean": {
         "do": "Keep the restore workflow's reading that the snapshot replaces the components' table data, shown by the drill before it is relied on.",
-        "settles": "Probe 7 on a native backend and the Layer 2 drill on the Orders and Inventory application, as [design/specs/application/restore.sdp.md:55] and [design/specs/application/restore.sdp.md:75] name them."
+        "settles": "Probe 7 on a native backend and the Layer 2 drill on the Orders and Inventory application, as [design/specs/application/restore.sdp.md:55] and [design/specs/application/restore.sdp.md:75] name them.",
+        "restsOn": "Probe 7 result, native backend tier on the pinned local backend: a CLI replacement into a fresh backend restores the parent, Orders and Inventory documents with their ids and creation times and leaves every `_scheduled_functions` table empty, and a stored scheduler id still validates while `system.get` returns null; a replacement in place replaces later changes with the exported documents and keeps every scheduler row, including ones created after the export, and a kept pending mutation still runs against the restored data. The full Layer 2 restore drill was not run."
       },
       "checkedBy": null,
       "fork": null,
@@ -3838,7 +3856,7 @@
       "lean": {
         "do": "Keep the 7-day default retry window, expiry checked at lookup, the per-tenant sweep of at most 1,000, the 256-byte key and tenant bounds and the 1,000 affected refs."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: every checked claim held, 6 of 6, at idempotency-and-receipts.sdp.md:69,83,99,100,101,102 (job-mus2kbol-a1d74933, plant caught); the lean has only its do, so it waits for its advisor's lean in full before it is applied",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -4474,7 +4492,7 @@
       "provisionalReading": null,
       "blocks": null,
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1: it rules on a term, whether the language gains a word for the function that refused or the field is renamed [design/specs/context/queries.sdp.md:37].",
@@ -4483,9 +4501,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The field is entry on the wire, one validator and one word; the rename of the code follows in the language lane. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-111",
@@ -4668,20 +4686,20 @@
       "provisionalReading": null,
       "blocks": "S5",
       "advisor": "operator",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 1: if Probe 7 lets the do-nothing option stand for the durable profile, D13's chosen option changes, which edits the doc, and [design/specs/obligations/do-nothing-check.sdp.md:45] has the owner restate readiness after the probe.",
       "lean": {
         "do": "Keep the obligation module as the durable profile's chosen option, with Probe 7 confirming F12 and F16 rather than reopening D13.",
-        "restsOn": "[design/specs/obligations/do-nothing-check.sdp.md:38] fails the do-nothing option on Sc L3-4, Sc L3-7 and Sc L3-8 from [design/specs/facts/f12-backups-exclude-pending-scheduled-functions.sdp.md:11], documented, and [design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:11], rechecked; what the probe adds is what a restore leaves of the scheduler, Workpool and Workflow [design/specs/obligations/do-nothing-check.sdp.md:33]. **Judgment.** A system table that forgets a run after 7 days gives the person on call no exit and no record, whatever the probe shows about restore.",
+        "restsOn": "[design/specs/obligations/do-nothing-check.sdp.md:38] fails the do-nothing option on Sc L3-4, Sc L3-7 and Sc L3-8 from [design/specs/facts/f12-backups-exclude-pending-scheduled-functions.sdp.md:11], documented, and [design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:11], rechecked; what the probe adds is what a restore leaves of the scheduler, Workpool and Workflow [design/specs/obligations/do-nothing-check.sdp.md:33]. **Judgment.** A system table that forgets a run after 7 days gives the person on call no exit and no record, whatever the probe shows about restore. Probe 7 result, native backend tier on the pinned local backend: a CLI replacement into a fresh backend restores the parent, Orders and Inventory documents with their ids and creation times and leaves every `_scheduled_functions` table empty, and a stored scheduler id still validates while `system.get` returns null; a replacement in place replaces later changes with the exported documents and keeps every scheduler row, including ones created after the export, and a kept pending mutation still runs against the restored data. A plain scheduled mutation performs the local reaction and a scan for failed runs works until the read boundary observed at 4,092 total rows; seven-day expiry, hosted dashboard restore, Workpool and Workflow are not run.",
         "settles": "Probe 7 on a native backend, then the owner's word on D13."
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "D13 stands: obligations stay the durable profile's choice, built at Layer 3's trigger; Probe 7's facts are recorded, and the do-nothing option fails Sc L3-4, L3-7 and L3-8. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-115",
@@ -4966,7 +4984,7 @@
       "reason": "Rule 3: a fact's status and its probe, settled by a probe [design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:21]; the ruling the probe serves, D13's do-nothing check, is the operator's by the register.",
       "lean": {
         "do": "Run Probe 7's confirmation half in S5, the states and the 7-day retention of _scheduled_functions on the native backend, and its restore half before L3; the ruling on D13's do-nothing check is the operator's.",
-        "restsOn": "F16 is rechecked: the states and the 7-day retention are documented on S6, read 2026-09-30 [design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:13,28]; the probe confirms them and shows what a restore leaves of scheduler, Workpool and Workflow state [design/specs/facts/probe-plan.sdp.md:64,73]; the backup page says nothing about component data or the scheduler [design/specs/facts/probe-plan.sdp.md:23]. **Judgment.** The confirmation half is cheap and local; the restore half needs a backup and a restore, and what a local backend cannot answer stays open on the fact by E-16's rule [design/specs/facts/probe-plan.sdp.md:57].",
+        "restsOn": "F16 is rechecked: the states and the 7-day retention are documented on S6, read 2026-09-30 [design/specs/facts/f16-scheduled-functions-table-shows-failed-runs.sdp.md:13,28]; the probe confirms them and shows what a restore leaves of scheduler, Workpool and Workflow state [design/specs/facts/probe-plan.sdp.md:64,73]; the backup page says nothing about component data or the scheduler [design/specs/facts/probe-plan.sdp.md:23]. **Judgment.** The confirmation half is cheap and local; the restore half needs a backup and a restore, and what a local backend cannot answer stays open on the fact by E-16's rule [design/specs/facts/probe-plan.sdp.md:57]. Probe 7 result, native backend tier on the pinned local backend: a CLI replacement into a fresh backend restores the parent, Orders and Inventory documents with their ids and creation times and leaves every `_scheduled_functions` table empty, and a stored scheduler id still validates while `system.get` returns null; a replacement in place replaces later changes with the exported documents and keeps every scheduler row, including ones created after the export, and a kept pending mutation still runs against the restored data. All five scheduler states are readable over a short interval, and the scheduled arguments of one mutation are refused above 16,777,216 bytes of Convex value bytes; seven-day expiry, hosted dashboard restore, Workpool and Workflow are not run.",
         "against": "A probe of documented behavior restates a page; the do-nothing option trusts S6 and spends the probe on the restore half only, the half D13 and D19 turn on.",
         "settles": "Probe 7 on the native backend at the pinned release, in S5 for the scheduler half and before L3 for the restore half. It should also read whether a v.id of _scheduled_functions validates after a restore, a lead, a pointer [design/STATE.md:293], and settle the two pages that disagree on a scheduled argument's size, 8 MB against 16 MiB, a pointer [design/STATE.md:325] against F13's 4 MiB per scheduled argument set [design/specs/facts/f13-transactions-have-limits.sdp.md:36].",
         "changes": "spec:facts.f16-scheduled-functions-table-shows-failed-runs, spec:facts.probe-plan, spec:obligations.obligation-module; S5 and L3. The alternative, no probe, edits the probe plan alone.",
@@ -5092,7 +5110,7 @@
       "provisionalReading": "OQ3: one document per stream as the default, and the largest order the placement command supports, are product decisions; the design assumes one document and leaves the maximum lines as a placeholder in the first experiment (OQ3, D10)",
       "blocks": "S3",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, product direction and an open question of the doc: the largest order the placement command supports is OQ3 [design/specs/kernel/state-document-mapping.sdp.md:28], and S3 needs it before its benchmarks [design/STATE.md:139], a pointer; the 1, 10 and 100-line measurement already exists [design/STATE.md:158], a pointer.",
@@ -5101,9 +5119,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-123.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "One answer for the largest order: 100 lines is the largest order `PlaceOrder` of the example supports, and the bound its declaration carries. It is the example's promise and no platform limit: a command's declaration carries its own bound, chosen by its author under the adapter's stream and byte ceilings. One document per stream stays the default mapping, with the derived mapping for state that outgrows its budget. The Specs stop calling 100 provisional. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-124",
@@ -5610,7 +5628,7 @@
         "changes": "For the lean: nothing in `spec:operations.baseline-operations`; the pipeline's step 10 gains `writeAudit` for declarations whose `audit` field is set [design/specs/operations/baseline-operations.sdp.md:66], which `spec:command.command-declaration` must carry. For the alternative, audit as events in a context or one table per kind: [design/specs/operations/baseline-operations.sdp.md:71] to [design/specs/operations/baseline-operations.sdp.md:83] and the restore's receipt check that reads audit by operation [design/specs/operations/baseline-operations.sdp.md:79].",
         "ifWrong": "A wrong table shape is an edit and a migration of an operational table, never of history; a wrong failure rule is found by the fault-injection scenario before production data; **Judgment.** a missing bound on `details` costs a failed command that the operator finds by the diagnostic record's error code, and a bound is one edit."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: 9 of 19 claims held; the do holds at corrected lines (baseline-operations.sdp.md:72,81,83,85,88,93,94,95,96; d19:40,43), but the against's unbounded details field does not exist (the audit schema at :78 has none) and 'nothing is built' is stale (src/audit/write.ts, tests/simulator/audit.test.ts); the lean needs its advisor's correction before it is applied (job-mus2kbol-a1d74933, plant caught)",
       "fork": null,
       "decidedBy": null,
       "decidedOn": null,
@@ -5726,7 +5744,7 @@
       "provisionalReading": "OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability; the owner confirms the mapping or chooses rule Specs for facts, which is a mechanical change (OQ5)",
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ5, which only the owner closes in the doc (design/specs/platform/transactional-domain-platform.sdp.md:44); doubt: the carrier choice itself is mechanical and would be tactical on its own.",
@@ -5735,9 +5753,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ5 confirmed: facts are constraint Specs, decisions are decision Specs, scenarios are example Specs under the component that provides the capability. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-139",
@@ -5759,7 +5777,7 @@
       "provisionalReading": "OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the corpus reads the latter as completion evidence and the owner picks one meaning before code names it (OQ6, Vocabulary)",
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ6 and a term of CONTEXT.md; the code already names receipt for the stored idempotency outcome (design/STATE.md:243, src/command/receipts.ts).",
@@ -5768,9 +5786,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ6, receipt: the stored outcome of a command; completion evidence proves an effect happened. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-140",
@@ -5792,7 +5810,7 @@
       "provisionalReading": "OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the corpus reads the latter as attempt and the owner picks one meaning before code names it (OQ6, Vocabulary)",
       "blocks": null,
       "advisor": "product",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Rule 1, the doc's own question OQ6 and a term of CONTEXT.md; the code already names generation for a numbered read-model build (design/STATE.md:243).",
@@ -5801,9 +5819,9 @@
       },
       "checkedBy": null,
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "OQ6, generation: a numbered build of a read model; attempt is one try at an obligation. Ruled by the main thread on the owner's instruction of 2026-10-03 (\"make recommendation for each ruling. And get feedback from 1x Opus 5.5 hxigh, 1x GPT 6 Astra ... And rule.\"), from the recommendations in the unit folder after one Opus and one astra read, and recorded as the owner's as sitting one's were (decision 40)."
     },
     {
       "id": "OD-141",
@@ -6089,7 +6107,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner tests 5 and 6: who may run a rebuild or a restore across every tenant trades safety against ease with no evidence on which weighs more, and any grant for it needs a scope beyond the tenant, which rules on the term grant, a permission in a tenant [CONTEXT.md:128]; doubt stated, because admin access alone is a mechanism and D11's trust boundary already admits it.",
@@ -6101,9 +6119,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-148.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "Admin access is the authority of an operation over the whole deployment. Every operator entry is an internal function, so only admin access reaches it. It takes the operator as a required argument, a string bounded as an actor's ID is, refuses an empty one, reads no grant, and writes that operator on what it changes: the generation row, the gate's audit record, the restore's run record. The Specs say \"records the stated operator\" and stop saying \"authorizes an operator actor\". No scope beyond the tenant is added. D11's one trusted deployment is the boundary, and the Spec says a stated operator is what admin access chose to state. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-149",
@@ -6123,23 +6141,23 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "operator",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "delegated",
       "reason": "Delegated test: the order of steps of an enumeration and what it records, inside what D9 and Law 11 rule; no Spec under `design/specs` names where the application's tenant list comes from, which the lean names as the gap.",
       "lean": {
-        "do": "Keep the live path as what covers a tenant created after `startGeneration`, and make every deployment-wide pass record the tenants it enumerated on its row, so a tenant it never examined is visible and completion is evidence rather than a count.",
-        "restsOn": "[design/specs/application/generation-registry.sdp.md:45] makes every command that maintains a read model write the building generation too, so a tenant whose first event comes after the generation row exists has no event the backfill can miss; [design/specs/application/rebuild.sdp.md:104] moves the cursor through the tenant list in tenant-ID order, so a tenant whose ID sorts behind the cursor is skipped by the backfill and the verify pass; [design/specs/application/restore.sdp.md:96] iterates a check under `all` the same way; [design/specs/application/restore.sdp.md:82] shows that history also arrives by `imports` rows. **Judgment.** The tenant that matters is not the one created by commands, which the live path covers, but one whose history arrives without commands, an import behind the cursor, and a check that reports clean for a tenant it never examined; the person who accepts a restore needs the list of what was examined, not a count of batches.",
-        "against": "Whether a new tenant sorts behind the cursor depends on how tenant IDs are assigned, which no Spec I opened pins, and no Spec I opened says what an import does to a building generation, so the hole may be narrower or wider than this reading; recording enumerated tenants on the row costs one array that grows with the tenant count against the document limit of F13.",
-        "settles": "The S4 build at the `convex-test` tier: a tenant created mid-pass with commands and one imported behind the cursor, each followed by the verify pass; no owner's word is needed.",
-        "changes": "For the lean: `spec:application.rebuild` at [design/specs/application/rebuild.sdp.md:104] and `spec:application.restore` at [design/specs/application/restore.sdp.md:96] gain the enumerated-tenants record, and one Spec must name the tenant list's source. For the alternative, a snapshot of the tenant list taken at `startGeneration` into the cursor [design/specs/application/generation-registry.sdp.md:62]: the same two lines, and a tenant created after the snapshot is skipped by rule rather than by sort order.",
-        "ifWrong": "A tenant missed on a per-entity view is served rows only for subjects written since the generation started, found by a verify pass that enumerates it, which is the circularity the record breaks; the cost is one tenant's stale read model until a rebuild, and an edit to the enumeration takes it back."
+        "do": "Keep the Specs as written: a tenant whose row enters the list behind a backfill's cursor is not visited by that pass and needs no visit, the verify pass starts again at the first tenant, a tenant fill and a generation in flight exclude each other, an operator runs `fillTenants` before the first `startGeneration` on a deployment whose grants predate the list, and no pass records the tenants it enumerated.",
+        "restsOn": "Lean of the domain lens, under the owner's one-advisor word of 2026-10-03, on a row whose advisor is `operator`. The tenant list is the `tenants` table, and `insertGrant` inserts a tenant's row when it finds none, in the same mutation as the grant [design/specs/command/actor-and-scope.sdp.md:35,52,77]; a command names its tenant and is authorized by a grant read in the same transaction [CONTEXT.md:119-121,127-129], so on a deployment built with the list a tenant's row precedes its first command and its first stream; a tenant behind the cursor therefore has only streams created after the generation was registered, which the live path wrote [design/specs/application/rebuild.sdp.md:81,92]; the verify pass enumerates from the first tenant [design/specs/application/rebuild.sdp.md:81,95,126,127]; an import is a sequence of bounded batch commands with their own receipts [design/specs/application/parent-use-cases.sdp.md:81], so imported history reaches a building generation through step 9 like any command's. The legacy case: `startGeneration` refuses an empty list beside a grant, `fillTenants` fills the list from the grants, and the two exclude each other [design/specs/application/rebuild.sdp.md:82,83,84]; a partly filled legacy list, one holding a tenant whose first grant came after the table and missing an older one, is not detected by that refusal, so the operator runs `fillTenants` on such a deployment before its first `startGeneration` [design/specs/application/rebuild.sdp.md:62]. The earlier lean's `against` named tenant-ID order and an import's effect as its uncertainties [design/decisions/register.json:6136]; both are answered by the lines above. **Judgment.** A pass visits every tenant that is in the list when its cursor reaches that tenant's position, and a tenant inserted behind the cursor needs no visit because all its streams were written live; the enumerated-tenants record would be a second truth of coverage beside the tenant list and the cursor, growing with the tenant count on a row every batch writes, and coverage here is a consequence of rules, which is the simpler design.",
+        "against": "**Judgment.** A writer that changes a source without a command, the journal's baseline driver, maintains no read model (`design-s4-paper.md:126`, lead 1, in the round 2 folder); a baseline is an event at the next stream version [design/specs/context/journal.sdp.md:64,100], so the verify pass repairs the row when it examines that source after the baseline [design/specs/application/rebuild.sdp.md:95,127], and a baseline written after that visit, or a tenant absent from the list for a reason not named here, a row deleted or a partly filled legacy list the operator did not fill, is repaired by no pass and shown by no record. An operator who accepts a restore reads counts, not a list of what was examined.",
+        "settles": "The `convex-test` obligations of a tenant inserted behind the cursor and of the fill's two mutual refusals (`design-s4-paper.md:104,149`), and the native L2-5 example's two tenants [design/specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md:33], none yet run; the baseline driver and read models is the journal Spec's open item, not this row's.",
+        "changes": "No Spec: `spec:application.rebuild` at its tenant rules and `spec:application.generation-registry` at its `startGeneration` Contract bullet carry it. The register row alone. The alternative, the enumerated-tenants record, would add a field to `tableGenerationProgress` and to the restore's check scope [design/specs/application/restore.sdp.md:96] and a growth bound under F13.",
+        "ifWrong": "A tenant with streams older than a generation and no row in the list when a pass reached its position is served no row of the new generation until `fillTenants` and a rebuild, one tenant's stale read model, found when its queries answer no rows; a count of tenants visited on the progress row, or the record the earlier lean asked for, is a field added by an edit and changes no stored row's meaning."
       },
-      "checkedBy": null,
+      "checkedBy": "gpt-6.1-sol, medium, 2026-10-03: 26 of 31 claims held; corrections: CONTEXT.md:135-136 for the grant read in the same transaction, the earlier lean is not kept in the row, native L2-5 runs exist, journal.sdp.md:41 says affected rows stay one version behind until a command or verify pass rewrites them, and rebuild.sdp.md:70 lets live writes insert missing rows in verifying and verified, which narrows the downside the ifWrong names (job-mus2kbol-a1d74933, plant caught)",
       "fork": null,
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "advisor:operator",
+      "decidedOn": "2026-10-03",
+      "ruling": "By the lean of the domain lens on this operator row, under the owner's one-advisor word, its facts checked with the corrections in checkedBy, none of which touches its do: the Specs as written; a tenant whose row enters the list behind a backfill's cursor is not visited by that pass and needs no visit, the verify pass starts again at the first tenant, a tenant fill and a generation in flight exclude each other, an operator runs fillTenants before the first startGeneration on a deployment whose grants predate the list, and no pass records the tenants it enumerated"
     },
     {
       "id": "OD-150",
@@ -6159,7 +6177,7 @@
       "provisionalReading": null,
       "blocks": "S4",
       "advisor": "operator",
-      "status": "waiting",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 5, and the doc makes acceptability itself a trigger: [docs/convex-transactional-domain-platform-decisions.md:354] activates online rebuild of cross-stream views when the write pause is unacceptable for them, so naming the acceptable length settles a trigger of the doc, which only the owner does; a policy by the operator lens's own rule.",
@@ -6170,9 +6188,9 @@
       },
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-150.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The write-pause Spec states no acceptable length. Before a paused rebuild starts, its length is estimated as the sum the lean names, backfill batches times batch time plus verify batches times batch time, and the number comes from the first paused rebuild that is measured on the native backend. Whether that length fires the doc's trigger for an online history rebuild is asked of the owner then, with the number. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-151",
@@ -6194,16 +6212,16 @@
       "provisionalReading": "the stock item holds allocated as one total",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 2, the example's policy under E-46, which the Spec leaves to the owner; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-151.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "Stock state keeps totals only. `release` takes the quantities from the cancelled order's own lines, in the same mutation as the order's `cancel`, with Orders called first (OD-074). The stock decider rejects a release larger than the allocated total. A second cancel of one order is rejected by the order's own state, so no stock item needs to remember an order. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-152",
@@ -6226,16 +6244,16 @@
       "provisionalReading": "the history view is in the first experiment and its rebuild pauses writes",
       "blocks": "S4",
       "advisor": "domain",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 2, the scope of the experiment; raised by the domain advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-152.md",
-      "decidedBy": null,
-      "decidedOn": null,
-      "ruling": null
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "The order allocation history view stays in the first experiment, because Sc L2-6 is a row of the doc and the experiment passes on every Layer 0 to 2 row. Its rules are written first (roadmap 4c) and its build is a unit of round 5, after the online rebuild. The roadmap's deferral \"at a view that needs them\" now covers the aggregate form only. Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
     },
     {
       "id": "OD-153",
@@ -6260,16 +6278,91 @@
       "provisionalReading": "Sc L2-9 is bound to native runs on a local backend with production configuration",
       "blocks": "S3",
       "advisor": "convex",
-      "status": "sorted",
+      "status": "decided",
       "foldedInto": [],
       "class": "owner",
       "reason": "Owner test 1, the reading of a scenario of the doc; OD-007's lean carries the case against; raised by the convex advisor's roadmap memo of 2026-10-02 and made a row by the session under decision 36.",
       "lean": null,
       "checkedBy": null,
       "fork": "design/decisions/forks/OD-153.md",
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-02",
+      "ruling": "Sc L2-9 reads as the local observation: the production composition on the pinned local backend, with the same authority, schemas, concurrency and code path a release has. No Spec claims parity with a hosted deployment. The concurrency half is the contention run on the production composition, as OD-007's checked lean says. A hosted run stays deferred with Probe 3's quota half (OD-036). Ruled by the main thread on the owner's words of 2026-10-02 (\"Decide on the forks in the roadmap.\"), and the owner agreed the same day to record the rulings as the owner's (\"i agree with the least noisy and cleanest path forward.\")."
+    },
+    {
+      "id": "OD-154",
+      "title": "Whether a command's grant read narrows from every grant of the principal to the grants of the command's permission",
+      "sources": [
+        {
+          "kind": "specLine",
+          "ref": "command.tenancy-and-authority#limitGrantsPerPrincipal",
+          "file": "design/specs/command/tenancy-and-authority.sdp.md",
+          "line": 78
+        }
+      ],
+      "families": [
+        "command"
+      ],
+      "cites": [
+        "F13",
+        "E-37"
+      ],
+      "provisionalReading": "at most 500 grants read per principal per tenant per command; the read takes 501 and a 501st row throws a plain `Error`, a technical failure, never a silent truncation",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "sorted",
+      "foldedInto": [],
+      "class": "delegated",
+      "reason": "Rule 3: what a command reads, settled by a measurement on the native backend and a ruling on the 500-grant refusal that lead 20 of design/STATE.md holds; raised by the measurement of PlaceOrder and made a row by the main thread's ruling on it.",
+      "lean": {
+        "do": "Keep the grant read at every grant of the principal until the 500-grant refusal is ruled, then narrow it with an index on tenant, principal and permission.",
+        "restsOn": "Measured at the native backend tier on the pinned local backend: on the ten-line PlaceOrder the three grants of other permissions cost 3 documents and 918 bytes, 8.57 percent of the documents and 6.35 percent of the bytes read; narrowing the read changes the refusal at more than 500 grants of a principal, which lead 20 of design/STATE.md holds [design/specs/command/tenancy-and-authority.sdp.md:78]."
+      },
+      "checkedBy": null,
+      "fork": null,
       "decidedBy": null,
       "decidedOn": null,
       "ruling": null
+    },
+    {
+      "id": "OD-155",
+      "title": "The hosted arrangement and account of E-59: one shared development deployment, each developer's own, a preview per run, or a fresh development deployment per run",
+      "sources": [
+        {
+          "kind": "specQuestion",
+          "ref": "spec:platform.native-harness#4",
+          "file": "design/specs/platform/native-harness.sdp.md",
+          "line": 27
+        }
+      ],
+      "families": [
+        "platform",
+        "facts"
+      ],
+      "cites": [
+        "E-59",
+        "Sc L2-9",
+        "F4",
+        "F12",
+        "F16",
+        "Probe 3",
+        "Probe 7"
+      ],
+      "provisionalReading": "the option taken here: the same harness, run record and compositions run natively on one hosted development deployment in a team and project of their own, selected only by `npm run test:hosted`, one run at a time, from a workflow whose failure fails no other check, with one development deploy key limited to the actions `deployKeyActions` lists",
+      "blocks": null,
+      "advisor": "convex",
+      "status": "decided",
+      "foldedInto": [],
+      "class": "owner",
+      "reason": "Rule 1, money: the team, the plan, the project and the deploy key are the owner's account; raised by the hosted lane of the tooling unit and made a row by its patch.",
+      "lean": {
+        "do": "One hosted development deployment in a project of its own, in the owner's otherwise unused team on the Professional plan, with one development deploy key held as one secret by a GitHub environment that admits the default branch only, run twice a week and on dispatch."
+      },
+      "checkedBy": null,
+      "fork": null,
+      "decidedBy": "owner",
+      "decidedOn": "2026-10-03",
+      "ruling": "The owner's words in the tooling unit, on the advisor's eight hosted recommendations: \"I agree with all recommendations. We have unused Convex Professional account. Let me know how to login.\" Taken as the lean: one hosted development deployment, dev/hosted in the project libar-platform-hosted of the owner's otherwise unused team on the Professional plan, with one development deploy key, hosted-ci-scoped, limited to the fourteen actions, held as the one secret HOSTED_DEPLOY_KEY by the GitHub environment hosted, which admits the default branch only; run twice a week and on dispatch. The owner made the key, the environment and the secret by hand on 2026-10-03."
     }
   ],
   "possiblySame": [

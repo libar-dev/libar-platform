@@ -21,13 +21,13 @@ Because read models update inside commands, rebuilding a per-entity or current-s
 - problem: A per-entity read model is rebuilt while commands run and the rebuild is interrupted and resumed; a cross-stream history view is rebuilt under a write pause and interrupted; a live command's incremental update on a row the backfill has not written yet builds a partial row, and a backfill batch can overwrite newer data (Sc L2-5, Sc L2-6)
 - outcome: A per-entity or current-state read model rebuilds online as a new generation while commands run, with no stale overwrite, no missing entity and no side effects; a history-dependent view rebuilds under a write pause with resume and abort (D9)
 - value: The common rebuild costs no downtime, and the write pause is paid only where a consistent cut is needed (D9)
-- risk: The standing cost is a generation registry, a generation on every rebuildable row, a per-entity marker for counts and sums, the migrations component, and for the write pause a maintenance gate every writer reads (D9)
+- risk: The standing cost is a generation registry, a generation on every rebuildable row, a per-entity marker for counts and sums, a progress row per generation, and for the write pause a maintenance gate every writer reads (D9)
 - assumption: Mutations are serializable under optimistic concurrency, so each backfill batch is ordered against live commands (F1)
-- assumption: `@convex-dev/migrations` fits a generation backfill (F17)
+- assumption: A self-scheduled internal mutation of the parent that keeps its cursor on a progress row gives resumable batching over a context's enumeration and a parent table alike; F17 records why `@convex-dev/migrations` is not used for it (F17)
 
 ### Open questions
 
-- [non-blocking] Probe 6 pending: a backfill batch racing a live command under optimistic concurrency, and the migrations component fitting a generation backfill (Probe 6, F1, F17, D9)
+- [non-blocking] Probe 6 ran a backfill batch racing a live command and the migrations component on the native backend, with its results on F17; a hosted deployment and sustained contention are not run (Probe 6, F1, F17, D9)
 
 ## Decision
 
@@ -39,8 +39,8 @@ Because read models update inside commands, rebuilding a per-entity or current-s
 - rationale: Because read models update inside commands, rebuilding a per-entity or current-state read model online is safe on Convex, and optimistic concurrency orders each batch against live commands so neither overwrites newer data (D9, D8, F1)
 - rationale: The write pause costs more than the online path, so it is the exception, for read models that depend on history across several streams where rebuild needs a consistent cut (D9)
 - consequence: An incremental update on a missing row would build a partial one, so a command on an existing stream updates the building generation's row only if backfill has already written it (D9)
-- consequence: `@convex-dev/migrations` provides resumable batching (D9, F17)
+- consequence: The rebuild's resumable batching is its own self-scheduled internal mutation, and `@convex-dev/migrations` is used for nothing, because Probe 6 showed that the component walks only the tables of the component it is defined in, drives a context's rows only through a parent internal mutation written by hand against a contract its README does not document, keeps a status apart from the generation's state, and leaves no error on its row when a batch fails past the read limit (D9, F17)
 - consequence: Counts and sums need a per-entity marker so live commands and backfill never count one entity twice, which is still transactional (D9)
 - consequence: Under the write pause every writer in the scope reads a maintenance gate, background writers are fenced or drained, and an operator can resume or abort (D9, Sc L2-6)
 - consequence: Rebuild never runs commands or external effects (D9, Law 10)
-- consequence: The standing cost is a generation registry and gate, a generation on every rebuildable row, markers for counts, the migrations component and its checkpoint state, and operator duties for switch, rollback, resume and abort (D9)
+- consequence: The standing cost is a generation registry and gate, a generation on every rebuildable row, markers for counts, a progress row per generation that is the one checkpoint, and operator duties for switch, rollback, resume and abort (D9)

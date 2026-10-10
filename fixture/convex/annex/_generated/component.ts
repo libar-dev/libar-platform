@@ -23,6 +23,45 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
+    bytePage: {
+      bounded: FunctionReference<
+        "query",
+        "internal",
+        { budgetBytes: number },
+        any,
+        Name
+      >;
+      read: FunctionReference<
+        "query",
+        "internal",
+        { maximumBytesRead: number },
+        any,
+        Name
+      >;
+      seed: FunctionReference<
+        "mutation",
+        "internal",
+        { budgetBytes: number; count: number; first: number },
+        null,
+        Name
+      >;
+    };
+    callBudget: {
+      empty: FunctionReference<
+        "mutation",
+        "internal",
+        { index: number },
+        number,
+        Name
+      >;
+      write: FunctionReference<
+        "mutation",
+        "internal",
+        { index: number },
+        number,
+        Name
+      >;
+    };
     failures: {
       throwAfterWrite: FunctionReference<
         "mutation",
@@ -119,5 +158,18 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
       seed: FunctionReference<"mutation", "internal", {}, string, Name>;
+    };
+    scheduledRows: {
+      schedule: FunctionReference<"mutation", "internal", {}, string, Name>;
+    };
+    timestamps: {
+      read: FunctionReference<"query", "internal", {}, any, Name>;
+      write: FunctionReference<
+        "mutation",
+        "internal",
+        { label: string },
+        { numericError: string; unresolved: boolean },
+        Name
+      >;
     };
   };

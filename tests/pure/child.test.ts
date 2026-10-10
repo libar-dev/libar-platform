@@ -6,7 +6,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { expect, onTestFinished, test, vi } from "vitest";
-import { redact, redactedBuffer, runChild } from "../../harness/child.js";
+import {
+  redact,
+  redactedBuffer,
+  redactError,
+  runChild,
+} from "../../harness/child.js";
 const secret = "0123456789abcdef-instance-secret";
 test("pure: a failed child's error holds its exit code and its output, and neither its arguments nor a secret", async () => {
   const error: unknown = await runChild(
@@ -314,7 +319,7 @@ test("pure: captured child failures carry the redacted command, exit code and la
     "process.stdout.write('stdout omitted'); for (let n = 1; n <= 25; n++) console.error(n + ':' + process.argv[1]); process.exit(7)",
     secret,
   ];
-  const error = await runChild("snapshot child", process.execPath, args, {
+  const error = await runChild("archive child", process.execPath, args, {
     timeoutMs: 10000,
     secrets: [secret],
     output: "both",
@@ -339,7 +344,7 @@ test("pure: captured child failures carry the redacted command, exit code and la
 test("pure: captured child output redacts both streams and abort rejects with the signal reason", async () => {
   expect(
     await runChild(
-      "snapshot child",
+      "archive child",
       process.execPath,
       [
         "-e",
@@ -354,9 +359,9 @@ test("pure: captured child output redacts both streams and abort rejects with th
     ),
   ).toEqual({ stdout: "[redacted]\n", stderr: "[redacted]\n" });
   const controller = new AbortController();
-  const reason = new Error("snapshot stopped");
+  const reason = new Error("archive export stopped");
   const result = runChild(
-    "snapshot child",
+    "archive child",
     process.execPath,
     ["-e", "setInterval(() => {}, 1000)"],
     {
@@ -367,4 +372,108 @@ test("pure: captured child output redacts both streams and abort rejects with th
   );
   controller.abort(reason);
   await expect(result).rejects.toBe(reason);
+});
+
+test("pure: a succeeded child's output is redacted in either output mode", async () => {
+  const args = [
+    "-e",
+    "console.log(process.argv[1]); console.error(process.argv[1])",
+    secret,
+  ];
+  expect(
+    await runChild("the child", process.execPath, args, {
+      timeoutMs: 10000,
+      secrets: [secret],
+    }),
+  ).toBe("[redacted]\n");
+});
+
+test("pure: an abort reason that carries a secret is redacted, and one that carries none is returned as it is", async () => {
+  for (const carries of [true, false]) {
+    const controller = new AbortController();
+    const reason = new Error(carries ? `stopped ${secret}` : "stopped");
+    const result = runChild(
+      "the child",
+      process.execPath,
+      ["-e", "setInterval(() => {}, 1000)"],
+      { timeoutMs: 10000, signal: controller.signal, secrets: [secret] },
+    );
+    controller.abort(reason);
+    const error = await result.catch((thrown: unknown) => thrown);
+    if (!carries) {
+      expect(error).toBe(reason);
+      continue;
+    }
+    expect(error).not.toBe(reason);
+    expect((error as Error).message).toBe("stopped [redacted]");
+    expect((error as Error).stack).not.toContain(secret);
+  }
+});
+
+// Everything a reporter or a log prints of an error: String, its stack and its JSON.
+const printedOf = (error: unknown) =>
+  [String(error), (error as Error).stack ?? "", JSON.stringify(error)].join(
+    "\n",
+  );
+test("pure: redactError replaces a secret in the error's name as in its message", () => {
+  const error = new Error("plain");
+  error.name = `Key${secret}Error`;
+  const redacted = redactError(error, [secret]);
+  expect(redacted).not.toBe(error);
+  expect((redacted as Error).name).toBe("Key[redacted]Error");
+  expect((redacted as Error).message).toBe("plain");
+  expect(printedOf(redacted)).not.toContain(secret);
+});
+test("pure: redactError finds a secret in an AggregateError's errors and in a cause, and keeps neither", () => {
+  const aggregate = new AggregateError(
+    [new Error(`connect ${secret}`)],
+    "fetch failed",
+  );
+  const caused = new Error("outer", {
+    cause: new Error("middle", { cause: `inner ${secret}` }),
+  });
+  for (const error of [aggregate, caused]) {
+    const redacted = redactError(error, [secret]);
+    expect(redacted).not.toBe(error);
+    expect((redacted as Error).name).toBe(error.name);
+    expect((redacted as Error).message).toBe(error.message);
+    expect((redacted as Error).cause).toBeUndefined();
+    expect((redacted as { errors?: unknown }).errors).toBeUndefined();
+    expect(printedOf(redacted)).not.toContain(secret);
+  }
+});
+test("pure: redactError fails closed past its depth bound: a key four cause links down, a deep chain without one and a cycle each come back as a redacted stub", () => {
+  const chain = (last: string) =>
+    new Error("one", {
+      cause: new Error("two", {
+        cause: new Error("three", {
+          cause: new Error("four", { cause: new Error(last) }),
+        }),
+      }),
+    });
+  const cycle = new AggregateError([], "cycle");
+  cycle.errors.push(cycle);
+  cycle.cause = cycle;
+  for (const error of [chain(`deep ${secret}`), chain("deep"), cycle]) {
+    const redacted = redactError(error, [secret]);
+    expect(redacted).not.toBe(error);
+    expect((redacted as Error).message).toBe(error.message);
+    expect((redacted as Error).cause).toBeUndefined();
+    expect((redacted as { errors?: unknown }).errors).toBeUndefined();
+    expect(printedOf(redacted)).not.toContain(secret);
+  }
+  const shallow = new Error("one", { cause: new Error("two") });
+  expect(redactError(shallow, [secret])).toBe(shallow);
+});
+test("pure: redactError walks the values of a plain object in a cause, so a key in an error held there is found and dropped", () => {
+  const error = new Error("outer", {
+    cause: { error: new Error(`held ${secret}`) },
+  });
+  const redacted = redactError(error, [secret]);
+  expect(redacted).not.toBe(error);
+  expect((redacted as Error).message).toBe("outer");
+  expect((redacted as Error).cause).toBeUndefined();
+  expect(printedOf(redacted)).not.toContain(secret);
+  const clean = new Error("outer", { cause: { error: new Error("held") } });
+  expect(redactError(clean, [secret])).toBe(clean);
 });

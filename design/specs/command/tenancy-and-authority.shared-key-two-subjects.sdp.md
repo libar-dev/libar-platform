@@ -9,7 +9,7 @@ relations:
 ---
 # A request key taken for another subject is reused with other input
 
-Law 5 · native tier · fixture composition.
+Law 5 · native backend tier · fixture composition.
 
 On the fixture composition, two ordinary clients carry fixture-issuer tokens for the subjects `user-1` and `user-2`. Each holds one grant for the permission of `CreateDocument`, and each grant names one document as its subject: `doc-1` for `user-1` and `doc-2` for `user-2`. The client of `user-2` sends the receipted `CreateDocument` for `doc-2` through its public entry with request key `k-1`, which succeeds and leaves a receipt. The client of `user-1` then sends `CreateDocument` for `doc-1` with the same key. Authorization passes at step 4, because the grant covers `doc-1`. The lookup of step 5 finds the receipt of the other call with a different fingerprint and throws `idempotencyConflict` with no details, so the caller learns that the key is taken and nothing of the receipt recorded for `doc-2` except the one fact its code cannot hide, that the receipt's contract version is the declaration's, because `unsupportedContractVersion` answers otherwise.
 
@@ -30,7 +30,7 @@ And the namespace the server assigned is {namespace: "public"}
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
-- The test asserts that the thrown error has `data.kind` equal to `"rejection"`, `data.code` equal to `"idempotencyConflict"`, `data.commandType` equal to `"CreateDocument"` and no `details`, and that the operation ID of the stored receipt appears nowhere in the error's data.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
+- The test asserts that the thrown error has `data.kind` equal to `"rejection"`, `data.code` equal to `"idempotencyConflict"`, `data.entry` equal to `"CreateDocument"` and no `details`, and that the operation ID of the stored receipt appears nowhere in the error's data.
 - The test asserts that the caller, sending `CreateDocument` for `doc-2` with a request key no call has used, is answered `forbidden`, so the stored receipt's subject is one the caller holds no grant for.
 - The test asserts that the receipt row is unchanged, that the receipts stored for the key number one, and that no stream exists for `doc-1`.

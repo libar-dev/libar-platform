@@ -11,7 +11,7 @@ import { components } from "./_generated/api.js";
 import { permissions } from "./depotCommands.js";
 import { documentTitle } from "./documentTitles.js";
 import { documentSummary } from "./summaries.js";
-const documentSource = { contextId: "depot", streamType: "document" };
+export const documentSource = { contextId: "depot", streamType: "document" };
 const createInput = v.object({ documentId: v.string(), title: v.string() });
 const createResult = v.object({ documentId: v.string() });
 export const createTwiceSummarizedDocumentDeclaration: CommandDeclaration<

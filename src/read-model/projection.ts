@@ -16,8 +16,22 @@ export type ReadModel<D, Row extends Record<string, Value>> = {
   name: string;
   table: string;
   rowBudgetBytes: number;
-  projection: Projection<D, Row>;
+  projections: readonly [Projection<D, Row>, ...Projection<D, Row>[]];
 };
+// The declared projection for one generation's version.
+export function projectionOf<D, Row extends Record<string, Value>>(
+  readModel: ReadModel<D, Row>,
+  version: number,
+): Projection<D, Row> {
+  const projection = readModel.projections.find(
+    (item) => item.version === version,
+  );
+  if (projection === undefined)
+    throw new Error(
+      `Read model ${readModel.name} declares no projection of version ${version}`,
+    );
+  return projection;
+}
 // A read model of any DTO and row. Both are read and written, so only any fits all.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyReadModel = ReadModel<any, any>;
@@ -26,13 +40,18 @@ export const defaultRowBudgetBytes = 16384;
 export const limitRowBudgetBytes = 65536;
 // One generation a command writes, with the role the write rule decides by.
 export type WritableGeneration = {
-  role: "active" | "building";
+  role: "active" | "building" | "verifying";
   generation: number;
   projectionVersion: number;
 };
-export type ApplyMode = "live-created" | "live-updated";
+export type ApplyMode = "live-created" | "live-updated" | "backfill";
 export type ApplyResult =
-  "inserted" | "updated" | "deleted" | "skipped-missing" | "unchanged";
+  | "inserted"
+  | "updated"
+  | "deleted"
+  | "skipped-missing"
+  | "skipped-newer"
+  | "unchanged";
 export type ApplyInput<D> = {
   tenantId: string;
   dto: D;
@@ -51,7 +70,7 @@ export async function applyProjection<
   readModel: ReadModel<D, Row>,
   input: ApplyInput<D>,
 ): Promise<ApplyResult[]> {
-  const { name, rowBudgetBytes, projection } = readModel;
+  const { name, rowBudgetBytes } = readModel;
   if (rowBudgetBytes > limitRowBudgetBytes)
     throw new Error(
       `Read model ${name} declares a row budget of ${rowBudgetBytes} bytes, above ${limitRowBudgetBytes}`,
@@ -59,16 +78,36 @@ export async function applyProjection<
   const db = rowWriter(ctx);
   const table = rowsOf(readModel.table);
   const { tenantId, versions } = input;
-  const key = projection.keyOf(tenantId, input.dto);
-  const fields = projection.project(tenantId, input.dto, versions);
   const results: ApplyResult[] = [];
-  for (const { role, generation } of input.generations) {
+  for (const { role, generation, projectionVersion } of input.generations) {
+    const projection = projectionOf(readModel, projectionVersion);
+    const key = projection.keyOf(tenantId, input.dto);
+    const fields = projection.project(tenantId, input.dto, versions);
     const existing = await db
       .query(table)
       .withIndex("by_key", (q) =>
         q.eq("tenantId", tenantId).eq("generation", generation).eq("key", key),
       )
       .unique();
+    if (
+      input.mode === "backfill" &&
+      existing !== null &&
+      !versions.some((inputVersion) => {
+        const recorded = existing.sourceVersions.find(
+          (version) =>
+            version.tenantId === inputVersion.tenantId &&
+            version.contextId === inputVersion.contextId &&
+            version.streamType === inputVersion.streamType &&
+            version.streamId === inputVersion.streamId,
+        );
+        return (
+          recorded === undefined || recorded.version < inputVersion.version
+        );
+      })
+    ) {
+      results.push("skipped-newer");
+      continue;
+    }
     if (fields === null) {
       if (existing === null) results.push("unchanged");
       else {

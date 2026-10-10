@@ -16,8 +16,10 @@ const anchor = codeAnchor({
 });
 void anchor;
 
+// The tiers an example's opening line names. The doc's end to end tier is no tier of its own: an
+// example of it names the native backend tier and the production composition.
 export type AcceptanceTier =
-  "domain" | "simulator" | "native" | "end to end" | "build";
+  "compiled" | "pure test" | "convex-test" | "native backend";
 export type AcceptanceComposition = "fixture" | "production";
 export interface RequiredScenario {
   row: string;
@@ -75,22 +77,21 @@ export interface AcceptanceRecord {
 export class AcceptanceUnanswerable extends Error {}
 
 const tiers: readonly AcceptanceTier[] = [
-  "domain",
-  "simulator",
-  "native",
-  "end to end",
-  "build",
+  "compiled",
+  "pure test",
+  "convex-test",
+  "native backend",
 ];
 const compositions: readonly AcceptanceComposition[] = [
   "fixture",
   "production",
 ];
+// The Vitest project that runs each tier.
 const projectOfTier: Record<AcceptanceTier, TestProjectName> = {
-  domain: "pure",
-  simulator: "simulator",
-  native: "native",
-  "end to end": "native",
-  build: "types",
+  compiled: "types",
+  "pure test": "pure",
+  "convex-test": "simulator",
+  "native backend": "native",
 };
 const rowPattern = /\bSc [A-Z]+\d*-\d+\b/g;
 
@@ -224,10 +225,7 @@ function judge(
         `${test.file} ran in the ${test.project ?? "unnamed"} project, not ${project}`,
       );
   }
-  if (
-    results.length > 0 &&
-    (scenario.tier === "native" || scenario.tier === "end to end")
-  ) {
+  if (results.length > 0 && scenario.tier === "native backend") {
     const backends = results.flatMap((test) => test.backends);
     if (scenario.composition === null)
       failures.push("the example names no composition");
@@ -325,6 +323,10 @@ function hasRunRecordShape(value: unknown): value is Record<string, unknown> {
     Array.isArray(value.tests)
   );
 }
+// A native run on a hosted deployment passes no scenario, so the check reads only a record whose
+// target is absent or the local backend.
+const targetsLocalBackend = (value: Record<string, unknown>) =>
+  value.target === undefined || value.target === "local backend";
 // Why a test entry cannot be read, or null when it can.
 function entryProblem(entry: unknown): string | null {
   if (!isObject(entry)) return "is not an object";
@@ -358,6 +360,10 @@ function readRecord(path: string): AcceptanceRecord {
   }
   if (!hasRunRecordShape(record))
     throw new AcceptanceUnanswerable(`The file ${path} is not a run record`);
+  if (!targetsLocalBackend(record))
+    throw new AcceptanceUnanswerable(
+      `The record ${path} is not a run on the local backend, and a native run on a hosted deployment passes no scenario`,
+    );
   for (const [index, entry] of (record.tests as unknown[]).entries()) {
     const problem = entryProblem(entry);
     if (problem !== null)
@@ -388,7 +394,8 @@ export function newestRecord(directory: string): string {
     } catch {
       continue;
     }
-    if (!hasRunRecordShape(candidate)) continue;
+    if (!hasRunRecordShape(candidate) || !targetsLocalBackend(candidate))
+      continue;
     const { startedAt } = candidate;
     if (typeof startedAt !== "string") continue;
     if (

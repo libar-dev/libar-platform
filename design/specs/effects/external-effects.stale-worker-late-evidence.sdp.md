@@ -9,7 +9,7 @@ relations:
 ---
 # An old worker reports after a new attempt
 
-Sc L3-6 · native tier · first of two cases: the report arrives after a new attempt claimed the obligation.
+Sc L3-6 · native backend tier · first of two cases: the report arrives after a new attempt claimed the obligation.
 
 ## Intent
 
@@ -28,7 +28,7 @@ And the obligation is {status: "succeeded"}
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test holds attempt 1's action past its lease, lets `expireLease` claim a reconcile attempt, then releases the old action so its confirmed report reaches `settleAttempt` with the old attempt ID (D14).
 - The test asserts `settleAttempt` returned `stale`, the report is in `lateEvidence`, `reconcileRequested` is true, and the status and active attempt were not overwritten (D14, Sc L3-6).
 - The test asserts the reconcile attempt finds the provider's record under the same key and settles succeeded, with exactly one irreversible effect recorded by the stub (D14).

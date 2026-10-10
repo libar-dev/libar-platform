@@ -1,5 +1,5 @@
-// The Orders context's order stream: an order is placed once with its lines, and its total is the sum
-// of quantity times unit price over its lines.
+// The Orders context's order stream: an order is placed once with its lines, its total is the sum of
+// quantity times unit price over its lines, and a placed order is cancelled once.
 import type {
   DecideResult,
   Decider,
@@ -14,19 +14,20 @@ export type OrderLine = {
   unitPrice: number;
 };
 // none is a stream with no events yet, the status initial() returns. placedAt is the time the
-// OrderPlaced event records, null before it.
-export type OrderStatus = "none" | "placed";
+// OrderPlaced event records, null before it. A cancelled order keeps its lines, total and placedAt.
+export type OrderStatus = "none" | "placed" | "cancelled";
 export type OrderState = {
   status: OrderStatus;
   lines: OrderLine[];
   total: number;
   placedAt: number | null;
 };
-export type OrderCommand = { commandType: "place"; lines: OrderLine[] };
-export type OrderEvent = DomainEvent<
-  "OrderPlaced",
-  { lines: OrderLine[]; total: number }
->;
+export type OrderCommand =
+  { commandType: "place"; lines: OrderLine[] } | { commandType: "cancel" };
+export type OrderEvent =
+  | DomainEvent<"OrderPlaced", { lines: OrderLine[]; total: number }>
+  | DomainEvent<"OrderCancelled", Record<string, never>>;
+// The line count and total of the order placed or cancelled.
 export type OrderResult = { lineCount: number; total: number };
 export const orderRejectionCodes = {
   // place with a quantity that is not a positive whole number, a unit price that is not a whole number
@@ -34,6 +35,10 @@ export const orderRejectionCodes = {
   invalidQuantity: "invalidQuantity",
   // place on an order that is already placed.
   orderAlreadyPlaced: "orderAlreadyPlaced",
+  // cancel of an order with no event.
+  orderNotFound: "orderNotFound",
+  // cancel of an order that is already cancelled.
+  orderAlreadyCancelled: "orderAlreadyCancelled",
 } as const;
 const isQuantity = (quantity: number) =>
   Number.isSafeInteger(quantity) && quantity >= 1;
@@ -46,11 +51,41 @@ const eventSchemaVersion = 1;
 function reject(rejection: Rejection): DecideResult<OrderEvent, OrderResult> {
   return { kind: "rejection", rejection };
 }
+// A placed order records OrderCancelled; the order's own state refuses an order that has no event and
+// one already cancelled, so a second cancel never reaches another context.
+function cancel(
+  state: OrderState,
+  context: DecisionContext,
+): DecideResult<OrderEvent, OrderResult> {
+  if (state.status === "none")
+    return reject({
+      code: orderRejectionCodes.orderNotFound,
+      message: "The order does not exist",
+    });
+  if (state.status === "cancelled")
+    return reject({
+      code: orderRejectionCodes.orderAlreadyCancelled,
+      message: "The order is already cancelled",
+    });
+  return {
+    kind: "applied",
+    events: [
+      {
+        eventType: "OrderCancelled",
+        eventSchemaVersion,
+        payload: {},
+        occurredAt: context.now,
+      },
+    ],
+    result: { lineCount: state.lines.length, total: state.total },
+  };
+}
 function decide(
   state: OrderState,
   command: OrderCommand,
   context: DecisionContext,
 ): DecideResult<OrderEvent, OrderResult> {
+  if (command.commandType === "cancel") return cancel(state, context);
   if (state.status !== "none")
     return reject({
       code: orderRejectionCodes.orderAlreadyPlaced,
@@ -97,6 +132,8 @@ function evolve(state: OrderState, event: OrderEvent): OrderState {
         total: event.payload.total,
         placedAt: event.occurredAt ?? null,
       };
+    case "OrderCancelled":
+      return { ...state, status: "cancelled" };
   }
 }
 export const orderDecider: Decider<
@@ -111,7 +148,8 @@ export const orderDecider: Decider<
   evolve,
   invariants: [
     {
-      // An order with no line is refused before it reaches the decider, as invalid input.
+      // An order with no line is refused before it reaches the decider, as invalid input. A cancelled
+      // order was placed and keeps what it was placed with.
       name: "aPlacedOrderHasALineATimeAndItsTotal",
       holds: (state) =>
         state.status === "none" ||

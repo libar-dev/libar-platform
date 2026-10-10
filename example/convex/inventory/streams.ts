@@ -37,6 +37,10 @@ export const stockItemStream: StreamRegistration<
   eventValidators: {
     StockReceived: v.object({ quantity: v.number() }),
     StockAllocated: v.object({ orderId: v.string(), quantity: v.number() }),
+    AllocationReleased: v.object({
+      orderId: v.string(),
+      quantity: v.number(),
+    }),
   },
   dto: stockItemDtoValidator,
   toDto: (state, meta): StockItemDto => ({

@@ -1,3 +1,4 @@
+import { installFixtureReadModel } from "./gate-support.js";
 import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
 import { readFileSync } from "node:fs";
@@ -140,10 +141,7 @@ test(
   async () => {
     const t = app();
     for (const readModel of ["documentSummary", "documentTitle"])
-      await t.mutation(internal.readModels.activate, {
-        readModel,
-        startedBy: { kind: "operator", id: "operator-1" },
-      });
+      await installFixtureReadModel(t, readModel);
     const documentVersion = {
       tenantId: "t-1",
       contextId: "depot",

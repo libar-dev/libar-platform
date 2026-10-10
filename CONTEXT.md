@@ -1,6 +1,6 @@
 # Transactional domain platform
 
-The language of a platform on which a business operation is one transaction: a command is authorized, decided against current state, recorded as events and answered, all or nothing. These are the words for what the platform is. Words for how it is designed and proven, and words for the work of building it, are listed apart at the end, because they must not leak into the first group.
+The language of a platform on which a business operation is one transaction: a command is authorized, decided against current state, recorded as events and answered, all or nothing. These are the words for what the platform is. Words for how it is designed and proven, and words for the work of building it, are listed apart at the end, because they must not leak into the first group. This file leads: `spec:platform.vocabulary` follows it, and the doc keeps its authority over what the platform decides.
 
 ## Language
 
@@ -21,6 +21,10 @@ _Avoid_: operation (alone), endpoint, handler, context command
 **Use case**:
 The parent's carrying out of one command across one or more contexts, with one outcome.
 _Avoid_: workflow, saga, orchestration, executor (the code's name for the function)
+
+**Entry**:
+A function the parent registers for a caller: a public command, an internal command, a parent query or an operator entry.
+_Avoid_: endpoint, handler, function (alone)
 
 ### Commands and outcomes
 
@@ -104,7 +108,7 @@ _Avoid_: apply, reduce, patch, state update
 
 **Rebuild**:
 Recomputing stored state from the history that should produce it: a stream's current state from its events, or a read model from its sources.
-_Avoid_: replay, resync, reprocess, backfill (one step of a read-model rebuild)
+_Avoid_: replay, resync, reprocess
 
 **Baseline event**:
 An event that holds migrated state, from which a rebuild starts when the meaning of earlier events has changed. Earlier events stay readable.
@@ -123,6 +127,10 @@ _Avoid_: scope (alone), tenancy
 **Actor**:
 The server-established identity that caused a command: a human, a service, an agent, a reviewer or an operator.
 _Avoid_: user, caller, principal, identity
+
+**Stated operator**:
+The name an administrator states when calling an operator entry. It records who said they acted and establishes no actor; an actor of kind operator is one the server establishes, which no entry does.
+_Avoid_: operator (alone, for this meaning), actor (for a stated name)
 
 **Grant**:
 An authoritative statement that an actor holds a permission in a tenant, read in the same transaction as the command it authorizes.
@@ -156,6 +164,18 @@ _Avoid_: replay, repeat, retry (what the caller does)
 
 ### Reads
 
+**Parent query**:
+A read the parent answers to a caller, authorized in the parent, relaying a context query or reading a read model.
+_Avoid_: query (alone), endpoint, read (alone)
+
+**Context query**:
+A read a context answers to the parent, returning a DTO and never a document.
+_Avoid_: query (alone), getter
+
+**Query refusal**:
+The refusal of a parent query, in the same wire shape as a rejection, naming the entry that refused. It is not an outcome, and nothing is recorded.
+_Avoid_: rejection (for a query), error, denial
+
 **Read model**:
 A stored shape made for reading, updated inside the command from the state that command committed.
 _Avoid_: view (alone), cache, table, projection (the logic, not the data)
@@ -168,9 +188,63 @@ _Avoid_: read model (the data), handler, subscriber
 One numbered build of a read model.
 _Avoid_: version, attempt
 
+**Installation**:
+Making a read model exist in a deployment: its declaration and its first rebuild.
+_Avoid_: activation, first activation, setup
+
+**Backfill**:
+The part of a rebuild that writes a generation's rows from its sources.
+_Avoid_: rebuild (for this part alone), replay, import
+
+**Verification**:
+The part of a rebuild that checks a generation's rows against its sources and corrects them.
+_Avoid_: validation, reconciliation, audit
+
+**Pass**:
+One traversal of a rebuild over its sources or its rows: a backfill, a verification, a purge or a fill. The verb passes and a pass condition belong to scenarios, and a test's outcome is a test result.
+_Avoid_: run, iteration, round
+
+**Switch**:
+Making a verified generation the one readers see, in one write.
+_Avoid_: cutover, promotion, activation
+
+**Rollback**:
+Making a retired generation the one readers see again.
+_Avoid_: revert, undo, downgrade
+
+**Retired generation**:
+A generation readers no longer see, kept until it is purged.
+_Avoid_: old generation, previous version, inactive
+
+**Purge**:
+Deleting a retired generation's rows.
+_Avoid_: cleanup, garbage collection, drop
+
+**Fence**:
+The number a generation's batches carry so that a batch from before an interruption writes no read-model row and schedules nothing.
+_Avoid_: epoch, token, lease
+
+**Progress row**:
+The row that holds where a rebuild stands, read by its batches and by no command.
+_Avoid_: checkpoint, cursor row, status row
+
+**Tenant list**:
+The parent's list of its tenants, which a rebuild and a sweep walk one tenant at a time.
+_Avoid_: tenant table, registry, directory
+
 **Write pause**:
 A stretch during which commands that write the sources of a read model are refused, so that the read model can be rebuilt from a consistent cut.
 _Avoid_: lock, maintenance mode, freeze
+
+### Backups
+
+**Backup archive**:
+The exported file of a deployment's table data at one moment, which a restore imports.
+_Avoid_: snapshot (a transaction's view of the database), export, dump, backup (alone, for the file)
+
+**Restore**:
+The procedure that imports a backup archive under matching code and proves the invariants hold before any writer runs.
+_Avoid_: import (one step of it), recovery, rollback
 
 ### Deferred work
 
@@ -206,9 +280,27 @@ Words for how the platform is specified and proven. They are lasting and may app
 - **Do-nothing option**: the design that adds no mechanism and relies on Convex as it is.
 - **Fact**: something the design relies on Convex to do, marked documented, probed or assumed.
 - **Probe**: one small test on a real backend that turns an assumed fact into a probed one.
-- **Scenario**: a situation with a pass condition that the platform must meet.
-- **Tier**: the kind of test that can prove a scenario: domain, simulator, native or end to end.
+- **Scenario**: a row of the doc's acceptance table, a situation with a pass condition that the platform must meet; a case is one example of a row.
+- **Tier**: the kind of test that can prove a scenario: compiled, pure test, convex-test or native backend.
+- **Target**: where a native backend test runs, the local backend or a hosted deployment, recorded apart from the tier and the composition.
 - **Composition**: an application assembled from the platform for a purpose: the production composition, or the fixture composition that exists only to prove scenarios.
+- **Verifier**: a test bound to an example, which proves it when it passes at the example's tier on its composition.
+- **Acceptance check**: the check that reads from the graph every scenario the first experiment requires and from one run's record whether each passed.
+- **Test result**: what one run of a verifier leaves in the run record: passed, failed or skipped.
+- **Run record**: the harness's record of one run of the test projects, with the commit, the pins, the target and every test result; a restore's own record is a restore run.
+- **Measurement record**: a run record's entry that holds a measured cost or time with its pins and its target.
+- **Local backend**: the pinned backend process the harness starts and disposes of for a test.
+- **Hosted deployment**: a Convex Cloud deployment the harness targets with a deploy key.
+- **Deploy key**: a hosted deployment's credential, scoped to the actions a run needs.
+- **Admin key**: the local backend's credential.
+- **Usage reading**: what a hosted deployment's usage report says for a window; a difference of two readings is one run's own only when no other run overlapped it.
+- **Stated plan**: the Convex plan a hosted run records as the owner stated it, never read from billing.
+- **Kept dataset**: the data a hosted deployment carries from one run to the next on purpose.
+- **Planting record**: the row a run writes beside a schedule it planted, so that a later run can tell a retained schedule from a lost one.
+- **Execution**: one run of a function by the backend, the unit the function log counts.
+- **OCC rerun**: an execution the engine repeats after a write conflict; neither an attempt nor a retry by the caller.
+- **Contention**: several commands at once on one stream.
+- **Controlled change**: one difference against a reference run, so that a cost is attributed to a line.
 
 ## Words that are not part of the language
 
@@ -223,7 +315,7 @@ Words about the work of building the platform: when something was done, in what 
 Three words exist on both sides and mean different things:
 
 - **Agent**: in the language, a kind of actor whose proposals the parent checks. In the work, a model that writes or reviews code. Only the first is a domain term.
-- **Reviewer** and **operator**: in the language, kinds of actor. In the work, whoever reviews a change or runs a deployment by hand.
+- **Reviewer** and **operator**: in the language, kinds of actor, and apart from them the stated operator. In the work, whoever reviews a change or runs a deployment by hand.
 - **Operation**: in the language, one accepted execution of a command. In the work, nothing: "an operation of the session" is a step.
 
 Fixture names such as depot, document and stock are the fixture composition's own small domain. They are not platform language either.

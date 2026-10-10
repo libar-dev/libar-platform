@@ -21,7 +21,7 @@ The fourth cost target. One business intent, retried by a client, a worker or a 
 
 ## Constraints
 
-- statement: One business intent produces exactly one public command execution with one business effect and one stored outcome, across concurrent sends, lost responses and UI double submits (First experiment, D6)
+- statement: One business intent produces exactly one public command execution that takes effect, with one business effect and one stored outcome, across concurrent sends, lost responses and UI double submits; a duplicate is answered from its receipt and reaches no decider, so it is no execution that takes effect (First experiment, D6)
 - flavor: cost
 - target: public-command-executions.per-business-intent.eq:1
-- measurableBy: the counts of business effects, receipts and events per intent in the idempotency scenarios of Layer 1 run inside the first experiment, and the experiment's count of executed commands per intent under contention (First experiment, Sc L1-3, Sc L1-4, E-47)
+- measurableBy: the counts of business effects, receipts and events per intent in the idempotency scenarios of Layer 1 run inside the first experiment, and the experiment's count of executed commands per intent under contention; an execution counts toward the target when it takes effect, and the measurement record keeps the count of top-level executions, the original's and each duplicate's, beside it (First experiment, Sc L1-3, Sc L1-4, E-47)

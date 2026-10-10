@@ -1,5 +1,9 @@
 // The command pipeline of spec:command.command-pipeline: the steps between a caller's request and the
 // committed outcome, in one top-level mutation. Its only failure signal is a throw.
+import type {
+  GenericDatabaseReader,
+  GenericDatabaseWriter,
+} from "convex/server";
 import { getConvexSize, v, type Validator, type Value } from "convex/values";
 import {
   limitActorIdLength,
@@ -15,7 +19,12 @@ import type { AffectedRef, StreamVersion } from "../kernel/index.js";
 import type { Actor, CallerNamespace } from "./actor-and-scope.js";
 import { authorize } from "./authority.js";
 import type { CommandDeclaration } from "./declaration.js";
-import { refuseTransient, reject } from "./outcome-boundary.js";
+import {
+  classifyThrown,
+  normalizeThrown,
+  refuseTransient,
+  reject,
+} from "./outcome-boundary.js";
 import {
   classifyReceipt,
   fingerprintOf,
@@ -24,6 +33,14 @@ import {
   type ReceiptKey,
 } from "./receipts.js";
 import type { MutationCtx } from "./tables.js";
+import { writeAudit, type AuditDataModel } from "../audit/index.js";
+import {
+  consoleSink,
+  emitDiagnostic,
+  type DiagnosticSink,
+} from "../operations/index.js";
+import { assertWritable, scopesOfUseCase } from "../gate/gate.js";
+import type { GateDataModel } from "../gate/tables.js";
 import {
   fromSource,
   writeReadModels,
@@ -146,7 +163,7 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
     if (length > limit)
       reject({
         code: "invalidInput",
-        commandType,
+        entry: decl.name,
         message: `${field} has at most ${limit} bytes of UTF-8`,
         details: { field, length, limit },
       });
@@ -162,7 +179,7 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   if (maxItems !== undefined && items > maxItems)
     reject({
       code: "operationTooLarge",
-      commandType,
+      entry: decl.name,
       message: `${commandType} takes at most ${maxItems} items, not ${items}`,
       details: { items, maxItems },
     });
@@ -170,16 +187,74 @@ function parse<I, R>(decl: CommandDeclaration<I, R>, call: PipelineCall<I>) {
   if (maxBytes !== undefined && bytes > maxBytes)
     reject({
       code: "operationTooLarge",
-      commandType,
+      entry: decl.name,
       message: `${commandType} takes at most ${maxBytes} bytes of input, not ${bytes}`,
       details: { bytes, maxBytes },
     });
   const refused = decl.refine?.(call.input) ?? null;
   if (refused !== null)
-    reject({ ...refused, code: "invalidInput", commandType });
+    reject({ ...refused, code: "invalidInput", entry: decl.name });
 }
-// Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. Step 7
-// reads no gate, and steps 10 and 11 write no audit record and emit no diagnostic.
+// What an entry has when it throws: actor is absent while the public entry has established none.
+export type FailedCall = {
+  tenantId: string;
+  namespace: CallerNamespace;
+  actor?: Actor;
+  requestKey?: string;
+  correlationId?: string;
+  causedBy?: CausedBy;
+};
+const sinkOf = <I, R>(decl: CommandDeclaration<I, R>): DiagnosticSink =>
+  decl.diagnosticSink ?? consoleSink;
+// The call's own fields of a diagnostic record, the same on every path.
+function callFields(call: FailedCall) {
+  return {
+    tenantId: call.tenantId,
+    namespace: call.namespace,
+    ...(call.requestKey === undefined ? {} : { requestKey: call.requestKey }),
+    ...(call.correlationId === undefined
+      ? {}
+      : { correlationId: call.correlationId }),
+    ...(call.actor === undefined
+      ? {}
+      : { actorKind: call.actor.kind, actorId: call.actor.id }),
+  };
+}
+// The whole body of each entry's outermost catch: the caller receives exactly what normalizeThrown
+// alone would throw, after one diagnostic record of that throw. Nothing stored carries the operation
+// ID, and nothing committed, so the record names no operation and counts no work.
+export function relayFailure<I, R>(
+  decl: CommandDeclaration<I, R>,
+  call: FailedCall,
+  error: unknown,
+): never {
+  let relayed: unknown = error;
+  try {
+    normalizeThrown(error, decl.name, decl.rejections);
+  } catch (thrown) {
+    relayed = thrown;
+  }
+  const classified = classifyThrown(relayed);
+  emitDiagnostic(
+    {
+      ...callFields(call),
+      commandType: decl.name,
+      kind: classified.kind,
+      ...(classified.kind === "technical"
+        ? {}
+        : { code: classified.data.code }),
+      replayed: false,
+      ...(call.causedBy === undefined ? {} : { causedBy: call.causedBy }),
+      eventsAppended: 0,
+      readModelRows: 0,
+      versions: [],
+    },
+    sinkOf(decl),
+  );
+  throw relayed;
+}
+// Steps 1 and 3 to 11 for either entry; the public entry ran step 2 before it built the call. A throw
+// leaves the diagnostic record to the entry's relayFailure.
 export async function runPipeline<I, R>(
   ctx: MutationCtx,
   decl: CommandDeclaration<I, R>,
@@ -201,7 +276,7 @@ export async function runPipeline<I, R>(
   if (!decision.allowed)
     reject({
       code: "forbidden",
-      commandType,
+      entry: decl.name,
       message: `The caller may not run ${commandType} in this tenant`,
       details: { reason: decision.reason },
     });
@@ -230,17 +305,32 @@ export async function runPipeline<I, R>(
       case "unsupportedVersion":
         reject({
           code: "unsupportedContractVersion",
-          commandType,
+          entry: decl.name,
           message: "This request key was used under another contract version",
         });
       case "conflict":
         reject({
           code: "idempotencyConflict",
-          commandType,
+          entry: decl.name,
           message: "This request key was used with other input",
         });
       case "duplicate": {
         const stored = classified.receipt;
+        // The execution did no work: the receipt's operation and versions, and no counts.
+        emitDiagnostic(
+          {
+            ...callFields(call),
+            commandType,
+            kind: stored.outcome,
+            replayed: true,
+            operationId: stored.operationId,
+            ...(call.causedBy === undefined ? {} : { causedBy: call.causedBy }),
+            eventsAppended: 0,
+            readModelRows: 0,
+            versions: stored.versions,
+          },
+          sinkOf(decl),
+        );
         return {
           kind: stored.outcome,
           result: null,
@@ -265,7 +355,13 @@ export async function runPipeline<I, R>(
           : { retryAfterMs: admission.retryAfterMs }),
       });
   }
-  // Step 7: the operation, minted once, before the first context call.
+  // Step 7: the gate, read once, and only then the operation, minted once, before the first context
+  // call. The library types ctx with the command tables; every composition that registers a command
+  // holds the gate's table too, and at run time ctx is that composition's own.
+  await assertWritable(
+    ctx as unknown as { db: GenericDatabaseReader<GateDataModel> },
+    scopesOfUseCase(tenantId, decl.writes),
+  );
   const operation: OperationRef = {
     operationId: crypto.randomUUID(),
     causedBy: call.causedBy ?? { kind: "command", commandType },
@@ -293,10 +389,11 @@ export async function runPipeline<I, R>(
       throw new Error(
         `${commandType} wrote ${version.contextId}/${version.streamType}, which its declaration does not list in writes`,
       );
+  let readModelRows = 0;
   if (decl.readModels !== undefined && decl.readModels.length > 0)
     // The library types ctx with the command tables. A parent that declares a read model holds the
     // registry and the read model's table too, and at run time ctx is that parent's own.
-    await writeReadModels(
+    readModelRows = await writeReadModels(
       ctx as unknown as RegistryReader<ReadModelDataModel> &
         RowWriter<ReadModelDataModel>,
       commandType,
@@ -318,7 +415,57 @@ export async function runPipeline<I, R>(
       },
       decl.retention,
     );
-  // Step 11.
+  // Step 10, the audit record of a declaration that sets audit, every field from the command alone.
+  if (decl.audit !== undefined) {
+    const first = executed.versions[0];
+    const subject =
+      decl.permission.subjectFrom?.(input) ??
+      (first === undefined
+        ? undefined
+        : {
+            contextId: first.contextId,
+            streamType: first.streamType,
+            streamId: first.streamId,
+          });
+    if (subject === undefined)
+      throw new Error(
+        `${commandType} sets audit, declares no subjectFrom and returned no version, so its audit record has no subject`,
+      );
+    await writeAudit(
+      ctx as unknown as { db: GenericDatabaseWriter<AuditDataModel> },
+      {
+        tenantId,
+        operationId: operation.operationId,
+        ...(call.requestKey === undefined
+          ? {}
+          : { requestKey: call.requestKey }),
+        commandType,
+        actor,
+        subject,
+        kind: decl.audit.kind,
+        decision: executed.kind,
+        causedBy: operation.causedBy,
+      },
+    );
+  }
+  // Step 11: the diagnostic record from values the pipeline holds, then the outcome.
+  emitDiagnostic(
+    {
+      ...callFields(call),
+      commandType,
+      kind: executed.kind,
+      replayed: false,
+      operationId: operation.operationId,
+      causedBy: operation.causedBy,
+      eventsAppended: executed.streams.reduce(
+        (sum, { appended }) => sum + appended,
+        0,
+      ),
+      readModelRows,
+      versions: executed.versions,
+    },
+    sinkOf(decl),
+  );
   return {
     kind: executed.kind,
     result: executed.result,

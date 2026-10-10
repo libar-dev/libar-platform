@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 3: the cost of a component call from a mutation
 
-Probe 3 · native tier · fixture composition.
+Probe 3 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,7 +24,7 @@ And the local function log holds {recordsPerCall: 1} completion record for one p
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The execution time is the one the backend's function log reports for the parent call; the run's evidence holds the three medians and the difference per call.
 - The test checks that each path read the document the bound number of times before it accepts a sample.
 - The size is recorded and not asserted. It is a local backend's time on one machine, a first reading for OQ1 and not a hosted deployment's cost.

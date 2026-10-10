@@ -9,7 +9,7 @@ relations:
 ---
 # Deploy while an old process is in flight
 
-Sc L4-3 · end to end tier.
+Sc L4-3 · native backend tier · production composition.
 
 ## Intent
 
@@ -25,6 +25,6 @@ And the process record shows which of the three happened and never shows complet
 
 ## Verification — executable
 
-- Runs in the end to end tier; every test owns its disposable backend.
+- Runs in the native backend tier on the production composition; every test owns its disposable backend.
 - The test deploys a release that keeps the old definition registered and asserts the old run continues; deploys one that removes it and asserts the process record is blocked with a remedy and the run's determinism violation is recorded, never a silent failure (D16, S11).
 - The test asserts a blocked process never reports success and that its payment obligation, if any, keeps its own state (Law 7, D15).

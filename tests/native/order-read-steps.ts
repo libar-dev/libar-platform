@@ -92,7 +92,7 @@ export function readThrows(world: ReadWorld, code: string) {
     expect((error as ConvexError<Value>).data).toMatchObject({
       kind: "rejection",
       code,
-      commandType: "getOrder",
+      entry: "getOrder",
     });
   }
   expect((errors[0] as ConvexError<Value>).data).toEqual(
@@ -100,13 +100,13 @@ export function readThrows(world: ReadWorld, code: string) {
       ? {
           kind: "rejection",
           code,
-          commandType: "getOrder",
+          entry: "getOrder",
           message: "getOrder needs an authenticated caller",
         }
       : {
           kind: "rejection",
           code,
-          commandType: "getOrder",
+          entry: "getOrder",
           message: "The caller may not read getOrder in this tenant",
           details: { reason: "no_grant" },
         },

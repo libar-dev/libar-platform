@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 1: a client closed with a pending mutation
 
-Probe 1 · native tier · fixture composition.
+Probe 1 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -24,7 +24,7 @@ And at least {leastCommittedUnconfirmed: 1} trial leaves its row although its cl
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The client is `ConvexClient` from `convex/browser`, which sends mutations through the same `BaseConvexClient` as the React client; the React client itself is not run.
 - The test holds the backend's responses back from the client, so every close happens with the mutation pending, and varies the time between the send and the close.
 - The test records how many trials left no row and how many left one, which is the measure of what a closed tab can lose.

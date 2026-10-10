@@ -9,7 +9,7 @@ relations:
 ---
 # An ordinary client cannot call a component's function
 
-E-13, E-15 · native tier · fixture composition.
+E-13, E-15 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -28,7 +28,7 @@ And the same mutation called with the harness's admin access writes {rowsAfterAd
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - Each HTTP refusal is identified by the text of Convex's own error, so a call that fails for another reason does not pass.
 - On the public route the test checks that the refused call named the same function the admin call runs, so a call to another name does not pass.
 - `BadDeployKey` is the gate of the endpoint that takes a component path: it answers every caller without the admin key, whatever the path, so on that route the error says nothing about the function, and the admin call is what shows that the function exists.

@@ -9,7 +9,7 @@ relations:
 ---
 # A retrieved document or prompt tries to widen the agent's rights
 
-Sc L5-4 · native tier.
+Sc L5-4 · native backend tier.
 
 ## Intent
 
@@ -25,5 +25,5 @@ And the run's grants after the run equal the grants before it
 
 ## Verification — executable
 
-- Runs in the native tier; every test owns its disposable backend.
+- Runs in the native backend tier; every test owns its disposable backend.
 - The test asserts the grants table is unchanged, that no approval was created by the run, and that the caller namespace on every receipt is `agent` (D17, D11, Law 5).

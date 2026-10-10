@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../../fixture/convex/_generated/api.js";
 import { internalMutation } from "../../fixture/convex/_generated/server.js";
 
-// Deployed only in a temporary copy of the fixture composition by the snapshot test.
+// Deployed only in a temporary copy of the fixture composition by the backup archive test.
 export const schedule = internalMutation({
   args: {},
   returns: v.array(v.id("_scheduled_functions")),

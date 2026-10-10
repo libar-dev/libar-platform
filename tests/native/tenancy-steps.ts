@@ -320,7 +320,7 @@ export function answerIs(
       expect(data).toMatchObject({
         kind: "rejection",
         code: answer === "conflict" ? "idempotencyConflict" : "forbidden",
-        commandType: "CreateDocument",
+        entry: "CreateDocument",
       });
       // A conflict carries nothing of the stored receipt.
       if (answer === "conflict") expect(data).not.toHaveProperty("details");

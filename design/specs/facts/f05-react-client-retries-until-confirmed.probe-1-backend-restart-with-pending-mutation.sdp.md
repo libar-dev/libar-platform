@@ -9,7 +9,7 @@ relations:
 ---
 # Probe 1: a backend restart with a mutation in flight
 
-Probe 1 · native tier · fixture composition.
+Probe 1 · native backend tier · fixture composition.
 
 ## Intent
 
@@ -25,7 +25,7 @@ And at least {leastKilledBeforeCommit: 1} trial was killed before its commit and
 
 ## Verification — executable
 
-- Runs in the native tier on the fixture composition; every test owns its disposable backend.
+- Runs in the native backend tier on the fixture composition; every test owns its disposable backend.
 - The client is `ConvexClient` from `convex/browser`, which sends mutations through the same `BaseConvexClient` as the React client; the React client itself is not run.
 - The kill is a SIGKILL, sent after a delay that the trials spread from none to a few tens of milliseconds. The test holds the backend's responses back from the client, reads the marker table with admin access after the restart and before the client reconnects, and so tells a kill before the commit from a kill after it.
 - A trial killed after its commit is the one that tests the guarantee: the client never saw the result, sends the mutation again when it reconnects, and the backend must not run it twice.

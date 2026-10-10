@@ -1,3 +1,4 @@
+import { installFixtureReadModel } from "./rebuild-install.js";
 import { getFunctionName, type PaginationResult } from "convex/server";
 import { ConvexError, convexToJson, type Value } from "convex/values";
 import type { ConvexHttpClient } from "convex/browser";
@@ -14,15 +15,12 @@ import {
 import { fixtureBackend, measure, required } from "../../harness/native.js";
 import { classifyThrown } from "../../src/command/index.js";
 // The fixture composition's read model, documentSummary: written by CreateSummarizedDocument at the
-// pipeline's step 9, made writable by the first activation, and read through the parent list
+// pipeline's step 9, made writable by the first rebuild, and read through the parent list
 // listDocumentSummaries, which authorizes before it reads.
 const identifier = "depotCommands:createSummarizedDocument";
-const operator = { kind: "operator", id: "native-test" } as const;
-const activate = (backend: Backend) =>
-  backend.admin.run(getFunctionName(internal.readModels.activate), {
-    readModel: "documentSummary",
-    startedBy: operator,
-  });
+const operator = "native-test";
+const install = (backend: Backend) =>
+  installFixtureReadModel(backend, "documentSummary");
 async function grant(
   backend: Backend,
   subject: string,
@@ -53,7 +51,7 @@ async function stored(backend: Backend) {
   };
 }
 
-test("native: a command whose read model has no generation fails as a technical failure and stores nothing; after the first activation the same command writes its summary row in its one mutation, and a second activation is refused", async () => {
+test("native: a command whose read model has no generation fails as a technical failure and stores nothing; after the first rebuild the same command writes its summary row in its one mutation, and another generation can be built", async () => {
   const backend = await fixtureBackend();
   await grant(backend, "user-1", permissions.documents);
   const client = ordinaryClient(backend.url, {
@@ -79,7 +77,8 @@ test("native: a command whose read model has no generation fails as a technical 
     events: [],
     summaries: [],
   });
-  expect(await activate(backend)).toBe(1);
+  // generation-registry.sdp.md:37; rebuild.sdp.md:115,133: the first rebuild installs generation 1.
+  await install(backend);
   const registry = await backend.admin.readTable("generations");
   expect(registry).toMatchObject([
     {
@@ -90,11 +89,29 @@ test("native: a command whose read model has no generation fails as a technical 
       startedBy: operator,
     },
   ]);
-  const second = await caught(activate(backend));
-  expect(String(second)).toContain(
-    "Read model documentSummary already has generation 1, which is active",
+  // rebuild.sdp.md:115: an active generation does not refuse the next rebuild.
+  const nextId = await backend.admin.run(
+    getFunctionName(internal.rebuild.startGeneration),
+    {
+      readModel: "documentSummary",
+      operator,
+    },
   );
-  expect(await backend.admin.readTable("generations")).toEqual(registry);
+  const next = (await backend.admin.readTable("generations")).find(
+    (row) => row._id === nextId,
+  );
+  // rebuild.sdp.md:115: start takes the next generation number.
+  expect(next).toMatchObject({
+    generation: 2,
+    projectionVersion: 1,
+    startedBy: operator,
+  });
+  // Stop its chain before measuring the single command below.
+  await backend.admin.run(getFunctionName(internal.rebuild.abortGeneration), {
+    generationId: nextId,
+    operator,
+    reason: "keep one writable generation",
+  });
   // The same command and key again: the failed attempt left no receipt, so this is new intent.
   const mark = await backend.admin.logMark();
   const response = await client.mutation(
@@ -155,7 +172,7 @@ test("native: a command whose read model has no generation fails as a technical 
 
 test("native: a refused parent query throws the rejection shape to an HTTP client and writes nothing, and the granted caller reads", async () => {
   const backend = await fixtureBackend();
-  await activate(backend);
+  await install(backend);
   await grant(backend, "user-1", permissions.documents);
   const writer = ordinaryClient(backend.url, {
     token: await backend.issuer.token("user-1"),
@@ -190,13 +207,13 @@ test("native: a refused parent query throws the rejection shape to an HTTP clien
   expect((anonymous as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "unauthenticated",
-    commandType: "listDocumentSummaries",
+    entry: "listDocumentSummaries",
     message: "listDocumentSummaries needs an authenticated caller",
   });
   expect((stranger as ConvexError<Value>).data).toEqual({
     kind: "rejection",
     code: "forbidden",
-    commandType: "listDocumentSummaries",
+    entry: "listDocumentSummaries",
     message: "The caller may not read listDocumentSummaries in this tenant",
     details: { reason: "no_grant" },
   });
@@ -214,7 +231,7 @@ test("native: a refused parent query throws the rejection shape to an HTTP clien
   expect(subscribed).toBeInstanceOf(ConvexError);
   expect((subscribed as ConvexError<Value>).data).toMatchObject({
     code: "unauthenticated",
-    commandType: "listDocumentSummaries",
+    entry: "listDocumentSummaries",
   });
   // The command was sent with no request key, and a read writes nothing: no receipt exists.
   expect(await backend.admin.readTable("receipts")).toEqual([]);
@@ -229,7 +246,7 @@ test("native: a refused parent query throws the rejection shape to an HTTP clien
 
 test("native: a parent list over the read model pages by the cursor pair, each page read once and then subscribed to its end cursor, with no page split and none of another tenant's rows", async () => {
   const backend = await fixtureBackend();
-  await activate(backend);
+  await install(backend);
   for (const tenantId of ["t-1", "t-2"])
     await grant(backend, "user-1", permissions.documents, tenantId);
   await grant(backend, "user-1", readPermission);

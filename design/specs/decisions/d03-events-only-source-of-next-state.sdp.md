@@ -11,7 +11,7 @@ relations:
 
 Provenance: carried from v0.1; the two gaps at the end are new. Feature · Traces: D3, Law 2, Law 3, Law 10, Sc L0-1, Sc L0-2, E-1, E-2, OQ3.
 
-`decide(state, command, context)` returns events and a result, or a rejection. The persistence adapter computes the next state as `fold(evolve, state, newEvents)` and saves it. The decider never returns a separate state patch. Commands load current state and apply only the new events; they never replay history. Today's platform has two authorities and nothing keeps them in step; one authority makes state and history agree by construction. The decision depends on D2 because the fold and the save happen inside the context that owns the state. The two gaps the doc names, initial state and state across several documents, are ruled provisionally by Package B as extensions E-1 and E-2.
+`decide(state, command, context)` returns events and a result, or a rejection. The persistence adapter computes the next state as `fold(evolve, state, newEvents)` and saves it. The decider never returns a separate state patch. Commands load current state and apply only the new events; they never replay history. Today's platform has two authorities and nothing keeps them in step; one authority makes state and history agree by construction. The decision depends on D2 because the fold and the save happen inside the context that owns the state. The two gaps the doc names, initial state and state across several documents, are ruled provisionally by Package B as extensions E-1 and E-2; of the second, one document per stream as the default, with the derived mapping for state that outgrows its budget, is settled, and the size budget stays provisional.
 
 ## Intent
 
@@ -24,7 +24,7 @@ Provenance: carried from v0.1; the two gaps at the end are new. Feature · Trace
 ### Open questions
 
 - [non-blocking] Gap, initial state: the v0.1 interface has none; add `initial()` or let `evolve` accept an empty state so a rebuild from the creation event has a defined start; ruled provisionally as E-1 in the kernel's initial-state decision (D3, E-1)
-- [non-blocking] Gap, state across several documents: prefer one document per stream while it fits the size budget, and where it cannot, derive the document writes from the folded state in one place per context; ruled provisionally as E-2 in the kernel's state-document mapping decision, with the size budget open under OQ3 (D3, E-2, OQ3)
+- [non-blocking] Gap, state across several documents, its size budget: one document per stream stays the default while it fits the size budget, and where it cannot, the document writes are derived from the folded state in one place per context, as the kernel's state-document mapping decision states; the size budget there is a provisional number of E-2 (D3, E-2, OQ3)
 
 ## Decision
 
