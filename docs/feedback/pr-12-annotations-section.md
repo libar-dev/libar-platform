@@ -56,7 +56,7 @@ The Protocol's branch rules the arc through three decision Specs, and the owner 
 
 ### Try it
 
-From the repository root, after `npm ci`. Measured on 2026-10-10 at `2347cbc`, after the merge of `feature/round-2` with its review repair (`09224b5`). Re-run the commands rather than inherit these numbers.
+From the repository root, after `npm ci`. Measured on 2026-10-10 at `e2c77e8`, the fold of the sol check of the review repairs, after the merge of `feature/round-2` with its review repair (`09224b5`) and its follow-up (`ab7a13f`). Re-run the commands rather than inherit these numbers.
 
 ```sh
 npx sdp q 'return g.byFile("src/read-model/rebuild.ts")' --json
@@ -126,7 +126,7 @@ protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-f23e358.tgz
 OK
 ```
 
-`npm test` passed 1,150 tests in 75 files, with 10 skipped, the not-compared pairs.
+`npm test` passed 1,151 tests in 75 files, with 10 skipped, the not-compared pairs.
 
 ### For the owner
 
