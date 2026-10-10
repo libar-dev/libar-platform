@@ -42,7 +42,7 @@ The Protocol's branch rules the arc through three decision Specs. The comment fo
 
 ### Try it
 
-From the repository root, after `npm ci`. Measured on 2026-10-09 at `57ed4f8`; re-run the commands rather than inherit these numbers.
+From the repository root, after `npm ci`. Measured on 2026-10-09 at `57ed4f8` and re-measured at `5355ed3`; re-run the commands rather than inherit these numbers.
 
 ```sh
 npx sdp q 'return g.byFile("src/read-model/rebuild.ts")' --json
@@ -67,7 +67,7 @@ npx sdp q "$(awk '/^## 27\./{f=1} /^## 28\./{f=0} f' "$R" | awk '/^```js/{c=1; n
 {
   "found": true,
   "id": "pack:history-view",
-  "totals": { "members": 19, "withReferences": 7, "withImplementations": 11, "withVerifier": 7, "unbound": 6 },
+  "totals": { "members": 19, "withReferences": 6, "withImplementations": 11, "withVerifier": 7, "unbound": 6 },
   "rows": [
     {
       "id": "spec:application.history-projection",
