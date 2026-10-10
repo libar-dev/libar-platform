@@ -32,7 +32,7 @@ Until this unit, every implementation anchor of this corpus lived in a test. The
 
 ### The rulings
 
-The Protocol's branch rules the arc through three decision Specs, each at `defined` and held for the owner's `ready`. The paths are in the Protocol's repository on `feature/annotations-v0`; the pinned package ships the same files under `node_modules/@libar-dev/software-delivery-protocol/`.
+The Protocol's branch rules the arc through three decision Specs. The comment form and architectural annotation state `ready` (the owner, 2026-10-10); the binding grain states `defined`, held for the owner's `ready` on its two open questions. The paths are in the Protocol's repository on `feature/annotations-v0`; the pinned package ships the same files under `node_modules/@libar-dev/software-delivery-protocol/`.
 
 | Ratified name | Ruling | Spec |
 |---|---|---|
