@@ -1,6 +1,6 @@
 ## Now: anchors in the code they bind, under the rulings of 2026-10-10
 
-Until this arc, every implementation anchor of this corpus lived in a test. The platform's runtime code may not import the Protocol package, so `byFile` on a source file returned nothing, a hand-kept join (`design/tools/anchor-sites.json`) stood in for the binding, and code could name a design only by claiming to realize it. The Protocol's annotations arc, its plan 40 on the branch `feature/annotations-v0`, moves closer to the Protocol's original design: an anchor can be written as a doc comment, code can name a design it answers to without claiming to build it, and an anchor can say what architectural part its code plays. The owner ruled on the arc on 2026-10-10, and all three of its decisions now state `ready`. This branch pins the Protocol at `f23e358` (`04a6aff`), the head that carries the rulings, and applies them (`ecba393`); a second read by `gpt-6.1-sol` checked that pass against the code, and its fold-in follows `ed4f97f`.
+Until this arc, every implementation anchor of this corpus lived in a test. The platform's runtime code may not import the Protocol package, so `byFile` on a source file returned nothing, a hand-kept join (`design/tools/anchor-sites.json`) stood in for the binding, and code could name a design only by claiming to realize it. The Protocol's annotations arc, its plan 40 on the branch `feature/annotations-v0`, moves closer to the Protocol's original design: an anchor can be written as a doc comment, code can name a design it answers to without claiming to build it, and an anchor can say what architectural part its code plays. The owner ruled on the arc on 2026-10-10, and all three of its decisions now state `ready`. This branch pins the Protocol at `822aea4` (`b5fb659`), its `main` after the merge of #29, `feature/annotations-v0`, which carries the rulings, and applies them (`ecba393`); a second read by `gpt-6.1-sol` checked that pass against the code, and its fold-in follows `ed4f97f`.
 
 **1. Anchors in the code they bind.** A comment-form anchor is a top-level `/** … */` block of reserved `@sdp` tags. The source carries it with no Protocol import, so the runtime pays nothing. The 22 implementation anchors that lived in nine test files are 46 units in `src/`, `example/` and `fixture/`, one per realizing file or site, beside 12 component anchors; the harness keeps its 18 constant-form anchors. No test file keeps an implementation anchor. The file is the binding grain of both forms: a block's line locates the anchor and names no declaration. The online rebuild, at the top of [`src/read-model/rebuild.ts`](https://github.com/libar-dev/libar-platform/blob/unit/design-in-the-graph/src/read-model/rebuild.ts#L2):
 
@@ -46,7 +46,7 @@ Until this arc, every implementation anchor of this corpus lived in a test. The 
 
 ### The rulings
 
-The Protocol's branch rules the arc through three decision Specs, and the owner states `ready` on all three. The paths are in the Protocol's repository on `feature/annotations-v0`; the pinned package ships the same files under `node_modules/@libar-dev/software-delivery-protocol/`.
+The Protocol's branch rules the arc through three decision Specs, and the owner states `ready` on all three. The paths are in the Protocol's repository, on `main` since the merge of #29 (`822aea4`); the pinned package ships the same files under `node_modules/@libar-dev/software-delivery-protocol/`.
 
 | Ratified name | Ruling | Spec |
 |---|---|---|
@@ -56,7 +56,7 @@ The Protocol's branch rules the arc through three decision Specs, and the owner 
 
 ### Try it
 
-From the repository root, after `npm ci`. Measured on 2026-10-10 at `e2c77e8`, the fold of the sol check of the review repairs, after the merge of `feature/round-2` with its review repair (`09224b5`) and its follow-up (`ab7a13f`). Re-run the commands rather than inherit these numbers.
+From the repository root, after `npm ci`. Measured on 2026-10-10 at `b5fb659`, the pin at `822aea4`, after the fold of the sol check of the review repairs (`e2c77e8`) and the merge of #11 into `main` (`a758ba4`). The re-pin moved no number below. Re-run the commands rather than inherit them.
 
 ```sh
 npx sdp q 'return g.byFile("src/read-model/rebuild.ts")' --json
@@ -121,7 +121,7 @@ entry addresses outside the Specs: 497; dependsOn cycles: 0
 architecture: 76 code units; roles: codec 1, contract 6, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 49 references edges from 41 units; platform isolation: 7 platform components, 21 uses edges from them, 0 into another context
 …
 Pack pages current: 1 of 1
-protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-f23e358.tgz
+protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-822aea4.tgz
 
 OK
 ```
