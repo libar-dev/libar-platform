@@ -330,6 +330,42 @@ test("native: two independent writers race a close and no successful command com
   // cannot witness the concurrency obligation.
   expect(overlapping + reruns).toBeGreaterThan(0);
 });
+// spec:application.write-pause restoreDoor, Contract "The restore procedure cannot use the gate document"; spec:command.receipt-table fnSweep: the receipt sweep is a writer, and the restore door keeps it out.
+test("native: the restore door refuses the receipt sweep and it deletes nothing, and the same call deletes the expired receipt once the variable is cleared", async () => {
+  const backend = await fixtureBackend();
+  await backend.admin.writeTable("receipts", {
+    insert: {
+      tenantId: "t",
+      namespace: "worker",
+      commandType: "SweepTest",
+      requestKey: "expired",
+      fingerprint: "fingerprint",
+      contractVersion: 1,
+      outcome: "applied",
+      operationId: "expired",
+      affected: [],
+      versions: [],
+      actorId: "worker",
+      recordedAt: 0,
+      expiresAt: 1,
+      tombstone: false,
+    },
+  });
+  const before = await stored(backend);
+  expect(before.receipts).toHaveLength(1);
+  const run = () =>
+    backend.admin.run(getFunctionName(internal.receipts.sweep), {
+      tenantId: "t",
+      now: Date.now() - 60_000,
+      limit: 1000,
+    });
+  await backend.admin.setEnvironment({ MAINTENANCE_MODE: "restore" });
+  await expectPaused(run(), "all", "restore");
+  expect(await stored(backend)).toEqual(before);
+  await backend.admin.setEnvironment({ MAINTENANCE_MODE: "" });
+  expect(await run()).toEqual({ deleted: 1, compacted: 0, more: false });
+  expect(await backend.admin.readTable("receipts")).toEqual([]);
+});
 function overlap(a: CompletionRecord, b: CompletionRecord) {
   return (
     a.timestamp - a.executionTime < b.timestamp &&

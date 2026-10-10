@@ -2,10 +2,11 @@ import { convexTest, type TestConvex } from "convex-test";
 import type { SchemaDefinition } from "convex/server";
 import { getDocumentSize } from "convex/values";
 import { commandTables } from "../../src/command/tables.js";
-import { expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import schema from "../../fixture/convex/schema.js";
 import { internal as fixtureInternal } from "../../fixture/convex/_generated/api.js";
 import { internal as productionInternal } from "../../example/convex/_generated/api.js";
+import { refusal } from "./gate-support.js";
 import { productionTest } from "./production.js";
 
 const compositions: {
@@ -22,6 +23,7 @@ const compositions: {
   { name: "production", app: productionTest, internal: productionInternal },
 ];
 const now = 1000;
+afterEach(() => vi.unstubAllEnvs());
 function receipt(tenantId: string, requestKey: string, expiresAt = now) {
   return {
     tenantId,
@@ -325,5 +327,146 @@ for (const composition of compositions) {
     expect(
       await t.run((ctx) => ctx.db.query("receipts").collect()),
     ).toHaveLength(1);
+  });
+  // spec:application.write-pause fnAssertWritable, errorCodeWritePaused; spec:command.receipt-table
+  // fnSweep, fnSweepNext: the sweep reads the gate after its argument check and before any receipt read.
+  test(`convex-test: ${composition.name} a closed deployment refuses sweep and sweepNext with writePaused and the expired receipts remain until the resume`, async () => {
+    const t = composition.app();
+    const stored = await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", { tenantId: "a", createdAt: 0 });
+      for (let i = 0; i < 3; i++)
+        await ctx.db.insert("receipts", receipt("a", `expired-${i}`));
+      return ctx.db.query("receipts").collect();
+    });
+    await t.mutation(composition.internal.gate.closeGate, {
+      scopeKey: "all",
+      reason: "move",
+      operator: "ops",
+    });
+    const run = () =>
+      t.mutation(composition.internal.receipts.sweep, {
+        tenantId: "a",
+        now,
+        limit: 1000,
+      });
+    // The argument check comes first: a bad limit is the plain error, not the refusal.
+    await expect(
+      t.mutation(composition.internal.receipts.sweep, {
+        tenantId: "a",
+        now,
+        limit: 0,
+      }),
+    ).rejects.toThrow("positive safe integer");
+    await refusal(run(), "all", "move");
+    await refusal(
+      t.mutation(composition.internal.receipts.sweepNext, {
+        after: null,
+        now,
+        limit: 1000,
+      }),
+      "all",
+      "move",
+    );
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
+      stored,
+    );
+    await t.mutation(composition.internal.gate.resumeGate, {
+      scopeKey: "all",
+      operator: "ops",
+    });
+    expect(await run()).toEqual({ deleted: 3, compacted: 0, more: false });
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
+      [],
+    );
+  });
+  // spec:application.write-pause Contract "A use case is in scope when all is closed, when its tenant is closed"; spec:command.receipt-table fnSweep, fnSweepNext.
+  test(`convex-test: ${composition.name} a closed tenant refuses its sweep and the loop sweeps another tenant`, async () => {
+    const t = composition.app();
+    const kept = await t.run(async (ctx) => {
+      for (const tenantId of ["a", "b"]) {
+        await ctx.db.insert("tenants", { tenantId, createdAt: 0 });
+        await ctx.db.insert(
+          "receipts",
+          receipt(tenantId, `${tenantId}-expired`),
+        );
+      }
+      return ctx.db
+        .query("receipts")
+        .withIndex("by_tenant_expiry", (q) => q.eq("tenantId", "a"))
+        .collect();
+    });
+    await t.mutation(composition.internal.gate.closeGate, {
+      scopeKey: "tenant:a",
+      reason: "move",
+      operator: "ops",
+    });
+    await refusal(
+      t.mutation(composition.internal.receipts.sweep, {
+        tenantId: "a",
+        now,
+        limit: 1000,
+      }),
+      "tenant:a",
+      "move",
+    );
+    await refusal(
+      t.mutation(composition.internal.receipts.sweepNext, {
+        after: null,
+        now,
+        limit: 1000,
+      }),
+      "tenant:a",
+      "move",
+    );
+    expect(
+      await t.mutation(composition.internal.receipts.sweepNext, {
+        after: "a",
+        now,
+        limit: 1000,
+      }),
+    ).toEqual({
+      tenantId: "b",
+      after: "b",
+      deleted: 1,
+      compacted: 0,
+      more: false,
+    });
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
+      kept,
+    );
+  });
+  // spec:application.write-pause restoreDoor, Contract "The restore door is read before the gate document"; spec:command.receipt-table fnSweep.
+  test(`convex-test: ${composition.name} the restore door refuses the sweep and deletes nothing, and the same call deletes once the variable is cleared`, async () => {
+    const t = composition.app();
+    const stored = await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", { tenantId: "a", createdAt: 0 });
+      await ctx.db.insert("receipts", receipt("a", "expired"));
+      return ctx.db.query("receipts").collect();
+    });
+    vi.stubEnv("MAINTENANCE_MODE", "restore");
+    const run = () =>
+      t.mutation(composition.internal.receipts.sweep, {
+        tenantId: "a",
+        now,
+        limit: 1000,
+      });
+    await refusal(run(), "all", "restore");
+    await refusal(
+      t.mutation(composition.internal.receipts.sweepNext, {
+        after: null,
+        now,
+        limit: 1000,
+      }),
+      "all",
+      "restore",
+    );
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
+      stored,
+    );
+    vi.stubEnv("MAINTENANCE_MODE", undefined);
+    expect(await run()).toEqual({ deleted: 1, compacted: 0, more: false });
+    expect(await t.run((ctx) => ctx.db.query("receipts").collect())).toEqual(
+      [],
+    );
   });
 }
