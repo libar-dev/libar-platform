@@ -10,7 +10,7 @@ relations:
 
 F13 · Status: documented · Doc status: Documented, S9 · Decisions: D10, D19.
 
-The numbers below were read from the limits page on 2026-09-30 and match the plan's section 9. Every batch, sweeper, fan-out and backfill in the design states its own bound below them, because platform limits are ceilings, not batch sizes. The limits page states no limit on nested `runQuery` or `runMutation` calls per function. The page on writing data, read on 2026-10-01, states that "a mutation or query called by another mutation or query share the overall transaction limits" and documents `ctx.meta.getTransactionMetrics()` and the `transactionLimits` option; it does not name components. Probe 4 ran on a native backend on 2026-10-01, release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0: the 16 MiB read limit and the 16 MiB write limit are each one budget across a nested call and across a component boundary, and a call stack of nine functions commits where ten fails.
+The numbers below were read from the limits page on 2026-09-30 and match the plan's section 9. The limits page was read again on 2026-10-03 for three entries, `limitDocument`, `limitWriteThroughput` and `limitIoOperations`. Every batch, sweeper, fan-out and backfill in the design states its own bound below them, because platform limits are ceilings, not batch sizes. The limits page states no limit on nested `runQuery` or `runMutation` calls per function. The page on writing data, read on 2026-10-01, states that "a mutation or query called by another mutation or query share the overall transaction limits" and documents `ctx.meta.getTransactionMetrics()` and the `transactionLimits` option; it does not name components. Probe 4 ran on a native backend on 2026-10-01, release `precompiled-2026-09-28-5c7cb5b` with `convex` 1.46.0: the 16 MiB read limit and the 16 MiB write limit are each one budget across a nested call and across a component boundary, and a call stack of nine functions commits where ten fails.
 
 ## Intent
 
@@ -27,11 +27,13 @@ The numbers below were read from the limits page on 2026-09-30 and match the pla
 
 The documented numbers bound batches. Probe 4 observes transaction budgets; Probe 7 distinguishes the scheduled-argument page values from the pinned backend's enforced budget. A warning on this release does not remove the documented ceiling from the design.
 
-- limitDocument: 1 MiB per document, 1024 fields, nesting depth 16, 8192 array elements (F13, S9)
+- limitDocument: 1 MiB per document and 1024 top-level fields, the system fields included, with nesting depth 16; per value, 1024 fields per object, 8192 elements per array and nesting depth 64 (F13, S9)
 - limitTransactionRead: 16 MiB read, 32,000 documents scanned and 4,096 index ranges read per transaction (F13, S9)
 - limitTransactionWrite: 16 MiB written and 16,000 documents written per transaction (F13, S9)
+- limitWriteThroughput: the limits page lists a mutation write throughput limit per deployment class, 4 MiB for S16, 8 MiB for S256, 32 MiB for D1024 and 64 MiB for D2048, and states no unit on that row; the native harness paces its writes at 4,194,304 bytes a second; a batch chain that writes near its per-batch bound is measured against it before a bound is raised (F13, S9)
 - limitFunctionPayload: 16 MiB per function argument set and 16 MiB per return value; a Node action's arguments are capped at 5 MiB (F13, S9)
 - limitQueryMutationTimeout: 1 second of execution per query or mutation, a limit on the function's own computation and not on the elapsed time of its call tree, because nested calls draw on a separate system-operation budget (F13, S9, F19)
+- limitIoOperations: the limits page states 1000 concurrent IO operations per function, a database operation among them, and does not say whether a sequence of awaited operations counts; no probe has reached it (F13, S9)
 - limitActionTimeout: 30 minutes in the Convex runtime and 10 minutes in the Node runtime (F13, S9)
 - limitScheduling: the limits page states 1000 scheduled functions per mutation, 4 MiB per scheduled argument set, 16 MiB summed arguments per mutation and 1000000 outstanding functions; the scheduling page states 8 MB total, both read 2026-10-02; the design keeps 4 MiB per call as its ceiling because this release names that limit as a future hard error (F13, S9, Probe 7)
 - limitSchema: 32 indexes per table, 16 fields per index, 10,000 tables per deployment (F13, S9)

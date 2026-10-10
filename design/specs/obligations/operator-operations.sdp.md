@@ -9,6 +9,7 @@ relations:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
     - spec:command.tenancy-and-authority
+    - spec:effects.claim-call-settle
   constrainedBy:
     - spec:laws.law05-authorization-before-execution-and-disclosure
     - spec:laws.law08-durable-capability-ships-operations
@@ -29,7 +30,7 @@ The module ships five scoped operations: inspect, retry, reconcile, cancel and a
 
 ### Open questions
 
-- [non-blocking] Extension E-53: the doc names the five operations and the repair record's fields but not their signatures or their transaction shape; this design makes them authorized parent mutations and queries that write the repair in the same transaction, refuses cancel and reconcile while a lease is live, and lets reconcile either mint a reconcile attempt that the claim mutation of `spec:effects.claim-call-settle` dispatches, or accept supplied provider evidence from needs attention (D13, D14, E-53)
+- [non-blocking #operatorObligationRepair] Extension E-53: the doc names the five operations and the repair record's fields but not their signatures or their transaction shape; this design makes them authorized parent mutations and queries that write the repair in the same transaction, refuses cancel and reconcile while a lease is live, and lets reconcile either mint a reconcile attempt that the claim mutation of `spec:effects.claim-call-settle` dispatches, or accept supplied provider evidence from needs attention (D13, D14, E-53)
 
 ## Contract
 

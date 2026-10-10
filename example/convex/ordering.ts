@@ -5,6 +5,13 @@
 // order is answered entityExists before Inventory decides, and CancelOrder because the order's own
 // state refuses a cancel before Inventory decides. A rejection or a throw in Inventory rolls back the
 // Orders call with the whole mutation, so neither executor catches anything.
+/**
+ * @sdpAnchor impl:application.parent-use-cases
+ * @sdpLabel PlaceOrder and CancelOrder over Orders and then Inventory
+ * @sdpReferences spec:application.parent-use-cases, spec:application.orders-inventory-example
+ * @sdpComponent component:example.parent
+ * @sdpRole use-case
+ */
 import { v, type Infer } from "convex/values";
 import {
   internalCommand,

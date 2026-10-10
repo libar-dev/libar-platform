@@ -13,6 +13,11 @@ relations:
     - spec:facts.f11-components-have-no-ctx-auth
     - spec:facts.f15-parent-query-over-component-query-stays-reactive
     - spec:facts.f13-transactions-have-limits
+  dependsOn:
+    - spec:context.journal
+    - spec:command.actor-and-scope
+    - spec:command.outcome-boundary
+    - spec:context.event-envelope
 ---
 # The context queries
 
@@ -33,9 +38,9 @@ A context exposes queries that return DTOs. The parent authenticates and authori
 
 ### Open questions
 
-- [non-blocking] Probe 5 showed on the pinned backend with `convex-helpers` 0.1.124 that the parent query stays reactive, that pages pinned by their end cursors stay contiguous, that a capped page crosses the boundary as `SplitRequired` with its `splitCursor`, and that the `usePaginatedQuery` hook of `convex-helpers/react` then shows 40 of 45 rows; this design uses no hook across the boundary, and the examples are rerun when either pin moves (Probe 5, F15, S4, D8, E-24)
-- [non-blocking] Extension E-24: the doc says component queries are authorized and return DTOs; this Spec fixes one definer per query, the one `tenantId` argument with no separate scope, the `toDto` mapping with the stream version on every DTO, pagination through `paginator`, the item cap with a row cap of twice the item cap and a byte cap passed on every run, the relay of `pageStatus` and `splitCursor` unchanged, paging by an explicit cursor pair with no client hook, the parent query's one `authorizeQuery` call and its refusal as a rejection, the `maxEvents` argument of the `rebuild` query and its `budgetExhausted` refusal for a batching caller, and the fold refusal of the `rebuild` query; this is a provisional reading the owner has not ruled (D8, S4, E-24, E-42)
-- [non-blocking] A parent query's refusal carries the name of the entry that refused in the field `entry` of the rejection data; the wire shape stays `RejectionData` of `spec:command.outcome-boundary` unchanged, and the owner confirmed the word (D7, E-24)
+- [non-blocking #contextPaginationSplit] Probe 5 showed on the pinned backend with `convex-helpers` 0.1.124 that the parent query stays reactive, that pages pinned by their end cursors stay contiguous, that a capped page crosses the boundary as `SplitRequired` with its `splitCursor`, and that the `usePaginatedQuery` hook of `convex-helpers/react` then shows 40 of 45 rows; this design uses no hook across the boundary, and the examples are rerun when either pin moves (Probe 5, F15, S4, D8, E-24)
+- [non-blocking #contextQueryContract] Extension E-24: the doc says component queries are authorized and return DTOs; this Spec fixes one definer per query, the one `tenantId` argument with no separate scope, the `toDto` mapping with the stream version on every DTO, pagination through `paginator`, the item cap with a row cap of twice the item cap and a byte cap passed on every run, the relay of `pageStatus` and `splitCursor` unchanged, paging by an explicit cursor pair with no client hook, the parent query's one `authorizeQuery` call and its refusal as a rejection, the `maxEvents` argument of the `rebuild` query and its `budgetExhausted` refusal for a batching caller, and the fold refusal of the `rebuild` query; this is a provisional reading the owner has not ruled (D8, S4, E-24, E-42)
+- [non-blocking #queryRefusalEntry] A parent query's refusal carries the name of the entry that refused in the field `entry` of the rejection data; the wire shape stays `RejectionData` of `spec:command.outcome-boundary` unchanged, and the owner confirmed the word (D7, E-24)
 
 ## Contract
 

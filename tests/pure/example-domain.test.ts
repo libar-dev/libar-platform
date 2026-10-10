@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { validate } from "convex-helpers/validators";
 import { expect, test } from "vitest";
 import {
@@ -30,15 +25,6 @@ import {
 } from "../../example/convex/orders/streams.js";
 import { orderSummary } from "../../example/convex/orderSummary.js";
 import type { StreamMeta } from "../../src/context/index.js";
-// Binds the production composition under example/ to the Spec of its domain. The composition is
-// bundled into a deployment, so it carries no Protocol import itself; this test carries its anchor.
-const anchor = codeAnchor({
-  id: codeAnchorId("impl:application.orders-inventory-example"),
-  label:
-    "the order and stock item deciders, the Orders and Inventory contexts, PlaceOrder, CancelOrder, ReceiveStock and the order summary",
-  satisfies: ref("spec:application.orders-inventory-example"),
-});
-void anchor;
 const context: DecisionContext = {
   now: Date.UTC(2026, 9, 1, 12),
   actor: { kind: "human", id: "example-user" },

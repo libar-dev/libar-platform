@@ -20,7 +20,7 @@ A paid call reserves budget before dispatch and settles once from evidence. Conc
 
 ### Open questions
 
-- [blocking] The reservation and usage records, the slot allocator and the reconciliation operation are deferred to the build on the agent trigger (D17, Decision method rule 4)
+- [blocking #agentBudgetAccounting] The reservation and usage records, the slot allocator and the reconciliation operation are deferred to the build on the agent trigger (D17, Decision method rule 4)
 
 ## Rule
 

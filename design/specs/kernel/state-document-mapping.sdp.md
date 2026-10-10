@@ -24,7 +24,7 @@ Folding is simple when a stream's state is one document. When state spans severa
 
 ### Open questions
 
-- [non-blocking] Extension E-2: the doc prefers one document per stream within a size budget and names no budget; this Spec sets `budgetBytes` as one number per stream type meaning the whole stream, the single document or the head and every part together, at most 256 KiB for the single mapping and at most 512 KiB over at most 32 parts for the derived mapping, provisionally, lets a stream type declare a smaller `budgetBytes` on its mapping, caps the derived budget at half the document ceiling because a baseline event holds the whole migrated state in one document, and derives every bound on streams per call, list page, backfill batch and baseline batch from that budget so that the 16 MiB read ceiling binds in bytes and not only in documents; the owner confirms the numbers (D3, D5, OQ3, F13, E-2, E-25)
+- [non-blocking #streamStateBudget] Extension E-2: the doc prefers one document per stream within a size budget and names no budget; this Spec sets `budgetBytes` as one number per stream type meaning the whole stream, the single document or the head and every part together, at most 256 KiB for the single mapping and at most 512 KiB over at most 32 parts for the derived mapping, provisionally, lets a stream type declare a smaller `budgetBytes` on its mapping, caps the derived budget at half the document ceiling because a baseline event holds the whole migrated state in one document, and derives every bound on streams per call, list page, backfill batch and baseline batch from that budget so that the 16 MiB read ceiling binds in bytes and not only in documents; the owner confirms the numbers (D3, D5, OQ3, F13, E-2, E-25)
 
 ## Decision
 

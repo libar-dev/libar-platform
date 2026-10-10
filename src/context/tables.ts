@@ -1,5 +1,12 @@
 // The tables of spec:context.tables, as a fragment a context component's schema.ts spreads into
 // defineSchema. Single mapping only: no streamParts table.
+/**
+ * @sdpAnchor impl:context.tables
+ * @sdpLabel the context tables fragment
+ * @sdpReferences spec:context.tables
+ * @sdpComponent component:platform.context
+ * @sdpRole schema
+ */
 import {
   defineTable,
   type DataModelFromSchemaDefinition,

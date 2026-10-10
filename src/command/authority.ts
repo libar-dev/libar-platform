@@ -3,6 +3,13 @@
 // authorizeQuery, which a parent query calls before it discloses anything, the plain helpers an
 // operator's function uses to write and delete a grant, and nextTenant, which reads the tenant list.
 // None is registered here.
+/**
+ * @sdpAnchor impl:command.tenancy-and-authority
+ * @sdpLabel establishActor, authorize, authorizeQuery and the grant helpers
+ * @sdpSatisfies spec:command.tenancy-and-authority, spec:command.actor-and-scope
+ * @sdpComponent component:platform.command
+ * @sdpRole service
+ */
 import type { GenericDatabaseReader, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
 import { limitIdLength, utf8Length } from "../context/text.js";

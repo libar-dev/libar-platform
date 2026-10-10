@@ -1,6 +1,14 @@
 // The parent's tables of spec:command.receipt-table and spec:command.actor-and-scope, receipts, grants
 // and the tenant list, as a fragment the app's schema.ts spreads into defineSchema. Every index leads
 // with tenantId.
+/**
+ * @sdpAnchor impl:command.receipt-table
+ * @sdpLabel the receipts, grants and tenant tables fragment
+ * @sdpSatisfies spec:command.actor-and-scope
+ * @sdpReferences spec:command.receipt-table
+ * @sdpComponent component:platform.command
+ * @sdpRole schema
+ */
 import {
   defineTable,
   type DataModelFromSchemaDefinition,

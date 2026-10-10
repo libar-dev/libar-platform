@@ -1,10 +1,12 @@
-"""Decision queries, patch refusals and the real register's graph coverage.
+"""Decision queries, patch refusals, the real register's question sources and its rows found by Spec,
+the two checks check.py runs through the Protocol's recipes, entry addresses outside the Specs and
+dependsOn cycles, and check.py run whole over a sample tree, so that each of its checks reaches the
+failures it prints and its exit status.
 
 Run: python3 -m unittest design/tools/test_decisions.py
 Fixtures and mutation copies live in operating-system temporary directories.
 """
 
-import collections
 import contextlib
 import copy
 import difflib
@@ -15,6 +17,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -24,6 +27,7 @@ TOOL_PATH = Path(os.environ.get("DECISIONS_TOOL_UNDER_TEST", ROOT / "design/tool
 SPEC = importlib.util.spec_from_file_location("decisions_under_test", TOOL_PATH)
 tool = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tool)
+CHECK_PATH = Path(os.environ.get("CHECK_TOOL_UNDER_TEST", ROOT / "design/tools/check.py"))
 
 
 def lean():
@@ -40,7 +44,7 @@ def lean():
 def row(identifier, **changes):
     result = {
         "id": identifier, "title": "Keep a bounded context call",
-        "sources": [{"kind": "specQuestion", "ref": "spec:context.tables#1", "file": "design/specs/context/tables.sdp.md", "line": 1}],
+        "sources": [{"kind": "specQuestion", "address": "spec:context.tables#question.boundedCall", "file": "design/specs/context/tables.sdp.md"}],
         "families": ["context"], "cites": ["E-32", "F13"],
         "provisionalReading": "One bounded call", "blocks": None, "advisor": "convex",
         "status": "unsorted", "foldedInto": [], "class": None, "reason": None, "lean": None,
@@ -153,7 +157,7 @@ class DecisionsTests(unittest.TestCase):
         for args in [("--spec", "spec:context.tables"), ("--family", "context"), ("--cites", "E-32")]:
             with self.subTest(args=args):
                 self.assertEqual(self.ids(*args), ["OD-001", "OD-002", "OD-003", "OD-004", "OD-007"])
-        self.assertEqual(self.ids("--spec", "spec:context.tables#1", "--decided"), ["OD-005", "OD-006"])
+        self.assertEqual(self.ids("--spec", "spec:context.tables", "--decided"), ["OD-005", "OD-006"])
         self.assertEqual(self.ids("--spec", "spec:context.table"), [])
         self.assertEqual(self.ids("--cites", "E-3"), [])
 
@@ -340,49 +344,271 @@ class DecisionsTests(unittest.TestCase):
         self.assertEqual(self.ids("--spec", "spec:command.command-pipeline"), ["OD-007"])
 
 
+class QuestionSourceTests(unittest.TestCase):
+    def setUp(self):
+        self.row = row("OD-001")
+        self.spec = "spec:context.tables"
+        self.address = self.row["sources"][0]["address"]
+        self.files = {self.spec: "design/specs/context/tables.sdp.md"}
+        self.questions = {self.spec: ["Keep a bounded context call. Another sentence."]}
+        self.resolutions = {self.address: {"address": self.address, "resolves": True,
+                            "id": self.spec, "section": "question", "key": "boundedCall", "reason": None}}
+
+    def errors(self):
+        return tool.question_source_errors(self.row, self.questions, self.files, self.resolutions)
+
+    def close_source(self):
+        self.row["sources"] = [{"kind": "specQuestion", "spec": self.spec,
+                                "question": "Keep a bounded context call.",
+                                "file": self.files[self.spec], "open": False}]
+
+    def test_address_survives_question_text_changes(self):
+        self.questions[self.spec] = ["A different sentence."]
+        self.assertEqual(self.errors(), [])
+
+    def test_missing_wrong_section_wrong_file_and_old_shape_are_refused(self):
+        for mutation in ("missing", "section", "file", "old", "line", "openTrue", "notString"):
+            with self.subTest(mutation=mutation):
+                saved_row = copy.deepcopy(self.row)
+                saved_resolutions = copy.deepcopy(self.resolutions)
+                source = self.row["sources"][0]
+                if mutation == "missing": self.resolutions[self.address].update(resolves=False, reason="entry")
+                elif mutation == "section": self.resolutions[self.address]["section"] = "design"
+                elif mutation == "file": source["file"] = "another.sdp.md"
+                elif mutation == "old":
+                    source.pop("address")
+                    source.update(spec=self.spec, question="Keep a bounded context call.")
+                elif mutation == "line": source["line"] = 1
+                elif mutation == "openTrue": source["open"] = True
+                elif mutation == "notString": source["address"] = []
+                self.assertTrue(self.errors())
+                self.row, self.resolutions = saved_row, saved_resolutions
+
+    def test_closed_opening_matching_normalizes_only_whitespace(self):
+        self.close_source()
+        self.row["status"] = "decided"
+        self.assertEqual(tool.question_opening("Keep `spec:context.tables` at 1.5 bytes. Why?"),
+                         "Keep `spec:context.tables` at 1.5 bytes.")
+        self.row["sources"][0]["question"] = "Keep a bounded\n context call."
+        self.assertIn("open: false question resolves again", " ".join(self.errors()))
+        self.row["sources"][0]["question"] = "keep a bounded context call."
+        self.assertEqual(self.errors(), [])
+
+    def test_removed_question_requires_closed_status_and_refuses_return(self):
+        self.close_source()
+        self.questions[self.spec] = []
+        for status in tool.STATUSES:
+            self.row["status"] = status
+            with self.subTest(status=status):
+                self.assertEqual(bool(self.errors()), status not in ("decided", "folded"))
+        self.questions[self.spec] = ["Keep a bounded context call. Returned text."]
+        self.assertIn("open: false question resolves again", " ".join(self.errors()))
+
+    def test_protocol_removed_key_fails_and_closed_source_keeps_passing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / self.files[self.spec]
+            path.parent.mkdir(parents=True)
+            carrier = """---
+id: spec:context.tables
+kind: rule
+altitude: story
+readiness: scoped
+relations: {}
+---
+# Bounded call
+
+## Intent
+- outcome: Keep a bounded call.
+
+### Open questions
+- [non-blocking #boundedCall] Keep a bounded context call. Another sentence.
+
+## Rule
+- Keep the call bounded.
+
+## Verification — reviewed
+- Review the bound.
+"""
+            path.write_text(carrier)
+            self.resolutions = tool.question_resolutions([self.row], root)
+            self.assertEqual(self.errors(), [])
+            path.write_text(carrier.replace(" #boundedCall", ""))
+            self.resolutions = tool.question_resolutions([self.row], root)
+            self.assertIn("does not resolve", " ".join(self.errors()))
+            path.write_text(carrier.replace("- [non-blocking #boundedCall] Keep a bounded context call. Another sentence.\n", ""))
+            graph = tool.graph_recipe(20, root)
+            self.questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in graph["specs"]}
+            self.close_source()
+            self.row["status"] = "decided"
+            before = copy.deepcopy(self.row["sources"])
+            self.assertEqual(self.errors(), [])
+            self.assertEqual(self.row["sources"], before)
+
+
 class RealRegisterTests(unittest.TestCase):
-    def test_real_register_has_unique_rows_and_exact_recipe_20_coverage(self):
+    def test_real_register_has_unique_ids_and_resolving_question_sources(self):
         register = json.loads((ROOT / "design/decisions/register.json").read_text())
         rows = register["decisions"]
-        self.assertGreaterEqual(len(rows), 147)
         ids = [r["id"] for r in rows]
-        self.assertEqual(ids, [f"OD-{i:03d}" for i in range(1, len(rows) + 1)])
-        self.assertEqual(len(set(ids)), len(rows))
-        for r in rows:
-            self.assertEqual(tool.row_errors(r, register["units"], ROOT, set(ids)), [], r["id"])
-            self.assertTrue(all(target in ids for target in r["foldedInto"]))
-            if r["status"] in ("sorted", "waiting", "decided"):
-                self.assertIn(r["class"], tool.CLASSES)
-                self.assertTrue(tool.present(r["reason"]))
-        self.assertTrue(all(set(s) == {"kind", "ref", "file", "line"} for r in rows for s in r["sources"]))
-        products = [s["ref"] for r in rows for s in r["sources"] if s["kind"] == "productDecision"]
-        self.assertEqual(products, ["product/1", "product/2", "product/3"])
-        self.assertEqual(len(register["possiblySame"]), 46)
-        self.assertEqual(register["schema"], 1)
-        self.assertEqual(register["units"], ["S3", "S4", "S5", "L3"])
-        refs = collections.Counter(s["ref"] for r in rows for s in r["sources"] if s["kind"] == "specQuestion")
+        self.assertEqual(len(set(ids)), len(ids))
+        graph = tool.graph_recipe(20)
+        resolutions = tool.question_resolutions(rows)
+        self.assertEqual(graph["malformed"], [])
+        questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in graph["specs"]}
+        files = {}
+        for path in (ROOT / "design/specs").rglob("*.sdp.md"):
+            identifier = re.search(r"^id: (\S+)", path.read_text(), re.M).group(1)
+            files[identifier] = path.relative_to(ROOT).as_posix()
         for decision in rows:
-            for source in decision["sources"]:
-                if source["kind"] != "specQuestion":
-                    continue
-                identifier, number = source["ref"].rsplit("#", 1)
-                text = (ROOT / source["file"]).read_text()
-                self.assertEqual(re.search(r"^id: (\S+)", text, re.M).group(1), identifier)
-                lines = text.splitlines()
-                start = lines.index("### Open questions")
-                end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
-                locations = [i + 1 for i in range(start + 1, end) if re.match(r"^- \[(?:non-blocking|blocking)\] ", lines[i])]
-                self.assertEqual(source["line"], locations[int(number) - 1])
-        recipes = (ROOT / "node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md").read_text()
-        body = re.search(r"## 20\..*?```js\n(.*?)```", recipes, re.S).group(1)
-        result = subprocess.run(["npx", "sdp", "q", body, "--root", "design", "--json"], cwd=ROOT, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        graph = json.loads(result.stdout)
-        expected = collections.Counter(f"{spec['id']}#{i}" for spec in graph["specs"] for i, _ in enumerate(spec["questions"], 1))
-        self.assertEqual(graph["totals"]["questions"], 144)
-        self.assertEqual(graph["totals"]["malformed"], 0)
-        self.assertEqual(refs, expected)
-        self.assertTrue(all(n == 1 for n in refs.values()))
+            with self.subTest(row=decision["id"]):
+                self.assertEqual(tool.row_errors(decision, register["units"], ROOT, set(ids)), [])
+                self.assertEqual(tool.question_source_errors(decision, questions, files, resolutions), [])
+
+    def test_real_rows_are_found_by_the_spec_their_sources_name(self):
+        def ids(*args):
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                code = tool.main([*args, "--json"], register_path=ROOT / "design/decisions/register.json", root=ROOT)
+            self.assertEqual(code, 0)
+            return {row["id"] for row in json.loads(stdout.getvalue())}
+        for spec, expected in [
+            ("spec:application.projection-contract", {"OD-171"}),
+            ("spec:application.history-projection", {"OD-172", "OD-173", "OD-174"}),
+            ("spec:application.history-rebuild", {"OD-175"}),
+        ]:
+            with self.subTest(spec=spec):
+                self.assertLessEqual(expected, ids("--spec", spec) | ids("--spec", spec, "--decided"))
+
+
+def sample_spec(name, relations="{}", key=" #keepIt"):
+    """A rule Spec of a sample corpus, with one Design entry and one open question, keyed unless key is empty."""
+    return f"""---
+id: spec:sample.{name}
+kind: rule
+altitude: story
+readiness: scoped
+relations: {relations}
+---
+# Sample {name}
+
+## Intent
+- outcome: Keep {name}.
+
+### Open questions
+- [non-blocking{key}] Keep {name} as it is. Another sentence.
+
+## Rule
+- Keep {name}.
+
+## Design
+- typeOne: `type One = string`
+
+## Verification — reviewed
+- Review {name}.
+"""
+
+
+class CheckTests(unittest.TestCase):
+    """check.py's address and cycle checks over a sample corpus, through the shipped recipes 25 and 26."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, str(ROOT / "design/tools"))
+        spec = importlib.util.spec_from_file_location("check_under_test", CHECK_PATH)
+        cls.check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.check)
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def put(self, path, text):
+        (self.root / path).parent.mkdir(parents=True, exist_ok=True)
+        (self.root / path).write_text(text)
+
+    def test_a_broken_address_fails_where_it_is_written(self):
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
+        self.put("src/cites.ts", "\n".join([
+            "// spec:sample.one#design.typeOne resolves.",
+            "// spec:sample.one#question.keepIt resolves.",
+            "// spec:sample.one#design.typeTwo names no entry.",
+            "// spec:sample.none#design.typeOne names no Spec.",
+            "// spec:sample.one#design.Type-one is malformed.",
+            "// spec:sample.one#3 is a positional citation, kept as written.",
+        ]) + "\n")
+        found = self.check.address_tokens([self.root / "src/cites.ts"], self.root)
+        self.assertEqual([where for _, where in found], [f"src/cites.ts:{n}" for n in range(1, 6)])
+        rows = tool.graph_recipe(25, self.root, [token for token, _ in found])["rows"]
+        self.assertEqual(self.check.address_failures(found, rows), [
+            "entry address spec:sample.one#design.typeTwo at src/cites.ts:3 names no entry of its Spec",
+            "entry address spec:sample.none#design.typeOne at src/cites.ts:4 names no Spec",
+            "entry address spec:sample.one#design.Type-one at src/cites.ts:5 is outside the address grammar",
+        ])
+        self.assertEqual(self.check.address_failures(found, rows[:-1]),
+                         ["the address recipe answered 4 rows for 5 entry addresses"])
+
+    def test_a_planted_cycle_fails_and_a_chain_passes(self):
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one", "\n  dependsOn: spec:sample.two"))
+        self.put("design/specs/sample/two.sdp.md", sample_spec("two", "\n  dependsOn: spec:sample.three"))
+        self.put("design/specs/sample/three.sdp.md", sample_spec("three"))
+        self.assertEqual(self.check.cycle_failures(tool.graph_recipe(26, self.root)), [])
+        self.put("design/specs/sample/three.sdp.md", sample_spec("three", "\n  dependsOn: spec:sample.one"))
+        self.assertEqual(self.check.cycle_failures(tool.graph_recipe(26, self.root)), [
+            "dependsOn cycle among spec:sample.one, spec:sample.three, spec:sample.two: "
+            "spec:sample.one -> spec:sample.two -> spec:sample.three -> spec:sample.one",
+        ])
+
+
+
+class CheckCommandTests(unittest.TestCase):
+    """check.py run whole, as the command it is, over a sample tree in a temporary directory.
+
+    The tree holds a copy of check.py and decisions.py under test, the pinned Protocol through a link to
+    this repository's node_modules, and a stand-in for the page generator. Four defects are planted at
+    once: an address that names no entry, a dependsOn cycle, an open question without a key, and a page
+    generator that exits 1. The run must print each one's failure, no other, and exit 1, so a check that
+    stops reaching its failures or the exit status fails here.
+    """
+
+    def put(self, path, text):
+        (self.root / path).parent.mkdir(parents=True, exist_ok=True)
+        (self.root / path).write_text(text)
+
+    def test_each_check_reaches_its_failure_and_the_exit_status(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.root = Path(temporary)
+            pin = json.loads((ROOT / "package.json").read_text())["devDependencies"]["@libar-dev/software-delivery-protocol"]
+            self.put("package.json", json.dumps({"devDependencies": {"@libar-dev/software-delivery-protocol": pin}}))
+            os.symlink(ROOT / "node_modules", self.root / "node_modules")
+            self.put("design/tools/check.py", CHECK_PATH.read_text())
+            self.put("design/tools/decisions.py", TOOL_PATH.read_text())
+            self.put("design/tools/prose-mentions.json", json.dumps({"pairs": []}))
+            self.put("design/decisions/register.json", json.dumps({"schema": 1, "units": [], "decisions": [], "possiblySame": []}))
+            self.put("design/reviews/consensus-ledger.json", json.dumps({"ledger": []}))
+            for name in ("STATE.md", "ROADMAP.md", "PLAN.md", "SESSIONS.md"):
+                self.put("design/" + name, "# Sample\n")
+            self.put("design/specs/sample/one.sdp.md", sample_spec("one", "\n  dependsOn: spec:sample.two"))
+            self.put("design/specs/sample/two.sdp.md", sample_spec("two", "\n  dependsOn: spec:sample.one", key=""))
+            self.put("src/cites.ts", "// spec:sample.one#design.typeOne resolves.\n// spec:sample.one#design.typeTwo names no entry.\n")
+            self.put("scripts/pack-page.mjs", 'console.error("pack-page: design/pages/history-view.md is behind the tree from line 1");\nprocess.exit(1);\n')
+            validate = subprocess.run(["node", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/cli/sdp.js"), "validate", "."],
+                                      cwd=self.root, capture_output=True, text=True)
+            summary = re.search(r"\d+ specs · \d+ packs · \d+ anchors → \d+ nodes · \d+ edges", validate.stdout + validate.stderr)
+            self.assertIsNotNone(summary, validate.stdout + validate.stderr)
+            self.put("design/README.md", f"{summary.group(0)} (0 errors, 0 warnings)\n\nvalidate: 0 errors · 0 warnings\n")
+            run = subprocess.run([sys.executable, str(self.root / "design/tools/check.py")], cwd=self.root, capture_output=True, text=True,
+                                 env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+            printed = [line[3:] for line in run.stdout.splitlines() if line.startswith(" - ")]
+            self.assertEqual(printed, [
+                "entry address spec:sample.one#design.typeTwo at src/cites.ts:2 names no entry of its Spec",
+                "dependsOn cycle among spec:sample.one, spec:sample.two: spec:sample.one -> spec:sample.two -> spec:sample.one",
+                "spec:sample.two carries an open question without a key",
+                "pack-page: design/pages/history-view.md is behind the tree from line 1",
+            ], run.stdout + run.stderr)
+            self.assertEqual(run.returncode, 1)
+            self.assertNotIn("\nOK", run.stdout)
 
 
 if __name__ == "__main__":

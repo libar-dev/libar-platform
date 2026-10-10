@@ -214,7 +214,8 @@ describe("the first rebuild", () => {
     async () => {
       const t = app();
       const generationId = await install(t);
-      // generation-registry.sdp.md:37; rebuild.sdp.md:115,133: installation is the first rebuild.
+      // generation-registry.sdp.md:37; spec:application.rebuild#design.fnStartGeneration and
+      // spec:application.rebuild#design.fnSwitchGeneration: installation is the first rebuild.
       expect(await generations(t)).toMatchObject([
         {
           _id: generationId,
@@ -230,7 +231,8 @@ describe("the first rebuild", () => {
           readModel: "documentSummary",
           operator,
         });
-        // rebuild.sdp.md:115: active does not refuse a start; building does, by this exact message.
+        // spec:application.rebuild#design.fnStartGeneration: active does not refuse a start;
+        // building does, by this exact message.
         await expect(
           t.mutation(internal.rebuild.startGeneration, {
             readModel: "documentSummary",
@@ -239,7 +241,8 @@ describe("the first rebuild", () => {
         ).rejects.toThrow(
           /^Read model documentSummary already has generation 2 in building$/,
         );
-        // rebuild.sdp.md:115: the refused start inserted no third generation.
+        // spec:application.rebuild#design.fnStartGeneration: the refused start inserted no third
+        // generation.
         expect(await generations(t)).toHaveLength(2);
         await t.finishAllScheduledFunctions(() => vi.runOnlyPendingTimers());
         await t.mutation(internal.rebuild.switchGeneration, {
@@ -259,7 +262,8 @@ describe("the first rebuild", () => {
       const t = app();
       await registry(t, [[3, "aborted"]]);
       const generationId = await install(t);
-      // rebuild.sdp.md:115: the next generation is one above the last, including an aborted one.
+      // spec:application.rebuild#design.fnStartGeneration: the next generation is one above the
+      // last, including an aborted one.
       expect(await generations(t)).toContainEqual(
         expect.objectContaining({
           _id: generationId,
@@ -267,7 +271,8 @@ describe("the first rebuild", () => {
           state: "active",
         }),
       );
-      // rebuild.sdp.md:115: an unknown read model is refused before registration.
+      // spec:application.rebuild#design.fnStartGeneration: an unknown read model is refused before
+      // registration.
       await expect(
         t.mutation(internal.rebuild.startGeneration, {
           readModel: "nope",

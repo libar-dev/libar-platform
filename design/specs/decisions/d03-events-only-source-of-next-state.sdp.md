@@ -23,8 +23,8 @@ Provenance: carried from v0.1; the two gaps at the end are new. Feature · Trace
 
 ### Open questions
 
-- [non-blocking] Gap, initial state: the v0.1 interface has none; add `initial()` or let `evolve` accept an empty state so a rebuild from the creation event has a defined start; ruled provisionally as E-1 in the kernel's initial-state decision (D3, E-1)
-- [non-blocking] Gap, state across several documents, its size budget: one document per stream stays the default while it fits the size budget, and where it cannot, the document writes are derived from the folded state in one place per context, as the kernel's state-document mapping decision states; the size budget there is a provisional number of E-2 (D3, E-2, OQ3)
+- [non-blocking #initialStateChoice] Gap, initial state: the v0.1 interface has none; add `initial()` or let `evolve` accept an empty state so a rebuild from the creation event has a defined start; ruled provisionally as E-1 in the kernel's initial-state decision (D3, E-1)
+- [non-blocking #streamStateSizeBudget] Gap, state across several documents, its size budget: one document per stream stays the default while it fits the size budget, and where it cannot, the document writes are derived from the folded state in one place per context, as the kernel's state-document mapping decision states; the size budget there is a provisional number of E-2 (D3, E-2, OQ3)
 
 ## Decision
 

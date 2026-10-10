@@ -8,6 +8,7 @@ relations:
   dependsOn:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
+    - spec:effects.claim-call-settle
   constrainedBy:
     - spec:facts.f16-scheduled-functions-table-shows-failed-runs
     - spec:facts.f13-transactions-have-limits
@@ -33,9 +34,9 @@ One run costs one nested mutation per recovered candidate and per expired lease,
 
 ### Open questions
 
-- [non-blocking] Extension E-52: the doc says the sweeper is batched and bounded but gives no cadence, batch bound, grace period, rearm bound or time guard; this design runs every 60 seconds, examines at most 100 candidates and 100 expired leases per scan, stops a run after 500 ms of elapsed time by `performance.now()`, waits a grace of 120 seconds past the next attempt time, allows 5 rearms, and isolates each candidate in a nested mutation; the numbers are tested against the pinned Convex version (D13, D19, E-52)
-- [non-blocking] Probe 3 pending: the candidate bound of 100 is provisional; it assumes a nested `ctx.runMutation` costs a few milliseconds, which F4 records as unknown, so the bound is reset from the probe's measured cost so that a full scan of 200 nested calls fits inside the elapsed guard, and until then the guard rather than the count is what keeps a run under the mutation timeout (Probe 3, F4, F13, E-52)
-- [non-blocking] Extension E-57: the sweeper scans deployment-wide by status; tenant fairness in its order is a policy to add when one tenant can starve another (D13, E-57)
+- [non-blocking #obligationSweepBounds] Extension E-52: the doc says the sweeper is batched and bounded but gives no cadence, batch bound, grace period, rearm bound or time guard; this design runs every 60 seconds, examines at most 100 candidates and 100 expired leases per scan, stops a run after 500 ms of elapsed time by `performance.now()`, waits a grace of 120 seconds past the next attempt time, allows 5 rearms, and isolates each candidate in a nested mutation; the numbers are tested against the pinned Convex version (D13, D19, E-52)
+- [non-blocking #sweepContextCallCost] Probe 3 pending: the candidate bound of 100 is provisional; it assumes a nested `ctx.runMutation` costs a few milliseconds, which F4 records as unknown, so the bound is reset from the probe's measured cost so that a full scan of 200 nested calls fits inside the elapsed guard, and until then the guard rather than the count is what keeps a run under the mutation timeout (Probe 3, F4, F13, E-52)
+- [non-blocking #tenantSweepFairness] Extension E-57: the sweeper scans deployment-wide by status; tenant fairness in its order is a policy to add when one tenant can starve another (D13, E-57)
 
 ## Contract
 

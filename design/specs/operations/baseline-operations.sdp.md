@@ -18,6 +18,10 @@ relations:
     - spec:constraints.bulk-operations-bounded
     - spec:laws.law05-authorization-before-execution-and-disclosure
     - spec:facts.f01-serializable-mutations-under-occ
+  dependsOn:
+    - spec:command.actor-and-scope
+    - spec:command.outcome-boundary
+    - spec:context.event-envelope
 ---
 # Baseline operations
 
@@ -39,8 +43,8 @@ Security, bounded resource use, useful errors and tests start in Layer 1, so non
 
 ### Open questions
 
-- [non-blocking] Extension E-43: the doc says audit is written inside the transaction and fails closed, that diagnostics hold no raw prompts, credentials or unbounded payloads, and that personal data sits behind references; it does not give the audit record, the diagnostic record or the reference. The option taken here: an `auditRecords` table with indexes by operation, subject and request key, whose every field has a stated source in the command, an `operatorAudit` table for the gate changes an operator entry makes, which name no tenant when the scope is the whole deployment, a bounded diagnostic line for every execution of a command entry's handler, whatever it ends in, written through a sink the declaration may name by a function that never throws, with no duration, because the backend records the time of each execution, and a `personalData` table that events point at by reference. The do-nothing option is Convex's own audit logging, which the pinned `convex` package declares as `audit(body)`; it is not taken as the record, because an entry in a log outside the database is not read by the operator's queries by operation, subject and request key, and whether such an entry proves a commit is not shown by the pinned package; a deployment may add it beside the tables as an export (E-43, D19)
-- [non-blocking] The retention and deletion policy's content is the owner's: which historical claims survive deletion and how long receipts, audit records and diagnostics are kept; the design gives the hooks and states no periods (D19)
+- [non-blocking #commandAuditDiagnostics] Extension E-43: the doc says audit is written inside the transaction and fails closed, that diagnostics hold no raw prompts, credentials or unbounded payloads, and that personal data sits behind references; it does not give the audit record, the diagnostic record or the reference. The option taken here: an `auditRecords` table with indexes by operation, subject and request key, whose every field has a stated source in the command, an `operatorAudit` table for the gate changes an operator entry makes, which name no tenant when the scope is the whole deployment, a bounded diagnostic line for every execution of a command entry's handler, whatever it ends in, written through a sink the declaration may name by a function that never throws, with no duration, because the backend records the time of each execution, and a `personalData` table that events point at by reference. The do-nothing option is Convex's own audit logging, which the pinned `convex` package declares as `audit(body)`; it is not taken as the record, because an entry in a log outside the database is not read by the operator's queries by operation, subject and request key, and whether such an entry proves a commit is not shown by the pinned package; a deployment may add it beside the tables as an export (E-43, D19)
+- [non-blocking #historicalClaimRetention] The retention and deletion policy's content is the owner's: which historical claims survive deletion and how long receipts, audit records and diagnostics are kept; the design gives the hooks and states no periods (D19)
 
 ## Rule
 

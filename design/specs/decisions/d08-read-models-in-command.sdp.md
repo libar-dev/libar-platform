@@ -27,7 +27,7 @@ The core path runs zero projection jobs and the simplest read that works wins. O
 
 ### Open questions
 
-- [non-blocking] Probe 5 ran on 2026-10-01: a parent query over component queries stays reactive, and pagination crosses the boundary with pages pinned by their end cursors; the client hook lost rows after a capped page split, which slice S2 settles before it builds a list (Probe 5, F15, D8)
+- [non-blocking #parentQueryPaginationSplit] Probe 5 ran on 2026-10-01: a parent query over component queries stays reactive, and pagination crosses the boundary with pages pinned by their end cursors; the client hook lost rows after a capped page split, which slice S2 settles before it builds a list (Probe 5, F15, D8)
 
 ## Decision
 

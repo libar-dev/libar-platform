@@ -1,4 +1,11 @@
 // The decider contract of spec:kernel.decider-contract: the shapes a context's pure domain code fits, and its helpers.
+/**
+ * @sdpAnchor impl:kernel.decider-contract
+ * @sdpLabel the decider contract's shapes and its fold, rebuild, invariant and transition helpers
+ * @sdpSatisfies spec:kernel.decider-contract
+ * @sdpComponent component:platform.kernel
+ * @sdpRole contract
+ */
 import type { Rejection } from "./outcome.js";
 // The adapter adds the envelope; a decider returns only these fields.
 export type DomainEvent<T extends string = string, P = unknown> = {

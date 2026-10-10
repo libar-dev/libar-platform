@@ -22,8 +22,8 @@ The two clashes are answered: a row that proves an effect happened is completion
 
 ### Open questions
 
-- [non-blocking] OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the owner answered OQ6 with receipt for the stored outcome of a command and completion evidence for the row that proves an effect happened (OQ6, Vocabulary)
-- [non-blocking] OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the owner answered OQ6 with generation for a numbered build of a read model and attempt for one try at an obligation (OQ6, Vocabulary)
+- [non-blocking #receiptCompletionEvidence] OQ6, receipt: this design uses receipt for the stored outcome of a command for idempotency, while today's glossary uses receipt for a row that proves an effect happened; the owner answered OQ6 with receipt for the stored outcome of a command and completion evidence for the row that proves an effect happened (OQ6, Vocabulary)
+- [non-blocking #generationObligationAttempt] OQ6, generation: this design uses generation for a numbered build of a read model, while today's glossary uses it for the attempt number of watched work; the owner answered OQ6 with generation for a numbered build of a read model and attempt for one try at an obligation (OQ6, Vocabulary)
 
 ## Model
 

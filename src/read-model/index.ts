@@ -1,4 +1,11 @@
 // The read-model library: what the parent uses to declare, rebuild, write and read a read model.
+/**
+ * @sdpAnchor component:platform.read-model
+ * @sdpLabel the read-model library: declare, rebuild, write and read a read model
+ * @sdpUses component:platform.kernel, component:platform.context, component:platform.command, component:platform.gate
+ * @sdpLayer application
+ * @sdpContext platform
+ */
 export { activeGeneration, generationsToWrite } from "./generations.js";
 export {
   applyProjection,

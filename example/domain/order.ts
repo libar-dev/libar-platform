@@ -1,5 +1,19 @@
 // The Orders context's order stream: an order is placed once with its lines, its total is the sum of
 // quantity times unit price over its lines, and a placed order is cancelled once.
+/**
+ * @sdpAnchor component:example.orders-domain
+ * @sdpLabel the Orders context's pure domain code
+ * @sdpUses component:platform.kernel
+ * @sdpLayer domain
+ * @sdpContext orders
+ */
+/**
+ * @sdpAnchor impl:application.orders-inventory-example
+ * @sdpLabel the order decider
+ * @sdpReferences spec:application.orders-inventory-example
+ * @sdpComponent component:example.orders-domain
+ * @sdpRole decider
+ */
 import type {
   DecideResult,
   Decider,

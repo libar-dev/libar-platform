@@ -1,4 +1,11 @@
 // The journal of spec:context.journal: a context's events, the stream registration, load and append.
+/**
+ * @sdpAnchor impl:context.journal
+ * @sdpLabel createJournal, load and append
+ * @sdpReferences spec:context.journal
+ * @sdpComponent component:platform.context
+ * @sdpRole event-store
+ */
 import type { DocumentByName as Doc } from "convex/server";
 import {
   getConvexSize,

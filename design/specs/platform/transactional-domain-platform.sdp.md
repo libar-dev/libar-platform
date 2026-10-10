@@ -41,7 +41,7 @@ Citations in this corpus use the tokens the plan fixes: D for a decision, Law fo
 
 ### Open questions
 
-- [non-blocking] OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability, which is the form the doc's behavior rules with examples take here; the owner confirmed the mapping (OQ5)
+- [non-blocking #decisionSpecMapping] OQ5 asks whether the decisions move into SDP carriers; this corpus is that move, with ledger facts as constraint Specs, decisions as decision Specs that list the do-nothing option first, and scenarios as example Specs under the component that provides the capability, which is the form the doc's behavior rules with examples take here; the owner confirmed the mapping (OQ5)
 
 ## Behavior
 

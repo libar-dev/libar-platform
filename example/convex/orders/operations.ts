@@ -1,4 +1,11 @@
 // The Orders context's sanctioned operations. Each takes a list, so a parent use case makes one call.
+/**
+ * @sdpAnchor impl:application.orders-inventory-example.orders-operations
+ * @sdpLabel the Orders sanctioned operations
+ * @sdpReferences spec:application.orders-inventory-example
+ * @sdpComponent component:example.orders-context
+ * @sdpRole service
+ */
 import { v, type Infer, type ObjectType } from "convex/values";
 import {
   defineOperation,

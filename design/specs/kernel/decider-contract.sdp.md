@@ -5,7 +5,9 @@ altitude: story
 readiness: defined
 relations:
   refines: spec:kernel.domain-kernel
-  dependsOn: spec:kernel.initial-state
+  dependsOn:
+    - spec:kernel.initial-state
+    - spec:kernel.outcome-model
   decidedBy: spec:decisions.d03-events-only-source-of-next-state
   constrainedBy:
     - spec:laws.law03-events-only-source-of-state
@@ -26,7 +28,7 @@ The generic parameters are the state `S`, the command `C`, the domain event `E` 
 
 ### Open questions
 
-- [non-blocking] Extension E-20: the concrete generic parameters, the fields of `DecisionContext`, the `DomainEvent` shape, the at-least-one-event rule and the helper shapes are this design's; the owner confirms them before code names them (D3, E-20)
+- [non-blocking #deciderEventContract] Extension E-20: the concrete generic parameters, the fields of `DecisionContext`, the `DomainEvent` shape, the at-least-one-event rule and the helper shapes are this design's; the owner confirms them before code names them (D3, E-20)
 
 ## Contract
 

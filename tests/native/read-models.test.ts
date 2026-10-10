@@ -77,7 +77,8 @@ test("native: a command whose read model has no generation fails as a technical 
     events: [],
     summaries: [],
   });
-  // generation-registry.sdp.md:37; rebuild.sdp.md:115,133: the first rebuild installs generation 1.
+  // generation-registry.sdp.md:37; spec:application.rebuild#design.fnStartGeneration and
+  // spec:application.rebuild#design.fnSwitchGeneration: the first rebuild installs generation 1.
   await install(backend);
   const registry = await backend.admin.readTable("generations");
   expect(registry).toMatchObject([
@@ -89,7 +90,8 @@ test("native: a command whose read model has no generation fails as a technical 
       startedBy: operator,
     },
   ]);
-  // rebuild.sdp.md:115: an active generation does not refuse the next rebuild.
+  // spec:application.rebuild#design.fnStartGeneration: an active generation does not refuse the
+  // next rebuild.
   const nextId = await backend.admin.run(
     getFunctionName(internal.rebuild.startGeneration),
     {
@@ -100,7 +102,7 @@ test("native: a command whose read model has no generation fails as a technical 
   const next = (await backend.admin.readTable("generations")).find(
     (row) => row._id === nextId,
   );
-  // rebuild.sdp.md:115: start takes the next generation number.
+  // spec:application.rebuild#design.fnStartGeneration: start takes the next generation number.
   expect(next).toMatchObject({
     generation: 2,
     projectionVersion: 1,

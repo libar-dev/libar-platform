@@ -9,6 +9,9 @@ relations:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
     - spec:command.outcome-boundary
+    - spec:application.write-pause
+    - spec:command.actor-and-scope
+    - spec:obligations.fan-out-and-chains
   constrainedBy:
     - spec:facts.f03-nested-run-mutation-partial-rollback
     - spec:facts.f08-scheduling-commits-with-mutation
@@ -31,7 +34,7 @@ The wrapper is the scheduled mutation that carries out one attempt of a local re
 
 ### Open questions
 
-- [non-blocking] Extension E-51: the doc does not give the backoff schedule, the default attempt budget, the default deadline or what a maintenance refusal does to the attempt count; this design uses exponential backoff from 1 second with base 2 capped at 1 hour, 8 attempts by default and no deadline by default, all per handler in the registry, and treats a transient `writePaused` or `capacity` refusal as a delay of the same attempt after `retryAfterMs` or 60 seconds; every number is a provisional default until the first experiment (D13, E-51, Decision method rule 4)
+- [non-blocking #obligationAttemptBackoff] Extension E-51: the doc does not give the backoff schedule, the default attempt budget, the default deadline or what a maintenance refusal does to the attempt count; this design uses exponential backoff from 1 second with base 2 capped at 1 hour, 8 attempts by default and no deadline by default, all per handler in the registry, and treats a transient `writePaused` or `capacity` refusal as a delay of the same attempt after `retryAfterMs` or 60 seconds; every number is a provisional default until the first experiment (D13, E-51, Decision method rule 4)
 
 ## Contract
 

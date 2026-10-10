@@ -1,5 +1,12 @@
 // The projection contract of spec:application.projection-contract for a per-entity read model: its
 // declaration, its projection, and applyProjection, the one writer of its rows.
+/**
+ * @sdpAnchor impl:application.projection-contract
+ * @sdpLabel ReadModel, Projection and applyProjection
+ * @sdpReferences spec:application.projection-contract
+ * @sdpComponent component:platform.read-model
+ * @sdpRole projection
+ */
 import { getConvexSize, type Value } from "convex/values";
 import type { GenericDataModel } from "convex/server";
 import type { StreamVersion } from "../kernel/index.js";

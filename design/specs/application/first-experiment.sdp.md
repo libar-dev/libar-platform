@@ -18,7 +18,12 @@ relations:
     - spec:application.parent-use-cases
     - spec:application.read-models
     - spec:application.rebuild
+    - spec:application.history-rebuild
     - spec:application.restore
+    - spec:application.generation-registry
+    - spec:application.history-projection
+    - spec:command.actor-and-scope
+    - spec:platform.native-harness
   constrainedBy:
     - spec:constraints.one-commit-per-successful-command
     - spec:constraints.zero-core-projection-jobs
@@ -56,12 +61,12 @@ The six cost targets are the constraint Specs this workflow is constrained by. T
 
 ### Open questions
 
-- [non-blocking] OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on this experiment's local measurement of component call cost, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, Probe 3)
-- [non-blocking] Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model (E-46, First experiment)
-- [non-blocking] Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)
-- [non-blocking] Extension E-47, the documents a command reads: the design expected one `PlaceOrder` of N lines to read about N + 6 documents, and the pinned backend counted 3N + 5; the measurement run decides where the other 2N reads come from (E-47, F13)
-- [non-blocking] Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a run seeds its grants and makes the order summary writable with admin access before its first command, the production composition names no service issuer, its `auth.config.ts` reads its issuer from environment variables, and it is the Convex app whose project directory is `example/`; these are options taken here and the owner has not ruled (E-8, E-13, E-15, E-37, E-46)
-- [non-blocking] Extension E-17, the rows the experiment requires: the doc says the experiment passes when every Layer 0, 1 and 2 scenario passes, and its one all-layer row, Sc ALL-1, applies to every installed layer; the option taken here requires the twenty-three rows the doc's table gives Layer 0, 1 or 2 and Sc ALL-1, each at the tier the acceptance contract names for it, so that the native proof of the audit and the diagnostic is part of the experiment; the owner confirmed both (E-17, First experiment, Sc ALL-1)
+- [non-blocking #contextIsolationCost] OQ1: a trivial context with no invariants of its own stays a component; the owner answered OQ1 on this experiment's local measurement of component call cost, and a measured workload that misses an agreed target, or a hosted usage reading above an agreed share, reopens it (OQ1, Probe 3)
+- [non-blocking #lifecycleCommandSummary] Extension E-46: the doc asks for one more lifecycle command and one essential summary without naming them; the option taken here is `CancelOrder`, which releases the allocation, and the order summary read model (E-46, First experiment)
+- [non-blocking #commandMeasurementRecord] Extension E-47: the doc lists what to count but not how; the option taken here is a measurement record per run captured from the disposable backend's function execution log, documents and bytes from the `usageStats` of the command's top-level completion record, and the calls per context from a pure test of the use case's executor, because the log holds no record of a component call inside a mutation, with any count the backend does not expose recorded as a gap; the owner has not ruled (E-47, First experiment)
+- [non-blocking #commandDocumentReads] Extension E-47, the documents a command reads: the design expected one `PlaceOrder` of N lines to read about N + 6 documents, and the pinned backend counted 3N + 5; the measurement run decides where the other 2N reads come from (E-47, F13)
+- [non-blocking #compositionInitialGrants] Extensions E-8, E-13, E-15 and E-37, as the experiment's setup takes them: stock exists only through `ReceiveStock`, a run seeds its grants and makes the order summary writable with admin access before its first command, the production composition names no service issuer, its `auth.config.ts` reads its issuer from environment variables, and it is the Convex app whose project directory is `example/`; these are options taken here and the owner has not ruled (E-8, E-13, E-15, E-37, E-46)
+- [non-blocking #requiredAcceptanceScenarios] Extension E-17, the rows the experiment requires: the doc says the experiment passes when every Layer 0, 1 and 2 scenario passes, and its one all-layer row, Sc ALL-1, applies to every installed layer; the option taken here requires the twenty-three rows the doc's table gives Layer 0, 1 or 2 and Sc ALL-1, each at the tier the acceptance contract names for it, so that the native proof of the audit and the diagnostic is part of the experiment; the owner confirmed both (E-17, First experiment, Sc ALL-1)
 
 ## Workflow
 

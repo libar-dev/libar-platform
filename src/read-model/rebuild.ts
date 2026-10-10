@@ -1,4 +1,11 @@
 // The operator entries and bounded batch chains of the online read-model rebuild.
+/**
+ * @sdpAnchor impl:application.rebuild
+ * @sdpLabel the online rebuild's operator entries, batch chains, tenant fill and batch bounds
+ * @sdpReferences spec:application.rebuild
+ * @sdpComponent component:platform.read-model
+ * @sdpRole service
+ */
 import type {
   FunctionReference,
   GenericMutationCtx,
@@ -642,7 +649,7 @@ export async function getGenerations<D extends RebuildDataModel>(
   config: RebuildConfig,
   args: { readModel: string },
 ) {
-  // rebuild.sdp.md:137: a read model the composition does not declare has no generations to list.
+  // spec:application.rebuild#design.fnGetGenerations: a read model the composition does not declare has no generations to list.
   if (
     !config.targets.some(({ readModel }) => readModel.name === args.readModel)
   )

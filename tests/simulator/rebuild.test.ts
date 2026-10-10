@@ -86,7 +86,8 @@ async function lastSchedule(t: App, name: string, args: object) {
   });
 }
 
-// rebuild.sdp.md fnStartGeneration:115; generation-registry.sdp.md tableGenerations, tableGenerationProgress.
+// spec:application.rebuild#design.fnStartGeneration; generation-registry.sdp.md tableGenerations,
+// tableGenerationProgress.
 test.each([false, true])(
   "convex-test: install on an empty deployment, tenant present=%s",
   async (present) => {
@@ -175,7 +176,7 @@ test.each([false, true])(
   },
 );
 
-// rebuild.sdp.md fnStartGeneration:115; projection-contract.sdp.md typeReadModel:67.
+// spec:application.rebuild#design.fnStartGeneration; projection-contract.sdp.md typeReadModel:67.
 test("convex-test: the default projection is the first and generation numbers increase past aborted rows", async () => {
   const t = rebuildApp();
   const first = await t.mutation(internal.rebuild.startGeneration, {
@@ -192,7 +193,9 @@ test("convex-test: the default projection is the first and generation numbers in
   expect((await read(t, second)).generation.generation).toBe(2);
 });
 
-// rebuild.sdp.md fnStartGeneration:115, fnBatchSizeFor:116, errorUnknownGeneration:143.
+// spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.fnBatchSizeFor,
+// spec:application.rebuild#design.errorUnknownGeneration.
 test("convex-test: start refusals follow target, projection, batch size, in-flight, empty list and fill order", async () => {
   const t = rebuildApp();
   await grantsWithoutTenants(t, 1);
@@ -243,7 +246,8 @@ test("convex-test: start refusals follow target, projection, batch size, in-flig
   }
 });
 
-// rebuild.sdp.md fnStartGeneration:115, fnBatchSizeFor:116.
+// spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.fnBatchSizeFor.
 test.each([0, -1, 1.5, NaN, Infinity])(
   "convex-test: start refuses batch size %s with its full message",
   async (batchSize) => {
@@ -256,7 +260,8 @@ test.each([0, -1, 1.5, NaN, Infinity])(
   },
 );
 
-// rebuild.sdp.md fnStartGeneration:115, limitBatchSize:146.
+// spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.limitBatchSize.
 test.each([100, 101])(
   "convex-test: start stores the capped batch size for requested %i",
   async (batchSize) => {
@@ -266,8 +271,13 @@ test.each([100, 101])(
   },
 );
 
-// rebuild.sdp.md errorUnknownGeneration:143, fnInterruptGeneration:130, fnResumeGeneration:132,
-// fnSwitchGeneration:133, fnRollbackGeneration:134, fnAbortGeneration:135, fnPurgeGeneration:136.
+// spec:application.rebuild#design.errorUnknownGeneration,
+// spec:application.rebuild#design.fnInterruptGeneration,
+// spec:application.rebuild#design.fnResumeGeneration,
+// spec:application.rebuild#design.fnSwitchGeneration,
+// spec:application.rebuild#design.fnRollbackGeneration,
+// spec:application.rebuild#design.fnAbortGeneration,
+// spec:application.rebuild#design.fnPurgeGeneration.
 test("convex-test: every generation entry refuses an unknown ID and every batch leaves it alone", async () => {
   const t = rebuildApp();
   const id = await start(t);
@@ -309,7 +319,8 @@ test("convex-test: every generation entry refuses an unknown ID and every batch 
   expect(await snapshot(t)).toStrictEqual(before);
 });
 
-// rebuild.sdp.md Design:107, the generation with no progress row; fnInterruptGeneration:134.
+// spec:application.rebuild, its Design narrative on a generation with no progress row;
+// spec:application.rebuild#design.fnInterruptGeneration.
 test("convex-test: every entry that reads the progress row and every batch over a generation with none throws, and the interrupt reads none", async () => {
   const t = rebuildApp();
   const id = await start(t);
@@ -361,7 +372,8 @@ test("convex-test: every entry that reads the progress row and every batch over 
   });
 });
 
-// actor-and-scope.sdp.md fnAssertOperator:91; rebuild.sdp.md fnStartGeneration:115 through fnFillTenants:139.
+// actor-and-scope.sdp.md fnAssertOperator:91; spec:application.rebuild#design.fnStartGeneration
+// through spec:application.rebuild#design.fnFillTenants.
 test.each(["", " \n\t ", " ".repeat(513), "x".repeat(513), "é".repeat(257)])(
   "convex-test: every operator entry refuses invalid operator %j before a lookup",
   async (stated) => {
@@ -405,7 +417,7 @@ test.each(["", " \n\t ", " ".repeat(513), "x".repeat(513), "é".repeat(257)])(
   },
 );
 
-// actor-and-scope.sdp.md fnAssertOperator:91; rebuild.sdp.md convexSurface:112.
+// actor-and-scope.sdp.md fnAssertOperator:91; spec:application.rebuild#design.convexSurface.
 test("convex-test: every plain entry checks the operator before touching ctx", async () => {
   const t = rebuildApp();
   const id = await start(t);
@@ -455,7 +467,8 @@ test("convex-test: every plain entry checks the operator before touching ctx", a
   });
 });
 
-// rebuild.sdp.md step6:126, verifySteps:127, fnEnumerateCall:120; actor-and-scope.sdp.md fnNextTenant:89.
+// spec:application.rebuild#design.step6, spec:application.rebuild#design.verifySteps,
+// spec:application.rebuild#design.fnEnumerateCall; actor-and-scope.sdp.md fnNextTenant:89.
 test("convex-test: page cursors continue, tenants cross in tenant-ID order and verify restarts at the first tenant", async () => {
   const t = rebuildApp();
   await create(t, "z", "z", "tenant-z");
@@ -520,7 +533,8 @@ test("convex-test: page cursors continue, tenants cross in tenant-ID order and v
   await lastSchedule(t, "verifyBatch", { generationId: id, fence: 1 });
 });
 
-// rebuild.sdp.md step2:122, step6:126. The empty tenant is an independent tenant-list obligation.
+// spec:application.rebuild#design.step2, spec:application.rebuild#design.step6. The empty tenant is
+// an independent tenant-list obligation.
 test("convex-test: an empty tenant consumes a batch and advances to the next tenant", async () => {
   const t = rebuildApp();
   await tenant(t, "tenant-a");
@@ -545,7 +559,10 @@ test("convex-test: an empty tenant consumes a batch and advances to the next ten
   ]);
 });
 
-// rebuild.sdp.md rule:81, step6:126, verifySteps:127. The tenant behind the cursor is an independent obligation.
+// spec:application.rebuild, its rule that a tenant entering the tenant list behind a backfill's
+// cursor is not visited by that pass; spec:application.rebuild#design.step6,
+// spec:application.rebuild#design.verifySteps. The tenant behind the cursor is an independent
+// obligation.
 test("convex-test: a tenant inserted between crossed tenants is skipped by backfill and visited by verify", async () => {
   const t = rebuildApp();
   await install(t);
@@ -580,7 +597,9 @@ test("convex-test: a tenant inserted between crossed tenants is skipped by backf
   );
 });
 
-// rebuild.sdp.md step1:125, verifySteps:131, purgeSteps:132, limitOutstandingBatches:152.
+// spec:application.rebuild#design.step1, spec:application.rebuild#design.verifySteps,
+// spec:application.rebuild#design.purgeSteps,
+// spec:application.rebuild#design.limitOutstandingBatches.
 test.each(["backfill", "verify", "purge"] as const)(
   "convex-test: in %s the batch the interrupt replaced records it once, and after a resume writes nothing",
   async (pass) => {
@@ -639,7 +658,10 @@ test.each(["backfill", "verify", "purge"] as const)(
   },
 );
 
-// rebuild.sdp.md fnInterruptGeneration:134, fnResumeChain:135, fnResumeGeneration:136; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
+// spec:application.rebuild#design.fnInterruptGeneration,
+// spec:application.rebuild#design.fnResumeChain,
+// spec:application.rebuild#design.fnResumeGeneration;
+// rebuild.online-rebuild-interrupt-resume.sdp.md:38.
 test("convex-test: interrupt after exactly three batches and resume at the stored size with a new fence", async () => {
   const t = rebuildApp();
   for (let i = 0; i < 6; i++) await create(t, `d${i}`);
@@ -698,7 +720,8 @@ test("convex-test: interrupt after exactly three batches and resume at the store
   expect(next.progress.cursor).not.toEqual(resumed.progress.cursor);
 });
 
-// rebuild.sdp.md fnInterruptGeneration:134, step1:125; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
+// spec:application.rebuild#design.fnInterruptGeneration, spec:application.rebuild#design.step1;
+// rebuild.online-rebuild-interrupt-resume.sdp.md:38.
 test("convex-test: an interrupt while a batch is scheduled leaves the progress row untouched, and that batch records the interruption and schedules nothing", async () => {
   const t = rebuildApp();
   for (let i = 0; i < 3; i++) await create(t, `d${i}`);
@@ -740,7 +763,8 @@ test("convex-test: an interrupt while a batch is scheduled leaves the progress r
   expect(await scheduled(t)).toStrictEqual(queued);
 });
 
-// rebuild.sdp.md step1:125, fnInterruptGeneration:134, fnResumeChain:135; generation-registry.sdp.md tableGenerations.
+// spec:application.rebuild#design.step1, spec:application.rebuild#design.fnInterruptGeneration,
+// spec:application.rebuild#design.fnResumeChain; generation-registry.sdp.md tableGenerations.
 test("convex-test: a batch pending across an interrupt and a resume, or across a resume alone, writes nothing", async () => {
   const t = rebuildApp();
   for (let i = 0; i < 3; i++) await create(t, `d${i}`);
@@ -763,7 +787,8 @@ test("convex-test: a batch pending across an interrupt and a resume, or across a
   }
 });
 
-// rebuild.sdp.md step1:125, fnInterruptGeneration:134; generation-registry.sdp.md tableGenerations.
+// spec:application.rebuild#design.step1, spec:application.rebuild#design.fnInterruptGeneration;
+// generation-registry.sdp.md tableGenerations.
 test("convex-test: a batch pending across two interrupts writes the note of the second once", async () => {
   const t = rebuildApp();
   for (let i = 0; i < 3; i++) await create(t, `d${i}`);
@@ -796,7 +821,8 @@ test("convex-test: a batch pending across two interrupts writes the note of the 
   expect(await snapshot(t)).toStrictEqual(recorded);
 });
 
-// rebuild.sdp.md fnInterruptGeneration:134, fnResumeChain:135.
+// spec:application.rebuild#design.fnInterruptGeneration,
+// spec:application.rebuild#design.fnResumeChain.
 test.each(states)(
   "convex-test: an idle pass in %s cannot be resumed, and the interrupt decides from the state alone",
   async (state) => {
@@ -840,7 +866,8 @@ test.each(states)(
   },
 );
 
-// rebuild.sdp.md step3:123, fnResumeChain:131; write-pause.sdp.md fnGateAllows, restoreDoor.
+// spec:application.rebuild#design.step3, spec:application.rebuild#design.fnResumeChain;
+// write-pause.sdp.md fnGateAllows, restoreDoor.
 test.each(["tenant", "restore"])(
   "convex-test: a parked batch under %s records its error without checkpointing and resumes after an interrupt",
   async (gate) => {
@@ -928,8 +955,8 @@ test.each(projectionCases)(
   },
 );
 
-// projection-contract.sdp.md step3:92; generation-registry.sdp.md typeWritableGeneration;
-// rebuild.sdp.md rule:69, rule:70, step5:125.
+// spec:application.projection-contract#design.step3, spec:application.generation-registry#design.writableGenerationRole,
+// spec:application.rebuild#design.step5 and its rule that live commands also write the generation being built.
 test.each(["building", "verifying", "verified"] as const)(
   "convex-test: live commands create and update rows in %s with that state's role",
   async (state) => {
@@ -1040,7 +1067,7 @@ test("convex-test: active version one and building version two project live writ
   ).toEqual(["deleted-before", "deleted-live", "live"]);
 });
 
-// rebuild.sdp.md verifySteps:127; projection-contract.sdp.md step1:90, step3:92.
+// spec:application.rebuild#design.verifySteps; projection-contract.sdp.md step1:90, step3:92.
 test("convex-test: verify inserts a missing row, updates an older row and deletes a row projected to null", async () => {
   const t = rebuildApp();
   for (const key of ["missing", "older", "deleted"])
@@ -1139,7 +1166,7 @@ test.each(["active", "building", "verifying"] as const)(
   },
 );
 
-// rebuild.sdp.md fnSwitchGeneration:133; generation-registry.sdp.md transitionCost.
+// spec:application.rebuild#design.fnSwitchGeneration; generation-registry.sdp.md transitionCost.
 test.each([undefined, 0, 2592000000])(
   "convex-test: switch patches both generations atomically with rollback period %s",
   async (rollbackPeriodMs) => {
@@ -1179,7 +1206,7 @@ test.each([undefined, 0, 2592000000])(
   },
 );
 
-// rebuild.sdp.md fnSwitchGeneration:133.
+// spec:application.rebuild#design.fnSwitchGeneration.
 test.each(states.filter((s) => s !== "verified"))(
   "convex-test: switch refuses %s before an invalid rollback period",
   async (state) => {
@@ -1198,7 +1225,7 @@ test.each(states.filter((s) => s !== "verified"))(
   },
 );
 
-// rebuild.sdp.md fnSwitchGeneration:133.
+// spec:application.rebuild#design.fnSwitchGeneration.
 test.each([-1, 0.5, 2592000001, NaN, Infinity])(
   "convex-test: switch refuses rollback period %s without changing either row",
   async (rollbackPeriodMs) => {
@@ -1219,7 +1246,8 @@ test.each([-1, 0.5, 2592000001, NaN, Infinity])(
   },
 );
 
-// rebuild.sdp.md fnSwitchGeneration:133, fnAbortGeneration:135.
+// spec:application.rebuild#design.fnSwitchGeneration,
+// spec:application.rebuild#design.fnAbortGeneration.
 test("convex-test: abort cannot remove the active generation while another awaits switch", async () => {
   const t = rebuildApp();
   const active = await install(t);
@@ -1247,7 +1275,8 @@ test("convex-test: abort cannot remove the active generation while another await
   expect((await read(t, id)).generation.state).toBe("active");
 });
 
-// rebuild.sdp.md fnRollbackGeneration:134, verifySteps:127; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
+// spec:application.rebuild#design.fnRollbackGeneration,
+// spec:application.rebuild#design.verifySteps; rebuild.online-rebuild-interrupt-resume.sdp.md:38.
 test("convex-test: rollback at version two repairs intervening creates, updates and a deletion before switch", async () => {
   const t = rebuildApp();
   await install(t, "documentSummary");
@@ -1362,7 +1391,8 @@ test("convex-test: rollback at version two repairs intervening creates, updates 
   expect((await read(t, id)).generation.state).toBe("retired");
 });
 
-// rebuild.sdp.md fnRollbackGeneration:134, limitRollbackPeriod:150.
+// spec:application.rebuild#design.fnRollbackGeneration,
+// spec:application.rebuild#design.limitRollbackPeriod.
 test.each(states.filter((s) => s !== "retired"))(
   "convex-test: rollback refuses %s",
   async (state) => {
@@ -1380,7 +1410,8 @@ test.each(states.filter((s) => s !== "retired"))(
   },
 );
 
-// rebuild.sdp.md fnRollbackGeneration:134. The remaining five refusals are checked in their pinned order.
+// spec:application.rebuild#design.fnRollbackGeneration. The remaining five refusals are checked in
+// their pinned order.
 test("convex-test: rollback checks period, purge, pause, in-flight generation and projection in order", async () => {
   const t = rebuildApp();
   const old = await install(t);
@@ -1418,8 +1449,10 @@ test("convex-test: rollback checks period, purge, pause, in-flight generation an
   );
   await patchGeneration(t, old, {}, { pass: "idle" });
   const other = await start(t);
-  // rebuild.sdp.md:84, :134: a fill and a reopened generation exclude each other; the pause refusal
-  // precedes the fill refusal, which precedes the in-flight refusal.
+  // spec:application.rebuild, its rule that a tenant fill and a generation in flight exclude each
+  // other, and spec:application.rebuild#design.fnRollbackGeneration: a fill and a reopened
+  // generation exclude each other; the pause refusal precedes the fill refusal, which precedes the
+  // in-flight refusal.
   const fillRow = {
     fence: 1,
     cursor: null,
@@ -1485,7 +1518,7 @@ test("convex-test: rollback checks period, purge, pause, in-flight generation an
   );
 });
 
-// rebuild.sdp.md fnAbortGeneration:135.
+// spec:application.rebuild#design.fnAbortGeneration.
 test.each(["building", "verifying", "verified"] as const)(
   "convex-test: abort from %s keeps its cursor and counts and ends the pass",
   async (state) => {
@@ -1527,7 +1560,7 @@ test.each(["building", "verifying", "verified"] as const)(
   },
 );
 
-// rebuild.sdp.md fnAbortGeneration:135.
+// spec:application.rebuild#design.fnAbortGeneration.
 test.each(["", "x".repeat(257), "é".repeat(129)])(
   "convex-test: abort refuses reason %j before checking state",
   async (reason) => {
@@ -1546,7 +1579,7 @@ test.each(["", "x".repeat(257), "é".repeat(129)])(
   },
 );
 
-// rebuild.sdp.md fnAbortGeneration:135.
+// spec:application.rebuild#design.fnAbortGeneration.
 test.each(["active", "retired", "aborted", "purged"] as const)(
   "convex-test: abort refuses %s",
   async (state) => {
@@ -1569,7 +1602,8 @@ test.each(["active", "retired", "aborted", "purged"] as const)(
   },
 );
 
-// rebuild.sdp.md fnRollbackGeneration:134, fnAbortGeneration:135.
+// spec:application.rebuild#design.fnRollbackGeneration,
+// spec:application.rebuild#design.fnAbortGeneration.
 test("convex-test: aborting a rollback leaves the serving generation active", async () => {
   const t = rebuildApp();
   const old = await install(t);
@@ -1603,7 +1637,7 @@ test("convex-test: aborting a rollback leaves the serving generation active", as
   });
 });
 
-// rebuild.sdp.md fnPurgeGeneration:136.
+// spec:application.rebuild#design.fnPurgeGeneration.
 test.each(["building", "verifying", "verified", "active", "purged"] as const)(
   "convex-test: purge refuses %s",
   async (state) => {
@@ -1621,7 +1655,9 @@ test.each(["building", "verifying", "verified", "active", "purged"] as const)(
   },
 );
 
-// rebuild.sdp.md fnPurgeGeneration:136, fnRollbackGeneration:134, limitRollbackPeriod:150.
+// spec:application.rebuild#design.fnPurgeGeneration,
+// spec:application.rebuild#design.fnRollbackGeneration,
+// spec:application.rebuild#design.limitRollbackPeriod.
 test("convex-test: purge is refused before retireAfter and allowed at it while rollback is refused at it", async () => {
   const t = rebuildApp();
   const old = await install(t);
@@ -1699,7 +1735,8 @@ async function purgeRows(
   });
 }
 
-// rebuild.sdp.md purgeSteps:128, fnPurgeGeneration:136; generation-registry.sdp.md tableGenerationProgress.
+// spec:application.rebuild#design.purgeSteps, spec:application.rebuild#design.fnPurgeGeneration;
+// generation-registry.sdp.md tableGenerationProgress.
 test("convex-test: purge crosses tenants and checkpoints only progress until the pass ends", async () => {
   const t = rebuildApp();
   const id = await start(t, { batchSize: 2 });
@@ -1768,7 +1805,8 @@ test("convex-test: purge crosses tenants and checkpoints only progress until the
   expect(await scheduled(t)).toStrictEqual(queue);
 });
 
-// rebuild.sdp.md purgeSteps:128, limitPurgeBatch:147. The purge near its bound is an independent obligation.
+// spec:application.rebuild#design.purgeSteps, spec:application.rebuild#design.limitPurgeBatch. The
+// purge near its bound is an independent obligation.
 test("convex-test: one more row than the purge cap takes exactly two batches on the tenant", async () => {
   const t = rebuildApp();
   const id = await start(t, { batchSize: 2 });
@@ -1809,8 +1847,9 @@ test("convex-test: one more row than the purge cap takes exactly two batches on 
   });
 });
 
-// rebuild.sdp.md purgeSteps:128, limitPurgeBatch:147. A valid start caps batchSize below this limit;
-// these stored progress rows exercise the defensive cap with a size above it.
+// spec:application.rebuild#design.purgeSteps, spec:application.rebuild#design.limitPurgeBatch. A
+// valid start caps batchSize below this limit; these stored progress rows exercise the defensive cap
+// with a size above it.
 test.each([256, 257])(
   "convex-test: the read-model purge limit caps an oversized stored batch at 256 for %i rows",
   async (count) => {
@@ -1857,7 +1896,9 @@ test.each([256, 257])(
   },
 );
 
-// rebuild.sdp.md fnPurgeGeneration:136, fnInterruptGeneration:130, fnResumeGeneration:132, purgeSteps:128.
+// spec:application.rebuild#design.fnPurgeGeneration,
+// spec:application.rebuild#design.fnInterruptGeneration,
+// spec:application.rebuild#design.fnResumeGeneration, spec:application.rebuild#design.purgeSteps.
 test.each(["retired", "aborted"] as const)(
   "convex-test: an interrupted purge of %s resumes at its stored batch size",
   async (state) => {
@@ -1955,7 +1996,7 @@ test.each(["retired", "aborted"] as const)(
   },
 );
 
-// rebuild.sdp.md fnStartGeneration:115, fnFillTenants:139.
+// spec:application.rebuild#design.fnStartGeneration, spec:application.rebuild#design.fnFillTenants.
 test("convex-test: a grant beside an empty tenant list refuses start with the fillTenants message", async () => {
   const t = rebuildApp();
   await grantsWithoutTenants(t, 1);
@@ -1966,7 +2007,8 @@ test("convex-test: a grant beside an empty tenant list refuses start with the fi
   );
 });
 
-// rebuild.sdp.md tableTenantFill:138, fnFillTenants:139, fillSteps:141, limitTenantFillBatch:142.
+// spec:application.rebuild#design.tableTenantFill, spec:application.rebuild#design.fnFillTenants,
+// spec:application.rebuild#design.fillSteps, spec:application.rebuild#design.limitTenantFillBatch.
 test.each([8, 9])(
   "convex-test: fill walks %i distinct tenants with a bound of eight and a second fill inserts none",
   async (count) => {
@@ -2066,7 +2108,7 @@ test.each([8, 9])(
   },
 );
 
-// rebuild.sdp.md fnFillTenants:139, fnStartGeneration:115.
+// spec:application.rebuild#design.fnFillTenants, spec:application.rebuild#design.fnStartGeneration.
 test.each(["building", "verifying", "verified"] as const)(
   "convex-test: fillTenants refuses a generation in %s",
   async (state) => {
@@ -2081,7 +2123,8 @@ test.each(["building", "verifying", "verified"] as const)(
   },
 );
 
-// rebuild.sdp.md fnStartGeneration:115, fnFillTenants:139, fillSteps:141.
+// spec:application.rebuild#design.fnStartGeneration, spec:application.rebuild#design.fnFillTenants,
+// spec:application.rebuild#design.fillSteps.
 test("convex-test: start refuses an unfinished fill even after the tenant list has rows", async () => {
   const t = rebuildApp();
   await grantsWithoutTenants(t, 9);
@@ -2097,7 +2140,8 @@ test("convex-test: start refuses an unfinished fill even after the tenant list h
   expect((await read(t, id)).generation.state).toBe("building");
 });
 
-// rebuild.sdp.md fillSteps:141, fnFillTenants:139; write-pause.sdp.md fnGateAllows.
+// spec:application.rebuild#design.fillSteps, spec:application.rebuild#design.fnFillTenants;
+// write-pause.sdp.md fnGateAllows.
 test("convex-test: fill ignores a tenant gate, parks under the deployment gate and keeps its cursor on resumption", async () => {
   const t = rebuildApp();
   await grantsWithoutTenants(t, 9);
@@ -2155,7 +2199,7 @@ test("convex-test: fill ignores a tenant gate, parks under the deployment gate a
   });
 });
 
-// rebuild.sdp.md fnFillTenants:139, fillSteps:141.
+// spec:application.rebuild#design.fnFillTenants, spec:application.rebuild#design.fillSteps.
 test("convex-test: fill refuses exactly the restore door and its batch parks there", async () => {
   const t = rebuildApp();
   await grantsWithoutTenants(t, 1);
@@ -2181,7 +2225,7 @@ test("convex-test: fill refuses exactly the restore door and its batch parks the
   expect(await scheduled(t)).toStrictEqual(queue);
 });
 
-// rebuild.sdp.md fillSteps:141.
+// spec:application.rebuild#design.fillSteps.
 test("convex-test: fill batches with no row, a stale fence or an idle pass write nothing", async () => {
   const t = rebuildApp();
   const empty = await snapshot(t);
@@ -2197,7 +2241,8 @@ test("convex-test: fill batches with no row, a stale fence or an idle pass write
   expect(await snapshot(t)).toStrictEqual(idle);
 });
 
-// rebuild.sdp.md fnGetGenerations:137, limitGenerationsListed:151.
+// spec:application.rebuild#design.fnGetGenerations,
+// spec:application.rebuild#design.limitGenerationsListed.
 test("convex-test: getGenerations returns the newest twenty complete row pairs from twenty-one generations", async () => {
   const t = rebuildApp();
   const ids: GenerationId[] = [];
@@ -2229,7 +2274,8 @@ test("convex-test: getGenerations returns the newest twenty complete row pairs f
   expect(await snapshot(t)).toStrictEqual(before);
 });
 
-// actor-and-scope.sdp.md fnAssertOperator:91; rebuild.sdp.md fnStartGeneration:115 through fnFillTenants:139.
+// actor-and-scope.sdp.md fnAssertOperator:91; spec:application.rebuild#design.fnStartGeneration
+// through spec:application.rebuild#design.fnFillTenants.
 test("convex-test: every operator entry accepts and records the trimmed 512-byte bound", async () => {
   const t = rebuildApp();
   const atBound = "é".repeat(256);
@@ -2279,7 +2325,9 @@ test("convex-test: every operator entry accepts and records the trimmed 512-byte
   expect((await fill(t))?.changedBy).toBe(atBound);
 });
 
-// rebuild.sdp.md convexSurface:112, fnStartGeneration:115, fnBackfillBatch:117, fnVerifyBatch:118, fnSwitchGeneration:133.
+// spec:application.rebuild#design.convexSurface, spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.fnBackfillBatch, spec:application.rebuild#design.fnVerifyBatch,
+// spec:application.rebuild#design.fnSwitchGeneration.
 test("convex-test: the example composition installs orderSummary through its registered rebuild entries", async () => {
   const t = productionTest();
   const id = await t.mutation(exampleInternal.rebuild.startGeneration, {
@@ -2330,7 +2378,8 @@ test("convex-test: the example composition installs orderSummary through its reg
   });
 });
 
-// rebuild.sdp.md step1:121, verifySteps:127, purgeSteps:128.
+// spec:application.rebuild#design.step1, spec:application.rebuild#design.verifySteps,
+// spec:application.rebuild#design.purgeSteps.
 test.each([
   ["backfillBatch", "active", "backfill"],
   ["backfillBatch", "building", "verify"],
@@ -2351,7 +2400,8 @@ test.each([
   },
 );
 
-// rebuild.sdp.md fnResumeChain:131, fnResumeGeneration:132, verifySteps:127.
+// spec:application.rebuild#design.fnResumeChain,
+// spec:application.rebuild#design.fnResumeGeneration, spec:application.rebuild#design.verifySteps.
 test("convex-test: resuming verify preserves its counts and cursor and schedules verify with the new fence", async () => {
   const t = rebuildApp();
   for (let i = 0; i < 3; i++) await create(t, `document-${i}`);
@@ -2413,7 +2463,8 @@ test("convex-test: resuming verify preserves its counts and cursor and schedules
   });
 });
 
-// rebuild.sdp.md step3:123, verifySteps:127, purgeSteps:128; write-pause.sdp.md fnGateAllows:66.
+// spec:application.rebuild#design.step3, spec:application.rebuild#design.verifySteps,
+// spec:application.rebuild#design.purgeSteps; write-pause.sdp.md fnGateAllows:66.
 test.each(["verify", "purge"] as const)(
   "convex-test: %s also parks under a closed tenant without touching rows or checkpoint counts",
   async (pass) => {
@@ -2455,7 +2506,8 @@ test.each(["verify", "purge"] as const)(
   },
 );
 
-// rebuild.sdp.md fnStartGeneration:115, fnSwitchGeneration:133; generation-registry.sdp.md transitionCost.
+// spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.fnSwitchGeneration; generation-registry.sdp.md transitionCost.
 test("convex-test: a failed activation commits neither half of the switch", async () => {
   const t = rebuildApp(true);
   const old = await install(t);
@@ -2473,7 +2525,8 @@ test("convex-test: a failed activation commits neither half of the switch", asyn
   expect((await read(t, id)).generation.state).toBe("verified");
 });
 
-// rebuild.sdp.md fnStartGeneration:115, Design:107; projection-contract.sdp.md readModelRowShape.
+// spec:application.rebuild#design.fnStartGeneration, its Design narrative;
+// projection-contract.sdp.md readModelRowShape.
 test("convex-test: startGeneration schedules exactly one batch and an install leaves one row per subject and no marker", async () => {
   const t = rebuildApp();
   for (const documentId of ["a1", "a2", "a3"]) await create(t, documentId);
@@ -2503,7 +2556,7 @@ test("convex-test: startGeneration schedules exactly one batch and an install le
   ).toStrictEqual([]);
 });
 
-// rebuild.sdp.md fnGetGenerations:137: only a declared read model's rows are listed.
+// spec:application.rebuild#design.fnGetGenerations: only a declared read model's rows are listed.
 test("convex-test: getGenerations answers [] for an undeclared read model even when rows name it", async () => {
   const t = rebuildApp();
   const id = await start(t);

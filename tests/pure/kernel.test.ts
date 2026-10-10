@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { expect, test, vi } from "vitest";
 import {
   checkInvariants,
@@ -13,14 +8,6 @@ import {
   type DomainEvent,
   type Transitions,
 } from "../../src/kernel/index.js";
-// Binds the kernel under src/kernel/ to its contract. The kernel imports no package at run time,
-// so it cannot carry the anchor itself; its unit tests carry it for it.
-const anchor = codeAnchor({
-  id: codeAnchorId("impl:kernel.decider-contract"),
-  label: "the domain kernel in src/kernel",
-  satisfies: ref("spec:kernel.decider-contract"),
-});
-void anchor;
 type Added = DomainEvent<"added", { amount: number }>;
 function counter(initial: number): Decider<number, number, Added, null> {
   return {

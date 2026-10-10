@@ -5,7 +5,11 @@ altitude: story
 readiness: defined
 relations:
   refines: spec:command.idempotency-and-receipts
-  dependsOn: spec:command.actor-and-scope
+  dependsOn:
+    - spec:application.write-pause
+    - spec:command.actor-and-scope
+    - spec:context.queries
+    - spec:kernel.outcome-model
   constrainedBy:
     - spec:facts.f13-transactions-have-limits
     - spec:laws.law11-tenant-scope-named
@@ -25,7 +29,7 @@ The `receipts` table lives in the parent, as the doc's ownership table assigns i
 
 ### Open questions
 
-- [non-blocking] Extension E-4: the doc fixes what a receipt holds and that expiry is explicit; the concrete fields, the three indexes, the tombstone shape and the defaults are the design's, and the expiry number is a product decision the declaration overrides (E-4, D6)
+- [non-blocking #receiptFieldsIndexes] Extension E-4: the doc fixes what a receipt holds and that expiry is explicit; the concrete fields, the three indexes, the tombstone shape and the defaults are the design's, and the expiry number is a product decision the declaration overrides (E-4, D6)
 
 ## Contract
 

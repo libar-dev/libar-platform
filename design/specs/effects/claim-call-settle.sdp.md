@@ -9,6 +9,7 @@ relations:
     - spec:obligations.record-contract
     - spec:obligations.lifecycle-transitions
     - spec:obligations.local-reaction-wrapper
+    - spec:command.actor-and-scope
   constrainedBy:
     - spec:facts.f09-scheduled-mutation-and-action-retry-semantics
     - spec:facts.f10-action-mutation-calls-are-separate-transactions
@@ -38,8 +39,8 @@ The action repeats exactly one thing when it throws: its settle call, within a s
 
 ### Open questions
 
-- [non-blocking] Extension E-11: the doc gives the three steps and the three policies but no signatures; this Spec pins them and adds a fourth policy value `none`, which is the declared absence of a safe policy the doc describes (D14, E-11)
-- [non-blocking] Extension E-58: the doc gives no lease duration, key derivation, late evidence bound, reconcile shape or handling of a settle call that throws; this design sets the lease to the handler runtime's action timeout plus 5 minutes, derives the key from tenant and effect key, keeps ten late reports, defines a reconcile as a provider query that returns the same report union, and lets the action repeat a thrown settle call three times, with a duplicate rule in the settle, before leaving the attempt to lease expiry (D14, D15, F13, E-58)
+- [non-blocking #effectAttemptPolicies] Extension E-11: the doc gives the three steps and the three policies but no signatures; this Spec pins them and adds a fourth policy value `none`, which is the declared absence of a safe policy the doc describes (D14, E-11)
+- [non-blocking #effectAttemptLeaseEvidence] Extension E-58: the doc gives no lease duration, key derivation, late evidence bound, reconcile shape or handling of a settle call that throws; this design sets the lease to the handler runtime's action timeout plus 5 minutes, derives the key from tenant and effect key, keeps ten late reports, defines a reconcile as a provider query that returns the same report union, and lets the action repeat a thrown settle call three times, with a duplicate rule in the settle, before leaving the attempt to lease expiry (D14, D15, F13, E-58)
 
 ## Contract
 

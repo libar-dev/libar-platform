@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { v } from "convex/values";
 import { expect, test } from "vitest";
 import {
@@ -20,47 +15,6 @@ import {
   type StockResult,
   type StockState,
 } from "../../fixture/domain/index.js";
-// Binds the context library under src/context/ to its Specs. The library is bundled into every
-// context component, so it carries no Protocol import itself; these tests carry its anchors.
-const anchorComponent = codeAnchor({
-  id: codeAnchorId("impl:context.context-component"),
-  label: "defineOperation and the depot fixture context",
-  satisfies: ref("spec:context.context-component"),
-});
-const anchorAdapter = codeAnchor({
-  id: codeAnchorId("impl:context.persistence-adapter"),
-  label: "execute, planned and runOperation in src/context",
-  satisfies: ref("spec:context.persistence-adapter"),
-});
-const anchorJournal = codeAnchor({
-  id: codeAnchorId("impl:context.journal"),
-  label: "createJournal, load and append in src/context",
-  satisfies: ref("spec:context.journal"),
-});
-const anchorTables = codeAnchor({
-  id: codeAnchorId("impl:context.tables"),
-  label: "the context tables in src/context",
-  satisfies: ref("spec:context.tables"),
-});
-const anchorEnvelope = codeAnchor({
-  id: codeAnchorId("impl:context.event-envelope"),
-  label: "the envelope types and validators in src/context",
-  satisfies: ref("spec:context.event-envelope"),
-});
-const anchorBatch = codeAnchor({
-  id: codeAnchorId("impl:context.batch-shaped-api"),
-  label:
-    "the operation bounds in src/context and the depot's list-shaped operations",
-  satisfies: ref("spec:context.batch-shaped-api"),
-});
-void [
-  anchorComponent,
-  anchorAdapter,
-  anchorJournal,
-  anchorTables,
-  anchorEnvelope,
-  anchorBatch,
-];
 const stock: StreamRegistration<
   StockState,
   StockCommand,

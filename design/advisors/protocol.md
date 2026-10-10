@@ -21,6 +21,7 @@ Your field is not evidence. What you know from practice says where to look and w
 1. **A sentence about the platform, about Convex or about the code carries its citation, or it opens with its basis.** No third kind exists.
 2. **Five kinds of evidence, each written one way.**
    - A Spec line: `[design/specs/command/command-pipeline.sdp.md:61]`. It shows what is intended.
+   - A Design entry: its entry address, `[spec:application.history-projection#design.fnApplyHistoryProjection]`. It shows what is intended, like a Spec line, and it still points at the entry after an edit moves the lines. Prefer it whenever the claim rests on one Design entry.
    - The doc: its token, `[D7]`, `[Law 3]`, `[F13]`, `[Sc L2-4]`, `[OQ1]`, with the line of the doc when you quote it.
    - Code: `[src/command/receipts.ts:40]`. It shows what is written, not what happens.
    - A measured fact: the tier, the pins and the record, `[native backend, convex 1.46.0, backend precompiled-2026-09-28-5c7cb5b, evidence/<record>.json]`.

@@ -117,7 +117,9 @@ export const inspection = (
 export const depotRows = (t: GateApp) =>
   t.run((ctx) => ctx.runQuery(inspection, {}));
 
-// generation-registry.sdp.md:37; rebuild.sdp.md:115,127,133: scheduled batches finish before switch.
+// generation-registry.sdp.md:37; spec:application.rebuild#design.fnStartGeneration,
+// spec:application.rebuild#design.verifySteps and
+// spec:application.rebuild#design.fnSwitchGeneration: scheduled batches finish before switch.
 export async function installFixtureReadModel(
   t: GateApp,
   readModel = "documentSummary",
@@ -138,7 +140,8 @@ export async function installFixtureReadModel(
       generationId,
       operator,
     });
-    // rebuild.sdp.md:115: the active generation is at the version the setup stated.
+    // spec:application.rebuild#design.fnStartGeneration: the active generation is at the version
+    // the setup stated.
     expect(await t.run((ctx) => ctx.db.get(generationId))).toMatchObject({
       state: "active",
       projectionVersion,
@@ -166,7 +169,8 @@ export async function installOrderSummary(
       generationId,
       operator,
     });
-    // rebuild.sdp.md:115: the active generation is at the version the setup stated.
+    // spec:application.rebuild#design.fnStartGeneration: the active generation is at the version
+    // the setup stated.
     expect(await t.run((ctx) => ctx.db.get(generationId))).toMatchObject({
       state: "active",
       projectionVersion,

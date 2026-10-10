@@ -1,8 +1,3 @@
-import {
-  codeAnchor,
-  codeAnchorId,
-  ref,
-} from "@libar-dev/software-delivery-protocol";
 import { getFunctionAddress } from "convex/server";
 import { expect, test } from "vitest";
 import {
@@ -13,14 +8,6 @@ import { receiveStockDeclaration } from "../../example/convex/receiving.js";
 import type { MutationCtx } from "../../src/command/index.js";
 import type { OperationRef, StreamDto } from "../../src/context/index.js";
 import type { StreamVersion } from "../../src/kernel/index.js";
-// Binds PlaceOrder, CancelOrder and ReceiveStock, the production composition's use cases, to their Spec.
-const anchor = codeAnchor({
-  id: codeAnchorId("impl:application.parent-use-cases"),
-  label:
-    "PlaceOrder and CancelOrder over Orders and then Inventory, and ReceiveStock",
-  satisfies: ref("spec:application.parent-use-cases"),
-});
-void anchor;
 type Call = { reference: string; args: Record<string, unknown> };
 const version = (
   contextId: string,

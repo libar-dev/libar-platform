@@ -1,5 +1,12 @@
 // The command pipeline of spec:command.command-pipeline: the steps between a caller's request and the
 // committed outcome, in one top-level mutation. Its only failure signal is a throw.
+/**
+ * @sdpAnchor impl:command.command-pipeline
+ * @sdpLabel runPipeline and the command response
+ * @sdpReferences spec:command.command-pipeline
+ * @sdpComponent component:platform.command
+ * @sdpRole service
+ */
 import type {
   GenericDatabaseReader,
   GenericDatabaseWriter,

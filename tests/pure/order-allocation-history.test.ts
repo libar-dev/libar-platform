@@ -1,6 +1,6 @@
 // The order allocation history's fold gives one row whatever the order in which the events of
 // different streams arrive and however they are split between calls
-// (spec:application.projection-contract, orderAllocationHistoryFold).
+// (spec:application.history-projection#design.orderAllocationHistoryFold).
 import { expect, test } from "vitest";
 import {
   orderAllocationHistoryKeyOf,

@@ -18,7 +18,7 @@ The pinned package declares `db.vars.commitTs`, a placeholder that a mutation wr
 
 ### Open questions
 
-- [non-blocking] The documented upper bound, `ctx.meta.getSnapshotTs()`, is absent from the pinned package's public declarations; ordering under overlapping transactions and behavior on a hosted deployment are outside the native example; a platform consumer adopts the bound only through a public declaration of a pinned package (F18, Probe 8)
+- [non-blocking #commitTimestampBound] The documented upper bound, `ctx.meta.getSnapshotTs()`, is absent from the pinned package's public declarations; ordering under overlapping transactions and behavior on a hosted deployment are outside the native example; a platform consumer adopts the bound only through a public declaration of a pinned package (F18, Probe 8)
 
 ## Constraints
 

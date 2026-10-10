@@ -34,8 +34,8 @@ Its boundary is the decider contract. Above it sits the context component of Lay
 
 ### Open questions
 
-- [non-blocking] Extension E-20: the doc gives `decide(state, command, context)`, `fold(evolve, state, newEvents)` and the purity rule, and nothing about the concrete generic parameters, the fields of the decision context, the shape of a domain event, or the state-machine and invariant helpers; the decider contract fixes them and the owner confirms them before code names them (D3, E-20)
-- [non-blocking] Extension E-1: the doc leaves open whether the interface gains `initial()` or `evolve` accepts an empty state; the initial-state decision rules for `initial()` provisionally (D3, E-1)
+- [non-blocking #deciderStateContract] Extension E-20: the doc gives `decide(state, command, context)`, `fold(evolve, state, newEvents)` and the purity rule, and nothing about the concrete generic parameters, the fields of the decision context, the shape of a domain event, or the state-machine and invariant helpers; the decider contract fixes them and the owner confirms them before code names them (D3, E-20)
+- [non-blocking #initialStateChoice] Extension E-1: the doc leaves open whether the interface gains `initial()` or `evolve` accepts an empty state; the initial-state decision rules for `initial()` provisionally (D3, E-1)
 
 ## Behavior
 

@@ -41,14 +41,14 @@ The two families are one team. The owner ruled on 2026-10-01 that Claude models 
 
 Proof and fix are written apart. Once a designer's Spec text is ruled, astra writes the tests and a builder writes the code, each from the Spec text alone, in a worktree of its own, and an integrator merges them. A test that fails at that merge is a gap in the Spec, a wrong test or a wrong fix, and the integrator says which. So the designer writes into the Spec everything the two must agree on.
 
-A GPT job is started as an agent of type `gpt:codex`, with its brief in a file, and a job that ended is continued on its own thread with the next rulings. Each reviewer that mutates code gets its own frozen copy. The mechanics, the briefing of each family and the calibration of a reviewer are in the orchestration guide, and this project's commands, brief fragments, plant results and job log are in its notes file. `AGENTS.md` names both.
+A GPT job is started as an agent of type `relay:job`, with its brief in a file, and a job that ended is continued on its own thread with the next rulings. Each reviewer that mutates code gets its own frozen copy. The mechanics, the briefing of each family and the calibration of a reviewer are in the orchestration guide, and this project's commands, brief fragments, plant results and job log are in its notes file. `AGENTS.md` names both.
 
 Four rules from the stop of 2026-09-30, when ten parallel Fable agents hit the usage limit and one left 109 unreported edits:
 
 - One unit per session.
 - One write lane per tree. A second writer gets its own git worktree and files the first does not touch, and an integrator agent or the main thread merges its branch. Two writers share one tree only when the two briefs split the files and each names the other's files as forbidden, and then nothing is committed or checked until both are done.
 - The ledger is written ahead: each finding and each status before the next begins.
-- A GPT job's report stays in its job directory and a Claude agent answers in the thread. The rule to save every report to a file is gone, because a job's report now survives in `~/.codex-jobs`.
+- A GPT job's report stays in its job directory and a Claude agent answers in the thread. The rule to save every report to a file is gone, because a job's report now survives in `~/.relay-jobs`.
 
 ## Open
 
@@ -101,7 +101,7 @@ Paper only, for findings no slice will build soon: Layer 3 and later, and polish
 
 ### adopt
 
-For a new Protocol version. Change the pin in `package.json`, run the check, apply what the version changes to the corpus, and write what the adoption found into `docs/sdp-feedback.md` for the Protocol's maintainers.
+For a new Protocol version. Change the pin in `package.json`, run the check, apply what the version changes to the corpus, and write what the adoption found into `docs/feedback/sdp-feedback-01.md`, the running file for the Protocol's maintainers.
 
 ### recover
 
@@ -126,7 +126,7 @@ Consensus holds for Layers 0 to 2 when the first experiment passes on a native b
 
 A build slice is too long for one conversation. The main thread hands over to a fresh main thread at a seam, before its own context gets in the way: after a commit, with no delegated job running.
 
-1. Reach the seam. Wait for or stop every delegated job. A Claude agent dies with the conversation and leaves no report. A GPT job survives it, and its report, events and thread id are in its directory under `~/.codex-jobs`.
+1. Reach the seam. Wait for or stop every delegated job. A Claude agent dies with the conversation and leaves no report. A GPT job survives it, and its report, events and thread id are in its directory under `~/.relay-jobs`.
 2. Commit what is in the tree on the unit's branch, as work in progress if it is not reviewed, and say so in the message.
 3. Write the handover note beside the unit's rulings page, in the folder the project notes name. It says what is committed, which gates fail at the last commit, which findings are ruled and where the rulings are, what is drafted and not applied, the next steps in order, and what waits for the owner. It lists every instruction the owner gave during the conversation, in the owner's words.
 4. Put a short "In progress" block at the top of `STATE.md` that names the unit, the seam and the note. The rest of `STATE.md` waits for the close.

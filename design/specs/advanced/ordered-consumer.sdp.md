@@ -26,7 +26,7 @@ Order is per tenant, consumer, generation and partition, with the smallest parti
 
 ### Open questions
 
-- [blocking] The sequence allocation, the consumer position record, the worker's batch bound and the skip authorization are deferred to the build on this trigger (D18, Decision method rule 4)
+- [blocking #orderedConsumerPosition] The sequence allocation, the consumer position record, the worker's batch bound and the skip authorization are deferred to the build on this trigger (D18, Decision method rule 4)
 
 ## Behavior
 

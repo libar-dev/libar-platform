@@ -1,6 +1,13 @@
 // The validators of the kernel's outcome model (spec:kernel.outcome-model), which the kernel may not
 // hold because it imports nothing from Convex at run time, and the operation outcome's validator of
 // spec:context.persistence-adapter.
+/**
+ * @sdpAnchor impl:kernel.outcome-model.validators
+ * @sdpLabel the outcome model's validators at the context boundary, and the operation outcome's
+ * @sdpReferences spec:kernel.outcome-model, spec:context.persistence-adapter
+ * @sdpComponent component:platform.context
+ * @sdpRole contract
+ */
 import { v, type Validator } from "convex/values";
 import { eventEnvelopeValidator } from "./envelope.js";
 export const affectedRefValidator = v.object({

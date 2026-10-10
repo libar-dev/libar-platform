@@ -11,7 +11,7 @@ An advisor is three layers, kept apart so that a change to one leaves the other 
 | Layer | File | Changes when |
 |---|---|---|
 | The lens: the questions a field asks of any decision, its hazards, its reading list | `lenses/<slug>.md` | The field's questions get sharper |
-| The protocol: how an advisor stands on the corpus, what a lean is, the limits | `protocol.md`, with `task-sort.md` and `task-fork.md` | The way of working changes |
+| The protocol: how an advisor stands on the corpus, what a lean is, the limits | `protocol.md`, with `task-sort.md`, `task-fork.md`, `task-roadmap.md` and `task-pass.md` | The way of working changes |
 | The project: what the corpus holds and where to look | `project-context.md` | A close moves a path |
 
 | Advisor | Slug | Lens | Definition |
@@ -44,6 +44,17 @@ The main thread merges each patch with `python3 design/tools/decisions.py apply 
 
 `python3 design/tools/decisions.py --owner --before <unit>` lists what the owner must decide first. One launch for each fork, or one for a few forks of the same advisor, with `design/advisors/task-fork.md`, the ids and a patch path. Forks of different advisors run at once: each writes `design/decisions/forks/<id>.md` and its own patch.
 
+## How the main thread runs a pass
+
+The owner asked on 2026-10-03 for designs of coming work to be first-class in the corpus and iterated from several perspectives before the work is committed to. A pass is one advisor reading one capability's Pack from its lens, with `task-pass.md`, before the capability is built; `design/PLAN.md` 6.7 says how such a design sits in the graph and what each lens asks of it. Passes of different lenses over one Pack may run at once, since each writes only its memo.
+
+```
+Agent(subagent_type: "advisor-convex",
+      prompt: "Your task is design/advisors/task-pass.md. Your slug is convex. Your Pack is pack:history-view. Write your memo to <folder>/pass-convex.md.")
+```
+
+The memo's facts are checked like a roadmap memo's, on a copy with a plant. The main thread then rules each finding: a Spec change written by an Opus agent, an open question, a register row, or nothing. The pass closes as `design: <pack>, the <lens> pass`, and the next pass reads the Specs as that one left them. The implementation and verification pass needs no advisor: `npm run test:types` compiles the Pack's pinned module, recipe 21 gives its dependency footing, and the main thread rules on what they show.
+
 ## How the main thread runs a roadmap
 
 The owner asked on 2026-10-02 for the panel to propose the upcoming milestones as a short-term roadmap. The task is `task-roadmap.md`, and the aggregated result is `design/ROADMAP.md`, a work document the main thread cuts from the four memos and the owner rules on.
@@ -58,12 +69,12 @@ Agent(subagent_type: "advisor-domain",
 Then, in this order:
 
 1. The memos are copied to `<folder>/check-copy/`, and the main thread plants one false citation in each copy and records the plants in `<folder>/plants.md`, as tactical decision 31 of `STATE.md` asks for a review copy.
-2. One `gpt:codex` job, `gpt-6.1-sol` at medium with the fast tier, checks the copies: every cited claim held, not held or not checked, every unlabelled fact listed. Its brief is `<folder>/check-brief.md`, and its report stays in its job directory under `~/.codex-jobs`.
+2. One `relay:job` job, `gpt-6.1-sol` at medium with the fast tier, checks the copies: every cited claim held, not held or not checked, every unlabelled fact listed. Its brief is `<folder>/check-brief.md`, and its report stays in its job directory under `~/.relay-jobs`.
 3. While the check runs, the main thread writes `design/ROADMAP.md`: the cut as one table, the rounds, what is deferred with its trigger, where the advisors differed and what was ruled, the questions that are not rows yet, the findings beyond the roadmap, and the words the advisors needed that `CONTEXT.md` lacks.
 4. The claims the check marked not held are corrected in the roadmap, or the advisor is continued with the check's findings where the memo must change. The plants caught go into `plants.md` and the project notes.
 5. The unit closes as any unit does: the check prints `OK`, `STATE.md` points at the roadmap, the commit goes up through a pull request.
 
-The next run is lighter, by the owner's words of 2026-10-02, quoted in tactical decision 37 of `STATE.md`. One Fable advisor and one astra advisor are launched for input, on the subjects where the roadmap is in doubt; astra runs as a `gpt:codex` job whose brief carries the protocol, the lens and the task by path, at high effort. The product advisor, a Fable agent, cuts the roadmap as its product manager, with the same task file and the same check. The main thread rules on the tactical questions and asks the owner only for the critical forks. Forks are drafted by `gpt-6.1-sol` from the register's leans and the Spec lines they cite, read by an Opus agent for balance, and an advisor rewrites one only when the owner names the row: Fable is spent on the main thread and on the design of a slice on paper.
+The next run is lighter, by the owner's words of 2026-10-02, quoted in tactical decision 37 of `STATE.md`. One Fable advisor and one astra advisor are launched for input, on the subjects where the roadmap is in doubt; astra runs as a `relay:job` job whose brief carries the protocol, the lens and the task by path, at high effort. The product advisor, a Fable agent, cuts the roadmap as its product manager, with the same task file and the same check. The main thread rules on the tactical questions and asks the owner only for the critical forks. Forks are drafted by `gpt-6.1-sol` from the register's leans and the Spec lines they cite, read by an Opus agent for balance, and an advisor rewrites one only when the owner names the row: Fable is spent on the main thread and on the design of a slice on paper.
 
 What the first run showed, on 2026-10-02. Four advisors took five to six and a half minutes each, at 186 to 231 thousand tokens, and each returned a memo of 76 to 86 lines in the task's shape. The disjoint subjects held: no advisor leaned on another's decision, and the needs between subjects came back as one-line requests, as the task asks. Two advisors put the same case against the order, S3 before S4, which is the main thread's to rule. Every advisor listed the words it lacked; the union is in the roadmap. The memos state far fewer unlabelled facts than the first sort did: the task repeats the rules of a sentence, and that appears to be enough. The sol check took ten minutes on the fast tier for 291 claims and caught all four plants; its real findings were line citations past the end of a Spec, which an advisor can avoid by opening the line, and sentences that said more than their source.
 

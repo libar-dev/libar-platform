@@ -21,7 +21,7 @@ The v0.1 interface had no initial state, so a rebuild from the creation event ha
 
 ### Open questions
 
-- [non-blocking] Extension E-1: the doc offers `initial()` or an `evolve` that accepts an empty state and rules on neither; this Spec takes `initial()` provisionally and the owner confirms or reverses it (D3, E-1)
+- [non-blocking #initialStateChoice] Extension E-1: the doc offers `initial()` or an `evolve` that accepts an empty state and rules on neither; this Spec takes `initial()` provisionally and the owner confirms or reverses it (D3, E-1)
 
 ## Decision
 
