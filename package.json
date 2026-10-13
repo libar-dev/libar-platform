@@ -37,7 +37,7 @@
     "@convex-dev/migrations": "0.3.6",
     "@edge-runtime/vm": "5.0.0",
     "@eslint/js": "10.0.1",
-    "@libar-dev/software-delivery-protocol": "github:libar-dev/software-delivery-protocol#cc8807679762d76efa1361b1fbb0179f758d9896",
+    "@libar-dev/software-delivery-protocol": "github:libar-dev/software-delivery-protocol#30f196a9d5bb74eb3be341afac2a7af661ffb683",
     "@types/node": "24.19.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
