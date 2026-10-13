@@ -80,21 +80,12 @@ function gapDeclaration(name) {
     : `type ${name} = ${code};`;
 }
 
-function query(body, params = {}) {
+function query(body) {
   const sdp = join(protocol, "dist/cli/sdp.js");
   try {
     const out = execFileSync(
       process.execPath,
-      [
-        sdp,
-        "q",
-        body,
-        "--root",
-        root,
-        "--params",
-        JSON.stringify(params),
-        "--json",
-      ],
+      [sdp, "q", body, "--root", root, "--params", "{}", "--json"],
       { cwd: root, encoding: "utf8", maxBuffer: 1 << 27 },
     );
     return JSON.parse(out);

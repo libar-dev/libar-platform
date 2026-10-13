@@ -70,7 +70,6 @@ PLATFORM_ISOLATION = (
 # lookup; finding the tokens and saying where each stands is this script's. Historical positional
 # citations in prose, spec:<id>#<n>, are kept as written and not sent.
 MENTION_TOKEN = re.compile(r"spec:[^\s`'\"()\[\]{}<>|,;]+")
-ADDRESS_SECTION = re.compile(r"#(design|ui|question|rule)\b")
 # The recipe's reasons for an address that does not resolve, as this script words them.
 ADDRESS_REASONS = {
     "malformed": "is outside the address grammar",
@@ -97,13 +96,20 @@ def run(args):
 
 def address_tokens(paths, base=ROOT):
     """Each entry address written in the files, as (token, where), in file and line order."""
+    sections = subprocess.run(["node", "--input-type=module", "--eval",
+                               'import { ENTRY_ADDRESS_SECTIONS } from "@libar-dev/software-delivery-protocol";'
+                               ' console.log(JSON.stringify(ENTRY_ADDRESS_SECTIONS));'],
+                              cwd=ROOT, capture_output=True, text=True)
+    if sections.returncode:
+        raise ValueError(f"cannot read the Protocol's entry-address sections: {sections.stderr.splitlines()[0]}")
+    section_pattern = re.compile(r"#(?:" + "|".join(re.escape(section) for section in json.loads(sections.stdout)) + r")\b")
     found = []
     for path in sorted(paths):
         with open(path, encoding="utf-8") as lines:
             for number, line in enumerate(lines, 1):
                 for token in MENTION_TOKEN.findall(line):
                     token = token.rstrip(".:!?")
-                    if ADDRESS_SECTION.search(token):
+                    if section_pattern.search(token):
                         found.append((token, f"{os.path.relpath(path, base)}:{number}"))
     return found
 

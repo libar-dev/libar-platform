@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -585,6 +586,21 @@ class CheckTests(unittest.TestCase):
             "entry address spec:sample.one#rule.Keep-one at src/rules.ts:3 is outside the address grammar",
         ])
 
+    def test_address_sections_follow_the_protocol_export(self):
+        self.put("src/cites.ts", "\n".join([
+            "// spec:sample.one#design.typeOne is an exported section.",
+            "// spec:sample.one#future.keepOne is a newly exported section.",
+            "// spec:sample.one#rule.keepOne is not in this export.",
+            "// spec:sample.one#3 remains a positional citation.",
+        ]) + "\n")
+        sections = subprocess.CompletedProcess([], 0, json.dumps(["design", "future"]), "")
+        with mock.patch.object(self.check.subprocess, "run", return_value=sections):
+            found = self.check.address_tokens([self.root / "src/cites.ts"], self.root)
+        self.assertEqual(found, [
+            ("spec:sample.one#design.typeOne", "src/cites.ts:1"),
+            ("spec:sample.one#future.keepOne", "src/cites.ts:2"),
+        ])
+
     def test_a_broken_address_fails_where_it_is_written(self):
         self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
         self.put("src/cites.ts", "\n".join([
@@ -655,6 +671,30 @@ class RecipeScriptTests(unittest.TestCase):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text)
 
+    def intercept_queries(self, refusal=None):
+        package = "node_modules/@libar-dev/software-delivery-protocol"
+        dist = self.root / package / "dist"
+        dist.unlink()
+        dist.mkdir()
+        for child in (ROOT / package / "dist").iterdir():
+            if child.name != "cli":
+                os.symlink(child, dist / child.name)
+        cli = str(ROOT / package / "dist/cli/sdp.js")
+        self.put(package + "/dist/cli/sdp.js", "\n".join([
+            'import { appendFileSync, readFileSync } from "node:fs";',
+            'import { execFileSync } from "node:child_process";',
+            'const args = process.argv.slice(2);',
+            'appendFileSync("queries.jsonl", JSON.stringify(args) + "\\n");',
+            f'const refusal = {json.dumps(refusal)};',
+            f'const recipes = {json.dumps(str(ROOT / package / "dist/recipes"))};',
+            'if (refusal && args[1].includes(readFileSync(`${recipes}/${refusal}`, "utf8"))) {',
+            '  console.error(`recipe ${refusal.slice(0, 2)} refused\\nextra diagnostics`);',
+            '  process.exit(7);',
+            '}',
+            f'process.stdout.write(execFileSync(process.execPath, [{json.dumps(cli)}, ...args],',
+            '  { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));',
+        ]) + "\n")
+
     def test_decisions_uses_shipped_recipes_without_the_catalog(self):
         path = self.root / "design/tools/decisions.py"
         self.put("design/tools/decisions.py", TOOL_PATH.read_text())
@@ -677,6 +717,35 @@ class RecipeScriptTests(unittest.TestCase):
         page = (self.root / "design/pages/sample.md").read_text()
         self.assertIn("spec:sample.one#question.keepIt", page)
         self.assertIn("type One = string", page)
+
+    def test_pack_page_runs_each_shipped_recipe_as_its_own_query(self):
+        self.intercept_queries()
+        result = subprocess.run(["node", "scripts/pack-page.mjs", "--pack", "pack:sample", "--out", "design/pages/sample.md"],
+                                cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        queries = [json.loads(line) for line in (self.root / "queries.jsonl").read_text().splitlines()]
+        recipes = ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/recipes"
+        self.assertEqual([args[1] for args in queries], [
+            (recipes / "20-open-question-register.js").read_text(),
+            (recipes / "24-pinned-declarations.js").read_text(),
+        ])
+        for args in queries:
+            self.assertEqual(args[args.index("--params") + 1], "{}")
+
+    def test_pack_page_reports_the_first_stderr_line_when_either_recipe_refuses(self):
+        for recipe in ("20-open-question-register.js", "24-pinned-declarations.js"):
+            with self.subTest(recipe=recipe):
+                # Each case has its own CLI, so no shared package file is changed.
+                if recipe.startswith("24"):
+                    shutil.rmtree(self.root / "node_modules/@libar-dev/software-delivery-protocol/dist")
+                    os.symlink(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist",
+                               self.root / "node_modules/@libar-dev/software-delivery-protocol/dist")
+                self.intercept_queries(recipe)
+                result = subprocess.run(["node", "scripts/pack-page.mjs", "--pack", "pack:sample", "--out", "design/pages/sample.md"],
+                                        cwd=self.root, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual(result.stderr, f"pack-page: cannot generate · the query failed: recipe {recipe[:2]} refused\n")
+                self.assertFalse((self.root / "design/pages/sample.md").exists())
 
 
 class CheckCommandTests(unittest.TestCase):

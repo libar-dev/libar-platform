@@ -1,9 +1,9 @@
 // Writes the page of one capability Pack, which a person opens to understand its design:
 // `node scripts/pack-page.mjs --pack <packId> --out <page>` writes the page, and with `--check` it
 // writes nothing and compares the page at --out with what the tree generates, naming the first line
-// that differs. It reads the graph in memory through the Protocol package's exported extractor and
-// reader, never through validate, view, census or build, and runs recipes 20 and 24 through q as the
-// pinned Protocol ships them in dist/recipes, with --params. Two inputs join it: the pinned pairs
+// that differs. It reads the member graph through the Protocol package's exported extractor and
+// reader. Questions and declarations each come from q's own graph derivation, running shipped
+// recipes 20 and 24 from dist/recipes with --params. Two inputs join it: the pinned pairs
 // (tests/types/pinned-pairs.json) and the rows of the decision register
 // (design/decisions/register.json); a missing input is an error that names its path. The code a
 // member binds comes from the graph alone: each anchor at its own site, with its role and its
@@ -395,30 +395,41 @@ const states = { bound: "bound", ahead: "ahead", notCompared: "not compared" };
 // ---------------------------------------------------------------------------------------------
 // The page.
 
-function recipes(base, params = {}) {
+function recipes(base) {
   const dist = join(root, "node_modules", engine, "dist");
   const body = (file) => readFileSync(join(dist, "recipes", file), "utf8");
-  // Both bodies share one query's graph, as they shared the in-memory reader before.
-  const query = `return {
-    questions: await (async () => { ${body("20-open-question-register.js")} })(),
-    declarations: await (async () => { ${body("24-pinned-declarations.js")} })(),
-  };`;
-  return JSON.parse(
-    execFileSync(
-      process.execPath,
-      [
-        join(dist, "cli/sdp.js"),
-        "q",
-        query,
-        "--root",
-        base,
-        "--params",
-        JSON.stringify(params),
-        "--json",
-      ],
-      { cwd: base, encoding: "utf8", maxBuffer: 1 << 27 },
-    ),
-  );
+  const query = (body) => {
+    try {
+      return JSON.parse(
+        execFileSync(
+          process.execPath,
+          [
+            join(dist, "cli/sdp.js"),
+            "q",
+            body,
+            "--root",
+            base,
+            "--params",
+            "{}",
+            "--json",
+          ],
+          {
+            cwd: base,
+            encoding: "utf8",
+            maxBuffer: 1 << 27,
+            stdio: ["ignore", "pipe", "pipe"],
+          },
+        ),
+      );
+    } catch (error) {
+      const reason = error.stderr?.toString() || error.message;
+      cannot(`the query failed: ${reason.split("\n")[0]}`);
+    }
+  };
+  return {
+    questions: query(body("20-open-question-register.js")),
+    declarations: query(body("24-pinned-declarations.js")),
+  };
 }
 
 async function readGraph(pack, base) {
