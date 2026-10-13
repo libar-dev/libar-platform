@@ -2,8 +2,8 @@
 // `node scripts/pack-page.mjs --pack <packId> --out <page>` writes the page, and with `--check` it
 // writes nothing and compares the page at --out with what the tree generates, naming the first line
 // that differs. It reads the graph in memory through the Protocol package's exported extractor and
-// reader, never through validate, view, census or build, and runs recipes 20 and 24 as the pinned
-// Protocol ships them in recipes.md. Two inputs join it: the pinned pairs
+// reader, never through validate, view, census or build, and runs recipes 20 and 24 through q as the
+// pinned Protocol ships them in dist/recipes, with --params. Two inputs join it: the pinned pairs
 // (tests/types/pinned-pairs.json) and the rows of the decision register
 // (design/decisions/register.json); a missing input is an error that names its path. The code a
 // member binds comes from the graph alone: each anchor at its own site, with its role and its
@@ -14,6 +14,7 @@
 // them, with the targets that break a typed-dependency clause.
 // Exit 0: written, or the page is current. 1: --check found the page behind the tree. 2: it cannot
 // generate.
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -394,19 +395,30 @@ const states = { bound: "bound", ahead: "ahead", notCompared: "not compared" };
 // ---------------------------------------------------------------------------------------------
 // The page.
 
-const AsyncFunction = (async () => {}).constructor;
-function recipe(number) {
-  const recipes = readFileSync(
-    join(root, "node_modules", engine, "docs/agent-surface/recipes.md"),
-    "utf8",
+function recipes(base, params = {}) {
+  const dist = join(root, "node_modules", engine, "dist");
+  const body = (file) => readFileSync(join(dist, "recipes", file), "utf8");
+  // Both bodies share one query's graph, as they shared the in-memory reader before.
+  const query = `return {
+    questions: await (async () => { ${body("20-open-question-register.js")} })(),
+    declarations: await (async () => { ${body("24-pinned-declarations.js")} })(),
+  };`;
+  return JSON.parse(
+    execFileSync(
+      process.execPath,
+      [
+        join(dist, "cli/sdp.js"),
+        "q",
+        query,
+        "--root",
+        base,
+        "--params",
+        JSON.stringify(params),
+        "--json",
+      ],
+      { cwd: base, encoding: "utf8", maxBuffer: 1 << 27 },
+    ),
   );
-  const section = recipes
-    .split(/^## /m)
-    .find((part) => part.startsWith(`${number}. `));
-  const fence = /^```js\n([\s\S]*?)^```$/m.exec(section ?? "");
-  if (fence === null)
-    cannot(`recipes.md has no recipe ${number} with a js fence`);
-  return fence[1];
 }
 
 async function readGraph(pack, base) {
@@ -421,21 +433,14 @@ async function readGraph(pack, base) {
   const summary =
     reader.packs().find((candidate) => candidate.id === pack) ??
     cannot(`the graph has no ${pack}`);
+  const entries = recipes(base);
   return {
     graph,
     reader,
     summary,
     members: packMembers(reader.packContext(pack)),
-    questions: await new AsyncFunction("g", "graph", "report", recipe(20))(
-      reader,
-      graph,
-      undefined,
-    ),
-    declarations: await new AsyncFunction("g", "graph", "report", recipe(24))(
-      reader,
-      graph,
-      undefined,
-    ),
+    questions: entries.questions,
+    declarations: entries.declarations,
   };
 }
 

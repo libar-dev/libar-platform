@@ -64,13 +64,13 @@ PLATFORM_ISOLATION = (
     " return { platformComponents: graph.nodes.filter((n) => n.id.startsWith(\"component:\") && n.context === \"platform\").length,"
     " platformUses: uses.filter((e) => contextOf(componentOf(e.from)) === \"platform\").length, crossings }"
 )
-# An entry address, spec:<id>#design.<key>, #ui.<key> or #question.<key>. A token runs from `spec:` to a
+# An entry address, spec:<id>#design.<key>, #ui.<key>, #question.<key> or #rule.<key>. A token runs from `spec:` to a
 # separator, loses trailing punctuation, and goes whole to the Protocol's address recipe (recipe 25), so a
 # malformed key is refused rather than read as its valid prefix. The recipe holds the grammar and the
 # lookup; finding the tokens and saying where each stands is this script's. Historical positional
 # citations in prose, spec:<id>#<n>, are kept as written and not sent.
 MENTION_TOKEN = re.compile(r"spec:[^\s`'\"()\[\]{}<>|,;]+")
-ADDRESS_SECTION = re.compile(r"#(design|ui|question)\b")
+ADDRESS_SECTION = re.compile(r"#(design|ui|question|rule)\b")
 # The recipe's reasons for an address that does not resolve, as this script words them.
 ADDRESS_REASONS = {
     "malformed": "is outside the address grammar",

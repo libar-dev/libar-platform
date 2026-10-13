@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -447,6 +448,39 @@ relations: {}
 
 
 class RealRegisterTests(unittest.TestCase):
+    def test_od157_is_found_at_its_question_address(self):
+        package = ROOT / "node_modules/@libar-dev/software-delivery-protocol"
+        body = (package / "dist/recipes/23-entry-search.js").read_text()
+        result = subprocess.run(["node", str(package / "dist/cli/sdp.js"), "q", body,
+                                 "--params", json.dumps({"term": "OD-157"}), "--json"],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        address = "spec:application.history-rebuild#question.verifyPassUnderPause"
+        matches = [match for match in json.loads(result.stdout)["matches"] if match["address"] == address]
+        self.assertEqual(len(matches), 1)
+        self.assertIsInstance(matches[0]["line"], int)
+        concept = subprocess.run(["node", str(package / "dist/cli/sdp.js"), "q",
+                                  'return g.findByConcept("OD-157")', "--json"],
+                                 cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(concept.returncode, 0, concept.stderr)
+        self.assertIn("spec:application.history-rebuild", concept.stdout)
+
+    def test_pinned_suite_verifies_the_specs_it_compares(self):
+        package = ROOT / "node_modules/@libar-dev/software-delivery-protocol"
+        body = ('const id = "test:history-view.pinned-declarations";'
+                ' return {anchor: graph.nodes.find((node) => node.id === id),'
+                ' targets: graph.edges.filter((edge) => edge.from === id && edge.type === "verifies")'
+                '.map((edge) => edge.to).sort()};')
+        result = subprocess.run(["node", str(package / "dist/cli/sdp.js"), "q", body, "--json"],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        answer = json.loads(result.stdout)
+        source = (ROOT / "tests/types/pinned.test-d.ts").read_text()
+        compared = sorted(set(re.findall(r'\btest\("(spec:[^#"]+)#design\.', source)))
+        self.assertEqual(answer["targets"], compared)
+        self.assertEqual(answer["anchor"]["file"], "tests/types/pinned.test-d.ts")
+        self.assertEqual(answer["anchor"]["label"], "compares pack:history-view's pinned declarations with the code")
+
     def test_real_register_has_unique_ids_and_resolving_question_sources(self):
         register = json.loads((ROOT / "design/decisions/register.json").read_text())
         rows = register["decisions"]
@@ -528,6 +562,29 @@ class CheckTests(unittest.TestCase):
         (self.root / path).parent.mkdir(parents=True, exist_ok=True)
         (self.root / path).write_text(text)
 
+    def test_addresses_are_parameters_including_an_empty_list(self):
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
+        for addresses in ([], ["spec:sample.one#design.typeOne", "not an address", "spec:sample.one#design.typeOne"]):
+            with self.subTest(addresses=addresses):
+                answer = tool.graph_recipe(25, self.root, addresses)
+                self.assertEqual([row["address"] for row in answer["rows"]], addresses)
+                self.assertEqual(answer["totals"]["addresses"], len(addresses))
+
+    def test_rule_addresses_resolve_or_fail_where_written(self):
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one").replace("- Keep one.", "- [#keepOne] Keep one."))
+        self.put("src/rules.ts", "\n".join([
+            "// spec:sample.one#rule.keepOne resolves.",
+            "// spec:sample.one#rule.missing names no entry.",
+            "// spec:sample.one#rule.Keep-one is malformed.",
+        ]) + "\n")
+        found = self.check.address_tokens([self.root / "src/rules.ts"], self.root)
+        self.assertEqual(len(found), 3)
+        rows = tool.graph_recipe(25, self.root, [token for token, _ in found])["rows"]
+        self.assertEqual(self.check.address_failures(found, rows), [
+            "entry address spec:sample.one#rule.missing at src/rules.ts:2 names no entry of its Spec",
+            "entry address spec:sample.one#rule.Keep-one at src/rules.ts:3 is outside the address grammar",
+        ])
+
     def test_a_broken_address_fails_where_it_is_written(self):
         self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
         self.put("src/cites.ts", "\n".join([
@@ -560,6 +617,66 @@ class CheckTests(unittest.TestCase):
             "spec:sample.one -> spec:sample.two -> spec:sample.three -> spec:sample.one",
         ])
 
+
+
+class RecipeScriptTests(unittest.TestCase):
+    """Recipe callers work with shipped files even when the Markdown catalog is absent.
+
+    The temporary package links its runtime dependencies read-only. No install runs through them.
+    """
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        modules = self.root / "node_modules"
+        modules.mkdir()
+        for dependency in (ROOT / "node_modules").iterdir():
+            if dependency.name != "@libar-dev":
+                os.symlink(dependency, modules / dependency.name)
+        package = modules / "@libar-dev/software-delivery-protocol"
+        package.mkdir(parents=True)
+        for child in (ROOT / "node_modules/@libar-dev/software-delivery-protocol").iterdir():
+            if child.name != "docs":
+                os.symlink(child, package / child.name)
+        for script in ("pinned.mjs", "pack-page.mjs"):
+            path = self.root / "scripts" / script
+            path.parent.mkdir(exist_ok=True)
+            shutil.copyfile(ROOT / "scripts" / script, path)
+        self.put("package.json", (ROOT / "package.json").read_text())
+        self.put(".prettierrc.json", (ROOT / ".prettierrc.json").read_text())
+        self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
+        self.put("design/specs/sample.pack.sdp.md", "---\nid: pack:sample\nspecs:\n  - spec:sample.one\n---\n# Sample\n")
+        self.put("tests/types/pinned-pairs.json", json.dumps({"pack": "pack:sample", "test": "tests/types/pinned.test-d.ts", "pairs": []}))
+        self.put("design/decisions/register.json", json.dumps({"decisions": []}))
+
+    def put(self, path, text):
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text)
+
+    def test_decisions_uses_shipped_recipes_without_the_catalog(self):
+        path = self.root / "design/tools/decisions.py"
+        self.put("design/tools/decisions.py", TOOL_PATH.read_text())
+        spec = importlib.util.spec_from_file_location("decisions_without_catalog", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        answer = module.graph_recipe(25, self.root, ["spec:sample.one#design.typeOne"])
+        self.assertEqual(answer["totals"]["resolved"], 1)
+
+    def test_pinned_uses_shipped_recipes_without_the_catalog(self):
+        result = subprocess.run(["node", "scripts/pinned.mjs", "--pack", "pack:sample"],
+                                cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("export type One = string", (self.root / "generated/pinned/sample.ts").read_text())
+
+    def test_pack_page_uses_shipped_recipes_with_parameters_without_the_catalog(self):
+        result = subprocess.run(["node", "scripts/pack-page.mjs", "--pack", "pack:sample", "--out", "design/pages/sample.md"],
+                                cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        page = (self.root / "design/pages/sample.md").read_text()
+        self.assertIn("spec:sample.one#question.keepIt", page)
+        self.assertIn("type One = string", page)
 
 
 class CheckCommandTests(unittest.TestCase):

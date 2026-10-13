@@ -57,12 +57,14 @@ def normalize_question(text):
 
 
 def graph_recipe(number, root=ROOT, addresses=None):
-    """Run a body from the pinned Protocol's shipped catalog."""
-    catalog = (ROOT / "node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md").read_text()
-    body = re.search(rf"## {number}\..*?```js\n(.*?)```", catalog, re.S).group(1)
-    if addresses is not None:
-        body = re.sub(r"const addresses = \[.*?\];", lambda _: "const addresses = " + json.dumps(addresses) + ";", body, count=1, flags=re.S)
-    result = subprocess.run(["npx", "sdp", "q", body, "--root", str(root), "--json"],
+    """Run the pinned Protocol's shipped recipe, with its subject passed as data."""
+    package = ROOT / "node_modules/@libar-dev/software-delivery-protocol"
+    recipes = list((package / "dist/recipes").glob(f"{number:02d}-*.js"))
+    if len(recipes) != 1:
+        raise ValueError(f"expected one shipped file for recipe {number}, found {len(recipes)}")
+    params = {} if addresses is None else {"addresses": addresses}
+    result = subprocess.run(["node", str(package / "dist/cli/sdp.js"), "q", recipes[0].read_text(),
+                             "--root", str(root), "--params", json.dumps(params), "--json"],
                             cwd=ROOT, capture_output=True, text=True)
     if result.returncode:
         raise ValueError(f"recipe {number} failed: {result.stderr or result.stdout}")
