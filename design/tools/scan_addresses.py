@@ -25,7 +25,9 @@ def entry_address_sections():
                                ' console.log(JSON.stringify(ENTRY_ADDRESS_SECTIONS));'],
                               cwd=ROOT, capture_output=True, text=True)
     if sections.returncode:
-        raise ValueError(f"cannot read the Protocol's entry-address sections: {sections.stderr.splitlines()[0]}")
+        reason = (sections.stderr or sections.stdout).strip().splitlines()
+        raise ValueError("cannot read the Protocol's entry-address sections: "
+                         + (reason[0] if reason else f"node exited {sections.returncode}"))
     return json.loads(sections.stdout)
 
 

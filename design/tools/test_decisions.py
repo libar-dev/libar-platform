@@ -495,6 +495,15 @@ class CheckTests(unittest.TestCase):
         self.assertIn("entry address spec:sample.one#rule.Keep-one at src/rules.ts:3 is outside the address grammar", text)
         self.assertNotIn("entry address spec:sample.one#rule.keepOne", text)
 
+    def test_address_sections_name_why_node_failed(self):
+        for stderr, stdout, reason in (("first line\nsecond line\n", "", "first line"),
+                                       ("", "on stdout\n", "on stdout"),
+                                       ("", "", "node exited 3")):
+            failed = subprocess.CompletedProcess([], 3, stdout, stderr)
+            with self.subTest(reason=reason), mock.patch.object(scanner.subprocess, "run", return_value=failed):
+                with self.assertRaisesRegex(ValueError, f"entry-address sections: {re.escape(reason)}$"):
+                    scanner.entry_address_sections()
+
     def test_address_sections_follow_the_protocol_export(self):
         self.put("src/cites.ts", "\n".join([
             "// spec:sample.one#design.typeOne is an exported section.",
