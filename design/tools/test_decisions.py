@@ -1,5 +1,5 @@
 """Decision queries, patch refusals, the real register's question sources and its rows found by Spec,
-the two checks check.py runs through the Protocol's recipes, entry addresses outside the Specs and
+the graph checks check.py runs through corpus rules, entry addresses outside the Specs and
 dependsOn cycles, and check.py run whole over a sample tree, so that each of its checks reaches the
 failures it prints and its exit status.
 
@@ -30,6 +30,8 @@ SPEC = importlib.util.spec_from_file_location("decisions_under_test", TOOL_PATH)
 tool = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tool)
 CHECK_PATH = Path(os.environ.get("CHECK_TOOL_UNDER_TEST", ROOT / "design/tools/check.py"))
+POLICY_PATH = ROOT / "design/rules/policy.js"
+SCAN_PATH = ROOT / "design/tools/scan_addresses.py"
 
 
 def lean():
@@ -545,12 +547,12 @@ relations: {relations}
 
 
 class CheckTests(unittest.TestCase):
-    """check.py's address and cycle checks over a sample corpus, through the shipped recipes 25 and 26."""
+    """The scanner and rules refuse broken addresses and cycles in a sample corpus."""
 
     @classmethod
     def setUpClass(cls):
         sys.path.insert(0, str(ROOT / "design/tools"))
-        spec = importlib.util.spec_from_file_location("check_under_test", CHECK_PATH)
+        spec = importlib.util.spec_from_file_location("scan_under_test", SCAN_PATH)
         cls.check = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.check)
 
@@ -562,6 +564,13 @@ class CheckTests(unittest.TestCase):
     def put(self, path, text):
         (self.root / path).parent.mkdir(parents=True, exist_ok=True)
         (self.root / path).write_text(text)
+
+    def policy(self, sites=None):
+        params = {"intended":{"pairs":[]}, "register":{"decisions":[]}, "addressSites":sites or []}
+        result = subprocess.run(["node", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/cli/sdp.js"),
+                                 "validate", str(self.root), "--rules", str(POLICY_PATH), "--params", json.dumps(params)],
+                                cwd=ROOT, capture_output=True, text=True)
+        return result, result.stdout + result.stderr
 
     def test_addresses_are_parameters_including_an_empty_list(self):
         self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
@@ -580,11 +589,11 @@ class CheckTests(unittest.TestCase):
         ]) + "\n")
         found = self.check.address_tokens([self.root / "src/rules.ts"], self.root)
         self.assertEqual(len(found), 3)
-        rows = tool.graph_recipe(25, self.root, [token for token, _ in found])["rows"]
-        self.assertEqual(self.check.address_failures(found, rows), [
-            "entry address spec:sample.one#rule.missing at src/rules.ts:2 names no entry of its Spec",
-            "entry address spec:sample.one#rule.Keep-one at src/rules.ts:3 is outside the address grammar",
-        ])
+        result, text = self.policy([{"address": token, "where": where} for token, where in found])
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("entry address spec:sample.one#rule.missing at src/rules.ts:2 names no entry of its Spec", text)
+        self.assertIn("entry address spec:sample.one#rule.Keep-one at src/rules.ts:3 is outside the address grammar", text)
+        self.assertNotIn("entry address spec:sample.one#rule.keepOne", text)
 
     def test_address_sections_follow_the_protocol_export(self):
         self.put("src/cites.ts", "\n".join([
@@ -613,25 +622,28 @@ class CheckTests(unittest.TestCase):
         ]) + "\n")
         found = self.check.address_tokens([self.root / "src/cites.ts"], self.root)
         self.assertEqual([where for _, where in found], [f"src/cites.ts:{n}" for n in range(1, 6)])
-        rows = tool.graph_recipe(25, self.root, [token for token, _ in found])["rows"]
-        self.assertEqual(self.check.address_failures(found, rows), [
+        result, text = self.policy([{"address": token, "where": where} for token, where in found])
+        self.assertEqual(result.returncode, 1, text)
+        for message in (
             "entry address spec:sample.one#design.typeTwo at src/cites.ts:3 names no entry of its Spec",
             "entry address spec:sample.none#design.typeOne at src/cites.ts:4 names no Spec",
             "entry address spec:sample.one#design.Type-one at src/cites.ts:5 is outside the address grammar",
-        ])
-        self.assertEqual(self.check.address_failures(found, rows[:-1]),
-                         ["the address recipe answered 4 rows for 5 entry addresses"])
+        ):
+            self.assertIn(message, text)
+        self.assertNotIn("entry address spec:sample.one#design.typeOne", text)
+        self.assertNotIn("entry address spec:sample.one#question.keepIt", text)
 
     def test_a_planted_cycle_fails_and_a_chain_passes(self):
         self.put("design/specs/sample/one.sdp.md", sample_spec("one", "\n  dependsOn: spec:sample.two"))
         self.put("design/specs/sample/two.sdp.md", sample_spec("two", "\n  dependsOn: spec:sample.three"))
-        self.put("design/specs/sample/three.sdp.md", sample_spec("three"))
-        self.assertEqual(self.check.cycle_failures(tool.graph_recipe(26, self.root)), [])
+        self.put("design/specs/sample/three.sdp.md", sample_spec("three", "\n  refines: spec:sample.one"))
+        result, text = self.policy()
+        self.assertEqual(result.returncode, 0, text)
+        self.assertNotIn("dependency-cycle", text)
         self.put("design/specs/sample/three.sdp.md", sample_spec("three", "\n  dependsOn: spec:sample.one"))
-        self.assertEqual(self.check.cycle_failures(tool.graph_recipe(26, self.root)), [
-            "dependsOn cycle among spec:sample.one, spec:sample.three, spec:sample.two: "
-            "spec:sample.one -> spec:sample.two -> spec:sample.three -> spec:sample.one",
-        ])
+        result, text = self.policy()
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("dependsOn cycle among spec:sample.one, spec:sample.three, spec:sample.two", text)
 
 
 
@@ -751,10 +763,10 @@ class RecipeScriptTests(unittest.TestCase):
 class CheckCommandTests(unittest.TestCase):
     """check.py run whole, as the command it is, over a sample tree in a temporary directory.
 
-    The tree holds a copy of check.py and decisions.py under test, the pinned Protocol through a link to
+    The tree holds the gate, scanner and rules under test, the pinned Protocol through a link to
     this repository's node_modules, and a stand-in for the page generator. Four defects are planted at
     once: an address that names no entry, a dependsOn cycle, an open question without a key, and a page
-    generator that exits 1. The run must print each one's failure, no other, and exit 1, so a check that
+    generator that exits 1. The run must print each failure and exit 1, so a check that
     stops reaching its failures or the exit status fails here.
     """
 
@@ -770,6 +782,8 @@ class CheckCommandTests(unittest.TestCase):
             os.symlink(ROOT / "node_modules", self.root / "node_modules")
             self.put("design/tools/check.py", CHECK_PATH.read_text())
             self.put("design/tools/decisions.py", TOOL_PATH.read_text())
+            self.put("design/tools/scan_addresses.py", SCAN_PATH.read_text())
+            self.put("design/rules/policy.js", POLICY_PATH.read_text())
             self.put("design/tools/prose-mentions.json", json.dumps({"pairs": []}))
             self.put("design/decisions/register.json", json.dumps({"schema": 1, "units": [], "decisions": [], "possiblySame": []}))
             self.put("design/reviews/consensus-ledger.json", json.dumps({"ledger": []}))
@@ -786,15 +800,164 @@ class CheckCommandTests(unittest.TestCase):
             self.put("design/README.md", f"{summary.group(0)} (0 errors, 0 warnings)\n\nvalidate: 0 errors · 0 warnings\n")
             run = subprocess.run([sys.executable, str(self.root / "design/tools/check.py")], cwd=self.root, capture_output=True, text=True,
                                  env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
-            printed = [line[3:] for line in run.stdout.splitlines() if line.startswith(" - ")]
-            self.assertEqual(printed, [
+            for message in (
                 "entry address spec:sample.one#design.typeTwo at src/cites.ts:2 names no entry of its Spec",
-                "dependsOn cycle among spec:sample.one, spec:sample.two: spec:sample.one -> spec:sample.two -> spec:sample.one",
+                "dependsOn cycle among spec:sample.one, spec:sample.two",
                 "spec:sample.two carries an open question without a key",
                 "pack-page: design/pages/history-view.md is behind the tree from line 1",
-            ], run.stdout + run.stderr)
+                "corpus rules: 3 errors · 0 warnings · 0 of 2 files failed",
+            ):
+                self.assertIn(message, run.stdout + run.stderr)
             self.assertEqual(run.returncode, 1)
             self.assertNotIn("\nOK", run.stdout)
+
+
+class CorpusRulesTests(unittest.TestCase):
+    """Planted graph mistakes are refused by the rules that the gate loads."""
+
+    put = CheckTests.put
+
+    def carrier(self, name, **kwargs):
+        return sample_spec(name, "\n  refines: spec:sample.base", **kwargs)
+
+    def validate_policy(self, intended=None, register=None, sites=None, walk=False):
+        self.put("intended.json", json.dumps(intended or {"pairs": []}))
+        self.put("register.json", json.dumps(register or {"decisions": []}))
+        self.put("sites.json", json.dumps(sites or []))
+        args = ["npx", "sdp", "validate", ".", "--rules", str(POLICY_PATH),
+                "--params", "intended=@intended.json", "--params", "register=@register.json",
+                "--params", "addressSites=@sites.json"]
+        if walk:
+            args += ["--rules", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/recipes/42-the-architecture-walk.js"),
+                     "--params", '{"isolated":["platform"]}']
+        result = subprocess.run(args, cwd=self.root, capture_output=True, text=True)
+        return result, result.stdout + result.stderr
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        os.symlink(ROOT / "node_modules", self.root / "node_modules")
+        self.put("design/specs/sample/base.sdp.md", sample_spec("base").replace("readiness: scoped", "readiness: idea"))
+        self.put("package.json", '{"type":"module"}')
+        self.put("design/specs/sample/one.sdp.md", self.carrier("one"))
+
+    def test_rules_accept_the_clean_graph_and_refuse_each_policy_mistake(self):
+        result, text = self.validate_policy()
+        self.assertEqual(result.returncode, 0, text)
+        mutations = [
+            ("readiness", self.carrier("one").replace("readiness: scoped", "readiness: ready"), {}, "owner-states-ready"),
+            ("divergence", self.carrier("one").replace("readiness: scoped", "readiness: defined").replace("- [non-blocking #keepIt]", "- [blocking #keepIt]"), {}, "readiness-divergence"),
+            ("key", self.carrier("one", key=""), {}, "question-key"),
+            ("blocking", self.carrier("one").replace("readiness: scoped", "readiness: defined").replace("- [non-blocking #keepIt]", "- [blocking #keepIt]"), {}, "blocking-means-scoped"),
+            ("citation", self.carrier("one").replace("- Keep one.", "- Keep one under Law 1 and F1."), {}, "cited-without-edge"),
+            ("address", self.carrier("one"), {"sites": [{"address":"spec:sample.one#design.absent", "where":"src/cites.ts:2"}]}, "address-resolves"),
+            ("stale", self.carrier("one"), {"intended":{"pairs":[{"from":"spec:sample.one", "to":"spec:sample.two", "reason":"A prose pointer."}]}}, "stale-mention"),
+            ("reason", self.carrier("one"), {"intended":{"pairs":[{"from":"spec:sample.one", "to":"spec:sample.two", "reason":" "}]}}, "mention-reason"),
+        ]
+        for name, carrier, params, validator in mutations:
+            with self.subTest(mistake=name):
+                self.put("design/specs/sample/one.sdp.md", carrier)
+                result, text = self.validate_policy(**params)
+                self.assertEqual(result.returncode, 1, text)
+                self.assertIn(validator, text)
+
+    def test_rules_refuse_an_unlisted_mention_and_accept_its_reason(self):
+        self.put("design/specs/sample/two.sdp.md", self.carrier("two"))
+        self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("- Keep one.", "- Read `spec:sample.two` for context."))
+        result, text = self.validate_policy()
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("unlisted-mention", text)
+        intended = {"pairs":[{"from":"spec:sample.one", "to":"spec:sample.two", "reason":"A prose pointer."}]}
+        result, text = self.validate_policy(intended=intended)
+        self.assertEqual(result.returncode, 0, text)
+
+    def test_rules_refuse_question_source_mistakes_and_returned_closed_questions(self):
+        decision = row("OD-001")
+        source = {"kind":"specQuestion", "address":"spec:sample.one#question.keepIt", "file":"design/specs/sample/one.sdp.md"}
+        decision["sources"] = [source]
+        result, text = self.validate_policy(register={"decisions":[decision]})
+        self.assertEqual(result.returncode, 0, text)
+        for mutation in ("missing", "section", "file", "shape", "notString", "closedStatus", "returned"):
+            with self.subTest(mistake=mutation):
+                planted = copy.deepcopy(decision)
+                site = planted["sources"][0]
+                if mutation == "missing": site["address"] = "spec:sample.one#question.absent"
+                elif mutation == "section": site["address"] = "spec:sample.one#design.typeOne"
+                elif mutation == "file": site["file"] = "design/specs/sample/two.sdp.md"
+                elif mutation == "shape": site.update(spec="spec:sample.one", question="Keep one.")
+                elif mutation == "notString": site["address"] = []
+                else:
+                    planted["sources"] = [{"kind":"specQuestion", "spec":"spec:sample.one", "file":source["file"],
+                                           "question":"Keep one as it is.", "open":False}]
+                    if mutation == "returned": planted["status"] = "decided"
+                result, text = self.validate_policy(register={"decisions":[planted]})
+                self.assertEqual(result.returncode, 1, text)
+                self.assertIn("question-source", text)
+        closed = copy.deepcopy(decision)
+        closed["status"] = "decided"
+        closed["sources"] = [{"kind":"specQuestion", "spec":"spec:sample.one", "file":source["file"],
+                              "question":"Keep one as\n it is.", "open":False}]
+        result, text = self.validate_policy(register={"decisions":[closed]})
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("open: false question resolves again", text)
+        closed["sources"][0]["question"] = "keep one as it is."
+        result, text = self.validate_policy(register={"decisions":[closed]})
+        self.assertEqual(result.returncode, 0, text)
+        self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("#keepIt", "#renamed"))
+        result, text = self.validate_policy(register={"decisions":[decision]})
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("question-source", text)
+        self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("### Open questions\n- [non-blocking #keepIt] Keep one as it is. Another sentence.\n", ""))
+        closed["sources"][0]["question"] = "Keep one as it is."
+        result, text = self.validate_policy(register={"decisions":[closed]})
+        self.assertEqual(result.returncode, 0, text)
+
+    def test_architecture_parameters_are_scoped_to_the_walk_and_crossings_fail(self):
+        self.put("src/components.ts", """/**
+ * @sdpAnchor component:sample.platform
+ * @sdpContext platform
+ * @sdpUses component:sample.orders
+ */
+export const platform = 1;
+/**
+ * @sdpAnchor component:sample.orders
+ * @sdpContext orders
+ */
+export const orders = 1;
+""")
+        result, text = self.validate_policy(walk=True)
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("isolated-context", text)
+        self.assertNotIn("unknownParams", text)
+        self.put("src/components.ts", (self.root / "src/components.ts").read_text().replace("@sdpContext orders", "@sdpContext platform"))
+        result, text = self.validate_policy(walk=True)
+        self.assertEqual(result.returncode, 0, text)
+
+
+class StudioGateTests(unittest.TestCase):
+    def test_gate_runs_the_studio_after_rules_and_refuses_a_dirty_render(self):
+        sys.path.insert(0, str(ROOT / "design/tools"))
+        spec = importlib.util.spec_from_file_location("studio_check_under_test", CHECK_PATH)
+        check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(check)
+        real_run = check.run
+        seen = []
+        def run(args):
+            seen.append(args)
+            if args == ["studio", "--check-clean"]:
+                return subprocess.CompletedProcess([], 1, "", "sdp studio --check-clean: generated Studio differs from the current projection.\n")
+            return real_run(args)
+        output = io.StringIO()
+        with mock.patch.object(check, "run", side_effect=run), contextlib.redirect_stdout(output):
+            with self.assertRaises(SystemExit) as stopped:
+                check.main()
+        self.assertEqual(stopped.exception.code, 1)
+        self.assertIn("generated Studio differs", output.getvalue())
+        self.assertIn(["studio", "--check-clean"], seen)
+        validate = next(args for args in seen if args[0] == "validate")
+        self.assertEqual(validate.count("--rules"), 2)
+        self.assertLess(seen.index(validate), seen.index(["studio", "--check-clean"]))
 
 
 if __name__ == "__main__":
