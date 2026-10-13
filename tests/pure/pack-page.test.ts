@@ -822,79 +822,91 @@ test("the page names each code unit at its own site, with its role and component
   }
 });
 
-test("the command's --check exits 1 for a page that is missing or behind the tree, and 0 for a current one", async () => {
-  const base = await mkdtemp(join(tmpdir(), "pack-page-"));
-  const said: string[] = [];
-  const error = vi
-    .spyOn(console, "error")
-    .mockImplementation((message: string) => void said.push(message));
-  try {
-    await smallSample(base);
-    const out = join(base, "design/pages/sample.md");
-    const command = ["--pack", "pack:sample", "--out", out];
-    const check = () => page.main([...command, "--check"], base);
+// Each page build runs two shipped recipes, each in its own `sdp q` process that derives the graph,
+// so the tests that build a page several times outlast the default timeout under a loaded runner.
+const pageBuilds = 30_000;
 
-    expect(await check()).toBe(1);
-    expect(said.at(-1)).toBe(
-      "pack-page: design/pages/sample.md is missing; run npm run pages",
-    );
-    expect(await page.main(command, base)).toBe(0);
-    expect(await check()).toBe(0);
-    const written = await readFile(out, "utf8");
-    await writeFile(out, `${written}A line the tree does not generate.\n`);
-    expect(await check()).toBe(1);
-    expect(said.at(-1)).toContain(
-      "pack-page: design/pages/sample.md is behind the tree from line",
-    );
-    await writeFile(out, written);
-    expect(await check()).toBe(0);
-  } finally {
-    error.mockRestore();
-    await rm(base, { recursive: true, force: true });
-  }
-});
+test(
+  "the command's --check exits 1 for a page that is missing or behind the tree, and 0 for a current one",
+  async () => {
+    const base = await mkdtemp(join(tmpdir(), "pack-page-"));
+    const said: string[] = [];
+    const error = vi
+      .spyOn(console, "error")
+      .mockImplementation((message: string) => void said.push(message));
+    try {
+      await smallSample(base);
+      const out = join(base, "design/pages/sample.md");
+      const command = ["--pack", "pack:sample", "--out", out];
+      const check = () => page.main([...command, "--check"], base);
+
+      expect(await check()).toBe(1);
+      expect(said.at(-1)).toBe(
+        "pack-page: design/pages/sample.md is missing; run npm run pages",
+      );
+      expect(await page.main(command, base)).toBe(0);
+      expect(await check()).toBe(0);
+      const written = await readFile(out, "utf8");
+      await writeFile(out, `${written}A line the tree does not generate.\n`);
+      expect(await check()).toBe(1);
+      expect(said.at(-1)).toContain(
+        "pack-page: design/pages/sample.md is behind the tree from line",
+      );
+      await writeFile(out, written);
+      expect(await check()).toBe(0);
+    } finally {
+      error.mockRestore();
+      await rm(base, { recursive: true, force: true });
+    }
+  },
+  pageBuilds,
+);
 
 // The script run as a process, from a copy in a sample tree that links this repository's
 // node_modules, so the exit status a caller such as check.py reads is the one asserted.
-test("the generator run as a process exits non-zero with --check on a stale page", async () => {
-  const base = await mkdtemp(join(tmpdir(), "pack-page-"));
-  try {
-    await smallSample(base);
-    await mkdir(join(base, "scripts"), { recursive: true });
-    await copyFile(
-      fileURLToPath(new URL("../../scripts/pack-page.mjs", import.meta.url)),
-      join(base, "scripts/pack-page.mjs"),
-    );
-    await symlink(
-      fileURLToPath(new URL("../../node_modules", import.meta.url)),
-      join(base, "node_modules"),
-    );
-    const run = (...flags: string[]) =>
-      spawnSync(
-        process.execPath,
-        [
-          "scripts/pack-page.mjs",
-          "--pack",
-          "pack:sample",
-          "--out",
-          "design/pages/sample.md",
-          ...flags,
-        ],
-        { cwd: base, encoding: "utf8" },
+test(
+  "the generator run as a process exits non-zero with --check on a stale page",
+  async () => {
+    const base = await mkdtemp(join(tmpdir(), "pack-page-"));
+    try {
+      await smallSample(base);
+      await mkdir(join(base, "scripts"), { recursive: true });
+      await copyFile(
+        fileURLToPath(new URL("../../scripts/pack-page.mjs", import.meta.url)),
+        join(base, "scripts/pack-page.mjs"),
       );
-    expect(run().status).toBe(0);
-    expect(run("--check").status).toBe(0);
-    const out = join(base, "design/pages/sample.md");
-    await writeFile(
-      out,
-      `${await readFile(out, "utf8")}A line the tree does not generate.\n`,
-    );
-    const stale = run("--check");
-    expect(stale.status).toBe(1);
-    expect(stale.stderr).toContain(
-      "pack-page: design/pages/sample.md is behind the tree from line",
-    );
-  } finally {
-    await rm(base, { recursive: true, force: true });
-  }
-});
+      await symlink(
+        fileURLToPath(new URL("../../node_modules", import.meta.url)),
+        join(base, "node_modules"),
+      );
+      const run = (...flags: string[]) =>
+        spawnSync(
+          process.execPath,
+          [
+            "scripts/pack-page.mjs",
+            "--pack",
+            "pack:sample",
+            "--out",
+            "design/pages/sample.md",
+            ...flags,
+          ],
+          { cwd: base, encoding: "utf8" },
+        );
+      expect(run().status).toBe(0);
+      expect(run("--check").status).toBe(0);
+      const out = join(base, "design/pages/sample.md");
+      await writeFile(
+        out,
+        `${await readFile(out, "utf8")}A line the tree does not generate.\n`,
+      );
+      const stale = run("--check");
+      expect(stale.status).toBe(1);
+      expect(stale.stderr).toContain(
+        "pack-page: design/pages/sample.md is behind the tree from line",
+      );
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  },
+  pageBuilds,
+);
