@@ -4,7 +4,7 @@
 
 The Specs a history view rests on, in reading order. A history view is a read model whose row folds the events of several streams, such as the order allocation history of the example domain. The history projection comes first because it pins the form, its fold and that view; the projection contract and the read models follow with the row conventions and the read-model rules every view shares. The rebuild, the history rebuild with its five examples, the write pause and the generation registry say how such a view comes to exist and is rebuilt while the commands that write its sources are refused. The rebuild comes first because it holds the operator entries and the batch chain both paths share; the history rebuild holds the paused path alone and the five examples verify it, so the rebuild's implementation binding claims the online path and the history rebuild shows the paused path designed apart from it. The example domain names the events the view folds, and the command declaration and the command pipeline bind the view to the commands that feed it and write it inside each command. The event envelope, the journal and the queries are where the events come from on the live path and on the backfill, and D9 is the decision that a read model which depends on history across several streams rebuilds under a write pause.
 
-This page is generated from the Specs of `pack:history-view` by `scripts/pack-page.mjs`, with two inputs: the pinned pairs in [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and the register rows in [`design/decisions/register.json`](../decisions/register.json). Do not edit it by hand. Change a Spec or an input, then run `npm run pages`; `npm run pages -- --check` fails while the page is behind the tree. The Protocol is pinned at `@libar-dev/software-delivery-protocol@file:vendor/libar-dev-software-delivery-protocol-0.0.0-822aea4.tgz`. The members speak the vocabulary of [`spec:platform.vocabulary`](../specs/platform/vocabulary.sdp.md).
+This page is generated from the Specs of `pack:history-view` by `scripts/pack-page.mjs`, with two inputs: the pinned pairs in [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and the register rows in [`design/decisions/register.json`](../decisions/register.json). Do not edit it by hand. Change a Spec or an input, then run `npm run pages`; `npm run pages -- --check` fails while the page is behind the tree. The Protocol is pinned at `@libar-dev/software-delivery-protocol@github:libar-dev/software-delivery-protocol#abf532d9a2a5da536d9235215f108d6aaa723ca2`. The members speak the vocabulary of [`spec:platform.vocabulary`](../specs/platform/vocabulary.sdp.md).
 
 ## How to read it
 
@@ -24,24 +24,24 @@ Start with the members and with what holds a member below its next rung: togethe
 
 | # | Spec | Kind | Stated | Floor | Next rung | Code | Examples and verifiers | Pairs | Open questions |
 |---|---|---|---|---|---|---|---|---|---|
-| [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | none | 2 bound, 3 ahead, 3 without a pair | 4, none blocking |
-| [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | none | 11 bound | 5, none blocking |
-| [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 2 units | 5 of 5 examples with a verifier | 2 bound, 9 without a pair | 6, none blocking |
-| [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 1 unit | 1 of 1 example with a verifier | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
+| [1](#1-history-projection) | [`spec:application.history-projection`](../specs/application/history-projection.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | 1 test | 2 bound, 3 ahead, 3 without a pair | 4, none blocking |
+| [2](#2-projection-contract) | [`spec:application.projection-contract`](../specs/application/projection-contract.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 1 test | 11 bound | 5, none blocking |
+| [3](#3-read-models) | [`spec:application.read-models`](../specs/application/read-models.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 2 units | 5 of 5 examples with a verifier, 1 test | 2 bound, 9 without a pair | 6, none blocking |
+| [4](#4-rebuild-generations-backfill-and-the-write-pause) | [`spec:application.rebuild`](../specs/application/rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 1 unit | 1 of 1 example with a verifier, 1 test | 2 bound, 3 ahead, 22 without a pair | 5, none blocking |
 | [5](#5-rebuild-of-a-history-view-under-a-write-pause) | [`spec:application.history-rebuild`](../specs/application/history-rebuild.sdp.md) | workflow | defined | ready | ready, which its floor holds | none | 0 of 5 examples with a verifier | 3 without a pair | 6, none blocking |
 | [6](#6-rebuild-a-cross-stream-history-view-under-a-write-pause-interrupt-then-resume) | [`spec:application.history-rebuild.write-pause-rebuild-interrupt`](../specs/application/history-rebuild.write-pause-rebuild-interrupt.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [7](#7-rebuild-a-cross-stream-history-view-under-a-write-pause-interrupt-then-abort) | [`spec:application.history-rebuild.write-pause-rebuild-abort`](../specs/application/history-rebuild.write-pause-rebuild-abort.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [8](#8-deploy-a-changed-history-projection-version-through-the-handoff) | [`spec:application.history-rebuild.write-pause-rebuild-version-change`](../specs/application/history-rebuild.write-pause-rebuild-version-change.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [9](#9-install-a-history-view-through-the-handoff) | [`spec:application.history-rebuild.write-pause-rebuild-installation`](../specs/application/history-rebuild.write-pause-rebuild-installation.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
 | [10](#10-reorder-a-history-views-sources-while-its-generation-is-interrupted) | [`spec:application.history-rebuild.write-pause-rebuild-source-order-mismatch`](../specs/application/history-rebuild.write-pause-rebuild-source-order-mismatch.sdp.md) | example | defined | ready | ready, which its floor holds | none | native backend tier, no verifier bound | no pinned declaration | none |
-| [11](#11-write-pause) | [`spec:application.write-pause`](../specs/application/write-pause.sdp.md) | contract | defined | ready | ready, which its floor holds | 4 anchors | 1 of 1 example with a verifier | 6 bound, 2 not compared, 6 without a pair | 3, none blocking |
-| [12](#12-generation-registry) | [`spec:application.generation-registry`](../specs/application/generation-registry.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 2 of 2 examples with a verifier | 8 bound, 3 ahead, 2 without a pair | 6, none blocking |
+| [11](#11-write-pause) | [`spec:application.write-pause`](../specs/application/write-pause.sdp.md) | contract | defined | ready | ready, which its floor holds | 4 anchors | 1 of 1 example with a verifier, 1 test | 6 bound, 2 not compared, 6 without a pair | 3, none blocking |
+| [12](#12-generation-registry) | [`spec:application.generation-registry`](../specs/application/generation-registry.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 2 of 2 examples with a verifier, 1 test | 8 bound, 3 ahead, 2 without a pair | 6, none blocking |
 | [13](#13-orders-and-inventory-the-example-domain) | [`spec:application.orders-inventory-example`](../specs/application/orders-inventory-example.sdp.md) | model | defined | ready | ready, which its floor holds | referenced by 14 units | 6 of 6 examples with a verifier | no pinned declaration | 1, none blocking |
-| [14](#14-command-declaration-and-bindings) | [`spec:command.command-declaration`](../specs/command/command-declaration.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 2 of 2 examples with a verifier | 4 bound, 2 ahead, 5 not compared, 7 without a pair | 3, none blocking |
-| [15](#15-the-command-pipeline) | [`spec:command.command-pipeline`](../specs/command/command-pipeline.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 2 units | 3 of 3 examples with a verifier | 3 bound, 1 ahead, 2 not compared, 12 without a pair | 7, none blocking |
-| [16](#16-the-event-envelope) | [`spec:context.event-envelope`](../specs/context/event-envelope.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | none | 7 bound, 3 without a pair | 2, none blocking |
-| [17](#17-the-journal) | [`spec:context.journal`](../specs/context/journal.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 1 unit | 0 of 1 example with a verifier | 3 bound, 4 ahead, 11 without a pair | 1, none blocking |
-| [18](#18-the-context-queries) | [`spec:context.queries`](../specs/context/queries.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | none | 3 bound, 2 ahead, 13 without a pair | 3, none blocking |
+| [14](#14-command-declaration-and-bindings) | [`spec:command.command-declaration`](../specs/command/command-declaration.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 2 units | 2 of 2 examples with a verifier, 1 test | 4 bound, 2 ahead, 5 not compared, 7 without a pair | 3, none blocking |
+| [15](#15-the-command-pipeline) | [`spec:command.command-pipeline`](../specs/command/command-pipeline.sdp.md) | workflow | defined | ready | ready, which its floor holds | referenced by 2 units | 3 of 3 examples with a verifier, 1 test | 3 bound, 1 ahead, 2 not compared, 12 without a pair | 7, none blocking |
+| [16](#16-the-event-envelope) | [`spec:context.event-envelope`](../specs/context/event-envelope.sdp.md) | contract | defined | ready | ready, which its floor holds | 1 anchor | 1 test | 7 bound, 3 without a pair | 2, none blocking |
+| [17](#17-the-journal) | [`spec:context.journal`](../specs/context/journal.sdp.md) | behavior | defined | ready | ready, which its floor holds | referenced by 1 unit | 0 of 1 example with a verifier, 1 test | 3 bound, 4 ahead, 11 without a pair | 1, none blocking |
+| [18](#18-the-context-queries) | [`spec:context.queries`](../specs/context/queries.sdp.md) | contract | defined | ready | ready, which its floor holds | referenced by 1 unit | 1 test | 3 bound, 2 ahead, 13 without a pair | 3, none blocking |
 | [19](#19-rebuild-online-by-default-pause-writes-only-for-history-dependent-views) | [`spec:decisions.d09-rebuild-online-by-default`](../specs/decisions/d09-rebuild-online-by-default.sdp.md) | decision | defined | ready | ready, which its floor holds | none | none | no pinned declaration | 1, none blocking |
 
 ## What holds a member below its next rung
@@ -296,7 +296,9 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [Projectio
 
 - `impl:application.order-allocation-history` at [`example/domain/orderAllocationHistory.ts` line 8](../../example/domain/orderAllocationHistory.ts#L8): the order allocation history's keyOf and project rules. Its role is projection. It belongs to `component:example.parent`, in the application layer and the orders-inventory context.
 
-**Examples and verifiers.** None is bound to it.
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 8 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -431,7 +433,9 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines and [Rebuil
 - `impl:application.generation-registry.tables` at [`src/read-model/tables.ts` line 5](../../src/read-model/tables.ts#L5): the generations, progress, marker and tenant fill tables and rowConventions. Its role is schema. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 - `impl:application.projection-contract` at [`src/read-model/projection.ts` line 3](../../src/read-model/projection.ts#L3): ReadModel, Projection and applyProjection. Its role is projection. It belongs to `component:platform.read-model`, in the application layer and the platform context.
 
-**Examples and verifiers.** None is bound to it.
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 11 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -596,6 +600,10 @@ Inside the Pack it rests on [The context queries](#18-the-context-queries) by de
 | [`spec:application.read-models.query-refused-before-disclosure`](../specs/application/read-models.query-refused-before-disclosure.sdp.md) | native backend | bound | A caller with no identity reads an order through the parent |
 | [`spec:application.read-models.query-refused-without-grant`](../specs/application/read-models.query-refused-without-grant.sdp.md) | native backend | bound | A caller with no grant in the tenant reads an order through the parent |
 
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
+
 **Pinned declarations.** 11 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
 | Design entry | Pair | Compared | Code | Why |
@@ -758,6 +766,10 @@ Inside the Pack it rests on [Read models](#3-read-models) by refines, [History p
 | Example | Tier | Verifier | Title |
 |---|---|---|---|
 | [`spec:application.rebuild.online-rebuild-interrupt-resume`](../specs/application/rebuild.online-rebuild-interrupt-resume.sdp.md) | native backend | bound | Rebuild a per-entity read model online while commands run; interrupt and resume |
+
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 27 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -1203,6 +1215,10 @@ Inside the Pack it rests on [Rebuild: generations, backfill and the write pause]
 |---|---|---|---|
 | [`spec:application.write-pause.restore-door-without-deploy`](../specs/application/write-pause.restore-door-without-deploy.sdp.md) | native backend | bound | The restore door closes and opens with no deploy |
 
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
+
 **Pinned declarations.** 14 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
 | Design entry | Pair | Compared | Code | Why |
@@ -1382,6 +1398,10 @@ Inside the Pack it rests on [Rebuild: generations, backfill and the write pause]
 |---|---|---|---|
 | [`spec:application.generation-registry.command-without-generation-fails`](../specs/application/generation-registry.command-without-generation-fails.sdp.md) | native backend | bound | A command whose read model has no generation fails |
 | [`spec:application.generation-registry.first-rebuild-installs-read-model`](../specs/application/generation-registry.first-rebuild-installs-read-model.sdp.md) | native backend | bound | A read model is installed through its first rebuild |
+
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 13 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -1595,6 +1615,10 @@ Inside the Pack it rests on [History projection](#1-history-projection) by depen
 |---|---|---|---|
 | [`spec:command.command-declaration.broken-argument-contract-fails-build`](../specs/command/command-declaration.broken-argument-contract-fails-build.sdp.md) | compiled | bound | Break a typed handler's argument contract |
 | [`spec:command.command-declaration.renamed-handler-fails-build`](../specs/command/command-declaration.renamed-handler-fails-build.sdp.md) | compiled | bound | Rename a typed handler |
+
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 18 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -1811,6 +1835,10 @@ Inside the Pack it rests on [History projection](#1-history-projection) by depen
 | [`spec:command.command-pipeline.failure-after-journal-append`](../specs/command/command-pipeline.failure-after-journal-append.sdp.md) | native backend | bound | Inject a failure after the journal append |
 | [`spec:command.command-pipeline.failure-after-state-write`](../specs/command/command-pipeline.failure-after-state-write.sdp.md) | native backend | bound | Inject a failure after the state write |
 | [`spec:command.command-pipeline.failure-before-receipt`](../specs/command/command-pipeline.failure-before-receipt.sdp.md) | native backend | bound | Inject a failure before the receipt insert |
+
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 18 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -2052,7 +2080,9 @@ Inside the Pack it rests on [The journal](#17-the-journal) by refines.
 
 - `impl:context.event-envelope` at [`src/context/envelope.ts` line 2](../../src/context/envelope.ts#L2): the envelope types and validators. Its role is contract. It belongs to `component:platform.context`, in the adapter layer and the platform context.
 
-**Examples and verifiers.** None is bound to it.
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 10 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -2212,6 +2242,10 @@ Inside the Pack it rests on [Write pause](#11-write-pause) by dependsOn.
 | Example | Tier | Verifier | Title |
 |---|---|---|---|
 | [`spec:context.journal.rebuild-from-baseline`](../specs/context/journal.rebuild-from-baseline.sdp.md) | native backend | none bound | Rebuild a stream that has a baseline event |
+
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 18 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
@@ -2468,7 +2502,9 @@ Inside the Pack it rests on [The event envelope](#16-the-event-envelope) by depe
 
 - `impl:context.queries` at [`src/context/queries.ts` line 3](../../src/context/queries.ts#L3): defineGet, defineList and boundedPage. Its role is query. It belongs to `component:platform.context`, in the adapter layer and the platform context.
 
-**Examples and verifiers.** None is bound to it.
+**Verifiers.**
+
+- `test:history-view.pinned-declarations` at [`tests/types/pinned.test-d.ts` line 24](../../tests/types/pinned.test-d.ts#L24): compares pack:history-view's pinned declarations with the code.
 
 **Pinned declarations.** 18 Design entries open with a code span. Each pair comes from [`tests/types/pinned-pairs.json`](../../tests/types/pinned-pairs.json) and is the test named by its address in [`tests/types/pinned.test-d.ts`](../../tests/types/pinned.test-d.ts).
 
