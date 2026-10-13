@@ -1,10 +1,13 @@
 // libar-platform's graph-side policy, as one corpus rules file (spec:validation.corpus-rules).
-// Run it from the repository root after scanning addresses with design/tools/scan_addresses.py:
+// Run it from the repository root after `python3 design/tools/scan_addresses.py > generated/address-sites.json`:
+// Write the Protocol's exported section list beside the scan:
+//   node --input-type=module --eval 'import { ENTRY_ADDRESS_SECTIONS } from "@libar-dev/software-delivery-protocol"; console.log(JSON.stringify(ENTRY_ADDRESS_SECTIONS))' > generated/address-sections.json
 //
 //   npx sdp validate . --rules design/rules/policy.js \
 //     --params intended=@design/tools/prose-mentions.json \
 //     --params register=@design/decisions/register.json \
 //     --params addressSites=@generated/address-sites.json \
+//     --params addressSections=@generated/address-sections.json \
 //     --rules node_modules/@libar-dev/software-delivery-protocol/dist/recipes/42-the-architecture-walk.js \
 //     --params '{"isolated":["platform"]}'
 //
@@ -20,6 +23,9 @@ if (!object(params.register) || !Array.isArray(params.register.decisions))
   diagnostics.push({ parameter: "register", problem: "Pass design/decisions/register.json as register." });
 if (!Array.isArray(params.addressSites))
   diagnostics.push({ parameter: "addressSites", problem: "Pass the scanned [{ address, where }] list as addressSites." });
+if (!Array.isArray(params.addressSections) || params.addressSections.length === 0 ||
+    !params.addressSections.every((section) => typeof section === "string" && section.length > 0))
+  diagnostics.push({ parameter: "addressSections", problem: "Pass the Protocol's exported ENTRY_ADDRESS_SECTIONS as addressSections." });
 if (diagnostics.length > 0) return { diagnostics };
 
 const findings = [];
@@ -78,7 +84,9 @@ for (const [key, pair] of [...listed].sort(([left], [right]) => byCodeUnit(left,
 }
 
 // Entry-address resolution, on the grammar recipe 25 reads.
-const addressPattern = /^(spec:[A-Za-z0-9][A-Za-z0-9-]*(?:\.[A-Za-z0-9][A-Za-z0-9-]*)*)#(design|ui|question|rule)\.([a-z][A-Za-z0-9]*)$/u;
+const escapedSection = (section) => section.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+const addressPattern = new RegExp(
+  `^(spec:[A-Za-z0-9][A-Za-z0-9-]*(?:\\.[A-Za-z0-9][A-Za-z0-9-]*)*)#(${params.addressSections.map(escapedSection).join("|")})\\.([a-z][A-Za-z0-9]*)$`, "u");
 const resolve = (address) => {
   const parsed = typeof address === "string" ? addressPattern.exec(address) : null;
   if (parsed === null) return { resolves: false, reason: "is outside the address grammar" };

@@ -32,6 +32,9 @@ SPEC.loader.exec_module(tool)
 CHECK_PATH = Path(os.environ.get("CHECK_TOOL_UNDER_TEST", ROOT / "design/tools/check.py"))
 POLICY_PATH = ROOT / "design/rules/policy.js"
 SCAN_PATH = ROOT / "design/tools/scan_addresses.py"
+SCAN_SPEC = importlib.util.spec_from_file_location("scanner_under_test", SCAN_PATH)
+scanner = importlib.util.module_from_spec(SCAN_SPEC)
+SCAN_SPEC.loader.exec_module(scanner)
 
 
 def lean():
@@ -348,108 +351,6 @@ class DecisionsTests(unittest.TestCase):
         self.assertEqual(self.ids("--spec", "spec:command.command-pipeline"), ["OD-007"])
 
 
-class QuestionSourceTests(unittest.TestCase):
-    def setUp(self):
-        self.row = row("OD-001")
-        self.spec = "spec:context.tables"
-        self.address = self.row["sources"][0]["address"]
-        self.files = {self.spec: "design/specs/context/tables.sdp.md"}
-        self.questions = {self.spec: ["Keep a bounded context call. Another sentence."]}
-        self.resolutions = {self.address: {"address": self.address, "resolves": True,
-                            "id": self.spec, "section": "question", "key": "boundedCall", "reason": None}}
-
-    def errors(self):
-        return tool.question_source_errors(self.row, self.questions, self.files, self.resolutions)
-
-    def close_source(self):
-        self.row["sources"] = [{"kind": "specQuestion", "spec": self.spec,
-                                "question": "Keep a bounded context call.",
-                                "file": self.files[self.spec], "open": False}]
-
-    def test_address_survives_question_text_changes(self):
-        self.questions[self.spec] = ["A different sentence."]
-        self.assertEqual(self.errors(), [])
-
-    def test_missing_wrong_section_wrong_file_and_old_shape_are_refused(self):
-        for mutation in ("missing", "section", "file", "old", "line", "openTrue", "notString"):
-            with self.subTest(mutation=mutation):
-                saved_row = copy.deepcopy(self.row)
-                saved_resolutions = copy.deepcopy(self.resolutions)
-                source = self.row["sources"][0]
-                if mutation == "missing": self.resolutions[self.address].update(resolves=False, reason="entry")
-                elif mutation == "section": self.resolutions[self.address]["section"] = "design"
-                elif mutation == "file": source["file"] = "another.sdp.md"
-                elif mutation == "old":
-                    source.pop("address")
-                    source.update(spec=self.spec, question="Keep a bounded context call.")
-                elif mutation == "line": source["line"] = 1
-                elif mutation == "openTrue": source["open"] = True
-                elif mutation == "notString": source["address"] = []
-                self.assertTrue(self.errors())
-                self.row, self.resolutions = saved_row, saved_resolutions
-
-    def test_closed_opening_matching_normalizes_only_whitespace(self):
-        self.close_source()
-        self.row["status"] = "decided"
-        self.assertEqual(tool.question_opening("Keep `spec:context.tables` at 1.5 bytes. Why?"),
-                         "Keep `spec:context.tables` at 1.5 bytes.")
-        self.row["sources"][0]["question"] = "Keep a bounded\n context call."
-        self.assertIn("open: false question resolves again", " ".join(self.errors()))
-        self.row["sources"][0]["question"] = "keep a bounded context call."
-        self.assertEqual(self.errors(), [])
-
-    def test_removed_question_requires_closed_status_and_refuses_return(self):
-        self.close_source()
-        self.questions[self.spec] = []
-        for status in tool.STATUSES:
-            self.row["status"] = status
-            with self.subTest(status=status):
-                self.assertEqual(bool(self.errors()), status not in ("decided", "folded"))
-        self.questions[self.spec] = ["Keep a bounded context call. Returned text."]
-        self.assertIn("open: false question resolves again", " ".join(self.errors()))
-
-    def test_protocol_removed_key_fails_and_closed_source_keeps_passing(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            path = root / self.files[self.spec]
-            path.parent.mkdir(parents=True)
-            carrier = """---
-id: spec:context.tables
-kind: rule
-altitude: story
-readiness: scoped
-relations: {}
----
-# Bounded call
-
-## Intent
-- outcome: Keep a bounded call.
-
-### Open questions
-- [non-blocking #boundedCall] Keep a bounded context call. Another sentence.
-
-## Rule
-- Keep the call bounded.
-
-## Verification — reviewed
-- Review the bound.
-"""
-            path.write_text(carrier)
-            self.resolutions = tool.question_resolutions([self.row], root)
-            self.assertEqual(self.errors(), [])
-            path.write_text(carrier.replace(" #boundedCall", ""))
-            self.resolutions = tool.question_resolutions([self.row], root)
-            self.assertIn("does not resolve", " ".join(self.errors()))
-            path.write_text(carrier.replace("- [non-blocking #boundedCall] Keep a bounded context call. Another sentence.\n", ""))
-            graph = tool.graph_recipe(20, root)
-            self.questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in graph["specs"]}
-            self.close_source()
-            self.row["status"] = "decided"
-            before = copy.deepcopy(self.row["sources"])
-            self.assertEqual(self.errors(), [])
-            self.assertEqual(self.row["sources"], before)
-
-
 class RealRegisterTests(unittest.TestCase):
     def test_od157_is_found_at_its_question_address(self):
         package = ROOT / "node_modules/@libar-dev/software-delivery-protocol"
@@ -489,18 +390,17 @@ class RealRegisterTests(unittest.TestCase):
         rows = register["decisions"]
         ids = [r["id"] for r in rows]
         self.assertEqual(len(set(ids)), len(ids))
-        graph = tool.graph_recipe(20)
-        resolutions = tool.question_resolutions(rows)
-        self.assertEqual(graph["malformed"], [])
-        questions = {spec["id"]: [q["question"] for q in spec["questions"]] for spec in graph["specs"]}
-        files = {}
-        for path in (ROOT / "design/specs").rglob("*.sdp.md"):
-            identifier = re.search(r"^id: (\S+)", path.read_text(), re.M).group(1)
-            files[identifier] = path.relative_to(ROOT).as_posix()
         for decision in rows:
             with self.subTest(row=decision["id"]):
                 self.assertEqual(tool.row_errors(decision, register["units"], ROOT, set(ids)), [])
-                self.assertEqual(tool.question_source_errors(decision, questions, files, resolutions), [])
+        result = subprocess.run(["node", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/cli/sdp.js"),
+                                 "validate", ".", "--rules", str(POLICY_PATH),
+                                 "--params", "intended=@design/tools/prose-mentions.json",
+                                 "--params", "register=@design/decisions/register.json",
+                                 "--params", json.dumps({"addressSites": [], "addressSections": scanner.entry_address_sections()})],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("corpus rules: 0 errors", result.stdout)
 
     def test_real_rows_are_found_by_the_spec_their_sources_name(self):
         def ids(*args):
@@ -566,7 +466,7 @@ class CheckTests(unittest.TestCase):
         (self.root / path).write_text(text)
 
     def policy(self, sites=None):
-        params = {"intended":{"pairs":[]}, "register":{"decisions":[]}, "addressSites":sites or []}
+        params = {"intended":{"pairs":[]}, "register":{"decisions":[]}, "addressSites":sites or [], "addressSections":scanner.entry_address_sections()}
         result = subprocess.run(["node", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/cli/sdp.js"),
                                  "validate", str(self.root), "--rules", str(POLICY_PATH), "--params", json.dumps(params)],
                                 cwd=ROOT, capture_output=True, text=True)
@@ -609,6 +509,23 @@ class CheckTests(unittest.TestCase):
             ("spec:sample.one#design.typeOne", "src/cites.ts:1"),
             ("spec:sample.one#future.keepOne", "src/cites.ts:2"),
         ])
+
+        # Model a Protocol section added after this policy was written, without changing the pin.
+        payload = {"body": POLICY_PATH.read_text(), "params": {
+            "intended": {"pairs": []}, "register": {"decisions": []},
+            "addressSections": ["design", "future"],
+            "addressSites": [{"address": token, "where": where} for token, where in found],
+        }}
+        result = subprocess.run(["node", "--input-type=module", "--eval", """
+import { readFileSync } from 'node:fs';
+const { body, params } = JSON.parse(readFileSync(0, 'utf8'));
+const spec = { id: 'spec:sample.one', file: 'sample.sdp.md', statedReadiness: 'scoped', derivedReadiness: 'scoped' };
+const g = { specs: () => [spec], specContext: () => ({ sections: { design: { typeOne: 'string' }, future: { keepOne: 'Keep one.' } } }) };
+const evaluate = new (Object.getPrototypeOf(async function () {}).constructor)('g', 'graph', 'report', 'params', body);
+console.log(JSON.stringify(await evaluate(g, { edges: [] }, { findings: [] }, params)));
+"""], input=json.dumps(payload), capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), {"findings": []})
 
     def test_a_broken_address_fails_where_it_is_written(self):
         self.put("design/specs/sample/one.sdp.md", sample_spec("one"))
@@ -766,7 +683,7 @@ class CheckCommandTests(unittest.TestCase):
     The tree holds the gate, scanner and rules under test, the pinned Protocol through a link to
     this repository's node_modules, and a stand-in for the page generator. Four defects are planted at
     once: an address that names no entry, a dependsOn cycle, an open question without a key, and a page
-    generator that exits 1. The run must print each failure and exit 1, so a check that
+    generator that exits 1. The run must print each failure, no other, and exit 1, so a check that
     stops reaching its failures or the exit status fails here.
     """
 
@@ -809,6 +726,10 @@ class CheckCommandTests(unittest.TestCase):
             ):
                 self.assertIn(message, run.stdout + run.stderr)
             self.assertEqual(run.returncode, 1)
+            self.assertEqual([line[3:] for line in run.stdout.splitlines() if line.startswith(" - ")], [
+                "sdp validate with corpus rules exited 1",
+                "pack-page: design/pages/history-view.md is behind the tree from line 1",
+            ])
             self.assertNotIn("\nOK", run.stdout)
 
 
@@ -826,7 +747,8 @@ class CorpusRulesTests(unittest.TestCase):
         self.put("sites.json", json.dumps(sites or []))
         args = ["npx", "sdp", "validate", ".", "--rules", str(POLICY_PATH),
                 "--params", "intended=@intended.json", "--params", "register=@register.json",
-                "--params", "addressSites=@sites.json"]
+                "--params", "addressSites=@sites.json",
+                "--params", json.dumps({"addressSections": scanner.entry_address_sections()})]
         if walk:
             args += ["--rules", str(ROOT / "node_modules/@libar-dev/software-delivery-protocol/dist/recipes/42-the-architecture-walk.js"),
                      "--params", '{"isolated":["platform"]}']
@@ -861,6 +783,8 @@ class CorpusRulesTests(unittest.TestCase):
                 result, text = self.validate_policy(**params)
                 self.assertEqual(result.returncode, 1, text)
                 self.assertIn(validator, text)
+                if name == "readiness":
+                    self.assertIn("other-warning", text)
 
     def test_rules_refuse_an_unlisted_mention_and_accept_its_reason(self):
         self.put("design/specs/sample/two.sdp.md", self.carrier("two"))
@@ -878,7 +802,7 @@ class CorpusRulesTests(unittest.TestCase):
         decision["sources"] = [source]
         result, text = self.validate_policy(register={"decisions":[decision]})
         self.assertEqual(result.returncode, 0, text)
-        for mutation in ("missing", "section", "file", "shape", "notString", "closedStatus", "returned"):
+        for mutation in ("missing", "section", "file", "shape", "line", "openTrue", "notString", "closedStatus", "returned"):
             with self.subTest(mistake=mutation):
                 planted = copy.deepcopy(decision)
                 site = planted["sources"][0]
@@ -886,6 +810,8 @@ class CorpusRulesTests(unittest.TestCase):
                 elif mutation == "section": site["address"] = "spec:sample.one#design.typeOne"
                 elif mutation == "file": site["file"] = "design/specs/sample/two.sdp.md"
                 elif mutation == "shape": site.update(spec="spec:sample.one", question="Keep one.")
+                elif mutation == "line": site["line"] = 1
+                elif mutation == "openTrue": site["open"] = True
                 elif mutation == "notString": site["address"] = []
                 else:
                     planted["sources"] = [{"kind":"specQuestion", "spec":"spec:sample.one", "file":source["file"],
@@ -904,14 +830,37 @@ class CorpusRulesTests(unittest.TestCase):
         closed["sources"][0]["question"] = "keep one as it is."
         result, text = self.validate_policy(register={"decisions":[closed]})
         self.assertEqual(result.returncode, 0, text)
-        self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("#keepIt", "#renamed"))
+
+        self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("Keep one as it is. Another sentence.", "A different question."))
         result, text = self.validate_policy(register={"decisions":[decision]})
-        self.assertEqual(result.returncode, 1, text)
-        self.assertIn("question-source", text)
+        self.assertEqual(result.returncode, 0, text)
+
+        for key in (" #renamed", ""):
+            with self.subTest(key=key):
+                self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace(" #keepIt", key))
+                result, text = self.validate_policy(register={"decisions":[decision]})
+                self.assertEqual(result.returncode, 1, text)
+                self.assertIn("question-source", text)
         self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("### Open questions\n- [non-blocking #keepIt] Keep one as it is. Another sentence.\n", ""))
         closed["sources"][0]["question"] = "Keep one as it is."
-        result, text = self.validate_policy(register={"decisions":[closed]})
-        self.assertEqual(result.returncode, 0, text)
+        for status in tool.STATUSES:
+            with self.subTest(status=status):
+                closed["status"] = status
+                before = copy.deepcopy(closed)
+                result, text = self.validate_policy(register={"decisions":[closed]})
+                self.assertEqual(result.returncode, 0 if status in ("decided", "folded") else 1, text)
+                self.assertEqual(closed, before)
+
+    def test_closed_question_opening_keeps_citations_and_decimal_points(self):
+        question = "Keep `spec:sample.base` at 1.5 bytes. Why?"
+        self.put("design/specs/sample/one.sdp.md", self.carrier("one").replace("Keep one as it is. Another sentence.", question))
+        decision = row("OD-001", status="folded", sources=[{
+            "kind": "specQuestion", "spec": "spec:sample.one", "file": "design/specs/sample/one.sdp.md",
+            "question": "Keep `spec:sample.base` at 1.5 bytes.", "open": False,
+        }])
+        result, text = self.validate_policy(register={"decisions": [decision]})
+        self.assertEqual(result.returncode, 1, text)
+        self.assertIn("open: false question resolves again", text)
 
     def test_architecture_parameters_are_scoped_to_the_walk_and_crossings_fail(self):
         self.put("src/components.ts", """/**
@@ -936,6 +885,46 @@ export const orders = 1;
 
 
 class StudioGateTests(unittest.TestCase):
+    def test_gate_passes_the_scanners_sections_to_rules(self):
+        sys.path.insert(0, str(ROOT / "design/tools"))
+        spec = importlib.util.spec_from_file_location("section_check_under_test", CHECK_PATH)
+        check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(check)
+        real_run = check.run
+        sections = scanner.entry_address_sections() + ["future"]
+        def run(args):
+            if args[0] == "validate":
+                binding = next((arg for arg in args if arg.startswith("addressSections=@")), None)
+                self.assertIsNotNone(binding, "the rules did not receive the scanner's section list")
+                self.assertEqual(json.loads(Path(binding.split("@", 1)[1]).read_text()), sections)
+            return real_run(args)
+        with mock.patch.object(check, "entry_address_sections", return_value=sections, create=True), \
+             mock.patch.object(check, "address_sites", return_value=[]) as scan, \
+             mock.patch.object(check, "run", side_effect=run), contextlib.redirect_stdout(io.StringIO()):
+            check.main()
+        scan.assert_called_once_with(check.ROOT, sections=sections)
+
+    def test_missing_dependency_fails_without_a_package_lookup(self):
+        sys.path.insert(0, str(ROOT / "design/tools"))
+        spec = importlib.util.spec_from_file_location("missing_check_under_test", CHECK_PATH)
+        check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(check)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binary = root / "bin"
+            binary.mkdir()
+            os.symlink(shutil.which("node"), binary / "node")
+            marker = root / "lookup"
+            tripwire = binary / "npx"
+            tripwire.write_text('#!/bin/sh\ntouch "$LOOKUP_MARKER"\nexit 99\n')
+            tripwire.chmod(0o755)
+            with mock.patch.object(check, "ROOT", str(root)), \
+                 mock.patch.dict(os.environ, {"PATH": str(binary) + ":/usr/bin:/bin", "LOOKUP_MARKER": str(marker)}):
+                result = check.run(["--version"])
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("run `npm ci`", result.stderr)
+            self.assertFalse(marker.exists(), "the gate tried a package lookup")
+
     def test_gate_runs_the_studio_after_rules_and_refuses_a_dirty_render(self):
         sys.path.insert(0, str(ROOT / "design/tools"))
         spec = importlib.util.spec_from_file_location("studio_check_under_test", CHECK_PATH)

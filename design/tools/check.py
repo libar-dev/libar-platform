@@ -30,7 +30,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 
 from decisions import graph_recipe
-from scan_addresses import address_sites
+from scan_addresses import address_sites, entry_address_sections
 
 DESIGN = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(DESIGN)
@@ -46,7 +46,10 @@ def fail(msg):
 
 
 def run(args):
-    return subprocess.run(["npx", "sdp"] + args, capture_output=True, text=True, cwd=ROOT)
+    cli = Path(ROOT, "node_modules/@libar-dev/software-delivery-protocol/dist/cli/sdp.js")
+    if not cli.is_file():
+        return subprocess.CompletedProcess([], 1, "", "The pinned Protocol CLI is missing; run `npm ci` at the repository root.\n")
+    return subprocess.run(["node", str(cli)] + args, capture_output=True, text=True, cwd=ROOT)
 
 
 def main():
@@ -61,17 +64,22 @@ def main():
 
     # Scan files before validation; rules files read only graph data and their parameters.
     try:
-        sites = address_sites(ROOT)
+        sections = entry_address_sections()
+        sites = address_sites(ROOT, sections=sections)
     except (OSError, ValueError) as error:
         fail(f"the address scan failed: {error}")
         sites = []
+        sections = []
     with tempfile.TemporaryDirectory(prefix="platform-rules-") as temporary:
         scanned = os.path.join(temporary, "address-sites.json")
+        exported = os.path.join(temporary, "address-sections.json")
         Path(scanned).write_text(json.dumps(sites), encoding="utf-8")
+        Path(exported).write_text(json.dumps(sections), encoding="utf-8")
         out = run(["validate", ".", "--rules", "design/rules/policy.js",
                    "--params", "intended=@design/tools/prose-mentions.json",
                    "--params", "register=@design/decisions/register.json",
                    "--params", "addressSites=@" + scanned,
+                   "--params", "addressSections=@" + exported,
                    "--rules", "node_modules/@libar-dev/software-delivery-protocol/dist/recipes/42-the-architecture-walk.js",
                    "--params", '{"isolated":["platform"]}'])
     text = out.stdout + out.stderr

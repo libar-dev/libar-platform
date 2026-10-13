@@ -121,7 +121,7 @@ entry addresses outside the Specs: 497; dependsOn cycles: 0
 architecture: 76 code units; roles: codec 1, contract 6, decider 2, event-store 1, operator-entry 1, projection 2, query 5, read-model 1, schema 6, service 10, use-case 2; layers: adapter 3, application 3, domain 3, infrastructure 3; contexts: inventory 2, orders 2, orders-inventory 1, platform 7; 49 references edges from 41 units; platform isolation: 7 platform components, 21 uses edges from them, 0 into another context
 …
 Pack pages current: 1 of 1
-protocol: 822aea4 (the package archive used at that close)
+protocol: file:vendor/libar-dev-software-delivery-protocol-0.0.0-822aea4.tgz
 
 OK
 ```
