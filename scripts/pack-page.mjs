@@ -2,8 +2,9 @@
 // `node scripts/pack-page.mjs --pack <packId> --out <page>` writes the page, and with `--check` it
 // writes nothing and compares the page at --out with what the tree generates, naming the first line
 // that differs. It reads the member graph through the Protocol package's exported extractor and
-// reader. Questions and declarations each come from q's own graph derivation, running shipped
-// recipes 20 and 24 from dist/recipes with --params. Two inputs join it: the pinned pairs
+// reader, with the line of each Design entry and open question from the reader's entry locations,
+// and reads no Spec carrier. Questions and declarations each come from q's own graph derivation,
+// running shipped recipes 20 and 24 from dist/recipes with --params. Two inputs join it: the pinned pairs
 // (tests/types/pinned-pairs.json) and the rows of the decision register
 // (design/decisions/register.json); a missing input is an error that names its path. The code a
 // member binds comes from the graph alone: each anchor at its own site, with its role and its
@@ -289,23 +290,21 @@ export function indexTables(rows) {
   return tables;
 }
 
-// The line of each Design entry and of each open question in a Spec's Markdown carrier.
-export function specLines(text) {
+// The line of each Design entry and of each open question, as the reader's Spec context locates
+// them: `design.<key>` and `question[<index>]`, the index counting the Spec's open questions from 0.
+// The Design entries keep the carrier's order, which the page's list of other entries follows.
+export function entryLines(context) {
   const design = new Map();
   const questions = [];
-  let section = null;
-  text.split("\n").forEach((line, at) => {
-    const heading = /^#{2,3} (.+)$/.exec(line);
-    if (heading !== null) section = heading[1];
-    else if (section === "Design") {
-      const key = /^- ([a-z][A-Za-z0-9]*): /.exec(line);
-      if (key !== null) design.set(key[1], at + 1);
-    } else if (
-      section === "Open questions" &&
-      /^- \[(?:non-)?blocking(?: #[a-z][A-Za-z0-9]*)?\] /.test(line)
-    )
-      questions.push(at + 1);
-  });
+  const located = [...(context?.entryLocations ?? [])].sort(
+    (left, right) => left.line - right.line,
+  );
+  for (const { entry, line } of located) {
+    if (entry.startsWith("design."))
+      design.set(entry.slice("design.".length), line);
+    const question = /^question\[(\d+)\]$/.exec(entry);
+    if (question !== null) questions[Number(question[1])] = line;
+  }
   return { design, questions };
 }
 
@@ -398,7 +397,7 @@ const states = { bound: "bound", ahead: "ahead", notCompared: "not compared" };
 function recipes(base) {
   const dist = join(root, "node_modules", engine, "dist");
   const body = (file) => readFileSync(join(dist, "recipes", file), "utf8");
-  const query = (body) => {
+  const query = (source) => {
     try {
       return JSON.parse(
         execFileSync(
@@ -406,7 +405,7 @@ function recipes(base) {
           [
             join(dist, "cli/sdp.js"),
             "q",
-            body,
+            source,
             "--root",
             base,
             "--params",
@@ -494,7 +493,7 @@ export async function generate(pack, out, base = root) {
     members.map(async (id, at) => {
       const context = reader.specContext(id);
       const next = nextRung(context);
-      const lines = specLines(readFileSync(join(base, context.file), "utf8"));
+      const lines = entryLines(context);
       const typed = context.relationsOut.filter((relation) =>
         typedRelations.includes(relation.type),
       );
@@ -1130,9 +1129,7 @@ export async function generate(pack, out, base = root) {
     const [id, key] = address.split("#design.");
     const spec = specs.get(id);
     if (spec === undefined) return span(address);
-    const line = specLines(
-      readFileSync(join(base, spec.file), "utf8"),
-    ).design.get(key);
+    const line = entryLines(reader.specContext(id)).design.get(key);
     return line === undefined
       ? `[${span(address)}](${link(spec.file)})`
       : `[${span(address)}](${link(spec.file, line)})`;

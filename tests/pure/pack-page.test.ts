@@ -68,7 +68,10 @@ type PackPage = {
   indexTables(
     rows: { spec: string; key: string; declaration: string }[],
   ): Map<string, string>;
-  specLines(text: string): { design: Map<string, number>; questions: number[] };
+  entryLines(context: { entryLocations?: { entry: string; line: number }[] }): {
+    design: Map<string, number>;
+    questions: number[];
+  };
   opening(text: string, limit?: number): string;
   tierOf(openingLine: string): string | null;
   firstDifference(
@@ -388,35 +391,24 @@ test("an input off its ruled shape is refused", async () => {
   }
 });
 
-test("the line of each Design entry and open question is read from the carrier", () => {
-  const spec = [
-    "---",
-    "id: spec:sample.one",
-    "---",
-    "# One",
-    "",
-    "## Intent",
-    "",
-    "- outcome: Pin one shape (E-1)",
-    "",
-    "### Open questions",
-    "",
-    "- [non-blocking #first] Extension E-1: the first question (E-1)",
-    "- [blocking] The second question (E-1)",
-    "",
-    "## Design",
-    "",
-    "A paragraph that names typeOne: in prose.",
-    "",
-    "- typeOne: `type One = { a: string }` (E-1)",
-    "- limitOne: 4 items (E-1)",
-  ].join("\n");
-  const lines = page.specLines(spec);
+// The reader lists entry locations by key; the page lists other Design entries in carrier order.
+test("the line of each Design entry and open question comes from the reader's entry locations", () => {
+  const lines = page.entryLines({
+    entryLocations: [
+      { entry: "question[1]", line: 13 },
+      { entry: "design.limitOne", line: 20 },
+      { entry: "relation.dependsOn[0]", line: 4 },
+      { entry: "rule[0]", line: 8 },
+      { entry: "question[0]", line: 12 },
+      { entry: "design.typeOne", line: 19 },
+    ],
+  });
   expect([...lines.design]).toEqual([
     ["typeOne", 19],
     ["limitOne", 20],
   ]);
   expect(lines.questions).toEqual([12, 13]);
+  expect(page.entryLines({})).toEqual({ design: new Map(), questions: [] });
 });
 
 test("a question opens to the end of its first sentence, cut outside code spans", () => {
