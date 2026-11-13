@@ -1,6 +1,6 @@
 # Roadmap: the next units
 
-Written on 2026-10-02 by the main thread, from four advisor memos written the same day under `design/advisors/task-roadmap.md`. It is a work document: it orders units and names what each needs and shows, and it says nothing a Spec should say. The owner rules on it. The memos, the plants and the check are in the roadmap unit's folder, which the project notes name. It is kept current at each close, last at the close of pull request #12 on 2026-10-10, before its merge into `main`.
+Written on 2026-10-02 by the main thread, from four advisor memos written the same day under `design/advisors/task-roadmap.md`. It is a work document: it orders units and names what each needs and shows, and it says nothing a Spec should say. The owner rules on it. The memos, the plants and the check are in the roadmap unit's folder, which the project notes name. It is kept current at each close, last at the close of pull request #13 on 2026-11-13, before its merge into `main`.
 
 ## How to read it
 
@@ -111,7 +111,9 @@ Every item is done but the hosted tier's first runs, which are the owner's after
 
 ## Beside the rounds
 
-**The Protocol's round 2** is merged: `feature/adopter-round-2` of `libar-dev/software-delivery-protocol` as its pull request #28 (`415b095`) on 2026-10-10, followed by the annotations arc, #29 (`822aea4`). It brought authored entry order rendered, a Pack's member order, the next rung, question keys, recipes 25 and 26, and the Studio slice, `pack:spec-studio-v1`. This corpus is pinned at `822aea4`, the Protocol's `main` after both merges. The owner's `ready` on the four Specs the round implemented, and the Studio Pack's 25 departures, keyed questions for the owner, are in the Owner queue of `STATE.md`.
+**The Protocol's round 2** is merged: `feature/adopter-round-2` of `libar-dev/software-delivery-protocol` as its pull request #28 (`415b095`) on 2026-10-10, followed by the annotations arc, #29 (`822aea4`). It brought authored entry order rendered, a Pack's member order, the next rung, question keys, recipes 25 and 26, and the Studio slice, `pack:spec-studio-v1`. The four Specs the round implemented state `ready` in the Protocol. The Studio Pack's 25 departures, keyed questions for the owner, are in the Owner queue of `STATE.md`.
+
+**The Protocol's design at the adopter's scale** is merged too: its pull request #33 (plan 45), on 2026-10-15 as `5a0b22c`, which this corpus pins since pull request #13. It brought the install from a commit, recipe bodies run as shipped with `--params`, corpus rules inside `sdp validate`, a context bundle that fits a Pack, the key-family register and the Spec Studio's phase 0. Whether the Studio replaces the committed Pack page of decision 58, and how a reviewer reaches it by a link, wait for the owner (Owner queue of `STATE.md`).
 
 **The dedicated pull request of O16**, a ruling of the unit `sdp-round-2`, comes after 5d or beside it, as the owner chooses. The owner: "Now it is perfect ground for demonstation in a dedicated PR. I am preparing the ground for that." and "The Graph, when properly implemented, gives all of these as projections." The Pack page, recipes 25 and 26, the question keys, the next-rung data and the Studio slice are its ground. Its subject lives in a private repository, and nothing from it is quoted here without the owner's word.
 
