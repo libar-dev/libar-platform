@@ -81,7 +81,7 @@ An advisor that finds a row plainly another's leaves it unsorted and says so in 
 }
 ```
 
-`check.py` resolves each open question source through the Protocol's address-resolution recipe and checks that `file` names its Spec. Every open question carries a key in its marker, such as `[non-blocking #commandAdmissionPolicy]`, addressed as `spec:<id>#question.<key>`. A closed source keeps its Spec and opening text. The check compares that text with the open questions' first sentences, normalizing whitespace only, and refuses a removed question that resolves again.
+`check.py` passes the register to `design/rules/policy.js`, whose `question-source` rule resolves each open question source by its address and checks that `file` names its Spec. Every open question carries a key in its marker, such as `[non-blocking #commandAdmissionPolicy]`, addressed as `spec:<id>#question.<key>`. A closed source keeps its Spec and opening text. The check compares that text with the open questions' first sentences, normalizing whitespace only, and refuses a removed question that resolves again.
 
 `units` is the order of the units a decision can block. The tool reads "before S4" from it, and a close keeps it current.
 

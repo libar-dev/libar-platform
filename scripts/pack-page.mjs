@@ -1,9 +1,10 @@
 // Writes the page of one capability Pack, which a person opens to understand its design:
 // `node scripts/pack-page.mjs --pack <packId> --out <page>` writes the page, and with `--check` it
 // writes nothing and compares the page at --out with what the tree generates, naming the first line
-// that differs. It reads the graph in memory through the Protocol package's exported extractor and
-// reader, never through validate, view, census or build, and runs recipes 20 and 24 as the pinned
-// Protocol ships them in recipes.md. Two inputs join it: the pinned pairs
+// that differs. It reads the member graph through the Protocol package's exported extractor and
+// reader, with the line of each Design entry and open question from the reader's entry locations,
+// and reads no Spec carrier. Questions and declarations each come from q's own graph derivation,
+// running shipped recipes 20 and 24 from dist/recipes with --params. Two inputs join it: the pinned pairs
 // (tests/types/pinned-pairs.json) and the rows of the decision register
 // (design/decisions/register.json); a missing input is an error that names its path. The code a
 // member binds comes from the graph alone: each anchor at its own site, with its role and its
@@ -14,6 +15,7 @@
 // them, with the targets that break a typed-dependency clause.
 // Exit 0: written, or the page is current. 1: --check found the page behind the tree. 2: it cannot
 // generate.
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -288,23 +290,21 @@ export function indexTables(rows) {
   return tables;
 }
 
-// The line of each Design entry and of each open question in a Spec's Markdown carrier.
-export function specLines(text) {
+// The line of each Design entry and of each open question, as the reader's Spec context locates
+// them: `design.<key>` and `question[<index>]`, the index counting the Spec's open questions from 0.
+// The Design entries keep the carrier's order, which the page's list of other entries follows.
+export function entryLines(context) {
   const design = new Map();
   const questions = [];
-  let section = null;
-  text.split("\n").forEach((line, at) => {
-    const heading = /^#{2,3} (.+)$/.exec(line);
-    if (heading !== null) section = heading[1];
-    else if (section === "Design") {
-      const key = /^- ([a-z][A-Za-z0-9]*): /.exec(line);
-      if (key !== null) design.set(key[1], at + 1);
-    } else if (
-      section === "Open questions" &&
-      /^- \[(?:non-)?blocking(?: #[a-z][A-Za-z0-9]*)?\] /.test(line)
-    )
-      questions.push(at + 1);
-  });
+  const located = [...(context?.entryLocations ?? [])].sort(
+    (left, right) => left.line - right.line,
+  );
+  for (const { entry, line } of located) {
+    if (entry.startsWith("design."))
+      design.set(entry.slice("design.".length), line);
+    const question = /^question\[(\d+)\]$/.exec(entry);
+    if (question !== null) questions[Number(question[1])] = line;
+  }
   return { design, questions };
 }
 
@@ -394,19 +394,41 @@ const states = { bound: "bound", ahead: "ahead", notCompared: "not compared" };
 // ---------------------------------------------------------------------------------------------
 // The page.
 
-const AsyncFunction = (async () => {}).constructor;
-function recipe(number) {
-  const recipes = readFileSync(
-    join(root, "node_modules", engine, "docs/agent-surface/recipes.md"),
-    "utf8",
-  );
-  const section = recipes
-    .split(/^## /m)
-    .find((part) => part.startsWith(`${number}. `));
-  const fence = /^```js\n([\s\S]*?)^```$/m.exec(section ?? "");
-  if (fence === null)
-    cannot(`recipes.md has no recipe ${number} with a js fence`);
-  return fence[1];
+function recipes(base) {
+  const dist = join(root, "node_modules", engine, "dist");
+  const body = (file) => readFileSync(join(dist, "recipes", file), "utf8");
+  const query = (source) => {
+    try {
+      return JSON.parse(
+        execFileSync(
+          process.execPath,
+          [
+            join(dist, "cli/sdp.js"),
+            "q",
+            source,
+            "--root",
+            base,
+            "--params",
+            "{}",
+            "--json",
+          ],
+          {
+            cwd: base,
+            encoding: "utf8",
+            maxBuffer: 1 << 27,
+            stdio: ["ignore", "pipe", "pipe"],
+          },
+        ),
+      );
+    } catch (error) {
+      const reason = error.stderr?.toString() || error.message;
+      cannot(`the query failed: ${reason.split("\n")[0]}`);
+    }
+  };
+  return {
+    questions: query(body("20-open-question-register.js")),
+    declarations: query(body("24-pinned-declarations.js")),
+  };
 }
 
 async function readGraph(pack, base) {
@@ -421,21 +443,14 @@ async function readGraph(pack, base) {
   const summary =
     reader.packs().find((candidate) => candidate.id === pack) ??
     cannot(`the graph has no ${pack}`);
+  const entries = recipes(base);
   return {
     graph,
     reader,
     summary,
     members: packMembers(reader.packContext(pack)),
-    questions: await new AsyncFunction("g", "graph", "report", recipe(20))(
-      reader,
-      graph,
-      undefined,
-    ),
-    declarations: await new AsyncFunction("g", "graph", "report", recipe(24))(
-      reader,
-      graph,
-      undefined,
-    ),
+    questions: entries.questions,
+    declarations: entries.declarations,
   };
 }
 
@@ -478,7 +493,7 @@ export async function generate(pack, out, base = root) {
     members.map(async (id, at) => {
       const context = reader.specContext(id);
       const next = nextRung(context);
-      const lines = specLines(readFileSync(join(base, context.file), "utf8"));
+      const lines = entryLines(context);
       const typed = context.relationsOut.filter((relation) =>
         typedRelations.includes(relation.type),
       );
@@ -1114,9 +1129,7 @@ export async function generate(pack, out, base = root) {
     const [id, key] = address.split("#design.");
     const spec = specs.get(id);
     if (spec === undefined) return span(address);
-    const line = specLines(
-      readFileSync(join(base, spec.file), "utf8"),
-    ).design.get(key);
+    const line = entryLines(reader.specContext(id)).design.get(key);
     return line === undefined
       ? `[${span(address)}](${link(spec.file)})`
       : `[${span(address)}](${link(spec.file, line)})`;

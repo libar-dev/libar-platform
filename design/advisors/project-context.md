@@ -33,7 +33,7 @@ These say where to look. They prove nothing about a Spec or about the code.
 
 ## How to read the Specs
 
-Through the graph, from the repository root: `npx sdp q '<recipe body>' --json`, with a body from `node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md`. Always `npx sdp`, and `q` only.
+Through the graph, from the repository root: `npx sdp q '<recipe body>' --params '<JSON>' --json`, with a shipped body from `node_modules/@libar-dev/software-delivery-protocol/dist/recipes/<nn>-*.js`. Always `npx sdp`, and `q` only.
 
 | Recipe | What it answers |
 |---|---|

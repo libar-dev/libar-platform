@@ -1,7 +1,7 @@
 // Emits the pinned module of one Pack, which the type tests import:
 // `node scripts/pinned.mjs --pack <packId> [--name <name>]` writes generated/pinned/<name>.ts, by
 // default the Pack's id without `pack:`. It runs the body of recipe 24, "Pinned declarations", read
-// from the pinned Protocol's recipes.md, with the pinned CLI. spec:extraction.contract-declarations
+// from the pinned Protocol's dist/recipes, with the pinned CLI. spec:extraction.contract-declarations
 // rules the module: a projection, regenerated and never edited, which earns its place when a
 // changed pin fails the compiled tier's typecheck against the code.
 //
@@ -85,7 +85,7 @@ function query(body) {
   try {
     const out = execFileSync(
       process.execPath,
-      [sdp, "q", body, "--root", root, "--json"],
+      [sdp, "q", body, "--root", root, "--params", "{}", "--json"],
       { cwd: root, encoding: "utf8", maxBuffer: 1 << 27 },
     );
     return JSON.parse(out);
@@ -94,16 +94,12 @@ function query(body) {
   }
 }
 
-// The body of recipe 24 as the Protocol ships it: the first js fence under its heading.
+// The body of recipe 24 as the Protocol ships it.
 function recipe24() {
-  const recipes = readFileSync(
-    join(protocol, "docs/agent-surface/recipes.md"),
+  return readFileSync(
+    join(protocol, "dist/recipes/24-pinned-declarations.js"),
     "utf8",
   );
-  const section = recipes.split(/^## /m).find((part) => /^24\. /.test(part));
-  const fence = /^```js\n([\s\S]*?)^```$/m.exec(section ?? "");
-  if (fence === null) cannot("recipes.md has no recipe 24 with a js fence");
-  return fence[1];
 }
 
 const parse = (text) =>

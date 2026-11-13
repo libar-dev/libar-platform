@@ -5,6 +5,11 @@
 // function's ctx is erased first where the pin's and the code's differ. Not compared: the pair
 // differs only in the ctx, or carries a ctx inside a type no erasing reaches, or its pin belongs to a
 // Spec outside the Pack, so the module does not emit it; nothing is asserted.
+import {
+  ref,
+  specTest,
+  testAnchorId,
+} from "@libar-dev/software-delivery-protocol";
 import type { TableDefinition } from "convex/server";
 import { describe, expectTypeOf, test } from "vitest";
 import type * as pinned from "../../generated/pinned/history-view.js";
@@ -15,6 +20,25 @@ import type * as command from "../../src/command/index.js";
 import type * as context from "../../src/context/index.js";
 import type * as gate from "../../src/gate/index.js";
 import type * as readModel from "../../src/read-model/index.js";
+
+const anchor = specTest({
+  id: testAnchorId("test:history-view.pinned-declarations"),
+  label: "compares pack:history-view's pinned declarations with the code",
+  verifies: [
+    ref("spec:application.history-projection"),
+    ref("spec:application.projection-contract"),
+    ref("spec:application.read-models"),
+    ref("spec:application.rebuild"),
+    ref("spec:application.write-pause"),
+    ref("spec:application.generation-registry"),
+    ref("spec:command.command-declaration"),
+    ref("spec:command.command-pipeline"),
+    ref("spec:context.event-envelope"),
+    ref("spec:context.journal"),
+    ref("spec:context.queries"),
+  ],
+});
+void anchor;
 
 // Representative arguments for the generic declarations.
 type Dto = { orderId: string; lineCount: number };

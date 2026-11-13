@@ -46,76 +46,19 @@ def date(value):
         raise argparse.ArgumentTypeError("expected a date in YYYY-MM-DD form")
 
 
-def question_opening(text):
-    """Keep the authored text through its first sentence."""
-    match = re.search(r"[.?!](?=\s|$)", text)
-    return text[:match.end()] if match else text
-
-
-def normalize_question(text):
-    return " ".join(text.split())
-
-
 def graph_recipe(number, root=ROOT, addresses=None):
-    """Run a body from the pinned Protocol's shipped catalog."""
-    catalog = (ROOT / "node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md").read_text()
-    body = re.search(rf"## {number}\..*?```js\n(.*?)```", catalog, re.S).group(1)
-    if addresses is not None:
-        body = re.sub(r"const addresses = \[.*?\];", lambda _: "const addresses = " + json.dumps(addresses) + ";", body, count=1, flags=re.S)
-    result = subprocess.run(["npx", "sdp", "q", body, "--root", str(root), "--json"],
+    """Run the pinned Protocol's shipped recipe, with its subject passed as data."""
+    package = ROOT / "node_modules/@libar-dev/software-delivery-protocol"
+    recipes = list((package / "dist/recipes").glob(f"{number:02d}-*.js"))
+    if len(recipes) != 1:
+        raise ValueError(f"expected one shipped file for recipe {number}, found {len(recipes)}")
+    params = {} if addresses is None else {"addresses": addresses}
+    result = subprocess.run(["node", str(package / "dist/cli/sdp.js"), "q", recipes[0].read_text(),
+                             "--root", str(root), "--params", json.dumps(params), "--json"],
                             cwd=ROOT, capture_output=True, text=True)
     if result.returncode:
         raise ValueError(f"recipe {number} failed: {result.stderr or result.stdout}")
     return json.loads(result.stdout)
-
-
-def question_resolutions(rows, root=ROOT):
-    addresses = [source.get("address") for row in rows for source in row["sources"]
-                 if source.get("kind") == "specQuestion" and source.get("open") is not False]
-    return {result["address"]: result for result in graph_recipe(25, root, addresses)["rows"]
-            if isinstance(result["address"], str)}
-
-
-def question_source_errors(row, questions, files, resolutions=None):
-    """Resolve open sources through the Protocol; keep closed sources' text rule."""
-    errors = []
-    resolutions = resolutions or {}
-    for source in row["sources"]:
-        if source.get("kind") != "specQuestion":
-            continue
-        closed = source.get("open") is False
-        required = {"kind", "spec", "question", "file", "open"} if closed else {"kind", "address", "file"}
-        if set(source) != required:
-            errors.append("closed specQuestion requires kind, spec, question, file and open: false" if closed
-                          else "open specQuestion requires kind, address and file")
-        if closed:
-            spec = source.get("spec")
-            question = source.get("question")
-            if not present(spec) or spec not in files:
-                errors.append("specQuestion names no Spec: " + repr(spec))
-                continue
-            if source.get("file") != files[spec]:
-                errors.append("specQuestion file does not name its Spec: " + spec)
-            if not present(question):
-                errors.append("specQuestion requires non-empty question text")
-                continue
-            matches = sum(normalize_question(question_opening(text)) == normalize_question(question)
-                          for text in questions.get(spec, []))
-            if row["status"] not in ("decided", "folded"):
-                errors.append("open: false requires a decided or folded row")
-            if matches:
-                errors.append("open: false question resolves again: " + spec)
-        else:
-            address = source.get("address")
-            resolved = resolutions.get(address) if isinstance(address, str) else None
-            if not resolved or not resolved["resolves"] or resolved["section"] != "question":
-                reason = resolved["reason"] if resolved else "missing address"
-                errors.append(f"specQuestion address does not resolve to an open question: {address!r} ({reason})")
-                continue
-            spec = resolved["id"]
-            if source.get("file") != files.get(spec):
-                errors.append("specQuestion file does not name its Spec: " + spec)
-    return errors
 
 
 def row_errors(row, units, root, row_ids):

@@ -8,7 +8,7 @@ A capability is designed in its Specs before anyone builds it. The owner asked o
 
 ## Before you read
 
-Read `design/advisors/protocol.md`, then `design/advisors/project-context.md`, then `design/advisors/lenses/<slug>.md`. Then read the Pack's page, `design/pages/<name>.md` for `pack:<name>`: the members in reading order with their rungs, bindings, pairs and open questions on one page. Your memo ends with one line on what you needed that the page did not give. Then read the Pack through the graph where the page is not enough, from the repository root, with bodies copied verbatim from `node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md`:
+Read `design/advisors/protocol.md`, then `design/advisors/project-context.md`, then `design/advisors/lenses/<slug>.md`. Then read the Pack's page, `design/pages/<name>.md` for `pack:<name>`: the members in reading order with their rungs, bindings, pairs and open questions on one page. Your memo ends with one line on what you needed that the page did not give. Then read the Pack through the graph where the page is not enough, from the repository root, with shipped bodies from `node_modules/@libar-dev/software-delivery-protocol/dist/recipes/<nn>-*.js`, each run with `--params` (recipe 5 takes `{"pack":"<pack>"}`):
 
 - recipe 5, the Pack review backbone, with `<pack>`: the members, their rungs and bindings;
 - recipe 20, the open questions, and recipe 21, the dependency footing, for each member that pins what the capability builds;

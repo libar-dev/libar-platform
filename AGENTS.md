@@ -12,7 +12,7 @@ The Convex transactional domain platform. `docs/` holds the inputs. `design/` ho
 
 - `docs/convex-transactional-domain-platform-decisions.md`, "the doc", says what the platform is. Its decisions are proposals until the owner rules. Only the owner states `ready` on a Spec or edits the doc. `design/SESSIONS.md`, "Who decides", says who settles an open question.
 - A Spec is intended truth. Report code that disagrees with a Spec as a gap, and the main thread rules which side changes.
-- Read the corpus through its graph. Run `npm ci` once, then, from the repository root, `npx sdp q '<recipe body>' --json` with a body from `node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md`. Always `npx sdp`: a bare `sdp` on macOS is an unrelated tool.
+- Read the corpus through its graph. Run `npm ci` once, then, from the repository root, `npx sdp q '<recipe body>' --params '<JSON>' --json` with a shipped body from `node_modules/@libar-dev/software-delivery-protocol/dist/recipes/<nn>-*.js`. Always `npx sdp`: a bare `sdp` on macOS is an unrelated tool.
 - Before you write or edit a Spec, read `design/PLAN.md` section 6 and `node_modules/@libar-dev/software-delivery-protocol/.agents/skills/sdp-authoring/SKILL.md`.
 - `python3 design/tools/check.py` prints `OK` when the Specs, the README and the ledger agree. Run it before you say they do.
 - Name the tier behind a claim about behavior: compiled, pure test, `convex-test`, or native backend.

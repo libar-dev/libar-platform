@@ -22,12 +22,15 @@ Always `npx sdp` or an `npm run` script. A bare `sdp` on macOS resolves to an un
 
 The index lists every Spec with its kind, altitude, stated readiness and the floor its structure reaches. Each Spec has one page under `generated/design-review/spec/`, each pack under `generated/design-review/pack/`. The Protocol's root is the repository root, because the graph binds the Specs under `design/specs/` to the tests that verify them, which live outside `design/`. `generated/` at the repository root is gitignored; regenerate it after any edit.
 
+The committed Pack page at [`pages/history-view.md`](pages/history-view.md) is the first page a history-view pass reads under decision 58; regenerate it with `npm run pages`.
+The generated Studio opens at `generated/spec-studio/index.html` after `npm run studio`, and `check.py` builds and checks its page set beside the committed page.
+
 A reading order that works. Start with the epic ([`transactional-domain-platform`](specs/platform/transactional-domain-platform.sdp.md)) and three of its five platform children ([`layers-and-profiles`](specs/platform/layers-and-profiles.sdp.md), [`decision-method`](specs/platform/decision-method.sdp.md), [`vocabulary`](specs/platform/vocabulary.sdp.md)); the other two, [`acceptance-contract`](specs/platform/acceptance-contract.sdp.md) and [`existing-systems`](specs/platform/existing-systems.sdp.md), are best read before the scenario table below, and [`native-harness`](specs/platform/native-harness.sdp.md), which refines the acceptance contract, before any native test. Then the twelve laws in [`specs/laws/`](specs/laws/) and decisions D1 to D12 in [`specs/decisions/`](specs/decisions/). Then go up the layers: the kernel ([`outcome-model`](specs/kernel/outcome-model.sdp.md) first, then [`decider-contract`](specs/kernel/decider-contract.sdp.md) and [`domain-kernel`](specs/kernel/domain-kernel.sdp.md)), the context component and its children in [`specs/context/`](specs/context/), the command pipeline in [`specs/command/`](specs/command/) (read [`actor-and-scope`](specs/command/actor-and-scope.sdp.md) before [`command-pipeline`](specs/command/command-pipeline.sdp.md)), and the composed application in [`specs/application/`](specs/application/). Read the fact ledger and the probe plan in [`specs/facts/`](specs/facts/) before the Layer 3 material, because the obligation module's justification is a probe that has not run. Layers 4 to 6 are trigger, promise and rules only.
 
-Questions the graph answers better than the files. Pass a recipe body from the Protocol's catalog to `sdp q`, run from the repository root. The catalog ships in the package, at `node_modules/@libar-dev/software-delivery-protocol/docs/agent-surface/recipes.md`:
+Questions the graph answers better than the files. Pass a shipped body from `node_modules/@libar-dev/software-delivery-protocol/dist/recipes/<nn>-*.js` to `npx sdp q` with `--params`, run from the repository root:
 
 ```sh
-npx sdp q '<recipe body>' --json
+npx sdp q '<recipe body>' --params '<JSON>' --json
 ```
 
 Recipe 3 gives one Spec's sections, relations and verifiers. Recipe 5 reviews a pack. Recipe 6 finds a concept by phrase, so `D7` or `staleVersion` lands on every Spec that carries it. Recipe 7 lists Specs whose stated readiness their structure does not earn; it returns `[]` on this corpus. Recipe 8 returns the warnings as data. Recipe 9 is the promotion preflight for one Spec. Recipe 11 lists every non-ready Spec by family with its floor. Recipe 20 is the open-question register, blocking questions first. Recipe 21 lists what one Spec rests on, with the rung each target states. Recipe 22 audits Spec ids written in prose against declared relations. Recipe 23 searches keyed Design entries.
@@ -45,7 +48,7 @@ python3 design/tools/check.py
 Expected result on the integrated corpus:
 
 ```
-243 specs · 6 packs · 180 anchors → 429 nodes · 1499 edges (0 errors, 0 warnings)
+243 specs · 6 packs · 181 anchors → 430 nodes · 1510 edges (0 errors, 0 warnings)
 validate: 0 errors · 12 warnings (conformance + honesty over the one graph)
 ```
 
