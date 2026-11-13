@@ -1,7 +1,11 @@
 // libar-platform's graph-side policy, as one corpus rules file (spec:validation.corpus-rules).
-// Run it from the repository root after `python3 design/tools/scan_addresses.py > generated/address-sites.json`:
-// Write the Protocol's exported section list beside the scan:
+// check.py runs it. To run it by hand from the repository root, first write the two lists it reads,
+// the entry addresses scanned outside the Specs and the Protocol's exported section list:
+//
+//   python3 design/tools/scan_addresses.py > generated/address-sites.json
 //   node --input-type=module --eval 'import { ENTRY_ADDRESS_SECTIONS } from "@libar-dev/software-delivery-protocol"; console.log(JSON.stringify(ENTRY_ADDRESS_SECTIONS))' > generated/address-sections.json
+//
+// then validate with both rules files:
 //
 //   npx sdp validate . --rules design/rules/policy.js \
 //     --params intended=@design/tools/prose-mentions.json \

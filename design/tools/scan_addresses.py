@@ -47,7 +47,6 @@ def address_tokens(paths, base=ROOT, sections=None):
     return found
 
 
-
 def address_sites(root=ROOT, sections=None):
     files = [path for top in ADDRESS_SOURCES for ext in ("ts", "tsx", "mjs")
              for path in glob.glob(os.path.join(root, top, "**", f"*.{ext}"), recursive=True)]
